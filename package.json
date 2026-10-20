@@ -11,7 +11,8 @@
     "build:sandbox": "node --require ./tools/sandbox-compat.cjs ./node_modules/@angular/cli/bin/ng.js build",
     "format": "prettier --write src tests tools *.json *.md .github/workflows/*.yml",
     "verify:build": "node tools/verify-build.mjs",
-    "postbuild": "node tools/prepare-hosting.mjs"
+    "postbuild": "node tools/package-worker.mjs",
+    "db:generate": "drizzle-kit generate"
   },
   "keywords": [],
   "author": "",
@@ -38,6 +39,8 @@
     "@angular/build": "^22.2.2",
     "@angular/cli": "^22.2.2",
     "@angular/compiler-cli": "^22.2.3",
+    "drizzle-kit": "^0.31.11",
+    "drizzle-orm": "^0.45.4",
     "fake-indexeddb": "^6.2.5",
     "prettier": "^3.9.10",
     "typescript": "^6.0.3",

@@ -1,3 +1,4 @@
+import { AuthService } from "../services/auth";
 import { A11yModule } from "@angular/cdk/a11y";
 import { Component, effect, inject, signal } from "@angular/core";
 import {
@@ -41,7 +42,7 @@ import { PwaService } from "../services/pwa";
           </div>
           <div>
             <h2>{{ s.profile().name }}</h2>
-            <span class="pill">{{ s.profile().role }} · Profilo locale</span>
+            <span class="pill">{{ auth.user()?.role === "User" ? "Cliente" : auth.user()?.role }}</span>
           </div>
         </div>
         <form [formGroup]="form" (ngSubmit)="save()">
@@ -137,7 +138,7 @@ import { PwaService } from "../services/pwa";
           <h2>Porta GymTrack con te</h2>
           <p class="subtle" style="margin:13px 0">
             Dopo il primo caricamento completo via HTTPS, l’app conserva le
-            risorse per l’uso offline.
+            risorse dell’interfaccia. La verifica dell’account al caricamento richiede una connessione.
           </p>
           @if (pwa.installed()) {
             <span class="pill green">App installata</span>
@@ -210,16 +211,18 @@ import { PwaService } from "../services/pwa";
       </p>
     </section>
     <section class="card" style="margin-top:20px">
-      <h2>GymTrack 1.0</h2>
-      <p class="subtle" style="margin-top:12px">
-        Angular · IndexedDB · PWA. Gratuito, senza account e senza servizi
-        remoti.
-      </p>
-      <p class="subtle" style="margin-top:8px">
-        Ruoli predisposti: SuperAdmin, Admin, User. In questa versione il ruolo
-        locale serve all’architettura: non è un sistema di autenticazione o
-        sicurezza multiutente.
-      </p>
+      <h2>Account e sicurezza</h2><p class="subtle" style="margin-top:12px">{{auth.user()?.email}}</p>
+      @if(accountError()) {<p class="notice error" role="alert">{{accountError()}}</p>}
+      @if(accountMessage()) {<p class="notice success" role="status">{{accountMessage()}}</p>}
+      @if(auth.user()?.role === 'SuperAdmin') {<div class="actions"><a class="button primary" routerLink="/utenti">Gestione utenti</a></div>}
+      <form (ngSubmit)="changePassword()" class="form-grid" style="margin-top:24px">
+        <input type="text" name="username" [ngModel]="auth.user()?.email" autocomplete="username" hidden />
+        <label class="wide">Password attuale<input name="current-password" type="password" autocomplete="current-password" [(ngModel)]="currentPassword" required maxlength="128" /></label>
+        <label>Nuova password<input name="new-password" type="password" autocomplete="new-password" [(ngModel)]="newPassword" required minlength="12" maxlength="128" /></label>
+        <label>Conferma nuova password<input name="confirm-password" type="password" autocomplete="new-password" [(ngModel)]="confirmPassword" required minlength="12" maxlength="128" /></label>
+        <div class="actions wide"><button class="primary" [disabled]="accountBusy()">Aggiorna password</button><button type="button" (click)="logout()">Esci dall’account</button></div>
+      </form>
+      <p class="subtle" style="margin-top:16px">Puoi salvare e compilare le credenziali con l’app Password di iOS. Gli allenamenti rimangono su questo dispositivo, separati per account.</p>
     </section>
     @if (pending(); as backup) {
       <div class="modal-backdrop">
@@ -255,7 +258,21 @@ import { PwaService } from "../services/pwa";
     }`,
 })
 export class ProfileComponent {
+  auth = inject(AuthService);
   s = inject(Store);
+  accountError = signal("");
+  accountMessage = signal("");
+  currentPassword = "";
+  newPassword = "";
+  confirmPassword = "";
+  accountBusy = signal(false);
+  async changePassword() {
+    this.accountError.set(""); this.accountMessage.set("");
+    if (this.newPassword !== this.confirmPassword) { this.accountError.set("Le password non coincidono."); return; }
+    this.accountBusy.set(true);
+    try { await this.auth.request("auth/password", {currentPassword:this.currentPassword,password:this.newPassword}); this.currentPassword="";this.newPassword="";this.confirmPassword="";this.accountMessage.set("Password aggiornata. Le altre sessioni sono state chiuse."); } catch(e) { this.accountError.set((e as Error).message); } finally {this.accountBusy.set(false);}
+  }
+  async logout() { try { await this.auth.logout(); } catch(e) {this.accountError.set((e as Error).message);} }
   pwa = inject(PwaService);
   fb = inject(FormBuilder);
   working = signal(false);

@@ -1,3 +1,4 @@
+import { AuthService } from "./auth";
 import { computed, inject, Injectable, signal } from "@angular/core";
 import { GYM_REPOSITORY } from "../repositories/repository";
 import {
@@ -13,6 +14,7 @@ import { seed } from "../core/seed";
 import { sessionVolume, exerciseRecords } from "./statistics";
 @Injectable({ providedIn: "root" })
 export class Store {
+  private auth = inject(AuthService, { optional: true });
   private repo = inject(GYM_REPOSITORY);
   data = signal<DataSet>(seed());
   ready = signal(false);
@@ -78,6 +80,7 @@ export class Store {
         d = seed();
         await this.repo.replace(d);
       }
+      if (this.auth?.user()) d.profiles[0].role = this.auth.user()!.role;
       this.data.set(d);
       this.applyTheme();
       this.ready.set(true);

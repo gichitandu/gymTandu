@@ -35,5 +35,6 @@ export const routes: Routes = [
     loadComponent: () =>
       import("../features/catalog.component").then((m) => m.CatalogComponent),
   },
+  { path: "utenti", loadComponent: () => import("../features/users.component").then(m => m.UsersComponent) },
   { path: "**", redirectTo: "" },
 ];

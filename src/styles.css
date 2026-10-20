@@ -1275,3 +1275,41 @@ body {
     flex-wrap: wrap;
   }
 }
+
+/* Content must be allowed to shrink inside grids/flex rows on phone screens. */
+.card, .stack, .split > *, .dashboard-grid > *, .form-grid > *,
+.card-head > div, .page-heading > div, .profile-head > div, .exercise-info > div,
+.setting-row > div, .day-head > *, .user-row > * { min-width: 0; }
+h1, h2, h3, p, label, strong, .pill, .stat-value, .stat-foot { overflow-wrap: anywhere; }
+button, .button { white-space: normal; max-width: 100%; }
+.pill { max-width: 100%; }
+.card-head, .day-head, .chart-footer { flex-wrap: wrap; }
+.setting-row > mat-slide-toggle, .profile-avatar { flex-shrink: 0; }
+.auth-page { min-height: 100dvh; display:grid;place-items:center;padding:24px 16px; }
+.auth-card { width:100%;max-width:460px; }
+.password-toggle { display:flex;align-items:center;gap:10px; }
+.password-toggle input { flex:0 0 20px;margin:0; }
+.user-row { display:flex;gap:14px;align-items:center;justify-content:space-between;border-top:1px solid var(--line);padding-top:16px;flex-wrap:wrap; }
+.user-row p { margin:4px 0 10px; }
+@media(max-width:500px) {
+ .page-heading { flex-wrap:wrap;gap:12px; }
+ .page-heading > .primary { width:100%; }
+ .stats-grid { gap:10px;grid-template-columns:repeat(2,minmax(0,1fr)); }
+ .stat { padding:14px; }
+ .stat .stat-label { padding-right:0;min-height:0;margin-top:38px; }
+ .stat .stat-value { font-size:24px; }
+ .stat-icon { top:12px;right:12px; }
+ .stat-value small { display:inline-block; }
+ .dashboard-grid > .stack { grid-template-columns:minmax(0,1fr); }
+ .setting-row { align-items:flex-start; }
+ .setting-row:has(.button) { flex-wrap:wrap; }
+ .setting-row select { flex:0 0 78px; }
+ .day-head { align-items:flex-start; }
+ .day-head .inline-actions { width:100%; }
+ .bottom-nav { display:grid;grid-template-columns:repeat(5,minmax(0,1fr));padding-left:4px;padding-right:4px; }
+ .bottom-nav a { min-width:0;padding:3px 1px;font-size:9px; }
+ .rest-timer { bottom:calc(86px + env(safe-area-inset-bottom));max-width:calc(100vw - 24px);gap:8px;padding:10px;white-space:normal;flex-wrap:wrap;justify-content:center; }
+ .week-day i { width:26px;height:26px; }
+ input, select, textarea { font-size:16px; } /* Avoid Safari zooming the form on focus. */
+ footer { margin-bottom:calc(75px + env(safe-area-inset-bottom)); }
+}
