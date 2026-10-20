@@ -14,15 +14,15 @@ import { StatusComponent } from "../shared/status.component";
     IconComponent,
     StatusComponent,
   ],
-  template: ` <div class="page-heading">
+  template: ` <div class="page-heading home-hero">
       <div>
         <p class="eyebrow">IL TUO PROSSIMO LIVELLO</p>
         <h1>
           Ciao {{ s.profile().name }} <span style="font-size:26px">👋</span>
         </h1>
-        <p class="subtle">Continua a migliorare, un allenamento alla volta.</p>
+        <p class="subtle">Disciplina oggi, risultati domani.</p>
       </div>
-      <div class="date"><gt-icon name="calendar" />{{ todayLabel }}</div>
+<div class="hero-quote"><span>“</span><p>Ogni allenamento è un passo in più verso la versione migliore di te stesso.</p></div>
     </div>
     <gt-status />
     <div class="stats-grid">

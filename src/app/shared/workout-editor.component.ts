@@ -1,3 +1,4 @@
+import { ExerciseVideoComponent } from "./exercise-video.component";
 import { Component, inject, input, signal } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import { Store } from "../services/store";
@@ -6,7 +7,7 @@ import { IconComponent } from "./icon.component";
 @Component({
   selector: "gt-workout-editor",
   standalone: true,
-  imports: [FormsModule, IconComponent],
+  imports: [FormsModule, IconComponent, ExerciseVideoComponent],
   template: ` @for (e of s.workoutExercises(workoutId()); track e.id) {
       <section class="card" style="margin-bottom:18px">
         <div class="card-head">
@@ -21,6 +22,7 @@ import { IconComponent } from "./icon.component";
             >{{ completeCount(e.id) }} / {{ s.sets(e.id).length }} serie</span
           >
         </div>
+        <gt-exercise-video [exercise]="s.exercise(e.exerciseId)" />
         @if (e.notes) {
           <p class="subtle" style="margin-bottom:16px">{{ e.notes }}</p>
         }

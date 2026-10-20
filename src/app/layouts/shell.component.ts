@@ -33,7 +33,7 @@ import { IconComponent } from "../shared/icon.component";
           </div>
           <i></i>
         </div>
-        <span class="version">GYMTRACK / VERSIONE 1.0</span>
+        <span class="version">GYMTRACK / IL TUO PROSSIMO LIVELLO</span>
       </div>
     </aside>
     <div class="app-main">

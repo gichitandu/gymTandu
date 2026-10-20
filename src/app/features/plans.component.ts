@@ -49,7 +49,7 @@ import { StatusComponent } from "../shared/status.component";
     </div>
     <div class="list">
       @for (p of plans(); track p.id) {
-        <section class="card plan-card">
+        <section class="card plan-card" [class.plan-active]="p.active">
           <div class="card-head">
             <div>
               <span class="pill" [class.green]="p.active">{{
@@ -319,10 +319,8 @@ import { StatusComponent } from "../shared/status.component";
                 ><label class="wide"
                   >Esercizio<select formControlName="exerciseId">
                     <option value="">Seleziona un esercizio</option>
-                    @for (e of availableExercises(); track e.id) {
-                      <option [value]="e.id">
-                        {{ e.name }} · {{ e.equipment }}
-                      </option>
+                    @for (g of s.data().muscleGroups; track g.id) {
+                      @if(exercisesForGroup(g.id).length) {<optgroup [label]="g.name">@for(e of exercisesForGroup(g.id);track e.id){<option [value]="e.id">{{e.name}} · {{e.equipment}}</option>}</optgroup>}
                     }
                   </select></label
                 ><label
@@ -413,12 +411,13 @@ export class PlansComponent {
       .data()
       .exercises.filter(
         (e) =>
-          (e.active || e.id === this.selectedCatalogId()) &&
+          e.active &&
           `${e.name} ${e.equipment}`
             .toLowerCase()
             .includes(this.exerciseSearch().toLowerCase()),
       ),
   );
+  exercisesForGroup(id:string) { return this.availableExercises().filter(e=>e.muscleGroupId===id); }
   planForm = this.fb.nonNullable.group({
     name: ["", [Validators.required, Validators.pattern(/\S/)]],
     description: [""],

@@ -1,3 +1,4 @@
+import { ThemeService } from "./theme";
 import { AuthService } from "./auth";
 import { computed, inject, Injectable, signal } from "@angular/core";
 import { GYM_REPOSITORY } from "../repositories/repository";
@@ -14,6 +15,7 @@ import { seed } from "../core/seed";
 import { sessionVolume, exerciseRecords } from "./statistics";
 @Injectable({ providedIn: "root" })
 export class Store {
+  private theme = inject(ThemeService, { optional: true });
   private auth = inject(AuthService, { optional: true });
   private repo = inject(GYM_REPOSITORY);
   data = signal<DataSet>(seed());
@@ -82,16 +84,18 @@ export class Store {
       }
       if (this.auth?.user()) d.profiles[0].role = this.auth.user()!.role;
       this.data.set(d);
+      if (this.auth?.user()) { await this.refreshCatalog(); await this.theme?.load(); }
       this.applyTheme();
       this.ready.set(true);
     } catch (e) {
       this.error.set(
-        "Impossibile aprire l’archivio locale. Controlla che il browser consenta IndexedDB e ricarica la pagina.",
+        e instanceof Error ? e.message : "Impossibile aprire l’archivio. Controlla la connessione e ricarica la pagina.",
       );
     }
   }
   private applyTheme() {
     document.body.classList.toggle("light", this.settings().theme === "light");
+    this.theme?.apply();
   }
   async change(
     fn: (d: DataSet) => void | Promise<void>,
@@ -104,6 +108,12 @@ export class Store {
         if (!this.ready()) throw Error("Archivio non ancora pronto");
         const next = structuredClone(this.data());
         await fn(next);
+        if(this.auth?.user()) {
+          const current=this.data(), ids=new Set(current.exercises.map(e=>e.id)), groups=new Map(next.muscleGroups.map(g=>[g.id,g]));
+          next.exercises=[...current.exercises,...next.exercises.filter(e=>!ids.has(e.id)).map(e=>({...e,active:false}))];
+          for(const g of current.muscleGroups) groups.set(g.id,g);
+          next.muscleGroups=[...groups.values()];next.profiles[0].role=this.auth.user()!.role;
+        }
         if (touchPlans) {
           for (const plan of next.plans) {
             if (
@@ -444,16 +454,46 @@ export class Store {
       d.workouts = d.workouts.filter((w) => w.id !== id);
     }, "Allenamento eliminato.");
   }
+  canEditCatalog() { return !!this.auth?.user() && ["Admin","SuperAdmin"].includes(this.auth.user()!.role); }
+  async refreshCatalog() {
+    if (!this.auth?.user()) return;
+    const catalog=await this.auth.request('catalog');
+    const exercises: Exercise[]=await Promise.all(catalog.exercises.map(async (e:any)=>{
+      const {imageData,...item}=e;
+      if(imageData) item.image=await (await fetch(imageData)).blob();
+      return item;
+    }));
+    const next=structuredClone(this.data());
+    // Retain local references for past plans/workouts, never offer them as choices.
+    const remoteIds=new Set(exercises.map(e=>e.id));
+    next.exercises=[...exercises,...next.exercises.filter(e=>!remoteIds.has(e.id)).map(e=>({...e,active:false}))];
+    const groups=new Map(next.muscleGroups.map(g=>[g.id,g]));
+    for(const g of catalog.muscleGroups) groups.set(g.id,g);
+    next.muscleGroups=[...groups.values()];
+    await this.repo.replace(next);this.data.set(next);
+  }
   async saveExercise(e: Exercise) {
+    if (this.auth?.user()) {
+      if(!this.canEditCatalog()) {this.error.set('Solo Admin e Super Admin possono modificare il catalogo.');return false;}
+      try {
+        const {image,...item}=e;let imageData='';
+        if(image) imageData=await new Promise<string>((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(r.result as string);r.onerror=()=>reject(Error('Immagine non leggibile.'));r.readAsDataURL(image);});
+        await this.auth.request('catalog/exercise',{...item,imageData});await this.refreshCatalog();this.message.set('Esercizio salvato nel catalogo condiviso.');this.error.set('');return true;
+      } catch(error){this.error.set((error as Error).message);return false;}
+    }
     return this.change((d) => {
-      if (!d.muscleGroups.some((g) => g.id === e.muscleGroupId))
-        throw Error("Gruppo muscolare non valido");
+      if (!d.muscleGroups.some((g) => g.id === e.muscleGroupId)) throw Error("Gruppo muscolare non valido");
       const i = d.exercises.findIndex((x) => x.id === e.id);
-      if (i >= 0) d.exercises[i] = e;
-      else d.exercises.push(e);
+      if (i >= 0) d.exercises[i] = e; else d.exercises.push(e);
     }, "Esercizio salvato.");
   }
+  async saveMuscleGroup(id:string,name:string) {
+    if(!this.canEditCatalog()) {this.error.set('Operazione riservata agli admin.');return;}
+    try{await this.auth!.request('catalog/group',{id,name});await this.refreshCatalog();this.message.set('Gruppo salvato.');}catch(e){this.error.set((e as Error).message);}
+  }
   async savePlanExercise(e: TrainingPlanExercise) {
+    if(this.auth?.user()) {try{await this.refreshCatalog();}catch{this.error.set('Connettiti per verificare il catalogo aggiornato.');return false;}}
+    if(!this.exercise(e.exerciseId)?.active) {this.error.set('Questo esercizio non è attivo nel catalogo.');return false;}
     return this.change((d) => {
       if (
         !d.days.some((x) => x.id === e.dayId) ||

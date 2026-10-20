@@ -1,3 +1,4 @@
+import { ExerciseVideoComponent } from "../shared/exercise-video.component";
 import { A11yModule } from "@angular/cdk/a11y";
 import { Component, computed, inject, signal } from "@angular/core";
 import {
@@ -14,6 +15,7 @@ import { StatusComponent } from "../shared/status.component";
   standalone: true,
   imports: [
     A11yModule,
+    ExerciseVideoComponent,
     FormsModule,
     ReactiveFormsModule,
     IconComponent,
@@ -25,9 +27,9 @@ import { StatusComponent } from "../shared/status.component";
         <h1>Catalogo esercizi</h1>
         <p class="subtle">Gli strumenti per costruire i tuoi allenamenti.</p>
       </div>
-      <button class="primary" (click)="open()" [disabled]="!s.ready()">
+      @if(s.canEditCatalog()) {<button class="primary" (click)="open()" [disabled]="!s.ready()">
         <gt-icon name="plus" /> Nuovo esercizio
-      </button>
+      </button>}
     </div>
     <gt-status />
     <div class="filters">
@@ -46,14 +48,12 @@ import { StatusComponent } from "../shared/status.component";
             <option [value]="g.id">{{ g.name }}</option>
           }
         </select></label
-      ><label
-        >Stato<select [ngModel]="active()" (ngModelChange)="active.set($event)">
-          <option value="active">Attivi</option>
-          <option value="all">Tutti, anche disattivati</option>
-        </select></label
       >
+      @if(s.canEditCatalog()) {<label>Stato<select [ngModel]="active()" (ngModelChange)="active.set($event)"><option value="active">Attivi</option><option value="all">Tutti, anche disattivati</option><option value="inactive">Solo disattivati</option></select></label>}
     </div>
-    <div class="split">
+    <nav class="muscle-tabs" aria-label="Zone muscolari"><button [class.selected]="!group()" (click)="group.set('')">Tutti</button>@for(g of s.data().muscleGroups;track g.id){<button [class.selected]="group()===g.id" (click)="group.set(g.id)">{{g.name}}</button>}</nav>
+    <p class="subtle" style="margin:16px 0">{{filtered().length}} esercizi {{s.canEditCatalog()?'· Catalogo condiviso':'· Disponibili per le tue schede'}}</p>
+    <div class="catalog-grid">
       @for (e of filtered(); track e.id) {
         <article class="card">
           <div class="card-head">
@@ -61,14 +61,14 @@ import { StatusComponent } from "../shared/status.component";
               @if (imageUrl(e)) {
                 <img class="exercise-thumb" [src]="imageUrl(e)" alt="" />
               } @else {
-                <span class="exercise-thumb"><gt-icon name="weight" /></span>
+                @if(e.thumbnailUrl) {<img class="exercise-thumb video-thumb" [src]="e.thumbnailUrl" alt="" loading="lazy" referrerpolicy="no-referrer" (error)="$any($event.target).style.display='none'" />} @else {<span class="exercise-thumb"><gt-icon name="weight" /></span>}
               }
               <div>
                 <h3>{{ e.name }}</h3>
                 <span class="pill">{{ s.muscle(e.muscleGroupId) }}</span>
               </div>
             </div>
-            <button class="ghost" (click)="open(e)">Modifica</button>
+            @if(s.canEditCatalog()) {<button class="ghost" (click)="open(e)">Modifica</button>}
           </div>
           <p class="subtle">
             {{ e.equipment }} · {{ modeLabel(e.loadMode)
@@ -77,10 +77,8 @@ import { StatusComponent } from "../shared/status.component";
           @if (e.description) {
             <p class="subtle" style="margin-top:12px">{{ e.description }}</p>
           }
-          <div class="actions">
-            <button class="ghost" (click)="toggle(e)">
-              {{ e.active ? "Disattiva" : "Riattiva" }}
-            </button>
+          <div class="actions"><gt-exercise-video [exercise]="e" />
+            @if(s.canEditCatalog()) {<label class="active-check"><input type="checkbox" [checked]="e.active" [disabled]="saving()" (change)="toggle(e)" />Attivo</label>}
             @for (t of e.tags; track t) {
               <span class="pill">{{ t }}</span>
             }
@@ -93,7 +91,7 @@ import { StatusComponent } from "../shared/status.component";
         </div>
       }
     </div>
-    <div class="card" style="margin-top:20px">
+    @if(s.canEditCatalog()) {<div class="card" style="margin-top:20px">
       <h3>Gruppi muscolari</h3>
       <div class="actions">
         @for (g of s.data().muscleGroups; track g.id) {
@@ -104,7 +102,9 @@ import { StatusComponent } from "../shared/status.component";
         <button (click)="newGroup()">+ Aggiungi gruppo</button>
       </div>
     </div>
-    @if (editing()) {
+    }
+    <p class="subtle" style="margin-top:20px">Video dimostrativi dei rispettivi autori YouTube · Riferimenti: <a class="link" href="https://github.com/rthepen/workout-database" target="_blank" rel="noopener noreferrer">Open-Source Workout Database</a>.</p>
+    @if (editing() && s.canEditCatalog()) {
       <div class="modal-backdrop" (click)="close($event)">
         <section
           class="modal"
@@ -168,7 +168,10 @@ import { StatusComponent } from "../shared/status.component";
                   formControlName="description"
                   maxlength="2000"
                 ></textarea></label
-              ><label class="wide"
+              ><label class="wide">Video dimostrativo (link HTTPS)<input type="url" formControlName="videoUrl" maxlength="1000" placeholder="https://www.youtube.com/watch?v=…" /></label>
+              <label class="wide active-check"><input type="checkbox" formControlName="active" />Attivo · visibile ai clienti e selezionabile nelle schede</label>
+              <p class="subtle wide">Se la spunta non è selezionata, l’esercizio resta nel catalogo degli admin. Per attivarlo è necessario inserire il video.</p>
+              <label class="wide"
                 >Tag, separati da virgola<input
                   formControlName="tags"
                   maxlength="200" /></label
@@ -199,7 +202,7 @@ import { StatusComponent } from "../shared/status.component";
               <button
                 class="primary"
                 type="submit"
-                [disabled]="form.invalid || s.busy()"
+                [disabled]="form.invalid || s.busy() || saving()"
               >
                 Salva esercizio</button
               ><button type="button" (click)="editing.set(false)">
@@ -218,6 +221,7 @@ export class CatalogComponent {
   group = signal("");
   active = signal("active");
   editing = signal(false);
+  saving = signal(false);
   editId = "";
   imageBlob?: Blob;
   private urls = new Map<Blob, string>();
@@ -229,19 +233,21 @@ export class CatalogComponent {
     loadMode: ["external" as LoadMode],
     description: [""],
     tags: [""],
+    videoUrl: [""],
+    active: [false],
   });
   filtered = computed(() =>
     this.s
       .data()
       .exercises.filter(
         (e) =>
-          (this.active() === "all" || e.active) &&
+          (this.s.canEditCatalog() ? this.active() === "all" || (this.active() === "inactive" ? !e.active : e.active) : e.active) &&
           (!this.group() || e.muscleGroupId === this.group()) &&
           `${e.name} ${e.equipment} ${e.tags.join(" ")}`
             .toLocaleLowerCase("it")
             .includes(this.query().toLocaleLowerCase("it")),
       )
-      .sort((a, b) => a.name.localeCompare(b.name)),
+      .sort((a, b) => this.s.muscle(a.muscleGroupId).localeCompare(this.s.muscle(b.muscleGroupId)) || a.name.localeCompare(b.name)),
   );
   modeLabel(m: LoadMode) {
     return {
@@ -261,6 +267,7 @@ export class CatalogComponent {
     this.urls.forEach((u) => URL.revokeObjectURL(u));
   }
   open(e?: Exercise) {
+    if(!this.s.canEditCatalog()) return;
     this.editId = e?.id || "";
     this.imageBlob = e?.image;
     this.form.reset({
@@ -272,6 +279,8 @@ export class CatalogComponent {
       loadMode: e?.loadMode || "external",
       description: e?.description || "",
       tags: e?.tags.join(", ") || "",
+      videoUrl: e?.videoUrl || "",
+      active: e?.active ?? false,
     });
     this.editing.set(true);
   }
@@ -298,7 +307,8 @@ export class CatalogComponent {
     }
   }
   async save() {
-    if (this.form.invalid) return;
+    if (this.form.invalid || this.saving() || !this.s.canEditCatalog()) return;
+    this.saving.set(true);
     const v = this.form.getRawValue();
     const old = this.s.exercise(this.editId);
     if (
@@ -320,41 +330,28 @@ export class CatalogComponent {
               .filter(Boolean),
           ),
         ],
-        active: old?.active ?? true,
+        active: v.active,
+        videoUrl: v.videoUrl.trim(),
+        thumbnailUrl: old?.thumbnailUrl,
+        videoTitle: old?.videoTitle,
+        videoChannel: old?.videoChannel,
         createdAt: old?.createdAt || now(),
         image: this.imageBlob,
       })
     )
       this.editing.set(false);
+    this.saving.set(false);
   }
-  toggle(e: Exercise) {
-    void this.s.saveExercise({ ...e, active: !e.active });
+  async toggle(e: Exercise) {
+    if(this.saving() || !this.s.canEditCatalog())return;
+    this.saving.set(true);await this.s.saveExercise({...e,active:!e.active});this.saving.set(false);
   }
   newGroup() {
-    const name = prompt("Nome del gruppo muscolare");
-    if (name?.trim())
-      void this.s.change((d) => {
-        if (
-          d.muscleGroups.some(
-            (g) => g.name.toLowerCase() === name.trim().toLowerCase(),
-          )
-        )
-          throw Error("Gruppo già presente");
-        d.muscleGroups.push({ id: uid(), name: name.trim() });
-      }, "Gruppo aggiunto.");
+    if(!this.s.canEditCatalog())return;
+    const name=prompt('Nome del gruppo muscolare');if(name?.trim()) void this.s.saveMuscleGroup(uid(),name.trim());
   }
-  renameGroup(id: string, current: string) {
-    const name = prompt("Modifica nome del gruppo", current);
-    if (name?.trim())
-      void this.s.change((d) => {
-        if (
-          d.muscleGroups.some(
-            (g) =>
-              g.id !== id && g.name.toLowerCase() === name.trim().toLowerCase(),
-          )
-        )
-          throw Error("Gruppo già presente");
-        d.muscleGroups.find((g) => g.id === id)!.name = name.trim();
-      }, "Gruppo aggiornato.");
+  renameGroup(id:string,current:string) {
+    if(!this.s.canEditCatalog())return;
+    const name=prompt('Modifica nome del gruppo',current);if(name?.trim())void this.s.saveMuscleGroup(id,name.trim());
   }
 }

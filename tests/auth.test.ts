@@ -1,6 +1,6 @@
 import { beforeEach, afterEach, it, expect } from 'vitest';
 import { DatabaseSync } from 'node:sqlite';
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import { api } from '../worker/index.js';
 let sql: DatabaseSync;
 let env: any;
@@ -12,7 +12,7 @@ function request(path:string,body?:unknown,opts:{cookie?:string;email?:string;vi
 async function call(path:string,body?:unknown,opts:any={}){return api(request(path,body,opts),env);}
 async function activate(){const r=await call('auth/setup',{password:'owner-password-123'});expect(r.status).toBe(200);return r.headers.get('set-cookie')!.split(';')[0];}
 beforeEach(()=>{
- sql=new DatabaseSync(':memory:');sql.exec(readFileSync('drizzle/0000_abandoned_human_torch.sql','utf8'));
+ sql=new DatabaseSync(':memory:');for(const f of readdirSync('drizzle').filter(f=>f.endsWith('.sql')).sort())sql.exec(readFileSync('drizzle/'+f,'utf8'));
  env={DB:{prepare:(q:string)=>{let args:any[]=[];const statement={bind:(...a:any[])=>{args=a;return statement;},first:async()=>sql.prepare(q).get(...args),all:async()=>({results:sql.prepare(q).all(...args)}),run:async()=>({meta:{changes:Number(sql.prepare(q).run(...args).changes)}})};return statement;},batch:async(a:any[])=>{sql.exec('BEGIN');try{const r=[];for(const s of a)r.push(await s.run());sql.exec('COMMIT');return r;}catch(e){sql.exec('ROLLBACK');throw e;}}}};
 });
 afterEach(()=>sql.close());
@@ -69,4 +69,31 @@ it('accepts eight plain characters and rejects seven for setup, creation and pas
  expect((await call('users',{name:'Client',email:'eight@example.com',role:'User',password:'abcdefgh'},{cookie})).status).toBe(201);
  expect((await call('auth/password',{currentPassword:'abcdefgh',password:'abcdefg'},{cookie})).status).toBe(400);
  expect((await call('auth/password',{currentPassword:'abcdefgh',password:'ijklmnop'},{cookie})).status).toBe(200);
+});
+
+it('shares the catalog, permits admin changes and hides inactive exercises from clients',async()=>{
+ const cookie=await activate();
+ const base=await (await call('catalog',undefined,{cookie})).json();expect(base.exercises).toHaveLength(97);expect(base.muscleGroups).toHaveLength(8);expect(base.exercises.every((e:any)=>e.videoUrl?.startsWith('https://www.youtube.com/watch?v='))).toBe(true);
+ for(const role of ['Admin','User'])await call('users',{name:role,email:role.toLowerCase()+'@example.com',role,password:'abcdefgh'},{cookie});
+ const sessionFor=async(role:string)=>{const r=await call('auth/login',{email:role.toLowerCase()+'@example.com',password:'abcdefgh'},{visitor:role});return {cookie:r.headers.get('set-cookie')!.split(';')[0],visitor:role};};
+ const admin=await sessionFor('Admin'),client=await sessionFor('User');
+ const e={...base.exercises[0],active:false};
+ expect((await call('catalog/exercise',e,client)).status).toBe(403);
+ expect((await call('catalog/group',{id:'test',name:'Test'},client)).status).toBe(403);
+ expect((await call('catalog/exercise',e,admin)).status).toBe(200);
+ const visible=await (await call('catalog',undefined,client)).json();expect(visible.exercises.find((x:any)=>x.id===e.id)).toBeUndefined();
+ const managed=await (await call('catalog',undefined,admin)).json();expect(managed.exercises.find((x:any)=>x.id===e.id).active).toBe(false);
+ expect((await call('catalog/exercise',{...e,id:'custom-test',name:'Esercizio test',active:true,videoUrl:''},admin)).status).toBe(400);
+ expect((await call('catalog/exercise',{...e,id:'custom-test',name:'Esercizio test',active:false,videoUrl:''},admin)).status).toBe(200);
+ expect((await call('catalog/exercise',{...e,active:true},admin)).status).toBe(200);
+ expect((await (await call('catalog',undefined,client)).json()).exercises.find((x:any)=>x.id===e.id)).toBeTruthy();
+});
+it('saves a background per account, rejects invalid colors and preserves the default for others',async()=>{
+ const cookie=await activate();
+ await call('users',{name:'Client',email:'theme@example.com',role:'User',password:'abcdefgh'},{cookie});
+ const r=await call('auth/login',{email:'theme@example.com',password:'abcdefgh'},{visitor:'client'});const client={cookie:r.headers.get('set-cookie')!.split(';')[0],visitor:'client'};
+ expect((await call('preferences',{backgroundColor:'red;display:none'},{cookie})).status).toBe(400);
+ expect((await call('preferences',{backgroundColor:'#123456'},{cookie})).status).toBe(200);
+ expect((await (await call('preferences',undefined,{cookie})).json()).backgroundColor).toBe('#123456');
+ expect((await (await call('preferences',undefined,client)).json()).backgroundColor).toBe('#050b12');
 });

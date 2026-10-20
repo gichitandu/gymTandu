@@ -1,3 +1,4 @@
+import { defaultExercises, defaultGroups } from './default-catalog.js';
 // The platform's ChatGPT access boundary remains in place. App sessions are
 // additionally bound to that authenticated visitor, and never stored in JS.
 const OWNER = 'giacomotanduo004@gmail.com';
@@ -36,6 +37,27 @@ async function startSession(request,db,u) {
   ]);
   return json({user:publicUser(u)},200,{'Set-Cookie':`${COOKIE}=${token}; Path=/; Secure; HttpOnly; SameSite=Strict; Max-Age=${TTL}`});
 }
+async function catalog(db) {
+  const [ex, groups] = await Promise.all([db.prepare('SELECT payload FROM catalog_exercises').all(),db.prepare('SELECT id,name FROM catalog_groups').all()]);
+  const exercises=new Map(defaultExercises.map(e=>[e.id,e]));
+  for(const row of ex.results) {const e=JSON.parse(row.payload);exercises.set(e.id,e);}
+  const muscleGroups=new Map(defaultGroups.map(g=>[g.id,g]));
+  for(const g of groups.results) muscleGroups.set(g.id,g);
+  return {exercises:[...exercises.values()],muscleGroups:[...muscleGroups.values()]};
+}
+const isEditor = user => user && ['Admin','SuperAdmin'].includes(user.role);
+function validHttps(value) {try {return new URL(value).protocol==='https:';}catch{return false;}}
+function exerciseFields(b,groups) {
+  const e={id:b.id,name:String(b.name||'').trim(),muscleGroupId:b.muscleGroupId,secondaryMuscleIds:b.secondaryMuscleIds||[],description:String(b.description||''),equipment:String(b.equipment||'').trim(),tags:b.tags||[],active:b.active,loadMode:b.loadMode,videoUrl:b.videoUrl||'',thumbnailUrl:b.thumbnailUrl||'',imageData:b.imageData||''};
+  if(typeof e.id!=='string'||! /^[a-zA-Z0-9_-]{1,150}$/.test(e.id)||!e.name||e.name.length>100||!e.equipment||e.equipment.length>80||e.description.length>2000||typeof e.active!=='boolean') fail('Dati esercizio non validi.');
+  if(!groups.some(g=>g.id===e.muscleGroupId)||!Array.isArray(e.secondaryMuscleIds)||e.secondaryMuscleIds.length>20||e.secondaryMuscleIds.some(id=>!groups.some(g=>g.id===id))) fail('Gruppo muscolare non valido.');
+  if(!['external','bodyweight','weighted-bodyweight','assisted'].includes(e.loadMode)||!Array.isArray(e.tags)||e.tags.length>20||e.tags.some(t=>typeof t!=='string'||t.length>80)) fail('Dati esercizio non validi.');
+  if(e.videoUrl && (!validHttps(e.videoUrl)||e.videoUrl.length>1000)) fail('Inserisci un link video HTTPS valido.');
+  if(e.thumbnailUrl && (!validHttps(e.thumbnailUrl)||e.thumbnailUrl.length>1000)) fail('Immagine non valida.');
+  if(typeof e.imageData!=='string'||e.imageData.length>2800000||e.imageData && !/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/.test(e.imageData)) fail('Immagine non valida.');
+  if(e.active && !e.videoUrl) fail('Per attivare l’esercizio inserisci un video dimostrativo.');
+  return e;
+}
 export async function api(request,env) {
   try {
     const url=new URL(request.url), path=url.pathname, db=env.DB;
@@ -49,14 +71,26 @@ export async function api(request,env) {
       const owner=await db.prepare('SELECT id FROM users WHERE email=?').bind(OWNER).first();
       return json({user:me?publicUser(me):null,setup:!owner && request.headers.get('oai-authenticated-user-email')?.toLowerCase()===OWNER,ownerEmail:OWNER});
     }
+    if(request.method==='GET'&&path==='/api/catalog') {
+      if(!me) fail('Accedi per consultare gli esercizi.',401);
+      const data=await catalog(db);
+      if(!isEditor(me)) data.exercises=data.exercises.filter(e=>e.active);
+      return json(data);
+    }
+    if(request.method==='GET'&&path==='/api/preferences') {
+      if(!me) fail('Accedi per caricare il tema.',401);
+      const p=await db.prepare('SELECT background_color FROM user_preferences WHERE user_id=?').bind(me.id).first();
+      return json({backgroundColor:p?.background_color||'#050b12'});
+    }
     if(request.method==='GET'&&path==='/api/users') {
       if(me?.role!=='SuperAdmin') fail('Accesso riservato al Super Admin.',403);
       const rows=await db.prepare('SELECT * FROM users ORDER BY created_at').all();
       return json({users:rows.results.map(publicUser)});
     }
     if(request.method==='GET') fail('Pagina non trovata.',404);
-    if(Number(request.headers.get('content-length')||0)>8192) fail('Richiesta troppo grande.',413);
-    const raw=await request.text(); if(raw.length>8192) fail('Richiesta troppo grande.',413);
+    const bodyLimit=path==='/api/catalog/exercise'?3000000:8192;
+    if(Number(request.headers.get('content-length')||0)>bodyLimit) fail('Richiesta troppo grande.',413);
+    const raw=await request.text(); if(raw.length>bodyLimit) fail('Richiesta troppo grande.',413);
     let b; try { b=JSON.parse(raw); } catch { fail('Richiesta non valida.'); }
     if(path==='/api/auth/setup'&&request.method==='POST') {
       if(request.headers.get('oai-authenticated-user-email')?.toLowerCase()!==OWNER) fail('Solo il proprietario può attivare il Super Admin.',403);
@@ -86,6 +120,26 @@ export async function api(request,env) {
       return json({ok:true},200,{'Set-Cookie':`${COOKIE}=; Path=/; Secure; HttpOnly; SameSite=Strict; Max-Age=0`});
     }
     if(!me) fail('Sessione scaduta. Accedi di nuovo.',401);
+    if(path==='/api/preferences'&&request.method==='POST') {
+      if(typeof b.backgroundColor!=='string'||!/^#[0-9a-fA-F]{6}$/.test(b.backgroundColor)) fail('Colore non valido.');
+      await db.prepare('INSERT INTO user_preferences(user_id,background_color) VALUES(?,?) ON CONFLICT(user_id) DO UPDATE SET background_color=excluded.background_color').bind(me.id,b.backgroundColor).run();
+      return json({backgroundColor:b.backgroundColor});
+    }
+    if(path==='/api/catalog/exercise'&&request.method==='POST') {
+      if(!isEditor(me)) fail('Solo Admin e Super Admin possono modificare il catalogo.',403);
+      const data=await catalog(db), old=data.exercises.find(e=>e.id===b.id), e=exerciseFields(b,data.muscleGroups);
+      e.createdAt=old?.createdAt||new Date().toISOString();
+      if(old?.videoUrl===e.videoUrl) {e.videoTitle=old.videoTitle;e.videoChannel=old.videoChannel;}
+      await db.prepare('INSERT INTO catalog_exercises(id,payload,active,updated_by,updated_at) VALUES(?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET payload=excluded.payload,active=excluded.active,updated_by=excluded.updated_by,updated_at=excluded.updated_at').bind(e.id,JSON.stringify(e),e.active?1:0,me.id,Date.now()).run();
+      return json({exercise:e});
+    }
+    if(path==='/api/catalog/group'&&request.method==='POST') {
+      if(!isEditor(me)) fail('Solo Admin e Super Admin possono modificare i gruppi.',403);
+      const id=b.id, name=String(b.name||'').trim();
+      if(typeof id!=='string'||! /^[a-zA-Z0-9_-]{1,150}$/.test(id)||!name||name.length>80) fail('Gruppo non valido.');
+      await db.prepare('INSERT INTO catalog_groups(id,name) VALUES(?,?) ON CONFLICT(id) DO UPDATE SET name=excluded.name').bind(id,name).run();
+      return json({ok:true});
+    }
     if(path==='/api/auth/password'&&request.method==='POST') {
       validPassword(b.password);
       if(!equal(await passwordHash(String(b.currentPassword||''),me.salt),me.password_hash)) fail('Password attuale errata.',403);

@@ -52,6 +52,10 @@ export interface Exercise extends Entity {
   secondaryMuscleIds: string[];
   description: string;
   image?: Blob;
+  videoUrl?: string;
+  thumbnailUrl?: string;
+  videoTitle?: string;
+  videoChannel?: string;
   equipment: string;
   tags: string[];
   active: boolean;
