@@ -15,7 +15,7 @@ function equal(a, b) { if(a.length !== b.length) return false; let d=0; for(let 
 function json(data, status=200, headers={}) { return Response.json(data,{status,headers:{'Cache-Control':'no-store','X-Content-Type-Options':'nosniff',...headers}}); }
 function fail(message,status=400) { throw Object.assign(new Error(message),{status}); }
 const publicUser = u => ({id:u.id,email:u.email,name:u.name,role:u.role,active:!!u.active,owner:u.email===OWNER});
-function validPassword(p) { if(typeof p!=='string'||p.length<12||p.length>128) fail('Usa una password da 12 a 128 caratteri.'); }
+function validPassword(p) { if(typeof p!=='string'||p.length<8||p.length>128) fail('Usa una password da 8 a 128 caratteri.'); }
 function fields(body) {
   const email=String(body.email||'').trim().toLowerCase(), name=String(body.name||'').trim();
   if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)||email.length>254) fail('Email non valida.');

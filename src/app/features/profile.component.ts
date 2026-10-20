@@ -218,8 +218,8 @@ import { PwaService } from "../services/pwa";
       <form (ngSubmit)="changePassword()" class="form-grid" style="margin-top:24px">
         <input type="text" name="username" [ngModel]="auth.user()?.email" autocomplete="username" hidden />
         <label class="wide">Password attuale<input name="current-password" type="password" autocomplete="current-password" [(ngModel)]="currentPassword" required maxlength="128" /></label>
-        <label>Nuova password<input name="new-password" type="password" autocomplete="new-password" [(ngModel)]="newPassword" required minlength="12" maxlength="128" /></label>
-        <label>Conferma nuova password<input name="confirm-password" type="password" autocomplete="new-password" [(ngModel)]="confirmPassword" required minlength="12" maxlength="128" /></label>
+        <label>Nuova password<input name="new-password" type="password" autocomplete="new-password" [(ngModel)]="newPassword" required minlength="8" maxlength="128" /></label>
+        <label>Conferma nuova password<input name="confirm-password" type="password" autocomplete="new-password" [(ngModel)]="confirmPassword" required minlength="8" maxlength="128" /></label>
         <div class="actions wide"><button class="primary" [disabled]="accountBusy()">Aggiorna password</button><button type="button" (click)="logout()">Esci dall’account</button></div>
       </form>
       <p class="subtle" style="margin-top:16px">Puoi salvare e compilare le credenziali con l’app Password di iOS. Gli allenamenti rimangono su questo dispositivo, separati per account.</p>

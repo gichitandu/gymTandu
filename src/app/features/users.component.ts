@@ -11,8 +11,8 @@ import { AuthService, Account } from '../services/auth';
 <label>Nome<input name="name" [(ngModel)]="name" required maxlength="80" /></label>
 <label>Email<input name="email" type="email" [(ngModel)]="email" required maxlength="254" autocapitalize="none" /></label>
 <label>Ruolo<select name="role" [(ngModel)]="role"><option value="User">Cliente</option><option value="Admin">Admin</option></select></label>
-<label>{{editing?'Nuova password (facoltativa)':'Password iniziale'}}<input name="new-password" type="password" autocomplete="new-password" [(ngModel)]="password" [required]="!editing" minlength="12" maxlength="128" /></label>
-<p class="subtle">Almeno 12 caratteri. Comunica le credenziali alla persona in modo riservato; potrà cambiare la password dal profilo.</p>
+<label>{{editing?'Nuova password (facoltativa)':'Password iniziale'}}<input name="new-password" type="password" autocomplete="new-password" [(ngModel)]="password" [required]="!editing" minlength="8" maxlength="128" /></label>
+<p class="subtle">Almeno 8 caratteri, senza obbligo di caratteri speciali. Comunica le credenziali alla persona in modo riservato; potrà cambiare la password dal profilo.</p>
 @if(editing) {<label class="password-toggle"><input type="checkbox" name="active" [(ngModel)]="active" /> Account attivo</label>}
 <div class="actions"><button class="primary" [disabled]="busy()">{{busy()?'Salvataggio…':editing?'Salva modifiche':'Crea account'}}</button>@if(editing) {<button type="button" (click)="reset()">Annulla</button>}</div>
 </form></section>

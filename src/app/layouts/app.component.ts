@@ -13,9 +13,9 @@ import { ShellComponent } from './shell.component';
 @if(auth.error() || error()) {<p class="notice error" role="alert" style="margin-top:20px">{{error() || auth.error()}}</p>}
 <form (ngSubmit)="submit()" class="stack" style="margin-top:24px" autocomplete="on">
 <label for="login-email">Email<input id="login-email" name="username" type="email" autocomplete="username" inputmode="email" autocapitalize="none" spellcheck="false" required maxlength="254" [readOnly]="auth.setup()" [ngModel]="auth.setup()?auth.ownerEmail():email" (ngModelChange)="email=$event" /></label>
-<label for="login-password">{{auth.setup()?'Scegli una password':'Password'}}<input id="login-password" name="password" [type]="show()?'text':'password'" [attr.autocomplete]="auth.setup()?'new-password':'current-password'" [(ngModel)]="password" required [minlength]="auth.setup()?12:1" maxlength="128" /></label>
+<label for="login-password">{{auth.setup()?'Scegli una password':'Password'}}<input id="login-password" name="password" [type]="show()?'text':'password'" [attr.autocomplete]="auth.setup()?'new-password':'current-password'" [(ngModel)]="password" required [minlength]="auth.setup()?8:1" maxlength="128" /></label>
 <label class="password-toggle"><input type="checkbox" name="show" [ngModel]="show()" (ngModelChange)="show.set($event)" /> Mostra password</label>
-@if(auth.setup()) {<label>Conferma password<input name="confirm-password" type="password" autocomplete="new-password" [(ngModel)]="confirm" required minlength="12" maxlength="128" /></label>}
+@if(auth.setup()) {<label>Conferma password<input name="confirm-password" type="password" autocomplete="new-password" [(ngModel)]="confirm" required minlength="8" maxlength="128" /></label>}
 <button class="primary" [disabled]="busy()">{{busy()?'Attendi…':auth.setup()?'Attiva Super Admin':'Accedi'}}</button>
 </form>
 <p class="subtle" style="margin-top:22px">Su iPhone puoi salvare la password nell’app Password e compilarla con Face ID. Accetta la proposta di Safari dopo l’accesso.</p>

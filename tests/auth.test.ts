@@ -60,3 +60,13 @@ it('changing a password invalidates older sessions and the old password',async()
  expect((await call('auth/login',{email:owner,password:'owner-password-123'})).status).toBe(401);
  expect((await call('auth/login',{email:owner,password:'new-password-12345'})).status).toBe(200);
 });
+
+it('accepts eight plain characters and rejects seven for setup, creation and password changes',async()=>{
+ expect((await call('auth/setup',{password:'abcdefg'})).status).toBe(400);
+ const setup=await call('auth/setup',{password:'abcdefgh'});expect(setup.status).toBe(200);
+ const cookie=setup.headers.get('set-cookie')!.split(';')[0];
+ expect((await call('users',{name:'Client',email:'eight@example.com',role:'User',password:'abcdefg'},{cookie})).status).toBe(400);
+ expect((await call('users',{name:'Client',email:'eight@example.com',role:'User',password:'abcdefgh'},{cookie})).status).toBe(201);
+ expect((await call('auth/password',{currentPassword:'abcdefgh',password:'abcdefg'},{cookie})).status).toBe(400);
+ expect((await call('auth/password',{currentPassword:'abcdefgh',password:'ijklmnop'},{cookie})).status).toBe(200);
+});
