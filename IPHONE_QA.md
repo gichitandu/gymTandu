@@ -75,3 +75,11 @@ Migrazione IndexedDB v4: pulizia dei riferimenti YouTube preesistenti, aggiunta 
 Solo il foglio di stile della schermata di accesso torna alla versione con logo argentato/blu, sfondo geometrico e pulsante sfumato. Non sono aggiunte registrazione pubblica, social login o biometria applicativa. Nessuna variazione alla UI delle altre sezioni.
 
 50 test automatici e build strict passati, incluse migrazioni del catalogo locale/condiviso e accessibilità degli esercizi attivi senza video. Il confronto visivo e il test Safari/PWA su iPhone reale restano da eseguire.
+
+## Estensione lat machine, petto e braccia
+
+Aggiunte 92 varianti, per 253 esercizi predefiniti totali: 23 voci di lat machine, 15 chest press, 13 croci ai cavi, 38 bicipiti e 31 tricipiti, oltre alle altre zone. Le varianti distinguono prese, attrezzatura, inclinazione e uso unilaterale; i video predefiniti restano vuoti. Le dip assistite e con zavorra usano rispettivamente le modalità di carico assisted e weighted-bodyweight.
+
+Un componente riutilizzabile offre filtri rapidi per queste cinque famiglie nel catalogo e nel selettore dei piani. La ricerca nei piani comprende anche i tag. La migrazione IndexedDB v5 aggiunge le voci mancanti e i tag di famiglia senza sostituire nomi personalizzati, flag di visibilità, immagini, nuovi link degli admin o collegamenti delle schede. Il catalogo online riceve le stesse definizioni; non richiede una nuova migrazione D1.
+
+52 test automatici passati, inclusi aggiornamento da archivio v4, parità del catalogo locale/server e modalità di carico. Su iPhone restano da provare lo scorrimento orizzontale dei filtri e la selezione degli esercizi nelle schede: nessun test visivo Safari è stato eseguito in questa sessione.

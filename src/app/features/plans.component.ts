@@ -1,3 +1,4 @@
+import { ExerciseFamiliesComponent } from "../shared/exercise-families.component";
 import { ExerciseThumbComponent } from "../shared/exercise-thumb.component";
 import { A11yModule } from "@angular/cdk/a11y";
 import { Component, computed, inject, signal } from "@angular/core";
@@ -22,6 +23,7 @@ import { StatusComponent } from "../shared/status.component";
   standalone: true,
   imports: [
     A11yModule,
+    ExerciseFamiliesComponent,
     ExerciseThumbComponent,
     ReactiveFormsModule,
     FormsModule,
@@ -315,8 +317,9 @@ import { StatusComponent } from "../shared/status.component";
                     [ngModel]="exerciseSearch()"
                     (ngModelChange)="exerciseSearch.set($event)"
                     [ngModelOptions]="{ standalone: true }"
-                    placeholder="Nome o attrezzatura…" /></label
-                ><label class="wide"
+                    placeholder="Nome, muscolo o attrezzatura…" /></label>
+                <gt-exercise-families class="wide" [query]="exerciseSearch()" (choose)="exerciseSearch.set($event)"/>
+                <label class="wide"
                   >Esercizio<select formControlName="exerciseId">
                     <option value="">Seleziona un esercizio</option>
                     @for (g of s.data().muscleGroups; track g.id) {
@@ -414,7 +417,7 @@ export class PlansComponent {
       .exercises.filter(
         (e) =>
           e.active &&
-          `${e.name} ${e.equipment}`
+          `${e.name} ${e.equipment} ${e.tags.join(" ")}`
             .toLowerCase()
             .includes(this.exerciseSearch().toLowerCase()),
       ),

@@ -1,3 +1,4 @@
+import { ExerciseFamiliesComponent } from "../shared/exercise-families.component";
 import { compressPhoto } from "../services/images";
 import { ExerciseVideoComponent } from "../shared/exercise-video.component";
 import { A11yModule } from "@angular/cdk/a11y";
@@ -16,6 +17,7 @@ import { StatusComponent } from "../shared/status.component";
   standalone: true,
   imports: [
     A11yModule,
+    ExerciseFamiliesComponent,
     ExerciseVideoComponent,
     FormsModule,
     ReactiveFormsModule,
@@ -52,6 +54,7 @@ import { StatusComponent } from "../shared/status.component";
       >
       @if(s.canEditCatalog()) {<label>Stato<select [ngModel]="active()" (ngModelChange)="active.set($event)"><option value="active">Attivi</option><option value="all">Tutti, anche disattivati</option><option value="inactive">Solo disattivati</option></select></label>}
     </div>
+    <gt-exercise-families [query]="query()" (choose)="query.set($event);group.set('')"/>
     <nav class="muscle-tabs" aria-label="Zone muscolari"><button [class.selected]="!group()" (click)="group.set('')">Tutti</button>@for(g of s.data().muscleGroups;track g.id){<button [class.selected]="group()===g.id" (click)="group.set(g.id)">{{g.name}}</button>}</nav>
     <p class="subtle" style="margin:16px 0">{{filtered().length}} esercizi {{s.canEditCatalog()?'· Catalogo condiviso':'· Disponibili per le tue schede'}}</p>
     <div class="catalog-grid">

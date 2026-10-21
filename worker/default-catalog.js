@@ -73,7 +73,8 @@ export const defaultExercises = [
     "description": "Mantieni un’esecuzione controllata e scegli un carico adatto al tuo livello. Il link video è facoltativo e può essere aggiunto da un amministratore.",
     "equipment": "Cavi",
     "tags": [
-      "Petto"
+      "Petto",
+      "Croci ai cavi"
     ],
     "active": true,
     "createdAt": "2026-10-20T00:00:00.000Z",
@@ -89,7 +90,8 @@ export const defaultExercises = [
     "description": "Mantieni un’esecuzione controllata e scegli un carico adatto al tuo livello. Il link video è facoltativo e può essere aggiunto da un amministratore.",
     "equipment": "Macchina",
     "tags": [
-      "Petto"
+      "Petto",
+      "Chest press"
     ],
     "active": true,
     "createdAt": "2026-10-20T00:00:00.000Z",
@@ -105,7 +107,8 @@ export const defaultExercises = [
     "description": "Mantieni un’esecuzione controllata e scegli un carico adatto al tuo livello. Il link video è facoltativo e può essere aggiunto da un amministratore.",
     "equipment": "Cavi",
     "tags": [
-      "Schiena"
+      "Schiena",
+      "Lat machine"
     ],
     "active": true,
     "createdAt": "2026-10-20T00:00:00.000Z",
@@ -297,7 +300,8 @@ export const defaultExercises = [
     "description": "Mantieni un’esecuzione controllata e scegli un carico adatto al tuo livello. Il link video è facoltativo e può essere aggiunto da un amministratore.",
     "equipment": "Bilanciere",
     "tags": [
-      "Braccia"
+      "Braccia",
+      "Bicipiti"
     ],
     "active": true,
     "createdAt": "2026-10-20T00:00:00.000Z",
@@ -313,7 +317,8 @@ export const defaultExercises = [
     "description": "Mantieni un’esecuzione controllata e scegli un carico adatto al tuo livello. Il link video è facoltativo e può essere aggiunto da un amministratore.",
     "equipment": "Manubri",
     "tags": [
-      "Braccia"
+      "Braccia",
+      "Bicipiti"
     ],
     "active": true,
     "createdAt": "2026-10-20T00:00:00.000Z",
@@ -329,7 +334,8 @@ export const defaultExercises = [
     "description": "Mantieni un’esecuzione controllata e scegli un carico adatto al tuo livello. Il link video è facoltativo e può essere aggiunto da un amministratore.",
     "equipment": "Cavi",
     "tags": [
-      "Braccia"
+      "Braccia",
+      "Tricipiti"
     ],
     "active": true,
     "createdAt": "2026-10-20T00:00:00.000Z",
@@ -345,7 +351,8 @@ export const defaultExercises = [
     "description": "Mantieni un’esecuzione controllata e scegli un carico adatto al tuo livello. Il link video è facoltativo e può essere aggiunto da un amministratore.",
     "equipment": "Bilanciere",
     "tags": [
-      "Braccia"
+      "Braccia",
+      "Tricipiti"
     ],
     "active": true,
     "createdAt": "2026-10-20T00:00:00.000Z",
@@ -569,7 +576,8 @@ export const defaultExercises = [
     "description": "Mantieni un’esecuzione controllata e scegli un carico adatto al tuo livello. Il link video è facoltativo e può essere aggiunto da un amministratore.",
     "equipment": "Cavi",
     "tags": [
-      "Schiena"
+      "Schiena",
+      "Lat machine"
     ],
     "active": true,
     "createdAt": "2026-10-20T00:00:00.000Z",
@@ -665,7 +673,8 @@ export const defaultExercises = [
     "description": "Mantieni un’esecuzione controllata e scegli un carico adatto al tuo livello. Il link video è facoltativo e può essere aggiunto da un amministratore.",
     "equipment": "Cavi",
     "tags": [
-      "Schiena"
+      "Schiena",
+      "Lat machine"
     ],
     "active": true,
     "createdAt": "2026-10-20T00:00:00.000Z",
@@ -1017,7 +1026,8 @@ export const defaultExercises = [
     "description": "Mantieni un’esecuzione controllata e scegli un carico adatto al tuo livello. Il link video è facoltativo e può essere aggiunto da un amministratore.",
     "equipment": "Manubri",
     "tags": [
-      "Braccia"
+      "Braccia",
+      "Bicipiti"
     ],
     "active": true,
     "createdAt": "2026-10-20T00:00:00.000Z",
@@ -1033,7 +1043,8 @@ export const defaultExercises = [
     "description": "Mantieni un’esecuzione controllata e scegli un carico adatto al tuo livello. Il link video è facoltativo e può essere aggiunto da un amministratore.",
     "equipment": "Bilanciere EZ",
     "tags": [
-      "Braccia"
+      "Braccia",
+      "Bicipiti"
     ],
     "active": true,
     "createdAt": "2026-10-20T00:00:00.000Z",
@@ -1049,7 +1060,8 @@ export const defaultExercises = [
     "description": "Mantieni un’esecuzione controllata e scegli un carico adatto al tuo livello. Il link video è facoltativo e può essere aggiunto da un amministratore.",
     "equipment": "Manubri",
     "tags": [
-      "Braccia"
+      "Braccia",
+      "Bicipiti"
     ],
     "active": true,
     "createdAt": "2026-10-20T00:00:00.000Z",
@@ -1065,7 +1077,8 @@ export const defaultExercises = [
     "description": "Mantieni un’esecuzione controllata e scegli un carico adatto al tuo livello. Il link video è facoltativo e può essere aggiunto da un amministratore.",
     "equipment": "Manubri",
     "tags": [
-      "Braccia"
+      "Braccia",
+      "Bicipiti"
     ],
     "active": true,
     "createdAt": "2026-10-20T00:00:00.000Z",
@@ -1081,7 +1094,8 @@ export const defaultExercises = [
     "description": "Mantieni un’esecuzione controllata e scegli un carico adatto al tuo livello. Il link video è facoltativo e può essere aggiunto da un amministratore.",
     "equipment": "Cavi",
     "tags": [
-      "Braccia"
+      "Braccia",
+      "Bicipiti"
     ],
     "active": true,
     "createdAt": "2026-10-20T00:00:00.000Z",
@@ -1097,7 +1111,8 @@ export const defaultExercises = [
     "description": "Mantieni un’esecuzione controllata e scegli un carico adatto al tuo livello. Il link video è facoltativo e può essere aggiunto da un amministratore.",
     "equipment": "Bilanciere",
     "tags": [
-      "Braccia"
+      "Braccia",
+      "Bicipiti"
     ],
     "active": true,
     "createdAt": "2026-10-20T00:00:00.000Z",
@@ -1113,7 +1128,8 @@ export const defaultExercises = [
     "description": "Mantieni un’esecuzione controllata e scegli un carico adatto al tuo livello. Il link video è facoltativo e può essere aggiunto da un amministratore.",
     "equipment": "Cavi",
     "tags": [
-      "Braccia"
+      "Braccia",
+      "Tricipiti"
     ],
     "active": true,
     "createdAt": "2026-10-20T00:00:00.000Z",
@@ -1129,7 +1145,8 @@ export const defaultExercises = [
     "description": "Mantieni un’esecuzione controllata e scegli un carico adatto al tuo livello. Il link video è facoltativo e può essere aggiunto da un amministratore.",
     "equipment": "Manubri",
     "tags": [
-      "Braccia"
+      "Braccia",
+      "Tricipiti"
     ],
     "active": true,
     "createdAt": "2026-10-20T00:00:00.000Z",
@@ -1145,7 +1162,8 @@ export const defaultExercises = [
     "description": "Mantieni un’esecuzione controllata e scegli un carico adatto al tuo livello. Il link video è facoltativo e può essere aggiunto da un amministratore.",
     "equipment": "Manubri",
     "tags": [
-      "Braccia"
+      "Braccia",
+      "Tricipiti"
     ],
     "active": true,
     "createdAt": "2026-10-20T00:00:00.000Z",
@@ -1161,7 +1179,8 @@ export const defaultExercises = [
     "description": "Mantieni un’esecuzione controllata e scegli un carico adatto al tuo livello. Il link video è facoltativo e può essere aggiunto da un amministratore.",
     "equipment": "Bilanciere",
     "tags": [
-      "Braccia"
+      "Braccia",
+      "Tricipiti"
     ],
     "active": true,
     "createdAt": "2026-10-20T00:00:00.000Z",
@@ -1177,7 +1196,8 @@ export const defaultExercises = [
     "description": "Mantieni un’esecuzione controllata e scegli un carico adatto al tuo livello. Il link video è facoltativo e può essere aggiunto da un amministratore.",
     "equipment": "Corpo libero",
     "tags": [
-      "Braccia"
+      "Braccia",
+      "Tricipiti"
     ],
     "active": true,
     "createdAt": "2026-10-20T00:00:00.000Z",
@@ -1193,7 +1213,8 @@ export const defaultExercises = [
     "description": "Mantieni un’esecuzione controllata e scegli un carico adatto al tuo livello. Il link video è facoltativo e può essere aggiunto da un amministratore.",
     "equipment": "Manubri",
     "tags": [
-      "Braccia"
+      "Braccia",
+      "Avambracci"
     ],
     "active": true,
     "createdAt": "2026-10-20T00:00:00.000Z",
@@ -1986,7 +2007,8 @@ export const defaultExercises = [
     "equipment": "Cavi",
     "tags": [
       "Petto",
-      "Variante"
+      "Variante",
+      "Croci ai cavi"
     ],
     "active": true,
     "createdAt": "2026-10-21T00:00:00.000Z",
@@ -2003,7 +2025,8 @@ export const defaultExercises = [
     "equipment": "Cavi",
     "tags": [
       "Petto",
-      "Variante"
+      "Variante",
+      "Croci ai cavi"
     ],
     "active": true,
     "createdAt": "2026-10-21T00:00:00.000Z",
@@ -2020,7 +2043,8 @@ export const defaultExercises = [
     "equipment": "Macchina",
     "tags": [
       "Petto",
-      "Variante"
+      "Variante",
+      "Chest press"
     ],
     "active": true,
     "createdAt": "2026-10-21T00:00:00.000Z",
@@ -2037,7 +2061,8 @@ export const defaultExercises = [
     "equipment": "Cavi",
     "tags": [
       "Schiena",
-      "Variante"
+      "Variante",
+      "Lat machine"
     ],
     "active": true,
     "createdAt": "2026-10-21T00:00:00.000Z",
@@ -2054,7 +2079,8 @@ export const defaultExercises = [
     "equipment": "Cavi",
     "tags": [
       "Schiena",
-      "Variante"
+      "Variante",
+      "Lat machine"
     ],
     "active": true,
     "createdAt": "2026-10-21T00:00:00.000Z",
@@ -2071,7 +2097,8 @@ export const defaultExercises = [
     "equipment": "Cavi",
     "tags": [
       "Schiena",
-      "Variante"
+      "Variante",
+      "Lat machine"
     ],
     "active": true,
     "createdAt": "2026-10-21T00:00:00.000Z",
@@ -2411,7 +2438,8 @@ export const defaultExercises = [
     "equipment": "Manubri",
     "tags": [
       "Braccia",
-      "Variante"
+      "Variante",
+      "Bicipiti"
     ],
     "active": true,
     "createdAt": "2026-10-21T00:00:00.000Z",
@@ -2428,7 +2456,8 @@ export const defaultExercises = [
     "equipment": "Manubri",
     "tags": [
       "Braccia",
-      "Variante"
+      "Variante",
+      "Bicipiti"
     ],
     "active": true,
     "createdAt": "2026-10-21T00:00:00.000Z",
@@ -2445,7 +2474,8 @@ export const defaultExercises = [
     "equipment": "Cavi",
     "tags": [
       "Braccia",
-      "Variante"
+      "Variante",
+      "Tricipiti"
     ],
     "active": true,
     "createdAt": "2026-10-21T00:00:00.000Z",
@@ -2462,7 +2492,8 @@ export const defaultExercises = [
     "equipment": "Cavi",
     "tags": [
       "Braccia",
-      "Variante"
+      "Variante",
+      "Tricipiti"
     ],
     "active": true,
     "createdAt": "2026-10-21T00:00:00.000Z",
@@ -2479,7 +2510,8 @@ export const defaultExercises = [
     "equipment": "Cavi",
     "tags": [
       "Braccia",
-      "Variante"
+      "Variante",
+      "Tricipiti"
     ],
     "active": true,
     "createdAt": "2026-10-21T00:00:00.000Z",
@@ -2496,7 +2528,8 @@ export const defaultExercises = [
     "equipment": "Manubri",
     "tags": [
       "Braccia",
-      "Variante"
+      "Variante",
+      "Tricipiti"
     ],
     "active": true,
     "createdAt": "2026-10-21T00:00:00.000Z",
@@ -2637,7 +2670,8 @@ export const defaultExercises = [
     "tags": [
       "Braccia",
       "Variante",
-      "45°"
+      "45°",
+      "Bicipiti"
     ],
     "active": true,
     "createdAt": "2026-10-21T00:00:00.000Z",
@@ -2655,7 +2689,8 @@ export const defaultExercises = [
     "tags": [
       "Braccia",
       "Variante",
-      "60°"
+      "60°",
+      "Bicipiti"
     ],
     "active": true,
     "createdAt": "2026-10-21T00:00:00.000Z",
@@ -2673,7 +2708,8 @@ export const defaultExercises = [
     "tags": [
       "Braccia",
       "Variante",
-      "30°"
+      "30°",
+      "Bicipiti"
     ],
     "active": true,
     "createdAt": "2026-10-21T00:00:00.000Z",
@@ -2691,10 +2727,1569 @@ export const defaultExercises = [
     "tags": [
       "Braccia",
       "Variante",
-      "45°"
+      "45°",
+      "Bicipiti"
     ],
     "active": true,
     "createdAt": "2026-10-21T00:00:00.000Z",
+    "loadMode": "external",
+    "videoUrl": "",
+    "thumbnailUrl": ""
+  },
+  {
+    "id": "variant-v2-lat-prona-media",
+    "name": "Lat machine presa prona media",
+    "muscleGroupId": "muscle-1",
+    "secondaryMuscleIds": [],
+    "description": "Regola sedile e fermacosce, se presenti; usa la presa o la maniglia indicata nel nome, tirando davanti al corpo. Mantieni un’esecuzione controllata e scegli un carico adatto al tuo livello. Il link video è facoltativo.",
+    "equipment": "Cavi",
+    "tags": [
+      "Schiena",
+      "Lat machine"
+    ],
+    "active": true,
+    "createdAt": "2026-10-21T08:00:00.000Z",
+    "loadMode": "external",
+    "videoUrl": "",
+    "thumbnailUrl": ""
+  },
+  {
+    "id": "variant-v2-lat-prona-stretta",
+    "name": "Lat machine presa prona stretta",
+    "muscleGroupId": "muscle-1",
+    "secondaryMuscleIds": [],
+    "description": "Regola sedile e fermacosce, se presenti; usa la presa o la maniglia indicata nel nome, tirando davanti al corpo. Mantieni un’esecuzione controllata e scegli un carico adatto al tuo livello. Il link video è facoltativo.",
+    "equipment": "Cavi",
+    "tags": [
+      "Schiena",
+      "Lat machine"
+    ],
+    "active": true,
+    "createdAt": "2026-10-21T08:00:00.000Z",
+    "loadMode": "external",
+    "videoUrl": "",
+    "thumbnailUrl": ""
+  },
+  {
+    "id": "variant-v2-lat-supina-stretta",
+    "name": "Lat machine presa supina stretta",
+    "muscleGroupId": "muscle-1",
+    "secondaryMuscleIds": [],
+    "description": "Regola sedile e fermacosce, se presenti; usa la presa o la maniglia indicata nel nome, tirando davanti al corpo. Mantieni un’esecuzione controllata e scegli un carico adatto al tuo livello. Il link video è facoltativo.",
+    "equipment": "Cavi",
+    "tags": [
+      "Schiena",
+      "Lat machine"
+    ],
+    "active": true,
+    "createdAt": "2026-10-21T08:00:00.000Z",
+    "loadMode": "external",
+    "videoUrl": "",
+    "thumbnailUrl": ""
+  },
+  {
+    "id": "variant-v2-lat-supina-larga",
+    "name": "Lat machine presa supina larga",
+    "muscleGroupId": "muscle-1",
+    "secondaryMuscleIds": [],
+    "description": "Regola sedile e fermacosce, se presenti; usa la presa o la maniglia indicata nel nome, tirando davanti al corpo. Mantieni un’esecuzione controllata e scegli un carico adatto al tuo livello. Il link video è facoltativo.",
+    "equipment": "Cavi",
+    "tags": [
+      "Schiena",
+      "Lat machine"
+    ],
+    "active": true,
+    "createdAt": "2026-10-21T08:00:00.000Z",
+    "loadMode": "external",
+    "videoUrl": "",
+    "thumbnailUrl": ""
+  },
+  {
+    "id": "variant-v2-lat-neutra-stretta",
+    "name": "Lat machine presa neutra con triangolo",
+    "muscleGroupId": "muscle-1",
+    "secondaryMuscleIds": [],
+    "description": "Regola sedile e fermacosce, se presenti; usa la presa o la maniglia indicata nel nome, tirando davanti al corpo. Mantieni un’esecuzione controllata e scegli un carico adatto al tuo livello. Il link video è facoltativo.",
+    "equipment": "Cavi",
+    "tags": [
+      "Schiena",
+      "Lat machine"
+    ],
+    "active": true,
+    "createdAt": "2026-10-21T08:00:00.000Z",
+    "loadMode": "external",
+    "videoUrl": "",
+    "thumbnailUrl": ""
+  },
+  {
+    "id": "variant-v2-lat-neutra-media",
+    "name": "Lat machine presa neutra media",
+    "muscleGroupId": "muscle-1",
+    "secondaryMuscleIds": [],
+    "description": "Regola sedile e fermacosce, se presenti; usa la presa o la maniglia indicata nel nome, tirando davanti al corpo. Mantieni un’esecuzione controllata e scegli un carico adatto al tuo livello. Il link video è facoltativo.",
+    "equipment": "Cavi",
+    "tags": [
+      "Schiena",
+      "Lat machine"
+    ],
+    "active": true,
+    "createdAt": "2026-10-21T08:00:00.000Z",
+    "loadMode": "external",
+    "videoUrl": "",
+    "thumbnailUrl": ""
+  },
+  {
+    "id": "variant-v2-lat-neutra-larga",
+    "name": "Lat machine presa neutra larga",
+    "muscleGroupId": "muscle-1",
+    "secondaryMuscleIds": [],
+    "description": "Regola sedile e fermacosce, se presenti; usa la presa o la maniglia indicata nel nome, tirando davanti al corpo. Mantieni un’esecuzione controllata e scegli un carico adatto al tuo livello. Il link video è facoltativo.",
+    "equipment": "Cavi",
+    "tags": [
+      "Schiena",
+      "Lat machine"
+    ],
+    "active": true,
+    "createdAt": "2026-10-21T08:00:00.000Z",
+    "loadMode": "external",
+    "videoUrl": "",
+    "thumbnailUrl": ""
+  },
+  {
+    "id": "variant-v2-lat-sagomata-stretta",
+    "name": "Lat machine con maniglia sagomata stretta",
+    "muscleGroupId": "muscle-1",
+    "secondaryMuscleIds": [],
+    "description": "Regola sedile e fermacosce, se presenti; usa la presa o la maniglia indicata nel nome, tirando davanti al corpo. Mantieni un’esecuzione controllata e scegli un carico adatto al tuo livello. Il link video è facoltativo.",
+    "equipment": "Cavi",
+    "tags": [
+      "Schiena",
+      "Lat machine"
+    ],
+    "active": true,
+    "createdAt": "2026-10-21T08:00:00.000Z",
+    "loadMode": "external",
+    "videoUrl": "",
+    "thumbnailUrl": ""
+  },
+  {
+    "id": "variant-v2-lat-sagomata-media",
+    "name": "Lat machine con maniglia sagomata media",
+    "muscleGroupId": "muscle-1",
+    "secondaryMuscleIds": [],
+    "description": "Regola sedile e fermacosce, se presenti; usa la presa o la maniglia indicata nel nome, tirando davanti al corpo. Mantieni un’esecuzione controllata e scegli un carico adatto al tuo livello. Il link video è facoltativo.",
+    "equipment": "Cavi",
+    "tags": [
+      "Schiena",
+      "Lat machine"
+    ],
+    "active": true,
+    "createdAt": "2026-10-21T08:00:00.000Z",
+    "loadMode": "external",
+    "videoUrl": "",
+    "thumbnailUrl": ""
+  },
+  {
+    "id": "variant-v2-lat-sagomata-larga",
+    "name": "Lat machine con maniglia sagomata larga",
+    "muscleGroupId": "muscle-1",
+    "secondaryMuscleIds": [],
+    "description": "Regola sedile e fermacosce, se presenti; usa la presa o la maniglia indicata nel nome, tirando davanti al corpo. Mantieni un’esecuzione controllata e scegli un carico adatto al tuo livello. Il link video è facoltativo.",
+    "equipment": "Cavi",
+    "tags": [
+      "Schiena",
+      "Lat machine"
+    ],
+    "active": true,
+    "createdAt": "2026-10-21T08:00:00.000Z",
+    "loadMode": "external",
+    "videoUrl": "",
+    "thumbnailUrl": ""
+  },
+  {
+    "id": "variant-v2-lat-indipendente",
+    "name": "Lat machine con due maniglie indipendenti",
+    "muscleGroupId": "muscle-1",
+    "secondaryMuscleIds": [],
+    "description": "Regola sedile e fermacosce, se presenti; usa la presa o la maniglia indicata nel nome, tirando davanti al corpo. Mantieni un’esecuzione controllata e scegli un carico adatto al tuo livello. Il link video è facoltativo.",
+    "equipment": "Cavi",
+    "tags": [
+      "Schiena",
+      "Lat machine"
+    ],
+    "active": true,
+    "createdAt": "2026-10-21T08:00:00.000Z",
+    "loadMode": "external",
+    "videoUrl": "",
+    "thumbnailUrl": ""
+  },
+  {
+    "id": "variant-v2-lat-unilaterale-neutra",
+    "name": "Lat machine unilaterale presa neutra",
+    "muscleGroupId": "muscle-1",
+    "secondaryMuscleIds": [],
+    "description": "Regola sedile e fermacosce, se presenti; usa la presa o la maniglia indicata nel nome, tirando davanti al corpo. Mantieni un’esecuzione controllata e scegli un carico adatto al tuo livello. Il link video è facoltativo.",
+    "equipment": "Cavi",
+    "tags": [
+      "Schiena",
+      "Lat machine"
+    ],
+    "active": true,
+    "createdAt": "2026-10-21T08:00:00.000Z",
+    "loadMode": "external",
+    "videoUrl": "",
+    "thumbnailUrl": ""
+  },
+  {
+    "id": "variant-v2-lat-unilaterale-supina",
+    "name": "Lat machine unilaterale presa supina",
+    "muscleGroupId": "muscle-1",
+    "secondaryMuscleIds": [],
+    "description": "Regola sedile e fermacosce, se presenti; usa la presa o la maniglia indicata nel nome, tirando davanti al corpo. Mantieni un’esecuzione controllata e scegli un carico adatto al tuo livello. Il link video è facoltativo.",
+    "equipment": "Cavi",
+    "tags": [
+      "Schiena",
+      "Lat machine"
+    ],
+    "active": true,
+    "createdAt": "2026-10-21T08:00:00.000Z",
+    "loadMode": "external",
+    "videoUrl": "",
+    "thumbnailUrl": ""
+  },
+  {
+    "id": "variant-v2-lat-inginocchio",
+    "name": "Lat machine al cavo in ginocchio",
+    "muscleGroupId": "muscle-1",
+    "secondaryMuscleIds": [],
+    "description": "Regola sedile e fermacosce, se presenti; usa la presa o la maniglia indicata nel nome, tirando davanti al corpo. Mantieni un’esecuzione controllata e scegli un carico adatto al tuo livello. Il link video è facoltativo.",
+    "equipment": "Cavi",
+    "tags": [
+      "Schiena",
+      "Lat machine"
+    ],
+    "active": true,
+    "createdAt": "2026-10-21T08:00:00.000Z",
+    "loadMode": "external",
+    "videoUrl": "",
+    "thumbnailUrl": ""
+  },
+  {
+    "id": "variant-v2-lat-convergente",
+    "name": "Lat machine convergente a dischi",
+    "muscleGroupId": "muscle-1",
+    "secondaryMuscleIds": [],
+    "description": "Regola la macchina per eseguire una tirata verticale con il percorso guidato previsto dal costruttore. Mantieni un’esecuzione controllata e scegli un carico adatto al tuo livello. Il link video è facoltativo.",
+    "equipment": "Macchina a dischi",
+    "tags": [
+      "Schiena",
+      "Lat machine"
+    ],
+    "active": true,
+    "createdAt": "2026-10-21T08:00:00.000Z",
+    "loadMode": "external",
+    "videoUrl": "",
+    "thumbnailUrl": ""
+  },
+  {
+    "id": "variant-v2-lat-divergente",
+    "name": "Lat machine divergente a dischi",
+    "muscleGroupId": "muscle-1",
+    "secondaryMuscleIds": [],
+    "description": "Regola la macchina per eseguire una tirata verticale con il percorso guidato previsto dal costruttore. Mantieni un’esecuzione controllata e scegli un carico adatto al tuo livello. Il link video è facoltativo.",
+    "equipment": "Macchina a dischi",
+    "tags": [
+      "Schiena",
+      "Lat machine"
+    ],
+    "active": true,
+    "createdAt": "2026-10-21T08:00:00.000Z",
+    "loadMode": "external",
+    "videoUrl": "",
+    "thumbnailUrl": ""
+  },
+  {
+    "id": "variant-v2-lat-machine-single",
+    "name": "Lat machine a dischi unilaterale",
+    "muscleGroupId": "muscle-1",
+    "secondaryMuscleIds": [],
+    "description": "Regola la macchina per eseguire una tirata verticale con il percorso guidato previsto dal costruttore. Mantieni un’esecuzione controllata e scegli un carico adatto al tuo livello. Il link video è facoltativo.",
+    "equipment": "Macchina a dischi",
+    "tags": [
+      "Schiena",
+      "Lat machine"
+    ],
+    "active": true,
+    "createdAt": "2026-10-21T08:00:00.000Z",
+    "loadMode": "external",
+    "videoUrl": "",
+    "thumbnailUrl": ""
+  },
+  {
+    "id": "variant-v2-chest-orizzontale",
+    "name": "Chest press orizzontale presa prona",
+    "muscleGroupId": "muscle-0",
+    "secondaryMuscleIds": [],
+    "description": "Regola l’altezza del sedile per allineare le impugnature alla linea di spinta della macchina indicata. Mantieni un’esecuzione controllata e scegli un carico adatto al tuo livello. Il link video è facoltativo.",
+    "equipment": "Macchina",
+    "tags": [
+      "Petto",
+      "Chest press"
+    ],
+    "active": true,
+    "createdAt": "2026-10-21T08:00:00.000Z",
+    "loadMode": "external",
+    "videoUrl": "",
+    "thumbnailUrl": ""
+  },
+  {
+    "id": "variant-v2-chest-neutra",
+    "name": "Chest press orizzontale presa neutra",
+    "muscleGroupId": "muscle-0",
+    "secondaryMuscleIds": [],
+    "description": "Regola l’altezza del sedile per allineare le impugnature alla linea di spinta della macchina indicata. Mantieni un’esecuzione controllata e scegli un carico adatto al tuo livello. Il link video è facoltativo.",
+    "equipment": "Macchina",
+    "tags": [
+      "Petto",
+      "Chest press"
+    ],
+    "active": true,
+    "createdAt": "2026-10-21T08:00:00.000Z",
+    "loadMode": "external",
+    "videoUrl": "",
+    "thumbnailUrl": ""
+  },
+  {
+    "id": "variant-v2-chest-declinata",
+    "name": "Chest press declinata alla macchina",
+    "muscleGroupId": "muscle-0",
+    "secondaryMuscleIds": [],
+    "description": "Regola l’altezza del sedile per allineare le impugnature alla linea di spinta della macchina indicata. Mantieni un’esecuzione controllata e scegli un carico adatto al tuo livello. Il link video è facoltativo.",
+    "equipment": "Macchina",
+    "tags": [
+      "Petto",
+      "Chest press"
+    ],
+    "active": true,
+    "createdAt": "2026-10-21T08:00:00.000Z",
+    "loadMode": "external",
+    "videoUrl": "",
+    "thumbnailUrl": ""
+  },
+  {
+    "id": "variant-v2-chest-convergente",
+    "name": "Chest press convergente orizzontale",
+    "muscleGroupId": "muscle-0",
+    "secondaryMuscleIds": [],
+    "description": "Regola l’altezza del sedile per allineare le impugnature alla linea di spinta della macchina indicata. Mantieni un’esecuzione controllata e scegli un carico adatto al tuo livello. Il link video è facoltativo.",
+    "equipment": "Macchina",
+    "tags": [
+      "Petto",
+      "Chest press"
+    ],
+    "active": true,
+    "createdAt": "2026-10-21T08:00:00.000Z",
+    "loadMode": "external",
+    "videoUrl": "",
+    "thumbnailUrl": ""
+  },
+  {
+    "id": "variant-v2-chest-convergente-inclinata",
+    "name": "Chest press convergente inclinata",
+    "muscleGroupId": "muscle-0",
+    "secondaryMuscleIds": [],
+    "description": "Regola l’altezza del sedile per allineare le impugnature alla linea di spinta della macchina indicata. Mantieni un’esecuzione controllata e scegli un carico adatto al tuo livello. Il link video è facoltativo.",
+    "equipment": "Macchina",
+    "tags": [
+      "Petto",
+      "Chest press"
+    ],
+    "active": true,
+    "createdAt": "2026-10-21T08:00:00.000Z",
+    "loadMode": "external",
+    "videoUrl": "",
+    "thumbnailUrl": ""
+  },
+  {
+    "id": "variant-v2-chest-convergente-declinata",
+    "name": "Chest press convergente declinata",
+    "muscleGroupId": "muscle-0",
+    "secondaryMuscleIds": [],
+    "description": "Regola l’altezza del sedile per allineare le impugnature alla linea di spinta della macchina indicata. Mantieni un’esecuzione controllata e scegli un carico adatto al tuo livello. Il link video è facoltativo.",
+    "equipment": "Macchina",
+    "tags": [
+      "Petto",
+      "Chest press"
+    ],
+    "active": true,
+    "createdAt": "2026-10-21T08:00:00.000Z",
+    "loadMode": "external",
+    "videoUrl": "",
+    "thumbnailUrl": ""
+  },
+  {
+    "id": "variant-v2-chest-unilaterale",
+    "name": "Chest press orizzontale unilaterale",
+    "muscleGroupId": "muscle-0",
+    "secondaryMuscleIds": [],
+    "description": "Regola l’altezza del sedile per allineare le impugnature alla linea di spinta della macchina indicata. Mantieni un’esecuzione controllata e scegli un carico adatto al tuo livello. Il link video è facoltativo.",
+    "equipment": "Macchina",
+    "tags": [
+      "Petto",
+      "Chest press"
+    ],
+    "active": true,
+    "createdAt": "2026-10-21T08:00:00.000Z",
+    "loadMode": "external",
+    "videoUrl": "",
+    "thumbnailUrl": ""
+  },
+  {
+    "id": "variant-v2-chest-unilaterale-inclinata",
+    "name": "Chest press inclinata unilaterale",
+    "muscleGroupId": "muscle-0",
+    "secondaryMuscleIds": [],
+    "description": "Regola l’altezza del sedile per allineare le impugnature alla linea di spinta della macchina indicata. Mantieni un’esecuzione controllata e scegli un carico adatto al tuo livello. Il link video è facoltativo.",
+    "equipment": "Macchina",
+    "tags": [
+      "Petto",
+      "Chest press"
+    ],
+    "active": true,
+    "createdAt": "2026-10-21T08:00:00.000Z",
+    "loadMode": "external",
+    "videoUrl": "",
+    "thumbnailUrl": ""
+  },
+  {
+    "id": "variant-v2-chest-alternata",
+    "name": "Chest press con bracci indipendenti alternata",
+    "muscleGroupId": "muscle-0",
+    "secondaryMuscleIds": [],
+    "description": "Regola l’altezza del sedile per allineare le impugnature alla linea di spinta della macchina indicata. Mantieni un’esecuzione controllata e scegli un carico adatto al tuo livello. Il link video è facoltativo.",
+    "equipment": "Macchina",
+    "tags": [
+      "Petto",
+      "Chest press"
+    ],
+    "active": true,
+    "createdAt": "2026-10-21T08:00:00.000Z",
+    "loadMode": "external",
+    "videoUrl": "",
+    "thumbnailUrl": ""
+  },
+  {
+    "id": "variant-v2-chest-inclinata-neutra",
+    "name": "Chest press inclinata presa neutra",
+    "muscleGroupId": "muscle-0",
+    "secondaryMuscleIds": [],
+    "description": "Regola l’altezza del sedile per allineare le impugnature alla linea di spinta della macchina indicata. Mantieni un’esecuzione controllata e scegli un carico adatto al tuo livello. Il link video è facoltativo.",
+    "equipment": "Macchina",
+    "tags": [
+      "Petto",
+      "Chest press"
+    ],
+    "active": true,
+    "createdAt": "2026-10-21T08:00:00.000Z",
+    "loadMode": "external",
+    "videoUrl": "",
+    "thumbnailUrl": ""
+  },
+  {
+    "id": "variant-v2-chest-dischi-piana",
+    "name": "Chest press orizzontale a dischi",
+    "muscleGroupId": "muscle-0",
+    "secondaryMuscleIds": [],
+    "description": "Carica in modo simmetrico i bracci della macchina e regola il sedile prima della serie. Mantieni un’esecuzione controllata e scegli un carico adatto al tuo livello. Il link video è facoltativo.",
+    "equipment": "Macchina a dischi",
+    "tags": [
+      "Petto",
+      "Chest press"
+    ],
+    "active": true,
+    "createdAt": "2026-10-21T08:00:00.000Z",
+    "loadMode": "external",
+    "videoUrl": "",
+    "thumbnailUrl": ""
+  },
+  {
+    "id": "variant-v2-chest-dischi-inclinata",
+    "name": "Chest press inclinata a dischi",
+    "muscleGroupId": "muscle-0",
+    "secondaryMuscleIds": [],
+    "description": "Carica in modo simmetrico i bracci della macchina e regola il sedile prima della serie. Mantieni un’esecuzione controllata e scegli un carico adatto al tuo livello. Il link video è facoltativo.",
+    "equipment": "Macchina a dischi",
+    "tags": [
+      "Petto",
+      "Chest press"
+    ],
+    "active": true,
+    "createdAt": "2026-10-21T08:00:00.000Z",
+    "loadMode": "external",
+    "videoUrl": "",
+    "thumbnailUrl": ""
+  },
+  {
+    "id": "variant-v2-chest-dischi-declinata",
+    "name": "Chest press declinata a dischi",
+    "muscleGroupId": "muscle-0",
+    "secondaryMuscleIds": [],
+    "description": "Carica in modo simmetrico i bracci della macchina e regola il sedile prima della serie. Mantieni un’esecuzione controllata e scegli un carico adatto al tuo livello. Il link video è facoltativo.",
+    "equipment": "Macchina a dischi",
+    "tags": [
+      "Petto",
+      "Chest press"
+    ],
+    "active": true,
+    "createdAt": "2026-10-21T08:00:00.000Z",
+    "loadMode": "external",
+    "videoUrl": "",
+    "thumbnailUrl": ""
+  },
+  {
+    "id": "variant-v2-croci-spalle",
+    "name": "Croci ai cavi all’altezza delle spalle",
+    "muscleGroupId": "muscle-0",
+    "secondaryMuscleIds": [],
+    "description": "Imposta entrambe le carrucole all’altezza delle spalle. Mantieni un’esecuzione controllata e scegli un carico adatto al tuo livello. Il link video è facoltativo.",
+    "equipment": "Cavi",
+    "tags": [
+      "Petto",
+      "Croci ai cavi"
+    ],
+    "active": true,
+    "createdAt": "2026-10-21T08:00:00.000Z",
+    "loadMode": "external",
+    "videoUrl": "",
+    "thumbnailUrl": ""
+  },
+  {
+    "id": "variant-v2-croci-unilaterali-medie",
+    "name": "Croci al cavo unilaterali all’altezza delle spalle",
+    "muscleGroupId": "muscle-0",
+    "secondaryMuscleIds": [],
+    "description": "Esegui un lato per volta con il cavo all’altezza della spalla. Mantieni un’esecuzione controllata e scegli un carico adatto al tuo livello. Il link video è facoltativo.",
+    "equipment": "Cavi",
+    "tags": [
+      "Petto",
+      "Croci ai cavi"
+    ],
+    "active": true,
+    "createdAt": "2026-10-21T08:00:00.000Z",
+    "loadMode": "external",
+    "videoUrl": "",
+    "thumbnailUrl": ""
+  },
+  {
+    "id": "variant-v2-croci-unilaterali-basse",
+    "name": "Croci al cavo unilaterali dal basso",
+    "muscleGroupId": "muscle-0",
+    "secondaryMuscleIds": [],
+    "description": "Esegui un lato per volta con la carrucola in basso. Mantieni un’esecuzione controllata e scegli un carico adatto al tuo livello. Il link video è facoltativo.",
+    "equipment": "Cavi",
+    "tags": [
+      "Petto",
+      "Croci ai cavi"
+    ],
+    "active": true,
+    "createdAt": "2026-10-21T08:00:00.000Z",
+    "loadMode": "external",
+    "videoUrl": "",
+    "thumbnailUrl": ""
+  },
+  {
+    "id": "variant-v2-croci-unilaterali-alte",
+    "name": "Croci al cavo unilaterali dall’alto",
+    "muscleGroupId": "muscle-0",
+    "secondaryMuscleIds": [],
+    "description": "Esegui un lato per volta con la carrucola in alto. Mantieni un’esecuzione controllata e scegli un carico adatto al tuo livello. Il link video è facoltativo.",
+    "equipment": "Cavi",
+    "tags": [
+      "Petto",
+      "Croci ai cavi"
+    ],
+    "active": true,
+    "createdAt": "2026-10-21T08:00:00.000Z",
+    "loadMode": "external",
+    "videoUrl": "",
+    "thumbnailUrl": ""
+  },
+  {
+    "id": "variant-v2-croci-panca-piana",
+    "name": "Croci ai cavi su panca piana (0°)",
+    "muscleGroupId": "muscle-0",
+    "secondaryMuscleIds": [],
+    "description": "Posiziona una panca orizzontale tra due carrucole basse. Mantieni un’esecuzione controllata e scegli un carico adatto al tuo livello. Il link video è facoltativo.",
+    "equipment": "Cavi",
+    "tags": [
+      "Petto",
+      "Croci ai cavi"
+    ],
+    "active": true,
+    "createdAt": "2026-10-21T08:00:00.000Z",
+    "loadMode": "external",
+    "videoUrl": "",
+    "thumbnailUrl": ""
+  },
+  {
+    "id": "variant-v2-croci-panca-30",
+    "name": "Croci ai cavi su panca inclinata a 30°",
+    "muscleGroupId": "muscle-0",
+    "secondaryMuscleIds": [],
+    "description": "Posiziona una panca inclinata a 30° tra due carrucole basse. Mantieni un’esecuzione controllata e scegli un carico adatto al tuo livello. Il link video è facoltativo.",
+    "equipment": "Cavi",
+    "tags": [
+      "Petto",
+      "Croci ai cavi"
+    ],
+    "active": true,
+    "createdAt": "2026-10-21T08:00:00.000Z",
+    "loadMode": "external",
+    "videoUrl": "",
+    "thumbnailUrl": ""
+  },
+  {
+    "id": "variant-v2-croci-panca-45",
+    "name": "Croci ai cavi su panca inclinata a 45°",
+    "muscleGroupId": "muscle-0",
+    "secondaryMuscleIds": [],
+    "description": "Posiziona una panca inclinata a 45° tra due carrucole basse. Mantieni un’esecuzione controllata e scegli un carico adatto al tuo livello. Il link video è facoltativo.",
+    "equipment": "Cavi",
+    "tags": [
+      "Petto",
+      "Croci ai cavi"
+    ],
+    "active": true,
+    "createdAt": "2026-10-21T08:00:00.000Z",
+    "loadMode": "external",
+    "videoUrl": "",
+    "thumbnailUrl": ""
+  },
+  {
+    "id": "variant-v2-croci-panca-declinata",
+    "name": "Croci ai cavi su panca declinata a −15°",
+    "muscleGroupId": "muscle-0",
+    "secondaryMuscleIds": [],
+    "description": "Usa una panca declinata a −15° con un sistema di appoggio adatto. Mantieni un’esecuzione controllata e scegli un carico adatto al tuo livello. Il link video è facoltativo.",
+    "equipment": "Cavi",
+    "tags": [
+      "Petto",
+      "Croci ai cavi"
+    ],
+    "active": true,
+    "createdAt": "2026-10-21T08:00:00.000Z",
+    "loadMode": "external",
+    "videoUrl": "",
+    "thumbnailUrl": ""
+  },
+  {
+    "id": "variant-v2-croci-seduto",
+    "name": "Croci ai cavi da seduto",
+    "muscleGroupId": "muscle-0",
+    "secondaryMuscleIds": [],
+    "description": "Usa una seduta stabile e regola le carrucole all’altezza della linea di adduzione. Mantieni un’esecuzione controllata e scegli un carico adatto al tuo livello. Il link video è facoltativo.",
+    "equipment": "Cavi",
+    "tags": [
+      "Petto",
+      "Croci ai cavi"
+    ],
+    "active": true,
+    "createdAt": "2026-10-21T08:00:00.000Z",
+    "loadMode": "external",
+    "videoUrl": "",
+    "thumbnailUrl": ""
+  },
+  {
+    "id": "variant-v2-croci-inginocchio",
+    "name": "Croci ai cavi alti in ginocchio",
+    "muscleGroupId": "muscle-0",
+    "secondaryMuscleIds": [],
+    "description": "Esegui l’adduzione dalle carrucole alte con il tronco stabile in ginocchio. Mantieni un’esecuzione controllata e scegli un carico adatto al tuo livello. Il link video è facoltativo.",
+    "equipment": "Cavi",
+    "tags": [
+      "Petto",
+      "Croci ai cavi"
+    ],
+    "active": true,
+    "createdAt": "2026-10-21T08:00:00.000Z",
+    "loadMode": "external",
+    "videoUrl": "",
+    "thumbnailUrl": ""
+  },
+  {
+    "id": "variant-v2-curl-ez",
+    "name": "Curl in piedi con bilanciere EZ",
+    "muscleGroupId": "muscle-4",
+    "secondaryMuscleIds": [],
+    "description": "Mantieni un’esecuzione controllata e scegli un carico adatto al tuo livello. Il link video è facoltativo e può essere aggiunto da un amministratore.",
+    "equipment": "Bilanciere EZ",
+    "tags": [
+      "Braccia",
+      "Bicipiti"
+    ],
+    "active": true,
+    "createdAt": "2026-10-21T08:00:00.000Z",
+    "loadMode": "external",
+    "videoUrl": "",
+    "thumbnailUrl": ""
+  },
+  {
+    "id": "variant-v2-curl-ez-stretto",
+    "name": "Curl con bilanciere EZ presa stretta",
+    "muscleGroupId": "muscle-4",
+    "secondaryMuscleIds": [],
+    "description": "Mantieni un’esecuzione controllata e scegli un carico adatto al tuo livello. Il link video è facoltativo e può essere aggiunto da un amministratore.",
+    "equipment": "Bilanciere EZ",
+    "tags": [
+      "Braccia",
+      "Bicipiti"
+    ],
+    "active": true,
+    "createdAt": "2026-10-21T08:00:00.000Z",
+    "loadMode": "external",
+    "videoUrl": "",
+    "thumbnailUrl": ""
+  },
+  {
+    "id": "variant-v2-curl-ez-largo",
+    "name": "Curl con bilanciere EZ presa larga",
+    "muscleGroupId": "muscle-4",
+    "secondaryMuscleIds": [],
+    "description": "Mantieni un’esecuzione controllata e scegli un carico adatto al tuo livello. Il link video è facoltativo e può essere aggiunto da un amministratore.",
+    "equipment": "Bilanciere EZ",
+    "tags": [
+      "Braccia",
+      "Bicipiti"
+    ],
+    "active": true,
+    "createdAt": "2026-10-21T08:00:00.000Z",
+    "loadMode": "external",
+    "videoUrl": "",
+    "thumbnailUrl": ""
+  },
+  {
+    "id": "variant-v2-curl-bar-stretto",
+    "name": "Curl con bilanciere dritto presa stretta",
+    "muscleGroupId": "muscle-4",
+    "secondaryMuscleIds": [],
+    "description": "Mantieni un’esecuzione controllata e scegli un carico adatto al tuo livello. Il link video è facoltativo e può essere aggiunto da un amministratore.",
+    "equipment": "Bilanciere",
+    "tags": [
+      "Braccia",
+      "Bicipiti"
+    ],
+    "active": true,
+    "createdAt": "2026-10-21T08:00:00.000Z",
+    "loadMode": "external",
+    "videoUrl": "",
+    "thumbnailUrl": ""
+  },
+  {
+    "id": "variant-v2-curl-bar-largo",
+    "name": "Curl con bilanciere dritto presa larga",
+    "muscleGroupId": "muscle-4",
+    "secondaryMuscleIds": [],
+    "description": "Mantieni un’esecuzione controllata e scegli un carico adatto al tuo livello. Il link video è facoltativo e può essere aggiunto da un amministratore.",
+    "equipment": "Bilanciere",
+    "tags": [
+      "Braccia",
+      "Bicipiti"
+    ],
+    "active": true,
+    "createdAt": "2026-10-21T08:00:00.000Z",
+    "loadMode": "external",
+    "videoUrl": "",
+    "thumbnailUrl": ""
+  },
+  {
+    "id": "variant-v2-drag-curl",
+    "name": "Drag curl con bilanciere",
+    "muscleGroupId": "muscle-4",
+    "secondaryMuscleIds": [],
+    "description": "Mantieni un’esecuzione controllata e scegli un carico adatto al tuo livello. Il link video è facoltativo e può essere aggiunto da un amministratore.",
+    "equipment": "Bilanciere",
+    "tags": [
+      "Braccia",
+      "Bicipiti"
+    ],
+    "active": true,
+    "createdAt": "2026-10-21T08:00:00.000Z",
+    "loadMode": "external",
+    "videoUrl": "",
+    "thumbnailUrl": ""
+  },
+  {
+    "id": "variant-v2-curl-db-simultaneo",
+    "name": "Curl con manubri simultaneo in piedi",
+    "muscleGroupId": "muscle-4",
+    "secondaryMuscleIds": [],
+    "description": "Mantieni un’esecuzione controllata e scegli un carico adatto al tuo livello. Il link video è facoltativo e può essere aggiunto da un amministratore.",
+    "equipment": "Manubri",
+    "tags": [
+      "Braccia",
+      "Bicipiti"
+    ],
+    "active": true,
+    "createdAt": "2026-10-21T08:00:00.000Z",
+    "loadMode": "external",
+    "videoUrl": "",
+    "thumbnailUrl": ""
+  },
+  {
+    "id": "variant-v2-hammer-alternato",
+    "name": "Curl a martello alternato",
+    "muscleGroupId": "muscle-4",
+    "secondaryMuscleIds": [],
+    "description": "Mantieni un’esecuzione controllata e scegli un carico adatto al tuo livello. Il link video è facoltativo e può essere aggiunto da un amministratore.",
+    "equipment": "Manubri",
+    "tags": [
+      "Braccia",
+      "Bicipiti"
+    ],
+    "active": true,
+    "createdAt": "2026-10-21T08:00:00.000Z",
+    "loadMode": "external",
+    "videoUrl": "",
+    "thumbnailUrl": ""
+  },
+  {
+    "id": "variant-v2-hammer-seduto",
+    "name": "Curl a martello da seduto",
+    "muscleGroupId": "muscle-4",
+    "secondaryMuscleIds": [],
+    "description": "Mantieni un’esecuzione controllata e scegli un carico adatto al tuo livello. Il link video è facoltativo e può essere aggiunto da un amministratore.",
+    "equipment": "Manubri",
+    "tags": [
+      "Braccia",
+      "Bicipiti"
+    ],
+    "active": true,
+    "createdAt": "2026-10-21T08:00:00.000Z",
+    "loadMode": "external",
+    "videoUrl": "",
+    "thumbnailUrl": ""
+  },
+  {
+    "id": "variant-v2-hammer-incrociato",
+    "name": "Curl a martello incrociato",
+    "muscleGroupId": "muscle-4",
+    "secondaryMuscleIds": [],
+    "description": "Mantieni un’esecuzione controllata e scegli un carico adatto al tuo livello. Il link video è facoltativo e può essere aggiunto da un amministratore.",
+    "equipment": "Manubri",
+    "tags": [
+      "Braccia",
+      "Bicipiti"
+    ],
+    "active": true,
+    "createdAt": "2026-10-21T08:00:00.000Z",
+    "loadMode": "external",
+    "videoUrl": "",
+    "thumbnailUrl": ""
+  },
+  {
+    "id": "variant-v2-zottman",
+    "name": "Curl Zottman con manubri",
+    "muscleGroupId": "muscle-4",
+    "secondaryMuscleIds": [],
+    "description": "Mantieni un’esecuzione controllata e scegli un carico adatto al tuo livello. Il link video è facoltativo e può essere aggiunto da un amministratore.",
+    "equipment": "Manubri",
+    "tags": [
+      "Braccia",
+      "Bicipiti"
+    ],
+    "active": true,
+    "createdAt": "2026-10-21T08:00:00.000Z",
+    "loadMode": "external",
+    "videoUrl": "",
+    "thumbnailUrl": ""
+  },
+  {
+    "id": "variant-v2-hammer-incline-45",
+    "name": "Curl a martello su panca inclinata a 45°",
+    "muscleGroupId": "muscle-4",
+    "secondaryMuscleIds": [],
+    "description": "Mantieni un’esecuzione controllata e scegli un carico adatto al tuo livello. Il link video è facoltativo e può essere aggiunto da un amministratore.",
+    "equipment": "Manubri",
+    "tags": [
+      "Braccia",
+      "Bicipiti"
+    ],
+    "active": true,
+    "createdAt": "2026-10-21T08:00:00.000Z",
+    "loadMode": "external",
+    "videoUrl": "",
+    "thumbnailUrl": ""
+  },
+  {
+    "id": "variant-v2-curl-cavo-corda",
+    "name": "Curl al cavo basso con corda",
+    "muscleGroupId": "muscle-4",
+    "secondaryMuscleIds": [],
+    "description": "Mantieni un’esecuzione controllata e scegli un carico adatto al tuo livello. Il link video è facoltativo e può essere aggiunto da un amministratore.",
+    "equipment": "Cavi",
+    "tags": [
+      "Braccia",
+      "Bicipiti"
+    ],
+    "active": true,
+    "createdAt": "2026-10-21T08:00:00.000Z",
+    "loadMode": "external",
+    "videoUrl": "",
+    "thumbnailUrl": ""
+  },
+  {
+    "id": "variant-v2-curl-cavo-barra",
+    "name": "Curl al cavo basso con barra dritta",
+    "muscleGroupId": "muscle-4",
+    "secondaryMuscleIds": [],
+    "description": "Mantieni un’esecuzione controllata e scegli un carico adatto al tuo livello. Il link video è facoltativo e può essere aggiunto da un amministratore.",
+    "equipment": "Cavi",
+    "tags": [
+      "Braccia",
+      "Bicipiti"
+    ],
+    "active": true,
+    "createdAt": "2026-10-21T08:00:00.000Z",
+    "loadMode": "external",
+    "videoUrl": "",
+    "thumbnailUrl": ""
+  },
+  {
+    "id": "variant-v2-curl-cavo-ez",
+    "name": "Curl al cavo basso con barra EZ",
+    "muscleGroupId": "muscle-4",
+    "secondaryMuscleIds": [],
+    "description": "Mantieni un’esecuzione controllata e scegli un carico adatto al tuo livello. Il link video è facoltativo e può essere aggiunto da un amministratore.",
+    "equipment": "Cavi",
+    "tags": [
+      "Braccia",
+      "Bicipiti"
+    ],
+    "active": true,
+    "createdAt": "2026-10-21T08:00:00.000Z",
+    "loadMode": "external",
+    "videoUrl": "",
+    "thumbnailUrl": ""
+  },
+  {
+    "id": "variant-v2-curl-cavo-unilaterale",
+    "name": "Curl al cavo basso unilaterale",
+    "muscleGroupId": "muscle-4",
+    "secondaryMuscleIds": [],
+    "description": "Mantieni un’esecuzione controllata e scegli un carico adatto al tuo livello. Il link video è facoltativo e può essere aggiunto da un amministratore.",
+    "equipment": "Cavi",
+    "tags": [
+      "Braccia",
+      "Bicipiti"
+    ],
+    "active": true,
+    "createdAt": "2026-10-21T08:00:00.000Z",
+    "loadMode": "external",
+    "videoUrl": "",
+    "thumbnailUrl": ""
+  },
+  {
+    "id": "variant-v2-curl-bayesian",
+    "name": "Curl al cavo dietro il corpo (Bayesian)",
+    "muscleGroupId": "muscle-4",
+    "secondaryMuscleIds": [],
+    "description": "Mantieni un’esecuzione controllata e scegli un carico adatto al tuo livello. Il link video è facoltativo e può essere aggiunto da un amministratore.",
+    "equipment": "Cavi",
+    "tags": [
+      "Braccia",
+      "Bicipiti"
+    ],
+    "active": true,
+    "createdAt": "2026-10-21T08:00:00.000Z",
+    "loadMode": "external",
+    "videoUrl": "",
+    "thumbnailUrl": ""
+  },
+  {
+    "id": "variant-v2-curl-cavi-alti",
+    "name": "Curl ai cavi alti a doppio bicipite",
+    "muscleGroupId": "muscle-4",
+    "secondaryMuscleIds": [],
+    "description": "Mantieni un’esecuzione controllata e scegli un carico adatto al tuo livello. Il link video è facoltativo e può essere aggiunto da un amministratore.",
+    "equipment": "Cavi",
+    "tags": [
+      "Braccia",
+      "Bicipiti"
+    ],
+    "active": true,
+    "createdAt": "2026-10-21T08:00:00.000Z",
+    "loadMode": "external",
+    "videoUrl": "",
+    "thumbnailUrl": ""
+  },
+  {
+    "id": "variant-v2-curl-cavo-inverso",
+    "name": "Curl al cavo presa prona",
+    "muscleGroupId": "muscle-4",
+    "secondaryMuscleIds": [],
+    "description": "Mantieni un’esecuzione controllata e scegli un carico adatto al tuo livello. Il link video è facoltativo e può essere aggiunto da un amministratore.",
+    "equipment": "Cavi",
+    "tags": [
+      "Braccia",
+      "Bicipiti"
+    ],
+    "active": true,
+    "createdAt": "2026-10-21T08:00:00.000Z",
+    "loadMode": "external",
+    "videoUrl": "",
+    "thumbnailUrl": ""
+  },
+  {
+    "id": "variant-v2-scott-db-single",
+    "name": "Curl su panca Scott con manubrio unilaterale",
+    "muscleGroupId": "muscle-4",
+    "secondaryMuscleIds": [],
+    "description": "Mantieni un’esecuzione controllata e scegli un carico adatto al tuo livello. Il link video è facoltativo e può essere aggiunto da un amministratore.",
+    "equipment": "Manubri",
+    "tags": [
+      "Braccia",
+      "Bicipiti"
+    ],
+    "active": true,
+    "createdAt": "2026-10-21T08:00:00.000Z",
+    "loadMode": "external",
+    "videoUrl": "",
+    "thumbnailUrl": ""
+  },
+  {
+    "id": "variant-v2-scott-bar",
+    "name": "Curl su panca Scott con bilanciere dritto",
+    "muscleGroupId": "muscle-4",
+    "secondaryMuscleIds": [],
+    "description": "Mantieni un’esecuzione controllata e scegli un carico adatto al tuo livello. Il link video è facoltativo e può essere aggiunto da un amministratore.",
+    "equipment": "Bilanciere",
+    "tags": [
+      "Braccia",
+      "Bicipiti"
+    ],
+    "active": true,
+    "createdAt": "2026-10-21T08:00:00.000Z",
+    "loadMode": "external",
+    "videoUrl": "",
+    "thumbnailUrl": ""
+  },
+  {
+    "id": "variant-v2-scott-cable",
+    "name": "Curl su panca Scott al cavo",
+    "muscleGroupId": "muscle-4",
+    "secondaryMuscleIds": [],
+    "description": "Mantieni un’esecuzione controllata e scegli un carico adatto al tuo livello. Il link video è facoltativo e può essere aggiunto da un amministratore.",
+    "equipment": "Cavi",
+    "tags": [
+      "Braccia",
+      "Bicipiti"
+    ],
+    "active": true,
+    "createdAt": "2026-10-21T08:00:00.000Z",
+    "loadMode": "external",
+    "videoUrl": "",
+    "thumbnailUrl": ""
+  },
+  {
+    "id": "variant-v2-scott-machine",
+    "name": "Curl alla macchina con appoggio Scott",
+    "muscleGroupId": "muscle-4",
+    "secondaryMuscleIds": [],
+    "description": "Mantieni un’esecuzione controllata e scegli un carico adatto al tuo livello. Il link video è facoltativo e può essere aggiunto da un amministratore.",
+    "equipment": "Macchina",
+    "tags": [
+      "Braccia",
+      "Bicipiti"
+    ],
+    "active": true,
+    "createdAt": "2026-10-21T08:00:00.000Z",
+    "loadMode": "external",
+    "videoUrl": "",
+    "thumbnailUrl": ""
+  },
+  {
+    "id": "variant-v2-spider-ez-45",
+    "name": "Spider curl con bilanciere EZ su panca a 45°",
+    "muscleGroupId": "muscle-4",
+    "secondaryMuscleIds": [],
+    "description": "Appoggia il petto alla panca inclinata. Imposta la panca a 45° rispetto al piano orizzontale. Mantieni un’esecuzione controllata e scegli un carico adatto al tuo livello. Il link video è facoltativo e può essere aggiunto da un amministratore.",
+    "equipment": "Bilanciere EZ",
+    "tags": [
+      "Braccia",
+      "Variante",
+      "45°",
+      "Bicipiti"
+    ],
+    "active": true,
+    "createdAt": "2026-10-21T08:00:00.000Z",
+    "loadMode": "external",
+    "videoUrl": "",
+    "thumbnailUrl": ""
+  },
+  {
+    "id": "variant-v2-pushdown-v",
+    "name": "Pushdown con barra a V",
+    "muscleGroupId": "muscle-4",
+    "secondaryMuscleIds": [],
+    "description": "Mantieni un’esecuzione controllata e scegli un carico adatto al tuo livello. Il link video è facoltativo e può essere aggiunto da un amministratore.",
+    "equipment": "Cavi",
+    "tags": [
+      "Braccia",
+      "Tricipiti"
+    ],
+    "active": true,
+    "createdAt": "2026-10-21T08:00:00.000Z",
+    "loadMode": "external",
+    "videoUrl": "",
+    "thumbnailUrl": ""
+  },
+  {
+    "id": "variant-v2-pushdown-ez",
+    "name": "Pushdown con barra EZ",
+    "muscleGroupId": "muscle-4",
+    "secondaryMuscleIds": [],
+    "description": "Mantieni un’esecuzione controllata e scegli un carico adatto al tuo livello. Il link video è facoltativo e può essere aggiunto da un amministratore.",
+    "equipment": "Cavi",
+    "tags": [
+      "Braccia",
+      "Tricipiti"
+    ],
+    "active": true,
+    "createdAt": "2026-10-21T08:00:00.000Z",
+    "loadMode": "external",
+    "videoUrl": "",
+    "thumbnailUrl": ""
+  },
+  {
+    "id": "variant-v2-pushdown-supino",
+    "name": "Pushdown con barra presa supina",
+    "muscleGroupId": "muscle-4",
+    "secondaryMuscleIds": [],
+    "description": "Mantieni un’esecuzione controllata e scegli un carico adatto al tuo livello. Il link video è facoltativo e può essere aggiunto da un amministratore.",
+    "equipment": "Cavi",
+    "tags": [
+      "Braccia",
+      "Tricipiti"
+    ],
+    "active": true,
+    "createdAt": "2026-10-21T08:00:00.000Z",
+    "loadMode": "external",
+    "videoUrl": "",
+    "thumbnailUrl": ""
+  },
+  {
+    "id": "variant-v2-pushdown-unilaterale-supino",
+    "name": "Pushdown unilaterale presa supina",
+    "muscleGroupId": "muscle-4",
+    "secondaryMuscleIds": [],
+    "description": "Mantieni un’esecuzione controllata e scegli un carico adatto al tuo livello. Il link video è facoltativo e può essere aggiunto da un amministratore.",
+    "equipment": "Cavi",
+    "tags": [
+      "Braccia",
+      "Tricipiti"
+    ],
+    "active": true,
+    "createdAt": "2026-10-21T08:00:00.000Z",
+    "loadMode": "external",
+    "videoUrl": "",
+    "thumbnailUrl": ""
+  },
+  {
+    "id": "variant-v2-pushdown-corda-single",
+    "name": "Pushdown con corda unilaterale",
+    "muscleGroupId": "muscle-4",
+    "secondaryMuscleIds": [],
+    "description": "Mantieni un’esecuzione controllata e scegli un carico adatto al tuo livello. Il link video è facoltativo e può essere aggiunto da un amministratore.",
+    "equipment": "Cavi",
+    "tags": [
+      "Braccia",
+      "Tricipiti"
+    ],
+    "active": true,
+    "createdAt": "2026-10-21T08:00:00.000Z",
+    "loadMode": "external",
+    "videoUrl": "",
+    "thumbnailUrl": ""
+  },
+  {
+    "id": "variant-v2-overhead-cable-bar",
+    "name": "Estensioni tricipiti sopra la testa al cavo con barra",
+    "muscleGroupId": "muscle-4",
+    "secondaryMuscleIds": [],
+    "description": "Mantieni un’esecuzione controllata e scegli un carico adatto al tuo livello. Il link video è facoltativo e può essere aggiunto da un amministratore.",
+    "equipment": "Cavi",
+    "tags": [
+      "Braccia",
+      "Tricipiti"
+    ],
+    "active": true,
+    "createdAt": "2026-10-21T08:00:00.000Z",
+    "loadMode": "external",
+    "videoUrl": "",
+    "thumbnailUrl": ""
+  },
+  {
+    "id": "variant-v2-overhead-cable-single",
+    "name": "Estensioni tricipiti sopra la testa al cavo unilaterali",
+    "muscleGroupId": "muscle-4",
+    "secondaryMuscleIds": [],
+    "description": "Mantieni un’esecuzione controllata e scegli un carico adatto al tuo livello. Il link video è facoltativo e può essere aggiunto da un amministratore.",
+    "equipment": "Cavi",
+    "tags": [
+      "Braccia",
+      "Tricipiti"
+    ],
+    "active": true,
+    "createdAt": "2026-10-21T08:00:00.000Z",
+    "loadMode": "external",
+    "videoUrl": "",
+    "thumbnailUrl": ""
+  },
+  {
+    "id": "variant-v2-overhead-cable-seated",
+    "name": "Estensioni tricipiti sopra la testa al cavo da seduto",
+    "muscleGroupId": "muscle-4",
+    "secondaryMuscleIds": [],
+    "description": "Mantieni un’esecuzione controllata e scegli un carico adatto al tuo livello. Il link video è facoltativo e può essere aggiunto da un amministratore.",
+    "equipment": "Cavi",
+    "tags": [
+      "Braccia",
+      "Tricipiti"
+    ],
+    "active": true,
+    "createdAt": "2026-10-21T08:00:00.000Z",
+    "loadMode": "external",
+    "videoUrl": "",
+    "thumbnailUrl": ""
+  },
+  {
+    "id": "variant-v2-french-ez-flat",
+    "name": "French press su panca piana con bilanciere EZ",
+    "muscleGroupId": "muscle-4",
+    "secondaryMuscleIds": [],
+    "description": "Mantieni un’esecuzione controllata e scegli un carico adatto al tuo livello. Il link video è facoltativo e può essere aggiunto da un amministratore.",
+    "equipment": "Bilanciere EZ",
+    "tags": [
+      "Braccia",
+      "Tricipiti"
+    ],
+    "active": true,
+    "createdAt": "2026-10-21T08:00:00.000Z",
+    "loadMode": "external",
+    "videoUrl": "",
+    "thumbnailUrl": ""
+  },
+  {
+    "id": "variant-v2-french-ez-incline-30",
+    "name": "French press su panca a 30° con bilanciere EZ",
+    "muscleGroupId": "muscle-4",
+    "secondaryMuscleIds": [],
+    "description": "Mantieni un’esecuzione controllata e scegli un carico adatto al tuo livello. Il link video è facoltativo e può essere aggiunto da un amministratore.",
+    "equipment": "Bilanciere EZ",
+    "tags": [
+      "Braccia",
+      "Tricipiti"
+    ],
+    "active": true,
+    "createdAt": "2026-10-21T08:00:00.000Z",
+    "loadMode": "external",
+    "videoUrl": "",
+    "thumbnailUrl": ""
+  },
+  {
+    "id": "variant-v2-french-db-flat",
+    "name": "French press su panca piana con manubri",
+    "muscleGroupId": "muscle-4",
+    "secondaryMuscleIds": [],
+    "description": "Mantieni un’esecuzione controllata e scegli un carico adatto al tuo livello. Il link video è facoltativo e può essere aggiunto da un amministratore.",
+    "equipment": "Manubri",
+    "tags": [
+      "Braccia",
+      "Tricipiti"
+    ],
+    "active": true,
+    "createdAt": "2026-10-21T08:00:00.000Z",
+    "loadMode": "external",
+    "videoUrl": "",
+    "thumbnailUrl": ""
+  },
+  {
+    "id": "variant-v2-french-db-incline-45",
+    "name": "French press su panca a 45° con manubri",
+    "muscleGroupId": "muscle-4",
+    "secondaryMuscleIds": [],
+    "description": "Mantieni un’esecuzione controllata e scegli un carico adatto al tuo livello. Il link video è facoltativo e può essere aggiunto da un amministratore.",
+    "equipment": "Manubri",
+    "tags": [
+      "Braccia",
+      "Tricipiti"
+    ],
+    "active": true,
+    "createdAt": "2026-10-21T08:00:00.000Z",
+    "loadMode": "external",
+    "videoUrl": "",
+    "thumbnailUrl": ""
+  },
+  {
+    "id": "variant-v2-french-cable",
+    "name": "French press su panca piana al cavo",
+    "muscleGroupId": "muscle-4",
+    "secondaryMuscleIds": [],
+    "description": "Mantieni un’esecuzione controllata e scegli un carico adatto al tuo livello. Il link video è facoltativo e può essere aggiunto da un amministratore.",
+    "equipment": "Cavi",
+    "tags": [
+      "Braccia",
+      "Tricipiti"
+    ],
+    "active": true,
+    "createdAt": "2026-10-21T08:00:00.000Z",
+    "loadMode": "external",
+    "videoUrl": "",
+    "thumbnailUrl": ""
+  },
+  {
+    "id": "variant-v2-french-ez-seated",
+    "name": "French press sopra la testa da seduto con bilanciere EZ",
+    "muscleGroupId": "muscle-4",
+    "secondaryMuscleIds": [],
+    "description": "Mantieni un’esecuzione controllata e scegli un carico adatto al tuo livello. Il link video è facoltativo e può essere aggiunto da un amministratore.",
+    "equipment": "Bilanciere EZ",
+    "tags": [
+      "Braccia",
+      "Tricipiti"
+    ],
+    "active": true,
+    "createdAt": "2026-10-21T08:00:00.000Z",
+    "loadMode": "external",
+    "videoUrl": "",
+    "thumbnailUrl": ""
+  },
+  {
+    "id": "variant-v2-kickback-cable",
+    "name": "Kickback tricipiti al cavo unilaterale",
+    "muscleGroupId": "muscle-4",
+    "secondaryMuscleIds": [],
+    "description": "Mantieni un’esecuzione controllata e scegli un carico adatto al tuo livello. Il link video è facoltativo e può essere aggiunto da un amministratore.",
+    "equipment": "Cavi",
+    "tags": [
+      "Braccia",
+      "Tricipiti"
+    ],
+    "active": true,
+    "createdAt": "2026-10-21T08:00:00.000Z",
+    "loadMode": "external",
+    "videoUrl": "",
+    "thumbnailUrl": ""
+  },
+  {
+    "id": "variant-v2-triceps-crossbody",
+    "name": "Estensioni tricipiti al cavo incrociate davanti al corpo",
+    "muscleGroupId": "muscle-4",
+    "secondaryMuscleIds": [],
+    "description": "Mantieni un’esecuzione controllata e scegli un carico adatto al tuo livello. Il link video è facoltativo e può essere aggiunto da un amministratore.",
+    "equipment": "Cavi",
+    "tags": [
+      "Braccia",
+      "Tricipiti"
+    ],
+    "active": true,
+    "createdAt": "2026-10-21T08:00:00.000Z",
+    "loadMode": "external",
+    "videoUrl": "",
+    "thumbnailUrl": ""
+  },
+  {
+    "id": "variant-v2-triceps-machine",
+    "name": "Estensioni tricipiti alla macchina con appoggio gomiti",
+    "muscleGroupId": "muscle-4",
+    "secondaryMuscleIds": [],
+    "description": "Mantieni un’esecuzione controllata e scegli un carico adatto al tuo livello. Il link video è facoltativo e può essere aggiunto da un amministratore.",
+    "equipment": "Macchina",
+    "tags": [
+      "Braccia",
+      "Tricipiti"
+    ],
+    "active": true,
+    "createdAt": "2026-10-21T08:00:00.000Z",
+    "loadMode": "external",
+    "videoUrl": "",
+    "thumbnailUrl": ""
+  },
+  {
+    "id": "variant-v2-dip-parallele",
+    "name": "Dip alle parallele per tricipiti",
+    "muscleGroupId": "muscle-4",
+    "secondaryMuscleIds": [],
+    "description": "Mantieni un’esecuzione controllata e scegli un carico adatto al tuo livello. Il link video è facoltativo e può essere aggiunto da un amministratore.",
+    "equipment": "Parallele",
+    "tags": [
+      "Braccia",
+      "Tricipiti"
+    ],
+    "active": true,
+    "createdAt": "2026-10-21T08:00:00.000Z",
+    "loadMode": "bodyweight",
+    "videoUrl": "",
+    "thumbnailUrl": ""
+  },
+  {
+    "id": "variant-v2-dip-assisted",
+    "name": "Dip alla macchina assistita",
+    "muscleGroupId": "muscle-4",
+    "secondaryMuscleIds": [],
+    "description": "Mantieni un’esecuzione controllata e scegli un carico adatto al tuo livello. Il link video è facoltativo e può essere aggiunto da un amministratore.",
+    "equipment": "Macchina assistita",
+    "tags": [
+      "Braccia",
+      "Tricipiti"
+    ],
+    "active": true,
+    "createdAt": "2026-10-21T08:00:00.000Z",
+    "loadMode": "assisted",
+    "videoUrl": "",
+    "thumbnailUrl": ""
+  },
+  {
+    "id": "variant-v2-dip-weighted",
+    "name": "Dip alle parallele con zavorra",
+    "muscleGroupId": "muscle-4",
+    "secondaryMuscleIds": [],
+    "description": "Mantieni un’esecuzione controllata e scegli un carico adatto al tuo livello. Il link video è facoltativo e può essere aggiunto da un amministratore.",
+    "equipment": "Parallele",
+    "tags": [
+      "Braccia",
+      "Tricipiti"
+    ],
+    "active": true,
+    "createdAt": "2026-10-21T08:00:00.000Z",
+    "loadMode": "weighted-bodyweight",
+    "videoUrl": "",
+    "thumbnailUrl": ""
+  },
+  {
+    "id": "variant-v2-pulley-unilaterale",
+    "name": "Pulley al cavo unilaterale",
+    "muscleGroupId": "muscle-1",
+    "secondaryMuscleIds": [],
+    "description": "Mantieni un’esecuzione controllata e scegli un carico adatto al tuo livello. Il link video è facoltativo e può essere aggiunto da un amministratore.",
+    "equipment": "Cavi",
+    "tags": [
+      "Schiena"
+    ],
+    "active": true,
+    "createdAt": "2026-10-21T08:00:00.000Z",
+    "loadMode": "external",
+    "videoUrl": "",
+    "thumbnailUrl": ""
+  },
+  {
+    "id": "variant-v2-pulley-supino",
+    "name": "Pulley presa supina",
+    "muscleGroupId": "muscle-1",
+    "secondaryMuscleIds": [],
+    "description": "Mantieni un’esecuzione controllata e scegli un carico adatto al tuo livello. Il link video è facoltativo e può essere aggiunto da un amministratore.",
+    "equipment": "Cavi",
+    "tags": [
+      "Schiena"
+    ],
+    "active": true,
+    "createdAt": "2026-10-21T08:00:00.000Z",
+    "loadMode": "external",
+    "videoUrl": "",
+    "thumbnailUrl": ""
+  },
+  {
+    "id": "variant-v2-row-dischi",
+    "name": "Rematore alla macchina a dischi",
+    "muscleGroupId": "muscle-1",
+    "secondaryMuscleIds": [],
+    "description": "Mantieni un’esecuzione controllata e scegli un carico adatto al tuo livello. Il link video è facoltativo e può essere aggiunto da un amministratore.",
+    "equipment": "Macchina a dischi",
+    "tags": [
+      "Schiena"
+    ],
+    "active": true,
+    "createdAt": "2026-10-21T08:00:00.000Z",
+    "loadMode": "external",
+    "videoUrl": "",
+    "thumbnailUrl": ""
+  },
+  {
+    "id": "variant-v2-pullover-cable-rope",
+    "name": "Pullover al cavo alto con corda",
+    "muscleGroupId": "muscle-1",
+    "secondaryMuscleIds": [],
+    "description": "Mantieni un’esecuzione controllata e scegli un carico adatto al tuo livello. Il link video è facoltativo e può essere aggiunto da un amministratore.",
+    "equipment": "Cavi",
+    "tags": [
+      "Schiena"
+    ],
+    "active": true,
+    "createdAt": "2026-10-21T08:00:00.000Z",
+    "loadMode": "external",
+    "videoUrl": "",
+    "thumbnailUrl": ""
+  },
+  {
+    "id": "variant-v2-lateral-machine",
+    "name": "Alzate laterali alla macchina",
+    "muscleGroupId": "muscle-2",
+    "secondaryMuscleIds": [],
+    "description": "Mantieni un’esecuzione controllata e scegli un carico adatto al tuo livello. Il link video è facoltativo e può essere aggiunto da un amministratore.",
+    "equipment": "Macchina",
+    "tags": [
+      "Spalle"
+    ],
+    "active": true,
+    "createdAt": "2026-10-21T08:00:00.000Z",
+    "loadMode": "external",
+    "videoUrl": "",
+    "thumbnailUrl": ""
+  },
+  {
+    "id": "variant-v2-legpress-horizontal",
+    "name": "Leg press orizzontale",
+    "muscleGroupId": "muscle-3",
+    "secondaryMuscleIds": [],
+    "description": "Mantieni un’esecuzione controllata e scegli un carico adatto al tuo livello. Il link video è facoltativo e può essere aggiunto da un amministratore.",
+    "equipment": "Macchina",
+    "tags": [
+      "Gambe"
+    ],
+    "active": true,
+    "createdAt": "2026-10-21T08:00:00.000Z",
+    "loadMode": "external",
+    "videoUrl": "",
+    "thumbnailUrl": ""
+  },
+  {
+    "id": "variant-v2-legpress-45",
+    "name": "Leg press inclinata a 45°",
+    "muscleGroupId": "muscle-3",
+    "secondaryMuscleIds": [],
+    "description": "Mantieni un’esecuzione controllata e scegli un carico adatto al tuo livello. Il link video è facoltativo e può essere aggiunto da un amministratore.",
+    "equipment": "Macchina",
+    "tags": [
+      "Gambe"
+    ],
+    "active": true,
+    "createdAt": "2026-10-21T08:00:00.000Z",
+    "loadMode": "external",
+    "videoUrl": "",
+    "thumbnailUrl": ""
+  },
+  {
+    "id": "variant-v2-smith-squat",
+    "name": "Squat al multipower",
+    "muscleGroupId": "muscle-3",
+    "secondaryMuscleIds": [],
+    "description": "Mantieni un’esecuzione controllata e scegli un carico adatto al tuo livello. Il link video è facoltativo e può essere aggiunto da un amministratore.",
+    "equipment": "Multipower",
+    "tags": [
+      "Gambe"
+    ],
+    "active": true,
+    "createdAt": "2026-10-21T08:00:00.000Z",
     "loadMode": "external",
     "videoUrl": "",
     "thumbnailUrl": ""

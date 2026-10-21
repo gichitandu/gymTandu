@@ -218,7 +218,7 @@ describe("IndexedDB e transazioni", () => {
     databases.push(db);
     const stored = await db.snapshot();
     expect(stored.plans[0].name).toBe("Forza aggiornata");
-    expect(stored.exercises.length).toBe(161);
+    expect(stored.exercises.length).toBe(253);
     expect(stored.sets.length).toBe(2);
   });
   it("rifiuta restore inconsistente senza modificare i dati correnti", async () => {

@@ -73,7 +73,7 @@ it('accepts eight plain characters and rejects seven for setup, creation and pas
 
 it('shares the catalog, permits admin changes and hides inactive exercises from clients',async()=>{
  const cookie=await activate();
- const base=await (await call('catalog',undefined,{cookie})).json();expect(base.exercises).toHaveLength(161);expect(base.muscleGroups).toHaveLength(8);expect(base.exercises.every((e:any)=>e.videoUrl==='')).toBe(true);
+ const base=await (await call('catalog',undefined,{cookie})).json();expect(base.exercises).toHaveLength(253);expect(base.muscleGroups).toHaveLength(8);expect(base.exercises.every((e:any)=>e.videoUrl==='')).toBe(true);
  for(const role of ['Admin','User'])await call('users',{name:role,email:role.toLowerCase()+'@example.com',username:role.toLowerCase(),role,password:'abcdefgh'},{cookie});
  const sessionFor=async(role:string)=>{const r=await call('auth/login',{email:role.toLowerCase()+'@example.com',password:'abcdefgh'},{visitor:role});return {cookie:r.headers.get('set-cookie')!.split(';')[0],visitor:role};};
  const admin=await sessionFor('Admin'),client=await sessionFor('User');

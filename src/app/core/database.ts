@@ -29,6 +29,17 @@ export class GymDatabase extends Dexie {
       await tx.table('muscleGroups').bulkPut(defaultGroups.filter(g=>!groups.has(g.id)));
       await exercises.bulkPut(defaultExercises.filter(e=>e.id.startsWith('variant-')&&!ids.has(e.id)));
     });
+    this.version(5).stores({}).upgrade(async tx=>{
+      const exercises=tx.table('exercises');
+      const ids=new Set(await exercises.toCollection().primaryKeys());
+      await exercises.bulkPut(defaultExercises.filter(e=>e.id.startsWith('variant-v2-')&&!ids.has(e.id)));
+      const known=new Map(defaultExercises.map(e=>[e.id,e]));
+      const families=new Set(['Lat machine','Chest press','Croci ai cavi','Bicipiti','Tricipiti','Avambracci']);
+      await exercises.toCollection().modify(e=>{
+        const tags=known.get(e.id)?.tags.filter(t=>families.has(t))||[];
+        if(tags.length)e.tags=[...new Set([...(e.tags||[]),...tags])];
+      });
+    });
   }
   entity<K extends keyof DataSet>(name: K): Table<DataSet[K][number], string> {
     return this.table(name);
