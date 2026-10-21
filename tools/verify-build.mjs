@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 const root = "dist/gymtrack/browser";
 for (const file of [
   "index.html",
@@ -36,6 +37,13 @@ for (const group of aiModel.weightsManifest) for (const file of group.paths)
   assert(fs.existsSync(root + '/vendor/food-model/' + file), `Pesi AI mancanti: ${file}`);
 assert(sw.assetGroups.find(g=>g.name==='app').urls.includes('/food-ai-worker.js'));
 const assets = Object.keys(sw.hashTable);
+const buildText = fs.readFileSync(root + '/app-build.json','utf8');
+const appBuild = JSON.parse(buildText);
+assert(/^[a-f0-9]{64}$/.test(appBuild.buildId), 'Identità della versione mancante');
+assert.equal(sw.appData?.buildId, appBuild.buildId, 'Versione diversa nel service worker');
+assert.equal(sw.hashTable['/app-build.json'],createHash('sha1').update(buildText).digest('hex'),'Descrittore versione non verificato dalla cache');
+assert(sw.assetGroups.find(g=>g.name==='app').urls.includes('/app-build.json'),'Versione esclusa dalla cache offline');
+assert(fs.readFileSync('dist/server/index.js','utf8').includes('const APP_BUILD_ID = '+JSON.stringify(appBuild.buildId)), 'Versione server diversa dagli asset pubblicati');
 for (const file of fs.readdirSync('public/exercises'))
   assert(assets.includes('/exercises/' + file), `${file} non disponibile offline`);
 const scripts = fs

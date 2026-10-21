@@ -114,3 +114,22 @@ it('saves the latest pending input when the historical editor is closed without 
   await store.settled();
   expect(set()).toMatchObject({ notes: 'Da conservare alla chiusura', rest: 0 });
 });
+
+it('requires confirmation before replacing existing historical series',async()=>{
+  vi.stubGlobal('confirm',vi.fn(()=>false));const copy=vi.spyOn(store,'copyPrevious');
+  editor.patchNumber(set(),'weight',72.5);await editor.copyPrevious(exercise().id);
+  expect(confirm).toHaveBeenCalledOnce();expect(copy).not.toHaveBeenCalled();
+  expect(editor.numberValue(set(),'weight')).toBe(72.5);
+});
+
+it('preserves completion and skipped flags when values are copied into a completed workout',async()=>{
+  const historicalExercise=exercise(),historicalWorkout=editor.workoutId();
+  await store.updateSet(set().id,{weight:60,reps:10,completed:true});
+  await store.addSet(historicalExercise.id);await store.finish();await store.start('day');
+  const reference=store.workoutExercises(store.draft()!.id)[0];
+  await store.updateSet(store.sets(reference.id)[0].id,{weight:80,reps:8,completed:true});
+  await store.addSet(reference.id);await store.updateSet(store.sets(reference.id)[1].id,{weight:85,reps:6,completed:true});await store.finish();
+  vi.stubGlobal('confirm',vi.fn(()=>true));await editor.copyPrevious(historicalExercise.id);
+  expect(store.data().workouts.find(workout=>workout.id===historicalWorkout)?.status).toBe('completed');
+  expect(store.sets(historicalExercise.id).map(row=>({weight:row.weight,completed:row.completed}))).toEqual([{weight:80,completed:true},{weight:85,completed:false}]);
+});

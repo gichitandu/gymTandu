@@ -5,6 +5,8 @@ import { archiveApi } from './archive.js';
 const OWNER = 'giacomotanduo004@gmail.com';
 const COOKIE = '__Host-gymtrack';
 const TTL = 60 * 60 * 24 * 30;
+// Replaced by the packager with the identity of these exact published assets.
+const APP_BUILD_ID = /* __APP_BUILD_ID__ */ 'development';
 const encoder = new TextEncoder();
 const hex = bytes => [...new Uint8Array(bytes)].map(x => x.toString(16).padStart(2, '0')).join('');
 const random = () => hex(crypto.getRandomValues(new Uint8Array(32)));
@@ -78,6 +80,10 @@ export async function api(request,env) {
     if(request.method!=='GET' && !request.headers.get('content-type')?.startsWith('application/json')) fail('Formato non supportato.',415);
     const me=await session(request,db);
     if(path==='/api/archive')return await archiveApi(request,env,me);
+    if(path==='/api/app-release'&&request.method==='GET') {
+      const release=await db.prepare('SELECT build_id,generation,requested_at FROM app_releases WHERE id=?').bind('current').first();
+      return json({buildId:APP_BUILD_ID,requestedBuildId:release?.build_id||null,generation:release?.generation||0,requestedAt:release?.requested_at||null});
+    }
     if(path==='/api/auth/me'&&request.method==='GET') {
       const owner=await db.prepare('SELECT id FROM users WHERE email=?').bind(OWNER).first();
       return json({user:me?publicUser(me):null,setup:!owner && request.headers.get('oai-authenticated-user-email')?.toLowerCase()===OWNER,platformOwner:request.headers.get('oai-authenticated-user-email')?.toLowerCase()===OWNER,ownerEmail:OWNER});
@@ -132,6 +138,14 @@ export async function api(request,env) {
       return json({ok:true},200,{'Set-Cookie':`${COOKIE}=; Path=/; Secure; HttpOnly; SameSite=Strict; Max-Age=0`});
     }
     if(!me) fail('Sessione scaduta. Accedi di nuovo.',401);
+    if(path==='/api/app-release'&&request.method==='POST') {
+      if(me.role!=='SuperAdmin') fail('Solo il Super Admin può distribuire un aggiornamento.',403);
+      // The client cannot select a build, URL, audience, or execute a deploy.
+      // Repeated requests for the same published version are idempotent.
+      await db.prepare('INSERT INTO app_releases(id,build_id,generation,requested_at,requested_by) VALUES(?,?,1,?,?) ON CONFLICT(id) DO UPDATE SET build_id=excluded.build_id,generation=app_releases.generation+1,requested_at=excluded.requested_at,requested_by=excluded.requested_by WHERE app_releases.build_id<>excluded.build_id').bind('current',APP_BUILD_ID,Date.now(),me.id).run();
+      const release=await db.prepare('SELECT build_id,generation,requested_at FROM app_releases WHERE id=?').bind('current').first();
+      return json({buildId:APP_BUILD_ID,requestedBuildId:release.build_id,generation:release.generation,requestedAt:release.requested_at});
+    }
     if(path==='/api/preferences'&&request.method==='POST') {
       if(typeof b.backgroundColor!=='string'||!/^#[0-9a-fA-F]{6}$/.test(b.backgroundColor)) fail('Colore non valido.');
       await db.prepare('INSERT INTO user_preferences(user_id,background_color) VALUES(?,?) ON CONFLICT(user_id) DO UPDATE SET background_color=excluded.background_color').bind(me.id,b.backgroundColor).run();

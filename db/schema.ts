@@ -13,3 +13,6 @@ export const archiveHeads = sqliteTable('archive_heads', {
 export const archiveVersions = sqliteTable('archive_versions', {
  id:text('id').primaryKey(),scope:text('scope').notNull(),revision:integer('revision').notNull(),objectKey:text('object_key').notNull(),updatedAt:integer('updated_at').notNull(),sizeBytes:integer('size_bytes').notNull(),contentHash:text('content_hash').notNull()
 },table=>[uniqueIndex('archive_versions_scope_revision').on(table.scope,table.revision)]);
+export const appReleases = sqliteTable('app_releases', {
+ id:text('id').primaryKey(),buildId:text('build_id').notNull(),generation:integer('generation').notNull().default(1),requestedAt:integer('requested_at').notNull(),requestedBy:text('requested_by').references(()=>users.id)
+});

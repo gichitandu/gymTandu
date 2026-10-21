@@ -8,6 +8,7 @@ import { Router, RouterLink, RouterLinkActive, RouterOutlet } from "@angular/rou
 import { IconComponent } from "../shared/icon.component";
 import { ArchiveRecoveryComponent } from "../shared/archive-recovery.component";
 import { ArchiveSyncService } from "../services/archive-sync";
+import { canResumeAtHome, MobileNavigationService } from "../services/mobile-navigation";
 @Component({
   selector: "gt-shell",
   standalone: true,
@@ -50,7 +51,7 @@ import { ArchiveSyncService } from "../services/archive-sync";
           <a class="header-calendar" routerLink="/calendario" aria-label="Apri calendario"><gt-icon name="calendar"/></a><a class="archive-sync-indicator" [class.copy-confirmed]="cloud.status()==='saved'" [class.copy-warning]="cloud.status()==='offline'||cloud.status()==='conflict'" routerLink="/profilo" [queryParams]="{section:'backup'}" [attr.aria-label]="backupStatus()" [title]="backupStatus()"><span aria-hidden="true">{{cloud.status()==='saved'?'✓':cloud.status()==='offline'||cloud.status()==='conflict'?'!':'↻'}}</span><small>{{backupStatus()}}</small></a><a class="avatar" routerLink="/profilo" aria-label="Apri profilo"><gt-avatar [photo]="s.profile().photo" [name]="s.profile().name" /></a>
         </div>
       </header>
-      <main>@if(auth.offlineMode()){<p class="local-mode-label">Archivio personale locale · funzioni condivise disabilitate</p>}<router-outlet />@if(['/','/piani','/profilo'].includes(router.url.split('?')[0])){<gt-archive-recovery/>}</main>
+      <main>@if(s.ready()){@if(auth.offlineMode()){<p class="local-mode-label">Archivio personale locale · funzioni condivise disabilitate</p>}<router-outlet />@if(['/','/piani','/profilo'].includes(router.url.split('?')[0])){<gt-archive-recovery/>}}@else{<section class="card archive-opening" role="status" aria-live="polite"><h1>Apertura del tuo archivio</h1><p>Sto caricando i dati salvati su questo dispositivo…</p>@if(s.error()){<p class="notice">{{s.error()}}</p>}</section>}</main>
       <div class="secondary-links"><a routerLink="/calendario">Calendario ↗</a><a routerLink="/allenamenti">Storico allenamenti ↗</a><a routerLink="/catalogo">Esercizi ↗</a></div><footer>
         OGNI RIPETIZIONE CONTA. <span>Costruisci il tuo prossimo livello.</span>
       </footer>
@@ -62,24 +63,26 @@ import { ArchiveSyncService } from "../services/archive-sync";
           routerLinkActive="selected"
           [class.training-selected]="item.path==='/piani'&&(router.url.startsWith('/sessione')||router.url.startsWith('/allenamenti'))"
           [routerLinkActiveOptions]="{ exact: true }"
-          ><gt-icon [name]="item.icon" /><span>{{ item.label }}</span></a
+          [attr.aria-label]="item.label"
+          ><gt-icon [name]="item.icon" /><span>{{ item.mobileLabel || item.label }}</span></a
         >
       }
     </nav>`,
 })
 export class ShellComponent {
   private resume=inject(WorkoutResumeService);private firstOpen=true;
-  constructor(){effect(()=>{if(!this.s.ready()||!this.firstOpen)return;this.firstOpen=false;const w=this.s.draft();if(w&&location.pathname==='/'&&this.resume.read(this.s.archiveKey(),w.id,this.s.data().workoutUi.find(x=>x.id===w.id),this.s.archiveRevision()))void this.router.navigateByUrl('/sessione');});}
+  private navigation=inject(MobileNavigationService);
+  constructor(){effect(()=>{if(!this.s.ready()||!this.firstOpen||!this.navigation.resolved())return;this.firstOpen=false;const w=this.s.draft();if(w&&canResumeAtHome(this.navigation.url(),this.navigation.resolved())&&this.resume.read(this.s.archiveKey(),w.id,this.s.data().workoutUi.find(x=>x.id===w.id),this.s.archiveRevision()))void this.router.navigateByUrl('/sessione');});}
   router=inject(Router);
   auth = inject(AuthService);
   s = inject(Store);
   pwa = inject(PwaService);
   cloud = inject(ArchiveSyncService);
   backupStatus(){return ({local:'Archivio sul dispositivo',syncing:'Copia server in corso',saved:'Copia server aggiornata',offline:'Copia server in attesa della rete',conflict:'Copie da verificare'})[this.cloud.status()];}
-  nav = [
+  nav: {path:string;label:string;mobileLabel?:string;icon:string}[] = [
     {path:'/',label:'Home',icon:'home'},
-    {path:'/piani',label:'Allenamenti',icon:'weight'},
-    {path:'/alimentazione',label:'Alimentazione',icon:'nutrition'},
+    {path:'/piani',label:'Allenamenti',mobileLabel:'Allenati',icon:'weight'},
+    {path:'/alimentazione',label:'Alimentazione',mobileLabel:'Pasti',icon:'nutrition'},
     {path:'/progressi',label:'Progressi',icon:'chart'},
     {path:'/profilo',label:'Profilo',icon:'user'},
   ];

@@ -6,6 +6,7 @@ import { Store } from "../services/store";
 import { WorkoutLogExercise, WorkoutLogSet } from "../models/domain";
 import { IconComponent } from "./icon.component";
 import type { AppUpdateEvent } from '../services/pwa';
+import { FormDraftService } from '../services/form-drafts';
 
 type NumberField = 'weight' | 'reps' | 'rpe' | 'rest';
 type SetDraft = Partial<Record<NumberField, number | null | undefined>> & { notes?: string; kind?: 'work' | 'warmup' };
@@ -13,6 +14,7 @@ type SetDraft = Partial<Record<NumberField, number | null | undefined>> & { note
   selector: "gt-workout-editor",
   standalone: true,
   imports: [FormsModule, IconComponent, ExerciseVideoComponent],
+  styleUrl: './workout-editor.css',
   template: ` @for (e of s.workoutExercises(workoutId()); track e.id) {
       <section class="card" style="margin-bottom:18px">
         <div class="card-head">
@@ -39,7 +41,7 @@ type SetDraft = Partial<Record<NumberField, number | null | undefined>> & { note
               <b>L’ultima volta</b
               ><button
                 (click)="copyPrevious(e.id)" [disabled]="s.busy()"
-                style="font-size:10px;padding:6px 10px;min-height:32px"
+                style="font-size:12px;padding:8px 12px;min-height:44px"
               >
                 Copia valori
               </button>
@@ -79,9 +81,9 @@ type SetDraft = Partial<Record<NumberField, number | null | undefined>> & { note
             </thead>
             <tbody>
               @for (set of s.sets(e.id); track set.id) {
-                <tr>
-                  <td>{{set.number}}<select aria-label="Tipo di serie" [ngModel]="kindValue(set)" (ngModelChange)="patchKind(set,$event)" (blur)="flushRow(set.id)"><option value="work">Allenante</option><option value="warmup">Riscaldamento</option></select></td>
-                  <td>
+                <tr class="set-entry">
+                  <td class="set-type" [attr.data-label]="'Serie '+set.number"><span class="desktop-set-number">{{set.number}}</span><select [attr.aria-label]="'Tipo di serie '+set.number" [ngModel]="kindValue(set)" (ngModelChange)="patchKind(set,$event)" (blur)="flushRow(set.id)"><option value="work">Allenante</option><option value="warmup">Riscaldamento</option></select></td>
+                  <td [attr.data-label]="(e.loadMode==='assisted'?'Assistenza':e.loadMode==='weighted-bodyweight'?'Zavorra':'Peso')+' ('+s.settings().unit+')'">
                     @if (e.loadMode === "bodyweight") {
                       <span class="muted">Corpo libero</span>
                     } @else {
@@ -99,7 +101,7 @@ type SetDraft = Partial<Record<NumberField, number | null | undefined>> & { note
                       />
                     }
                   </td>
-                  <td>
+                  <td data-label="Ripetizioni">
                     <input
                       [attr.aria-label]="
                         'Ripetizioni serie ' + set.number + ' ' + e.name
@@ -114,7 +116,7 @@ type SetDraft = Partial<Record<NumberField, number | null | undefined>> & { note
                       (blur)="flushRow(set.id)"
                     />
                   </td>
-                  <td class="rpe-column">
+                  <td class="rpe-column" data-label="RPE (facoltativo)">
                     <input
                       [attr.aria-label]="'RPE serie ' + set.number"
                       type="number"
@@ -128,7 +130,7 @@ type SetDraft = Partial<Record<NumberField, number | null | undefined>> & { note
                       (blur)="flushRow(set.id)"
                     />
                   </td>
-                  <td>
+                  <td data-label="Serie completata">
                     <button
                       [class.set-done]="set.completed"
                       [attr.aria-label]="
@@ -143,7 +145,7 @@ type SetDraft = Partial<Record<NumberField, number | null | undefined>> & { note
                       <gt-icon name="check" />
                     </button>
                   </td>
-                  <td>
+                  <td class="set-remove" data-label="Elimina serie">
                     <button
                       class="icon-btn ghost"
                       (click)="remove(set)"
@@ -208,26 +210,35 @@ export class WorkoutEditorComponent {
   private drafts = new Map<string, SetDraft>();
   private timers = new Map<string, ReturnType<typeof setTimeout>>();
   private writes = new Map<string, Promise<boolean>>();
+  private draftStorage=inject(FormDraftService,{optional:true});
+  private draftSession?:ReturnType<FormDraftService['bind']>;
   toggling = signal(new Set<string>());
   restUntil = 0;
   private tick = setInterval(() => this.clock.set(Date.now()), 1000);
   clock = signal(Date.now());
   DateNow = () => this.clock();
+  ngOnInit(){this.draftSession=this.draftStorage?.bind<{entries:[string,SetDraft][];bases?:Record<string,string>}>(this.s.archiveKey(),'history-sets:'+this.workoutId(),()=>this.drafts.size?{entries:[...this.drafts],bases:Object.fromEntries(this.s.workoutExercises(this.workoutId()).flatMap(exercise=>this.s.sets(exercise.id)).filter(set=>this.drafts.has(set.id)).map(set=>[set.id,JSON.stringify(set)]))}:null,data=>{
+    if(!Array.isArray(data?.entries)||data.entries.length>1000)return;
+    const owned=new Set(this.s.workoutExercises(this.workoutId()).flatMap(exercise=>this.s.sets(exercise.id)).map(set=>set.id));
+    for(const entry of data.entries){if(!Array.isArray(entry)||entry.length!==2||!owned.has(entry[0])||!entry[1]||typeof entry[1]!=='object')continue;const allowed=['weight','reps','rpe','rest','notes','kind'];if(Object.keys(entry[1]).some(key=>!allowed.includes(key)))continue;const set=this.s.workoutExercises(this.workoutId()).flatMap(exercise=>this.s.sets(exercise.id)).find(set=>set.id===entry[0]);if(data.bases?.[entry[0]]&&data.bases[entry[0]]!==JSON.stringify(set)){this.s.message.set('Una serie è cambiata dall’ultima bozza: sono conservati i valori già salvati.');continue;}this.drafts.set(entry[0],entry[1]);}
+  });}
   ngOnDestroy() {
     clearInterval(this.tick);
     for (const timer of this.timers.values()) clearTimeout(timer);
     this.timers.clear();
+    void this.draftSession?.flush();
     void this.flushAll(false);
+    void this.draftSession?.destroy();
   }
   @HostListener('window:gymtrack:before-update', ['$event']) beforeUpdate(event: Event) {
     (event as AppUpdateEvent).waitUntil(this.flushAll());
   }
-  @HostListener('window:pagehide') flushOnHide() { void this.flushAll(false); }
+  @HostListener('window:pagehide') flushOnHide() { void this.draftSession?.flush();void this.flushAll(false); }
   remaining() {
     return Math.max(0, Math.ceil((this.restUntil - this.clock()) / 1000));
   }
   previous(e: WorkoutLogExercise) {
-    return this.s.previous(e.exerciseId, e.workoutId);
+    return this.s.previous(e.exerciseId, e.workoutId,e.machineSetup);
   }
   mode(e: WorkoutLogExercise) {
     return {
@@ -251,9 +262,11 @@ export class WorkoutEditorComponent {
   patchKind(set: WorkoutLogSet, kind: 'work' | 'warmup') { this.queueDraft(set.id, { kind }); }
   private queueDraft(id: string, patch: SetDraft) {
     this.drafts.set(id, { ...this.drafts.get(id), ...patch });
+    this.draftSession?.changed();
     clearTimeout(this.timers.get(id));
     this.timers.set(id, setTimeout(() => { this.timers.delete(id); void this.flushRow(id, false); }, 200));
   }
+  private draftsChanged(){if(this.drafts.size)this.draftSession?.changed();else void this.draftSession?.clear().catch(()=>{});}
   private validatedPatch(draft: SetDraft): Partial<WorkoutLogSet> | undefined {
     const patch: Partial<WorkoutLogSet> = {};
     for (const key of ['weight', 'reps', 'rpe', 'rest'] as const) {
@@ -278,22 +291,24 @@ export class WorkoutEditorComponent {
       const draft = this.drafts.get(id);
       if (!draft) return true;
       const patch = this.validatedPatch(draft);
-      if (!patch) { if (report) this.s.error.set('Valore non valido: controlla i limiti del campo.'); return false; }
+      if (!patch) { if (report) this.s.error.set('Valore non valido: controlla i limiti del campo.'); await this.draftSession?.flush();return false; }
       const job = this.s.updateSet(id, patch);
       this.writes.set(id, job);
       let saved = false;
       try { saved = await job; }
       catch (error) { this.s.error.set(error instanceof Error ? error.message : 'Modifiche alla serie non salvate. Riprova.'); }
       finally { if (this.writes.get(id) === job) this.writes.delete(id); }
-      if (!saved) return false;
+      if (!saved) {await this.draftSession?.flush();return false;}
       // Keep inputs typed while an older write was pending on screen. Only the
       // exact draft accepted by this write can be removed from the local form.
       if (this.drafts.get(id) === draft) this.drafts.delete(id);
+      this.draftsChanged();
     }
   }
   async flushAll(report = true) {
     const ids = new Set([...this.drafts.keys(), ...this.writes.keys()]);
     const saved = await Promise.all([...ids].map(id => this.flushRow(id, report)));
+    await this.draftSession?.flush();
     return saved.every(Boolean);
   }
   async toggle(set: WorkoutLogSet, e: WorkoutLogExercise) {
@@ -312,15 +327,16 @@ export class WorkoutEditorComponent {
     } finally { this.toggling.update(ids => new Set([...ids].filter(id => id !== set.id))); }
   }
   async copyPrevious(id: string) {
+    if(this.s.sets(id).some(set=>set.kind!=='warmup')&&!confirm('Sostituire le serie allenanti con i valori precedenti? Nello storico verrà conservato lo stato delle serie completate; le serie di riscaldamento restano conservate.'))return;
     if (!await this.flushAll()) return;
     const ids = this.s.sets(id).map(set => set.id);
-    if (await this.s.copyPrevious(id)) for (const key of ids) this.drafts.delete(key);
+    if (await this.s.copyPrevious(id)){for (const key of ids) this.drafts.delete(key);this.draftsChanged();}
   }
   async remove(set: WorkoutLogSet) {
     if (set.completed && !confirm('Eliminare questa serie già completata?')) return;
     clearTimeout(this.timers.get(set.id)); this.timers.delete(set.id);
     const pending = this.writes.get(set.id);
     if (pending) await pending;
-    if (await this.s.removeSet(set.id)) this.drafts.delete(set.id);
+    if (await this.s.removeSet(set.id)){this.drafts.delete(set.id);this.draftsChanged();}
   }
 }

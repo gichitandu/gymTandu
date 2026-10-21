@@ -1,4 +1,5 @@
-import { Component, computed, ElementRef, inject, signal } from '@angular/core';
+import { Component, computed, effect, ElementRef, inject, signal } from '@angular/core';
+import { TodayService } from '../services/today';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { A11yModule } from '@angular/cdk/a11y';
@@ -13,7 +14,10 @@ export class CalendarComponent {
  private host=inject<ElementRef<HTMLElement>>(ElementRef,{optional:true});private scrollKey='';private frame:number|undefined;
  ngAfterViewChecked(){const key=this.view()+this.selected();if(!this.host||key===this.scrollKey)return;this.scrollKey=key;if(this.frame!==undefined)cancelAnimationFrame(this.frame);this.frame=requestAnimationFrame(()=>{const rail=this.host?.nativeElement.querySelector<HTMLElement>('[data-week-rail]'),active=rail?.querySelector<HTMLElement>('[aria-pressed="true"]');if(rail&&active)rail.scrollTo({left:Math.max(0,active.offsetLeft-(rail.clientWidth-active.offsetWidth)/2),behavior:'auto'});});}
  ngOnDestroy(){if(this.frame!==undefined)cancelAnimationFrame(this.frame);}
- view=signal<CalendarView>('week');today=localDate();selected=signal(this.today);
+ private todayClock=inject(TodayService,{optional:true});
+ get today(){return this.todayClock?.date()||localDate();}
+ private lastToday=this.today;private followsToday=true;
+ view=signal<CalendarView>('week');selected=signal(this.today);
  weekdays=['Lun','Mar','Mer','Gio','Ven','Sab','Dom'];
  dates=computed(()=>calendarDays(this.selected(),this.view()));
  periodDates=computed(()=>this.view()==='month'?this.dates().filter(date=>date.slice(0,7)===this.selected().slice(0,7)):this.dates());
@@ -32,7 +36,7 @@ export class CalendarComponent {
  target=computed(()=>this.view()==='week'?this.s.settings().goals?.workoutsPerWeek:undefined);
  scoreProgress=computed(()=>{const goal=this.target()||(this.periodStats().planned+this.periodStats().completed);return goal?Math.min(100,this.periodStats().completed/goal*100):0;});
  upcoming=computed(()=>this.view()==='day'?[]:this.s.data().scheduledWorkouts.filter(e=>this.periodDates().includes(e.date)&&e.date!==this.selected()&&this.linked(e)?.status!=='completed').sort((a,b)=>a.date.localeCompare(b.date)).slice(0,4));
- constructor(){const date=inject(ActivatedRoute).snapshot.queryParamMap.get('date');if(date)this.choose(date);}
+ constructor(){const date=inject(ActivatedRoute).snapshot.queryParamMap.get('date');if(date)this.choose(date);if(this.todayClock)effect(()=>{const today=this.today,previous=this.lastToday;this.lastToday=today;if(today!==previous&&this.followsToday&&!this.modal())this.selected.set(today);});}
  day(date:string){return this.activity().get(date)||this.emptyActivity;}
  label(date:string){return parseLocalDate(date).toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long'});}
  shortLabel(date:string){return parseLocalDate(date).toLocaleDateString('it-IT',{weekday:'short',day:'numeric',month:'short'});}
@@ -42,8 +46,8 @@ export class CalendarComponent {
  periodTitle(){return this.view()==='week'?'La tua settimana':this.view()==='month'?'Il tuo mese':'Il tuo giorno';}
  dayHint(date:string){const a=this.day(date);return a.completed?`${a.completed} ${a.completed===1?'svolto':'svolti'}`:a.planned?`${a.planned} in programma`:a.meals?`${a.meals} pasti`:'Libero';}
  dayAria(date:string){const a=this.day(date);return `${this.label(date)}, ${a.planned} programmati, ${a.completed} svolti, ${a.meals} pasti`+(date===this.today?', oggi':'');}
- move(direction:number){this.selected.set(movePeriod(this.selected(),this.view(),direction));}
- choose(date:string){try{parseLocalDate(date);this.selected.set(date);}catch{}}
+ move(direction:number){this.followsToday=false;this.selected.set(movePeriod(this.selected(),this.view(),direction));}
+ choose(date:string){try{parseLocalDate(date);this.followsToday=date===this.today;this.selected.set(date);}catch{}}
  tomorrow(){this.choose(moveDate(this.today,1));}
  linked(e:ScheduledWorkout){return this.s.data().workouts.find(w=>w.id===e.workoutId);}
  available(e:ScheduledWorkout){return this.availableDays().some(d=>d.id===e.dayId);}

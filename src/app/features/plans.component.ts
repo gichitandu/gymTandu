@@ -22,6 +22,14 @@ import {
 } from "../models/domain";
 import { IconComponent } from "../shared/icon.component";
 import { StatusComponent } from "../shared/status.component";
+import { DraftSession, FormDraftService } from "../services/form-drafts";
+type PlanEditorDraft = {
+  kind: string; editId: string; saveId: string; parentId: string; baseline: string;
+  expanded: string; archived: boolean; search: string; scope: ExerciseScope; unit?:'kg'|'lb';
+  plan: ReturnType<PlansComponent['planForm']['getRawValue']>;
+  day: ReturnType<PlansComponent['dayForm']['getRawValue']>;
+  exercise: ReturnType<PlansComponent['exerciseForm']['getRawValue']>;
+};
 @Component({
   standalone: true,
   styleUrl: "./feature-polish.css",
@@ -41,6 +49,7 @@ import { StatusComponent } from "../shared/status.component";
       </button>
     </gt-section-heading>
     <gt-status />
+    @if(draftNotice()){<p class="notice" role="status">{{draftNotice()}}</p>}
     <div class="segmented plan-tabs">
       <button [class.active]="!archived()" (click)="archived.set(false)">
         Attivi</button
@@ -402,6 +411,14 @@ export class PlansComponent {
   expanded = signal("");
   modal = signal("");
   saving = signal(false);
+  draftNotice = signal('');
+  private drafts = inject(FormDraftService,{optional:true});
+  private draftSession?: DraftSession<PlanEditorDraft>;
+  private draftSubscriptions: {unsubscribe():void}[] = [];
+  private formBaseline = '';
+  private restoringDraft = false;
+  private destroyed = false;
+  private restoreTimer?: ReturnType<typeof setTimeout>;
   private formSaveId = "";
   editId = "";
   parentId = "";
@@ -474,8 +491,63 @@ export class PlansComponent {
     rpe: [null as number | null, [Validators.min(1), Validators.max(10)]],
     notes: [""],
   });
+  ngOnInit(){
+    if(!this.drafts)return;
+    this.draftSession=this.drafts.bind(this.s.archiveKey(),'plans-editor',()=>this.captureDraft(),value=>this.restoreDraft(value));
+    const changed=()=>{if(!this.restoringDraft)this.draftSession?.changed();};
+    this.draftSubscriptions=[this.planForm.valueChanges.subscribe(changed),this.dayForm.valueChanges.subscribe(changed),this.exerciseForm.valueChanges.subscribe(changed)];
+  }
+  private activeValue(){return this.modal()==='plan'?this.planForm.getRawValue():this.modal()==='day'?this.dayForm.getRawValue():this.exerciseForm.getRawValue();}
+  private hasChanges(){return !!this.modal()&&JSON.stringify(this.activeValue())!==this.formBaseline;}
+  private captureDraft():PlanEditorDraft|null{
+    if(!this.hasChanges())return null;
+    return {kind:this.modal(),editId:this.editId,saveId:this.formSaveId,parentId:this.parentId,baseline:this.formBaseline,expanded:this.expanded(),archived:this.archived(),search:this.exerciseSearch(),scope:this.scope(),unit:this.s.settings?.()?.unit||'kg',plan:this.planForm.getRawValue(),day:this.dayForm.getRawValue(),exercise:this.exerciseForm.getRawValue()};
+  }
+  private appliedDraft(value:PlanEditorDraft){
+    const data=this.s.data();
+    if(value.kind==='plan'){const plan=data.plans.find(item=>item.id===value.saveId);return !!plan&&plan.name===value.plan.name.trim()&&plan.description===value.plan.description.trim();}
+    if(value.kind==='day'){const day=data.days.find(item=>item.id===value.saveId);return !!day&&day.name===value.day.name.trim()&&day.weekday===(value.day.weekday===''?undefined:Number(value.day.weekday));}
+    const entry=data.planExercises.find(item=>item.id===value.saveId),form=value.exercise;
+    const kg=form.targetWeight===null?undefined:value.unit==='lb'?form.targetWeight/2.2046226218:form.targetWeight;
+    return !!entry&&entry.exerciseId===form.exerciseId&&entry.sets===form.sets&&entry.repsMin===form.repsMin&&entry.repsMax===form.repsMax&&entry.rest===form.rest&&entry.targetWeight===kg&&entry.rpe===(form.rpe??undefined)&&entry.notes===(form.notes||'')&&(entry.warmupSets||0)===(form.warmupSets||0)&&(entry.superset||'')===(form.superset||'');
+  }
+  private restoreDraft(value:PlanEditorDraft){
+    if(this.destroyed||this.modal())return;
+    if(typeof this.s.ready==='function'&&!this.s.ready()){this.restoreTimer=setTimeout(()=>this.restoreDraft(value),100);return;}
+    if(!value){void this.draftSession?.clear();return;}
+    const data=this.s.data();
+    const stale=!['plan','day','exercise'].includes(value.kind)||!value.saveId||!value.plan||!value.day||!value.exercise||typeof value.baseline!=='string'||
+      value.kind==='plan'&&!!value.editId&&!data.plans.some(p=>p.id===value.editId)||
+      value.kind==='day'&&(!data.plans.some(p=>p.id===value.parentId)||!!value.editId&&!data.days.some(d=>d.id===value.editId&&d.planId===value.parentId))||
+      value.kind==='exercise'&&(!data.days.some(d=>d.id===value.parentId)||!!value.editId&&!data.planExercises.some(e=>e.id===value.editId&&e.dayId===value.parentId));
+    if(stale||this.appliedDraft(value)){this.draftNotice.set(stale?'La bozza precedente si riferiva a un elemento non più disponibile. L’archivio è rimasto invariato.':'');this.clearStoredDraft();return;}
+    const unit=this.s.settings?.()?.unit||'kg';
+    if(value.unit&&value.unit!==unit&&value.exercise.targetWeight!==null){
+      const convert=(weight:number)=>unit==='lb'?weight*2.2046226218:weight/2.2046226218;
+      value.exercise.targetWeight=convert(value.exercise.targetWeight);
+      if(value.kind==='exercise'){try{const baseline=JSON.parse(value.baseline);if(baseline.targetWeight!==null)baseline.targetWeight=convert(baseline.targetWeight);value.baseline=JSON.stringify(baseline);}catch{/* An old baseline can remain conservative and ask before discard. */}}
+    }
+    this.restoringDraft=true;
+    try{
+      this.planForm.reset(value.plan);this.dayForm.reset(value.day);this.exerciseForm.reset(value.exercise);
+      const existing=(value.kind==='plan'?data.plans:value.kind==='day'?data.days:data.planExercises).some(item=>item.id===value.saveId);
+      this.editId=existing?value.saveId:value.editId;this.formSaveId=value.saveId;this.parentId=value.parentId;this.formBaseline=value.baseline;
+      this.expanded.set(value.expanded);this.archived.set(value.archived);this.exerciseSearch.set(value.search);this.scope.set(value.scope);
+      this.selectedCatalogId.set(value.exercise.exerciseId||'');this.modal.set(value.kind);this.draftNotice.set('Bozza recuperata. Controlla i valori e salva quando sei pronto.');
+    }finally{this.restoringDraft=false;}
+  }
+  private beginEditor(){
+    if(this.saving())return false;
+    if(this.hasChanges()&&!confirm('Scartare le modifiche non salvate prima di aprire un altro modulo?'))return false;
+    if(this.modal())this.clearStoredDraft();
+    clearTimeout(this.restoreTimer);this.draftNotice.set('');return true;
+  }
+  private editorOpened(){this.formBaseline=JSON.stringify(this.activeValue());this.draftSession?.changed();}
+  private clearStoredDraft(){void this.draftSession?.clear().catch(()=>{/* Pending cleanup is retried by the draft service before exit. */});}
+  private editorSaved(){this.modal.set('');this.formBaseline='';this.draftNotice.set('');this.clearStoredDraft();}
+  ngOnDestroy(){clearTimeout(this.restoreTimer);void this.draftSession?.destroy();this.destroyed=true;this.draftSubscriptions.forEach(subscription=>subscription.unsubscribe());}
   openPlan(p?: TrainingPlan) {
-    if(this.saving())return;
+    if(!this.beginEditor())return;
     this.editId = p?.id || "";
     this.formSaveId = p?.id || uid();
     this.planForm.reset({
@@ -483,6 +555,7 @@ export class PlansComponent {
       description: p?.description || "",
     });
     this.modal.set("plan");
+    this.editorOpened();
   }
   async savePlan() {
     if (this.planForm.invalid || this.saving()) return;
@@ -493,12 +566,12 @@ export class PlansComponent {
     const id = this.formSaveId ||= this.editId || uid();
     if (await this.s.savePlan(id, v.name, v.description)) {
       this.expanded.set(id);
-      this.modal.set("");
+      this.editorSaved();
     }
     } finally { this.planForm.enable({emitEvent:false});this.saving.set(false); }
   }
   openDay(planId: string, day?: TrainingPlanDay) {
-    if(this.saving())return;
+    if(!this.beginEditor())return;
     this.parentId = planId;
     this.editId = day?.id || "";
     this.formSaveId = day?.id || uid();
@@ -507,6 +580,7 @@ export class PlansComponent {
       weekday: day?.weekday === undefined ? "" : String(day.weekday),
     });
     this.modal.set("day");
+    this.editorOpened();
   }
   async saveDay() {
     if (this.dayForm.invalid || this.saving()) return;
@@ -523,7 +597,7 @@ export class PlansComponent {
       )
     ) {
       this.expanded.set(this.parentId);
-      this.modal.set("");
+      this.editorSaved();
     }
     } finally { this.dayForm.enable({emitEvent:false});this.saving.set(false); }
   }
@@ -577,7 +651,7 @@ export class PlansComponent {
     });
   }
   openExercise(dayId: string, e?: TrainingPlanExercise) {
-    if(this.saving())return;
+    if(!this.beginEditor())return;
     this.parentId = dayId;
     this.editId = e?.id || "";
     this.formSaveId = e?.id || uid();
@@ -595,8 +669,9 @@ export class PlansComponent {
       notes: e?.notes || "",warmupSets:e?.warmupSets||0,superset:e?.superset||"",
     });
     this.modal.set("exercise");
+    this.editorOpened();
   }
-  closeModal(){if(!this.saving())this.modal.set('');}
+  closeModal(){if(this.saving())return;if(this.hasChanges()&&!confirm('Scartare le modifiche non salvate?'))return;this.editorSaved();}
   async saveExercise() {
     if (this.exerciseForm.invalid || this.saving()) return;
     const v = this.exerciseForm.getRawValue();
@@ -628,7 +703,7 @@ export class PlansComponent {
             ?.order ?? this.s.planExercises(this.parentId).length,
       })
     )
-      this.modal.set("");
+      this.editorSaved();
     } finally { this.exerciseForm.enable({emitEvent:false});this.saving.set(false); }
   }
   moveExercise(e: TrainingPlanExercise, dir: number) {
@@ -645,6 +720,7 @@ export class PlansComponent {
     });
   }
   removeExercise(e: TrainingPlanExercise) {
+    if(!confirm('Rimuovere questo esercizio dal giorno del piano? Lo storico degli allenamenti resta conservato.'))return;
     void this.s.change((d) => {
       d.planExercises = d.planExercises.filter((x) => x.id !== e.id);
       d.planExercises

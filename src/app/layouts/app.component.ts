@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, effect, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../services/auth';
 import { ViewportService } from '../services/viewport';
@@ -6,10 +6,12 @@ import { ShellComponent } from './shell.component';
 import { IconComponent } from '../shared/icon.component';
 import { FeedbackPopupsComponent } from '../shared/feedback-popups.component';
 import { feedbackForContext, feedbackSignal } from '../services/feedback';
+import { AppActivationUncertainError, AppReleaseService } from '../services/app-release';
 @Component({selector:'app-root',standalone:true,imports:[FormsModule,ShellComponent,IconComponent,FeedbackPopupsComponent],styleUrl:'./entry.css',template:`
 <gt-feedback-popups/>
 @if(auth.user()) { <gt-shell /> } @else {
-<main class="entry-page" [class.welcome-state]="welcome() && !auth.setup()">
+@if(auth.loggingOut()){<p class="entry-status" role="status">Uscita e aggiornamento…</p>}
+<main class="entry-page" [class.welcome-state]="welcome() && !auth.setup()" [attr.inert]="entryUpdating()||auth.loggingOut()?'':null">
 <div class="entry-layout">
 <aside class="entry-hero" aria-label="GymTrack, allenamento e nutrizione">
 <div class="hero-emblem"><div class="emblem-orbit" aria-hidden="true"></div><img src="/brand/gt-mark.png" alt="Logo GT GymTrack"/><div class="entry-wordmark">Gym<span>Track</span></div><p class="brand-tagline">ALLENAMENTO · NUTRIZIONE · PROGRESSI</p></div>
@@ -60,6 +62,17 @@ export class AppComponent {
  private viewport=inject(ViewportService);
  private feedback=feedbackForContext();
  auth=inject(AuthService);welcome=signal(false);tab=signal<'account'|'local'>('account');help=signal(false);remember=false;username='';email='';password='';confirm='';busy=signal(false);error=feedbackSignal('error',this.feedback);show=signal(false);
+ private releases=inject(AppReleaseService);entryUpdating=signal(false);private attemptedEntryBuild='';
+ constructor(){effect(()=>{if(!this.auth.loading()&&!this.auth.loggingOut()&&!this.auth.user()&&!this.busy()&&this.releases.autoUpdateReady())queueMicrotask(()=>void this.updateSignedOut());});}
+ private async updateSignedOut(){
+  const target=this.releases.downloadedBuild();
+  if(!target||this.attemptedEntryBuild===target||this.auth.user()||this.auth.loading()||this.auth.loggingOut()||this.busy()||this.email||this.username||this.password||this.confirm||!this.releases.autoUpdateReady())return;
+  this.attemptedEntryBuild=target;this.entryUpdating.set(true);
+  let reloading=false;
+  try{if(await this.releases.activateReady(this.releases.policy()?.requestedBuildId||undefined)){reloading=true;location.reload();}}
+  catch(error){if(error instanceof AppActivationUncertainError){reloading=true;location.reload();}else this.error.set('Aggiornamento rimandato. Puoi accedere e riprovare dalle impostazioni.');}
+  finally{if(!reloading)this.entryUpdating.set(false);}
+ }
  async submit() {
   if(this.busy()) return;this.error.set('');
   if(this.auth.setup()&&this.password!==this.confirm) {this.error.set('Le password non coincidono.');return;}

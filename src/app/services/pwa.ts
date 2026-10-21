@@ -1,7 +1,11 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { SwUpdate } from '@angular/service-worker';
+import { Subscription } from 'rxjs';
 import { Store } from './store';
 import { ArchiveSyncService } from './archive-sync';
+import { AppActivationUncertainError, AppReleaseService } from './app-release';
+import { FormDraftService } from './form-drafts';
+import { feedbackForContext, feedbackSignal } from './feedback';
 interface InstallEvent extends Event {prompt():Promise<void>;userChoice:Promise<{outcome:string}>}
 export interface AppUpdateEvent extends Event {waitUntil(save:Promise<boolean|void>):void}
 @Injectable({providedIn:'root'})
@@ -9,38 +13,93 @@ export class PwaService {
  event=signal<InstallEvent|undefined>(undefined);
  installed=signal(matchMedia('(display-mode: standalone)').matches || !!(navigator as Navigator&{standalone?:boolean}).standalone);
  online=signal(navigator.onLine);offlineReady=signal(false);updateReady=signal(false);updating=signal(false);storage=signal('Non ancora misurato');persisted=signal<boolean|null>(null);
+ updateError=feedbackSignal('error',feedbackForContext());
  private updates=inject(SwUpdate);
  private store=inject(Store);
  private cloud=inject(ArchiveSyncService,{optional:true});
+ private drafts=inject(FormDraftService,{optional:true});
+ readonly releases=inject(AppReleaseService);
+ private subscriptions:Subscription[]=[];
+ private autoTimer:ReturnType<typeof setTimeout>|undefined;
+ private attemptedBuild='';
+ private destroyed=false;
+ private onOnline=()=>{this.online.set(true);this.attemptedBuild='';void this.releases.check();};
+ private onOffline=()=>this.online.set(false);
+ private onInstall=(event:Event)=>{event.preventDefault();this.event.set(event as InstallEvent);};
+ private onInstalled=()=>{this.installed.set(true);this.event.set(undefined);};
+ private onVisibility=()=>{if(document.visibilityState==='visible'){this.online.set(navigator.onLine);this.attemptedBuild='';void this.measureStorage();void this.tryAutoReload();}};
  constructor(){
-  window.addEventListener('online',()=>this.online.set(true));window.addEventListener('offline',()=>this.online.set(false));
-  window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();this.event.set(e as InstallEvent);});window.addEventListener('appinstalled',()=>{this.installed.set(true);this.event.set(undefined);});
-  this.updates.versionUpdates.subscribe(event=>{if(event.type==='VERSION_READY')this.updateReady.set(true);});
+  window.addEventListener('online',this.onOnline);window.addEventListener('offline',this.onOffline);
+  window.addEventListener('beforeinstallprompt',this.onInstall);window.addEventListener('appinstalled',this.onInstalled);
+  this.subscriptions.push(this.updates.versionUpdates.subscribe(event=>{if(event.type==='VERSION_READY'){this.updateReady.set(true);queueMicrotask(()=>void this.tryAutoReload());}}));
+  this.subscriptions.push(this.releases.checked.subscribe(()=>{this.updateReady.set(this.releases.updateReady());this.attemptedBuild='';void this.tryAutoReload();}));
   if('serviceWorker' in navigator)navigator.serviceWorker.ready.then(()=>{this.offlineReady.set(true);}).catch(()=>{});
-  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'){this.online.set(navigator.onLine);void this.measureStorage();}});
-  void this.measureStorage();
-  void this.requestPersistence();
+  document.addEventListener('visibilitychange',this.onVisibility);
+  this.updateReady.set(this.releases.updateReady());
+  queueMicrotask(()=>void this.tryAutoReload());
+  void this.measureStorage();void this.requestPersistence();
  }
  async measureStorage(){try{const e=await navigator.storage?.estimate?.();this.storage.set(e?.usage!==undefined&&e.quota?`${(e.usage/1048576).toFixed(1)} MB usati su ${(e.quota/1048576).toFixed(0)} MB disponibili al sito`:'Misura dello spazio non disponibile in questo Safari');this.persisted.set(await navigator.storage?.persisted?.()??null);}catch{this.storage.set('Misura dello spazio non disponibile');}}
- async install(){const e=this.event();if(e){await e.prompt();await e.userChoice;this.event.set(undefined);}}
+ async install(){const event=this.event();if(event){await event.prompt();await event.userChoice;this.event.set(undefined);}}
  async requestPersistence(){try{if(navigator.storage?.persist&&!(await navigator.storage.persisted()))this.persisted.set(await navigator.storage.persist());}catch{/* The archive remains available even when this browser cannot grant persistence. */}}
- async reload(){
-  if(this.updating())return;
-  this.updating.set(true);
+ async prepareExit(reason:'update'|'logout'='update'):Promise<boolean>{
+  this.updateError.set('');
   try{
-   if(!this.store.ready())throw Error('Attendi l’apertura dell’archivio prima di aggiornare.');
-   // Editors register their save result so validation errors cannot be hidden
-   // by a later successful background write before the app reloads.
+   if(!this.store.ready())throw Error('Attendi l’apertura dell’archivio prima di continuare.');
    const saves:Promise<boolean|void>[]=[];
    const event=Object.assign(new Event('gymtrack:before-update'),{waitUntil:(save:Promise<boolean|void>)=>{saves.push(save);}});
    window.dispatchEvent(event);
-   if((await Promise.all(saves)).some(result=>result===false))throw Error('Salva o correggi i dati della serie prima di aggiornare.');
+   if(this.drafts)saves.push(this.drafts.flushAll());
+   if((await Promise.all(saves)).some(result=>result===false))throw Error('Salva o correggi i dati del modulo prima di continuare.');
    let pending;
    do{pending=this.store.settled();await pending;}while(pending!==this.store.settled());
-   if(this.store.error())throw Error('Aggiornamento sospeso: '+this.store.error());
-   if(this.cloud&&!await this.cloud.flush())throw Error('Aggiornamento sospeso: la copia server è ancora da completare o verificare. I dati locali sono conservati. Apri Profilo → Backup e ripristino.');
-   location.reload();
-  }catch(error){this.store.error.set(error instanceof Error?error.message:'Aggiornamento sospeso: salvataggio non riuscito. I dati presenti sono conservati.');}
-  finally{this.updating.set(false);}
+   if(this.store.error())throw Error(this.store.error());
+   if(this.cloud&&!await this.cloud.flush()){
+    // Explicit offline logout keeps local drafts and the pending server copy.
+    if(reason!=='logout'||navigator.onLine!==false)throw Error('La copia server è ancora da completare o verificare. I dati locali sono conservati. Apri Profilo → Backup e ripristino.');
+   }
+   // A save accepted while waiting may have cleared or revised its form draft.
+   // Persist that final state as well before revoking the cookie or reloading.
+   if(this.drafts&&!await this.drafts.flushAll())throw Error('Bozza non salvata. Resta nell’app e riprova.');
+   return true;
+  }catch(error){
+   this.updateError.set((reason==='logout'?'Uscita sospesa: ':'Aggiornamento sospeso: ')+(error instanceof Error?error.message:'Salvataggio non riuscito. I dati presenti sono conservati.'));
+   return false;
+  }
  }
+ private scheduleAuto(){clearTimeout(this.autoTimer);this.autoTimer=setTimeout(()=>{this.autoTimer=undefined;void this.tryAutoReload();},30000);}
+ private async tryAutoReload(){
+  if(this.destroyed||!this.releases.autoUpdateReady()||this.updating())return;
+  const target=this.releases.downloadedBuild()!;
+  if(this.attemptedBuild===target)return;
+  const active=document.activeElement as HTMLElement|null;
+  if(!this.store.ready()||this.store.busy?.()||this.store.draft?.()||document.visibilityState==='hidden'||active?.matches?.('input,textarea,select,[contenteditable="true"]')){this.scheduleAuto();return;}
+  this.attemptedBuild=target;await this.reload(true);
+ }
+ async reload(automatic=false){
+  if(this.updating())return;
+  this.updating.set(true);
+  const root=document.querySelector?.('app-root') as HTMLElement|null;
+  const priorInert=root?.inert;
+  let reloading=false;
+  try{
+   if(automatic&&(this.store.draft?.()||!this.releases.autoUpdateReady()))return;
+   // Freeze before the snapshot: typing while the server copy is pending must
+   // not create a newer draft between the last flush and the page reload.
+   if(root)root.inert=true;
+   if(!await this.prepareExit('update'))return;
+   if(automatic&&this.store.draft?.()){this.scheduleAuto();return;}
+   const activated=await this.releases.activateReady(automatic?this.releases.policy()?.requestedBuildId||undefined:undefined);
+   if(automatic&&!activated)return;
+   reloading=true;location.reload();
+  }catch(error){if(error instanceof AppActivationUncertainError){reloading=true;location.reload();}else this.updateError.set('Aggiornamento sospeso: '+(error instanceof Error?error.message:'Nuova versione non pronta. Riprova.'));}
+  finally{if(root&&!reloading)root.inert=priorInert||false;this.updating.set(false);}
+ }
+ async finishLogoutUpdate():Promise<void>{
+  // Called after prepareExit succeeded and the account cookie was revoked.
+  try{await this.releases.check();await this.releases.activateReady();}
+  catch{/* The next opening can retry; logout must still complete. */}
+  finally{location.reload();}
+ }
+ ngOnDestroy(){this.destroyed=true;clearTimeout(this.autoTimer);for(const subscription of this.subscriptions)subscription.unsubscribe();window.removeEventListener('online',this.onOnline);window.removeEventListener('offline',this.onOffline);window.removeEventListener('beforeinstallprompt',this.onInstall);window.removeEventListener('appinstalled',this.onInstalled);document.removeEventListener('visibilitychange',this.onVisibility);}
 }

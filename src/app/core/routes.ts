@@ -1,5 +1,6 @@
 import { Routes } from "@angular/router";
-export const routes: Routes = [
+import { preserveFormDrafts } from '../services/draft-navigation';
+const pages: Routes = [
   {
     path: "",
     loadComponent: () =>
@@ -40,3 +41,4 @@ export const routes: Routes = [
   { path: "utenti", loadComponent: () => import("../features/users.component").then(m => m.UsersComponent) },
   { path: "**", redirectTo: "" },
 ];
+export const routes: Routes = pages.map(route => route.redirectTo !== undefined ? route : {...route,canDeactivate:[preserveFormDrafts]});

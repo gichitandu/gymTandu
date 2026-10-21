@@ -6,6 +6,7 @@ import { localDate } from "../models/domain";
 import { IconComponent } from "../shared/icon.component";
 import { StatusComponent } from "../shared/status.component";
 import { RingComponent } from "../shared/ring.component";
+import { TodayService } from '../services/today';
 @Component({
   standalone: true,
   imports: [
@@ -20,17 +21,18 @@ import { RingComponent } from "../shared/ring.component";
 export class HomeComponent {
   s = inject(Store);
   router = inject(Router);
-  today = localDate();
+  private todayClock = inject(TodayService,{optional:true});
+  get today() { return this.todayClock?.date() || localDate(); }
   goals = computed(() => this.s.settings().goals);
   Math = Math;
   firstName = computed(
     () => this.s.profile().name.trim().split(/\s+/)[0] || "atleta",
   );
-  todayLabel = new Date().toLocaleDateString("it-IT", {
+  get todayLabel() { return new Date(this.today+'T12:00:00').toLocaleDateString("it-IT", {
     weekday: "long",
     day: "numeric",
     month: "long",
-  });
+  }); }
   totals = computed(() =>
     this.s
       .data()
@@ -56,8 +58,8 @@ export class HomeComponent {
         )
         .sort((a, b) => a.date.localeCompare(b.date))[0],
   );
-  week = Array.from({ length: 7 }, (_, i) => {
-    const d = new Date();
+  private weekDays = computed(() => Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(this.today+'T12:00:00');
     d.setHours(12, 0, 0, 0);
     d.setDate(d.getDate() - ((d.getDay() + 6) % 7) + i);
     return {
@@ -66,7 +68,8 @@ export class HomeComponent {
       x: 8 + i * 14,
       y: [74, 40, 20, 13, 20, 40, 74][i],
     };
-  });
+  }));
+  get week() { return this.weekDays(); }
   weekCount = computed(
     () =>
       this.s

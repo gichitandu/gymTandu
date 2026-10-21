@@ -21,13 +21,16 @@ import { WorkoutResumeService } from "./workout-resume";
 import { sessionVolume, exerciseRecords } from "./statistics";
 import { feedbackForContext, feedbackSignal } from "./feedback";
 import { AcceptedCatalogChanges, mergeCatalog } from "./catalog-merge";
-import { ArchiveSyncService } from "./archive-sync";
+import { ArchiveSyncService, archiveFingerprint } from "./archive-sync";
+import { exportBackup } from "./backup";
+import { TodayService } from "./today";
 @Injectable({ providedIn: "root" })
 export class Store {
   private theme = inject(ThemeService, { optional: true });
   private auth = inject(AuthService, { optional: true });
   private repo = inject(GYM_REPOSITORY);
   private cloud = inject(ArchiveSyncService,{optional:true});
+  private today = inject(TodayService,{optional:true});
   private resume = inject(WorkoutResumeService,{optional:true})||new WorkoutResumeService();
   data = signal<DataSet>(seed());
   archiveKey(){return this.repo.storageKey||this.auth?.user()?.id||'local';}
@@ -81,7 +84,7 @@ export class Store {
       ).size,
   );
   week = computed(() => {
-    const d = new Date();
+    const d = new Date((this.today?.date()||localDate())+'T00:00:00');
     d.setHours(0, 0, 0, 0);
     d.setDate(d.getDate() - ((d.getDay() + 6) % 7));
     return this.completed().filter((w) => new Date(w.date + "T12:00:00") >= d);
@@ -96,13 +99,17 @@ export class Store {
   });
   private queue: Promise<unknown> = Promise.resolve();
   private catalogRequest = 0;
+  private initialization = 0;
   settled(){return this.queue;}
   constructor() {
     void this.init();
   }
   async init() {
+    const initialization = ++this.initialization;
     try {
+      await this.queue;
       let d = await this.repo.read();
+      if(initialization!==this.initialization)return;
       this.conflicted.set(false);
       this.resume.rebase(this.archiveKey(),this.archiveRevision(),this.archiveRevision());
       if (!d.profiles.length || !d.settings.length || !d.roles.length) {
@@ -117,20 +124,44 @@ export class Store {
         d.muscleGroups.push(...defaults.muscleGroups.filter(g=>!groupIds.has(g.id)));
         const revision=this.archiveRevision();await this.repo.replace(d);this.resume.rebase(this.archiveKey(),revision,this.archiveRevision());
       }
-      if(this.cloud){
-        const recovered=await this.cloud.open(this.archiveKey(),d);
-        if(recovered!==d){await this.repo.replace(recovered);this.resume.clear(this.archiveKey());d=recovered;}
-      }
       if (this.auth?.user()) d.profiles[0].role = this.auth.user()!.role;
       this.data.set(d);
-      if (this.auth?.user() && !this.auth.offlineMode() && navigator.onLine) {
-        try {await this.refreshCatalog();} catch {this.message.set("Catalogo online non raggiungibile: uso la copia locale. Allenamenti e pasti restano disponibili.");}
-      }
-      await this.theme?.load();
       this.applyTheme();
       this.ready.set(true);
-      this.cloud?.changed(this.data());
+      // The local archive is immediately usable. Slow network checks must not
+      // make existing plans appear empty or hold the save buttons disabled.
+      const local = d, localRevision = this.archiveRevision();
+      void (async()=>{
+        if(this.cloud){
+          await this.cloud.open(this.archiveKey(),local,true,async recovered=>{
+            // A user may have saved a plan while the remote copy was loading.
+            // Serialize restoration with those writes and reject a stale
+            // snapshot before either the database or the cloud baseline moves.
+            const job=this.queue.then(async()=>{
+              if(initialization!==this.initialization)return false;
+              if(this.data()!==local||this.archiveRevision()!==localRevision){
+                // A catalog receipt is bookkeeping, not a personal edit. It
+                // may arrive from another open section during the GET.
+                const current=await archiveFingerprint(await exportBackup(this.data()),true);
+                if(current!==await archiveFingerprint(await exportBackup(local),true))return false;
+              }
+              if(this.auth?.user())recovered.profiles[0].role=this.auth.user()!.role;
+              try{await this.repo.replace(recovered);this.resume.clear(this.archiveKey());this.data.set(recovered);return true;}
+              catch(error){this.rejectStaleArchive(error);this.error.set(error instanceof Error?error.message:'Copia server non ripristinata. I dati locali sono conservati.');return false;}
+            });
+            this.queue=job;
+            return job;
+          });
+          if(initialization!==this.initialization)return;
+          this.cloud.changed(this.data());
+        }
+        if (this.auth?.user() && !this.auth.offlineMode() && navigator.onLine) {
+          try {await this.refreshCatalog();} catch {this.message.set("Catalogo online non raggiungibile: uso la copia locale. Allenamenti e pasti restano disponibili.");}
+        }
+      })().catch(()=>{this.message.set('Copia online momentaneamente non disponibile. L’archivio locale resta utilizzabile.');});
+      void this.theme?.load().then(()=>{if(initialization===this.initialization)this.applyTheme();}).catch(()=>{});
     } catch (e) {
+      if(initialization!==this.initialization)return;
       this.error.set(
         e instanceof Error ? e.message : "Impossibile aprire l’archivio. Controlla la connessione e ricarica la pagina.",
       );
@@ -473,16 +504,19 @@ export class Store {
     const prev = this.previous(ex.exerciseId, ex.workoutId,ex.machineSetup);
     if (!prev.length) return;
     return this.change((d) => {
+      const historical=d.workouts.find(workout=>workout.id===ex.workoutId)?.status==='completed';
+      const existing=d.sets.filter(set=>set.workoutExerciseId===id&&set.kind!=='warmup').sort((a,b)=>a.number-b.number);
+      const warmups=d.sets.filter(set=>set.workoutExerciseId===id&&set.kind==='warmup').sort((a,b)=>a.number-b.number);
       d.sets = d.sets.filter((s) => s.workoutExerciseId !== id||s.kind==='warmup');
-      d.sets.filter(s=>s.workoutExerciseId===id).sort((a,b)=>a.number-b.number).forEach((s,i)=>s.number=i+1);
+      warmups.forEach((s,i)=>s.number=i+1);
       d.sets.push(
         ...prev.map((s, i) => ({
           ...s,
           id: uid(),
           workoutExerciseId: id,
-          number: i + 1+d.sets.filter(x=>x.workoutExerciseId===id).length,
+          number: i + 1+warmups.length,
           kind:"work" as const,
-          completed: false,
+          completed: historical?(existing[i]?.completed??true):false,
         })),
       );
     }, "Valori precedenti copiati.");
@@ -556,9 +590,9 @@ export class Store {
     }, "Esercizio salvato.");
   }
   async saveMuscleGroup(id:string,name:string) {
-    if(!this.canEditCatalog()) {this.error.set('Operazione riservata agli admin.');return;}
+    if(!this.canEditCatalog()) {this.error.set('Operazione riservata agli admin.');return false;}
     if(!this.sharedCatalog())return this.change(d=>{const group=d.muscleGroups.find(group=>group.id===id);if(group)group.name=name.trim();else d.muscleGroups.push({id,name:name.trim()});},'Gruppo personale salvato.',false);
-    try{await this.auth!.request('catalog/group',{id,name});await this.refreshCatalog({groups:[id]});this.message.set('Gruppo salvato.');}catch(e){this.error.set((e as Error).message);}
+    try{await this.auth!.request('catalog/group',{id,name});await this.refreshCatalog({groups:[id]});this.message.set('Gruppo salvato.');return true;}catch(e){this.error.set((e as Error).message);return false;}
   }
   async scheduleWorkout(date:string,dayId:string,notes='',id:string=uid(),repeatCount=1) {
     return this.change(d=>{

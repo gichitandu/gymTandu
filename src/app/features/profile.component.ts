@@ -10,7 +10,10 @@ import { ThemeService, DEFAULT_BACKGROUND } from "../services/theme";
 import { feedbackForContext, feedbackSignal } from "../services/feedback";
 import { AuthService } from "../services/auth";
 import { A11yModule } from "@angular/cdk/a11y";
-import { Component, effect, inject, signal } from "@angular/core";
+import { Component, effect, HostListener, inject, signal } from "@angular/core";
+import { FormDraftService, DraftSession } from '../services/form-drafts';
+import { TodayService } from '../services/today';
+import { AppUpdatesComponent } from '../shared/app-updates.component';
 import {
   FormBuilder,
   ReactiveFormsModule,
@@ -29,10 +32,16 @@ import { ExternalTimerService } from "../services/external-timer";
 import { ArchiveSyncService } from "../services/archive-sync";
 import { ArchiveSyncComponent } from "../shared/archive-sync.component";
 import { mergeRecoveredArchive } from "../services/archive-recovery";
+interface ProfileFormDraft {
+  version:1;panel:string;unit:'kg'|'lb';
+  profile:Record<string,string|number|null>;goals:Record<string,number|null>;
+  photo?:Blob|null;username?:string|null;
+  measurement?:{date:string;weight:number|null;waist:number|null;bodyFat:number|null};
+}
 @Component({
   standalone: true,
   styleUrl: "./account-polish.css",
-  imports: [SectionHeadingComponent,BackupReminderComponent,ArchiveSyncComponent,
+  imports: [SectionHeadingComponent,BackupReminderComponent,ArchiveSyncComponent,AppUpdatesComponent,
     A11yModule,
     AvatarComponent,
     IosStatusComponent,
@@ -44,6 +53,7 @@ import { mergeRecoveredArchive } from "../services/archive-recovery";
     IconComponent,
   ],
   template: `<gt-section-heading index="06" eyebrow="IL TUO SPAZIO PERSONALE" [title]="panelLabel()" description="Un percorso che ti assomiglia, in ogni dettaglio.">@if(panel()!=='overview'){<button class="icon-btn ghost" aria-label="Torna al profilo" (click)="panel.set('overview')">‹</button>}@if(panel()==='overview'){<button class="ghost" (click)="panel.set('settings')">Modifica profilo</button>}</gt-section-heading><gt-status/>
+@if(draftRestored()){<div class="notice" role="status">Bozza recuperata: controlla i valori e salva per confermarli.<button type="button" class="ghost" (click)="discardDraft()">Elimina bozza</button></div>}
 @if(panel()==='overview'){
 <section class="card profile-dashboard identity-card">
  <div class="identity-topline"><span>GYMTRACK / IDENTITÀ PERSONALE</span><span class="identity-status"><i></i> Archivio locale</span></div>
@@ -56,7 +66,7 @@ import { mergeRecoveredArchive } from "../services/archive-recovery";
 <div class="profile-menu-group"><div class="account-section-label"><span>02 / SU MISURA</span><span>La tua app, il tuo stile.</span></div><nav class="profile-menu" aria-label="Preferenze e dati"><button (click)="panel.set('theme')"><gt-icon name="palette"/><span><strong>Tema e personalizzazione</strong><small>Colori e aspetto del tuo spazio</small></span>›</button><button (click)="panel.set('settings')"><gt-icon name="settings"/><span><strong>Impostazioni</strong><small>Profilo, foto e unità di misura</small></span>›</button><button (click)="panel.set('backup')"><gt-icon name="download"/><span><strong>Backup e ripristino</strong><small>Porta al sicuro il tuo percorso</small></span>›</button><button (click)="panel.set('security')"><gt-icon name="shield"/><span><strong>Account e sicurezza</strong><small>Credenziali e accesso personale</small></span>›</button>@if(auth.user()?.role==='SuperAdmin'){<a routerLink="/utenti"><gt-icon name="user"/><span><strong>Gestione utenti</strong><small>Account, ruoli e autorizzazioni</small></span>›</a>}<button (click)="panel.set('info')"><gt-icon name="info"/><span><strong>Informazioni app e iPhone</strong><small>Installazione e verifiche dispositivo</small></span>›</button></nav></div>
 }
 @if(panel()==='goals'){<section class="card"><h2>I tuoi obiettivi</h2><p class="subtle" style="margin:12px 0 20px">Inserisci i tuoi riferimenti personali. Non vengono calcolati da una fotografia e non sono prescrizioni automatiche.</p><form [formGroup]="goalsForm" (ngSubmit)="saveGoals()" class="form-grid"><label>Calorie giornaliere (kcal)<input type="number" inputmode="numeric" formControlName="calories" min="1" max="20000"/></label><label>Proteine giornaliere (g)<input type="number" inputmode="decimal" formControlName="protein" min="1" max="2000"/></label><label>Carboidrati giornalieri (g)<input type="number" inputmode="decimal" formControlName="carbs" min="1" max="3000"/></label><label>Grassi giornalieri (g)<input type="number" inputmode="decimal" formControlName="fat" min="1" max="2000"/></label><label class="wide">Allenamenti per settimana<input type="number" inputmode="numeric" formControlName="workoutsPerWeek" min="1" max="14"/></label><button class="primary wide" [disabled]="goalsForm.invalid||goalsSaving()||s.busy()||!s.ready()">Salva obiettivi</button></form><p class="subtle" style="margin-top:14px">Lascia vuoto un campo per rimuovere quel riferimento.</p></section>}
-@if(panel()==='measurements'){<section class="card"><h2>Registra misurazione</h2><form #measurementForm="ngForm" (ngSubmit)="saveMeasurement()" class="form-grid" style="margin-top:18px"><label>Data<input name="date" type="date" [(ngModel)]="measurementDate" required [max]="today"/></label><label>Peso ({{s.settings().unit}})<input name="weight" type="number" inputmode="decimal" [(ngModel)]="measurementWeight" min="1" max="1500" step="0.1" required/></label><label>Girovita (cm, facoltativo)<input name="waist" type="number" inputmode="decimal" [(ngModel)]="measurementWaist" min="1" max="300" step="0.1"/></label><label>Massa grassa (%, facoltativa)<input name="bodyfat" type="number" inputmode="decimal" [(ngModel)]="measurementBodyFat" min="1" max="80" step="0.1"/></label><button class="primary wide" [disabled]="measurementForm.invalid||s.busy()">Salva misurazione</button></form></section><section class="card" style="margin-top:18px"><h2>Storico misurazioni</h2><div class="list" style="margin-top:18px">@for(m of measurementHistory();track m.id){<div class="measurement-row"><div><strong>{{s.formatWeight(m.weight)}} {{s.settings().unit}}</strong><p class="subtle">{{m.date}}{{m.waist?' · Vita '+m.waist+' cm':''}}{{m.bodyFat?' · Massa grassa '+m.bodyFat+'%':''}}</p></div><button class="ghost danger" (click)="removeMeasurement(m.id)" aria-label="Rimuovi misurazione">×</button></div>}@empty{<p class="subtle">Nessuna misurazione registrata.</p>}</div></section>}
+@if(panel()==='measurements'){<section class="card"><h2>Registra misurazione</h2><form #measurementForm="ngForm" (ngSubmit)="saveMeasurement()" class="form-grid" style="margin-top:18px"><label>Data<input name="date" type="date" [ngModel]="measurementDate" (ngModelChange)="chooseMeasurementDate($event)" required [max]="today"/></label><label>Peso ({{s.settings().unit}})<input name="weight" type="number" inputmode="decimal" [(ngModel)]="measurementWeight" min="1" max="1500" step="0.1" required/></label><label>Girovita (cm, facoltativo)<input name="waist" type="number" inputmode="decimal" [(ngModel)]="measurementWaist" min="1" max="300" step="0.1"/></label><label>Massa grassa (%, facoltativa)<input name="bodyfat" type="number" inputmode="decimal" [(ngModel)]="measurementBodyFat" min="1" max="80" step="0.1"/></label><button class="primary wide" [disabled]="measurementForm.invalid||s.busy()">Salva misurazione</button></form></section><section class="card" style="margin-top:18px"><h2>Storico misurazioni</h2><div class="list" style="margin-top:18px">@for(m of measurementHistory();track m.id){<div class="measurement-row"><div><strong>{{s.formatWeight(m.weight)}} {{s.settings().unit}}</strong><p class="subtle">{{m.date}}{{m.waist?' · Vita '+m.waist+' cm':''}}{{m.bodyFat?' · Massa grassa '+m.bodyFat+'%':''}}</p></div><button class="ghost danger" (click)="removeMeasurement(m.id)" aria-label="Rimuovi misurazione">×</button></div>}@empty{<p class="subtle">Nessuna misurazione registrata.</p>}</div></section>}
 @if(panel()==='settings'||panel()==='theme'||panel()==='info'){
     <div class="profile-settings-panels">
       <section class="card" [hidden]="panel()!=='settings'">
@@ -205,6 +215,7 @@ import { mergeRecoveredArchive } from "../services/archive-recovery";
       </div>
     </div>
     }
+    @if(panel()==='settings'){<gt-app-updates/><section class="card" style="margin-top:20px"><h2>Accesso all’app</h2><p class="subtle" style="margin:12px 0">Le bozze vengono conservate prima dell’uscita. Piani, esercizi e allenamenti rimangono nel tuo archivio.</p><button type="button" class="full-width" [disabled]="loggingOut()" (click)="logout()">{{loggingOut()?'Salvataggio e uscita…':'Esci dall’app'}}</button></section>}
     @if(panel()==='backup'){<gt-archive-sync (recover)="recoverCloud($event)"/><gt-backup-reminder mode="settings"/><section class="card" style="margin-top:20px">
       <div class="card-head">
         <div>
@@ -318,18 +329,24 @@ export class ProfileComponent {
   resume=inject(WorkoutResumeService);
   confirmBackup(){void this.s.change(d=>{d.settings[0].backupConfirmedAt=new Date().toISOString();delete d.settings[0].backupSnoozedUntil;},"Copia in File confermata da te.",false);}
   photoDraft = signal<Blob|null|undefined>(undefined);
+  private formDrafts=inject(FormDraftService,{optional:true});
+  private draftSession?:DraftSession<ProfileFormDraft>;
+  private draftSubscriptions:{unsubscribe():void}[]=[];
+  draftRestored=signal(false);
+  loggingOut=signal(false);
   photoBusy = signal(false);
   profileSaving = signal(false);
   goalsSaving = signal(false);
+  measurementSaving=signal(false);
   private photoRequest = 0;
   private profileSignature = '';
   private goalsSignature = '';
   private profileUnit?: 'kg'|'lb';
   usernameDraft = signal<string|null>(null);
   usernameBusy = signal(false);
-  async selectPhoto(event:Event){const input=event.target as HTMLInputElement,file=input.files?.[0];input.value='';if(!file)return;const request=++this.photoRequest;this.photoBusy.set(true);try{const photo=await compressPhoto(file);if(request===this.photoRequest){this.photoDraft.set(photo);this.s.error.set('');}}catch(e){if(request===this.photoRequest)this.s.error.set((e as Error).message);}finally{if(request===this.photoRequest)this.photoBusy.set(false);}}
-  removeProfilePhoto(){this.photoRequest++;this.photoBusy.set(false);this.photoDraft.set(null);}
-  async saveUsername(){if(this.usernameBusy())return;this.accountError.set('');this.accountMessage.set('');this.usernameBusy.set(true);try{await this.auth.setUsername(this.usernameDraft()??this.auth.user()?.username??'');this.usernameDraft.set(null);this.accountMessage.set('Nome utente salvato. Puoi accedere con questo nome oppure con l’email.');}catch(e){this.accountError.set((e as Error).message);}finally{this.usernameBusy.set(false);}}
+  async selectPhoto(event:Event){const input=event.target as HTMLInputElement,file=input.files?.[0];input.value='';if(!file)return;const request=++this.photoRequest;this.photoBusy.set(true);try{const photo=await compressPhoto(file);if(request===this.photoRequest){this.photoDraft.set(photo);this.s.error.set('');this.draftSession?.changed();}}catch(e){if(request===this.photoRequest)this.s.error.set((e as Error).message);}finally{if(request===this.photoRequest)this.photoBusy.set(false);}}
+  removeProfilePhoto(){this.photoRequest++;this.photoBusy.set(false);this.photoDraft.set(null);this.draftSession?.changed();}
+  async saveUsername(){if(this.usernameBusy())return;this.accountError.set('');this.accountMessage.set('');this.usernameBusy.set(true);try{await this.auth.setUsername(this.usernameDraft()??this.auth.user()?.username??'');this.usernameDraft.set(null);this.accountMessage.set('Nome utente salvato. Puoi accedere con questo nome oppure con l’email.');await this.persistDraftState();}catch(e){this.accountError.set((e as Error).message);}finally{this.usernameBusy.set(false);}}
   theme = inject(ThemeService);
   defaultBackground = DEFAULT_BACKGROUND;
   auth = inject(AuthService);
@@ -348,7 +365,20 @@ export class ProfileComponent {
     try { await this.auth.request("auth/password", {currentPassword:this.currentPassword,password:this.newPassword}); this.currentPassword="";this.newPassword="";this.confirmPassword="";this.accountMessage.set("Password aggiornata. Le altre sessioni sono state chiuse."); } catch(e) { this.accountError.set((e as Error).message); } finally {this.accountBusy.set(false);}
   }
   rememberOffline() {try{this.auth.enableOffline();this.accountMessage.set("Archivio abilitato per l’accesso offline su questo dispositivo.");}catch(e){this.accountError.set((e as Error).message);}}
-  async logout() { try { await this.auth.logout(); } catch(e) {this.accountError.set((e as Error).message);} }
+  async logout() {
+    if(this.loggingOut()||this.pwa.updating())return;
+    this.loggingOut.set(true);this.pwa.updating.set(true);
+    const root=typeof document==='undefined'?null:document.querySelector?.('app-root') as HTMLElement|null,priorInert=root?.inert;
+    let exited=false;
+    try {
+      if(this.photoBusy())throw Error('Attendi la preparazione della foto prima di uscire.');
+      // Freeze editing before taking snapshots, including during a slow cloud copy.
+      if(root)root.inert=true;
+      if(!await this.pwa.prepareExit('logout'))return;
+      await this.auth.logout({reload:false});exited=true;await this.pwa.finishLogoutUpdate();
+    }catch(e){this.accountError.set((e as Error).message);}
+    finally{if(!exited){if(root)root.inert=priorInert||false;this.pwa.updating.set(false);}this.loggingOut.set(false);}
+  }
   pwa = inject(PwaService);
   externalTimer = inject(ExternalTimerService,{optional:true});
   fb = inject(FormBuilder);
@@ -356,7 +386,9 @@ export class ProfileComponent {
   pending = signal<DataSet | undefined>(undefined);
   backupFile = signal<File | null>(null);
   async shareBackup(){const file=this.backupFile();if(!file)return;try{if(navigator.canShare?.({files:[file]})){await navigator.share({files:[file],title:"Backup GymTrack"});}else{this.s.message.set("Usa il download del backup e spostalo in File dal menu Condividi di Safari.");}}catch(e){if((e as Error).name!=="AbortError")this.s.error.set("Condivisione non disponibile. Usa il download JSON.");}}
-  today = localDate();
+  private todayClock=inject(TodayService,{optional:true});
+  get today(){return this.todayClock?.date()||localDate();}
+  private lastToday=this.today;
   form = this.fb.group({
     name: ["", [Validators.required, Validators.pattern(/\S/)]],
     bodyWeight: [
@@ -370,23 +402,59 @@ export class ProfileComponent {
   panel=signal('overview');
   panelLabel(){return ({overview:'Profilo',goals:'Obiettivi',measurements:'Misurazioni corporee',settings:'Impostazioni',theme:'Tema e personalizzazione',backup:'Backup e ripristino',security:'Account e sicurezza',info:'Informazioni app'} as Record<string,string>)[this.panel()]||'Profilo';}
   age(){const birth=this.s.profile().birthDate;if(!birth)return null;const d=new Date(birth+'T12:00:00'),now=new Date();return now.getFullYear()-d.getFullYear()-((now.getMonth()<d.getMonth()||now.getMonth()===d.getMonth()&&now.getDate()<d.getDate())?1:0);}
-  measurementDate=localDate();measurementWeight:number|null=null;measurementWaist:number|null=null;measurementBodyFat:number|null=null;
+  measurementDate=this.today;measurementWeight:number|null=null;measurementWaist:number|null=null;measurementBodyFat:number|null=null;private measurementDateChosen=false;
+  chooseMeasurementDate(date:string){this.measurementDate=date;this.measurementDateChosen=true;this.draftSession?.changed();}
   measurementHistory(){return [...this.s.data().measurements].sort((a,b)=>b.date.localeCompare(a.date));}
   goalsForm=this.fb.group({calories:[null as number|null,[Validators.min(1),Validators.max(20000)]],protein:[null as number|null,[Validators.min(1),Validators.max(2000)]],carbs:[null as number|null,[Validators.min(1),Validators.max(3000)]],fat:[null as number|null,[Validators.min(1),Validators.max(2000)]],workoutsPerWeek:[null as number|null,[Validators.min(1),Validators.max(14)]]});
-  async saveGoals(){if(this.goalsForm.invalid||this.goalsSaving())return;const value=this.goalsForm.getRawValue();if(value.workoutsPerWeek!==null&&!Number.isInteger(value.workoutsPerWeek)){this.s.error.set('Inserisci un numero intero di allenamenti.');return;}this.goalsSaving.set(true);try{if(await this.s.change(d=>{d.settings[0].goals=Object.fromEntries(Object.entries(value).filter(([,v])=>v!==null));},'Obiettivi salvati.',false)){for(const key of Object.keys(value) as (keyof typeof value)[]){const control=this.goalsForm.controls[key];if(control.value===value[key])control.markAsPristine();}this.syncForms();}}finally{this.goalsSaving.set(false);}}
-  async saveMeasurement(){const weight=this.measurementWeight===null?0:this.s.kg(this.measurementWeight),date=this.measurementDate,waist=this.measurementWaist??undefined,bodyFat=this.measurementBodyFat??undefined;if(!Number.isFinite(weight)||weight<=0||weight>700||date>this.today){this.s.error.set('Controlla la data e il peso.');return;}await this.s.change(d=>{const old=d.measurements.find(m=>m.date===date);const measurement={id:old?.id||uid(),date,weight,waist,bodyFat};if(old)Object.assign(old,measurement);else d.measurements.push(measurement);const latest=[...d.measurements].sort((a,b)=>b.date.localeCompare(a.date))[0];if(latest)d.profiles[0].bodyWeight=latest.weight;},'Misurazione salvata.',false);}
+  async saveGoals(){if(this.goalsForm.invalid||this.goalsSaving())return;const value=this.goalsForm.getRawValue();if(value.workoutsPerWeek!==null&&!Number.isInteger(value.workoutsPerWeek)){this.s.error.set('Inserisci un numero intero di allenamenti.');return;}this.goalsSaving.set(true);try{if(await this.s.change(d=>{d.settings[0].goals=Object.fromEntries(Object.entries(value).filter(([,v])=>v!==null));},'Obiettivi salvati.',false)){for(const key of Object.keys(value) as (keyof typeof value)[]){const control=this.goalsForm.controls[key];if(control.value===value[key])control.markAsPristine();}this.syncForms();await this.persistDraftState();}}finally{this.goalsSaving.set(false);}}
+  async saveMeasurement(){
+    if(this.measurementSaving())return;
+    const snapshot={date:this.measurementDate,weight:this.measurementWeight,waist:this.measurementWaist,bodyFat:this.measurementBodyFat};
+    const weight=snapshot.weight===null?0:this.s.kg(snapshot.weight),date=snapshot.date,waist=snapshot.waist??undefined,bodyFat=snapshot.bodyFat??undefined;
+    if(!Number.isFinite(weight)||weight<=0||weight>700||!/^\d{4}-\d{2}-\d{2}$/.test(date)||date>this.today){this.s.error.set('Controlla la data e il peso.');return;}
+    this.measurementSaving.set(true);
+    try{if(await this.s.change(d=>{const old=d.measurements.find(m=>m.date===date);const measurement={id:old?.id||uid(),date,weight,waist,bodyFat};if(old)Object.assign(old,measurement);else d.measurements.push(measurement);const latest=[...d.measurements].sort((a,b)=>b.date.localeCompare(a.date))[0];if(latest)d.profiles[0].bodyWeight=latest.weight;},'Misurazione salvata.',false)){
+      if(this.measurementDate===snapshot.date&&this.measurementWeight===snapshot.weight&&this.measurementWaist===snapshot.waist&&this.measurementBodyFat===snapshot.bodyFat){this.measurementDate=this.today;this.measurementDateChosen=false;this.measurementWeight=null;this.measurementWaist=null;this.measurementBodyFat=null;}
+      await this.persistDraftState();
+    }}finally{this.measurementSaving.set(false);}
+  }
   async removeMeasurement(id:string){if(confirm('Rimuovere questa misurazione?'))await this.s.change(d=>{d.measurements=d.measurements.filter(m=>m.id!==id);},'Misurazione rimossa.',false);}
   constructor() {
     inject(ActivatedRoute).queryParamMap.pipe(takeUntilDestroyed()).subscribe(params=>{const section=params.get('section');if(section&&['backup','goals','settings','measurements','theme','security','info'].includes(section))this.panel.set(section);});
-    effect(() => this.syncForms());
+    effect(() => {this.syncForms();if(this.s.ready()&&this.formDrafts&&!this.draftSession){this.draftSession=this.formDrafts.bind(this.s.archiveKey(),'profile',()=>this.captureDraft(),value=>this.restoreDraft(value));this.draftSubscriptions.push(this.form.valueChanges.subscribe(()=>this.draftSession?.changed()),this.goalsForm.valueChanges.subscribe(()=>this.draftSession?.changed()));}});
+    if(this.todayClock)effect(()=>{const today=this.today,previous=this.lastToday;this.lastToday=today;if(today!==previous&&!this.measurementDateChosen&&this.measurementDate===previous&&this.measurementWeight===null&&this.measurementWaist===null&&this.measurementBodyFat===null)this.measurementDate=today;});
   }
+  @HostListener('input') @HostListener('change') draftChanged(){this.draftSession?.changed();}
+  canLeave(){if(this.photoBusy()){this.s.error.set('Attendi la preparazione della foto prima di cambiare sezione.');return false;}if(this.profileSaving()||this.goalsSaving()||this.measurementSaving()||this.usernameBusy()||this.accountBusy()){this.s.error.set('Attendi il completamento del salvataggio prima di uscire.');return false;}return true;}
+  @HostListener('window:gymtrack:before-update',['$event']) beforeUpdate(event:Event){(event as Event&{waitUntil(save:Promise<boolean>):void}).waitUntil(Promise.resolve(this.canLeave()));}
+  private captureDraft():ProfileFormDraft|null{
+    const profile:ProfileFormDraft['profile']={},goals:ProfileFormDraft['goals']={};
+    for(const [key,control] of Object.entries(this.form.controls))if(control.dirty)profile[key]=control.value;
+    for(const [key,control] of Object.entries(this.goalsForm.controls))if(control.dirty)goals[key]=control.value;
+    const measurement=this.measurementWeight!==null||this.measurementWaist!==null||this.measurementBodyFat!==null||this.measurementDateChosen?{date:this.measurementDate,weight:this.measurementWeight,waist:this.measurementWaist,bodyFat:this.measurementBodyFat}:undefined;
+    if(!Object.keys(profile).length&&!Object.keys(goals).length&&this.photoDraft()===undefined&&this.usernameDraft()===null&&!measurement)return null;
+    return {version:1,panel:this.panel(),unit:this.profileUnit||this.s.settings().unit,profile,goals,photo:this.photoDraft(),username:this.usernameDraft(),measurement};
+  }
+  private restoreDraft(value:ProfileFormDraft){
+    if(value?.version!==1||!value.profile||!value.goals)return;
+    for(const [key,entry] of Object.entries(value.profile)){const control=this.form.controls[key as keyof typeof this.form.controls];if(!control||control.dirty)continue;const numeric=key==='bodyWeight'||key==='height';if(numeric?(entry!==null&&(typeof entry!=='number'||!Number.isFinite(entry))):(typeof entry!=='string'||entry.length>1000))continue;control.setValue(entry as never,{emitEvent:false});control.markAsDirty();}
+    for(const [key,entry] of Object.entries(value.goals)){const control=this.goalsForm.controls[key as keyof typeof this.goalsForm.controls];if(control&&!control.dirty&&(entry===null||typeof entry==='number'&&Number.isFinite(entry))){control.setValue(entry,{emitEvent:false});control.markAsDirty();}}
+    if(value.photo===null||value.photo instanceof Blob)this.photoDraft.set(value.photo);
+    if(typeof value.username==='string'&&value.username.length<=30)this.usernameDraft.set(value.username);
+    if(value.unit==='kg'||value.unit==='lb')this.profileUnit=value.unit;
+    const m=value.measurement;if(m&&typeof m.date==='string'&&m.date.length<=10&&[m.weight,m.waist,m.bodyFat].every(n=>n===null||typeof n==='number'&&Number.isFinite(n))){this.measurementDate=m.date;this.measurementDateChosen=true;this.measurementWeight=m.weight;this.measurementWaist=m.waist;this.measurementBodyFat=m.bodyFat;}
+    if(['settings','goals','measurements','security'].includes(value.panel))this.panel.set(value.panel);
+    this.syncForms();this.draftRestored.set(true);
+  }
+  private async persistDraftState(){if(!this.draftSession)return;try{if(this.captureDraft())await this.draftSession.flush();else{await this.draftSession.clear();this.draftRestored.set(false);}}catch(error){this.s.error.set(error instanceof Error?error.message:'Bozza non aggiornata. Riprova.');}}
+  async discardDraft(){if(this.profileSaving()||this.goalsSaving()||this.photoBusy()||!confirm('Eliminare la bozza e rileggere i dati già salvati?'))return;this.form.markAsPristine();this.goalsForm.markAsPristine();this.photoDraft.set(undefined);this.usernameDraft.set(null);this.measurementWeight=null;this.measurementWaist=null;this.measurementBodyFat=null;this.measurementDate=this.today;this.measurementDateChosen=false;this.profileSignature='';this.goalsSignature='';this.syncForms();await this.persistDraftState();}
   syncForms(){
     if(!this.s.ready())return;
     const p=this.s.profile(),settings=this.s.settings(),unit=settings.unit;
     const profile={name:p.name,bodyWeight:p.bodyWeight===undefined?null:this.s.weight(p.bodyWeight),height:p.height??null,birthDate:p.birthDate||'',goal:p.goal||''};
     // Store writes clone the whole archive. Only persisted values may refresh
     // untouched controls; a meal, theme or autosave must not reset a draft.
-    if(this.profileUnit&&this.profileUnit!==unit){const control=this.form.controls.bodyWeight;if(control.dirty&&control.value!==null&&Number.isFinite(control.value)){const kg=this.profileUnit==='lb'?control.value/2.2046226218:control.value;control.setValue(unit==='lb'?kg*2.2046226218:kg,{emitEvent:false});}}
+    if(this.profileUnit&&this.profileUnit!==unit){const control=this.form.controls.bodyWeight;if(control.dirty&&control.value!==null&&Number.isFinite(control.value)){const kg=this.profileUnit==='lb'?control.value/2.2046226218:control.value;control.setValue(unit==='lb'?kg*2.2046226218:kg,{emitEvent:false});}if(this.measurementWeight!==null&&Number.isFinite(this.measurementWeight)){const kg=this.profileUnit==='lb'?this.measurementWeight/2.2046226218:this.measurementWeight;this.measurementWeight=unit==='lb'?kg*2.2046226218:kg;}}
     const profileSignature=JSON.stringify(profile);
     if(profileSignature!==this.profileSignature){for(const key of Object.keys(profile) as (keyof typeof profile)[]){const control=this.form.controls[key];if(!control.dirty)control.setValue(profile[key] as never,{emitEvent:false});}this.profileSignature=profileSignature;}
     this.profileUnit=unit;
@@ -419,7 +487,7 @@ export class ProfileComponent {
         goal: v.goal?.trim() || "",
       });
     }, "Profilo salvato.");
-    if(saved){if(this.photoDraft()===photo)this.photoDraft.set(undefined);for(const key of Object.keys(v) as (keyof typeof v)[]){const control=this.form.controls[key];if(control.value===v[key])control.markAsPristine();}this.profileSignature='';this.syncForms();}
+    if(saved){if(this.photoDraft()===photo)this.photoDraft.set(undefined);for(const key of Object.keys(v) as (keyof typeof v)[]){const control=this.form.controls[key];if(control.value===v[key])control.markAsPristine();}this.profileSignature='';this.syncForms();await this.persistDraftState();}
     }finally{this.profileSaving.set(false);}
   }
   setting(key: "theme" | "unit" | "prefill", value: string | boolean) {
@@ -524,5 +592,5 @@ export class ProfileComponent {
       );
     }
   }
-  ngOnDestroy(){this.photoRequest++;}
+  ngOnDestroy(){void this.draftSession?.destroy();this.draftSubscriptions.forEach(s=>s.unsubscribe());this.photoRequest++;}
 }

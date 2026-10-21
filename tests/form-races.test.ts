@@ -2,14 +2,15 @@ import '@angular/compiler';
 import { createEnvironmentInjector, EnvironmentInjector, runInInjectionContext } from '@angular/core';
 import { FormBuilder } from '@angular/forms';
 import { Router } from '@angular/router';
-import { afterEach, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { CatalogComponent } from '../src/app/features/catalog.component';
 import { PlansComponent } from '../src/app/features/plans.component';
 import { Store } from '../src/app/services/store';
 import { seed } from '../src/app/core/seed';
 import * as images from '../src/app/services/images';
 
-afterEach(() => vi.restoreAllMocks());
+beforeEach(()=>vi.stubGlobal('confirm',()=>true));
+afterEach(() => {vi.restoreAllMocks();vi.unstubAllGlobals();});
 
 function setup() {
   const data = seed();

@@ -161,3 +161,56 @@ it('starts pending copies immediately on background or page hide and removes lif
   t.doc.dispatchEvent(new Event('visibilitychange'));t.win.dispatchEvent(new Event('pagehide'));
   expect(flush).not.toHaveBeenCalled();
 });
+
+it('retries an interrupted background copy on foreground even when the browser stays online',async()=>{
+ const initial=plans('Primo'),t=await setup(initial);await t.service.open(t.key,initial);
+ const original=t.fetch.getMockImplementation()!;let interrupt=true;
+ t.fetch.mockImplementation(async(url,options)=>{if(options?.method==='POST'&&interrupt){interrupt=false;throw new TypeError('Richiesta sospesa da iOS');}return original(url,options);});
+ t.service.changed(plans('Modifica prima del blocco'));t.doc.visibilityState='hidden';t.doc.dispatchEvent(new Event('visibilitychange'));
+ await vi.waitFor(()=>expect(t.service.status()).toBe('offline'));expect(t.nav.onLine).toBe(true);
+ t.doc.visibilityState='visible';t.doc.dispatchEvent(new Event('visibilitychange'));
+ await vi.waitFor(()=>expect(t.service.status()).toBe('saved'));
+ expect(t.fetch.mock.calls.filter(([,options])=>options?.method==='POST')).toHaveLength(2);
+ expect((await importBackup(t.head.backup!)).plans[0].name).toBe('Modifica prima del blocco');
+});
+
+it('coalesces repeated pageshow and foreground events into one upload and does not retry a conflict',async()=>{
+ const initial=plans('Primo'),t=await setup(initial);await t.service.open(t.key,initial);
+ const original=t.fetch.getMockImplementation()!;let release!:()=>void;
+ const held=new Promise<void>(resolve=>release=resolve);
+ t.fetch.mockImplementation(async(url,options)=>{const response=await original(url,options);if(options?.method==='POST')await held;return response;});
+ try{
+ t.service.changed(plans('Ripresa'));t.win.dispatchEvent(new Event('pageshow'));
+ await vi.waitFor(()=>expect(t.posts).toHaveLength(1));
+ t.win.dispatchEvent(new Event('pageshow'));t.doc.dispatchEvent(new Event('visibilitychange'));
+ release();await vi.waitFor(()=>expect(t.service.status()).toBe('saved'));expect(t.posts).toHaveLength(1);
+ t.fetch.mockImplementation(original);t.head.revision++;t.head.backup=await exportBackup(plans('Altro dispositivo'));
+ t.service.changed(plans('Da conservare'));expect(await t.service.flush()).toBe(false);
+ expect(t.service.status()).toBe('conflict');const calls=t.fetch.mock.calls.length;
+ t.win.dispatchEvent(new Event('pageshow'));t.doc.dispatchEvent(new Event('visibilitychange'));t.win.dispatchEvent(new Event('online'));
+ await Promise.resolve();expect(t.fetch).toHaveBeenCalledTimes(calls);
+ }finally{release();}
+},15000);
+
+it('automatically retries a transient online failure with backoff without requiring another edit',async()=>{
+ vi.useFakeTimers();
+ try{
+  const initial=plans('Primo'),t=await setup(initial);await t.service.open(t.key,initial);
+  const original=t.fetch.getMockImplementation()!;let failed=false;
+  t.fetch.mockImplementation(async(url,options)=>{if(options?.method==='POST'&&!failed){failed=true;throw new TypeError('Rete intermittente');}return original(url,options);});
+  t.service.changed(plans('Da sincronizzare'));expect(await t.service.flush()).toBe(false);expect(t.service.status()).toBe('offline');
+  await vi.advanceTimersByTimeAsync(2000);
+  await vi.waitFor(()=>expect(t.service.status()).toBe('saved'));
+  expect((await importBackup(t.head.backup!)).plans[0].name).toBe('Da sincronizzare');
+ }finally{vi.useRealTimers();}
+});
+
+it('does not create a seed-only server copy when an update flush waits for the first server check',async()=>{
+ const t=await setup(),initial=seed(),original=t.fetch.getMockImplementation()!;
+ let release!:()=>void;const held=new Promise<void>(resolve=>release=resolve);
+ t.fetch.mockImplementationOnce(async(url,options)=>{await held;return original(url,options);});
+ const opening=t.service.open(t.key,initial),flushing=t.service.flush();
+ t.service.changed(initial);release();await opening;
+ t.service.changed(initial);expect(await flushing).toBe(true);expect(await t.service.flush()).toBe(true);
+ expect(t.posts).toHaveLength(0);expect(t.head.revision).toBe(0);
+});

@@ -7,7 +7,7 @@ import { ExerciseFamiliesComponent } from "../shared/exercise-families.component
 import { compressPhoto } from "../services/images";
 import { ExerciseVideoComponent } from "../shared/exercise-video.component";
 import { A11yModule } from "@angular/cdk/a11y";
-import { Component, computed, inject, signal } from "@angular/core";
+import { Component, computed, HostListener, inject, signal } from "@angular/core";
 import {
   FormBuilder,
   ReactiveFormsModule,
@@ -18,6 +18,11 @@ import { Store } from "../services/store";
 import { Exercise, LoadMode, uid, now } from "../models/domain";
 import { IconComponent } from "../shared/icon.component";
 import { StatusComponent } from "../shared/status.component";
+import { DraftSession, FormDraftService } from "../services/form-drafts";
+type CatalogEditorDraft = {
+  kind:'exercise'|'group';editId:string;saveId:string;baseline:string;
+  value?:ReturnType<CatalogComponent['form']['getRawValue']>;image?:Blob;pendingImage?:Blob;groupName?:string;
+};
 @Component({
   standalone: true,
   styleUrl: "./account-polish.css",
@@ -33,6 +38,7 @@ import { StatusComponent } from "../shared/status.component";
   template: `<gt-section-heading index="08" eyebrow="CATALOGO ESERCIZI" title="Ogni possibilità." description="Trova la variante giusta. Costruisci un allenamento che sia tuo.">@if(s.canEditCatalog()){<button class="primary" (click)="open()" [disabled]="!s.ready()"><gt-icon name="plus"/> Nuovo esercizio</button>}</gt-section-heading>
     <div class="catalog-intro"><div class="catalog-orbit" aria-hidden="true"><gt-icon name="weight"/><i></i></div><div><span class="eyebrow">LA TUA LIBRERIA DI MOVIMENTO</span><strong>{{s.data().exercises.length}} <small>esercizi in archivio</small></strong><p>{{s.data().muscleGroups.length}} gruppi muscolari · Varianti per ogni attrezzatura</p></div></div>
     <gt-status />
+    @if(draftNotice()){<p class="notice" role="status">{{draftNotice()}}</p>}
     <div class="filters catalog-filters">
       <label
         >Cerca<input
@@ -215,6 +221,12 @@ import { StatusComponent } from "../shared/status.component";
           </form>
         </section>
       </div>
+    }
+    @if(groupEditing()&&s.canEditCatalog()){
+      <div class="modal-backdrop" (click)="close($event)"><section class="modal" cdkTrapFocus [cdkTrapFocusAutoCapture]="true" role="dialog" aria-modal="true" aria-labelledby="group-title" (keydown.escape)="dismiss()">
+        <div class="modal-head"><h2 id="group-title">{{editId?'Modifica gruppo muscolare':'Nuovo gruppo muscolare'}}</h2><button type="button" (click)="dismiss()" [disabled]="saving()" aria-label="Chiudi">×</button></div>
+        <form #groupForm="ngForm" (ngSubmit)="saveGroup()"><label>Nome del gruppo<input name="group-name" [(ngModel)]="groupName" required maxlength="80" [disabled]="saving()"/></label><div class="actions"><button class="primary" [disabled]="saving()||groupForm.invalid||!groupName.trim()">{{saving()?'Salvataggio…':'Salva gruppo'}}</button><button type="button" (click)="dismiss()" [disabled]="saving()">Annulla</button></div></form>
+      </section></div>
     }`,
 })
 export class CatalogComponent {
@@ -224,6 +236,19 @@ export class CatalogComponent {
   group = signal("");
   active = signal("active");
   editing = signal(false);
+  groupEditing = signal(false);
+  groupName = '';
+  draftNotice = signal('');
+  private drafts = inject(FormDraftService,{optional:true});
+  private draftSession?: DraftSession<CatalogEditorDraft>;
+  private draftSubscription?: {unsubscribe():void};
+  private formBaseline='';
+  private imageBaseline?:Blob;
+  private pendingImage?:Blob;
+  private restoringDraft=false;
+  private destroyed=false;
+  private editorRequest=0;
+  private restoreTimer?:ReturnType<typeof setTimeout>;
   saving = signal(false);
   imageLoading = signal(false);
   private imageRequest = 0;
@@ -241,6 +266,57 @@ export class CatalogComponent {
     videoUrl: [""],
     active: [false],
   });
+  ngOnInit(){
+    if(!this.drafts)return;
+    this.draftSession=this.drafts.bind(this.s.archiveKey(),'catalog-editor',()=>this.captureDraft(),value=>{void this.restoreDraft(value).catch(()=>this.draftNotice.set('La bozza non è stata riaperta. I dati già salvati sono conservati.'));});
+    this.draftSubscription=this.form.valueChanges.subscribe(()=>{if(!this.restoringDraft)this.draftSession?.changed();});
+  }
+  @HostListener('input') @HostListener('change') draftChanged(){if(!this.restoringDraft)this.draftSession?.changed();}
+  private hasChanges(){return this.groupEditing()?this.groupName!==this.formBaseline:this.editing()&&(JSON.stringify(this.form.getRawValue())!==this.formBaseline||this.imageBlob!==this.imageBaseline||!!this.pendingImage);}
+  private captureDraft():CatalogEditorDraft|null{
+    if(!this.hasChanges())return null;
+    return this.groupEditing()?{kind:'group',editId:this.editId,saveId:this.formSaveId,baseline:this.formBaseline,groupName:this.groupName}:{kind:'exercise',editId:this.editId,saveId:this.formSaveId,baseline:this.formBaseline,value:this.form.getRawValue(),image:this.imageBlob,pendingImage:this.pendingImage};
+  }
+  private async samePhoto(first?:Blob,second?:Blob){
+    if(first===second)return true;
+    if(!first||!second||first.type!==second.type||first.size!==second.size)return false;
+    const [a,b]=await Promise.all([first.arrayBuffer(),second.arrayBuffer()]);
+    const other=new Uint8Array(b);return new Uint8Array(a).every((byte,index)=>byte===other[index]);
+  }
+  private async appliedDraft(value:CatalogEditorDraft){
+    if(value.kind==='group')return this.s.data().muscleGroups.some(group=>group.id===value.saveId&&group.name===(value.groupName||'').trim());
+    const item=this.s.exercise(value.saveId),form=value.value;if(!item||!form||value.pendingImage)return false;
+    const tags=[...new Set(form.tags.split(',').map(tag=>tag.trim()).filter(Boolean))];
+    return item.name===form.name.trim()&&item.muscleGroupId===form.muscleGroupId&&JSON.stringify(item.secondaryMuscleIds)===JSON.stringify(form.secondaryMuscleIds.filter(id=>id!==form.muscleGroupId))&&item.equipment===form.equipment.trim()&&item.loadMode===form.loadMode&&item.description===form.description.trim()&&JSON.stringify(item.tags)===JSON.stringify(tags)&&item.active===form.active&&(item.videoUrl||'')===form.videoUrl.trim()&&await this.samePhoto(item.image,value.image);
+  }
+  private async restoreDraft(value:CatalogEditorDraft){
+    if(this.destroyed||this.editing()||this.groupEditing())return;
+    if(typeof this.s.ready==='function'&&!this.s.ready()){this.restoreTimer=setTimeout(()=>void this.restoreDraft(value),100);return;}
+    if(!this.s.canEditCatalog())return;
+    const items=value?.kind==='group'?this.s.data().muscleGroups:this.s.data().exercises;
+    if(!value||!['exercise','group'].includes(value.kind)||!value.saveId||value.kind==='exercise'&&!value.value||typeof value.baseline!=='string'||value.editId&&!items.some(item=>item.id===value.editId)){
+      this.draftNotice.set('La bozza precedente è già stata salvata o si riferiva a un elemento non più disponibile.');this.clearStoredDraft();return;
+    }
+    const request=this.editorRequest,applied=await this.appliedDraft(value);
+    if(this.destroyed||request!==this.editorRequest||this.editing()||this.groupEditing())return;
+    if(applied){this.clearStoredDraft();return;}
+    this.restoringDraft=true;
+    try{
+      this.editId=items.some(item=>item.id===value.saveId)?value.saveId:value.editId;this.formSaveId=value.saveId;this.formBaseline=value.baseline;
+      if(value.kind==='group'){this.groupName=value.groupName||'';this.groupEditing.set(true);}
+      else if(value.value){this.form.reset(value.value);this.imageBlob=value.image;this.imageBaseline=this.s.exercise(value.editId)?.image;this.pendingImage=value.pendingImage;this.editing.set(true);if(value.pendingImage)void this.image({target:{files:[value.pendingImage],value:''}} as unknown as Event);}
+      this.draftNotice.set('Bozza recuperata. Controlla i valori e salva quando sei pronto.');
+    }finally{this.restoringDraft=false;}
+  }
+  private beginEditor(){
+    if(this.saving()||!this.s.canEditCatalog())return false;
+    if(this.hasChanges()&&!confirm('Scartare le modifiche non salvate prima di aprire un altro modulo?'))return false;
+    if(this.editing()||this.groupEditing())this.clearStoredDraft();
+    clearTimeout(this.restoreTimer);this.editorRequest++;this.imageRequest++;this.imageLoading.set(false);this.pendingImage=undefined;this.editing.set(false);this.groupEditing.set(false);this.draftNotice.set('');return true;
+  }
+  private clearStoredDraft(){void this.draftSession?.clear().catch(()=>{/* Pending cleanup is retried by the draft service before exit. */});}
+  private editorSaved(){this.editorRequest++;this.imageRequest++;this.imageLoading.set(false);this.pendingImage=undefined;this.editing.set(false);this.groupEditing.set(false);this.draftNotice.set('');this.clearStoredDraft();}
+  ngOnDestroy(){clearTimeout(this.restoreTimer);void this.draftSession?.destroy();this.destroyed=true;this.editorRequest++;this.imageRequest++;this.draftSubscription?.unsubscribe();}
   filtered = computed(() =>
     this.s
       .data()
@@ -262,8 +338,7 @@ export class CatalogComponent {
     }[m];
   }
   open(e?: Exercise) {
-    if(this.saving()||!this.s.canEditCatalog()) return;
-    this.imageRequest++;this.imageLoading.set(false);
+    if(!this.beginEditor())return;
     this.editId = e?.id || "";
     this.formSaveId = e?.id || uid();
     this.imageBlob = e?.image;
@@ -280,22 +355,23 @@ export class CatalogComponent {
       active: e?.active ?? !this.s.sharedCatalog(),
     });
     this.editing.set(true);
+    this.formBaseline=JSON.stringify(this.form.getRawValue());this.imageBaseline=this.imageBlob;this.draftSession?.changed();
   }
   close(e: MouseEvent) {
     if (e.target === e.currentTarget) this.dismiss();
   }
-  dismiss(){if(this.saving())return;this.imageRequest++;this.imageLoading.set(false);this.editing.set(false);}
-  removeImage(){if(this.saving())return;this.imageRequest++;this.imageLoading.set(false);this.imageBlob=undefined;}
+  dismiss(){if(this.saving())return;if(this.hasChanges()&&!confirm('Scartare le modifiche non salvate?'))return;this.editorSaved();}
+  removeImage(){if(this.saving())return;this.imageRequest++;this.imageLoading.set(false);this.imageBlob=undefined;this.pendingImage=undefined;this.draftSession?.changed();}
   async image(event: Event) {
     const input=event.target as HTMLInputElement;
     const file = input.files?.[0];
     if (!file) return;
     input.value='';
     if(this.saving())return;
-    const request=++this.imageRequest;this.imageLoading.set(true);
+    const request=++this.imageRequest;this.imageLoading.set(true);this.pendingImage=file;this.draftSession?.changed();
     try {const photo=await compressPhoto(file);if(request===this.imageRequest)this.imageBlob=photo;}
     catch(e){if(request===this.imageRequest)this.s.error.set((e as Error).message);}
-    finally{if(request===this.imageRequest)this.imageLoading.set(false);}
+    finally{if(request===this.imageRequest){this.imageLoading.set(false);this.pendingImage=undefined;this.draftSession?.changed();}}
   }
   async save() {
     if (this.form.invalid || this.saving() || this.imageLoading() || !this.s.canEditCatalog()) return;
@@ -333,7 +409,7 @@ export class CatalogComponent {
         image: this.imageBlob,
       })
     )
-      this.editing.set(false);
+      this.editorSaved();
     } finally { this.form.enable({emitEvent:false});this.saving.set(false); }
   }
   async toggle(e: Exercise) {
@@ -341,11 +417,10 @@ export class CatalogComponent {
     this.saving.set(true);try{await this.s.saveExercise({...e,active:!e.active});}finally{this.saving.set(false);}
   }
   newGroup() {
-    if(!this.s.canEditCatalog())return;
-    const name=prompt('Nome del gruppo muscolare');if(name?.trim()) void this.s.saveMuscleGroup(uid(),name.trim());
+    if(!this.beginEditor())return;this.editId='';this.formSaveId=uid();this.groupName='';this.formBaseline='';this.groupEditing.set(true);this.draftSession?.changed();
   }
   renameGroup(id:string,current:string) {
-    if(!this.s.canEditCatalog())return;
-    const name=prompt('Modifica nome del gruppo',current);if(name?.trim())void this.s.saveMuscleGroup(id,name.trim());
+    if(!this.beginEditor())return;this.editId=id;this.formSaveId=id;this.groupName=current;this.formBaseline=current;this.groupEditing.set(true);this.draftSession?.changed();
   }
+  async saveGroup(){if(this.saving()||!this.groupEditing()||!this.groupName.trim()||this.groupName.length>80||!this.s.canEditCatalog())return;this.saving.set(true);try{if(await this.s.saveMuscleGroup(this.formSaveId||=this.editId||uid(),this.groupName.trim()))this.editorSaved();}finally{this.saving.set(false);}}
 }

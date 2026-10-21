@@ -10,15 +10,19 @@ import { Store } from '../src/app/services/store';
 import { PlansComponent } from '../src/app/features/plans.component';
 import { ActiveWorkoutComponent } from '../src/app/shared/active-workout.component';
 import { SessionComponent } from '../src/app/features/session.component';
+import { FormDraftService } from '../src/app/services/form-drafts';
+import Dexie from 'dexie';
 
 let db: GymDatabase, injector: EnvironmentInjector, s: Store;
 let active: ActiveWorkoutComponent | undefined;
+let formDrafts:FormDraftService,draftName:string;
 beforeEach(async () => {
   vi.stubGlobal('document', { body: { classList: { toggle: () => {} } } });
   db = new GymDatabase('recording-flow-' + crypto.randomUUID());
+  draftName='recording-form-drafts-'+crypto.randomUUID();formDrafts=new FormDraftService(draftName);
   injector = createEnvironmentInjector([
     { provide: GYM_REPOSITORY, useValue: { read: () => db.snapshot(), replace: (data: any) => db.replace(data) } },
-    { provide: Router, useValue: { navigateByUrl: vi.fn(async () => true) } }, FormBuilder, Store,
+    { provide: Router, useValue: { navigateByUrl: vi.fn(async () => true) } },{provide:FormDraftService,useValue:formDrafts}, FormBuilder, Store,
   ], null as unknown as EnvironmentInjector);
   s = injector.get(Store);
   await vi.waitFor(() => expect(s.ready()).toBe(true));
@@ -26,6 +30,7 @@ beforeEach(async () => {
 afterEach(async () => {
   active?.ngOnDestroy(); active = undefined;
   await s.settled();
+  await formDrafts.flushAll();formDrafts.ngOnDestroy();await formDrafts.flushAll();(formDrafts as any).db.close();await Dexie.delete(draftName);
   injector.destroy(); await db.delete(); vi.restoreAllMocks(); vi.unstubAllGlobals();
 });
 async function setup() {
@@ -157,4 +162,34 @@ it('ignora un secondo tocco ravvicinato su Salva anche se è già visibile la se
   expect(c.completedSets()).toBe(1); expect(c.step()).toBe('record');
   await c.complete({ timeStamp: 1700 } as MouseEvent);
   expect(c.completedSets()).toBe(2);
+});
+
+it('ritenta tutte le serie rimaste in bozza e riapre il campo non salvato prima di concludere',async()=>{
+  const c=await setup(),exercise=c.exercises()[0],sets=s.sets(exercise.id);c.quickRecord(exercise);
+  c.weight=72.5;c.reps=9;c.inputChanged();
+  const update=s.updateSet.bind(s),fault=vi.spyOn(s,'updateSet').mockImplementation(async(id,patch)=>id===sets[0].id?false:update(id,patch));
+  expect(await c.saveDraft()).toBe(false);c.record(sets[1]);c.weight=80;c.reps=8;c.inputChanged();
+  expect(await c.flushForFinish()).toBe(false);
+  expect(c.setId()).toBe(sets[0].id);expect(c.weight).toBe(72.5);
+  expect(s.sets(exercise.id)[1].weight).toBe(80);
+  fault.mockRestore();expect(await c.flushForFinish()).toBe(true);
+  expect(s.sets(exercise.id)[0]).toMatchObject({weight:72.5,reps:9,completed:false});
+});
+
+it('recupera una bozza invalida della serie dopo aver lasciato la schermata e la elimina dopo la correzione',async()=>{
+  const c=await setup();c.ngOnInit();await (c as any).draftSession.ready;c.quickRecord(c.exercises()[0]);
+  c.weight=null as unknown as number;c.reps=12;c.inputChanged();
+  await (c as any).draftSession.flush();const id=c.workoutId(),setId=c.setId();c.ngOnDestroy();await formDrafts.flushAll();
+  active=runInInjectionContext(injector,()=>new ActiveWorkoutComponent());Object.defineProperty(active,'workoutId',{value:()=>id});active.ngOnInit();await (active as any).draftSession.ready;
+  expect(active.step()).toBe('record');expect(active.setId()).toBe(setId);expect(active.weight).toBeNull();expect(active.reps).toBe(12);
+  active.weight=67.5;active.inputChanged();expect(await active.flushForFinish()).toBe(true);await formDrafts.flushAll();
+  expect(await formDrafts.read(s.archiveKey(),'active-sets:'+id)).toBeNull();
+});
+
+it('non perde il comando Completa se il salvataggio automatico della stessa serie era già in corso',async()=>{
+  const c=await setup();c.quickRecord(c.exercises()[0]);c.weight=70;c.reps=10;
+  let release!:()=>void;const held=new Promise<void>(resolve=>{release=resolve;}),update=s.updateSet.bind(s);
+  vi.spyOn(s,'updateSet').mockImplementationOnce(async(id,patch)=>{await held;return update(id,patch);});
+  const automatic=c.saveDraft();const completing=c.complete();release();await automatic;await completing;
+  expect(c.currentSet()).toMatchObject({weight:70,reps:10,completed:true});expect(c.step()).toBe('rest');
 });
