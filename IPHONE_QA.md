@@ -83,3 +83,13 @@ Aggiunte 92 varianti, per 253 esercizi predefiniti totali: 23 voci di lat machin
 Un componente riutilizzabile offre filtri rapidi per queste cinque famiglie nel catalogo e nel selettore dei piani. La ricerca nei piani comprende anche i tag. La migrazione IndexedDB v5 aggiunge le voci mancanti e i tag di famiglia senza sostituire nomi personalizzati, flag di visibilità, immagini, nuovi link degli admin o collegamenti delle schede. Il catalogo online riceve le stesse definizioni; non richiede una nuova migrazione D1.
 
 52 test automatici passati, inclusi aggiornamento da archivio v4, parità del catalogo locale/server e modalità di carico. Su iPhone restano da provare lo scorrimento orizzontale dei filtri e la selezione degli esercizi nelle schede: nessun test visivo Safari è stato eseguito in questa sessione.
+
+## Nuovo calendario: UI e uso con una mano
+
+Riepilogo del periodo con conteggi reali e anello di avanzamento (obiettivo personale soltanto nella vista Settimana); giorni settimanali a schede scorrevoli, selezione portata in vista senza scorrimento verticale della pagina; mese con indicatori per programmazioni, sessioni e pasti. Le viste Giorno, Settimana predefinita e Mese restano disponibili. Il riepilogo mensile esclude i giorni dei mesi adiacenti mostrati nella griglia.
+
+Agenda con filtri Tutto/Da fare/Svolti, schede colorate per stato, esercizi/serie del piano, avvio/ripresa e accesso allo storico. Menu per modificare la programmazione o duplicarla dopo 7 giorni. Barra Programma raggiungibile sopra la navigazione inferiore, safe area e layout per tastiera e orientamento orizzontale. Su iPhone il modulo è una finestra dal basso; nessuna modifica allo stile delle altre sezioni.
+
+Nel modulo è possibile creare 1, 2, 4 o 8 appuntamenti settimanali indipendenti. Il salvataggio è atomico: se una data contiene già lo stesso allenamento, nessuna nuova data viene aggiunta. Le programmazioni esistenti, i collegamenti allo storico e il formato dei backup restano validi; non occorre una migrazione del database. Le sessioni svolte sono conteggiate nella loro data effettiva, evitando duplicati con gli eventi del calendario.
+
+56 test automatici passati, inclusi ripetizioni, conflitti/rollback, filtri, duplicazione, collegamenti alle sessioni e confini mese/anno. Build strict e verifica PWA passate. Verifiche da eseguire su iPhone reale: menu e finestra con tastiera, ritorno del focus, selezione con una mano, date picker nativo, safe area a 320/375/390/430 px, animazioni con Riduci movimento e riapertura offline. Il browser di QA dell'ambiente non è disponibile: nessun test visivo Safari è stato eseguito in questa sessione.

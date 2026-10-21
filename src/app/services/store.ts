@@ -1,3 +1,4 @@
+import { weeklyDates } from "./calendar";
 import { ThemeService } from "./theme";
 import { AuthService } from "./auth";
 import { computed, inject, Injectable, signal } from "@angular/core";
@@ -495,15 +496,19 @@ export class Store {
     if(!this.canEditCatalog()) {this.error.set('Operazione riservata agli admin.');return;}
     try{await this.auth!.request('catalog/group',{id,name});await this.refreshCatalog();this.message.set('Gruppo salvato.');}catch(e){this.error.set((e as Error).message);}
   }
-  async scheduleWorkout(date:string,dayId:string,notes='',id:string=uid()) {
+  async scheduleWorkout(date:string,dayId:string,notes='',id:string=uid(),repeatCount=1) {
     return this.change(d=>{
       const day=d.days.find(x=>x.id===dayId),plan=d.plans.find(p=>p.id===day?.planId);
-      const parsed=new Date(date+'T12:00:00');
-      if(!day||!plan||plan.archived||!/^\d{4}-\d{2}-\d{2}$/.test(date)||!Number.isFinite(parsed.getTime())||localDate(parsed)!==date)throw Error('Seleziona un giorno valido di un piano disponibile.');
-      if(d.scheduledWorkouts.some(e=>e.date===date&&e.dayId===dayId&&e.id!==id))throw Error('Questo allenamento è già programmato per la data scelta.');
-      const event={id,date,dayId,planId:plan.id,planName:plan.name,dayName:day.name,notes:notes.trim()};
-      const index=d.scheduledWorkouts.findIndex(e=>e.id===id);if(index>=0){const old=d.scheduledWorkouts[index];if(old.workoutId)throw Error('Un allenamento già avviato non può essere riprogrammato.');d.scheduledWorkouts[index]=event;}else d.scheduledWorkouts.push(event);
-    },'Allenamento programmato.',false);
+      if(!day||!plan||plan.archived)throw Error('Seleziona un giorno valido di un piano disponibile.');
+      const dates=weeklyDates(date,repeatCount);
+      const index=d.scheduledWorkouts.findIndex(e=>e.id===id);
+      if(index>=0&&d.scheduledWorkouts[index].workoutId)throw Error('Una programmazione già avviata non può essere modificata.');
+      if(index>=0&&repeatCount!==1)throw Error('Per ripetere l’allenamento crea una nuova programmazione.');
+      if(notes.length>2000)throw Error('Le note possono contenere al massimo 2000 caratteri.');
+      if(dates.some(value=>d.scheduledWorkouts.some(e=>e.date===value&&e.dayId===dayId&&e.id!==id)))throw Error('Questo allenamento è già programmato in una delle date scelte. Nessuna nuova programmazione è stata aggiunta.');
+      const events=dates.map((value,i)=>({id:i===0?id:uid(),date:value,dayId,planId:plan.id,planName:plan.name,dayName:day.name,notes:notes.trim()}));
+      if(index>=0)d.scheduledWorkouts[index]=events[0];else d.scheduledWorkouts.push(...events);
+    },repeatCount>1?'Allenamenti programmati per '+repeatCount+' settimane.':'Allenamento programmato.',false);
   }
   async startScheduled(id:string) {
     const event=this.data().scheduledWorkouts.find(e=>e.id===id);if(!event)return false;

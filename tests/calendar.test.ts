@@ -1,15 +1,17 @@
 import '@angular/compiler';
 import 'fake-indexeddb/auto';
 import { beforeEach,afterEach,it,expect,vi } from 'vitest';
-import {createEnvironmentInjector,EnvironmentInjector} from '@angular/core';
-import {calendarDays,movePeriod,moveDate,parseLocalDate} from '../src/app/services/calendar';
+import {createEnvironmentInjector,EnvironmentInjector,runInInjectionContext} from '@angular/core';
+import {calendarDays,calendarActivity,weeklyDates,movePeriod,moveDate,parseLocalDate} from '../src/app/services/calendar';
+import {ActivatedRoute,Router} from '@angular/router';
+import {CalendarComponent} from '../src/app/features/calendar.component';
 import {Store} from '../src/app/services/store';
 import {GymDatabase} from '../src/app/core/database';
 import {GYM_REPOSITORY} from '../src/app/repositories/repository';
 import {seed} from '../src/app/core/seed';
 import {exportBackup,importBackup} from '../src/app/services/backup';
-let db:GymDatabase,injector:EnvironmentInjector,s:Store;
-beforeEach(async()=>{vi.stubGlobal('document',{body:{classList:{toggle:()=>{}}}});db=new GymDatabase('calendar-test-'+crypto.randomUUID());injector=createEnvironmentInjector([{provide:GYM_REPOSITORY,useValue:{read:()=>db.snapshot(),replace:(d:any)=>db.replace(d)}},Store],null as unknown as EnvironmentInjector);s=injector.get(Store);await vi.waitFor(()=>expect(s.ready()).toBe(true));});
+let db:GymDatabase,injector:EnvironmentInjector,s:Store;let routeDate:string|null=null;
+beforeEach(async()=>{routeDate=null;vi.stubGlobal('document',{body:{classList:{toggle:()=>{}}}});db=new GymDatabase('calendar-test-'+crypto.randomUUID());injector=createEnvironmentInjector([{provide:GYM_REPOSITORY,useValue:{read:()=>db.snapshot(),replace:(d:any)=>db.replace(d)}},{provide:ActivatedRoute,useValue:{snapshot:{queryParamMap:{get:()=>routeDate}}}},{provide:Router,useValue:{navigateByUrl:vi.fn()}},Store],null as unknown as EnvironmentInjector);s=injector.get(Store);await vi.waitFor(()=>expect(s.ready()).toBe(true));});
 afterEach(async()=>{injector.destroy();await db.delete();vi.unstubAllGlobals();});
 it('calculates daily, Monday-first weekly and month views including year and leap-day boundaries',()=>{
  expect(calendarDays('2026-10-21','day')).toEqual(['2026-10-21']);expect(calendarDays('2026-10-21','week')).toEqual(['2026-10-19','2026-10-20','2026-10-21','2026-10-22','2026-10-23','2026-10-24','2026-10-25']);
@@ -30,4 +32,29 @@ it('roundtrips calendar, measurements and goals and migrates v3 backups without 
  const d=seed();d.scheduledWorkouts.push({id:'event',date:'2026-10-22',dayId:'retired-day',planId:'retired-plan',planName:'Piano conservato',dayName:'Giorno conservato',notes:'Snapshot'});d.measurements.push({id:'measure',date:'2026-10-21',weight:75,waist:82,bodyFat:18});d.settings[0].goals={calories:2500,protein:150,workoutsPerWeek:3};
  const restored=await importBackup(await exportBackup(d));expect(restored.scheduledWorkouts).toEqual(d.scheduledWorkouts);expect(restored.measurements).toEqual(d.measurements);expect(restored.settings[0].goals).toEqual(d.settings[0].goals);
  const old=JSON.parse(await exportBackup(d));old.schemaVersion=3;delete old.data.scheduledWorkouts;delete old.data.measurements;const migrated=await importBackup(JSON.stringify(old));expect(migrated.scheduledWorkouts).toEqual([]);expect(migrated.measurements).toEqual([]);expect(migrated.exercises).toEqual(d.exercises);
+});
+
+it('repeats on the same weekday through leap years and saves the entire series atomically',async()=>{
+ expect(weeklyDates('2024-02-23',4)).toEqual(['2024-02-23','2024-03-01','2024-03-08','2024-03-15']);expect(()=>weeklyDates('2026-10-22',9)).toThrow();expect(()=>weeklyDates('2026-02-30',2)).toThrow();
+ await plan();expect(await s.scheduleWorkout('2026-10-22','day','Stesso obiettivo','series',4)).toBe(true);
+ const saved=await db.snapshot();expect(saved.scheduledWorkouts.map(e=>e.date).sort()).toEqual(['2026-10-22','2026-10-29','2026-11-05','2026-11-12']);expect(new Set(saved.scheduledWorkouts.map(e=>e.id)).size).toBe(4);
+ expect(await s.scheduleWorkout('2026-10-15','day','','conflict',4)).toBe(false);expect((await db.snapshot()).scheduledWorkouts).toEqual(saved.scheduledWorkouts);
+ expect(await s.scheduleWorkout('2026-10-23','day','Modificata','series')).toBe(true);expect(s.data().scheduledWorkouts.find(e=>e.id==='series')?.date).toBe('2026-10-23');expect(s.data().scheduledWorkouts).toHaveLength(4);
+});
+it('counts completed sessions on their actual date without double counting linked calendar entries',()=>{
+ const d=seed(),w={id:'w',userId:'local',planId:'p',dayId:'day',planName:'Piano',dayName:'Giorno',date:'2026-10-21',startedAt:new Date().toISOString(),duration:60,notes:'',status:'completed' as const};d.workouts.push(w,{...w,id:'draft',date:'2026-10-22',status:'draft'});
+ d.scheduledWorkouts.push({id:'e1',date:'2026-10-22',planId:'p',dayId:'day',planName:'Piano',dayName:'Giorno',notes:'',workoutId:'w'},{id:'e2',date:'2026-10-22',planId:'p',dayId:'other',planName:'Piano',dayName:'Altro',notes:'',workoutId:'draft'});
+ d.meals.push({id:'m',date:'2026-10-22',name:'Pasto',grams:100,calories:450,protein:20,carbs:50,fat:15,notes:'',source:'manual',createdAt:new Date().toISOString()});
+ const activity=calendarActivity(d);expect(activity.get('2026-10-21')).toMatchObject({completed:1,planned:0});expect(activity.get('2026-10-22')).toEqual({completed:0,planned:1,meals:1,calories:450});
+});
+it('opens deep links in the default week and limits month totals to the selected month',async()=>{
+ routeDate='2026-10-22';await plan();for(const date of ['2026-09-30','2026-10-22','2026-11-01'])await s.scheduleWorkout(date,'day');
+ const c=runInInjectionContext(injector,()=>new CalendarComponent());expect(c.view()).toBe('week');expect(c.selected()).toBe('2026-10-22');c.view.set('month');expect(c.periodStats().planned).toBe(1);expect(c.upcoming()).toHaveLength(0);c.view.set('week');c.choose('2026-12-30');expect(c.periodLabel()).toContain('2026');expect(c.periodLabel()).toContain('2027');c.choose('not-a-date');expect(c.selected()).toBe('2026-12-30');
+});
+it('filters linked sessions once and duplicates a program without changing history',async()=>{
+ routeDate='2026-10-22';await plan();await s.scheduleWorkout('2026-10-22','day','','event');
+ const c=runInInjectionContext(injector,()=>new CalendarComponent());expect(c.visibleEvents()).toHaveLength(1);c.filter.set('completed');expect(c.visibleEvents()).toHaveLength(0);c.filter.set('all');
+ const w={id:'historic',userId:'local',planId:'p',dayId:'day',planName:'Piano',dayName:'Giorno',date:'2026-10-22',startedAt:new Date().toISOString(),duration:60,notes:'',status:'completed' as const};
+ await s.change(d=>{d.workouts.push(w);d.scheduledWorkouts[0].workoutId=w.id;},'',false);expect(c.completed()).toHaveLength(0);expect(c.completedCount()).toBe(1);c.filter.set('planned');expect(c.visibleEvents()).toHaveLength(0);
+ await c.duplicate(s.data().scheduledWorkouts[0]);expect(c.selected()).toBe('2026-10-29');expect(c.filter()).toBe('all');expect(c.visibleEvents()).toHaveLength(1);expect(c.visibleEvents()[0].workoutId).toBeUndefined();expect(s.completed()[0]).toEqual(w);expect((await db.snapshot()).scheduledWorkouts).toHaveLength(2);
 });

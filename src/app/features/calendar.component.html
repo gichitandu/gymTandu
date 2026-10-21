@@ -1,0 +1,73 @@
+<div class="cal-page">
+  <header class="cal-heading">
+    <div><span class="cal-eyebrow">IL TUO RITMO</span><h1>Calendario<span class="cal-title-dot" aria-hidden="true"></span></h1></div>
+    <button class="cal-today" (click)="choose(today)" [class.is-today]="selected()===today"><gt-icon name="calendar"/> Oggi</button>
+  </header>
+  @if(!modal()){<gt-status/>}
+  <section class="cal-spotlight" aria-label="Riepilogo del periodo">
+    <div class="cal-spotlight-copy"><span class="cal-eyebrow">{{periodTitle()}}</span><h2>{{monthLabel()}}</h2><p>{{periodStats().planned?periodStats().planned+' '+(periodStats().planned===1?'allenamento ti aspetta.':'allenamenti ti aspettano.'):'Il prossimo passo parte da qui.'}}</p><div class="cal-mini-stats"><span><i class="cal-state-dot done"></i><b>{{periodStats().completed}}</b> svolti</span><span><i class="cal-state-dot planned"></i><b>{{periodStats().planned}}</b> in programma</span></div></div>
+    <div class="cal-score" [style.--cal-progress]="scoreProgress()+'%'" role="img" [attr.aria-label]="periodStats().completed+' allenamenti svolti'+(target()?' su un obiettivo settimanale di '+target():' nel periodo')"><div><gt-icon name="bolt"/><strong>{{periodStats().completed}}</strong><span>{{target()?'obiettivo '+target():'allenamenti'}}</span></div></div>
+    <span class="cal-orbit cal-orbit-one" aria-hidden="true"></span><span class="cal-orbit cal-orbit-two" aria-hidden="true"></span>
+  </section>
+
+  <div class="cal-view-switch" role="group" aria-label="Vista del calendario"><button [class.active]="view()==='day'" [attr.aria-pressed]="view()==='day'" (click)="view.set('day')">Giorno</button><button [class.active]="view()==='week'" [attr.aria-pressed]="view()==='week'" (click)="view.set('week')">Settimana</button><button [class.active]="view()==='month'" [attr.aria-pressed]="view()==='month'" (click)="view.set('month')">Mese</button></div>
+  <section class="cal-board" aria-label="Selezione del giorno">
+    <div class="cal-period-nav"><button class="cal-arrow" aria-label="Periodo precedente" (click)="move(-1)"><gt-icon name="back"/></button><h2 aria-live="polite">{{periodLabel()}}</h2><button class="cal-arrow" aria-label="Periodo successivo" (click)="move(1)"><gt-icon name="arrow"/></button></div>
+    @if(view()==='week'){
+      <div class="cal-week-rail" data-week-rail aria-label="Giorni della settimana">
+        @for(date of dates();track date){
+          <button class="cal-week-day" [class.selected]="selected()===date" [class.today]="date===today" [class.has-done]="day(date).completed>0" [class.has-plan]="day(date).planned>0" [attr.aria-label]="dayAria(date)" [attr.aria-pressed]="selected()===date" [attr.aria-current]="date===today?'date':null" (click)="choose(date)"><span class="cal-week-name">{{weekday(date)}}</span><strong>{{+date.slice(8)}}</strong><span class="cal-week-icon"><gt-icon [name]="day(date).completed?'check':day(date).planned?'weight':day(date).meals?'nutrition':'minus'"/></span><span class="cal-week-count">{{day(date).completed+day(date).planned||'—'}}</span></button>
+        }
+      </div>
+      <p class="cal-rail-hint">Tocca un giorno per vedere il tuo programma <gt-icon name="arrow"/></p>
+    } @else if(view()==='month') {
+      <div class="cal-month-scroll"><div class="cal-month-weekdays">@for(day of weekdays;track $index){<span>{{day}}</span>}</div><div class="cal-month-grid">@for(date of dates();track date){<button class="cal-month-day" [class.selected]="selected()===date" [class.today]="date===today" [class.outside]="date.slice(0,7)!==selected().slice(0,7)" [class.has-done]="day(date).completed>0" [class.has-plan]="day(date).planned>0" [attr.aria-label]="dayAria(date)" [attr.aria-pressed]="selected()===date" [attr.aria-current]="date===today?'date':null" (click)="choose(date)"><span>{{+date.slice(8)}}</span><span class="cal-cell-marks">@if(day(date).planned){<i class="planned"></i>}@if(day(date).completed){<i class="done"></i>}@if(day(date).meals){<i class="meal"></i>}</span></button>}</div></div>
+    } @else {
+      <div class="cal-day-focus"><span>{{weekday(selected())}}</span><strong>{{+selected().slice(8)}}</strong><div><span>{{selected()===today?'È il tuo oggi':shortLabel(selected())}}</span><p>{{dayHint(selected())==='Libero'?'Nessun allenamento programmato':dayHint(selected())}}</p></div></div>
+    }
+    <div class="cal-board-footer"><div class="cal-color-key"><span><i class="planned"></i>Da fare</span><span><i class="done"></i>Svolti</span><span><i class="meal"></i>Pasti</span></div><label class="cal-date-jump"><gt-icon name="calendar"/><span>Scegli data</span><input type="date" aria-label="Vai a una data" [ngModel]="selected()" (ngModelChange)="choose($event)"/></label></div>
+  </section>
+
+  <div class="cal-agenda-heading"><div><span class="cal-eyebrow">IL PROGRAMMA</span><h2>{{label(selected())}}</h2></div>@if(selected()===today){<span class="cal-now-label">Oggi</span>}<button class="cal-add-day" aria-label="Aggiungi allenamento a questo giorno" (click)="open()" [disabled]="!s.ready()"><gt-icon name="plus"/></button></div>
+  <div class="cal-agenda-filters" role="group" aria-label="Filtra allenamenti"><button [class.active]="filter()==='all'" [attr.aria-pressed]="filter()==='all'" (click)="filter.set('all')">Tutto <span>{{events().length+completed().length}}</span></button><button [class.active]="filter()==='planned'" [attr.aria-pressed]="filter()==='planned'" (click)="filter.set('planned')">Da fare <span>{{day(selected()).planned}}</span></button><button [class.active]="filter()==='completed'" [attr.aria-pressed]="filter()==='completed'" (click)="filter.set('completed')">Svolti <span>{{completedCount()}}</span></button></div>
+  <div class="cal-agenda" aria-live="polite">
+    @for(event of visibleEvents();track event.id){
+      <article class="cal-workout-card" [class.is-complete]="linked(event)?.status==='completed'" [class.is-running]="linked(event)?.status==='draft'">
+        <div class="cal-workout-top"><span class="cal-workout-status"><i></i>{{linked(event)?.status==='completed'?'COMPLETATO':linked(event)?.status==='draft'?'IN CORSO':'IN PROGRAMMA'}}</span><details class="cal-event-menu"><summary [attr.aria-label]="'Azioni per '+event.dayName">•••</summary><div>@if(!event.workoutId){<button (click)="open(event)" [disabled]="s.busy()"><gt-icon name="edit"/> Modifica data o piano</button>}@if(available(event)){<button (click)="duplicate(event)" [disabled]="s.busy()"><gt-icon name="copy"/> Duplica tra 7 giorni</button>}<button class="danger" (click)="remove(event)" [disabled]="s.busy()"><gt-icon name="trash"/> Rimuovi dal calendario</button></div></details></div>
+        <div class="cal-workout-main"><span class="cal-workout-symbol"><gt-icon [name]="linked(event)?.status==='completed'?'check':'weight'"/></span><div><p>{{event.planName}}</p><h3>{{event.dayName}}</h3><span>{{daySummary(event.dayId)}}</span></div></div>
+        @if(muscles(event.dayId)){<p class="cal-muscles">{{muscles(event.dayId)}}</p>}
+        @if(event.notes){<p class="cal-event-notes"><gt-icon name="note"/>{{event.notes}}</p>}
+        @if(linked(event)?.status==='completed'){
+          @if(linked(event)?.date!==event.date){<p class="cal-record-date">Registrato il {{shortLabel(linked(event)!.date)}}</p>}
+          <a class="cal-complete-action" routerLink="/allenamenti" [queryParams]="{workout:event.workoutId}"><span>{{s.formatWeight(s.volume(event.workoutId!))}} {{s.settings().unit}} di volume</span> Vedi sessione <gt-icon name="arrow"/></a>
+        } @else {
+          <button class="primary cal-start" (click)="start(event)" [disabled]="s.busy()||!available(event)"><gt-icon name="play"/>{{linked(event)?.status==='draft'?'Riprendi allenamento':'Inizia allenamento'}}<gt-icon name="arrow"/></button>
+        }
+        @if(!available(event)&&!linked(event)){<p class="cal-record-date">Il giorno del piano non è più disponibile. La programmazione è conservata.</p>}
+      </article>
+    }
+    @for(w of visibleCompleted();track w.id){
+      <a class="cal-workout-card is-complete cal-history-card" routerLink="/allenamenti" [queryParams]="{workout:w.id}"><span class="cal-workout-status"><i></i>SESSIONE REGISTRATA</span><div class="cal-workout-main"><span class="cal-workout-symbol"><gt-icon name="check"/></span><div><p>{{w.planName}}</p><h3>{{w.dayName}}</h3><span>{{s.formatWeight(s.volume(w.id))}} {{s.settings().unit}} di volume</span></div><gt-icon name="arrow"/></div><p class="cal-history-link">Rivedi i tuoi risultati</p></a>
+    }
+    @if(!visibleEvents().length&&!visibleCompleted().length){
+      <div class="cal-empty"><div class="cal-empty-art" aria-hidden="true"><gt-icon [name]="filter()==='completed'?'trophy':'calendar'"/><i></i></div><h3>{{filter()==='completed'?'I tuoi risultati arriveranno qui':filter()==='planned'?'Nessun allenamento da fare':'Dai spazio al prossimo traguardo'}}</h3><p>{{filter()==='completed'?'Le sessioni concluse compaiono nella data in cui le registri.':'Scegli un giorno del tuo piano e costruisci il tuo ritmo.'}}</p><button (click)="open()" [disabled]="!s.ready()"><gt-icon name="plus"/>Programma per questo giorno</button></div>
+    }
+  </div>
+  <a class="cal-nutrition-card" routerLink="/alimentazione" [queryParams]="{date:selected()}"><span class="cal-nutrition-icon"><gt-icon name="nutrition"/></span><div><strong>Il carburante del giorno</strong><span>{{day(selected()).meals}} pasti · {{day(selected()).calories.toLocaleString('it-IT',{maximumFractionDigits:0})}} kcal registrate</span></div><gt-icon name="arrow"/></a>
+  @if(upcoming().length&&filter()!=='completed'){
+    <section class="cal-upcoming"><div class="cal-upcoming-heading"><h2>{{view()==='week'?'Gli altri giorni della settimana':'Altre date del periodo'}}</h2><span>{{periodStats().active}} giorni di allenamento</span></div>@for(event of upcoming();track event.id){<button (click)="choose(event.date)" class="cal-upcoming-row"><span class="cal-upcoming-date"><small>{{weekday(event.date)}}</small><b>{{+event.date.slice(8)}}</b></span><span><strong>{{event.dayName}}</strong><small>{{event.planName}} · {{shortLabel(event.date)}}</small></span><gt-icon name="arrow"/></button>}</section>
+  }
+  <div class="cal-quick-bar"><div><span>Prossimo passo</span><strong>{{shortLabel(selected())}}</strong></div><button class="primary" (click)="open()" [disabled]="!s.ready()"><gt-icon name="plus"/>Programma</button></div>
+</div>
+@if(modal()){
+  <div class="modal-backdrop cal-modal-backdrop" (click)="backdrop($event)"><section class="modal cal-schedule-sheet" role="dialog" aria-modal="true" aria-labelledby="schedule-title" cdkTrapFocus [cdkTrapFocusAutoCapture]="true" (keydown.escape)="close()"><div class="cal-sheet-grab" aria-hidden="true"></div><div class="modal-head"><div><span class="cal-eyebrow">IL TUO PROSSIMO PASSO</span><h2 id="schedule-title">{{editing?'Modifica allenamento':'Programma allenamento'}}</h2></div><button class="cal-close" (click)="close()" aria-label="Chiudi"><gt-icon name="close"/></button></div>
+  @if(s.error()){<p class="notice error" role="alert">{{s.error()}}</p>}
+  @if(!availableDays().length){<div class="cal-empty"><gt-icon name="plans"/><h3>Parti dal tuo piano</h3><p>Crea un piano con almeno un giorno, poi aggiungilo al calendario.</p><a class="button primary" routerLink="/piani">Vai ai piani</a></div>}
+  @else {
+    <form #scheduleForm="ngForm" (ngSubmit)="save()"><div class="cal-sheet-date"><gt-icon name="calendar"/><label>Quando ti alleni?<input type="date" name="date" [(ngModel)]="eventDate" required/></label></div><label class="cal-sheet-field">Scegli l’allenamento<select name="day" [(ngModel)]="dayId" required><option value="">Seleziona giorno del piano</option>@for(plan of availablePlans();track plan.id){<optgroup [label]="plan.name">@for(day of s.days(plan.id);track day.id){<option [value]="day.id">{{day.name}}</option>}</optgroup>}</select></label>
+    @if(dayId){<div class="cal-sheet-preview"><gt-icon name="weight"/><div><strong>{{daySummary(dayId)}}</strong><span>{{muscles(dayId)||'Il tuo programma personale'}}</span></div></div>}
+    @if(!editing){<label class="cal-sheet-field">Ripeti ogni settimana<select name="repeat" [(ngModel)]="repeatCount"><option [ngValue]="1">Solo questa data</option><option [ngValue]="2">Per 2 settimane</option><option [ngValue]="4">Per 4 settimane</option><option [ngValue]="8">Per 8 settimane</option></select></label>@if(repeatCount>1){<p class="cal-repeat-preview">{{repeatPreview()}}</p><p class="cal-repeat-help">Vengono create {{repeatCount}} date indipendenti, modificabili una alla volta.</p>}}
+    <label class="cal-sheet-field">Note <span class="cal-optional">facoltative</span><textarea name="notes" [(ngModel)]="notes" maxlength="2000" rows="2" placeholder="Un obiettivo, un promemoria…"></textarea></label><button class="primary cal-sheet-submit" [disabled]="scheduleForm.invalid||s.busy()"><gt-icon name="check"/>{{s.busy()?'Salvataggio…':editing?'Salva modifiche':repeatCount>1?'Programma '+repeatCount+' allenamenti':'Aggiungi al calendario'}}</button></form>
+  }
+  </section></div>
+}
