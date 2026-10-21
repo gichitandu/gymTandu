@@ -1,7 +1,7 @@
 import { setupKey,setupSummary,hasSetup } from "./training-flow";
 import { weightProgression } from "./progression";
 import { MachineSetup,WorkoutUiState } from "../models/domain";
-import { weeklyDates } from "./calendar";
+import { parseLocalDate, weeklyDates } from "./calendar";
 import { ThemeService } from "./theme";
 import { AuthService } from "./auth";
 import { computed, inject, Injectable, signal } from "@angular/core";
@@ -277,9 +277,10 @@ export class Store {
       maximumFractionDigits: 1,
     });
   }
-  previous(exerciseId: string, exclude?: string, machineSetup?:MachineSetup) {
+  previous(exerciseId: string, exclude?: string, machineSetup?:MachineSetup, latestDate?:string) {
+    const cutoff=latestDate||this.data().workouts.find(w=>w.id===exclude)?.date;
     for (const w of this.completed()) {
-      if (w.id === exclude) continue;
+      if (w.id === exclude || cutoff&&w.date>cutoff) continue;
       const e = this.data().workoutExercises.find(
         (e) =>
           e.workoutId === w.id &&
@@ -352,6 +353,18 @@ export class Store {
       p.updatedAt = now();
     }, "Giorno salvato.");
   }
+  async deletePlan(id:string){
+    return this.change(d=>{
+      if(!d.plans.some(plan=>plan.id===id))throw Error('Piano non trovato.');
+      if(d.workouts.some(workout=>workout.planId===id&&workout.status==='draft'))throw Error('Concludi o riprendi la sessione aperta di questo piano prima di eliminarlo.');
+      const days=new Set(d.days.filter(day=>day.planId===id).map(day=>day.id));
+      // Recorded sessions have their own snapshots. Never cascade into logs,
+      // sets, calendar snapshots, the exercise catalog or another plan.
+      d.planExercises=d.planExercises.filter(exercise=>!days.has(exercise.dayId));
+      d.days=d.days.filter(day=>!days.has(day.id));
+      d.plans=d.plans.filter(plan=>plan.id!==id);
+    },'Piano eliminato. Gli allenamenti registrati sono conservati.',false);
+  }
   async duplicatePlan(id: string) {
     await this.change((d) => {
       const source = d.plans.find((p) => p.id === id);
@@ -395,15 +408,22 @@ export class Store {
       );
     }, "Giorno duplicato.");
   }
-  async start(dayId: string) {
-    if (this.draft()) return true;
+  async start(dayId: string, date?:string) {
+    const workoutDate=date??localDate();
+    try{parseLocalDate(workoutDate);if(workoutDate>localDate())throw Error('Per registrare un allenamento scegli oggi o una data passata.');}
+    catch(error){this.error.set(error instanceof Error?error.message:'Data non valida.');return false;}
+    if (this.draft()) {
+      if(date!==undefined&&(this.draft()!.dayId!==dayId||this.draft()!.date!==workoutDate)){this.error.set('Hai già una sessione aperta: riprendila o concludila prima di registrare un altro allenamento.');return false;}
+      return true;
+    }
     return this.change((d) => {
       const day = d.days.find((x) => x.id === dayId);
       const plan = d.plans.find((x) => x.id === day?.planId);
       const entries = d.planExercises
         .filter((e) => e.dayId === dayId)
         .sort((a, b) => a.order - b.order);
-      if (d.workouts.some((w) => w.status === "draft")) return;
+      const open=d.workouts.find(w=>w.status==='draft');
+      if(open){if(date!==undefined&&(open.dayId!==dayId||open.date!==workoutDate))throw Error('Hai già una sessione aperta: riprendila o concludila prima di registrare un altro allenamento.');return;}
       if (!day || !plan || !entries.length)
         throw Error(
           "Aggiungi almeno un esercizio al giorno prima di iniziare.",
@@ -416,7 +436,7 @@ export class Store {
         dayId,
         planName: plan.name,
         dayName: day.name,
-        date: localDate(),
+        date: workoutDate,
         startedAt: now(),
         duration: 0,
         notes: "",
@@ -439,7 +459,7 @@ export class Store {
           rest: item.rest,
           notes: item.notes,
         });
-        const prev = this.settings().prefill ? this.previous(ex.id,undefined,d.exercisePreferences.find(p=>p.id===ex.id)?.machineSetup) : [];
+        const prev = this.settings().prefill ? this.previous(ex.id,undefined,d.exercisePreferences.find(p=>p.id===ex.id)?.machineSetup,workoutDate) : [];
         const warmups=item.warmupSets||0;
         for(let i=0;i<warmups;i++)d.sets.push({id:uid(),workoutExerciseId:weid,number:i+1,kind:'warmup',weight:0,reps:item.repsMin,rest:item.rest,notes:'',completed:false});
         for (let i = 0; i < item.sets; i++) {
@@ -533,7 +553,7 @@ export class Store {
       w.status = "completed";
       d.workoutUi=d.workoutUi.filter(x=>x.id!==w.id);
       w.endedAt = now();
-      w.duration = Math.max(
+      w.duration = w.duration>0?w.duration:Math.max(
         1,
         Math.round((Date.now() - new Date(w.startedAt).getTime()) / 60000),
       );
@@ -608,12 +628,12 @@ export class Store {
       if(index>=0)d.scheduledWorkouts[index]=events[0];else d.scheduledWorkouts.push(...events);
     },repeatCount>1?'Allenamenti programmati per '+repeatCount+' settimane.':'Allenamento programmato.',false);
   }
-  async startScheduled(id:string) {
+  async startScheduled(id:string,date?:string) {
     const event=this.data().scheduledWorkouts.find(e=>e.id===id);if(!event)return false;
     const linked=this.data().workouts.find(w=>w.id===event.workoutId);if(linked?.status==='completed'){this.error.set('Questa sessione è già stata completata.');return false;}
     if(this.draft()&&this.data().scheduledWorkouts.some(e=>e.id!==id&&e.workoutId===this.draft()!.id)){this.error.set('La sessione in corso è già associata a un’altra programmazione.');return false;}
     if(this.draft()&&this.draft()!.id!==event.workoutId&&this.draft()!.dayId!==event.dayId){this.error.set('Concludi o riprendi prima la sessione già in corso.');return false;}
-    if(!await this.start(event.dayId))return false;
+    if(!await this.start(event.dayId,date))return false;
     return this.change(d=>{const e=d.scheduledWorkouts.find(e=>e.id===id)!;const w=d.workouts.find(w=>w.status==='draft');if(w&&w.dayId===e.dayId)e.workoutId=w.id;},'',false);
   }
   async savePlanExercise(e: TrainingPlanExercise) {

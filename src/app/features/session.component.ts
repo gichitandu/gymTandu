@@ -5,6 +5,8 @@ import { Store } from "../services/store";
 import { StatusComponent } from "../shared/status.component";
 import { IconComponent } from "../shared/icon.component";
 import { ActiveWorkoutComponent } from "../shared/active-workout.component";
+import { localDate } from '../models/domain';
+import { parseLocalDate } from '../services/calendar';
 @Component({
   standalone: true,
   imports: [
@@ -19,7 +21,7 @@ import { ActiveWorkoutComponent } from "../shared/active-workout.component";
       <div class="session-header">
         <div class="page-heading">
           <div>
-            <p class="eyebrow">ALLENAMENTO IN CORSO</p>
+            <p class="eyebrow">{{ w.date < today ? 'REGISTRAZIONE DI UN ALLENAMENTO PASSATO':'ALLENAMENTO IN CORSO'}}</p>
             <h1>{{ w.dayName }}</h1>
             <p class="subtle">
               {{ w.planName }} · {{ elapsed(w.startedAt) }} ·
@@ -35,17 +37,14 @@ import { ActiveWorkoutComponent } from "../shared/active-workout.component";
             <i [class.done]="set.completed"></i>
           }
         </div>
+        <div class="form-grid" style="margin-top:14px"><label>Data effettiva dell’allenamento<input type="date" [max]="today" [ngModel]="w.date" (ngModelChange)="update(w.id,'date',$event)"/></label>
+        @if(w.date < today){<label>Durata effettiva (minuti, facoltativa)<input type="number" inputmode="numeric" min="1" max="1440" [ngModel]="w.duration||null" (ngModelChange)="update(w.id,'duration',$event)" placeholder="Es. 60"/></label>}</div>
       </div>
       <gt-active-workout [workoutId]="w.id" (finish)="finish()" />
       <details class="card session-options"><summary>Data, note e salvataggio</summary>
         <h2 style="margin-top:16px">Il tuo allenamento</h2>
         <div class="form-grid" style="margin-top:18px">
-          <label
-            >Data effettiva<input
-              type="date"
-              [ngModel]="w.date"
-              (ngModelChange)="update(w.id, 'date', $event)" /></label
-          ><label
+          <label class="wide"
             >Note generali<textarea
               maxlength="2000"
               [ngModel]="w.notes"
@@ -77,6 +76,7 @@ export class SessionComponent {
   finishing = signal(false);
   router = inject(Router);
   clock = signal(Date.now());
+  get today(){return localDate(new Date(this.clock()));}
   timer = setInterval(() => this.clock.set(Date.now()), 1000);
   ngOnDestroy() {
     clearInterval(this.timer);
@@ -85,10 +85,12 @@ export class SessionComponent {
   allSets(id: string) {
     return this.s.workoutExercises(id).flatMap((e) => this.s.sets(e.id));
   }
-  update(id: string, key: "date" | "notes", value: string) {
-    if (key === "date" && !/^\d{4}-\d{2}-\d{2}$/.test(value)) return;
+  update(id: string, key: "date" | "notes" | "duration", value: string | number | null) {
+    if(key==='date'){try{parseLocalDate(String(value));if(String(value)>this.today)throw Error('Scegli oggi o una data passata.');}catch(error){this.s.error.set(error instanceof Error?error.message:'Data non valida.');return;}}
+    if(key==='duration'&&(value===null||value===''||!Number.isInteger(+value)||+value<1||+value>1440))return;
     void this.s.change((d) => {
-      d.workouts.find((w) => w.id === id)![key] = value;
+      const workout=d.workouts.find(w=>w.id===id);if(!workout)throw Error('Allenamento non trovato.');
+      if(key==='duration')workout.duration=Number(value);else workout[key]=String(value);
     });
   }
   async finish() {

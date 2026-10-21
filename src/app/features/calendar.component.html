@@ -41,7 +41,7 @@
           @if(linked(event)?.date!==event.date){<p class="cal-record-date">Registrato il {{shortLabel(linked(event)!.date)}}</p>}
           <a class="cal-complete-action" routerLink="/allenamenti" [queryParams]="{workout:event.workoutId}"><span>{{s.formatWeight(s.volume(event.workoutId!))}} {{s.settings().unit}} di volume</span> Vedi sessione <gt-icon name="arrow"/></a>
         } @else {
-          <button class="primary cal-start" (click)="start(event)" [disabled]="s.busy()||!available(event)"><gt-icon name="play"/>{{linked(event)?.status==='draft'?'Riprendi allenamento':'Inizia allenamento'}}<gt-icon name="arrow"/></button>
+          <button class="primary cal-start" (click)="start(event)" [disabled]="s.busy()||!available(event)"><gt-icon name="play"/>{{linked(event)?.status==='draft'?'Riprendi allenamento': event.date < today ? 'Registra allenamento passato':'Inizia allenamento'}}<gt-icon name="arrow"/></button>
         }
         @if(!available(event)&&!linked(event)){<p class="cal-record-date">Il giorno del piano non è più disponibile. La programmazione è conservata.</p>}
       </article>

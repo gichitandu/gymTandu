@@ -72,6 +72,6 @@ export class CalendarComponent {
   finally{this.saving.set(false);}
  }
  async duplicate(e:ScheduledWorkout){const version=this.formVersion,date=moveDate(e.date,7);const saved=await this.s.scheduleWorkout(date,e.dayId,e.notes);if(this.formVersion!==version)return;if(saved){this.choose(date);this.filter.set('all');}else{this.open();this.eventDate=date;this.dayId=e.dayId;this.notes=e.notes;}}
- async start(e:ScheduledWorkout){if(e.date!==this.today&&!confirm('Iniziare ora questo allenamento? La sessione verrà registrata nella data di oggi.'))return;if(await this.s.startScheduled(e.id))await this.router.navigateByUrl('/sessione');}
+ async start(e:ScheduledWorkout){if(e.date>this.today&&!confirm('Iniziare ora questo allenamento? La sessione verrà registrata nella data di oggi.'))return;const date=this.linked(e)?.status==='draft'||e.date>this.today?undefined:e.date;if(await this.s.startScheduled(e.id,date))await this.router.navigateByUrl('/sessione');}
  async remove(e:ScheduledWorkout){if(confirm('Rimuovere la programmazione? Gli allenamenti già registrati resteranno nello storico.'))await this.s.change(d=>{d.scheduledWorkouts=d.scheduledWorkouts.filter(x=>x.id!==e.id);},'Programmazione rimossa.',false);}
 }

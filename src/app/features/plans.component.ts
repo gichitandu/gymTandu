@@ -19,7 +19,10 @@ import {
   TrainingPlanExercise,
   now,
   uid,
+  localDate,
 } from "../models/domain";
+import { TodayService } from '../services/today';
+import { parseLocalDate } from '../services/calendar';
 import { IconComponent } from "../shared/icon.component";
 import { StatusComponent } from "../shared/status.component";
 import { DraftSession, FormDraftService } from "../services/form-drafts";
@@ -93,6 +96,7 @@ type PlanEditorDraft = {
             ><button class="ghost" (click)="archive(p)">
               {{ p.archived ? "Ripristina" : "Archivia" }}
             </button>
+            <button type="button" class="ghost danger" (click)="removePlan(p)" [disabled]="s.busy()||!!deletingPlan()">{{deletingPlan()===p.id?'Eliminazione…':'Elimina piano'}}</button>
           </div>
           @if (expanded() === p.id) {
             @for (day of s.days(p.id); track day.id) {
@@ -202,6 +206,12 @@ type PlanEditorDraft = {
                     </button>
                   </div>
                 }
+                <details class="past-workout-entry" style="margin-top:14px">
+                  <summary style="min-height:44px;align-content:center;cursor:pointer">Registra un allenamento passato</summary>
+                  <p class="subtle" style="margin:10px 0">Scegli la data in cui ti sei allenato, poi inserisci e conferma le serie effettuate.</p>
+                  <div class="form-grid"><label>Data dell’allenamento<input type="date" [max]="today" [ngModel]="pastDates[day.id]||''" (ngModelChange)="pastDates[day.id]=$event" [attr.aria-label]="'Data allenamento passato · '+day.name"/></label><button type="button" class="primary" (click)="startPast(day.id)" [disabled]="!pastDates[day.id]||!s.planExercises(day.id).length||s.busy()||startingPast()">{{startingPast()?'Apertura…':'Registra per questa data'}}</button></div>
+                  @if(s.draft()){<p class="subtle" style="margin-top:10px">La sessione aperta è conservata. <a routerLink="/sessione">Riprendila</a> prima di iniziarne un’altra.</p>}
+                </details>
               </div>
             } @empty {
               <div class="empty">
@@ -411,6 +421,9 @@ export class PlansComponent {
   expanded = signal("");
   modal = signal("");
   saving = signal(false);
+  deletingPlan=signal('');startingPast=signal(false);pastDates:Record<string,string>={};
+  private todayClock=inject(TodayService,{optional:true});
+  get today(){return this.todayClock?.date()||localDate();}
   draftNotice = signal('');
   private drafts = inject(FormDraftService,{optional:true});
   private draftSession?: DraftSession<PlanEditorDraft>;
@@ -624,6 +637,13 @@ export class PlansComponent {
       p.archived ? "Piano ripristinato." : "Piano archiviato.",
     );
   }
+  async removePlan(plan:TrainingPlan){
+    if(this.deletingPlan())return;
+    if(!confirm(`Eliminare definitivamente il piano “${plan.name}” con i suoi giorni e gli esercizi programmati? Gli allenamenti già registrati e le loro serie resteranno nello storico. Gli altri piani non saranno modificati.`))return;
+    this.deletingPlan.set(plan.id);
+    try{if(await this.s.deletePlan(plan.id)){if(this.expanded()===plan.id)this.expanded.set('');}}
+    finally{this.deletingPlan.set('');}
+  }
   removeDay(day: TrainingPlanDay) {
     if (
       confirm(
@@ -731,5 +751,14 @@ export class PlansComponent {
   }
   async start(day: string) {
     if (await this.s.start(day)) await this.router.navigateByUrl("/sessione");
+  }
+  async startPast(day:string){
+    if(this.startingPast())return;
+    const date=this.pastDates[day];
+    try{parseLocalDate(date);if(date>this.today)throw Error('Scegli oggi o una data passata.');}
+    catch(error){this.s.error.set(error instanceof Error?error.message:'Scegli la data dell’allenamento.');return;}
+    this.startingPast.set(true);
+    try{if(await this.s.start(day,date))await this.router.navigateByUrl('/sessione');}
+    finally{this.startingPast.set(false);}
   }
 }
