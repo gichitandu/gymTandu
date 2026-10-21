@@ -122,3 +122,12 @@ it('flushes the final edits before closing a past workout and stops its external
   const session=runInInjectionContext(injector,()=>new SessionComponent());sessions.push(session);Object.defineProperty(session,'activeWorkout',{value:()=>c});
   await session.finish();expect(s.draft()).toBeUndefined();expect(s.data().sets.find(set=>set.id===c.setId())).toMatchObject({weight:72.5,reps:12});expect(stop).toHaveBeenCalled();
 });
+it('identifies the blocking session and opens it directly when a different past date is requested',async()=>{
+  const openDate=moveDate(localDate(),-4),requestedDate=moveDate(localDate(),-1);
+  await s.start('day-a',openDate);const before=await db.snapshot();
+  const component=runInInjectionContext(injector,()=>new PlansComponent());component.pastDates['day-a']=requestedDate;
+  await component.startPast('day-a');
+  expect(s.error()).toContain('Piano Tandu');expect(s.error()).toContain('Giorno A');expect(s.error()).toContain('Termina allenamento');
+  expect(injector.get(Router).navigateByUrl).toHaveBeenCalledWith('/sessione?requestedDate='+requestedDate);
+  expect(await db.snapshot()).toEqual(before);expect(component.startingPast()).toBe(false);
+});

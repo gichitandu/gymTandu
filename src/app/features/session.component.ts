@@ -1,5 +1,5 @@
 import { Component, inject, signal, viewChild } from "@angular/core";
-import { Router, RouterLink } from "@angular/router";
+import { ActivatedRoute, Router, RouterLink } from "@angular/router";
 import { FormsModule } from "@angular/forms";
 import { Store } from "../services/store";
 import { StatusComponent } from "../shared/status.component";
@@ -18,6 +18,7 @@ import { parseLocalDate } from '../services/calendar';
   ],
   template: `<gt-status />
     @if (s.draft(); as w) {
+      @if(requestedDate){<div class="card" role="status" style="margin-bottom:16px"><strong>Non è stato aperto un nuovo allenamento per il {{formatDate(requestedDate)}}.</strong><p>Questa è la sessione che blocca la registrazione: <strong>{{w.planName}} · {{w.dayName}} · {{formatDate(w.date)}}</strong>.</p><p class="subtle">Controlla i dati e premi “Termina allenamento”. Le serie inserite resteranno conservate; poi potrai registrare l’altra data dai Piani.</p></div>}
       <div class="session-header">
         <div class="page-heading">
           <div>
@@ -76,6 +77,8 @@ import { parseLocalDate } from '../services/calendar';
 })
 export class SessionComponent {
   s = inject(Store);
+  requestedDate = inject(ActivatedRoute,{optional:true})?.snapshot.queryParamMap.get('requestedDate') || '';
+  formatDate(date:string){try{return parseLocalDate(date).toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit',year:'numeric'});}catch{return date;}}
   activeWorkout = viewChild(ActiveWorkoutComponent);
   finishing = signal(false);
   router = inject(Router);

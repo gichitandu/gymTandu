@@ -408,12 +408,16 @@ export class Store {
       );
     }, "Giorno duplicato.");
   }
+  openSessionMessage(workout: {planName:string;dayName:string;date:string}) {
+    const date=parseLocalDate(workout.date).toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit',year:'numeric'});
+    return `Hai una sessione aperta: ${workout.planName} · ${workout.dayName} · ${date}. Apri “Sessione” e premi “Termina allenamento” prima di registrare un altro giorno.`;
+  }
   async start(dayId: string, date?:string) {
     const workoutDate=date??localDate();
     try{parseLocalDate(workoutDate);if(workoutDate>localDate())throw Error('Per registrare un allenamento scegli oggi o una data passata.');}
     catch(error){this.error.set(error instanceof Error?error.message:'Data non valida.');return false;}
     if (this.draft()) {
-      if(date!==undefined&&(this.draft()!.dayId!==dayId||this.draft()!.date!==workoutDate)){this.error.set('Hai già una sessione aperta: riprendila o concludila prima di registrare un altro allenamento.');return false;}
+      if(date!==undefined&&(this.draft()!.dayId!==dayId||this.draft()!.date!==workoutDate)){this.error.set(this.openSessionMessage(this.draft()!));return false;}
       return true;
     }
     return this.change((d) => {
@@ -423,7 +427,7 @@ export class Store {
         .filter((e) => e.dayId === dayId)
         .sort((a, b) => a.order - b.order);
       const open=d.workouts.find(w=>w.status==='draft');
-      if(open){if(date!==undefined&&(open.dayId!==dayId||open.date!==workoutDate))throw Error('Hai già una sessione aperta: riprendila o concludila prima di registrare un altro allenamento.');return;}
+      if(open){if(date!==undefined&&(open.dayId!==dayId||open.date!==workoutDate))throw Error(this.openSessionMessage(open));return;}
       if (!day || !plan || !entries.length)
         throw Error(
           "Aggiungi almeno un esercizio al giorno prima di iniziare.",

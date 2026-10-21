@@ -759,7 +759,10 @@ export class PlansComponent {
     try{parseLocalDate(date);if(date>this.today)throw Error('Scegli oggi o una data passata.');}
     catch(error){this.s.error.set(error instanceof Error?error.message:'Scegli la data dell’allenamento.');return;}
     this.startingPast.set(true);
-    try{if(await this.s.start(day,date))await this.router.navigateByUrl('/sessione');}
+    try{
+      if(await this.s.start(day,date))await this.router.navigateByUrl('/sessione');
+      else if(this.s.draft())await this.router.navigateByUrl('/sessione?requestedDate='+encodeURIComponent(date));
+    }
     finally{this.startingPast.set(false);}
   }
 }
