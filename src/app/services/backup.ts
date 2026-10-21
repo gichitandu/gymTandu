@@ -2,7 +2,7 @@ import { validateIntegrity } from "./integrity";
 export { validateIntegrity } from "./integrity";
 import { z } from "zod";
 import { DataSet } from "../models/domain";
-export const BACKUP_VERSION = 4;
+export const BACKUP_VERSION = 5;
 const id = z.string().min(1).max(150);
 const text = z.string().max(10000);
 const nonempty = z.string().trim().min(1).max(200);
@@ -30,6 +30,7 @@ const image = z.object({
     .max(2800000)
     .regex(/^[A-Za-z0-9+/]*={0,2}$/),
 });
+const machineSetup=z.object({machine:z.string().max(120).optional(),seat:z.string().max(80).optional(),backrest:z.string().max(80).optional(),grip:z.string().max(120).optional(),notes:z.string().max(500).optional()});
 const schemas = {
   profiles: z.object({
     id,
@@ -68,6 +69,8 @@ const schemas = {
       id,
       dayId: id,
       exerciseId: id,
+      superset:z.enum(["A","B","C","D"]).optional(),
+      warmupSets:z.number().int().min(0).max(5).optional(),
       sets: z.number().int().min(1).max(30),
       repsMin: z.number().int().min(1).max(999),
       repsMax: z.number().int().min(1).max(999),
@@ -115,6 +118,7 @@ const schemas = {
     .refine((w) => w.status !== "completed" || !!w.endedAt)
     .refine((w) => !w.endedAt || new Date(w.endedAt) >= new Date(w.startedAt)),
   workoutExercises: z.object({
+    superset:z.enum(["A","B","C","D"]).optional(),machineSetup:machineSetup.optional(),
     id,
     workoutId: id,
     exerciseId: id,
@@ -125,6 +129,7 @@ const schemas = {
     notes: text,
   }),
   sets: z.object({
+    kind:z.enum(["work","warmup"]).optional(),
     id,
     workoutExerciseId: id,
     number: z.number().int().min(1),
@@ -140,12 +145,15 @@ const schemas = {
     theme: z.enum(["dark", "light"]),
     unit: z.enum(["kg", "lb"]),
     prefill: z.boolean(),
-    lastBackup: time.optional(),
+    lastBackup: time.optional(),backupConfirmedAt:time.optional(),backupSnoozedUntil:time.optional(),backupReminderDays:z.union([z.literal(0),z.literal(7),z.literal(14),z.literal(30)]).optional(),
+    iphoneChecklist:z.object({device:z.string().max(120),ios:z.string().max(80),checks:z.record(z.string().max(80),z.object({state:z.enum(['todo','pass','fail']),note:z.string().max(500).optional(),checkedAt:time.optional()}))}).optional(),
     backgroundColor: z.string().regex(/^#[0-9a-fA-F]{6}$/).optional(),
     goals:z.object({calories:z.number().positive().max(20000).optional(),protein:z.number().positive().max(2000).optional(),carbs:z.number().positive().max(3000).optional(),fat:z.number().positive().max(2000).optional(),workoutsPerWeek:z.number().int().min(1).max(14).optional()}).optional(),
   }),
 };
 const dataSchema = z.object({
+  exercisePreferences:z.array(z.object({id,favorite:z.boolean(),machineSetup:machineSetup.optional()})).max(10000),
+  workoutUi:z.array(z.object({id,step:z.enum(['list','detail','record','rest']),tab:z.enum(['sets','history','notes']),exerciseId:z.string().max(150),setId:z.string().max(150),restEnd:num,restTotal:num.max(7200),paused:z.boolean(),pausedSeconds:num.max(7200),weight:num,reps:z.number().int().min(1).max(999),rpe,setNotes:z.string().max(10000),kind:z.enum(['work','warmup']),updatedAt:time})).max(1),
   profiles: z.array(schemas.profiles).length(1),
   roles: z.array(schemas.roles).min(3).max(3),
   plans: z.array(schemas.plans).max(10000),
@@ -196,7 +204,7 @@ export async function exportBackup(data: DataSet) {
   );
 }
 // Add explicit vN -> vN+1 pure functions here when the on-disk format evolves.
-export const migrations: Record<number, (value: unknown) => unknown> = {1: value => ({...(value as object),meals:[]}),2:value=>value,3:value=>({...value as object,scheduledWorkouts:[],measurements:[]})};
+export const migrations: Record<number, (value: unknown) => unknown> = {1: value => ({...(value as object),meals:[]}),2:value=>value,3:value=>({...value as object,scheduledWorkouts:[],measurements:[]}),4:value=>({...value as object,exercisePreferences:[],workoutUi:[]})};
 export async function importBackup(json: string): Promise<DataSet> {
   if (new Blob([json]).size > 50 * 1024 * 1024)
     throw Error("Backup troppo grande: limite 50 MB.");

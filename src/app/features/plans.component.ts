@@ -1,3 +1,4 @@
+import {ExerciseScope,ExerciseScopeComponent} from "../shared/exercise-scope.component";
 import { ExerciseFamiliesComponent } from "../shared/exercise-families.component";
 import { ExerciseThumbComponent } from "../shared/exercise-thumb.component";
 import { A11yModule } from "@angular/cdk/a11y";
@@ -22,7 +23,7 @@ import { StatusComponent } from "../shared/status.component";
 @Component({
   standalone: true,
   imports: [
-    A11yModule,
+    A11yModule,ExerciseScopeComponent,
     ExerciseFamiliesComponent,
     ExerciseThumbComponent,
     ReactiveFormsModule,
@@ -130,7 +131,7 @@ import { StatusComponent } from "../shared/status.component";
                       <div>
                         <strong>{{ s.exercise(pe.exerciseId)?.name }}</strong
                         ><small
-                          >{{ pe.sets }} serie × {{ pe.repsMin }}–{{
+                          >{{ pe.sets }} serie allenanti × {{ pe.repsMin }}–{{
                             pe.repsMax
                           }}
                           rip · {{ pe.rest }} s recupero
@@ -142,6 +143,7 @@ import { StatusComponent } from "../shared/status.component";
                             · RPE {{ pe.rpe }}
                           }
                         </small>
+                        @if(pe.superset){<span class="superset-tag">Superset {{pe.superset}}</span>}@if(pe.warmupSets){<small>+ {{pe.warmupSets}} serie di riscaldamento</small>}
                         @if (pe.notes) {
                           <small>{{ pe.notes }}</small>
                         }
@@ -318,7 +320,7 @@ import { StatusComponent } from "../shared/status.component";
                     (ngModelChange)="exerciseSearch.set($event)"
                     [ngModelOptions]="{ standalone: true }"
                     placeholder="Nome, muscolo o attrezzatura…" /></label>
-                <gt-exercise-families class="wide" [query]="exerciseSearch()" (choose)="exerciseSearch.set($event)"/>
+                <gt-exercise-scope class="wide" [value]="scope()" (choose)="scope.set($event)"/><gt-exercise-families class="wide" [query]="exerciseSearch()" (choose)="exerciseSearch.set($event)"/>
                 <label class="wide"
                   >Esercizio<select formControlName="exerciseId">
                     <option value="">Seleziona un esercizio</option>
@@ -327,7 +329,7 @@ import { StatusComponent } from "../shared/status.component";
                     }
                   </select></label
                 ><label
-                  >Serie<input
+                  >Serie allenanti<input
                     type="number"
                     min="1"
                     max="30"
@@ -363,7 +365,7 @@ import { StatusComponent } from "../shared/status.component";
                     max="10"
                     step="0.5"
                     formControlName="rpe" /></label
-                ><label class="wide"
+                ><label>Serie di riscaldamento<input type="number" inputmode="numeric" min="0" max="5" formControlName="warmupSets"/></label><label>Superset<select formControlName="superset"><option value="">Nessuno</option><option value="A">Gruppo A</option><option value="B">Gruppo B</option><option value="C">Gruppo C</option><option value="D">Gruppo D</option></select></label><p class="subtle wide">Assegna lo stesso gruppo a due esercizi per alternarli. Il recupero parte dopo la coppia. I riscaldamenti restano separati dai record.</p><button type="button" class="wide" [disabled]="!exerciseForm.controls.exerciseId.value" (click)="s.toggleFavorite(exerciseForm.controls.exerciseId.value!)">{{s.isFavorite(exerciseForm.controls.exerciseId.value||'')?'★ Rimuovi dai preferiti':'☆ Aggiungi ai preferiti'}}</button><label class="wide"
                   >Note<textarea
                     formControlName="notes"
                     maxlength="1000"
@@ -397,7 +399,7 @@ export class PlansComponent {
   modal = signal("");
   editId = "";
   parentId = "";
-  exerciseSearch = signal("");
+  exerciseSearch = signal("");scope=signal<ExerciseScope>("all");
   selectedCatalogId = signal("");
   weekdays = [
     "Lunedì",
@@ -417,6 +419,7 @@ export class PlansComponent {
       .exercises.filter(
         (e) =>
           e.active &&
+          (this.scope()==='all'||(this.scope()==='favorites'?this.s.isFavorite(e.id):this.s.recentExerciseIds().includes(e.id))) &&
           `${e.name} ${e.equipment} ${e.tags.join(" ")}`
             .toLowerCase()
             .includes(this.exerciseSearch().toLowerCase()),
@@ -432,6 +435,7 @@ export class PlansComponent {
     weekday: [""],
   });
   exerciseForm = this.fb.group({
+    warmupSets:[0,[Validators.min(0),Validators.max(5),Validators.pattern(/^\d+$/)]],superset:[""],
     exerciseId: ["", Validators.required],
     sets: [
       3,
@@ -569,7 +573,7 @@ export class PlansComponent {
       targetWeight:
         e?.targetWeight === undefined ? null : this.s.weight(e.targetWeight),
       rpe: e?.rpe ?? null,
-      notes: e?.notes || "",
+      notes: e?.notes || "",warmupSets:e?.warmupSets||0,superset:e?.superset||"",
     });
     this.modal.set("exercise");
   }
@@ -586,6 +590,7 @@ export class PlansComponent {
       await this.s.savePlanExercise({
         id: this.editId || uid(),
         dayId: this.parentId,
+        warmupSets:v.warmupSets||0,superset:v.superset||undefined,
         exerciseId: v.exerciseId!,
         sets: v.sets!,
         repsMin: v.repsMin!,

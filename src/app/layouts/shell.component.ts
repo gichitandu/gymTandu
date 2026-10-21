@@ -1,8 +1,9 @@
+import {WorkoutResumeService} from "../services/workout-resume";
 import { AvatarComponent } from "../shared/avatar.component";
 import { AuthService } from "../services/auth";
 import { Store } from "../services/store";
 import { PwaService } from "../services/pwa";
-import { Component, inject } from "@angular/core";
+import { Component, effect, inject } from "@angular/core";
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from "@angular/router";
 import { IconComponent } from "../shared/icon.component";
 @Component({
@@ -64,6 +65,8 @@ import { IconComponent } from "../shared/icon.component";
     </nav>`,
 })
 export class ShellComponent {
+  private resume=inject(WorkoutResumeService);private firstOpen=true;
+  constructor(){effect(()=>{if(!this.s.ready()||!this.firstOpen)return;this.firstOpen=false;const w=this.s.draft();if(w&&location.pathname==='/'&&this.resume.read(this.s.archiveKey(),w.id,this.s.data().workoutUi.find(x=>x.id===w.id)))void this.router.navigateByUrl('/sessione');});}
   router=inject(Router);
   auth = inject(AuthService);
   s = inject(Store);

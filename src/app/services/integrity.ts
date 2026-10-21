@@ -1,3 +1,4 @@
+import {validWorkoutUi} from "./workout-resume";
 import { sumIngredients } from './nutrition';
 import { DataSet, TABLES } from "../models/domain";
 export function validateIntegrity(d: DataSet) {
@@ -53,6 +54,12 @@ export function validateIntegrity(d: DataSet) {
   for(const e of d.scheduledWorkouts)if(!e.planId||!e.dayId||!e.planName.trim()||!e.dayName.trim()||!/^\d{4}-\d{2}-\d{2}$/.test(e.date))fail("evento calendario non valido");
   if(new Set(d.measurements.map(m=>m.date)).size!==d.measurements.length)fail("misurazioni duplicate nella stessa data");
   for(const m of d.measurements)if(!Number.isFinite(m.weight)||m.weight<=0||m.weight>700||(m.waist!==undefined&&(!Number.isFinite(m.waist)||m.waist<=0||m.waist>300))||(m.bodyFat!==undefined&&(!Number.isFinite(m.bodyFat)||m.bodyFat<1||m.bodyFat>80))||!/^\d{4}-\d{2}-\d{2}$/.test(m.date))fail("misurazione non valida");
+  for(const p of d.exercisePreferences){if(typeof p.favorite!=='boolean')fail('preferenza non valida');if(p.machineSetup){for(const [key,value] of Object.entries(p.machineSetup))if(!['machine','seat','backrest','grip','notes'].includes(key)||(value!==undefined&&(typeof value!=='string'||value.length>(key==='notes'?500:['seat','backrest'].includes(key)?80:120))))fail('configurazione macchina non valida');}}
+  if(d.workoutUi.length>1)fail('più punti di ripresa');
+  for(const state of d.workoutUi)if(!validWorkoutUi(state)||!d.workouts.some(w=>w.id===state.id&&w.status==='draft'))fail('punto di ripresa non valido');
+  for(const pe of d.planExercises){if(pe.superset&&!['A','B','C','D'].includes(pe.superset)||pe.warmupSets!==undefined&&(!Number.isInteger(pe.warmupSets)||pe.warmupSets<0||pe.warmupSets>5))fail('superset o riscaldamento non valido');if(pe.superset&&d.planExercises.filter(e=>e.dayId===pe.dayId&&e.superset===pe.superset).length>2)fail('superset con più di due esercizi');}
+  for(const set of d.sets)if(set.kind!==undefined&&!['work','warmup'].includes(set.kind))fail('tipo serie non valido');
+  const settings=d.settings[0];if(settings.backupReminderDays!==undefined&&![0,7,14,30].includes(settings.backupReminderDays))fail('promemoria backup non valido');
   const photo=d.profiles[0].photo;
   if(photo && (photo.size>500*1024||!["image/jpeg","image/png","image/webp"].includes(photo.type))) fail("foto profilo non valida");
   const setKeys = d.sets.map((s) => s.workoutExerciseId + ":" + s.number);

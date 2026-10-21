@@ -33,6 +33,8 @@ export interface TrainingPlanDay extends Entity {
   weekday?: number;
 }
 export interface TrainingPlanExercise extends Entity {
+  superset?: string;
+  warmupSets?: number;
   dayId: string;
   exerciseId: string;
   sets: number;
@@ -78,6 +80,8 @@ export interface WorkoutLog extends Entity {
   bodyWeight?: number;
 }
 export interface WorkoutLogExercise extends Entity {
+  superset?: string;
+  machineSetup?: MachineSetup;
   workoutId: string;
   exerciseId: string;
   name: string;
@@ -87,6 +91,7 @@ export interface WorkoutLogExercise extends Entity {
   notes: string;
 }
 export interface WorkoutLogSet extends Entity {
+  kind?: "work" | "warmup";
   workoutExerciseId: string;
   number: number;
   weight: number;
@@ -117,7 +122,16 @@ export interface ScheduledWorkout extends Entity {
 }
 export interface BodyMeasurement extends Entity {date:string;weight:number;waist?:number;bodyFat?:number;}
 export interface PersonalGoals {calories?:number;protein?:number;carbs?:number;fat?:number;workoutsPerWeek?:number;}
+export interface MachineSetup {machine?:string;seat?:string;backrest?:string;grip?:string;notes?:string;}
+export interface ExercisePreference extends Entity {favorite:boolean;machineSetup?:MachineSetup;}
+export interface WorkoutUiState extends Entity {step:'list'|'detail'|'record'|'rest';tab:'sets'|'history'|'notes';exerciseId:string;setId:string;restEnd:number;restTotal:number;paused:boolean;pausedSeconds:number;weight:number;reps:number;rpe?:number;setNotes:string;kind:'work'|'warmup';updatedAt:string;}
+export interface IphoneCheck {state:'todo'|'pass'|'fail';note?:string;checkedAt?:string;}
+export interface IphoneChecklist {device:string;ios:string;checks:Record<string,IphoneCheck>;}
 export interface AppSettings extends Entity {
+  backupConfirmedAt?:string;
+  backupReminderDays?:number;
+  backupSnoozedUntil?:string;
+  iphoneChecklist?:IphoneChecklist;
   theme: "dark" | "light";
   unit: "kg" | "lb";
   prefill: boolean;
@@ -126,6 +140,8 @@ export interface AppSettings extends Entity {
   goals?: PersonalGoals;
 }
 export interface DataSet {
+  exercisePreferences: ExercisePreference[];
+  workoutUi: WorkoutUiState[];
   profiles: UserProfile[];
   roles: Role[];
   plans: TrainingPlan[];
@@ -142,6 +158,8 @@ export interface DataSet {
   measurements: BodyMeasurement[];
 }
 export const TABLES: (keyof DataSet)[] = [
+  "exercisePreferences",
+  "workoutUi",
   "profiles",
   "roles",
   "plans",

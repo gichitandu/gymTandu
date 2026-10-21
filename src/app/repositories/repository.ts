@@ -3,12 +3,14 @@ import { inject, InjectionToken } from "@angular/core";
 import { DataSet } from "../models/domain";
 import { GymDatabase } from "../core/database";
 export interface GymRepository {
+  storageKey?: string;
   read(): Promise<DataSet>;
   replace(data: DataSet): Promise<void>;
 }
 export class IndexedDbRepository implements GymRepository {
   readonly db: GymDatabase;
-  constructor(name = "gymtrack-v1") { this.db = new GymDatabase(name); }
+  readonly storageKey:string;
+  constructor(name = "gymtrack-v1") { this.storageKey=name;this.db = new GymDatabase(name); }
   read() {
     return this.db.snapshot();
   }

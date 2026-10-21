@@ -31,7 +31,7 @@ import { IconComponent } from "./icon.component";
         <label
           >Esercizio<select
             [ngModel]="exercise() || defaultId()"
-            (ngModelChange)="exercise.set($event)"
+            (ngModelChange)="exercise.set($event);machine.set('')"
           >
             @for (e of s.data().exercises; track e.id) {
               <option [value]="e.id">{{ e.name }}</option>
@@ -39,6 +39,7 @@ import { IconComponent } from "./icon.component";
           </select></label
         >
       }
+      @if(metric()!=='weekly'&&s.configurations(exercise()||defaultId()).length){<label>Configurazione macchina<select [ngModel]="machine()" (ngModelChange)="machine.set($event)"><option value="">Tutte le configurazioni</option>@for(config of s.configurations(exercise()||defaultId());track config.key){<option [value]="config.key">{{config.label}}</option>}</select></label>}
       <label
         >Periodo<select
           [ngModel]="months()"
@@ -88,13 +89,13 @@ import { IconComponent } from "./icon.component";
         >
       </div>
     }
-    <div class="chart-footer">
+<p class="subtle" style="font-size:11px;margin-top:12px">I carichi di macchine o configurazioni diverse possono non essere confrontabili. Usa il filtro quando disponibile.</p><div class="chart-footer">
       <span>{{
         metric() === "rm"
           ? "Stima Epley · non è un massimale testato"
           : metric() === "weekly" || metric() === "volume"
-            ? "Solo carichi esterni · serie completate"
-            : "Solo serie completate"
+            ? "Solo carichi esterni · serie allenanti completate"
+            : "Solo serie allenanti completate"
       }}</span
       ><span
         >{{ points().length }}
@@ -107,7 +108,7 @@ export class ProgressChartComponent implements AfterViewInit {
   initialMetric = input<Metric>("weight");
   plan = signal("");
   exercise = signal("");
-  months = signal(3);
+  months = signal(3);machine=signal("");
   metric = signal<Metric>("weight");
   canvas = viewChild<ElementRef<HTMLCanvasElement>>("canvas");
   private chart?: Chart;
@@ -120,6 +121,7 @@ export class ProgressChartComponent implements AfterViewInit {
       this.plan(),
       this.months(),
       this.metric(),
+      this.metric()==='weekly'?undefined:this.machine()||undefined,
     ),
   );
   constructor() {

@@ -1,3 +1,4 @@
+import {setupKey} from "../services/training-flow";
 import { DataChartComponent, DataPoint } from "../shared/data-chart.component";
 import { RouterLink } from "@angular/router";
 import { localDate } from "../models/domain";
@@ -55,13 +56,14 @@ import { StatusComponent } from "../shared/status.component";
       <label style="max-width:400px"
         >Esercizio<select
           [ngModel]="exerciseId() || defaultId()"
-          (ngModelChange)="exerciseId.set($event)"
+          (ngModelChange)="exerciseId.set($event);machine.set('')"
         >
           @for (e of s.data().exercises; track e.id) {
             <option [value]="e.id">{{ e.name }}</option>
           }
         </select></label
       >
+      @if(s.configurations(exerciseId()||defaultId()).length){<label style="margin-top:12px">Configurazione dei record<select [ngModel]="machine()" (ngModelChange)="machine.set($event)"><option value="">Tutte le configurazioni</option>@for(config of s.configurations(exerciseId()||defaultId());track config.key){<option [value]="config.key">{{config.label}}</option>}</select></label>}
       <div class="stats-grid">
         <div class="card stat">
           <span class="stat-label">{{
@@ -203,13 +205,13 @@ export class ProgressComponent {
   fatPoints=computed(()=>this.measurements().filter(m=>m.bodyFat!==undefined).map(m=>({label:this.dateLabel(m.date),value:m.bodyFat!})));
   nutritionPoints=computed(()=>{const totals=new Map<string,number>();for(const m of this.s.data().meals)if(!this.cutoff()||m.date>=this.cutoff())totals.set(m.date,(totals.get(m.date)||0)+m.calories);return [...totals].sort(([a],[b])=>a.localeCompare(b)).map(([date,value])=>({label:this.dateLabel(date),value}));});
   s = inject(Store);
-  exerciseId = signal("");
+  exerciseId = signal("");machine=signal("");
   defaultId = computed(() => this.s.data().exercises[0]?.id || "");
   selectedExercise = computed(() =>
     this.s.exercise(this.exerciseId() || this.defaultId()),
   );
   records = computed(() =>
-    this.s.records(this.exerciseId() || this.defaultId()),
+    this.s.records(this.exerciseId() || this.defaultId(),this.machine()||undefined),
   );
   weightRecords = computed(() =>
     Object.entries(this.records().repsByWeight).map(([weight, reps]) => ({
@@ -225,10 +227,11 @@ export class ProgressComponent {
         .filter(
           (e) =>
             e.exerciseId === id &&
+            (!this.machine()||setupKey(e.machineSetup)===this.machine()) &&
             e.loadMode === this.selectedExercise()?.loadMode,
         );
       const sets = es.flatMap((e) =>
-        this.s.sets(e.id).filter((s) => s.completed),
+        this.s.sets(e.id).filter((s) => s.completed&&s.kind!=="warmup"),
       );
       if (!sets.length) return [];
       const weight = Math.max(...sets.map((s) => s.weight));

@@ -1,3 +1,5 @@
+import {ExerciseScope,ExerciseScopeComponent} from "../shared/exercise-scope.component";
+import {MachineSetupComponent} from "../shared/machine-setup.component";
 import { ExerciseFamiliesComponent } from "../shared/exercise-families.component";
 import { compressPhoto } from "../services/images";
 import { ExerciseVideoComponent } from "../shared/exercise-video.component";
@@ -16,7 +18,7 @@ import { StatusComponent } from "../shared/status.component";
 @Component({
   standalone: true,
   imports: [
-    A11yModule,
+    A11yModule,ExerciseScopeComponent,MachineSetupComponent,
     ExerciseFamiliesComponent,
     ExerciseVideoComponent,
     FormsModule,
@@ -54,6 +56,8 @@ import { StatusComponent } from "../shared/status.component";
       >
       @if(s.canEditCatalog()) {<label>Stato<select [ngModel]="active()" (ngModelChange)="active.set($event)"><option value="active">Attivi</option><option value="all">Tutti, anche disattivati</option><option value="inactive">Solo disattivati</option></select></label>}
     </div>
+    <gt-exercise-scope [value]="scope()" (choose)="scope.set($event)"/>
+    @if(scope()==='recent'){<p class="subtle">Esercizi delle ultime sessioni, incluse quelle in corso.</p>}
     <gt-exercise-families [query]="query()" (choose)="query.set($event);group.set('')"/>
     <nav class="muscle-tabs" aria-label="Zone muscolari"><button [class.selected]="!group()" (click)="group.set('')">Tutti</button>@for(g of s.data().muscleGroups;track g.id){<button [class.selected]="group()===g.id" (click)="group.set(g.id)">{{g.name}}</button>}</nav>
     <p class="subtle" style="margin:16px 0">{{filtered().length}} esercizi {{s.canEditCatalog()?'· Catalogo condiviso':'· Disponibili per le tue schede'}}</p>
@@ -72,7 +76,7 @@ import { StatusComponent } from "../shared/status.component";
                 <span class="pill">{{ s.muscle(e.muscleGroupId) }}</span>
               </div>
             </div>
-            @if(s.canEditCatalog()) {<button class="ghost" (click)="open(e)">Modifica</button>}
+            <div class="inline-actions"><button class="favorite-button" [class.favorite-on]="s.isFavorite(e.id)" [attr.aria-pressed]="s.isFavorite(e.id)" [attr.aria-label]="(s.isFavorite(e.id)?'Rimuovi dai preferiti: ':'Aggiungi ai preferiti: ')+e.name" (click)="s.toggleFavorite(e.id)" [disabled]="s.busy()">{{s.isFavorite(e.id)?'★':'☆'}}</button>@if(s.canEditCatalog()){<button class="ghost" (click)="open(e)">Modifica</button>}</div>
           </div>
           <p class="subtle">
             {{ e.equipment }} · {{ modeLabel(e.loadMode)
@@ -81,7 +85,7 @@ import { StatusComponent } from "../shared/status.component";
           @if (e.description) {
             <p class="subtle" style="margin-top:12px">{{ e.description }}</p>
           }
-          <div class="actions"><gt-exercise-video [exercise]="e" />
+          <gt-machine-setup [exerciseId]="e.id"/><div class="actions"><gt-exercise-video [exercise]="e" />
             @if(s.canEditCatalog()) {<label class="active-check"><input type="checkbox" [checked]="e.active" [disabled]="saving()" (change)="toggle(e)" />Attivo</label>}
             @for (t of e.tags; track t) {
               <span class="pill">{{ t }}</span>
@@ -91,7 +95,7 @@ import { StatusComponent } from "../shared/status.component";
       } @empty {
         <div class="card empty">
           <h3>Nessun esercizio trovato</h3>
-          <p>Prova un filtro diverso o aggiungi un esercizio.</p>
+          <p>{{scope()==='favorites'?'Tocca la stella accanto agli esercizi per ritrovarli qui.':scope()==='recent'?'Qui compariranno gli esercizi delle tue sessioni.':'Prova un filtro diverso.'}}</p>
         </div>
       }
     </div>
@@ -222,7 +226,7 @@ import { StatusComponent } from "../shared/status.component";
 export class CatalogComponent {
   s = inject(Store);
   fb = inject(FormBuilder);
-  query = signal("");
+  query = signal("");scope=signal<ExerciseScope>("all");
   group = signal("");
   active = signal("active");
   editing = signal(false);
@@ -246,13 +250,14 @@ export class CatalogComponent {
       .data()
       .exercises.filter(
         (e) =>
+          (this.scope()==='all'||(this.scope()==='favorites'?this.s.isFavorite(e.id):this.s.recentExerciseIds().includes(e.id))) &&
           (this.s.canEditCatalog() ? this.active() === "all" || (this.active() === "inactive" ? !e.active : e.active) : e.active) &&
           (!this.group() || e.muscleGroupId === this.group()) &&
           `${e.name} ${e.equipment} ${e.tags.join(" ")}`
             .toLocaleLowerCase("it")
             .includes(this.query().toLocaleLowerCase("it")),
       )
-      .sort((a, b) => this.s.muscle(a.muscleGroupId).localeCompare(this.s.muscle(b.muscleGroupId)) || a.name.localeCompare(b.name)),
+      .sort((a, b) => this.scope()==='recent'?this.s.recentExerciseIds().indexOf(a.id)-this.s.recentExerciseIds().indexOf(b.id):this.s.muscle(a.muscleGroupId).localeCompare(this.s.muscle(b.muscleGroupId)) || a.name.localeCompare(b.name)),
   );
   modeLabel(m: LoadMode) {
     return {

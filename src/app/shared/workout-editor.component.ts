@@ -1,3 +1,4 @@
+import {setupSummary} from "../services/training-flow";
 import { ExerciseVideoComponent } from "./exercise-video.component";
 import { Component, inject, input, signal } from "@angular/core";
 import { FormsModule } from "@angular/forms";
@@ -22,7 +23,7 @@ import { IconComponent } from "./icon.component";
             >{{ completeCount(e.id) }} / {{ s.sets(e.id).length }} serie</span
           >
         </div>
-        <gt-exercise-video [exercise]="s.exercise(e.exerciseId)" />
+        <p class="subtle" style="margin-bottom:12px">{{setupSummary(e.machineSetup)}}{{e.superset?' · Superset '+e.superset:''}}</p><gt-exercise-video [exercise]="s.exercise(e.exerciseId)" />
         @if (e.notes) {
           <p class="subtle" style="margin-bottom:16px">{{ e.notes }}</p>
         }
@@ -75,7 +76,7 @@ import { IconComponent } from "./icon.component";
             <tbody>
               @for (set of s.sets(e.id); track set.id) {
                 <tr>
-                  <td>{{ set.number }}</td>
+                  <td>{{set.number}}<select aria-label="Tipo di serie" [ngModel]="set.kind||'work'" (ngModelChange)="s.updateSet(set.id,{kind:$event})"><option value="work">Allenante</option><option value="warmup">Riscaldamento</option></select></td>
                   <td>
                     @if (e.loadMode === "bodyweight") {
                       <span class="muted">Corpo libero</span>
@@ -193,6 +194,7 @@ import { IconComponent } from "./icon.component";
     }`,
 })
 export class WorkoutEditorComponent {
+  setupSummary=setupSummary;
   s = inject(Store);
   workoutId = input.required<string>();
   restUntil = 0;

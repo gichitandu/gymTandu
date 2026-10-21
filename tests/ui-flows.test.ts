@@ -19,7 +19,7 @@ beforeEach(async()=>{
  injector=createEnvironmentInjector([{provide:GYM_REPOSITORY,useValue:{read:()=>db.snapshot(),replace:(d:any)=>db.replace(d)}},{provide:ActivatedRoute,useValue:{snapshot:{queryParamMap:{get:()=>null}}}},{provide:LocalAiService,useValue:{supported:false,busy:()=>false,cancel:()=>{}}},Store],null as unknown as EnvironmentInjector);
  s=injector.get(Store);await vi.waitFor(()=>expect(s.ready()).toBe(true));
 });
-afterEach(async()=>{active?.ngOnDestroy();active=undefined;vi.useRealTimers();injector.destroy();await db.delete();vi.unstubAllGlobals();});
+afterEach(async()=>{active?.ngOnDestroy();active=undefined;await s.settled();vi.useRealTimers();injector.destroy();await db.delete();vi.unstubAllGlobals();});
 it('percorre dettaglio, serie, pausa e riepilogo conservando lo storico',async()=>{
  await s.savePlan('p','Piano di prova','');await s.saveDay('d','p','Giorno 1');
  await s.savePlanExercise({id:'pe',dayId:'d',exerciseId:'exercise-0',sets:1,repsMin:8,repsMax:8,rest:120,notes:'',order:0,targetWeight:80});

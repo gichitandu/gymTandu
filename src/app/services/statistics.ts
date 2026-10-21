@@ -1,10 +1,11 @@
+import {setupKey} from "./training-flow";
 import { DataSet, LoadMode, WorkoutLog, WorkoutLogSet } from "../models/domain";
 export function epley(weight: number, reps: number): number {
   return weight > 0 && reps > 0 ? weight * (1 + reps / 30) : 0;
 }
 export function volume(sets: WorkoutLogSet[], mode: LoadMode): number {
   return mode === "external"
-    ? sets.filter((s) => s.completed).reduce((v, s) => v + s.weight * s.reps, 0)
+    ? sets.filter((s) => s.completed&&s.kind!=="warmup").reduce((v, s) => v + s.weight * s.reps, 0)
     : 0;
 }
 export function sessionVolume(data: DataSet, w: WorkoutLog): number {
@@ -20,23 +21,24 @@ export function sessionVolume(data: DataSet, w: WorkoutLog): number {
       0,
     );
 }
-export function exerciseRecords(data: DataSet, id: string) {
+export function exerciseRecords(data: DataSet, id: string,machine?:string) {
   const mode = data.exercises.find((e) => e.id === id)?.loadMode;
   const rows = data.workoutExercises.filter(
     (e) =>
       e.exerciseId === id &&
+      (machine===undefined||setupKey(e.machineSetup)===machine) &&
       (!mode || e.loadMode === mode) &&
       data.workouts.some(
         (w) => w.id === e.workoutId && w.status === "completed",
       ),
   );
   const sets = rows.flatMap((e) =>
-    data.sets.filter((s) => s.workoutExerciseId === e.id && s.completed),
+    data.sets.filter((s) => s.workoutExerciseId === e.id && s.completed&&s.kind!=="warmup"),
   );
   const external = rows
     .filter((e) => e.loadMode === "external")
     .flatMap((e) =>
-      data.sets.filter((s) => s.workoutExerciseId === e.id && s.completed),
+      data.sets.filter((s) => s.workoutExerciseId === e.id && s.completed&&s.kind!=="warmup"),
     );
   return {
     maxWeight: Math.max(0, ...sets.map((s) => s.weight)),
@@ -73,6 +75,7 @@ export function chartSeries(
   planId: string,
   months: number,
   metric: Metric,
+  machine?:string,
 ) {
   const cutoff = new Date();
   if (months) cutoff.setMonth(cutoff.getMonth() - months);
@@ -103,12 +106,13 @@ export function chartSeries(
       (e) =>
         e.workoutId === w.id &&
         e.exerciseId === id &&
+      (machine===undefined||setupKey(e.machineSetup)===machine) &&
         e.loadMode ===
           (data.exercises.find((x) => x.id === id)?.loadMode ?? e.loadMode),
     );
     if (!entries.length) return [];
     const sets = entries.flatMap((e) =>
-      data.sets.filter((s) => s.workoutExerciseId === e.id && s.completed),
+      data.sets.filter((s) => s.workoutExerciseId === e.id && s.completed&&s.kind!=="warmup"),
     );
     if (!sets.length) return [];
     if (

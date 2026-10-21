@@ -40,6 +40,7 @@ export class GymDatabase extends Dexie {
         if(tags.length)e.tags=[...new Set([...(e.tags||[]),...tags])];
       });
     });
+    this.version(6).stores({exercisePreferences:'id',workoutUi:'id'});
   }
   entity<K extends keyof DataSet>(name: K): Table<DataSet[K][number], string> {
     return this.table(name);

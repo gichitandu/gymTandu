@@ -1,3 +1,6 @@
+import {takeUntilDestroyed} from "@angular/core/rxjs-interop";
+import {BackupReminderComponent} from "../shared/backup-reminder.component";
+import {WorkoutResumeService} from "../services/workout-resume";
 import { ActivatedRoute } from "@angular/router";
 import { AvatarComponent } from "../shared/avatar.component";
 import { compressPhoto } from "../services/images";
@@ -22,7 +25,7 @@ import { IconComponent } from "../shared/icon.component";
 import { PwaService } from "../services/pwa";
 @Component({
   standalone: true,
-  imports: [
+  imports: [BackupReminderComponent,
     A11yModule,
     AvatarComponent,
     IosStatusComponent,
@@ -178,7 +181,7 @@ import { PwaService } from "../services/pwa";
       </div>
     </div>
     }
-    @if(panel()==='backup'){<section class="card" style="margin-top:20px">
+    @if(panel()==='backup'){<gt-backup-reminder mode="settings"/><section class="card" style="margin-top:20px">
       <div class="card-head">
         <div>
           <h2>Backup e ripristino</h2>
@@ -221,10 +224,11 @@ import { PwaService } from "../services/pwa";
           working()
             ? "Elaborazione…"
             : s.settings().lastBackup
-              ? "Ultimo backup: " + backupDate()
+              ? "Ultimo file generato: " + backupDate()
               : "Non hai ancora esportato un backup."
         }}
       </p>
+      @if(s.settings().lastBackup){<button class="primary full-width" style="margin-top:14px" (click)="confirmBackup()">Ho verificato la copia salvata in File</button><p class="subtle" style="margin-top:12px">Conferma dopo aver trovato il JSON nell’app File. La data del file generato non dimostra che il download sia stato conservato.</p>}
     </section>
     }
     @if(panel()==='security'){<section class="card" style="margin-top:20px">
@@ -279,6 +283,8 @@ import { PwaService } from "../services/pwa";
     }`,
 })
 export class ProfileComponent {
+  resume=inject(WorkoutResumeService);
+  confirmBackup(){void this.s.change(d=>{d.settings[0].backupConfirmedAt=new Date().toISOString();delete d.settings[0].backupSnoozedUntil;},"Copia in File confermata da te.",false);}
   photoDraft = signal<Blob|null|undefined>(undefined);
   photoBusy = signal(false);
   usernameDraft = signal<string|null>(null);
@@ -330,7 +336,7 @@ export class ProfileComponent {
   async saveMeasurement(){const weight=this.measurementWeight===null?0:this.s.kg(this.measurementWeight);if(!Number.isFinite(weight)||weight<=0||weight>700||this.measurementDate>this.today){this.s.error.set('Controlla la data e il peso.');return;}await this.s.change(d=>{const old=d.measurements.find(m=>m.date===this.measurementDate);const measurement={id:old?.id||uid(),date:this.measurementDate,weight,waist:this.measurementWaist??undefined,bodyFat:this.measurementBodyFat??undefined};if(old)Object.assign(old,measurement);else d.measurements.push(measurement);const latest=[...d.measurements].sort((a,b)=>b.date.localeCompare(a.date))[0];if(latest)d.profiles[0].bodyWeight=latest.weight;},'Misurazione salvata.',false);}
   async removeMeasurement(id:string){if(confirm('Rimuovere questa misurazione?'))await this.s.change(d=>{d.measurements=d.measurements.filter(m=>m.id!==id);},'Misurazione rimossa.',false);}
   constructor() {
-    const section=inject(ActivatedRoute).snapshot.queryParamMap.get('section');if(section&&['backup','goals','settings','measurements','theme','security','info'].includes(section))this.panel.set(section);
+    inject(ActivatedRoute).queryParamMap.pipe(takeUntilDestroyed()).subscribe(params=>{const section=params.get('section');if(section&&['backup','goals','settings','measurements','theme','security','info'].includes(section))this.panel.set(section);});
     effect(() => {
       if (!this.s.ready()) return;
       const p = this.s.profile();
@@ -385,6 +391,7 @@ export class ProfileComponent {
   async export() {
     this.working.set(true);
     try {
+      await this.s.settled();
       const d = structuredClone(this.s.data());
       d.settings[0].lastBackup = new Date().toISOString();
       d.settings[0].backgroundColor=this.theme.color();
@@ -443,6 +450,7 @@ export class ProfileComponent {
           false,
         )
       ) {
+        this.resume.clear(this.s.archiveKey());
         if(d.settings[0].backgroundColor)await this.theme.save(d.settings[0].backgroundColor);
         this.pending.set(undefined);
       }

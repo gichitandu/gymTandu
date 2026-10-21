@@ -160,7 +160,7 @@ describe("Backup", () => {
   it("rifiuta JSON malformato e versioni future", async () => {
     await expect(importBackup("{")).rejects.toThrow("JSON");
     const raw = JSON.parse(await exportBackup(fixture()));
-    raw.schemaVersion = 5;
+    raw.schemaVersion = 6;
     await expect(importBackup(JSON.stringify(raw))).rejects.toThrow("recente");
   });
   it("rifiuta dati mancanti, numeri non validi e riferimenti orfani", async () => {

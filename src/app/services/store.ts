@@ -1,3 +1,5 @@
+import { setupKey,setupSummary,hasSetup } from "./training-flow";
+import { MachineSetup,WorkoutUiState } from "../models/domain";
 import { weeklyDates } from "./calendar";
 import { ThemeService } from "./theme";
 import { AuthService } from "./auth";
@@ -20,6 +22,14 @@ export class Store {
   private auth = inject(AuthService, { optional: true });
   private repo = inject(GYM_REPOSITORY);
   data = signal<DataSet>(seed());
+  archiveKey(){return this.repo.storageKey||this.auth?.user()?.id||'local';}
+  recentExerciseIds=computed(()=>{const times=new Map(this.data().workouts.map(w=>[w.id,w.startedAt]));return [...new Set([...this.data().workoutExercises].filter(e=>times.has(e.workoutId)).sort((a,b)=>(times.get(b.workoutId)||'').localeCompare(times.get(a.workoutId)||'')||a.order-b.order).map(e=>e.exerciseId))].slice(0,30);});
+  preference(id:string){return this.data().exercisePreferences.find(p=>p.id===id);}
+  isFavorite(id:string){return this.preference(id)?.favorite||false;}
+  toggleFavorite(id:string){return this.change(d=>{if(!d.exercises.some(e=>e.id===id))throw Error('Esercizio non trovato.');const p=d.exercisePreferences.find(p=>p.id===id);if(p)p.favorite=!p.favorite;else d.exercisePreferences.push({id,favorite:true});},'',false);}
+  saveMachineSetup(id:string,setup:MachineSetup,workoutExerciseId?:string){return this.change(d=>{if(!d.exercises.some(e=>e.id===id))throw Error('Esercizio non trovato.');const clean=Object.fromEntries(Object.entries(setup).map(([key,value])=>[key,value?.trim()||undefined]));const p=d.exercisePreferences.find(p=>p.id===id);if(p)p.machineSetup=clean;else d.exercisePreferences.push({id,favorite:false,machineSetup:clean});if(workoutExerciseId){const e=d.workoutExercises.find(e=>e.id===workoutExerciseId&&e.exerciseId===id);if(e&&!d.sets.some(s=>s.workoutExerciseId===e.id&&s.completed))e.machineSetup=structuredClone(clean);}},'Configurazione personale salvata. Le serie già registrate conservano la configurazione precedente.',false);}
+  rememberWorkout(state:WorkoutUiState){return this.change(d=>{if(!d.workouts.some(w=>w.id===state.id&&w.status==='draft'))return;d.workoutUi=[structuredClone(state)];},'',false);}
+
   ready = signal(false);
   error = signal("");
   message = signal("");
@@ -52,7 +62,7 @@ export class Store {
             (e) =>
               this.completed().some((w) => w.id === e.workoutId) &&
               this.data().sets.some(
-                (s) => s.workoutExerciseId === e.id && s.completed,
+                (s) => s.workoutExerciseId === e.id && s.completed && s.kind!=="warmup",
               ),
           )
           .map((e) => e.exerciseId),
@@ -73,6 +83,7 @@ export class Store {
     return days[(index + 1) % days.length];
   });
   private queue: Promise<unknown> = Promise.resolve();
+  settled(){return this.queue;}
   constructor() {
     void this.init();
   }
@@ -192,8 +203,9 @@ export class Store {
     const w = this.data().workouts.find((w) => w.id === id);
     return w ? sessionVolume(this.data(), w) : 0;
   }
-  records(id: string) {
-    return exerciseRecords(this.data(), id);
+  configurations(id:string){return [...new Map(this.data().workoutExercises.filter(e=>e.exerciseId===id&&this.completed().some(w=>w.id===e.workoutId)).map(e=>[setupKey(e.machineSetup),{key:setupKey(e.machineSetup),label:setupSummary(e.machineSetup)||"Configurazione non registrata"}])).values()];}
+  records(id: string,machine?:string) {
+    return exerciseRecords(this.data(), id,machine);
   }
   weight(kg: number) {
     return this.settings().unit === "lb" ? kg * 2.2046226218 : kg;
@@ -206,16 +218,17 @@ export class Store {
       maximumFractionDigits: 1,
     });
   }
-  previous(exerciseId: string, exclude?: string) {
+  previous(exerciseId: string, exclude?: string, machineSetup?:MachineSetup) {
     for (const w of this.completed()) {
       if (w.id === exclude) continue;
       const e = this.data().workoutExercises.find(
         (e) =>
           e.workoutId === w.id &&
           e.exerciseId === exerciseId &&
+          (!hasSetup(machineSetup)||setupKey(e.machineSetup)===setupKey(machineSetup)) &&
           e.loadMode === (this.exercise(exerciseId)?.loadMode ?? e.loadMode),
       );
-      if (e) return this.sets(e.id).filter((s) => s.completed);
+      if (e) {const sets=this.sets(e.id).filter((s) => s.completed&&s.kind!=="warmup");if(sets.length)return sets;}
     }
     return [];
   }
@@ -344,19 +357,24 @@ export class Store {
           id: weid,
           workoutId: wid,
           exerciseId: ex.id,
+          superset:item.superset,
+          machineSetup:structuredClone(d.exercisePreferences.find(p=>p.id===ex.id)?.machineSetup),
           name: ex.name,
           loadMode: ex.loadMode,
           order: item.order,
           rest: item.rest,
           notes: item.notes,
         });
-        const prev = this.settings().prefill ? this.previous(ex.id) : [];
+        const prev = this.settings().prefill ? this.previous(ex.id,undefined,d.exercisePreferences.find(p=>p.id===ex.id)?.machineSetup) : [];
+        const warmups=item.warmupSets||0;
+        for(let i=0;i<warmups;i++)d.sets.push({id:uid(),workoutExerciseId:weid,number:i+1,kind:'warmup',weight:0,reps:item.repsMin,rest:item.rest,notes:'',completed:false});
         for (let i = 0; i < item.sets; i++) {
           const p = prev[i];
           d.sets.push({
             id: uid(),
             workoutExerciseId: weid,
-            number: i + 1,
+            number: i + 1 + warmups,
+            kind:"work",
             weight: p?.weight ?? item.targetWeight ?? 0,
             reps: p?.reps ?? item.repsMin,
             rpe: item.rpe,
@@ -374,6 +392,7 @@ export class Store {
       if (!s) throw Error("Serie non trovata");
       Object.assign(s, patch);
       if (
+        (s.kind!==undefined&&!["warmup","work"].includes(s.kind)) ||
         s.weight < 0 ||
         s.reps < 1 ||
         !Number.isInteger(s.reps) ||
@@ -385,22 +404,8 @@ export class Store {
         );
     });
   }
-  async addSet(id: string) {
-    return this.change((d) => {
-      const list = d.sets.filter((s) => s.workoutExerciseId === id);
-      const prev = list.at(-1);
-      d.sets.push({
-        id: uid(),
-        workoutExerciseId: id,
-        number: list.length + 1,
-        weight: prev?.weight || 0,
-        reps: prev?.reps || 8,
-        rpe: prev?.rpe,
-        rest: prev?.rest,
-        notes: "",
-        completed: false,
-      });
-    });
+  async addSet(id:string,kind:'work'|'warmup'='work'){
+    return this.change(d=>{const list=d.sets.filter(s=>s.workoutExerciseId===id).sort((a,b)=>a.number-b.number),prev=list.at(-1);if(!d.workoutExercises.some(e=>e.id===id))throw Error('Esercizio non trovato.');if(list.length>=60)throw Error('Limite di serie per esercizio raggiunto.');const entry:WorkoutLogSet={id:uid(),workoutExerciseId:id,number:list.length+1,kind,weight:kind==='warmup'?0:prev?.weight||0,reps:prev?.reps||8,rpe:kind==='warmup'?undefined:prev?.rpe,rest:prev?.rest,notes:'',completed:false};d.sets.push(entry);if(kind==='warmup'){const ordered=[...list.filter(s=>s.kind==='warmup'),entry,...list.filter(s=>s.kind!=='warmup')];ordered.forEach((s,i)=>s.number=i+1);}});
   }
   async removeSet(id: string) {
     return this.change((d) => {
@@ -416,16 +421,18 @@ export class Store {
   async copyPrevious(id: string) {
     const ex = this.data().workoutExercises.find((e) => e.id === id);
     if (!ex) return;
-    const prev = this.previous(ex.exerciseId, ex.workoutId);
+    const prev = this.previous(ex.exerciseId, ex.workoutId,ex.machineSetup);
     if (!prev.length) return;
     return this.change((d) => {
-      d.sets = d.sets.filter((s) => s.workoutExerciseId !== id);
+      d.sets = d.sets.filter((s) => s.workoutExerciseId !== id||s.kind==='warmup');
+      d.sets.filter(s=>s.workoutExerciseId===id).sort((a,b)=>a.number-b.number).forEach((s,i)=>s.number=i+1);
       d.sets.push(
         ...prev.map((s, i) => ({
           ...s,
           id: uid(),
           workoutExerciseId: id,
-          number: i + 1,
+          number: i + 1+d.sets.filter(x=>x.workoutExerciseId===id).length,
+          kind:"work" as const,
           completed: false,
         })),
       );
@@ -441,6 +448,7 @@ export class Store {
       if (!d.sets.some((s) => ids.has(s.workoutExerciseId) && s.completed))
         throw Error("Completa almeno una serie prima di concludere.");
       w.status = "completed";
+      d.workoutUi=d.workoutUi.filter(x=>x.id!==w.id);
       w.endedAt = now();
       w.duration = Math.max(
         1,
@@ -456,6 +464,7 @@ export class Store {
       d.sets = d.sets.filter((s) => !ids.has(s.workoutExerciseId));
       d.workoutExercises = d.workoutExercises.filter((e) => e.workoutId !== id);
       d.workouts = d.workouts.filter((w) => w.id !== id);
+      d.workoutUi=d.workoutUi.filter(x=>x.id!==id);
       for(const event of d.scheduledWorkouts)if(event.workoutId===id)delete event.workoutId;
     }, "Allenamento eliminato.");
   }
@@ -527,6 +536,9 @@ export class Store {
         !d.exercises.some((x) => x.id === e.exerciseId)
       )
         throw Error("Riferimenti non validi");
+      if(e.superset&&!['A','B','C','D'].includes(e.superset))throw Error('Gruppo superset non valido.');
+      if(e.superset&&d.planExercises.filter(x=>x.dayId===e.dayId&&x.id!==e.id&&x.superset===e.superset).length>=2)throw Error('Un superset può contenere due esercizi. Scegli un altro gruppo.');
+      if(e.warmupSets!==undefined&&(!Number.isInteger(e.warmupSets)||e.warmupSets<0||e.warmupSets>5))throw Error('Scegli da 0 a 5 serie di riscaldamento.');
       const i = d.planExercises.findIndex((x) => x.id === e.id);
       if (i < 0) d.planExercises.push(e);
       else d.planExercises[i] = e;
