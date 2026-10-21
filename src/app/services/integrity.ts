@@ -1,3 +1,4 @@
+import { sumIngredients } from './nutrition';
 import { DataSet, TABLES } from "../models/domain";
 export function validateIntegrity(d: DataSet) {
   const fail = (m: string): never => {
@@ -46,6 +47,7 @@ export function validateIntegrity(d: DataSet) {
     if (!exists("workoutExercises", s.workoutExerciseId))
       fail("esercizio della serie mancante");
   for(const m of d.meals) {
+    if(m.ingredients){const totals=sumIngredients(m.ingredients);for(const key of ['grams','calories','protein','carbs','fat'] as const)if(Math.abs(totals[key]-m[key])>.11)fail("totali del pasto diversi dagli alimenti");}
     if(!m.name.trim()||!/^\d{4}-\d{2}-\d{2}$/.test(m.date)||!Number.isFinite(m.grams)||m.grams<=0||m.grams>10000||[m.calories,m.protein,m.carbs,m.fat].some((v,i)=>!Number.isFinite(v)||v<0||v>[20000,2000,3000,2000][i])||m.photo && (m.photo.size>500*1024||!["image/jpeg","image/png","image/webp"].includes(m.photo.type))) fail("pasto non valido");
   }
   for(const e of d.scheduledWorkouts)if(!e.planId||!e.dayId||!e.planName.trim()||!e.dayName.trim()||!/^\d{4}-\d{2}-\d{2}$/.test(e.date))fail("evento calendario non valido");

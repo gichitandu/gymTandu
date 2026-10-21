@@ -4,18 +4,21 @@ import { Store } from '../services/store';
 import { WorkoutLogExercise, WorkoutLogSet } from '../models/domain';
 import { ExerciseThumbComponent } from './exercise-thumb.component';
 import { ExerciseVideoComponent } from './exercise-video.component';
+import { MuscleMapComponent } from './muscle-map.component';
+import { remainingSeconds, formatSeconds } from '../services/rest-clock';
 import { IconComponent } from './icon.component';
-@Component({selector:'gt-active-workout',standalone:true,imports:[FormsModule,ExerciseThumbComponent,ExerciseVideoComponent,IconComponent],template:`
+@Component({selector:'gt-active-workout',standalone:true,imports:[FormsModule,MuscleMapComponent,ExerciseThumbComponent,ExerciseVideoComponent,IconComponent],template:`
 @if(step()==='list'){
 <div class="section-title"><h2>Allenamento in corso</h2><span class="pill green">{{completedSets()}} / {{allSets().length}} serie</span></div>
 <div class="training-list">@for(e of exercises();track e.id){<button class="card training-list-row" (click)="open(e)"><gt-exercise-thumb [exercise]="s.exercise(e.exerciseId)"/><span><strong>{{e.name}}</strong><small>{{count(e.id)}} / {{s.sets(e.id).length}} serie · {{muscle(e)}}</small></span><span class="exercise-state" [class.complete]="count(e.id)===s.sets(e.id).length">{{count(e.id)===s.sets(e.id).length?'✓':'›'}}</span></button>}</div><button class="primary full-width workout-end" (click)="finish.emit()" [disabled]="s.busy()">Termina allenamento</button>
 }@else if(selected();as e){
 <div class="focus-heading"><button class="icon-btn ghost" aria-label="Torna al riepilogo" (click)="step.set('list')"><gt-icon name="back"/></button><div><h2>{{e.name}}</h2><p class="subtle">{{muscle(e)}} · {{s.exercise(e.exerciseId)?.equipment}}</p></div><span class="pill">{{count(e.id)}}/{{s.sets(e.id).length}}</span></div>
 @if(step()==='detail'){
-<gt-exercise-thumb class="exercise-feature-image" [exercise]="s.exercise(e.exerciseId)"/><gt-exercise-video [exercise]="s.exercise(e.exerciseId)"/>
+<gt-exercise-thumb class="exercise-feature-image" [exercise]="s.exercise(e.exerciseId)"/><gt-exercise-video [exercise]="s.exercise(e.exerciseId)"/><gt-muscle-map [primary]="muscle(e)" [secondary]="secondary(e)"/>
+<section class="last-session-inline"><span>Ultimi valori registrati</span>@if(previous().length){<div class="previous-values">@for(p of previous();track p.id){<span>{{e.loadMode==='bodyweight'?'Corpo libero':s.formatWeight(p.weight)+' '+s.settings().unit}} × {{p.reps}}</span>}</div><button class="ghost" (click)="usePrevious(e.id)" [disabled]="s.busy()">Usa ultimi valori</button>}@else{<p class="subtle">Il primo allenamento farà da riferimento.</p>}</section>
 <div class="segmented"><button [class.active]="tab()==='sets'" (click)="tab.set('sets')">Serie</button><button [class.active]="tab()==='history'" (click)="tab.set('history')">Storico</button><button [class.active]="tab()==='notes'" (click)="tab.set('notes')">Note</button></div>
 @if(tab()==='sets'){<div class="card focus-set-list"><div class="focus-set-row table-caption"><span>#</span><span>Peso ({{s.settings().unit}})</span><span>Rip.</span><span>RPE</span></div>@for(set of s.sets(e.id);track set.id){<button class="focus-set-row" [class.is-complete]="set.completed" (click)="record(set)"><span>{{set.number}}</span><span>{{e.loadMode==='bodyweight'?'—':s.formatWeight(set.weight)}}</span><span>{{set.reps}}</span><span>{{set.rpe??'—'}} {{set.completed?'✓':'›'}}</span></button>}<button class="ghost full-width" (click)="s.addSet(e.id)">+ Aggiungi serie</button></div><button class="primary full-width" (click)="nextRecord()">{{count(e.id)===s.sets(e.id).length?'Rivedi le serie':'Registra prossima serie'}}</button>}
-@if(tab()==='history'){<section class="card"><h3>Ultimo allenamento</h3>@if(previous().length){<div class="previous-values">@for(p of previous();track p.id){<span>{{s.formatWeight(p.weight)}} {{s.settings().unit}} × {{p.reps}}</span>}</div><button class="primary full-width" (click)="s.copyPrevious(e.id)">Usa gli ultimi valori</button>}@else{<p class="subtle">Nessun dato precedente per questo esercizio.</p>}</section>}
+@if(tab()==='history'){<section class="card"><h3>Ultimo allenamento</h3>@if(previous().length){<div class="previous-values">@for(p of previous();track p.id){<span>{{s.formatWeight(p.weight)}} {{s.settings().unit}} × {{p.reps}}</span>}</div><button class="primary full-width" (click)="usePrevious(e.id)">Usa gli ultimi valori</button>}@else{<p class="subtle">Nessun dato precedente per questo esercizio.</p>}</section>}
 @if(tab()==='notes'){<section class="card"><label>Note dell’esercizio<textarea [ngModel]="e.notes" (ngModelChange)="saveNotes(e.id,$event)" maxlength="2000"></textarea></label><p class="subtle" style="margin-top:12px">Recupero previsto: {{e.rest}} secondi.</p></section>}
 <div class="actions"><button (click)="step.set('list')">Riepilogo allenamento</button></div>
 }
@@ -39,10 +42,11 @@ export class ActiveWorkoutComponent {
  private timer=setInterval(()=>this.clock.set(Date.now()),1000);
  exercises=computed(()=>this.s.workoutExercises(this.workoutId()));selected=computed(()=>this.exercises().find(e=>e.id===this.exerciseId()));allSets=computed(()=>this.exercises().flatMap(e=>this.s.sets(e.id)));completedSets=computed(()=>this.allSets().filter(s=>s.completed).length);currentSet=computed(()=>this.allSets().find(s=>s.id===this.setId()));
  previous=computed(()=>{const e=this.selected();return e?this.s.previous(e.exerciseId,e.workoutId):[];});
- remaining=computed(()=>this.paused()?this.pausedSeconds():Math.max(0,Math.ceil((this.restEnd()-this.clock())/1000)));
+ remaining=computed(()=>this.paused()?this.pausedSeconds():remainingSeconds(this.restEnd(),this.clock()));
  restRatio=computed(()=>Math.min(100,this.remaining()/Math.max(1,this.restTotal())*100));
  nextExercise=computed(()=>{const current=this.selected();if(current&&this.s.sets(current.id).some(s=>!s.completed))return current;return this.exercises().find(e=>this.s.sets(e.id).some(s=>!s.completed));});
  muscle(e:WorkoutLogExercise){return this.s.muscle(this.s.exercise(e.exerciseId)?.muscleGroupId||'');}
+ secondary(e:WorkoutLogExercise){return (this.s.exercise(e.exerciseId)?.secondaryMuscleIds||[]).map(id=>this.s.muscle(id));}
  count(id:string){return this.s.sets(id).filter(s=>s.completed).length;}
  open(e:WorkoutLogExercise){this.exerciseId.set(e.id);this.tab.set('sets');this.step.set('detail');}
  record(s:WorkoutLogSet){this.setId.set(s.id);this.weight=this.s.weight(s.weight);this.reps=s.reps;this.rpe=s.rpe;this.setNotes=s.notes||'';this.step.set('record');}
@@ -53,8 +57,9 @@ export class ActiveWorkoutComponent {
  async complete(){if(this.committing())return;this.committing.set(true);try{if(!await this.saveDraft(true))return;const rest=this.currentSet()?.rest??this.selected()?.rest??90;this.clock.set(Date.now());this.restTotal.set(rest);this.paused.set(false);this.restEnd.set(Date.now()+rest*1000);this.step.set('rest');}finally{this.committing.set(false);}}
  pauseRest(){this.clock.set(Date.now());if(this.paused()){this.restEnd.set(Date.now()+this.pausedSeconds()*1000);this.paused.set(false);}else{this.pausedSeconds.set(this.remaining());this.paused.set(true);}}
  adjustRest(delta:number){const seconds=Math.max(0,this.remaining()+delta);this.restTotal.set(Math.max(this.restTotal(),seconds));if(this.paused())this.pausedSeconds.set(seconds);else{this.clock.set(Date.now());this.restEnd.set(Date.now()+seconds*1000);}}
- formatSeconds(seconds:number){return `${Math.floor(seconds/60).toString().padStart(2,'0')}:${(seconds%60).toString().padStart(2,'0')}`;}
+ formatSeconds=formatSeconds;
  advance(){this.restEnd.set(0);this.paused.set(false);const next=this.nextExercise();if(next){this.exerciseId.set(next.id);this.nextRecord();}else this.step.set('list');}
+ async usePrevious(id:string){if(this.count(id)&&!confirm('Sostituire le serie di questo esercizio con gli ultimi valori? Le serie già registrate in questa sessione verranno sostituite.'))return;await this.s.copyPrevious(id);}
  saveNotes(id:string,notes:string){void this.s.change(d=>{const e=d.workoutExercises.find(e=>e.id===id);if(e)e.notes=notes;},'',false);}
  async removeSet(set:WorkoutLogSet){if(!set.completed||confirm('Eliminare questa serie completata?'))if(await this.s.removeSet(set.id))this.step.set('detail');}
  ngOnDestroy(){clearInterval(this.timer);}

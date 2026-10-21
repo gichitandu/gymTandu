@@ -55,3 +55,13 @@ Da provare sul telefono: scegliere/scattare la foto, verificare anteprima senza 
 Il calendario offre Giorno, Settimana (predefinita) e Mese. Verificare su Safari e PWA: cambio periodo, programmazione/modifica/rimozione, avvio della sessione e collegamento allo storico. La rimozione di una programmazione conserva l'allenamento registrato. Provare il nuovo flusso elenco → dettaglio → serie → recupero → riepilogo, con tastiera e uso con una mano.
 
 Verificare inoltre le schede Peso/Forza/Corpo/Alimentazione, gli obiettivi personali, le misurazioni e il backup JSON v4 da File. La migrazione IndexedDB v3 conserva gli archivi precedenti e aggiunge calendario e misurazioni. Sono passati 44 test automatici; le prove su un iPhone reale restano da eseguire.
+
+## Rifinitura UI su riferimento
+
+Palette predefinita: sfondo #050E17, schede #102230, azioni #0675FF. I temi personali salvati restano disponibili. Le miniature usano la foto associata all'esercizio; se non caricabile mostrano un'icona, senza una fotografia sportiva attribuita all'esercizio sbagliato. Le immagini/video remoti richiedono connettività se non già disponibili.
+
+La schermata esercizio mostra uno schema indicativo per zona muscolare e gli ultimi valori prima della registrazione. La sostituzione di serie già completate richiede conferma. La conferma pasti permette più alimenti con quantità e valori correggibili; i totali vengono sommati e verificati prima del salvataggio. Il dettaglio degli alimenti è facoltativo e conservato nel backup v4; i pasti precedenti restano utilizzabili.
+
+47 test automatici verificano anche il percorso reale del componente allenamento (dettaglio, serie, pausa/ripresa, riepilogo, persistenza), la modifica di un pasto composto e il suo roundtrip JSON. Il timer usa timestamp assoluti, quindi il conteggio recupera il tempo trascorso quando i callback vengono sospesi. Il timer non prosegue dopo la chiusura completa della pagina.
+
+Non sono stati eseguiti test visivi del browser o di un dispositivo iOS reale in questa sessione: il controllo browser previsto dall'ambiente non è disponibile. Restano da verificare fisicamente navigazione e layout a 320/375/390/430 px, tastiera, safe area, selezione foto, timer dopo blocco schermo, scorrimento del calendario sugli schermi più stretti e PWA installata. Non sono presenti pulsanti di social login o biometria applicativa; Face ID può essere usato dal gestore Password di iOS per compilare le credenziali.

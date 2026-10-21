@@ -1665,3 +1665,85 @@ input[type=date],input[type=time],select {min-inline-size:0;max-inline-size:100%
 @media(min-width:801px) and (pointer:fine){.overview-primary,.macro-grid,.next-workout-card,.home-week-strip{max-width:760px;}.compact-rest-chip{left:calc(50% + 100px);bottom:30px;}.profile-menu{max-width:720px;}.profile-dashboard{max-width:720px;}.training-list,.focus-heading,.exercise-feature-image,.focus-set-list,.workout-end{max-width:760px;}}
 [hidden]{display:none!important;}
 .mini-ring{--ring-size:44px;}.mini-ring text{display:none;}
+
+/* Palette and proportions from the approved GymTrack reference. */
+:root {--bg:#050E17;--card:#102230;--raised:#132A3B;--line:#243B4B;--blue:#0675FF;--muted:#B5C4D1;--text:#FFFFFF;--radius:12px;}
+body {background:var(--bg);}
+.card {background:var(--card);box-shadow:inset 0 1px #ffffff03;}
+button.primary,.button.primary {background:#0675FF;border-color:#1683FF;box-shadow:0 3px 12px #0675ff20;}
+.segmented>button.active {background:#0675FF;}
+button,.button,.icon-btn {min-height:44px;}
+.icon-btn,.meal-check {min-width:44px;}
+.topbar {background:var(--bg);}
+.home-greeting {padding:8px 0;}
+.home-greeting h1 {font-size:24px;}
+.overview-tile {padding:14px;background:var(--card);}
+.overview-tile>span,.overview-tile small {font-size:12px;}
+.overview-value strong {font-size:30px;}
+.macro-grid span {font-size:12px;}
+.macro-card {padding:8px 4px;}
+.macro-card gt-ring {--ring-size:80px;}
+.plan-tabs {display:grid;grid-template-columns:1fr 1fr;}
+.plan-tabs>a {grid-column:1/-1;font-size:12px;justify-content:flex-end;min-height:44px;padding:0 8px;background:transparent;border:0;}
+.plan-card>.card-head {margin:0!important;min-height:80px;}
+.plan-card>.card-head>gt-exercise-thumb {--thumb-width:76px;--thumb-height:82px;border-radius:8px;}
+.plan-card>.card-head>button {font-size:26px;width:44px;flex-shrink:0;}
+.plan-card .plan-subtitle {font-size:12px;margin:6px 0;color:var(--muted);overflow-wrap:anywhere;}
+.plan-count {font-size:11px;font-weight:400;color:var(--muted);}
+.plan-card:not(.is-open)>p {display:none;}
+.plan-card.is-open>p {margin-top:14px;}
+.plan-card.is-open>.actions {margin-top:16px;}
+.plan-card>.card-head>div>.pill {font-size:9px;}
+.last-session-inline {background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;margin:12px 0;}
+.last-session-inline>span {font-size:12px;color:var(--muted);}
+.last-session-inline .previous-values {margin:12px 0;gap:8px;}
+.last-session-inline>.ghost {width:100%;color:#58AEFF;}
+.training-list-row {min-height:76px;}
+.training-list-row gt-exercise-thumb {--thumb-width:68px;--thumb-height:54px;}
+.training-list-row small {font-size:12px;line-height:1.4;}
+.exercise-feature-image {--thumb-height:200px;}
+.focus-set-row {min-height:48px;}
+.focus-set-row.is-complete {background:#0675FF26;color:var(--text);}
+.meal-diary-main>span,.nutrition-secondary-actions button,.nutrition-dashboard>.subtle {font-size:12px;line-height:1.5;}
+.meal-diary-main strong {font-size:14px;}
+.meal-diary-row>img,.meal-fallback {width:54px;height:54px;}
+.ingredient-review {margin:18px 0;}
+.ingredient-item {padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--bg);margin-bottom:10px;}
+.ingredient-title {display:flex;align-items:center;justify-content:space-between;gap:12px;}
+.ingredient-title strong {font-size:14px;overflow-wrap:anywhere;}
+.ingredient-inputs {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;}
+.ingredient-inputs>label:first-child {grid-column:1/-1;}
+.ingredient-inputs label {font-size:12px;}
+.meal-confirm-totals {padding:16px;background:#0675FF18;border:1px solid #0675FF66;border-radius:12px;display:grid;gap:9px;margin-top:16px;}
+.meal-confirm-totals>strong {font-size:26px;}
+.meal-confirm-totals>span,.meal-confirm-totals>small {font-size:12px;color:var(--muted);line-height:1.6;}
+.meal-name-field {margin-top:16px;}
+.ai-details>summary,.session-options summary {min-height:44px;display:flex;align-items:center;}
+@media(max-width:800px),(max-width:1100px) and (pointer:coarse){
+ main {padding-inline:max(16px,var(--safe-left)) max(16px,var(--safe-right));}
+ .compact-heading {margin-bottom:16px;}
+ .compact-heading h1 {font-size:22px;}
+ .home-greeting h1 {font-size:24px;}
+ .bottom-nav {padding-top:7px;}
+ .bottom-nav a {font-size:10px;min-height:52px;gap:5px;}
+ .bottom-nav a gt-icon {width:22px;height:22px;}
+ .bottom-nav a span {letter-spacing:-.25px;}
+ .session-header .page-heading>.primary {min-height:44px;font-size:12px;}
+ .plan-card>.card-head>gt-exercise-thumb {--thumb-width:68px;--thumb-height:76px;}
+ .plan-card>.card-head h2 {font-size:15px!important;}
+ .plan-card>.card-head>button {font-size:25px;}
+ .plan-card .plan-subtitle {font-size:11px;line-height:1.5;}
+ .plan-count {font-size:11px;}
+ .profile-menu>a,.profile-menu>button {font-size:14px;}
+ .profile-key-stats small,.profile-key-stats span {font-size:12px;}
+ .series-dots button {width:44px;min-width:44px;}
+ .nutrition-date-heading label {min-height:44px;display:flex;align-items:center;justify-content:center;}
+ .nutrition-date-heading input {min-height:44px;}
+ .progress-tabs>button {font-size:11px;}
+}
+@media(min-width:801px) and (pointer:fine){
+ .nutrition-dashboard {max-width:760px;}.meal-diary-list,.scan-meal-button,.nutrition-secondary-actions,.meal-editor,.ai-details{max-width:760px;}
+ .ingredient-inputs {grid-template-columns:repeat(5,minmax(0,1fr));}.ingredient-inputs>label:first-child{grid-column:auto;}
+}
+.scan-steps{list-style:none;padding:0;margin:0 0 22px;display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px;}.scan-steps li{padding:12px 8px;border-bottom:2px solid var(--line);color:var(--muted);}.scan-steps .done{border-color:#1FD799;}.scan-steps .active{color:var(--text);border-color:var(--blue);}
+button{min-width:44px;}.calendar-grid,.calendar-weekdays{min-width:320px;}.calendar-card{overflow-x:auto;}.calendar-cell{min-width:44px;}.calendar-cell.selected{min-width:44px;}

@@ -37,7 +37,7 @@ import { IconComponent } from "../shared/icon.component";
     </aside>
     <div class="app-main">
       <header class="topbar">
-        <a class="mobile-brand brand" routerLink="/">Gym<span>Track</span></a
+        <a class="mobile-brand brand" routerLink="/"><img class="app-brand-mark" src="/brand/gt-mark.png" alt=""/>Gym<span>Track</span></a
         ><span class="desktop-only breadcrumb"
           >IL TUO DIARIO DI ALLENAMENTO</span
         >

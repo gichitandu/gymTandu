@@ -40,10 +40,10 @@ import { StatusComponent } from "../shared/status.component";
       </button>
     </div>
     <gt-status />
-    <div class="filters">
-      <button [class.primary]="!archived()" (click)="archived.set(false)">
-        I miei piani</button
-      ><button [class.primary]="archived()" (click)="archived.set(true)">
+    <div class="segmented plan-tabs">
+      <button [class.active]="!archived()" (click)="archived.set(false)">
+        Attivi</button
+      ><button [class.active]="archived()" (click)="archived.set(true)">
         Archivio</button
       ><a class="button ghost" routerLink="/catalogo"
         >Catalogo esercizi <gt-icon name="arrow"
@@ -61,10 +61,10 @@ import { StatusComponent } from "../shared/status.component";
                     ? "ARCHIVIATO"
                     : "PIANO PERSONALE"
               }}</span>
-              <h2 style="margin-top:13px">{{ p.name }}</h2>
+              <h2>{{ p.name }}</h2><p class="plan-subtitle">{{p.description || "Programma personalizzato"}}</p><small class="plan-count">{{s.days(p.id).length}} giorni · {{exerciseCount(p.id)}} esercizi</small>
             </div>
-            <button (click)="expanded.set(expanded() === p.id ? '' : p.id)">
-              {{ expanded() === p.id ? "Chiudi" : "Apri piano" }}
+            <button [attr.aria-label]="(expanded()===p.id?'Chiudi ':'Apri ')+p.name" [attr.aria-expanded]="expanded()===p.id" (click)="expanded.set(expanded() === p.id ? '' : p.id)">
+              <span aria-hidden="true">{{ expanded() === p.id ? "⌃" : "›" }}</span>
             </button>
           </div>
           <p>{{ p.description || "Il tuo programma personalizzato." }}</p>
@@ -384,6 +384,7 @@ import { StatusComponent } from "../shared/status.component";
     }`,
 })
 export class PlansComponent {
+  exerciseCount(id:string){return this.s.days(id).reduce((n,d)=>n+this.s.planExercises(d.id).length,0);}
   thumbnailExercise(id:string){const day=this.s.days(id)[0],entry=day?this.s.planExercises(day.id)[0]:undefined;return entry?this.s.exercise(entry.exerciseId):undefined;}
   s = inject(Store);
   router = inject(Router);

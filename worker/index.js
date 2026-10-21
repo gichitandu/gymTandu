@@ -90,7 +90,7 @@ export async function api(request,env) {
     if(request.method==='GET'&&path==='/api/preferences') {
       if(!me) fail('Accedi per caricare il tema.',401);
       const p=await db.prepare('SELECT background_color FROM user_preferences WHERE user_id=?').bind(me.id).first();
-      return json({backgroundColor:p?.background_color||'#050b12'});
+      return json({backgroundColor:p?.background_color||'#050E17'});
     }
     if(request.method==='GET'&&path==='/api/users') {
       if(me?.role!=='SuperAdmin') fail('Accesso riservato al Super Admin.',403);

@@ -95,7 +95,7 @@ it('saves a background per account, rejects invalid colors and preserves the def
  expect((await call('preferences',{backgroundColor:'red;display:none'},{cookie})).status).toBe(400);
  expect((await call('preferences',{backgroundColor:'#123456'},{cookie})).status).toBe(200);
  expect((await (await call('preferences',undefined,{cookie})).json()).backgroundColor).toBe('#123456');
- expect((await (await call('preferences',undefined,client)).json()).backgroundColor).toBe('#050b12');
+ expect((await (await call('preferences',undefined,client)).json()).backgroundColor).toBe('#050E17');
 });
 
 it('reserves normalized unique usernames and supports both username and email login',async()=>{

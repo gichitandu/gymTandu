@@ -96,7 +96,9 @@ export interface WorkoutLogSet extends Entity {
   notes?: string;
   completed: boolean;
 }
+export interface MealIngredient {id:string;name:string;grams:number;calories:number;protein:number;carbs:number;fat:number;}
 export interface Meal extends Entity {
+  ingredients?: MealIngredient[];
   mealType?: "breakfast"|"lunch"|"dinner"|"snack";
   date: string;
   name: string;

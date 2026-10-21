@@ -1,0 +1,51 @@
+import '@angular/compiler';
+import 'fake-indexeddb/auto';
+import {createEnvironmentInjector,EnvironmentInjector,runInInjectionContext} from '@angular/core';
+import {ActivatedRoute} from '@angular/router';
+import {afterEach,beforeEach,expect,it,vi} from 'vitest';
+import {GymDatabase} from '../src/app/core/database';
+import {Store} from '../src/app/services/store';
+import {GYM_REPOSITORY} from '../src/app/repositories/repository';
+import {ActiveWorkoutComponent} from '../src/app/shared/active-workout.component';
+import {NutritionComponent} from '../src/app/features/nutrition.component';
+import {LocalAiService} from '../src/app/services/local-ai';
+import {exportBackup,importBackup} from '../src/app/services/backup';
+import {FOODS,portion,sumIngredients} from '../src/app/services/nutrition';
+let db:GymDatabase,injector:EnvironmentInjector,s:Store,active:ActiveWorkoutComponent|undefined;
+beforeEach(async()=>{
+ vi.stubGlobal('document',{body:{classList:{toggle:()=>{}}}});
+ vi.stubGlobal('window',{scrollTo:()=>{}});
+ db=new GymDatabase('ui-flows-'+crypto.randomUUID());
+ injector=createEnvironmentInjector([{provide:GYM_REPOSITORY,useValue:{read:()=>db.snapshot(),replace:(d:any)=>db.replace(d)}},{provide:ActivatedRoute,useValue:{snapshot:{queryParamMap:{get:()=>null}}}},{provide:LocalAiService,useValue:{supported:false,busy:()=>false,cancel:()=>{}}},Store],null as unknown as EnvironmentInjector);
+ s=injector.get(Store);await vi.waitFor(()=>expect(s.ready()).toBe(true));
+});
+afterEach(async()=>{active?.ngOnDestroy();active=undefined;vi.useRealTimers();injector.destroy();await db.delete();vi.unstubAllGlobals();});
+it('percorre dettaglio, serie, pausa e riepilogo conservando lo storico',async()=>{
+ await s.savePlan('p','Piano di prova','');await s.saveDay('d','p','Giorno 1');
+ await s.savePlanExercise({id:'pe',dayId:'d',exerciseId:'exercise-0',sets:1,repsMin:8,repsMax:8,rest:120,notes:'',order:0,targetWeight:80});
+ await s.start('d');const id=s.draft()!.id;
+ active=runInInjectionContext(injector,()=>new ActiveWorkoutComponent());Object.defineProperty(active,'workoutId',{value:()=>id});
+ const e=s.workoutExercises(id)[0];active.open(e);expect(active.step()).toBe('detail');active.nextRecord();expect(active.step()).toBe('record');active.weight=82.5;active.reps=8;active.rpe=8.5;
+ expect(await active.saveDraft()).toBe(true);await active.complete();expect(active.step()).toBe('rest');expect(active.remaining()).toBe(120);
+ active.pauseRest();active.clock.set(Date.now()+45000);expect(active.remaining()).toBe(120);active.adjustRest(-15);expect(active.remaining()).toBe(105);active.pauseRest();
+ active.clock.set(Date.now()+120000);expect(active.remaining()).toBe(0);active.advance();expect(active.step()).toBe('list');expect(active.completedSets()).toBe(1);
+ expect(await s.finish()).toBe(true);const stored=await db.snapshot();expect(stored.sets[0]).toMatchObject({weight:82.5,reps:8,rpe:8.5,completed:true});expect(stored.workouts[0].status).toBe('completed');expect(s.totalVolume()).toBe(660);
+});
+it('conferma più alimenti, ricalcola grammi e conserva dettagli in archivio e backup',async()=>{
+ const c=runInInjectionContext(injector,()=>new NutritionComponent());
+ c.choose('chicken',true);c.grams=150;c.recalculate();c.addIngredient();
+ c.choose('rice');c.grams=100;c.recalculate();c.addIngredient();
+ expect(c.ingredients.map(i=>i.name)).toEqual(['Petto di pollo cotto','Riso cotto, senza condimento']);
+ c.changeIngredientGrams(c.ingredients[1].id,200);expect(c.ingredientTotal()?.calories).toBe(508);
+ c.composedName='Pollo e riso';await c.save();expect(c.error()).toBe('');
+ const stored=await db.snapshot();expect(stored.meals[0]).toMatchObject({name:'Pollo e riso',grams:350,calories:508});expect(stored.meals[0].ingredients).toHaveLength(2);
+ const restored=await importBackup(await exportBackup(stored));expect(restored.meals[0].ingredients).toEqual(stored.meals[0].ingredients);
+ c.edit(stored.meals[0]);c.changeIngredientValue(c.ingredients[0].id,'calories',250);await c.save();expect(s.data().meals).toHaveLength(1);expect(s.data().meals[0].calories).toBe(510);
+ c.ngOnDestroy();
+});
+it('impedisce totali nutrizionali incoerenti senza modificare i pasti esistenti',async()=>{
+ const item={id:'i',name:'Riso',grams:100,...portion(FOODS.find(f=>f.id==='rice')!,100)};
+ expect(()=>sumIngredients([{...item,grams:NaN}])).toThrow();
+ expect(await s.change(d=>{d.meals.push({id:'bad',date:'2026-10-21',name:'Totali errati',grams:100,calories:999,protein:0,carbs:0,fat:0,notes:'',source:'manual',createdAt:new Date().toISOString(),ingredients:[item]});})).toBe(false);
+ expect((await db.snapshot()).meals).toHaveLength(0);
+});

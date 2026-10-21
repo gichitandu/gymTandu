@@ -1,3 +1,4 @@
+import { MealIngredient } from '../models/domain';
 // Approximate reference values per 100g, always editable; not inferred from pixels.
 export const FOODS=[
  {id:'banana',name:'Banana',match:/banana/i,kcal:89,protein:1.1,carbs:22.8,fat:.3},
@@ -16,3 +17,17 @@ export const FOODS=[
 ];
 export function portion(food:typeof FOODS[number],grams:number){if(!Number.isFinite(grams)||grams<=0||grams>10000)throw Error('Quantità non valida.');return {calories:Math.round(food.kcal*grams/100),protein:+(food.protein*grams/100).toFixed(1),carbs:+(food.carbs*grams/100).toFixed(1),fat:+(food.fat*grams/100).toFixed(1)};}
 export function foodSuggestions(predictions:{label:string;probability:number}[]){return FOODS.filter(f=>predictions.some(p=>p.probability>=.15&&f.match.test(p.label)));}
+
+export function sumIngredients(items:MealIngredient[]){
+ if(!items.length||items.length>30)throw Error('Aggiungi da 1 a 30 alimenti.');
+ const totals={grams:0,calories:0,protein:0,carbs:0,fat:0};
+ for(const item of items){if(!item.name.trim()||!Number.isFinite(item.grams)||item.grams<=0||item.grams>10000||[item.calories,item.protein,item.carbs,item.fat].some((n,i)=>!Number.isFinite(n)||n<0||n>[20000,2000,3000,2000][i]))throw Error('Controlla quantità e valori degli alimenti.');for(const key of Object.keys(totals) as (keyof typeof totals)[])totals[key]+=item[key];}
+ for(const key of Object.keys(totals) as (keyof typeof totals)[])totals[key]=Math.round(totals[key]*10)/10;
+ if(totals.grams>10000||totals.calories>20000||totals.protein>2000||totals.carbs>3000||totals.fat>2000)throw Error('Il totale del pasto supera i limiti consentiti.');
+ return totals;
+}
+export function resizeIngredient(item:MealIngredient,grams:number):MealIngredient{
+ if(!Number.isFinite(grams)||grams<=0||grams>10000||item.grams<=0)throw Error('Quantità non valida.');
+ const ratio=grams/item.grams;
+ return {...item,grams,calories:Math.round(item.calories*ratio*10)/10,protein:Math.round(item.protein*ratio*10)/10,carbs:Math.round(item.carbs*ratio*10)/10,fat:Math.round(item.fat*ratio*10)/10};
+}

@@ -159,7 +159,7 @@ const dataSchema = z.object({
   settings: z.array(schemas.settings).length(1),
   scheduledWorkouts:z.array(z.object({id,date,planId:id,dayId:id,planName:nonempty,dayName:nonempty,notes:text,workoutId:id.optional()})).max(10000),
   measurements:z.array(z.object({id,date,weight:z.number().positive().max(700),waist:z.number().positive().max(300).optional(),bodyFat:z.number().min(1).max(80).optional()})).max(10000),
-  meals: z.array(z.object({id,date,mealType:z.enum(["breakfast","lunch","dinner","snack"]).optional(),name:nonempty,grams:z.number().positive().max(10000),calories:num.max(20000),protein:num.max(2000),carbs:num.max(3000),fat:num.max(2000),notes:text,photo:image.optional(),source:z.enum(["manual","photo-suggestion"]),createdAt:time})).max(10000),
+  meals: z.array(z.object({id,date,ingredients:z.array(z.object({id,name:nonempty,grams:z.number().positive().max(10000),calories:num.max(20000),protein:num.max(2000),carbs:num.max(3000),fat:num.max(2000)})).min(1).max(30).optional(),mealType:z.enum(["breakfast","lunch","dinner","snack"]).optional(),name:nonempty,grams:z.number().positive().max(10000),calories:num.max(20000),protein:num.max(2000),carbs:num.max(3000),fat:num.max(2000),notes:text,photo:image.optional(),source:z.enum(["manual","photo-suggestion"]),createdAt:time})).max(10000),
 });
 async function base64(blob: Blob) {
   const bytes = new Uint8Array(await blob.arrayBuffer());
