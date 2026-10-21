@@ -1,10 +1,20 @@
 # GymTrack
 
-Diario personale di palestra, mobile-first, in italiano. Angular e TypeScript strict, senza backend, account, API esterne o abbonamenti. I dati sono persistiti sul dispositivo tramite IndexedDB/Dexie. Nessun allenamento dimostrativo viene inserito: la prima apertura crea solo un profilo locale SuperAdmin, i ruoli, i gruppi muscolari e 21 esercizi modificabili.
+Diario personale di palestra in italiano con Angular e TypeScript. Allenamenti, pasti, foto e impostazioni personali sono conservati sul dispositivo tramite IndexedDB/Dexie. Il Worker gestisce account, catalogo condiviso e preferenze del tema; non sincronizza il diario personale. Nessun allenamento dimostrativo viene inserito.
+
+## Aggiornamenti e registrazione rapida
+
+Le nuove versioni mantengono lo stesso indirizzo, gli stessi nomi degli archivi e i dati esistenti. Le migrazioni aggiungono le nuove strutture senza reinizializzare l’archivio. Il comando di aggiornamento conserva la bozza attiva e attende il completamento dei salvataggi; un errore sospende il ricaricamento. Una seconda finestra con dati vecchi non può sovrascrivere una modifica già salvata da un’altra finestra. Il browser riceve anche la richiesta di archiviazione persistente. I dati personali restano locali: eliminare i dati del sito o usare un dispositivo, browser o archivio diverso richiede un backup per recuperarli.
+
+La selezione degli esercizi cerca tutte le parole digitate anche all’interno dei nomi, in qualsiasi ordine e senza distinguere maiuscole o accenti. I risultati mostrano foto personali, immagini del catalogo oppure illustrazioni locali del movimento, disponibili offline. Le illustrazioni indicano la famiglia del movimento; non rappresentano ogni variante di presa o macchina.
+
+Durante una sessione, toccare un esercizio apre direttamente la prossima serie. Peso e ripetizioni hanno controlli vicini, i dettagli facoltativi sono richiudibili e il pulsante di conferma resta a portata di mano. I salvataggi ripetuti dello stesso modulo condividono la stessa operazione anziché creare nuove copie.
+
+Nel recupero, **Timer fuori app** apre una finestra flottante se il browser supporta Picture-in-Picture. In alternativa, con il consenso dell’utente, mostra una notifica con l’ora di fine. Una web app non può garantire Live Activities su iPhone, aggiornamenti continui o avvisi puntuali quando il sistema sospende il browser. Il tempo usa una scadenza assoluta e si riallinea al rientro.
 
 ## Avvio rapido
 
-Requisiti: Node.js 24 LTS e npm. È necessaria una connessione per installare le dipendenze; l'app compilata non chiama servizi esterni.
+Requisiti: Node.js 24 LTS e npm. È necessaria una connessione per installare le dipendenze. Il diario personale funziona offline dopo il primo caricamento; account e catalogo condiviso richiedono la connessione.
 
 ```bash
 npm ci

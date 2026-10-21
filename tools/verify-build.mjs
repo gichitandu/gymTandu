@@ -27,6 +27,8 @@ assert(html.includes('apple-mobile-web-app-capable'));
 assert(sw.assetGroups.some(g=>g.name==='local-ai-runtime'&&g.installMode==='lazy'));
 assert(sw.assetGroups.find(g=>g.name==='app').urls.includes('/food-ai-worker.js'));
 const assets = Object.keys(sw.hashTable);
+for (const file of fs.readdirSync('public/exercises'))
+  assert(assets.includes('/exercises/' + file), `${file} non disponibile offline`);
 const scripts = fs
   .readdirSync(root)
   .filter(

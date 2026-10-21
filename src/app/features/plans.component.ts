@@ -2,6 +2,7 @@ import { SectionHeadingComponent } from "../shared/section-heading.component";
 import {ExerciseScope,ExerciseScopeComponent} from "../shared/exercise-scope.component";
 import { ExerciseFamiliesComponent } from "../shared/exercise-families.component";
 import { ExerciseThumbComponent } from "../shared/exercise-thumb.component";
+import { matchesExercise } from "../services/exercise-search";
 import { A11yModule } from "@angular/cdk/a11y";
 import { Component, computed, inject, signal } from "@angular/core";
 import {
@@ -269,7 +270,7 @@ import { StatusComponent } from "../shared/status.component";
               <div class="actions">
                 <button
                   class="primary"
-                  [disabled]="planForm.invalid || s.busy()"
+                  [disabled]="planForm.invalid || saving() || s.busy()"
                 >
                   Salva piano
                 </button>
@@ -298,7 +299,7 @@ import { StatusComponent } from "../shared/status.component";
               <div class="actions">
                 <button
                   class="primary"
-                  [disabled]="dayForm.invalid || s.busy()"
+                  [disabled]="dayForm.invalid || saving() || s.busy()"
                 >
                   Salva giorno
                 </button>
@@ -309,20 +310,29 @@ import { StatusComponent } from "../shared/status.component";
             <form [formGroup]="exerciseForm" (ngSubmit)="saveExercise()">
               <div class="form-grid">
                 <label class="wide"
-                  >Cerca nel catalogo<input
+                  >Cerca esercizio per nome<input
+                    type="search"
                     [ngModel]="exerciseSearch()"
                     (ngModelChange)="exerciseSearch.set($event)"
                     [ngModelOptions]="{ standalone: true }"
-                    placeholder="Nome, muscolo o attrezzatura…" /></label>
+                    placeholder="Es. panca manubri · anche parole parziali" /></label>
                 <gt-exercise-scope class="wide" [value]="scope()" (choose)="scope.set($event)"/><gt-exercise-families class="wide" [query]="exerciseSearch()" (choose)="exerciseSearch.set($event)"/>
-                <label class="wide"
-                  >Esercizio<select formControlName="exerciseId">
-                    <option value="">Seleziona un esercizio</option>
-                    @for (g of s.data().muscleGroups; track g.id) {
-                      @if(exercisesForGroup(g.id).length) {<optgroup [label]="g.name">@for(e of exercisesForGroup(g.id);track e.id){<option [value]="e.id">{{e.name}} · {{e.equipment}}</option>}</optgroup>}
-                    }
-                  </select></label
-                ><label
+                <div class="wide exercise-picker">
+                  <p class="subtle" role="status">{{availableExercises().length}} risultati · tocca un esercizio per selezionarlo</p>
+                  <div class="exercise-picker-results" role="group" aria-label="Esercizi trovati">
+                    @for(e of availableExercises();track e.id){
+                      <button type="button" class="exercise-pick" [class.exercise-picked]="exerciseForm.controls.exerciseId.value===e.id" [attr.aria-pressed]="exerciseForm.controls.exerciseId.value===e.id" (click)="chooseExercise(e.id)">
+                        <gt-exercise-thumb [exercise]="e"/>
+                        <span><strong>{{e.name}}</strong><small>{{s.muscle(e.muscleGroupId)}} · {{e.equipment}}</small></span>
+                        <span class="pick-check" aria-hidden="true">{{exerciseForm.controls.exerciseId.value===e.id?'✓':'+'}}</span>
+                      </button>
+                    }@empty{<p class="subtle">Nessun esercizio trovato. Prova meno parole o scegli Tutti.</p>}
+                  </div>
+                  @if(s.exercise(exerciseForm.controls.exerciseId.value||'');as selected){
+                    <div class="exercise-selection"><gt-exercise-thumb [exercise]="selected"/><span><small>ESERCIZIO SELEZIONATO</small><strong>{{selected.name}}</strong><small>Illustrazione indicativa del movimento; le foto personali hanno precedenza.</small></span></div>
+                  }
+                </div>
+                <label
                   >Serie allenanti<input
                     type="number"
                     min="1"
@@ -369,7 +379,7 @@ import { StatusComponent } from "../shared/status.component";
               <div class="actions">
                 <button
                   class="primary"
-                  [disabled]="exerciseForm.invalid || s.busy()"
+                  [disabled]="exerciseForm.invalid || saving() || s.busy()"
                 >
                   Salva esercizio</button
                 ><a class="button ghost" routerLink="/catalogo"
@@ -391,6 +401,8 @@ export class PlansComponent {
   archived = signal(false);
   expanded = signal("");
   modal = signal("");
+  saving = signal(false);
+  private formSaveId = "";
   editId = "";
   parentId = "";
   exerciseSearch = signal("");scope=signal<ExerciseScope>("all");
@@ -414,12 +426,11 @@ export class PlansComponent {
         (e) =>
           e.active &&
           (this.scope()==='all'||(this.scope()==='favorites'?this.s.isFavorite(e.id):this.s.recentExerciseIds().includes(e.id))) &&
-          `${e.name} ${e.equipment} ${e.tags.join(" ")}`
-            .toLowerCase()
-            .includes(this.exerciseSearch().toLowerCase()),
+          matchesExercise(e,this.exerciseSearch()),
       ),
   );
   exercisesForGroup(id:string) { return this.availableExercises().filter(e=>e.muscleGroupId===id); }
+  chooseExercise(id:string) { this.exerciseForm.controls.exerciseId.setValue(id);this.exerciseForm.controls.exerciseId.markAsTouched();this.selectedCatalogId.set(id); }
   planForm = this.fb.nonNullable.group({
     name: ["", [Validators.required, Validators.pattern(/\S/)]],
     description: [""],
@@ -465,6 +476,7 @@ export class PlansComponent {
   });
   openPlan(p?: TrainingPlan) {
     this.editId = p?.id || "";
+    this.formSaveId = p?.id || uid();
     this.planForm.reset({
       name: p?.name || "",
       description: p?.description || "",
@@ -472,17 +484,21 @@ export class PlansComponent {
     this.modal.set("plan");
   }
   async savePlan() {
-    if (this.planForm.invalid) return;
+    if (this.planForm.invalid || this.saving()) return;
+    this.saving.set(true);
+    try {
     const v = this.planForm.getRawValue();
-    const id = this.editId || uid();
+    const id = this.formSaveId ||= this.editId || uid();
     if (await this.s.savePlan(id, v.name, v.description)) {
       this.expanded.set(id);
       this.modal.set("");
     }
+    } finally { this.saving.set(false); }
   }
   openDay(planId: string, day?: TrainingPlanDay) {
     this.parentId = planId;
     this.editId = day?.id || "";
+    this.formSaveId = day?.id || uid();
     this.dayForm.reset({
       name: day?.name || "",
       weekday: day?.weekday === undefined ? "" : String(day.weekday),
@@ -490,11 +506,13 @@ export class PlansComponent {
     this.modal.set("day");
   }
   async saveDay() {
-    if (this.dayForm.invalid) return;
+    if (this.dayForm.invalid || this.saving()) return;
+    this.saving.set(true);
+    try {
     const v = this.dayForm.getRawValue();
     if (
       await this.s.saveDay(
-        this.editId || uid(),
+        this.formSaveId ||= this.editId || uid(),
         this.parentId,
         v.name,
         v.weekday === "" ? undefined : Number(v.weekday),
@@ -503,6 +521,7 @@ export class PlansComponent {
       this.expanded.set(this.parentId);
       this.modal.set("");
     }
+    } finally { this.saving.set(false); }
   }
   activate(id: string) {
     void this.s.change((d) => {
@@ -556,6 +575,7 @@ export class PlansComponent {
   openExercise(dayId: string, e?: TrainingPlanExercise) {
     this.parentId = dayId;
     this.editId = e?.id || "";
+    this.formSaveId = e?.id || uid();
     this.selectedCatalogId.set(e?.exerciseId || "");
     this.exerciseSearch.set("");
     this.exerciseForm.reset({
@@ -572,7 +592,7 @@ export class PlansComponent {
     this.modal.set("exercise");
   }
   async saveExercise() {
-    if (this.exerciseForm.invalid) return;
+    if (this.exerciseForm.invalid || this.saving()) return;
     const v = this.exerciseForm.getRawValue();
     if (v.repsMin! > v.repsMax!) {
       this.s.error.set(
@@ -580,9 +600,11 @@ export class PlansComponent {
       );
       return;
     }
+    this.saving.set(true);
+    try {
     if (
       await this.s.savePlanExercise({
-        id: this.editId || uid(),
+        id: this.formSaveId ||= this.editId || uid(),
         dayId: this.parentId,
         warmupSets:v.warmupSets||0,superset:v.superset||undefined,
         exerciseId: v.exerciseId!,
@@ -595,11 +617,12 @@ export class PlansComponent {
         rpe: v.rpe ?? undefined,
         notes: v.notes || "",
         order:
-          this.s.data().planExercises.find((e) => e.id === this.editId)
+          this.s.data().planExercises.find((e) => e.id === (this.formSaveId || this.editId))
             ?.order ?? this.s.planExercises(this.parentId).length,
       })
     )
       this.modal.set("");
+    } finally { this.saving.set(false); }
   }
   moveExercise(e: TrainingPlanExercise, dir: number) {
     void this.s.change((d) => {

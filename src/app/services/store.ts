@@ -16,14 +16,20 @@ import {
   uid,
 } from "../models/domain";
 import { seed } from "../core/seed";
+import { ArchiveConflictError } from "../core/database";
+import { WorkoutResumeService } from "./workout-resume";
 import { sessionVolume, exerciseRecords } from "./statistics";
 @Injectable({ providedIn: "root" })
 export class Store {
   private theme = inject(ThemeService, { optional: true });
   private auth = inject(AuthService, { optional: true });
   private repo = inject(GYM_REPOSITORY);
+  private resume = inject(WorkoutResumeService,{optional:true})||new WorkoutResumeService();
   data = signal<DataSet>(seed());
   archiveKey(){return this.repo.storageKey||this.auth?.user()?.id||'local';}
+  archiveRevision(){return this.repo.revision?.();}
+  conflicted=signal(false);
+  private rejectStaleArchive(error:unknown){if(error instanceof ArchiveConflictError){this.conflicted.set(true);this.resume.invalidate(this.archiveKey(),this.archiveRevision());}}
   recentExerciseIds=computed(()=>{const times=new Map(this.data().workouts.map(w=>[w.id,w.startedAt]));return [...new Set([...this.data().workoutExercises].filter(e=>times.has(e.workoutId)).sort((a,b)=>(times.get(b.workoutId)||'').localeCompare(times.get(a.workoutId)||'')||a.order-b.order).map(e=>e.exerciseId))].slice(0,30);});
   preference(id:string){return this.data().exercisePreferences.find(p=>p.id===id);}
   isFavorite(id:string){return this.preference(id)?.favorite||false;}
@@ -84,6 +90,7 @@ export class Store {
     return days[(index + 1) % days.length];
   });
   private queue: Promise<unknown> = Promise.resolve();
+  private catalogRequest = 0;
   settled(){return this.queue;}
   constructor() {
     void this.init();
@@ -91,9 +98,19 @@ export class Store {
   async init() {
     try {
       let d = await this.repo.read();
-      if (!d.profiles.length) {
-        d = seed();
-        await this.repo.replace(d);
+      this.conflicted.set(false);
+      this.resume.rebase(this.archiveKey(),this.archiveRevision(),this.archiveRevision());
+      if (!d.profiles.length || !d.settings.length || !d.roles.length) {
+        // Repair missing bootstrap records additively. An incomplete archive
+        // must never be mistaken for a new installation and reset to seed data.
+        const defaults = seed();
+        d = {...d,profiles:d.profiles.length?d.profiles:defaults.profiles,
+          settings:d.settings.length?d.settings:defaults.settings,
+          roles:d.roles.length?d.roles:defaults.roles};
+        const exerciseIds=new Set(d.exercises.map(e=>e.id)),groupIds=new Set(d.muscleGroups.map(g=>g.id));
+        d.exercises.push(...defaults.exercises.filter(e=>!exerciseIds.has(e.id)));
+        d.muscleGroups.push(...defaults.muscleGroups.filter(g=>!groupIds.has(g.id)));
+        const revision=this.archiveRevision();await this.repo.replace(d);this.resume.rebase(this.archiveKey(),revision,this.archiveRevision());
       }
       if (this.auth?.user()) d.profiles[0].role = this.auth.user()!.role;
       this.data.set(d);
@@ -122,6 +139,7 @@ export class Store {
       this.busy.set(true);
       try {
         if (!this.ready()) throw Error("Archivio non ancora pronto");
+        if(this.conflicted())throw new ArchiveConflictError();
         const next = structuredClone(this.data());
         await fn(next);
         if(this.auth?.user()) {
@@ -141,13 +159,14 @@ export class Store {
             }
           }
         }
-        await this.repo.replace(next);
+        const revision=this.archiveRevision();await this.repo.replace(next);this.resume.rebase(this.archiveKey(),revision,this.archiveRevision());
         this.data.set(next);
         this.applyTheme();
         this.error.set("");
         if (message) this.message.set(message);
         return true;
       } catch (e) {
+        this.rejectStaleArchive(e);
         this.error.set(
           e instanceof Error
             ? e.name === "QuotaExceededError"
@@ -420,8 +439,14 @@ export class Store {
         );
     });
   }
-  async addSet(id:string,kind:'work'|'warmup'='work'){
-    return this.change(d=>{const list=d.sets.filter(s=>s.workoutExerciseId===id).sort((a,b)=>a.number-b.number),prev=list.at(-1);if(!d.workoutExercises.some(e=>e.id===id))throw Error('Esercizio non trovato.');if(list.length>=60)throw Error('Limite di serie per esercizio raggiunto.');const entry:WorkoutLogSet={id:uid(),workoutExerciseId:id,number:list.length+1,kind,weight:kind==='warmup'?0:prev?.weight||0,reps:prev?.reps||8,rpe:kind==='warmup'?undefined:prev?.rpe,rest:prev?.rest,notes:'',completed:false};d.sets.push(entry);if(kind==='warmup'){const ordered=[...list.filter(s=>s.kind==='warmup'),entry,...list.filter(s=>s.kind!=='warmup')];ordered.forEach((s,i)=>s.number=i+1);}});
+  private pendingSetAdds = new Map<string, Promise<boolean>>();
+  addSet(id:string,kind:'work'|'warmup'='work'){
+    const key=id+':'+kind, pending=this.pendingSetAdds.get(key);
+    if(pending)return pending;
+    const job=this.change(d=>{const list=d.sets.filter(s=>s.workoutExerciseId===id).sort((a,b)=>a.number-b.number),prev=list.at(-1);if(!d.workoutExercises.some(e=>e.id===id))throw Error('Esercizio non trovato.');if(list.length>=60)throw Error('Limite di serie per esercizio raggiunto.');const entry:WorkoutLogSet={id:uid(),workoutExerciseId:id,number:list.length+1,kind,weight:kind==='warmup'?0:prev?.weight||0,reps:prev?.reps||8,rpe:kind==='warmup'?undefined:prev?.rpe,rest:prev?.rest,notes:'',completed:false};d.sets.push(entry);if(kind==='warmup'){const ordered=[...list.filter(s=>s.kind==='warmup'),entry,...list.filter(s=>s.kind!=='warmup')];ordered.forEach((s,i)=>s.number=i+1);}});
+    this.pendingSetAdds.set(key,job);
+    void job.finally(()=>{if(this.pendingSetAdds.get(key)===job)this.pendingSetAdds.delete(key);});
+    return job;
   }
   async removeSet(id: string) {
     return this.change((d) => {
@@ -487,20 +512,29 @@ export class Store {
   canEditCatalog() { return !!this.auth?.user() && !this.auth.offlineMode() && ["Admin","SuperAdmin"].includes(this.auth.user()!.role); }
   async refreshCatalog() {
     if (!this.auth?.user() || this.auth.offlineMode()) return;
+    const request = ++this.catalogRequest;
     const catalog=await this.auth.request('catalog');
     const exercises: Exercise[]=await Promise.all(catalog.exercises.map(async (e:any)=>{
       const {imageData,...item}=e;
       if(imageData) item.image=await (await fetch(imageData)).blob();
       return item;
     }));
-    const next=structuredClone(this.data());
-    // Retain local references for past plans/workouts, never offer them as choices.
-    const remoteIds=new Set(exercises.map(e=>e.id));
-    next.exercises=[...exercises,...next.exercises.filter(e=>!remoteIds.has(e.id)).map(e=>({...e,active:false}))];
-    const groups=new Map(next.muscleGroups.map(g=>[g.id,g]));
-    for(const g of catalog.muscleGroups) groups.set(g.id,g);
-    next.muscleGroups=[...groups.values()];
-    await this.repo.replace(next);this.data.set(next);
+    // Catalog refreshes share the same write queue as personal changes. Build
+    // the snapshot when this job runs so a slow catalog request cannot restore
+    // older weights, plans or meals over a concurrent save.
+    const job=this.queue.then(async()=>{
+      if(request!==this.catalogRequest)return;
+      const next=structuredClone(this.data());
+      const remoteIds=new Set(exercises.map(e=>e.id));
+      next.exercises=[...exercises,...next.exercises.filter(e=>!remoteIds.has(e.id)).map(e=>({...e,active:false}))];
+      const groups=new Map(next.muscleGroups.map(g=>[g.id,g]));
+      for(const g of catalog.muscleGroups) groups.set(g.id,g);
+      next.muscleGroups=[...groups.values()];
+      if(this.conflicted())throw new ArchiveConflictError();
+      try{const revision=this.archiveRevision();await this.repo.replace(next);this.resume.rebase(this.archiveKey(),revision,this.archiveRevision());this.data.set(next);}catch(error){this.rejectStaleArchive(error);throw error;}
+    });
+    this.queue=job.catch(()=>{});
+    await job;
   }
   async saveExercise(e: Exercise) {
     if (this.auth?.user()) {

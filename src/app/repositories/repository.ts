@@ -4,6 +4,7 @@ import { DataSet } from "../models/domain";
 import { GymDatabase } from "../core/database";
 export interface GymRepository {
   storageKey?: string;
+  revision?(): number | undefined;
   read(): Promise<DataSet>;
   replace(data: DataSet): Promise<void>;
 }
@@ -14,6 +15,7 @@ export class IndexedDbRepository implements GymRepository {
   read() {
     return this.db.snapshot();
   }
+  revision(){return this.db.currentRevision();}
   replace(data: DataSet) {
     return this.db.replace(data);
   }

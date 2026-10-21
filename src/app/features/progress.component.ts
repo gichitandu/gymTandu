@@ -9,6 +9,7 @@ import { Store } from "../services/store";
 import { ProgressChartComponent } from "../shared/progress-chart.component";
 import { IconComponent } from "../shared/icon.component";
 import { StatusComponent } from "../shared/status.component";
+import { ExerciseFilterComponent } from "../shared/exercise-filter.component";
 @Component({
   standalone: true,
   styleUrl: "./feature-polish.css",
@@ -19,6 +20,7 @@ import { StatusComponent } from "../shared/status.component";
     ProgressChartComponent,
     IconComponent,
     StatusComponent,
+    ExerciseFilterComponent,
   ],
   template: `<gt-section-heading index="05" eyebrow="Ogni dato ha una storia" title="Progressi" description="La costanza lascia il segno. Qui puoi vederlo."><span class="data-source-label"><i></i>Dati reali</span></gt-section-heading>
     <section class="progress-ledger" aria-label="Il tuo percorso in numeri"><div class="ledger-primary"><span class="panel-kicker">IL TUO PERCORSO, FIN QUI</span><div class="ledger-number">{{s.completed().length.toString().padStart(2,'0')}}<span>allenamenti<br>completati</span></div></div><div class="ledger-secondary"><span>VOLUME CUMULATIVO</span><strong>{{s.formatWeight(s.totalVolume())}} <small>{{s.settings().unit}}</small></strong><i aria-hidden="true"></i><span>MISURAZIONI CORPOREE</span><strong>{{s.data().measurements.length}} <small>registrate</small></strong></div><span class="ledger-corner" aria-hidden="true">↗</span></section>
@@ -50,16 +52,8 @@ import { StatusComponent } from "../shared/status.component";
         </div>
         <gt-icon name="trophy" />
       </div>
-      <label style="max-width:400px"
-        >Esercizio<select
-          [ngModel]="exerciseId() || defaultId()"
-          (ngModelChange)="exerciseId.set($event);machine.set('')"
-        >
-          @for (e of s.data().exercises; track e.id) {
-            <option [value]="e.id">{{ e.name }}</option>
-          }
-        </select></label
-      >
+      <gt-exercise-filter style="max-width:400px" [exercises]="s.data().exercises"
+        [value]="exerciseId() || defaultId()" (choose)="exerciseId.set($event);machine.set('')" />
       @if(s.configurations(exerciseId()||defaultId()).length){<label style="margin-top:12px">Configurazione dei record<select [ngModel]="machine()" (ngModelChange)="machine.set($event)"><option value="">Tutte le configurazioni</option>@for(config of s.configurations(exerciseId()||defaultId());track config.key){<option [value]="config.key">{{config.label}}</option>}</select></label>}
       <div class="stats-grid performance-record-grid">
         <div class="card stat">

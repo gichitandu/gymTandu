@@ -7,6 +7,7 @@ import { Store } from "../services/store";
 import { IconComponent } from "../shared/icon.component";
 import { StatusComponent } from "../shared/status.component";
 import { WorkoutEditorComponent } from "../shared/workout-editor.component";
+import { ExerciseFilterComponent } from "../shared/exercise-filter.component";
 @Component({
   standalone: true,
   styleUrl: "./account-polish.css",
@@ -17,6 +18,7 @@ import { WorkoutEditorComponent } from "../shared/workout-editor.component";
     IconComponent,
     StatusComponent,
     WorkoutEditorComponent,
+    ExerciseFilterComponent,
   ],
   template: `<gt-section-heading index="07" eyebrow="STORICO ALLENAMENTI" title="Il lavoro che resta." description="Ogni sessione costruisce la tua storia. Ritrova tutti i dettagli."><a class="button primary" routerLink="/piani"><gt-icon name="plus"/> Allenati</a></gt-section-heading>
     <div class="archive-signal"><div><span>SESSIONI COMPLETATE</span><strong>{{s.completed().length}}</strong></div><div><span>VOLUME CON CARICHI ESTERNI</span><strong>{{s.formatWeight(s.totalVolume())}} <small>{{s.settings().unit}}</small></strong></div><span class="archive-signal-mark" aria-hidden="true"><gt-icon name="activity"/></span></div>
@@ -98,17 +100,8 @@ import { WorkoutEditorComponent } from "../shared/workout-editor.component";
               <option [value]="d.id">{{ d.name }}</option>
             }
           </select></label
-        ><label
-          >Esercizio<select
-            [ngModel]="exercise()"
-            (ngModelChange)="exercise.set($event)"
-          >
-            <option value="">Tutti gli esercizi</option>
-            @for (e of s.data().exercises; track e.id) {
-              <option [value]="e.id">{{ e.name }}</option>
-            }
-          </select></label
-        ><label
+        ><gt-exercise-filter [exercises]="s.data().exercises" [value]="exercise()"
+          [includeAll]="true" (choose)="exercise.set($event)" /><label
           >Dal<input
             type="date"
             [ngModel]="from()"

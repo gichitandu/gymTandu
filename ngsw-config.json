@@ -13,7 +13,8 @@
           "/*.webmanifest",
           "/icons/**",
           "/*.webp",
-          "/brand/**"
+          "/brand/**",
+          "/exercises/**"
         ]
       }
     },

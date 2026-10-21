@@ -68,7 +68,7 @@ import { IconComponent } from "../shared/icon.component";
 })
 export class ShellComponent {
   private resume=inject(WorkoutResumeService);private firstOpen=true;
-  constructor(){effect(()=>{if(!this.s.ready()||!this.firstOpen)return;this.firstOpen=false;const w=this.s.draft();if(w&&location.pathname==='/'&&this.resume.read(this.s.archiveKey(),w.id,this.s.data().workoutUi.find(x=>x.id===w.id)))void this.router.navigateByUrl('/sessione');});}
+  constructor(){effect(()=>{if(!this.s.ready()||!this.firstOpen)return;this.firstOpen=false;const w=this.s.draft();if(w&&location.pathname==='/'&&this.resume.read(this.s.archiveKey(),w.id,this.s.data().workoutUi.find(x=>x.id===w.id),this.s.archiveRevision()))void this.router.navigateByUrl('/sessione');});}
   router=inject(Router);
   auth = inject(AuthService);
   s = inject(Store);

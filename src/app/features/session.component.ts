@@ -1,4 +1,4 @@
-import { Component, inject, signal } from "@angular/core";
+import { Component, inject, signal, viewChild } from "@angular/core";
 import { Router, RouterLink } from "@angular/router";
 import { FormsModule } from "@angular/forms";
 import { Store } from "../services/store";
@@ -26,7 +26,7 @@ import { ActiveWorkoutComponent } from "../shared/active-workout.component";
               {{ s.busy() ? "Salvataggio…" : "Salvato sul dispositivo" }}
             </p>
           </div>
-          <button class="primary" (click)="finish()" [disabled]="s.busy()">
+          <button class="primary" (click)="finish()" [disabled]="s.busy() || finishing()">
             Concludi <gt-icon name="check" />
           </button>
         </div>
@@ -54,7 +54,7 @@ import { ActiveWorkoutComponent } from "../shared/active-workout.component";
           </label>
         </div>
         <div class="actions">
-          <button class="primary" (click)="finish()" [disabled]="s.busy()">
+          <button class="primary" (click)="finish()" [disabled]="s.busy() || finishing()">
             Concludi allenamento</button
           ><a class="button" routerLink="/">Salva e torna alla Home</a
           ><button class="danger ghost" (click)="discard(w.id)">
@@ -73,6 +73,8 @@ import { ActiveWorkoutComponent } from "../shared/active-workout.component";
 })
 export class SessionComponent {
   s = inject(Store);
+  activeWorkout = viewChild(ActiveWorkoutComponent);
+  finishing = signal(false);
   router = inject(Router);
   clock = signal(Date.now());
   timer = setInterval(() => this.clock.set(Date.now()), 1000);
@@ -90,7 +92,14 @@ export class SessionComponent {
     });
   }
   async finish() {
-    if (await this.s.finish()) await this.router.navigateByUrl("/allenamenti");
+    if(this.finishing())return;
+    this.finishing.set(true);
+    try {
+      const active=this.activeWorkout();
+      if(active&&!await active.flushForFinish())return;
+      await this.s.settled();
+      if (await this.s.finish()) await this.router.navigateByUrl("/allenamenti");
+    } finally { this.finishing.set(false); }
   }
   async discard(id: string) {
     if (

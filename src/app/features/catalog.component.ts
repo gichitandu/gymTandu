@@ -1,4 +1,6 @@
 import { SectionHeadingComponent } from "../shared/section-heading.component";
+import { ExerciseThumbComponent } from "../shared/exercise-thumb.component";
+import { matchesExercise } from "../services/exercise-search";
 import {ExerciseScope,ExerciseScopeComponent} from "../shared/exercise-scope.component";
 import {MachineSetupComponent} from "../shared/machine-setup.component";
 import { ExerciseFamiliesComponent } from "../shared/exercise-families.component";
@@ -19,7 +21,7 @@ import { StatusComponent } from "../shared/status.component";
 @Component({
   standalone: true,
   styleUrl: "./account-polish.css",
-  imports: [SectionHeadingComponent,
+  imports: [SectionHeadingComponent, ExerciseThumbComponent,
     A11yModule,ExerciseScopeComponent,MachineSetupComponent,
     ExerciseFamiliesComponent,
     ExerciseVideoComponent,
@@ -34,7 +36,7 @@ import { StatusComponent } from "../shared/status.component";
     <div class="filters catalog-filters">
       <label
         >Cerca<input
-          placeholder="Nome, tag o attrezzatura…"
+          type="search" placeholder="Cerca parole nel nome, es. panca manubri"
           [ngModel]="query()"
           (ngModelChange)="query.set($event)" /></label
       ><label
@@ -60,11 +62,7 @@ import { StatusComponent } from "../shared/status.component";
         <article class="card catalog-exercise-card">
           <div class="card-head">
             <div class="exercise-info">
-              @if (imageUrl(e)) {
-                <img class="exercise-thumb" [src]="imageUrl(e)" alt="" />
-              } @else {
-                @if(e.thumbnailUrl) {<img class="exercise-thumb video-thumb" [src]="e.thumbnailUrl" alt="" loading="lazy" referrerpolicy="no-referrer" (error)="$any($event.target).style.display='none'" />} @else {<span class="exercise-thumb"><gt-icon name="weight" /></span>}
-              }
+              <gt-exercise-thumb [exercise]="e" style="--thumb-width:116px;--thumb-height:88px"/>
               <div>
                 <h3>{{ e.name }}</h3>
                 <span class="pill">{{ s.muscle(e.muscleGroupId) }}</span>
@@ -226,8 +224,8 @@ export class CatalogComponent {
   editing = signal(false);
   saving = signal(false);
   editId = "";
+  private formSaveId = "";
   imageBlob?: Blob;
-  private urls = new Map<Blob, string>();
   form = this.fb.nonNullable.group({
     name: ["", [Validators.required, Validators.pattern(/\S/)]],
     muscleGroupId: ["", Validators.required],
@@ -247,9 +245,7 @@ export class CatalogComponent {
           (this.scope()==='all'||(this.scope()==='favorites'?this.s.isFavorite(e.id):this.s.recentExerciseIds().includes(e.id))) &&
           (this.s.canEditCatalog() ? this.active() === "all" || (this.active() === "inactive" ? !e.active : e.active) : e.active) &&
           (!this.group() || e.muscleGroupId === this.group()) &&
-          `${e.name} ${e.equipment} ${e.tags.join(" ")}`
-            .toLocaleLowerCase("it")
-            .includes(this.query().toLocaleLowerCase("it")),
+          matchesExercise(e,this.query()),
       )
       .sort((a, b) => this.scope()==='recent'?this.s.recentExerciseIds().indexOf(a.id)-this.s.recentExerciseIds().indexOf(b.id):this.s.muscle(a.muscleGroupId).localeCompare(this.s.muscle(b.muscleGroupId)) || a.name.localeCompare(b.name)),
   );
@@ -261,18 +257,10 @@ export class CatalogComponent {
       assisted: "Assistito",
     }[m];
   }
-  imageUrl(e: Exercise) {
-    if (!e.image) return "";
-    if (!this.urls.has(e.image))
-      this.urls.set(e.image, URL.createObjectURL(e.image));
-    return this.urls.get(e.image)!;
-  }
-  ngOnDestroy() {
-    this.urls.forEach((u) => URL.revokeObjectURL(u));
-  }
   open(e?: Exercise) {
     if(!this.s.canEditCatalog()) return;
     this.editId = e?.id || "";
+    this.formSaveId = e?.id || uid();
     this.imageBlob = e?.image;
     this.form.reset({
       name: e?.name || "",
@@ -300,11 +288,13 @@ export class CatalogComponent {
   async save() {
     if (this.form.invalid || this.saving() || !this.s.canEditCatalog()) return;
     this.saving.set(true);
+    try {
     const v = this.form.getRawValue();
-    const old = this.s.exercise(this.editId);
+    const id = this.formSaveId ||= this.editId || uid();
+    const old = this.s.exercise(id);
     if (
       await this.s.saveExercise({
-        id: this.editId || uid(),
+        id,
         name: v.name.trim(),
         muscleGroupId: v.muscleGroupId,
         secondaryMuscleIds: v.secondaryMuscleIds.filter(
@@ -331,7 +321,7 @@ export class CatalogComponent {
       })
     )
       this.editing.set(false);
-    this.saving.set(false);
+    } finally { this.saving.set(false); }
   }
   async toggle(e: Exercise) {
     if(this.saving() || !this.s.canEditCatalog())return;

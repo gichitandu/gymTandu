@@ -14,10 +14,11 @@ import Chart from "chart.js/auto";
 import { Store } from "../services/store";
 import { Metric, chartSeries } from "../services/statistics";
 import { IconComponent } from "./icon.component";
+import { ExerciseFilterComponent } from "./exercise-filter.component";
 @Component({
   selector: "gt-progress-chart",
   standalone: true,
-  imports: [FormsModule, IconComponent],
+  imports: [FormsModule, IconComponent, ExerciseFilterComponent],
   template: `<div class="filters">
       <label
         >Piano<select [ngModel]="plan()" (ngModelChange)="plan.set($event)">
@@ -28,16 +29,8 @@ import { IconComponent } from "./icon.component";
         </select></label
       >
       @if (metric() !== "weekly") {
-        <label
-          >Esercizio<select
-            [ngModel]="exercise() || defaultId()"
-            (ngModelChange)="exercise.set($event);machine.set('')"
-          >
-            @for (e of s.data().exercises; track e.id) {
-              <option [value]="e.id">{{ e.name }}</option>
-            }
-          </select></label
-        >
+        <gt-exercise-filter [exercises]="s.data().exercises" [value]="exercise() || defaultId()"
+          (choose)="exercise.set($event);machine.set('')" />
       }
       @if(metric()!=='weekly'&&s.configurations(exercise()||defaultId()).length){<label>Configurazione macchina<select [ngModel]="machine()" (ngModelChange)="machine.set($event)"><option value="">Tutte le configurazioni</option>@for(config of s.configurations(exercise()||defaultId());track config.key){<option [value]="config.key">{{config.label}}</option>}</select></label>}
       <label

@@ -3,7 +3,12 @@ import { clearLegacyYoutube } from "./catalog-upgrade";
 import { validateIntegrity } from "../services/integrity";
 import Dexie, { Table } from "dexie";
 import { DataSet, Entity, TABLES } from "../models/domain";
+export class ArchiveConflictError extends Error {
+  constructor(){super('L’archivio è stato aggiornato in un’altra finestra. Riapri l’app per caricare i dati più recenti prima di salvare. Nessun dato è stato sovrascritto.');this.name='ArchiveConflictError';}
+}
 export class GymDatabase extends Dexie {
+  private revision: number | undefined;
+  currentRevision(){return this.revision;}
   constructor(name = "gymtrack-v1") {
     super(name);
     this.version(1).stores({
@@ -41,6 +46,8 @@ export class GymDatabase extends Dexie {
       });
     });
     this.version(6).stores({exercisePreferences:'id',workoutUi:'id'});
+    // App releases add stores/indexes without replacing the user's archive.
+    this.version(7).stores({archiveMeta:'id'});
   }
   entity<K extends keyof DataSet>(name: K): Table<DataSet[K][number], string> {
     return this.table(name);
@@ -48,26 +55,35 @@ export class GymDatabase extends Dexie {
   async snapshot(): Promise<DataSet> {
     return this.transaction(
       "r",
-      TABLES.map((n) => this.table(n)),
-      async () =>
-        Object.fromEntries(
+      [...TABLES.map((n) => this.table(n)), this.table('archiveMeta')],
+      async () => {
+        this.revision = (await this.table('archiveMeta').get('revision'))?.value ?? 0;
+        return Object.fromEntries(
           await Promise.all(
             TABLES.map(async (n) => [n, await this.table(n).toArray()]),
           ),
-        ),
+        );
+      },
     ) as Promise<DataSet>;
   }
   async replace(data: DataSet): Promise<void> {
     validateIntegrity(data);
-    await this.transaction(
+    const expectedRevision = this.revision ?? 0;
+    const nextRevision = await this.transaction(
       "rw",
-      TABLES.map((n) => this.table(n)),
+      [...TABLES.map((n) => this.table(n)), this.table('archiveMeta')],
       async () => {
+        const revision = (await this.table('archiveMeta').get('revision'))?.value ?? 0;
+        if (revision !== expectedRevision)
+          throw new ArchiveConflictError();
         for (const name of TABLES) {
           await this.table<Entity, string>(name).clear();
           await this.table(name).bulkPut(data[name]);
         }
+        await this.table('archiveMeta').put({id:'revision',value:revision + 1});
+        return revision + 1;
       },
     );
+    this.revision = nextRevision;
   }
 }
