@@ -160,3 +160,64 @@
 .cal-workout-card:has(.cal-event-menu[open]){z-index:20;}
 :host-context(.keyboard-open) .cal-quick-bar{display:none;}
 .cal-week-rail{position:relative;}
+
+/* The calendar shares GymTrack's orbital rhythm without adding decorative motion. */
+.cal-heading-copy{min-width:0;}
+.cal-heading-copy>.cal-eyebrow{display:flex;align-items:center;gap:8px;letter-spacing:1.9px;font-size:9px;}
+.cal-section-mark{display:inline-grid;place-items:center;width:21px;height:21px;border:1px solid #0675ff55;border-radius:6px;color:#58b8ff;font-size:15px;letter-spacing:0;background:#0675ff0a;}
+.cal-heading h1{font-size:clamp(32px,4vw,44px);letter-spacing:-1.8px;margin-top:9px;}
+.cal-heading-copy>p{font-size:12px;color:var(--muted);line-height:1.5;margin:8px 0 0;}
+.cal-today{border-radius:50px;padding-inline:17px;border-color:var(--line);}
+.cal-spotlight{display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:22px;row-gap:22px;padding:28px 28px 15px;border-radius:25px;border-color:#508bb34d;background:linear-gradient(105deg,#0d2234f5,#091824f0),#102230;box-shadow:inset 0 1px #d4ebff10,0 16px 36px #0002;}
+.cal-spotlight::before{content:'';position:absolute;inset:0;pointer-events:none;background:linear-gradient(90deg,transparent calc(100% - 1px),#80c7ff07 0),linear-gradient(0deg,transparent calc(100% - 1px),#80c7ff07 0);background-size:36px 36px;mask-image:linear-gradient(110deg,transparent 35%,#000);-webkit-mask-image:linear-gradient(110deg,transparent 35%,#000);}
+.cal-spotlight::after{content:'';position:absolute;top:0;left:28px;width:48px;height:2px;background:#3bb6ff;box-shadow:48px 0 #1672b246;}
+.cal-spotlight h2{font-size:clamp(26px,4vw,37px);letter-spacing:-1.3px;line-height:1.12;margin:10px 0 10px;}
+.cal-spotlight p{max-width:29ch;color:#b0c6d8;font-size:12px;line-height:1.65;}
+.cal-spotlight .cal-eyebrow{font-size:9px;color:#71bded;letter-spacing:1.8px;}
+.cal-mini-stats{gap:24px;margin-top:22px;}
+.cal-mini-stats>span{display:grid;grid-template-columns:5px auto;column-gap:7px;row-gap:5px;align-items:center;}
+.cal-mini-stats i{grid-column:1;grid-row:1;}
+.cal-mini-stats b{grid-column:2;grid-row:1;font-size:25px;font-weight:650;line-height:1;font-variant-numeric:tabular-nums;letter-spacing:-.7px;}
+.cal-mini-stats small{grid-column:2;font-size:10px;color:#a8bfd1;line-height:1.3;font-weight:450;}
+.cal-score{width:118px;height:118px;padding:3px;box-shadow:0 0 0 8px #b1dbff03,0 0 0 9px #9dd3ff12;}
+.cal-score::before{content:'';position:absolute;inset:-17px;border:1px solid #7ac3f029;border-radius:50%;border-top-color:#44adff9c;border-bottom-color:#44adff9c;transform:rotate(-32deg);pointer-events:none;}
+.cal-score::after{content:'';position:absolute;top:calc(50% - 1px);left:-22px;width:13px;height:2px;background:#7ac3f05c;box-shadow:calc(118px + 31px) 0 #7ac3f05c;pointer-events:none;}
+.cal-score>div{background:#0c1c2a;border:5px solid #0c1c2a;box-shadow:none;}
+.cal-score strong{font-size:38px;font-weight:650;letter-spacing:-1.5px;font-variant-numeric:tabular-nums;}
+.cal-score span{font-size:9px;}
+.cal-orbit-one{width:360px;height:360px;top:calc(50% - 180px);right:-96px;border-color:#7ec9ff0e;}
+.cal-orbit-two{width:480px;height:480px;top:calc(50% - 240px);right:-156px;border-color:#7ec9ff0a;}
+.cal-orbital-axis{position:absolute;pointer-events:none;top:0;bottom:0;right:88px;width:1px;background:linear-gradient(transparent,#80caff0b,transparent);transform:rotate(32deg);}
+.cal-rhythm-line{position:relative;z-index:1;grid-column:1/-1;display:flex;align-items:center;gap:12px;border-top:1px solid #badfff14;padding-top:13px;color:#a9c1d4;font-size:10px;line-height:1.6;}
+.cal-rhythm-line b{color:#d9f0ff;font-weight:650;font-variant-numeric:tabular-nums;}
+.cal-rhythm-stroke{display:flex;align-items:center;gap:3px;flex-shrink:0;height:16px;}
+.cal-rhythm-stroke i{height:5px;width:2px;border-radius:2px;background:#3ca9f3;}
+.cal-rhythm-stroke i:nth-child(2n){height:11px;background:#2b79ab;}.cal-rhythm-stroke i:nth-child(3n){height:16px;background:#6cc7ff;}
+.cal-view-switch{border-radius:17px;margin-top:23px;padding:5px;}
+.cal-view-switch button{border-radius:12px;font-size:12px;letter-spacing:.1px;}
+.cal-view-switch button.active{background:#0675ff;box-shadow:0 2px 9px #0675ff24;}
+.cal-board{border-radius:23px;padding:18px 20px 12px;box-shadow:inset 0 1px #c6e7ff05;}
+.cal-period-nav h2{font-weight:650;letter-spacing:-.5px;}
+.cal-week-day{border-radius:17px;background:color-mix(in srgb,var(--card) 72%,var(--bg));min-height:128px;}
+.cal-week-day strong,.cal-month-day,.cal-day-focus>strong{font-variant-numeric:tabular-nums;}
+.cal-week-day.selected{background:linear-gradient(165deg,#168fff,#0665e7);border-color:#7bc3ffb3;box-shadow:inset 0 1px #e4faff40,0 6px 20px #0675ff20;}
+.cal-week-day.selected::before{content:'';position:absolute;bottom:5px;left:calc(50% - 9px);width:18px;height:2px;border-radius:2px;background:#ffffff59;}
+.cal-week-name{font-size:10px;letter-spacing:.7px;}
+.cal-month-day{border-radius:14px;min-height:66px;}
+.cal-agenda-heading{margin-top:31px;}
+.cal-agenda-heading h2{font-size:22px;letter-spacing:-.8px;}
+.cal-agenda-heading .cal-eyebrow{display:flex;align-items:center;gap:8px;font-size:9px;}
+.cal-agenda-heading .cal-eyebrow::before{content:'';width:17px;height:1px;background:#4daeff;}
+.cal-workout-card{border-radius:21px;padding:19px;border-left-width:2px;box-shadow:inset 0 1px #dcf0ff06;}
+.cal-workout-symbol{border-radius:15px 6px 15px 15px;background:#0675ff12;width:54px;height:58px;}
+.cal-workout-main h3{font-size:21px;letter-spacing:-.65px;}
+.cal-workout-status{font-size:9px;letter-spacing:1.3px;}
+.cal-agenda-filters button.active{border-color:#3d8bc85c;}
+.cal-start{border-radius:13px;min-height:50px;}
+.cal-nutrition-card{border-radius:19px;padding:17px;}
+.cal-quick-bar{border-radius:22px;border-color:#5f9cc65c;box-shadow:0 10px 26px #0003,inset 0 1px #effaff0a;}
+.cal-quick-bar button{border-radius:15px;}
+.cal-upcoming-date{border-radius:14px 6px 14px 14px;}
+@media(min-width:900px) and (pointer:fine){.cal-score{width:132px;height:132px;}.cal-score::after{box-shadow:calc(132px + 31px) 0 #7ac3f05c;}.cal-spotlight{padding:32px 38px 17px;}.cal-mini-stats{gap:32px;}.cal-mini-stats b{font-size:28px;}.cal-week-day{min-height:136px;}.cal-spotlight h2{font-size:39px;}}
+@media(max-width:800px),(max-width:1100px) and (pointer:coarse){.cal-heading h1{font-size:34px;letter-spacing:-1.4px;}.cal-heading-copy>p{font-size:11px;}.cal-heading{gap:10px;align-items:center;margin-bottom:23px;}.cal-today{padding-inline:13px;font-size:11px;}.cal-spotlight{padding:24px 20px 14px;column-gap:20px;row-gap:20px;border-radius:23px;}.cal-spotlight h2{font-size:27px;letter-spacing:-.9px;}.cal-spotlight p{font-size:11px;}.cal-mini-stats{gap:18px;margin-top:18px;}.cal-mini-stats b{font-size:23px;}.cal-mini-stats small{font-size:9px;}.cal-score{width:94px;height:94px;}.cal-score::before{inset:-12px;}.cal-score::after{left:-16px;width:8px;box-shadow:calc(94px + 24px) 0 #7ac3f05c;}.cal-score strong{font-size:33px;}.cal-score span{font-size:8px;}.cal-rhythm-line{font-size:9px;}.cal-view-switch{margin-top:20px;border-radius:16px;}.cal-board{padding:15px 12px 10px;border-radius:21px;}.cal-week-day{border-radius:14px;min-height:114px;}.cal-week-day strong{font-size:25px;}.cal-week-name{font-size:9px;}.cal-month-day{min-height:63px;}.cal-agenda-heading h2{font-size:20px;}.cal-workout-card{padding:17px;border-radius:20px;}.cal-workout-main h3{font-size:19px;}.cal-workout-symbol{width:48px;height:54px;}.cal-quick-bar{border-radius:20px;}.cal-quick-bar button{border-radius:13px;}.cal-nutrition-card{padding:15px;}}
+@media(max-width:350px){.cal-heading h1{font-size:30px;}.cal-heading-copy>.cal-eyebrow{font-size:8px;letter-spacing:1.3px;}.cal-heading-copy>p{font-size:10px;}.cal-spotlight{padding:21px 14px 12px;gap:15px;}.cal-spotlight h2{font-size:23px;}.cal-spotlight p{font-size:10px;}.cal-score{width:80px;height:80px;}.cal-score::after{box-shadow:calc(80px + 24px) 0 #7ac3f05c;}.cal-score strong{font-size:28px;}.cal-mini-stats{gap:13px;}.cal-mini-stats b{font-size:21px;}.cal-mini-stats small{font-size:8px;}.cal-rhythm-line{font-size:8px;gap:9px;}.cal-week-day{min-height:108px;}.cal-workout-main h3{font-size:18px;}}

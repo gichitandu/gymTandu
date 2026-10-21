@@ -1,29 +1,120 @@
-import {BackupReminderComponent} from "../shared/backup-reminder.component";
-import { Component, computed, inject } from '@angular/core';
-import { Router, RouterLink } from '@angular/router';
-import { Store } from '../services/store';
-import { localDate } from '../models/domain';
-import { IconComponent } from '../shared/icon.component';
-import { StatusComponent } from '../shared/status.component';
-import { RingComponent } from '../shared/ring.component';
-@Component({standalone:true,imports:[BackupReminderComponent,RouterLink,IconComponent,StatusComponent,RingComponent],template:`
-<div class="page-heading compact-heading home-greeting"><div><h1>Ciao {{s.profile().name}} 👋</h1><p class="home-motto">Disciplina oggi,<br/><span>risultati domani.</span></p></div><a class="button icon-btn ghost" routerLink="/calendario" aria-label="Apri calendario"><gt-icon name="calendar"/></a></div><gt-status/>
-<div class="overview-primary"><a class="card overview-tile" routerLink="/allenamenti"><span>Allenamenti</span><div class="overview-value"><strong>{{s.completed().length}}</strong><gt-ring class="mini-ring" [value]="s.week().length" [target]="goals()?.workoutsPerWeek" label="Allenamenti della settimana" color="#16d8a1"/></div><small>{{s.week().length}} questa settimana{{goals()?.workoutsPerWeek?' / '+goals()?.workoutsPerWeek:''}}</small></a><a class="card overview-tile" routerLink="/alimentazione"><span>Calorie di oggi</span><div class="overview-value"><strong>{{totals().calories.toLocaleString('it-IT',{maximumFractionDigits:0})}}</strong><gt-ring class="mini-ring" [value]="totals().calories" [target]="goals()?.calories" label="Calorie di oggi" color="#ecc533"/></div><small>{{goals()?.calories?'di '+goals()?.calories+' kcal':'Imposta il tuo obiettivo'}}</small></a></div>
-<div class="macro-grid"><a class="card macro-card" routerLink="/alimentazione"><gt-ring [value]="totals().protein" [target]="goals()?.protein" unit="g" label="Proteine" color="#df3b69"/><span>Proteine</span></a><a class="card macro-card" routerLink="/alimentazione"><gt-ring [value]="totals().carbs" [target]="goals()?.carbs" unit="g" label="Carboidrati" color="#eabf32"/><span>Carboidrati</span></a><a class="card macro-card" routerLink="/alimentazione"><gt-ring [value]="totals().fat" [target]="goals()?.fat" unit="g" label="Grassi" color="#16a1ff"/><span>Grassi</span></a></div>
-<div class="section-title"><h2>Prossimo allenamento</h2><a routerLink="/piani" class="link">I miei piani ›</a></div>
-<section class="card next-workout-card">@if(s.draft();as draft){<div class="workout-preview"><img src="/gym-hero.webp" alt=""/><div><h3>{{draft.dayName}}</h3><p>{{draft.planName}}</p><span class="pill green">Sessione in corso</span></div></div><a class="button primary full-width" routerLink="/sessione">Riprendi allenamento</a>}@else if(nextScheduled();as e){<div class="workout-preview"><img src="/gym-hero.webp" alt=""/><div><h3>{{e.dayName}}</h3><p>{{e.planName}}</p><span class="pill">{{dateLabel(e.date)}}</span></div></div><button class="primary full-width" (click)="startEvent(e.id)" [disabled]="s.busy()">{{e.date===today?'Inizia allenamento':'Apri programmazione'}}</button>}@else if(s.nextDay();as day){<div class="workout-preview"><img src="/gym-hero.webp" alt=""/><div><h3>{{s.activePlan()?.name}} · {{day.name}}</h3><p>{{s.planExercises(day.id).length}} esercizi · Giorno {{day.order+1}}</p></div></div><button class="primary full-width" (click)="start(day.id)" [disabled]="!s.ready()||s.busy()">Inizia allenamento</button>}@else{<h3>Il tuo primo piano</h3><p class="subtle">Scegli i tuoi esercizi e costruisci il programma.</p><a class="button primary full-width" routerLink="/piani">Crea piano di allenamento</a>}</section>
-<div class="section-title"><h2>La tua settimana</h2><a routerLink="/calendario" class="link">Calendario ›</a></div><section class="card home-week-strip"><div class="week-days">@for(day of week;track day.date){<a class="week-day" routerLink="/calendario" [queryParams]="{date:day.date}">{{day.label}}<i [class.today]="day.date===today" [class.done]="done(day.date)">{{+day.date.slice(8)}}</i><span class="week-indicator" [class.planned]="planned(day.date)"></span></a>}</div></section>
-<div class="quick-links"><a class="card" routerLink="/calendario"><gt-icon name="calendar"/><span>Programma<br/>allenamento</span><gt-icon name="arrow"/></a><a class="card" routerLink="/progressi"><gt-icon name="chart"/><span>Progressi<br/>e record</span><gt-icon name="arrow"/></a></div>
-<gt-backup-reminder/><a class="backup-strip" routerLink="/profilo" [queryParams]="{section:'backup'}"><gt-icon name="shield"/><span>Conserva i tuoi progressi con un backup JSON</span><gt-icon name="arrow"/></a>
-`})
+import { BackupReminderComponent } from "../shared/backup-reminder.component";
+import { Component, computed, inject } from "@angular/core";
+import { Router, RouterLink } from "@angular/router";
+import { Store } from "../services/store";
+import { localDate } from "../models/domain";
+import { IconComponent } from "../shared/icon.component";
+import { StatusComponent } from "../shared/status.component";
+import { RingComponent } from "../shared/ring.component";
+@Component({
+  standalone: true,
+  imports: [
+    BackupReminderComponent,
+    RouterLink,
+    IconComponent,
+    StatusComponent,
+    RingComponent,
+  ],
+  templateUrl: "./home.component.html",
+})
 export class HomeComponent {
- s=inject(Store);router=inject(Router);today=localDate();goals=computed(()=>this.s.settings().goals);
- totals=computed(()=>this.s.data().meals.filter(m=>m.date===this.today).reduce((a,m)=>({calories:a.calories+m.calories,protein:a.protein+m.protein,carbs:a.carbs+m.carbs,fat:a.fat+m.fat}),{calories:0,protein:0,carbs:0,fat:0}));
- nextScheduled=computed(()=>this.s.data().scheduledWorkouts.filter(e=>e.date>=this.today&&!this.s.completed().some(w=>w.id===e.workoutId)).sort((a,b)=>a.date.localeCompare(b.date))[0]);
- week=Array.from({length:7},(_,i)=>{const d=new Date();d.setHours(12,0,0,0);d.setDate(d.getDate()-((d.getDay()+6)%7)+i);return{date:localDate(d),label:['L','M','M','G','V','S','D'][i]};});
- done(date:string){return this.s.completed().some(w=>w.date===date);}
- planned(date:string){return this.s.data().scheduledWorkouts.some(e=>e.date===date&&!this.s.completed().some(w=>w.id===e.workoutId));}
- dateLabel(date:string){return new Date(date+'T12:00:00').toLocaleDateString('it-IT',{weekday:'short',day:'numeric',month:'short'});}
- async start(id:string){if(await this.s.start(id))await this.router.navigateByUrl('/sessione');}
- async startEvent(id:string){const e=this.s.data().scheduledWorkouts.find(e=>e.id===id);if(e?.date!==this.today){await this.router.navigate(['/calendario'],{queryParams:{date:e?.date}});return;}if(await this.s.startScheduled(id))await this.router.navigateByUrl('/sessione');}
+  s = inject(Store);
+  router = inject(Router);
+  today = localDate();
+  goals = computed(() => this.s.settings().goals);
+  Math = Math;
+  firstName = computed(
+    () => this.s.profile().name.trim().split(/\s+/)[0] || "atleta",
+  );
+  todayLabel = new Date().toLocaleDateString("it-IT", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+  });
+  totals = computed(() =>
+    this.s
+      .data()
+      .meals.filter((m) => m.date === this.today)
+      .reduce(
+        (a, m) => ({
+          calories: a.calories + m.calories,
+          protein: a.protein + m.protein,
+          carbs: a.carbs + m.carbs,
+          fat: a.fat + m.fat,
+        }),
+        { calories: 0, protein: 0, carbs: 0, fat: 0 },
+      ),
+  );
+  nextScheduled = computed(
+    () =>
+      this.s
+        .data()
+        .scheduledWorkouts.filter(
+          (e) =>
+            e.date >= this.today &&
+            !this.s.completed().some((w) => w.id === e.workoutId),
+        )
+        .sort((a, b) => a.date.localeCompare(b.date))[0],
+  );
+  week = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date();
+    d.setHours(12, 0, 0, 0);
+    d.setDate(d.getDate() - ((d.getDay() + 6) % 7) + i);
+    return {
+      date: localDate(d),
+      label: ["Lun", "Mar", "Mer", "Gio", "Ven", "Sab", "Dom"][i],
+      x: 8 + i * 14,
+      y: [74, 40, 20, 13, 20, 40, 74][i],
+    };
+  });
+  weekCount = computed(
+    () =>
+      this.s
+        .completed()
+        .filter((w) => this.week.some((day) => day.date === w.date)).length,
+  );
+  done(date: string) {
+    return this.s.completed().some((w) => w.date === date);
+  }
+  planned(date: string) {
+    return this.s
+      .data()
+      .scheduledWorkouts.some(
+        (e) =>
+          e.date === date &&
+          !this.s.completed().some((w) => w.id === e.workoutId),
+      );
+  }
+  dayAria(date: string) {
+    return (
+      this.dateLabel(date) +
+      ": " +
+      (this.done(date)
+        ? "allenamento svolto"
+        : this.planned(date)
+          ? "allenamento programmato"
+          : "nessun allenamento")
+    );
+  }
+  dateLabel(date: string) {
+    return new Date(date + "T12:00:00").toLocaleDateString("it-IT", {
+      weekday: "short",
+      day: "numeric",
+      month: "short",
+    });
+  }
+  async start(id: string) {
+    if (await this.s.start(id)) await this.router.navigateByUrl("/sessione");
+  }
+  async startEvent(id: string) {
+    const e = this.s.data().scheduledWorkouts.find((e) => e.id === id);
+    if (e?.date !== this.today) {
+      await this.router.navigate(["/calendario"], {
+        queryParams: { date: e?.date },
+      });
+      return;
+    }
+    if (await this.s.startScheduled(id))
+      await this.router.navigateByUrl("/sessione");
+  }
 }

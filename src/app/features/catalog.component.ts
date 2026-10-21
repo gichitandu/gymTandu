@@ -1,3 +1,4 @@
+import { SectionHeadingComponent } from "../shared/section-heading.component";
 import {ExerciseScope,ExerciseScopeComponent} from "../shared/exercise-scope.component";
 import {MachineSetupComponent} from "../shared/machine-setup.component";
 import { ExerciseFamiliesComponent } from "../shared/exercise-families.component";
@@ -17,7 +18,8 @@ import { IconComponent } from "../shared/icon.component";
 import { StatusComponent } from "../shared/status.component";
 @Component({
   standalone: true,
-  imports: [
+  styleUrl: "./account-polish.css",
+  imports: [SectionHeadingComponent,
     A11yModule,ExerciseScopeComponent,MachineSetupComponent,
     ExerciseFamiliesComponent,
     ExerciseVideoComponent,
@@ -26,18 +28,10 @@ import { StatusComponent } from "../shared/status.component";
     IconComponent,
     StatusComponent,
   ],
-  template: ` <div class="page-heading">
-      <div>
-        <p class="eyebrow">LA TUA LIBRERIA</p>
-        <h1>Catalogo esercizi</h1>
-        <p class="subtle">Gli strumenti per costruire i tuoi allenamenti.</p>
-      </div>
-      @if(s.canEditCatalog()) {<button class="primary" (click)="open()" [disabled]="!s.ready()">
-        <gt-icon name="plus" /> Nuovo esercizio
-      </button>}
-    </div>
+  template: `<gt-section-heading index="08" eyebrow="CATALOGO ESERCIZI" title="Ogni possibilità." description="Trova la variante giusta. Costruisci un allenamento che sia tuo.">@if(s.canEditCatalog()){<button class="primary" (click)="open()" [disabled]="!s.ready()"><gt-icon name="plus"/> Nuovo esercizio</button>}</gt-section-heading>
+    <div class="catalog-intro"><div class="catalog-orbit" aria-hidden="true"><gt-icon name="weight"/><i></i></div><div><span class="eyebrow">LA TUA LIBRERIA DI MOVIMENTO</span><strong>{{s.data().exercises.length}} <small>esercizi in archivio</small></strong><p>{{s.data().muscleGroups.length}} gruppi muscolari · Varianti per ogni attrezzatura</p></div></div>
     <gt-status />
-    <div class="filters">
+    <div class="filters catalog-filters">
       <label
         >Cerca<input
           placeholder="Nome, tag o attrezzatura…"
@@ -63,7 +57,7 @@ import { StatusComponent } from "../shared/status.component";
     <p class="subtle" style="margin:16px 0">{{filtered().length}} esercizi {{s.canEditCatalog()?'· Catalogo condiviso':'· Disponibili per le tue schede'}}</p>
     <div class="catalog-grid">
       @for (e of filtered(); track e.id) {
-        <article class="card">
+        <article class="card catalog-exercise-card">
           <div class="card-head">
             <div class="exercise-info">
               @if (imageUrl(e)) {

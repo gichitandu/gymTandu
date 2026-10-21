@@ -1,12 +1,13 @@
+import { SectionHeadingComponent } from "../shared/section-heading.component";
 import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { AuthService, Account } from '../services/auth';
-@Component({standalone:true,imports:[FormsModule],template:`
-<div class="page-heading"><div><p class="eyebrow">AMMINISTRAZIONE</p><h1>Gestione utenti</h1><p class="subtle">Accesso riservato al Super Admin.</p></div></div>
+@Component({standalone:true,imports:[FormsModule,SectionHeadingComponent],styleUrl:"./account-polish.css",template:`
+<gt-section-heading index="09" eyebrow="GESTIONE UTENTI / SUPER ADMIN" title="Persone. Potenziale." description="Gestisci gli account e assegna a ciascuno il proprio spazio."/>
 @if(auth.user()?.role==='SuperAdmin') {
 @if(error()) {<p class="notice error" role="alert">{{error()}}</p>}
 @if(message()) {<p class="notice success" role="status">{{message()}}</p>}
-<div class="split"><section class="card"><h2>{{editing?'Modifica account':'Nuovo account'}}</h2>
+<div class="account-admin-signal"><span class="eyebrow">GESTIONE ACCESSI</span><strong>{{users().length}} <small>account registrati</small></strong><p>Clienti e amministratori, con privilegi distinti.</p></div><div class="split users-panels"><section class="card"><span class="account-panel-index">01 / ACCOUNT</span><h2>{{editing?'Modifica account':'Nuovo account'}}</h2>
 <form (ngSubmit)="save()" class="stack" style="margin-top:20px" autocomplete="off">
 <label>Nome<input name="name" [(ngModel)]="name" required maxlength="80" /></label>
 <label>Nome utente univoco<input name="username" [(ngModel)]="username" required minlength="3" maxlength="30" autocapitalize="none" spellcheck="false" pattern="[A-Za-z0-9][A-Za-z0-9._-]{2,29}" /></label>
@@ -17,9 +18,9 @@ import { AuthService, Account } from '../services/auth';
 @if(editing) {<label class="password-toggle"><input type="checkbox" name="active" [(ngModel)]="active" /> Account attivo</label>}
 <div class="actions"><button class="primary" [disabled]="busy()">{{busy()?'Salvataggio…':editing?'Salva modifiche':'Crea account'}}</button>@if(editing) {<button type="button" (click)="reset()">Annulla</button>}</div>
 </form></section>
-<section class="card"><div class="card-head"><h2>Account registrati</h2><button (click)="load()" [disabled]="busy()">Aggiorna</button></div>
+<section class="card"><span class="account-panel-index">02 / PERSONE</span><div class="card-head"><h2>Account registrati</h2><button (click)="load()" [disabled]="busy()">Aggiorna</button></div>
 @if(loading()) {<p role="status">Caricamento…</p>}
-<div class="list">@for(u of users();track u.id) {<article class="user-row"><div><h3>{{u.name}}</h3><p class="subtle">{{u.username?"@"+u.username:"Nome utente non ancora scelto"}}</p><p class="subtle">{{u.email}}</p><span class="pill">{{u.role==='User'?'Cliente':u.role==='SuperAdmin'?'Super Admin':'Admin'}}</span> <span class="pill" [class.green]="u.active">{{u.active?'Attivo':'Disattivato'}}</span></div>
+<div class="list">@for(u of users();track u.id) {<article class="user-row"><div class="user-monogram" aria-hidden="true">{{u.name.slice(0,1).toUpperCase()}}</div><div class="user-identity"><h3>{{u.name}}</h3><p class="subtle">{{u.username?"@"+u.username:"Nome utente non ancora scelto"}}</p><p class="subtle">{{u.email}}</p><span class="pill">{{u.role==='User'?'Cliente':u.role==='SuperAdmin'?'Super Admin':'Admin'}}</span> <span class="pill" [class.green]="u.active">{{u.active?'Attivo':'Disattivato'}}</span></div>
 @if(!u.owner) {<button (click)="edit(u)" [disabled]="busy()">Modifica</button>} @else {<small class="muted">Proprietario · protetto</small>}</article>}</div>
 <p class="notice" style="margin-top:20px">Il sito mantiene l’accesso privato attuale. Creare un account GymTrack non concede automaticamente l’accesso al sito: gli utenti devono essere autorizzati anche nella condivisione di Sites.</p>
 </section></div>

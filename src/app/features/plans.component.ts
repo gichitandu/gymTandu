@@ -1,3 +1,4 @@
+import { SectionHeadingComponent } from "../shared/section-heading.component";
 import {ExerciseScope,ExerciseScopeComponent} from "../shared/exercise-scope.component";
 import { ExerciseFamiliesComponent } from "../shared/exercise-families.component";
 import { ExerciseThumbComponent } from "../shared/exercise-thumb.component";
@@ -22,7 +23,8 @@ import { IconComponent } from "../shared/icon.component";
 import { StatusComponent } from "../shared/status.component";
 @Component({
   standalone: true,
-  imports: [
+  styleUrl: "./feature-polish.css",
+  imports: [SectionHeadingComponent,
     A11yModule,ExerciseScopeComponent,
     ExerciseFamiliesComponent,
     ExerciseThumbComponent,
@@ -32,16 +34,11 @@ import { StatusComponent } from "../shared/status.component";
     IconComponent,
     StatusComponent,
   ],
-  template: ` <div class="page-heading compact-heading">
-      <div>
-        <p class="eyebrow">IL TUO PERCORSO</p>
-        <h1>Piani di allenamento</h1>
-        <p class="subtle">Una struttura solida. Spazio per migliorare.</p>
-      </div>
-      <button class="primary" (click)="openPlan()" [disabled]="!s.ready()">
+  template: `<gt-section-heading index="02" eyebrow="Disegna la tua evoluzione" title="Piani di allenamento" description="La struttura del tuo percorso. Il prossimo livello si costruisce qui.">
+      <button class="primary create-plan" (click)="openPlan()" [disabled]="!s.ready()">
         <gt-icon name="plus" /> <span class="desktop-button-label">Nuovo piano</span>
       </button>
-    </div>
+    </gt-section-heading>
     <gt-status />
     <div class="segmented plan-tabs">
       <button [class.active]="!archived()" (click)="archived.set(false)">
@@ -52,9 +49,11 @@ import { StatusComponent } from "../shared/status.component";
         >Catalogo esercizi <gt-icon name="arrow"
       /></a>
     </div>
-    <div class="list">
-      @for (p of plans(); track p.id) {
+    <div class="plan-collection-label"><span>{{archived()?'La tua memoria di allenamento':'La tua collezione personale'}}</span><b>{{plans().length.toString().padStart(2,'0')}} <small>piani</small></b></div>
+    <div class="list plan-collection">
+      @for (p of plans(); track p.id; let planIndex=$index) {
         <section class="card plan-card" [class.plan-active]="p.active" [class.is-open]="expanded()===p.id">
+          <div class="plan-topline"><span class="plan-edition">PERCORSO <b>{{(planIndex+1).toString().padStart(2,'0')}}</b></span><div class="plan-day-markers" aria-hidden="true">@for(day of s.days(p.id);track day.id){<i></i>}</div><small>{{s.days(p.id).length}} giorni</small></div>
           <div class="card-head"><gt-exercise-thumb [exercise]="thumbnailExercise(p.id)"/>
             <div>
               <span class="pill" [class.green]="p.active">{{
@@ -70,13 +69,8 @@ import { StatusComponent } from "../shared/status.component";
               <span aria-hidden="true">{{ expanded() === p.id ? "⌃" : "›" }}</span>
             </button>
           </div>
-          <p>{{ p.description || "Il tuo programma personalizzato." }}</p>
-          <p class="subtle">
-            {{ s.days(p.id).length }} giorni · Rotazione libera{{
-              p.archived ? " · Storico conservato" : ""
-            }}
-          </p>
-          <div class="actions">
+          <div class="plan-day-preview" aria-label="Giorni del piano">@for(day of s.days(p.id);track day.id){<span><b>{{(day.order+1).toString().padStart(2,'0')}}</b>{{day.name}}</span>}@empty{<span>Il primo giorno ti aspetta</span>}</div>
+          <div class="actions plan-management-actions">
             @if (!p.archived) {
               @if (!p.active) {
                 <button (click)="activate(p.id)">Attiva piano</button>
@@ -92,7 +86,7 @@ import { StatusComponent } from "../shared/status.component";
           </div>
           @if (expanded() === p.id) {
             @for (day of s.days(p.id); track day.id) {
-              <div class="day">
+              <div class="day plan-training-day">
                 <div class="day-head">
                   <div>
                     <h3>{{ day.order + 1 }}. {{ day.name }}</h3>
@@ -125,7 +119,7 @@ import { StatusComponent } from "../shared/status.component";
                   </div>
                 </div>
                 @for (pe of s.planExercises(day.id); track pe.id) {
-                  <div class="exercise-row">
+                  <div class="exercise-row plan-exercise-row">
                     <div class="exercise-info">
                       <gt-exercise-thumb [exercise]="s.exercise(pe.exerciseId)"/>
                       <div>

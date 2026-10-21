@@ -3,17 +3,19 @@ import { AvatarComponent } from "../shared/avatar.component";
 import { AuthService } from "../services/auth";
 import { Store } from "../services/store";
 import { PwaService } from "../services/pwa";
-import { Component, effect, inject } from "@angular/core";
+import { Component, effect, inject, ViewEncapsulation } from "@angular/core";
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from "@angular/router";
 import { IconComponent } from "../shared/icon.component";
 @Component({
   selector: "gt-shell",
   standalone: true,
   imports: [RouterLink, RouterLinkActive, RouterOutlet, IconComponent, AvatarComponent],
+  styleUrls: ['./experience.css'],
+  encapsulation: ViewEncapsulation.None,
   template: ` <aside class="sidebar">
       <a class="brand" routerLink="/"
         ><img class="app-brand-mark" src="/brand/gt-mark.png" alt=""/>Gym<span>Track</span></a
-      ><span class="nav-caption">IL TUO SPAZIO</span>
+      ><div class="sidebar-signature" aria-hidden="true"><i></i><i></i><i></i><span>OGNI RIPETIZIONE.<br/>UNA NUOVA VERSIONE DI TE.</span></div><span class="nav-caption">IL TUO SPAZIO</span>
       <nav>
         @for (item of desktopNav; track item.path) {
           <a
@@ -40,7 +42,7 @@ import { IconComponent } from "../shared/icon.component";
       <header class="topbar">
         <a class="mobile-brand brand" routerLink="/"><img class="app-brand-mark" src="/brand/gt-mark.png" alt=""/>Gym<span>Track</span></a
         ><span class="desktop-only breadcrumb"
-          >IL TUO DIARIO DI ALLENAMENTO</span
+          ><i class="brand-coordinate"></i> IL TUO PROSSIMO LIVELLO, OGNI GIORNO.</span
         >
         <div class="topbar-right">
           <a class="header-calendar" routerLink="/calendario" aria-label="Apri calendario"><gt-icon name="calendar"/></a><span class="offline-label"><i></i> Archivio locale</span

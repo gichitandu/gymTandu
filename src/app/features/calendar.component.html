@@ -1,13 +1,13 @@
 <div class="cal-page">
   <header class="cal-heading">
-    <div><span class="cal-eyebrow">IL TUO RITMO</span><h1>Calendario<span class="cal-title-dot" aria-hidden="true"></span></h1></div>
+    <div class="cal-heading-copy"><span class="cal-eyebrow"><span class="cal-section-mark" aria-hidden="true">↗</span> IL TUO RITMO</span><h1>Calendario<span class="cal-title-dot" aria-hidden="true"></span></h1><p>Il tempo che dedichi a te.</p></div>
     <button class="cal-today" (click)="choose(today)" [class.is-today]="selected()===today"><gt-icon name="calendar"/> Oggi</button>
   </header>
   @if(!modal()){<gt-status/>}
   <section class="cal-spotlight" aria-label="Riepilogo del periodo">
-    <div class="cal-spotlight-copy"><span class="cal-eyebrow">{{periodTitle()}}</span><h2>{{monthLabel()}}</h2><p>{{periodStats().planned?periodStats().planned+' '+(periodStats().planned===1?'allenamento ti aspetta.':'allenamenti ti aspettano.'):'Il prossimo passo parte da qui.'}}</p><div class="cal-mini-stats"><span><i class="cal-state-dot done"></i><b>{{periodStats().completed}}</b> svolti</span><span><i class="cal-state-dot planned"></i><b>{{periodStats().planned}}</b> in programma</span></div></div>
+    <div class="cal-spotlight-copy"><span class="cal-eyebrow">{{periodTitle()}}</span><h2>{{monthLabel()}}</h2><p>{{periodStats().planned?periodStats().planned+' '+(periodStats().planned===1?'allenamento ti aspetta.':'allenamenti ti aspettano.'):'Il prossimo passo parte da qui.'}}</p><div class="cal-mini-stats"><span><i class="cal-state-dot done"></i><b>{{periodStats().completed}}</b><small>Svolti</small></span><span><i class="cal-state-dot planned"></i><b>{{periodStats().planned}}</b><small>In programma</small></span></div></div>
     <div class="cal-score" [style.--cal-progress]="scoreProgress()+'%'" role="img" [attr.aria-label]="periodStats().completed+' allenamenti svolti'+(target()?' su un obiettivo settimanale di '+target():' nel periodo')"><div><gt-icon name="bolt"/><strong>{{periodStats().completed}}</strong><span>{{target()?'obiettivo '+target():'allenamenti'}}</span></div></div>
-    <span class="cal-orbit cal-orbit-one" aria-hidden="true"></span><span class="cal-orbit cal-orbit-two" aria-hidden="true"></span>
+    <span class="cal-orbit cal-orbit-one" aria-hidden="true"></span><span class="cal-orbit cal-orbit-two" aria-hidden="true"></span><span class="cal-orbital-axis" aria-hidden="true"></span><div class="cal-rhythm-line"><span class="cal-rhythm-stroke" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span><span><b>{{periodStats().active}}</b> {{periodStats().active===1?"giorno di allenamento":"giorni di allenamento"}} nel periodo</span></div>
   </section>
 
   <div class="cal-view-switch" role="group" aria-label="Vista del calendario"><button [class.active]="view()==='day'" [attr.aria-pressed]="view()==='day'" (click)="view.set('day')">Giorno</button><button [class.active]="view()==='week'" [attr.aria-pressed]="view()==='week'" (click)="view.set('week')">Settimana</button><button [class.active]="view()==='month'" [attr.aria-pressed]="view()==='month'" (click)="view.set('month')">Mese</button></div>

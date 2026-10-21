@@ -1,3 +1,4 @@
+import { SectionHeadingComponent } from "../shared/section-heading.component";
 import { Component, computed, inject, signal } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import { DatePipe } from "@angular/common";
@@ -8,7 +9,8 @@ import { StatusComponent } from "../shared/status.component";
 import { WorkoutEditorComponent } from "../shared/workout-editor.component";
 @Component({
   standalone: true,
-  imports: [
+  styleUrl: "./account-polish.css",
+  imports: [SectionHeadingComponent,
     FormsModule,
     DatePipe,
     RouterLink,
@@ -16,16 +18,8 @@ import { WorkoutEditorComponent } from "../shared/workout-editor.component";
     StatusComponent,
     WorkoutEditorComponent,
   ],
-  template: `<div class="page-heading">
-      <div>
-        <p class="eyebrow">IL LAVORO CHE CONTA</p>
-        <h1>I tuoi allenamenti</h1>
-        <p class="subtle">Ogni sessione è un passo avanti.</p>
-      </div>
-      <a class="button primary" routerLink="/piani"
-        ><gt-icon name="plus" /> Allenati</a
-      >
-    </div>
+  template: `<gt-section-heading index="07" eyebrow="STORICO ALLENAMENTI" title="Il lavoro che resta." description="Ogni sessione costruisce la tua storia. Ritrova tutti i dettagli."><a class="button primary" routerLink="/piani"><gt-icon name="plus"/> Allenati</a></gt-section-heading>
+    <div class="archive-signal"><div><span>SESSIONI COMPLETATE</span><strong>{{s.completed().length}}</strong></div><div><span>VOLUME CON CARICHI ESTERNI</span><strong>{{s.formatWeight(s.totalVolume())}} <small>{{s.settings().unit}}</small></strong></div><span class="archive-signal-mark" aria-hidden="true"><gt-icon name="activity"/></span></div>
     <gt-status />
     @if (s.draft()) {
       <div class="notice">
@@ -86,7 +80,7 @@ import { WorkoutEditorComponent } from "../shared/workout-editor.component";
       </div>
       <gt-workout-editor [workoutId]="w.id" />
     } @else {
-      <div class="filters">
+      <div class="filters history-filters">
         <label
           >Piano<select
             [ngModel]="plan()"
@@ -129,12 +123,12 @@ import { WorkoutEditorComponent } from "../shared/workout-editor.component";
       <p class="subtle" style="margin-bottom:16px">
         {{ filtered().length }} allenamenti trovati
       </p>
-      <div class="list">
+      <div class="list workout-timeline">
         @for (w of filtered(); track w.id) {
-          <article class="card">
+          <article class="card history-session">
             <div class="card-head">
               <div class="exercise-info">
-                <span class="exercise-thumb"><gt-icon name="weight" /></span>
+                <span class="history-date"><strong>{{w.date | date: "dd"}}</strong><small>{{w.date | date: "MM / yyyy"}}</small></span>
                 <div>
                   <h2>{{ w.dayName }}</h2>
                   <p>{{ w.planName }} · {{ w.date | date: "dd/MM/yyyy" }}</p>

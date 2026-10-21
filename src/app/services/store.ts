@@ -1,4 +1,5 @@
 import { setupKey,setupSummary,hasSetup } from "./training-flow";
+import { weightProgression } from "./progression";
 import { MachineSetup,WorkoutUiState } from "../models/domain";
 import { weeklyDates } from "./calendar";
 import { ThemeService } from "./theme";
@@ -231,6 +232,21 @@ export class Store {
       if (e) {const sets=this.sets(e.id).filter((s) => s.completed&&s.kind!=="warmup");if(sets.length)return sets;}
     }
     return [];
+  }
+  progression(workoutExerciseId: string, incrementKg: number) {
+    return weightProgression(this.data(), workoutExerciseId, incrementKg);
+  }
+  applyProgression(workoutExerciseId: string, incrementKg: number) {
+    return this.change(d => {
+      // Re-evaluate inside the write queue, so an older on-screen proposal cannot
+      // overwrite data after a setup, history or session change.
+      const proposal = weightProgression(d, workoutExerciseId, incrementKg);
+      if (!proposal.eligible || proposal.nextWeight === undefined) throw Error(proposal.reason);
+      for (const set of d.sets) {
+        if (set.workoutExerciseId === workoutExerciseId && !set.completed && set.kind !== "warmup")
+          set.weight = proposal.nextWeight;
+      }
+    }, "Carico proposto applicato alle serie di lavoro da completare. Puoi modificarlo in ogni momento.", false);
   }
   async savePlan(id: string, name: string, description: string) {
     return this.change((d) => {

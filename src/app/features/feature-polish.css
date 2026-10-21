@@ -1,0 +1,1181 @@
+:host {
+  display: block;
+  min-width: 0;
+  --feature-cyan: #22caff;
+}
+.panel-kicker {
+  font-size: 9px;
+  font-weight: 750;
+  letter-spacing: 0.14em;
+  color: var(--muted);
+  line-height: 1.5;
+}
+/* Piani: each program is a numbered personal training edition. */
+.plan-collection-label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 7px 0 17px;
+  border-bottom: 1px solid var(--line);
+  margin: 20px 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+.plan-collection-label > b {
+  font-size: 24px;
+  letter-spacing: -0.04em;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+.plan-collection-label small {
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0;
+  color: var(--muted);
+}
+.plan-collection {
+  gap: 18px;
+  counter-reset: program;
+}
+.plan-card {
+  padding: 21px;
+  isolation: isolate;
+  border-radius: 22px;
+  background: var(--card);
+  background:
+    linear-gradient(
+      120deg,
+      color-mix(in srgb, var(--blue) 6%, transparent),
+      transparent 65%
+    ),
+    var(--card);
+  box-shadow: 0 8px 28px #00000010;
+  transition:
+    border-color 0.2s,
+    transform 0.2s;
+}
+.plan-card::after {
+  position: absolute;
+  content: "";
+  pointer-events: none;
+  width: 42px;
+  height: 42px;
+  right: 0;
+  top: 0;
+  background: linear-gradient(
+    45deg,
+    transparent 49%,
+    color-mix(in srgb, var(--blue) 18%, transparent) 50%
+  );
+  z-index: -1;
+}
+.plan-card.plan-active {
+  border-color: color-mix(in srgb, var(--blue) 65%, var(--line));
+  box-shadow:
+    inset 3px 0 0 var(--blue),
+    0 10px 32px #00000012;
+}
+.plan-topline {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 13px;
+  color: var(--muted);
+}
+.plan-edition {
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  white-space: nowrap;
+}
+.plan-edition > b {
+  font-size: 14px;
+  color: var(--blue);
+  margin-left: 5px;
+  font-variant-numeric: tabular-nums;
+}
+.plan-topline > small {
+  font-size: 10px;
+  white-space: nowrap;
+}
+.plan-day-markers {
+  display: flex;
+  gap: 3px;
+  flex: 1;
+  justify-content: flex-end;
+  max-width: 45%;
+  overflow: hidden;
+}
+.plan-day-markers > i {
+  display: block;
+  width: 14px;
+  height: 4px;
+  border-radius: 1px;
+  flex-shrink: 0;
+  background: color-mix(in srgb, var(--blue) 45%, var(--line));
+  transform: skewX(-22deg);
+}
+.plan-card.plan-active .plan-day-markers > i {
+  background: var(--blue);
+}
+.plan-card > .card-head {
+  gap: 17px;
+  align-items: center;
+}
+.plan-card > .card-head > gt-exercise-thumb {
+  --thumb-width: 86px;
+  --thumb-height: 98px;
+  border-radius: 13px;
+  overflow: hidden;
+  box-shadow: 0 0 0 1px var(--line);
+}
+.plan-card > .card-head h2 {
+  font-size: 22px !important;
+  line-height: 1.13 !important;
+  letter-spacing: -0.04em !important;
+}
+.plan-card .plan-subtitle {
+  font-size: 12px;
+  line-height: 1.55;
+  max-width: 45ch;
+  margin: 8px 0;
+}
+.plan-card > .card-head > button {
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  min-width: 44px;
+  min-height: 44px;
+  background: var(--raised);
+  color: var(--text);
+}
+.plan-card > .card-head > div > .pill {
+  font-size: 8px;
+  letter-spacing: 0.055em;
+  margin-bottom: 8px;
+  border-radius: 4px;
+}
+.plan-day-preview {
+  display: flex;
+  gap: 7px;
+  flex-wrap: wrap;
+  margin-top: 20px;
+  padding-top: 15px;
+  border-top: 1px solid var(--line);
+}
+.plan-day-preview > span {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 8px;
+  border-radius: 5px;
+  background: color-mix(in srgb, var(--text) 3%, transparent);
+  font-size: 10px;
+  line-height: 1.5;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+.plan-day-preview b {
+  font-size: 8px;
+  font-weight: 650;
+  color: var(--blue);
+}
+.plan-management-actions {
+  border-top: 1px solid var(--line);
+  padding-top: 16px;
+  gap: 7px;
+}
+.plan-management-actions > button {
+  font-size: 11px;
+  min-height: 44px;
+  padding-inline: 12px;
+}
+.plan-training-day {
+  position: relative;
+  border: 1px solid var(--line);
+  background: color-mix(in srgb, var(--bg) 45%, var(--card));
+  border-radius: 16px;
+  margin-top: 20px;
+  padding: 18px;
+  counter-reset: movement;
+}
+.plan-training-day .day-head {
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 14px;
+  margin-bottom: 3px;
+  align-items: start;
+}
+.plan-training-day h3 {
+  font-size: 17px;
+  letter-spacing: -0.02em;
+}
+.plan-exercise-row {
+  counter-increment: movement;
+  position: relative;
+  padding-block: 16px;
+  border-bottom-color: color-mix(in srgb, var(--line) 65%, transparent);
+}
+.plan-exercise-row .exercise-info {
+  gap: 12px;
+}
+.plan-exercise-row .exercise-info > div > strong {
+  font-size: 13px;
+  line-height: 1.4;
+}
+.plan-exercise-row .exercise-info small {
+  font-size: 11px;
+  line-height: 1.65;
+}
+.plan-exercise-row .inline-actions {
+  gap: 5px;
+}
+.plan-exercise-row .inline-actions button {
+  min-height: 44px;
+  min-width: 44px;
+}
+/* Alimentazione: the calorie ring and its three satellites form one observatory. */
+.nutrition-day-selector {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 9px 12px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--card);
+  margin-bottom: 20px;
+  max-width: 840px;
+}
+.nutrition-day-selector > .icon-btn {
+  border-radius: 50%;
+  width: 44px;
+  height: 44px;
+}
+.nutrition-date-heading > strong {
+  display: block;
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.3;
+}
+.nutrition-date-heading > label {
+  margin-top: 3px;
+}
+.nutrition-date-heading > label > span {
+  font-size: 11px;
+  color: var(--muted);
+}
+.nutrition-dashboard.nutrition-observatory {
+  padding: 0;
+  max-width: 840px;
+  text-align: left;
+}
+.energy-panel {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  padding: 23px 22px 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px 10px;
+  background: var(--card);
+  background:
+    radial-gradient(ellipse at 88% 48%, #0675ff15, transparent 60%), var(--card);
+}
+.energy-panel::before {
+  content: "";
+  position: absolute;
+  left: 22px;
+  top: 0;
+  width: 42px;
+  height: 2px;
+  background: var(--feature-cyan);
+}
+.energy-caption {
+  position: relative;
+  z-index: 1;
+  max-width: 25ch;
+}
+.energy-caption h2 {
+  font-size: 26px;
+  letter-spacing: -0.05em;
+  line-height: 1.05;
+  margin: 10px 0;
+}
+.energy-caption p {
+  font-size: 11px;
+  line-height: 1.65;
+  margin: 0;
+}
+.energy-orbit {
+  position: relative;
+  display: grid;
+  place-items: center;
+  padding: 9px;
+  isolation: isolate;
+}
+.energy-orbit::before,
+.energy-orbit::after {
+  content: "";
+  position: absolute;
+  border: 1px solid color-mix(in srgb, var(--feature-cyan) 18%, transparent);
+  border-radius: 50%;
+  inset: 0;
+  pointer-events: none;
+  z-index: -1;
+}
+.energy-orbit::after {
+  inset: 16px;
+  border-style: dashed;
+  border-color: color-mix(in srgb, var(--feature-cyan) 10%, transparent);
+}
+.energy-orbit .calorie-ring {
+  --ring-size: 174px;
+  filter: drop-shadow(0 0 12px #22caff16);
+}
+.orbit-tick {
+  position: absolute;
+  height: 5px;
+  width: 5px;
+  background: var(--feature-cyan);
+  border-radius: 50%;
+  box-shadow: 0 0 9px #22caff75;
+}
+.tick-one {
+  left: 7px;
+  top: 35%;
+}
+.tick-two {
+  right: 7px;
+  bottom: 35%;
+  width: 3px;
+  height: 3px;
+  background: var(--blue);
+}
+.energy-foot {
+  grid-column: 1/-1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  border-top: 1px solid var(--line);
+  padding: 10px 0;
+  margin-top: 5px;
+  min-height: 52px;
+}
+.energy-foot > span {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 10px;
+  color: var(--muted);
+}
+.energy-foot > span > i {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--feature-cyan);
+}
+.energy-foot > a {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 44px;
+  font-size: 11px;
+  color: var(--text);
+}
+.energy-foot > a > gt-icon {
+  width: 16px;
+  height: 16px;
+  color: var(--blue);
+}
+.macro-grid.macro-constellation {
+  gap: 9px;
+  margin: 10px 0 26px;
+  max-width: none;
+}
+.macro-constellation > .macro-panel {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 14px 6px 15px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  gap: 3px;
+  background: var(--card);
+  overflow: hidden;
+}
+.macro-panel::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 35%;
+  right: 35%;
+  height: 2px;
+  background: var(--macro-color);
+}
+.protein-panel {
+  --macro-color: #ff638b;
+}
+.carbs-panel {
+  --macro-color: #eacb58;
+}
+.fat-panel {
+  --macro-color: #af8bff;
+}
+.macro-constellation .macro-index {
+  font-size: 7px;
+  font-weight: 650;
+  letter-spacing: 0.07em;
+  color: var(--muted);
+  margin-bottom: 7px;
+  text-align: center;
+  line-height: 1.4;
+}
+.nutrition-observatory .macro-grid gt-ring {
+  --ring-size: 91px;
+}
+.macro-constellation .macro-panel > span:not(.macro-index) {
+  font-size: 11px;
+  font-weight: 650;
+  color: var(--text);
+}
+.macro-panel > small {
+  font-size: 9px;
+  color: var(--muted);
+  line-height: 1.4;
+  text-align: center;
+  margin-top: 3px;
+}
+.diary-section-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 26px 0 16px;
+  max-width: 840px;
+}
+.diary-section-heading h2 {
+  font-size: 21px;
+  letter-spacing: -0.04em;
+  margin: 6px 0 0;
+}
+.diary-count {
+  font-size: 35px;
+  line-height: 1;
+  letter-spacing: -0.05em;
+  font-weight: 650;
+  color: var(--muted);
+  opacity: 0.5;
+}
+.meal-diary-list {
+  max-width: 840px;
+  gap: 10px;
+}
+.meal-diary-row {
+  border-radius: 16px;
+  padding: 12px;
+  gap: 12px;
+  box-shadow: none;
+  min-height: 90px;
+}
+.meal-diary-row > img,
+.meal-diary-row > .meal-fallback {
+  width: 58px;
+  height: 64px;
+  border-radius: 11px;
+  object-fit: cover;
+  background: var(--raised);
+}
+.meal-diary-main {
+  display: block;
+  flex: 1;
+  min-width: 0;
+  min-height: 64px;
+  text-align: left;
+  padding: 3px 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+.meal-diary-main > strong {
+  display: block;
+  font-size: 14px;
+  letter-spacing: -0.015em;
+  line-height: 1.4;
+  margin-bottom: 4px;
+  color: var(--text);
+}
+.meal-diary-main > span {
+  display: block;
+  font-size: 11px;
+  line-height: 1.5;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  color: var(--muted);
+}
+.meal-diary-main > small {
+  display: block;
+  font-size: 9px;
+  font-weight: 500;
+  line-height: 1.6;
+  color: var(--muted);
+  margin-top: 4px;
+}
+.meal-diary-main > small > i {
+  font-style: normal;
+  opacity: 0.4;
+  margin-inline: 3px;
+}
+.meal-check {
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  min-height: 44px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  color: var(--feature-cyan);
+  background: color-mix(in srgb, var(--feature-cyan) 7%, transparent);
+  border: 1px solid color-mix(in srgb, var(--feature-cyan) 23%, transparent);
+}
+.meal-check gt-icon {
+  width: 17px;
+  height: 17px;
+}
+.diary-empty {
+  padding-block: 30px;
+  border-style: dashed;
+}
+.diary-empty-orbit {
+  display: grid;
+  place-items: center;
+  width: 72px;
+  height: 72px;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  margin: 0 auto 20px;
+  outline: 1px dashed var(--line);
+  outline-offset: 8px;
+  color: var(--feature-cyan);
+}
+.diary-empty h3 {
+  font-size: 20px;
+  letter-spacing: -0.035em;
+}
+.nutrition-capture {
+  max-width: 840px;
+  padding-top: 17px;
+}
+.nutrition-capture .scan-meal-button {
+  min-height: 56px;
+  border-radius: 15px;
+  font-size: 14px;
+  justify-content: center;
+  gap: 12px;
+}
+.scan-meal-button > gt-icon:last-child {
+  width: 17px;
+  height: 17px;
+  margin-left: auto;
+}
+.scan-meal-button > gt-icon:first-child {
+  margin-right: auto;
+}
+.nutrition-secondary-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 8px;
+}
+.nutrition-secondary-actions > button {
+  font-size: 11px;
+  min-height: 48px;
+  border-radius: 12px;
+  background: var(--card);
+}
+.meal-editor,
+.ai-details {
+  max-width: 840px;
+  border-radius: 20px;
+}
+.ai-details {
+  margin-top: 24px;
+  padding: 18px;
+  font-size: 12px;
+  border: 1px dashed var(--line);
+  background: transparent;
+}
+.ai-details > summary {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  font-weight: 650;
+}
+.meal-editor .ingredient-review {
+  margin-top: 20px;
+  border-top: 1px solid var(--line);
+  padding-top: 18px;
+}
+.meal-editor .ingredient-item {
+  border-radius: 14px;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  padding: 14px;
+  margin-bottom: 12px;
+}
+/* Progressi: an editorial ledger before the actual charts. */
+.data-source-label {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  white-space: nowrap;
+  font-size: 10px;
+  color: var(--muted);
+}
+.data-source-label > i {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--feature-cyan);
+}
+.progress-ledger {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: 1.15fr 1fr;
+  gap: 20px;
+  border: 1px solid var(--line);
+  border-radius: 23px;
+  padding: 26px;
+  background: var(--card);
+  margin-bottom: 24px;
+}
+.progress-ledger::before {
+  content: "";
+  position: absolute;
+  width: 220px;
+  height: 220px;
+  border: 1px solid color-mix(in srgb, var(--blue) 12%, transparent);
+  border-radius: 50%;
+  top: -110px;
+  right: -70px;
+  z-index: -1;
+  box-shadow:
+    0 0 0 25px color-mix(in srgb, var(--blue) 3%, transparent),
+    0 0 0 50px color-mix(in srgb, var(--blue) 2%, transparent);
+}
+.ledger-primary {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-width: 0;
+  gap: 20px;
+}
+.ledger-number {
+  font-size: clamp(52px, 7vw, 84px);
+  font-weight: 700;
+  line-height: 0.9;
+  letter-spacing: -0.075em;
+  display: flex;
+  align-items: flex-end;
+  gap: 13px;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+}
+.ledger-number > span {
+  font-size: 10px;
+  line-height: 1.6;
+  color: var(--muted);
+  font-weight: 500;
+  letter-spacing: 0;
+  padding-bottom: 4px;
+}
+.ledger-secondary {
+  border-left: 1px solid var(--line);
+  padding-left: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  min-width: 0;
+}
+.ledger-secondary > span {
+  font-size: 8px;
+  letter-spacing: 0.08em;
+  font-weight: 650;
+  color: var(--muted);
+}
+.ledger-secondary > strong {
+  font-size: 22px;
+  letter-spacing: -0.04em;
+  line-height: 1.1;
+  overflow-wrap: anywhere;
+  font-variant-numeric: tabular-nums;
+}
+.ledger-secondary > strong > small {
+  font-size: 10px;
+  letter-spacing: 0;
+  color: var(--muted);
+  font-weight: 500;
+  white-space: nowrap;
+}
+.ledger-secondary > i {
+  height: 1px;
+  background: var(--line);
+  margin: 5px 0;
+  max-width: 30px;
+}
+.ledger-corner {
+  position: absolute;
+  top: 14px;
+  right: 16px;
+  font-size: 23px;
+  color: var(--blue);
+  line-height: 1;
+}
+.progress-tabs {
+  padding: 5px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--card) 60%, transparent);
+  margin-bottom: 20px;
+  gap: 4px;
+  max-width: none;
+}
+.progress-tabs > button {
+  min-height: 44px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 650;
+}
+.performance-chart-card {
+  position: relative;
+  padding: 23px;
+  background: var(--card);
+  border-radius: 21px;
+  overflow: hidden;
+}
+.chart-section-label {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 18px;
+  color: var(--muted);
+}
+.chart-section-label > span {
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.chart-section-label > i {
+  height: 1px;
+  background: var(--line);
+  flex: 1;
+}
+.performance-chart-card > h2 {
+  font-size: 18px;
+  letter-spacing: -0.035em;
+  margin-bottom: 18px;
+}
+.performance-chart-card > .card-head {
+  margin-bottom: 22px;
+  align-items: flex-start;
+}
+.performance-chart-card .card-head h2 {
+  font-size: 21px;
+  letter-spacing: -0.04em;
+}
+.performance-chart-card .card-head p {
+  font-size: 12px;
+  line-height: 1.6;
+  max-width: 45ch;
+}
+.performance-chart-card .card-head > gt-icon {
+  color: var(--feature-cyan);
+  margin-top: 3px;
+}
+.personal-records-panel {
+  border-radius: 21px;
+}
+.performance-record-grid {
+  gap: 10px;
+  margin-block: 20px;
+}
+.performance-record-grid > .stat {
+  position: relative;
+  border-radius: 14px;
+  overflow: hidden;
+  min-height: 120px;
+  padding: 18px;
+  background: color-mix(in srgb, var(--bg) 45%, var(--card));
+  box-shadow: none;
+}
+.performance-record-grid > .stat::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 18px;
+  width: 25px;
+  height: 2px;
+  background: var(--blue);
+}
+.performance-record-grid .stat-label {
+  font-size: 10px;
+  line-height: 1.5;
+  min-height: 30px;
+  display: block;
+  color: var(--muted);
+}
+.performance-record-grid .record-value {
+  font-size: 30px;
+  letter-spacing: -0.06em;
+  line-height: 1.2;
+  margin-top: 8px;
+  font-variant-numeric: tabular-nums;
+}
+.performance-record-grid .record-value > small {
+  font-size: 11px;
+  letter-spacing: 0;
+  font-weight: 500;
+}
+.progress-archive-note {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 25px;
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.6;
+}
+.progress-archive-note > gt-icon {
+  width: 15px;
+  height: 15px;
+  color: var(--blue);
+}
+@media (hover: hover) and (pointer: fine) {
+  .plan-card:hover {
+    transform: translateY(-2px);
+    border-color: var(--blue);
+  }
+  .meal-diary-row:hover {
+    border-color: var(--blue);
+  }
+}
+@media (min-width: 1000px) {
+  .nutrition-observatory {
+    display: grid;
+    grid-template-columns: 1.3fr 1fr;
+    gap: 16px;
+    align-items: stretch;
+  }
+  .nutrition-observatory .macro-grid {
+    grid-template-columns: 1fr;
+    margin: 0;
+    gap: 9px;
+  }
+  .macro-constellation > .macro-panel {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    grid-template-rows: auto auto auto;
+    text-align: left;
+    padding: 14px 16px;
+    column-gap: 14px;
+    align-items: center;
+  }
+  .nutrition-observatory .macro-grid gt-ring {
+    --ring-size: 70px;
+    grid-column: 1;
+    grid-row: 1/4;
+  }
+  .macro-constellation .macro-index {
+    grid-column: 2;
+    margin: 0;
+    text-align: left;
+  }
+  .macro-constellation .macro-panel > span:not(.macro-index),
+  .macro-panel > small {
+    grid-column: 2;
+    text-align: left;
+  }
+  .energy-panel {
+    grid-template-columns: 1fr;
+    padding: 28px 24px 0;
+    gap: 16px;
+  }
+  .energy-caption {
+    max-width: none;
+  }
+  .energy-caption h2 {
+    font-size: 32px;
+  }
+  .energy-orbit {
+    width: 230px;
+    margin: auto;
+  }
+  .energy-orbit .calorie-ring {
+    --ring-size: 210px;
+  }
+  .energy-foot {
+    width: 100%;
+  }
+  .plan-card > .card-head > gt-exercise-thumb {
+    --thumb-width: 106px;
+    --thumb-height: 118px;
+  }
+  .plan-card > .card-head h2 {
+    font-size: 26px !important;
+  }
+}
+@media (max-width: 600px) {
+  .plan-card {
+    padding: 17px;
+    border-radius: 19px;
+  }
+  .plan-topline {
+    margin-bottom: 16px;
+    padding-bottom: 11px;
+  }
+  .plan-card > .card-head {
+    gap: 12px;
+  }
+  .plan-card > .card-head > gt-exercise-thumb {
+    --thumb-width: 70px;
+    --thumb-height: 86px;
+    border-radius: 10px;
+  }
+  .plan-card > .card-head h2 {
+    font-size: 19px !important;
+  }
+  .plan-card .plan-subtitle {
+    font-size: 11px;
+    line-height: 1.5;
+  }
+  .plan-card > .card-head > button {
+    background: transparent;
+    border-color: var(--line);
+  }
+  .plan-count {
+    font-size: 10px;
+  }
+  .plan-day-preview {
+    margin-top: 16px;
+    padding-top: 13px;
+  }
+  .plan-training-day {
+    padding: 13px;
+  }
+  .plan-training-day .day-head {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .plan-exercise-row {
+    padding-block: 14px;
+  }
+  .energy-panel {
+    padding: 20px 16px 0;
+  }
+  .energy-panel::before {
+    left: 16px;
+  }
+  .energy-caption h2 {
+    font-size: 25px;
+  }
+  .energy-caption .panel-kicker {
+    font-size: 8px;
+    letter-spacing: 0.08em;
+  }
+  .energy-orbit .calorie-ring {
+    --ring-size: 150px;
+  }
+  .energy-orbit {
+    padding: 7px;
+  }
+  .nutrition-day-selector {
+    margin-bottom: 15px;
+  }
+  .progress-ledger {
+    padding: 22px 18px;
+    gap: 15px;
+    border-radius: 20px;
+  }
+  .ledger-secondary {
+    padding-left: 16px;
+    gap: 8px;
+  }
+  .ledger-secondary > strong {
+    font-size: 20px;
+  }
+  .ledger-number {
+    font-size: 64px;
+    gap: 9px;
+  }
+  .ledger-number > span {
+    font-size: 9px;
+  }
+  .ledger-primary > .panel-kicker {
+    font-size: 8px;
+    letter-spacing: 0.06em;
+  }
+  .progress-tabs > button {
+    font-size: 11px;
+    padding-inline: 7px;
+  }
+  .performance-chart-card {
+    padding: 18px;
+  }
+  .performance-record-grid > .stat {
+    padding: 15px;
+  }
+  .performance-record-grid .record-value {
+    font-size: 27px;
+  }
+  .data-source-label {
+    font-size: 9px;
+  }
+  .performance-chart-card .card-head h2 {
+    font-size: 19px;
+  }
+}
+@media (max-width: 365px) {
+  .energy-caption h2 {
+    font-size: 22px;
+  }
+  .energy-orbit .calorie-ring {
+    --ring-size: 125px;
+  }
+  .energy-caption p {
+    font-size: 10px;
+  }
+  .macro-constellation .macro-index {
+    font-size: 6px;
+    letter-spacing: 0.02em;
+  }
+  .nutrition-observatory .macro-grid gt-ring {
+    --ring-size: 78px;
+  }
+  .macro-panel > small {
+    font-size: 8px;
+  }
+  .ledger-number {
+    font-size: 54px;
+  }
+  .ledger-number > span {
+    font-size: 8px;
+  }
+  .ledger-secondary > strong {
+    font-size: 18px;
+  }
+  .ledger-secondary > span {
+    font-size: 7px;
+  }
+  .plan-card > .card-head h2 {
+    font-size: 17px !important;
+  }
+  .plan-card > .card-head > gt-exercise-thumb {
+    --thumb-width: 59px;
+    --thumb-height: 78px;
+  }
+  .meal-diary-row {
+    gap: 8px;
+  }
+  .meal-diary-row > img,
+  .meal-diary-row > .meal-fallback {
+    width: 46px;
+    height: 54px;
+  }
+  .meal-diary-main > small {
+    font-size: 8px;
+  }
+  .data-source-label {
+    display: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .plan-card {
+    transition: none;
+  }
+  .plan-card:hover {
+    transform: none;
+  }
+}
+/* Keep large real totals legible on narrow iPhones; the label owns its own line. */
+.ledger-number {
+  display: block;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: normal;
+  line-height: 1;
+}
+.ledger-number > span {
+  display: block;
+  line-height: 1.55;
+  margin-top: 11px;
+  padding-bottom: 0;
+}
+.ledger-secondary > strong {
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  line-height: 1.25;
+}
+:host-context(body.custom-light) {
+  --feature-cyan: #006980;
+}
+:host-context(body.custom-light) .meal-check {
+  color: #006980;
+  border-color: #7db0ba;
+  background: #e6f4f5;
+}
+:host-context(body.custom-light) .energy-caption .panel-kicker,
+:host-context(body.custom-light) .macro-constellation .macro-index,
+:host-context(body.custom-light) .ledger-secondary > span,
+:host-context(body.custom-light) .chart-section-label {
+  color: var(--muted);
+}
+@media (max-width: 600px) {
+  .ledger-number {
+    font-size: clamp(38px, 10vw, 60px);
+    letter-spacing: -0.06em;
+  }
+  .ledger-number > span {
+    font-size: 10px;
+    margin-top: 8px;
+  }
+  .ledger-primary {
+    gap: 18px;
+    justify-content: flex-start;
+  }
+  .ledger-secondary {
+    justify-content: center;
+  }
+  .ledger-secondary > strong {
+    font-size: clamp(17px, 4.9vw, 22px);
+  }
+}
+@media (max-width: 365px) {
+  .ledger-number {
+    font-size: 34px;
+  }
+  .ledger-number > span {
+    font-size: 9px;
+  }
+  .ledger-primary {
+    gap: 16px;
+  }
+  .ledger-secondary > strong {
+    font-size: 17px;
+  }
+  .progress-ledger {
+    gap: 12px;
+    padding-inline: 16px;
+  }
+  .ledger-secondary {
+    padding-left: 13px;
+  }
+}

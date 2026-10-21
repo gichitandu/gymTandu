@@ -1,0 +1,254 @@
+<header class="home-welcome">
+  <div>
+    <span class="experience-eyebrow">IL TUO SPAZIO, IL TUO RITMO</span>
+    <h1>Ciao, {{ firstName() }}<span class="welcome-point">.</span></h1>
+    <p>{{ todayLabel }}</p>
+  </div>
+  <a
+    class="home-date-link"
+    routerLink="/calendario"
+    aria-label="Apri il calendario"
+    ><gt-icon name="calendar" /><span>{{ +today.slice(8) }}</span></a
+  >
+</header>
+<gt-status />
+<section class="training-spotlight" aria-label="Prossimo allenamento">
+  <div class="spotlight-art" aria-hidden="true">
+    <i></i><i></i><span>G / T</span>
+  </div>
+  <div class="spotlight-content">
+    <div class="spotlight-kicker">
+      <span class="experience-index">01</span><span>IL TUO PROSSIMO PASSO</span>
+    </div>
+    @if (s.draft(); as draft) {
+      <span class="spotlight-state"><i></i>ALLENAMENTO IN CORSO</span>
+      <h2>{{ draft.dayName }}</h2>
+      <p>{{ draft.planName }}</p>
+      <a class="button primary spotlight-action" routerLink="/sessione"
+        ><span>Riprendi da dove eri</span><gt-icon name="arrow"
+      /></a>
+    } @else if (nextScheduled(); as e) {
+      <span class="spotlight-state">{{ dateLabel(e.date) }}</span>
+      <h2>{{ e.dayName }}</h2>
+      <p>{{ e.planName }}</p>
+      <button
+        class="primary spotlight-action"
+        (click)="startEvent(e.id)"
+        [disabled]="s.busy()"
+      >
+        <span>{{
+          e.date === today ? "Inizia allenamento" : "Apri programmazione"
+        }}</span
+        ><gt-icon [name]="e.date === today ? 'play' : 'arrow'" />
+      </button>
+    } @else if (s.nextDay(); as day) {
+      <span class="spotlight-state"
+        >{{ s.planExercises(day.id).length }} ESERCIZI · GIORNO
+        {{ day.order + 1 }}</span
+      >
+      <h2>{{ day.name }}</h2>
+      <p>{{ s.activePlan()?.name }}</p>
+      <button
+        class="primary spotlight-action"
+        (click)="start(day.id)"
+        [disabled]="!s.ready() || s.busy()"
+      >
+        <span>Inizia allenamento</span><gt-icon name="play" />
+      </button>
+    } @else {
+      <span class="spotlight-state">IL PRIMO PASSO È TUO</span>
+      <h2>Costruisci il tuo<br /><em>prossimo livello.</em></h2>
+      <p>Un piano su misura. Una serie alla volta.</p>
+      <a class="button primary spotlight-action" routerLink="/piani"
+        ><span>Crea il tuo piano</span><gt-icon name="plus"
+      /></a>
+    }
+  </div>
+  <div class="spotlight-baseline">
+    <span><i></i>Disciplina oggi. Risultati domani.</span
+    ><a routerLink="/piani">I tuoi piani <gt-icon name="arrow" /></a>
+  </div>
+</section>
+<div class="home-section-label">
+  <span>LA TUA GIORNATA</span
+  ><span>DATI REALI / {{ today.slice(8) }}.{{ today.slice(5, 7) }}</span>
+</div>
+<div class="home-metrics">
+  <a class="home-metric metric-training" routerLink="/allenamenti"
+    ><div class="metric-label">
+      <gt-icon name="weight" /><span>Allenamenti</span><gt-icon name="arrow" />
+    </div>
+    <div class="metric-main">
+      <strong>{{ s.completed().length }}</strong
+      ><gt-ring
+        [value]="weekCount()"
+        [target]="goals()?.workoutsPerWeek"
+        label="Allenamenti della settimana"
+        color="#58dfc5"
+      />
+    </div>
+    <span class="metric-foot"
+      ><b>{{ weekCount() }}</b> questa settimana{{
+        goals()?.workoutsPerWeek ? " / " + goals()?.workoutsPerWeek : ""
+      }}</span
+    ></a
+  ><a class="home-metric metric-nutrition" routerLink="/alimentazione"
+    ><div class="metric-label">
+      <gt-icon name="bolt" /><span>Calorie di oggi</span
+      ><gt-icon name="arrow" />
+    </div>
+    <div class="metric-main">
+      <strong>{{
+        totals().calories.toLocaleString("it-IT", { maximumFractionDigits: 0 })
+      }}</strong
+      ><small>kcal</small>
+    </div>
+    <div class="metric-meter" aria-hidden="true">
+      <i
+        [style.width.%]="
+          goals()?.calories
+            ? Math.min(100, (totals().calories / goals()!.calories!) * 100)
+            : 0
+        "
+      ></i>
+    </div>
+    <span class="metric-foot">{{
+      goals()?.calories
+        ? "Obiettivo " + goals()?.calories + " kcal"
+        : "Scegli un obiettivo nel Profilo"
+    }}</span></a
+  >
+</div>
+<div class="home-macros">
+  <a routerLink="/alimentazione" class="home-macro"
+    ><span class="macro-code protein-code">P</span>
+    <div>
+      <span>Proteine</span
+      ><strong
+        >{{
+          totals().protein.toLocaleString("it-IT", {
+            maximumFractionDigits: 0,
+          })
+        }}<small>g</small></strong
+      ><span>{{
+        goals()?.protein ? "di " + goals()?.protein + " g" : "registrate"
+      }}</span>
+    </div>
+    <gt-ring
+      [value]="totals().protein"
+      [target]="goals()?.protein"
+      label="Proteine"
+      color="#fc7399" /></a
+  ><a routerLink="/alimentazione" class="home-macro"
+    ><span class="macro-code carbs-code">C</span>
+    <div>
+      <span>Carboidrati</span
+      ><strong
+        >{{
+          totals().carbs.toLocaleString("it-IT", { maximumFractionDigits: 0 })
+        }}<small>g</small></strong
+      ><span>{{
+        goals()?.carbs ? "di " + goals()?.carbs + " g" : "registrati"
+      }}</span>
+    </div>
+    <gt-ring
+      [value]="totals().carbs"
+      [target]="goals()?.carbs"
+      label="Carboidrati"
+      color="#f3ca6c" /></a
+  ><a routerLink="/alimentazione" class="home-macro"
+    ><span class="macro-code fat-code">G</span>
+    <div>
+      <span>Grassi</span
+      ><strong
+        >{{ totals().fat.toLocaleString("it-IT", { maximumFractionDigits: 0 })
+        }}<small>g</small></strong
+      ><span>{{
+        goals()?.fat ? "di " + goals()?.fat + " g" : "registrati"
+      }}</span>
+    </div>
+    <gt-ring
+      [value]="totals().fat"
+      [target]="goals()?.fat"
+      label="Grassi"
+      color="#58baff"
+  /></a>
+</div>
+<section class="home-rhythm">
+  <div class="rhythm-heading">
+    <div>
+      <span class="experience-eyebrow">02 / LA TUA TRACCIA</span>
+      <h2>La costanza prende forma.</h2>
+    </div>
+    <a routerLink="/calendario" aria-label="Apri la settimana nel calendario"
+      ><gt-icon name="arrow"
+    /></a>
+  </div>
+  <div class="rhythm-scroll">
+    <div class="rhythm-stage">
+      <svg viewBox="0 0 400 140" preserveAspectRatio="none" aria-hidden="true">
+        <path d="M28 105 Q200 -65 372 105" />
+        <path d="M28 126 Q200 -44 372 126" class="rhythm-secondary" />
+      </svg>
+      @for (day of week; track day.date) {
+        <a
+          class="rhythm-day"
+          routerLink="/calendario"
+          [queryParams]="{ date: day.date }"
+          [style.left.%]="day.x"
+          [style.top.px]="day.y"
+          [class.today]="day.date === today"
+          [class.done]="done(day.date)"
+          [class.planned]="planned(day.date)"
+          [attr.aria-label]="dayAria(day.date)"
+          [attr.aria-current]="day.date === today ? 'date' : null"
+          ><span>{{ day.label }}</span
+          ><i>{{ done(day.date) ? "✓" : +day.date.slice(8) }}</i
+          ><b>{{
+            day.date === today
+              ? "oggi"
+              : done(day.date)
+                ? "svolto"
+                : planned(day.date)
+                  ? "previsto"
+                  : ""
+          }}</b></a
+        >
+      }
+      <div class="rhythm-count">
+        <strong
+          >{{ weekCount()
+          }}<small>{{
+            goals()?.workoutsPerWeek ? " / " + goals()?.workoutsPerWeek : ""
+          }}</small></strong
+        ><span>allenamenti questa settimana</span>
+      </div>
+    </div>
+  </div>
+  <div class="rhythm-legend">
+    <span><i class="done"></i>Svolto</span
+    ><span><i class="planned"></i>In programma</span
+    ><span>Tocca un giorno <gt-icon name="arrow" /></span>
+  </div>
+</section>
+<div class="home-paths">
+  <a routerLink="/calendario"
+    ><span class="experience-index">03</span><gt-icon name="calendar" />
+    <h3>Dai spazio<br />al prossimo traguardo.</h3>
+    <span>Programma la settimana <gt-icon name="arrow" /></span></a
+  ><a routerLink="/progressi"
+    ><span class="experience-index">04</span><gt-icon name="chart" />
+    <h3>Guarda quanta<br />strada hai fatto.</h3>
+    <span>Esplora i tuoi progressi <gt-icon name="arrow" /></span
+  ></a>
+</div>
+<gt-backup-reminder /><a
+  class="backup-strip home-backup"
+  routerLink="/profilo"
+  [queryParams]="{ section: 'backup' }"
+  ><gt-icon name="shield" /><span
+    >I tuoi progressi meritano di essere conservati.<small
+      >Esporta una copia del tuo archivio.</small
+    ></span
+  ><gt-icon name="arrow"
+/></a>
