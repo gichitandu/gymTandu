@@ -4,7 +4,7 @@ import { FormsModule } from "@angular/forms";
 import { Store } from "../services/store";
 import { StatusComponent } from "../shared/status.component";
 import { IconComponent } from "../shared/icon.component";
-import { WorkoutEditorComponent } from "../shared/workout-editor.component";
+import { ActiveWorkoutComponent } from "../shared/active-workout.component";
 @Component({
   standalone: true,
   imports: [
@@ -12,7 +12,7 @@ import { WorkoutEditorComponent } from "../shared/workout-editor.component";
     RouterLink,
     StatusComponent,
     IconComponent,
-    WorkoutEditorComponent,
+    ActiveWorkoutComponent,
   ],
   template: `<gt-status />
     @if (s.draft(); as w) {
@@ -22,7 +22,7 @@ import { WorkoutEditorComponent } from "../shared/workout-editor.component";
             <p class="eyebrow">ALLENAMENTO IN CORSO</p>
             <h1>{{ w.dayName }}</h1>
             <p class="subtle">
-              {{ w.planName }} · {{ elapsed(w.startedAt) }} min ·
+              {{ w.planName }} · {{ elapsed(w.startedAt) }} ·
               {{ s.busy() ? "Salvataggio…" : "Salvato sul dispositivo" }}
             </p>
           </div>
@@ -36,9 +36,9 @@ import { WorkoutEditorComponent } from "../shared/workout-editor.component";
           }
         </div>
       </div>
-      <gt-workout-editor [workoutId]="w.id" />
-      <section class="card">
-        <h2>Il tuo allenamento, a modo tuo</h2>
+      <gt-active-workout [workoutId]="w.id" (finish)="finish()" />
+      <details class="card session-options"><summary>Data, note e salvataggio</summary>
+        <h2 style="margin-top:16px">Il tuo allenamento</h2>
         <div class="form-grid" style="margin-top:18px">
           <label
             >Data effettiva<input
@@ -61,7 +61,7 @@ import { WorkoutEditorComponent } from "../shared/workout-editor.component";
             Scarta sessione
           </button>
         </div>
-      </section>
+      </details>
     } @else if (s.ready()) {
       <div class="card empty">
         <gt-icon name="weight" />
@@ -75,16 +75,11 @@ export class SessionComponent {
   s = inject(Store);
   router = inject(Router);
   clock = signal(Date.now());
-  timer = setInterval(() => this.clock.set(Date.now()), 10000);
+  timer = setInterval(() => this.clock.set(Date.now()), 1000);
   ngOnDestroy() {
     clearInterval(this.timer);
   }
-  elapsed(date: string) {
-    return Math.max(
-      0,
-      Math.floor((this.clock() - new Date(date).getTime()) / 60000),
-    );
-  }
+  elapsed(date:string){const seconds=Math.max(0,Math.floor((this.clock()-new Date(date).getTime())/1000));return `${Math.floor(seconds/3600).toString().padStart(2,'0')}:${Math.floor(seconds%3600/60).toString().padStart(2,'0')}:${(seconds%60).toString().padStart(2,'0')}`;}
   allSets(id: string) {
     return this.s.workoutExercises(id).flatMap((e) => this.s.sets(e.id));
   }

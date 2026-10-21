@@ -1,3 +1,4 @@
+import { ExerciseThumbComponent } from "../shared/exercise-thumb.component";
 import { A11yModule } from "@angular/cdk/a11y";
 import { Component, computed, inject, signal } from "@angular/core";
 import {
@@ -21,20 +22,21 @@ import { StatusComponent } from "../shared/status.component";
   standalone: true,
   imports: [
     A11yModule,
+    ExerciseThumbComponent,
     ReactiveFormsModule,
     FormsModule,
     RouterLink,
     IconComponent,
     StatusComponent,
   ],
-  template: ` <div class="page-heading">
+  template: ` <div class="page-heading compact-heading">
       <div>
         <p class="eyebrow">IL TUO PERCORSO</p>
         <h1>Piani di allenamento</h1>
         <p class="subtle">Una struttura solida. Spazio per migliorare.</p>
       </div>
       <button class="primary" (click)="openPlan()" [disabled]="!s.ready()">
-        <gt-icon name="plus" /> Nuovo piano
+        <gt-icon name="plus" /> <span class="desktop-button-label">Nuovo piano</span>
       </button>
     </div>
     <gt-status />
@@ -49,8 +51,8 @@ import { StatusComponent } from "../shared/status.component";
     </div>
     <div class="list">
       @for (p of plans(); track p.id) {
-        <section class="card plan-card" [class.plan-active]="p.active">
-          <div class="card-head">
+        <section class="card plan-card" [class.plan-active]="p.active" [class.is-open]="expanded()===p.id">
+          <div class="card-head"><gt-exercise-thumb [exercise]="thumbnailExercise(p.id)"/>
             <div>
               <span class="pill" [class.green]="p.active">{{
                 p.active
@@ -122,9 +124,7 @@ import { StatusComponent } from "../shared/status.component";
                 @for (pe of s.planExercises(day.id); track pe.id) {
                   <div class="exercise-row">
                     <div class="exercise-info">
-                      <span class="exercise-thumb"
-                        ><gt-icon name="weight"
-                      /></span>
+                      <gt-exercise-thumb [exercise]="s.exercise(pe.exerciseId)"/>
                       <div>
                         <strong>{{ s.exercise(pe.exerciseId)?.name }}</strong
                         ><small
@@ -384,6 +384,7 @@ import { StatusComponent } from "../shared/status.component";
     }`,
 })
 export class PlansComponent {
+  thumbnailExercise(id:string){const day=this.s.days(id)[0],entry=day?this.s.planExercises(day.id)[0]:undefined;return entry?this.s.exercise(entry.exerciseId):undefined;}
   s = inject(Store);
   router = inject(Router);
   fb = inject(FormBuilder);

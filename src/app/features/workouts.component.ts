@@ -1,7 +1,7 @@
 import { Component, computed, inject, signal } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import { DatePipe } from "@angular/common";
-import { RouterLink } from "@angular/router";
+import { ActivatedRoute, RouterLink } from "@angular/router";
 import { Store } from "../services/store";
 import { IconComponent } from "../shared/icon.component";
 import { StatusComponent } from "../shared/status.component";
@@ -173,6 +173,7 @@ import { WorkoutEditorComponent } from "../shared/workout-editor.component";
     }`,
 })
 export class WorkoutsComponent {
+  constructor(){const query=inject(ActivatedRoute).snapshot.queryParamMap;const workout=query.get("workout");if(workout)this.selectedId.set(workout);const date=query.get("date");if(date){this.from.set(date);this.to.set(date);}}
   s = inject(Store);
   plan = signal("");
   day = signal("");

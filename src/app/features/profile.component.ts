@@ -1,3 +1,4 @@
+import { ActivatedRoute } from "@angular/router";
 import { AvatarComponent } from "../shared/avatar.component";
 import { compressPhoto } from "../services/images";
 import { IosStatusComponent } from "../shared/ios-status.component";
@@ -15,7 +16,7 @@ import { RouterLink } from "@angular/router";
 import { MatSlideToggleModule } from "@angular/material/slide-toggle";
 import { Store } from "../services/store";
 import { exportBackup, importBackup } from "../services/backup";
-import { DataSet } from "../models/domain";
+import { DataSet, localDate, uid } from "../models/domain";
 import { StatusComponent } from "../shared/status.component";
 import { IconComponent } from "../shared/icon.component";
 import { PwaService } from "../services/pwa";
@@ -32,17 +33,16 @@ import { PwaService } from "../services/pwa";
     StatusComponent,
     IconComponent,
   ],
-  template: `<div class="page-heading">
-      <div>
-        <p class="eyebrow">IL TUO SPAZIO PERSONALE</p>
-        <h1>Profilo e impostazioni</h1>
-        <p class="subtle">Tutto quello che serve, sotto il tuo controllo.</p>
-      </div>
-    </div>
-    <gt-status />
-    <section class="profile-cover"><div><p class="eyebrow">DISCIPLINA · COSTANZA · RISULTATI</p><h2>{{s.profile().name}}</h2><span class="pill">{{auth.user()?.role==='SuperAdmin'?'Super Admin':auth.user()?.role==='Admin'?'Admin':'Cliente'}}</span></div></section>
-    <div class="split">
-      <section class="card">
+  template: `<div class="page-heading compact-heading">@if(panel()!=='overview'){<button class="icon-btn ghost" aria-label="Torna al profilo" (click)="panel.set('overview')">‹</button>}<div><h1>{{panelLabel()}}</h1></div>@if(panel()==='overview'){<button class="ghost" (click)="panel.set('settings')">Modifica</button>}</div><gt-status/>
+@if(panel()==='overview'){
+<section class="card profile-dashboard"><div class="profile-head"><div class="profile-avatar"><gt-avatar [photo]="s.profile().photo" [name]="s.profile().name"/></div><div><h2>{{s.profile().name}}</h2><span class="pill">{{auth.user()?.role==='SuperAdmin'?'Super Admin':auth.user()?.role==='Admin'?'Admin':'Personale'}}</span>@if(auth.user()?.username){<p class="subtle">@{{auth.user()?.username}}</p>}</div></div><div class="profile-key-stats"><div><strong>{{s.profile().bodyWeight!==undefined?s.formatWeight(s.profile().bodyWeight!):'—'}} <small>{{s.settings().unit}}</small></strong><span>Peso</span></div><div><strong>{{s.profile().height??'—'}} <small>cm</small></strong><span>Altezza</span></div><div><strong>{{age()??'—'}}</strong><span>Età</span></div></div></section>
+<nav class="profile-menu" aria-label="Sezioni del profilo"><button (click)="panel.set('goals')"><gt-icon name="trophy"/><span>Obiettivi</span>›</button><button (click)="panel.set('measurements')"><gt-icon name="activity"/><span>Misurazioni corporee</span>›</button><button (click)="panel.set('settings')"><gt-icon name="settings"/><span>Impostazioni</span>›</button><button (click)="panel.set('backup')"><gt-icon name="download"/><span>Backup e ripristino</span>›</button><a routerLink="/catalogo"><gt-icon name="weight"/><span>{{s.canEditCatalog()?'Gestione esercizi':'Catalogo esercizi'}}</span>›</a><button (click)="panel.set('theme')"><gt-icon name="palette"/><span>Tema e personalizzazione</span>›</button><a routerLink="/calendario"><gt-icon name="calendar"/><span>Calendario allenamenti</span>›</a><button (click)="panel.set('security')"><gt-icon name="shield"/><span>Account e sicurezza</span>›</button>@if(auth.user()?.role==='SuperAdmin'){<a routerLink="/utenti"><gt-icon name="user"/><span>Gestione utenti</span>›</a>}<button (click)="panel.set('info')"><gt-icon name="info"/><span>Informazioni app e iPhone</span>›</button></nav>
+}
+@if(panel()==='goals'){<section class="card"><h2>I tuoi obiettivi</h2><p class="subtle" style="margin:12px 0 20px">Inserisci i tuoi riferimenti personali. Non vengono calcolati da una fotografia e non sono prescrizioni automatiche.</p><form [formGroup]="goalsForm" (ngSubmit)="saveGoals()" class="form-grid"><label>Calorie giornaliere (kcal)<input type="number" inputmode="numeric" formControlName="calories" min="1" max="20000"/></label><label>Proteine giornaliere (g)<input type="number" inputmode="decimal" formControlName="protein" min="1" max="2000"/></label><label>Carboidrati giornalieri (g)<input type="number" inputmode="decimal" formControlName="carbs" min="1" max="3000"/></label><label>Grassi giornalieri (g)<input type="number" inputmode="decimal" formControlName="fat" min="1" max="2000"/></label><label class="wide">Allenamenti per settimana<input type="number" inputmode="numeric" formControlName="workoutsPerWeek" min="1" max="14"/></label><button class="primary wide" [disabled]="goalsForm.invalid||s.busy()||!s.ready()">Salva obiettivi</button></form><p class="subtle" style="margin-top:14px">Lascia vuoto un campo per rimuovere quel riferimento.</p></section>}
+@if(panel()==='measurements'){<section class="card"><h2>Registra misurazione</h2><form #measurementForm="ngForm" (ngSubmit)="saveMeasurement()" class="form-grid" style="margin-top:18px"><label>Data<input name="date" type="date" [(ngModel)]="measurementDate" required [max]="today"/></label><label>Peso ({{s.settings().unit}})<input name="weight" type="number" inputmode="decimal" [(ngModel)]="measurementWeight" min="1" max="1500" step="0.1" required/></label><label>Girovita (cm, facoltativo)<input name="waist" type="number" inputmode="decimal" [(ngModel)]="measurementWaist" min="1" max="300" step="0.1"/></label><label>Massa grassa (%, facoltativa)<input name="bodyfat" type="number" inputmode="decimal" [(ngModel)]="measurementBodyFat" min="1" max="80" step="0.1"/></label><button class="primary wide" [disabled]="measurementForm.invalid||s.busy()">Salva misurazione</button></form></section><section class="card" style="margin-top:18px"><h2>Storico misurazioni</h2><div class="list" style="margin-top:18px">@for(m of measurementHistory();track m.id){<div class="measurement-row"><div><strong>{{s.formatWeight(m.weight)}} {{s.settings().unit}}</strong><p class="subtle">{{m.date}}{{m.waist?' · Vita '+m.waist+' cm':''}}{{m.bodyFat?' · Massa grassa '+m.bodyFat+'%':''}}</p></div><button class="ghost danger" (click)="removeMeasurement(m.id)" aria-label="Rimuovi misurazione">×</button></div>}@empty{<p class="subtle">Nessuna misurazione registrata.</p>}</div></section>}
+@if(panel()==='settings'||panel()==='theme'||panel()==='info'){
+    <div class="profile-settings-panels">
+      <section class="card" [hidden]="panel()!=='settings'">
         <div class="profile-head">
           <div class="profile-avatar">
             <gt-avatar [photo]="photoDraft()===undefined?s.profile().photo:(photoDraft()||undefined)" [name]="s.profile().name" />
@@ -96,7 +96,7 @@ import { PwaService } from "../services/pwa";
         </form>
       </section>
       <div class="stack">
-        <section class="card">
+        <section class="card" [hidden]="panel()==='info'">
           <h2>Aspetto e preferenze</h2>
           <div class="theme-picker"><h3>Colore dello sfondo</h3><p class="subtle">Scegli qualsiasi colore: viene salvato solo sul tuo account.</p>
           <div class="theme-swatches">@for(color of theme.presets;track color){<button type="button" class="swatch" [style.background]="color" [class.chosen]="theme.color()===color" [attr.aria-label]="'Sfondo '+color" [attr.aria-pressed]="theme.color()===color" [disabled]="theme.busy()" (click)="theme.save(color)">@if(theme.color()===color){<span>✓</span>}</button>}</div>
@@ -150,7 +150,7 @@ import { PwaService } from "../services/pwa";
             /></a>
           </div>
         </section>
-        <section class="card">
+        <section class="card" [hidden]="panel()!=='info'">
           <h2>Porta GymTrack con te</h2>
           <p class="subtle" style="margin:13px 0">
             Dopo il primo caricamento completo via HTTPS, l’app conserva le
@@ -177,7 +177,8 @@ import { PwaService } from "../services/pwa";
         </section>
       </div>
     </div>
-    <section class="card" style="margin-top:20px">
+    }
+    @if(panel()==='backup'){<section class="card" style="margin-top:20px">
       <div class="card-head">
         <div>
           <h2>Backup e ripristino</h2>
@@ -225,7 +226,8 @@ import { PwaService } from "../services/pwa";
         }}
       </p>
     </section>
-    <section class="card" style="margin-top:20px">
+    }
+    @if(panel()==='security'){<section class="card" style="margin-top:20px">
       <h2>Account e sicurezza</h2>
       @if(!auth.offlineMode()){<form (ngSubmit)="saveUsername()" class="stack" style="margin-top:20px"><label>Nome utente per il login<input name="account-username" autocomplete="username" autocapitalize="none" spellcheck="false" [ngModel]="usernameDraft()===null?(auth.user()?.username||''):usernameDraft()" (ngModelChange)="usernameDraft.set($event)" required minlength="3" maxlength="30" pattern="[A-Za-z0-9][A-Za-z0-9._-]{2,29}" /></label><p class="subtle">3–30 caratteri: lettere, numeri, punto, trattino o underscore. Deve essere univoco: maiuscole e minuscole sono equivalenti. Il nome visualizzato nel profilo può essere diverso.</p><button class="primary" [disabled]="usernameBusy()">{{usernameBusy()?'Salvataggio…':'Salva nome utente'}}</button></form>}<p class="subtle" style="margin-top:12px">{{auth.user()?.email}}</p>
       @if(accountError()) {<p class="notice error" role="alert">{{accountError()}}</p>}
@@ -241,7 +243,8 @@ import { PwaService } from "../services/pwa";
       </form>} @else {<div class="actions"><button (click)="logout()">Esci dall’archivio locale</button></div>}
       <p class="subtle" style="margin-top:16px">Puoi salvare e compilare le credenziali con l’app Password di iOS. Gli allenamenti rimangono su questo dispositivo, separati per account.</p>
     </section>
-    <gt-ios-status />
+    }
+    @if(panel()==='info'){<gt-ios-status />}
     @if (pending(); as backup) {
       <div class="modal-backdrop">
         <section
@@ -306,7 +309,7 @@ export class ProfileComponent {
   pending = signal<DataSet | undefined>(undefined);
   backupFile = signal<File | null>(null);
   async shareBackup(){const file=this.backupFile();if(!file)return;try{if(navigator.canShare?.({files:[file]})){await navigator.share({files:[file],title:"Backup GymTrack"});}else{this.s.message.set("Usa il download del backup e spostalo in File dal menu Condividi di Safari.");}}catch(e){if((e as Error).name!=="AbortError")this.s.error.set("Condivisione non disponibile. Usa il download JSON.");}}
-  today = new Date().toISOString().slice(0, 10);
+  today = localDate();
   form = this.fb.group({
     name: ["", [Validators.required, Validators.pattern(/\S/)]],
     bodyWeight: [
@@ -317,11 +320,22 @@ export class ProfileComponent {
     birthDate: [""],
     goal: [""],
   });
+  panel=signal('overview');
+  panelLabel(){return ({overview:'Profilo',goals:'Obiettivi',measurements:'Misurazioni corporee',settings:'Impostazioni',theme:'Tema e personalizzazione',backup:'Backup e ripristino',security:'Account e sicurezza',info:'Informazioni app'} as Record<string,string>)[this.panel()]||'Profilo';}
+  age(){const birth=this.s.profile().birthDate;if(!birth)return null;const d=new Date(birth+'T12:00:00'),now=new Date();return now.getFullYear()-d.getFullYear()-((now.getMonth()<d.getMonth()||now.getMonth()===d.getMonth()&&now.getDate()<d.getDate())?1:0);}
+  measurementDate=localDate();measurementWeight:number|null=null;measurementWaist:number|null=null;measurementBodyFat:number|null=null;
+  measurementHistory(){return [...this.s.data().measurements].sort((a,b)=>b.date.localeCompare(a.date));}
+  goalsForm=this.fb.group({calories:[null as number|null,[Validators.min(1),Validators.max(20000)]],protein:[null as number|null,[Validators.min(1),Validators.max(2000)]],carbs:[null as number|null,[Validators.min(1),Validators.max(3000)]],fat:[null as number|null,[Validators.min(1),Validators.max(2000)]],workoutsPerWeek:[null as number|null,[Validators.min(1),Validators.max(14)]]});
+  async saveGoals(){if(this.goalsForm.invalid)return;const value=this.goalsForm.getRawValue();if(value.workoutsPerWeek!==null&&!Number.isInteger(value.workoutsPerWeek)){this.s.error.set('Inserisci un numero intero di allenamenti.');return;}await this.s.change(d=>{d.settings[0].goals=Object.fromEntries(Object.entries(value).filter(([,v])=>v!==null));},'Obiettivi salvati.',false);}
+  async saveMeasurement(){const weight=this.measurementWeight===null?0:this.s.kg(this.measurementWeight);if(!Number.isFinite(weight)||weight<=0||weight>700||this.measurementDate>this.today){this.s.error.set('Controlla la data e il peso.');return;}await this.s.change(d=>{const old=d.measurements.find(m=>m.date===this.measurementDate);const measurement={id:old?.id||uid(),date:this.measurementDate,weight,waist:this.measurementWaist??undefined,bodyFat:this.measurementBodyFat??undefined};if(old)Object.assign(old,measurement);else d.measurements.push(measurement);const latest=[...d.measurements].sort((a,b)=>b.date.localeCompare(a.date))[0];if(latest)d.profiles[0].bodyWeight=latest.weight;},'Misurazione salvata.',false);}
+  async removeMeasurement(id:string){if(confirm('Rimuovere questa misurazione?'))await this.s.change(d=>{d.measurements=d.measurements.filter(m=>m.id!==id);},'Misurazione rimossa.',false);}
   constructor() {
+    const section=inject(ActivatedRoute).snapshot.queryParamMap.get('section');if(section&&['backup','goals','settings','measurements','theme','security','info'].includes(section))this.panel.set(section);
     effect(() => {
       if (!this.s.ready()) return;
       const p = this.s.profile();
       const unit = this.s.settings().unit;
+      this.goalsForm.reset({calories:this.s.settings().goals?.calories??null,protein:this.s.settings().goals?.protein??null,carbs:this.s.settings().goals?.carbs??null,fat:this.s.settings().goals?.fat??null,workoutsPerWeek:this.s.settings().goals?.workoutsPerWeek??null});
       this.form.reset({
         name: p.name,
         bodyWeight:
@@ -345,6 +359,7 @@ export class ProfileComponent {
       return;
     }
     const saved = await this.s.change((d) => {
+      if(bw!==undefined&&bw!==d.profiles[0].bodyWeight){const old=d.measurements.find(m=>m.date===this.today);if(old)old.weight=bw;else d.measurements.push({id:uid(),date:this.today,weight:bw});}
       Object.assign(d.profiles[0], {
         name: v.name!.trim(),
         photo: this.photoDraft()===undefined?d.profiles[0].photo:(this.photoDraft()||undefined),

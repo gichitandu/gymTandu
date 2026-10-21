@@ -49,3 +49,9 @@ Annotare modello iPhone, versione iOS, Safari/PWA, tempi CPU, output del test lo
 ## Aggiornamento foto profilo e username
 
 Da provare sul telefono: scegliere/scattare la foto, verificare anteprima senza salvataggio, confermare con Salva profilo, controllare avatar in alto e persistenza alla riapertura; rimuovere e verificare il backup v3/importazione da File. Per l’account online scegliere un username nel Profilo, uscire e accedere sia con username sia con email. Provare un duplicato con diversa capitalizzazione: deve essere rifiutato. I 40 test automatici attuali includono queste regole lato logica/API e il roundtrip del backup; non sostituiscono la prova Safari.
+
+## Calendario e nuova interfaccia
+
+Il calendario offre Giorno, Settimana (predefinita) e Mese. Verificare su Safari e PWA: cambio periodo, programmazione/modifica/rimozione, avvio della sessione e collegamento allo storico. La rimozione di una programmazione conserva l'allenamento registrato. Provare il nuovo flusso elenco → dettaglio → serie → recupero → riepilogo, con tastiera e uso con una mano.
+
+Verificare inoltre le schede Peso/Forza/Corpo/Alimentazione, gli obiettivi personali, le misurazioni e il backup JSON v4 da File. La migrazione IndexedDB v3 conserva gli archivi precedenti e aggiunge calendario e misurazioni. Sono passati 44 test automatici; le prove su un iPhone reale restano da eseguire.

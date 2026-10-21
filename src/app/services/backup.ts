@@ -2,7 +2,7 @@ import { validateIntegrity } from "./integrity";
 export { validateIntegrity } from "./integrity";
 import { z } from "zod";
 import { DataSet } from "../models/domain";
-export const BACKUP_VERSION = 3;
+export const BACKUP_VERSION = 4;
 const id = z.string().min(1).max(150);
 const text = z.string().max(10000);
 const nonempty = z.string().trim().min(1).max(200);
@@ -142,6 +142,7 @@ const schemas = {
     prefill: z.boolean(),
     lastBackup: time.optional(),
     backgroundColor: z.string().regex(/^#[0-9a-fA-F]{6}$/).optional(),
+    goals:z.object({calories:z.number().positive().max(20000).optional(),protein:z.number().positive().max(2000).optional(),carbs:z.number().positive().max(3000).optional(),fat:z.number().positive().max(2000).optional(),workoutsPerWeek:z.number().int().min(1).max(14).optional()}).optional(),
   }),
 };
 const dataSchema = z.object({
@@ -156,7 +157,9 @@ const dataSchema = z.object({
   workoutExercises: z.array(schemas.workoutExercises).max(300000),
   sets: z.array(schemas.sets).max(1000000),
   settings: z.array(schemas.settings).length(1),
-  meals: z.array(z.object({id,date,name:nonempty,grams:z.number().positive().max(10000),calories:num.max(20000),protein:num.max(2000),carbs:num.max(3000),fat:num.max(2000),notes:text,photo:image.optional(),source:z.enum(["manual","photo-suggestion"]),createdAt:time})).max(10000),
+  scheduledWorkouts:z.array(z.object({id,date,planId:id,dayId:id,planName:nonempty,dayName:nonempty,notes:text,workoutId:id.optional()})).max(10000),
+  measurements:z.array(z.object({id,date,weight:z.number().positive().max(700),waist:z.number().positive().max(300).optional(),bodyFat:z.number().min(1).max(80).optional()})).max(10000),
+  meals: z.array(z.object({id,date,mealType:z.enum(["breakfast","lunch","dinner","snack"]).optional(),name:nonempty,grams:z.number().positive().max(10000),calories:num.max(20000),protein:num.max(2000),carbs:num.max(3000),fat:num.max(2000),notes:text,photo:image.optional(),source:z.enum(["manual","photo-suggestion"]),createdAt:time})).max(10000),
 });
 async function base64(blob: Blob) {
   const bytes = new Uint8Array(await blob.arrayBuffer());
@@ -193,7 +196,7 @@ export async function exportBackup(data: DataSet) {
   );
 }
 // Add explicit vN -> vN+1 pure functions here when the on-disk format evolves.
-export const migrations: Record<number, (value: unknown) => unknown> = {1: value => ({...(value as object),meals:[]}),2:value=>value};
+export const migrations: Record<number, (value: unknown) => unknown> = {1: value => ({...(value as object),meals:[]}),2:value=>value,3:value=>({...value as object,scheduledWorkouts:[],measurements:[]})};
 export async function importBackup(json: string): Promise<DataSet> {
   if (new Blob([json]).size > 50 * 1024 * 1024)
     throw Error("Backup troppo grande: limite 50 MB.");

@@ -35,6 +35,7 @@ export const routes: Routes = [
     loadComponent: () =>
       import("../features/catalog.component").then((m) => m.CatalogComponent),
   },
+  { path: "calendario", loadComponent: () => import("../features/calendar.component").then(m=>m.CalendarComponent) },
   { path: "alimentazione", loadComponent: () => import("../features/nutrition.component").then(m => m.NutritionComponent) },
   { path: "utenti", loadComponent: () => import("../features/users.component").then(m => m.UsersComponent) },
   { path: "**", redirectTo: "" },

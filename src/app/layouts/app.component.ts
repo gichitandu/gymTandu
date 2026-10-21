@@ -15,7 +15,7 @@ import { IconComponent } from '../shared/icon.component';
 </aside>
 <section class="entry-panel" aria-labelledby="entry-title">
 <div class="entry-topline"><button class="entry-back" aria-label="Torna alla presentazione" (click)="welcome.set(true)" [disabled]="auth.setup()"><gt-icon name="back"/></button><span class="entry-language" lang="it">IT</span></div>
-<div class="entry-brand"><img src="/brand/gt-mark.png" alt="Logo GT GymTrack"/><div class="entry-wordmark">Gym<span>Track</span></div></div>
+<div class="entry-brand"><img src="/brand/gt-mark.png" alt="Logo GT GymTrack"/><div class="entry-wordmark">Gym<span>Track</span></div><p class="brand-tagline">ALLENAMENTO · NUTRIZIONE · PROGRESSI</p></div>
 <header class="entry-heading"><h1 id="entry-title">{{auth.setup()?'Attiva il tuo account':'Bentornato'}}</h1><p>{{auth.setup()?'Giacomo, prepara il tuo spazio Super Admin.':'Accedi e continua il tuo percorso.'}}</p></header>
 @if(!auth.setup()){<div class="entry-tabs" role="tablist" aria-label="Modalità di accesso"><button id="account-tab" role="tab" [attr.aria-selected]="tab()==='account'" aria-controls="account-panel" [class.active]="tab()==='account'" (click)="tab.set('account')">Account</button><button id="local-tab" role="tab" [attr.aria-selected]="tab()==='local'" aria-controls="local-panel" [class.active]="tab()==='local'" (click)="tab.set('local')">Sul dispositivo</button></div>}
 @if(tab()==='account' || auth.setup()) {

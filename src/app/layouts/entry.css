@@ -113,3 +113,12 @@
  .entry-brand {margin-bottom:18px;}
  .entry-panel {max-width:460px;margin:auto;}
 }
+@media(max-width:760px),(max-width:1100px) and (pointer:coarse){
+ .entry-brand{min-height:225px;padding:100px 20px 15px;width:calc(100% + 40px);margin:0 -20px 12px;justify-content:flex-end;background:linear-gradient(180deg,#02070d12 0%,#02070d40 40%,#02070df2 100%),url('/gym-hero.webp') 72% 28%/cover;}
+ .entry-brand>img{width:65px;height:65px;filter:drop-shadow(0 2px 15px #007aff60);}
+ .entry-brand .entry-wordmark{font-size:27px;}
+ .entry-brand .brand-tagline{font-size:7px;letter-spacing:1.7px;margin-top:10px;}
+ .entry-panel>.entry-topline{position:absolute;top:0;left:0;right:0;}
+ .entry-heading h1{font-size:22px;}.entry-heading p{font-size:11px;}
+ .entry-tabs{margin-top:18px;}.entry-divider{margin-top:18px;}
+}

@@ -3,7 +3,7 @@ import { AuthService } from "../services/auth";
 import { Store } from "../services/store";
 import { PwaService } from "../services/pwa";
 import { Component, inject } from "@angular/core";
-import { RouterLink, RouterLinkActive, RouterOutlet } from "@angular/router";
+import { Router, RouterLink, RouterLinkActive, RouterOutlet } from "@angular/router";
 import { IconComponent } from "../shared/icon.component";
 @Component({
   selector: "gt-shell",
@@ -14,7 +14,7 @@ import { IconComponent } from "../shared/icon.component";
         ><img class="app-brand-mark" src="/brand/gt-mark.png" alt=""/>Gym<span>Track</span></a
       ><span class="nav-caption">IL TUO SPAZIO</span>
       <nav>
-        @for (item of nav; track item.path) {
+        @for (item of desktopNav; track item.path) {
           <a
             [routerLink]="item.path"
             routerLinkActive="selected"
@@ -42,12 +42,12 @@ import { IconComponent } from "../shared/icon.component";
           >IL TUO DIARIO DI ALLENAMENTO</span
         >
         <div class="topbar-right">
-          <span class="offline-label"><i></i> Archivio locale</span
+          <a class="header-calendar" routerLink="/calendario" aria-label="Apri calendario"><gt-icon name="calendar"/></a><span class="offline-label"><i></i> Archivio locale</span
           ><a class="avatar" routerLink="/profilo" aria-label="Apri profilo"><gt-avatar [photo]="s.profile().photo" [name]="s.profile().name" /></a>
         </div>
       </header>
       <main>@if(auth.offlineMode()){<p class="local-mode-label">Archivio personale locale · funzioni condivise disabilitate</p>}<router-outlet /></main>
-      <div class="secondary-links"><a routerLink="/progressi">Progressi e statistiche ↗</a><a routerLink="/catalogo">Esercizi ↗</a></div><footer>
+      <div class="secondary-links"><a routerLink="/calendario">Calendario ↗</a><a routerLink="/allenamenti">Storico allenamenti ↗</a><a routerLink="/catalogo">Esercizi ↗</a></div><footer>
         OGNI RIPETIZIONE CONTA. <span>Costruisci il tuo prossimo livello.</span>
       </footer>
     </div>
@@ -56,6 +56,7 @@ import { IconComponent } from "../shared/icon.component";
         <a
           [routerLink]="item.path"
           routerLinkActive="selected"
+          [class.training-selected]="item.path==='/piani'&&(router.url.startsWith('/sessione')||router.url.startsWith('/allenamenti'))"
           [routerLinkActiveOptions]="{ exact: true }"
           ><gt-icon [name]="item.icon" /><span>{{ item.label }}</span></a
         >
@@ -63,14 +64,16 @@ import { IconComponent } from "../shared/icon.component";
     </nav>`,
 })
 export class ShellComponent {
+  router=inject(Router);
   auth = inject(AuthService);
   s = inject(Store);
   pwa = inject(PwaService);
   nav = [
-    { path: "/", label: "Home", icon: "home" },
-    { path: "/piani", label: "Piani", icon: "plans" },
-    { path: "/allenamenti", label: "Allenamenti", icon: "weight" },
-    { path: "/alimentazione", label: "Pasti", icon: "activity" },
-    { path: "/profilo", label: "Profilo", icon: "user" },
+    {path:'/',label:'Home',icon:'home'},
+    {path:'/piani',label:'Allenamenti',icon:'weight'},
+    {path:'/alimentazione',label:'Alimentazione',icon:'nutrition'},
+    {path:'/progressi',label:'Progressi',icon:'chart'},
+    {path:'/profilo',label:'Profilo',icon:'user'},
   ];
+  desktopNav=[...this.nav,{path:'/calendario',label:'Calendario',icon:'calendar'},{path:'/allenamenti',label:'Storico',icon:'clock'}];
 }

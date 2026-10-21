@@ -18,6 +18,8 @@ export function seed(): DataSet {
     exercises: structuredClone(defaultExercises),
     muscleGroups: structuredClone(defaultGroups),
     meals: [],
+    scheduledWorkouts: [],
+    measurements: [],
     workouts: [],
     workoutExercises: [],
     sets: [],

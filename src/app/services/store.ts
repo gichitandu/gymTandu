@@ -455,6 +455,7 @@ export class Store {
       d.sets = d.sets.filter((s) => !ids.has(s.workoutExerciseId));
       d.workoutExercises = d.workoutExercises.filter((e) => e.workoutId !== id);
       d.workouts = d.workouts.filter((w) => w.id !== id);
+      for(const event of d.scheduledWorkouts)if(event.workoutId===id)delete event.workoutId;
     }, "Allenamento eliminato.");
   }
   canEditCatalog() { return !!this.auth?.user() && !this.auth.offlineMode() && ["Admin","SuperAdmin"].includes(this.auth.user()!.role); }
@@ -493,6 +494,24 @@ export class Store {
   async saveMuscleGroup(id:string,name:string) {
     if(!this.canEditCatalog()) {this.error.set('Operazione riservata agli admin.');return;}
     try{await this.auth!.request('catalog/group',{id,name});await this.refreshCatalog();this.message.set('Gruppo salvato.');}catch(e){this.error.set((e as Error).message);}
+  }
+  async scheduleWorkout(date:string,dayId:string,notes='',id:string=uid()) {
+    return this.change(d=>{
+      const day=d.days.find(x=>x.id===dayId),plan=d.plans.find(p=>p.id===day?.planId);
+      const parsed=new Date(date+'T12:00:00');
+      if(!day||!plan||plan.archived||!/^\d{4}-\d{2}-\d{2}$/.test(date)||!Number.isFinite(parsed.getTime())||localDate(parsed)!==date)throw Error('Seleziona un giorno valido di un piano disponibile.');
+      if(d.scheduledWorkouts.some(e=>e.date===date&&e.dayId===dayId&&e.id!==id))throw Error('Questo allenamento è già programmato per la data scelta.');
+      const event={id,date,dayId,planId:plan.id,planName:plan.name,dayName:day.name,notes:notes.trim()};
+      const index=d.scheduledWorkouts.findIndex(e=>e.id===id);if(index>=0){const old=d.scheduledWorkouts[index];if(old.workoutId)throw Error('Un allenamento già avviato non può essere riprogrammato.');d.scheduledWorkouts[index]=event;}else d.scheduledWorkouts.push(event);
+    },'Allenamento programmato.',false);
+  }
+  async startScheduled(id:string) {
+    const event=this.data().scheduledWorkouts.find(e=>e.id===id);if(!event)return false;
+    const linked=this.data().workouts.find(w=>w.id===event.workoutId);if(linked?.status==='completed'){this.error.set('Questa sessione è già stata completata.');return false;}
+    if(this.draft()&&this.data().scheduledWorkouts.some(e=>e.id!==id&&e.workoutId===this.draft()!.id)){this.error.set('La sessione in corso è già associata a un’altra programmazione.');return false;}
+    if(this.draft()&&this.draft()!.id!==event.workoutId&&this.draft()!.dayId!==event.dayId){this.error.set('Concludi o riprendi prima la sessione già in corso.');return false;}
+    if(!await this.start(event.dayId))return false;
+    return this.change(d=>{const e=d.scheduledWorkouts.find(e=>e.id===id)!;const w=d.workouts.find(w=>w.status==='draft');if(w&&w.dayId===e.dayId)e.workoutId=w.id;},'',false);
   }
   async savePlanExercise(e: TrainingPlanExercise) {
     if(this.auth?.user() && !this.auth.offlineMode()) {try{await this.refreshCatalog();}catch{this.message.set('Modalità offline: scelta dal catalogo salvato su questo dispositivo.');}}

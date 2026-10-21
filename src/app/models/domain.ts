@@ -97,6 +97,7 @@ export interface WorkoutLogSet extends Entity {
   completed: boolean;
 }
 export interface Meal extends Entity {
+  mealType?: "breakfast"|"lunch"|"dinner"|"snack";
   date: string;
   name: string;
   grams: number;
@@ -109,12 +110,18 @@ export interface Meal extends Entity {
   source: "manual" | "photo-suggestion";
   createdAt: string;
 }
+export interface ScheduledWorkout extends Entity {
+  date: string; planId:string; dayId:string; planName:string; dayName:string; notes:string; workoutId?:string;
+}
+export interface BodyMeasurement extends Entity {date:string;weight:number;waist?:number;bodyFat?:number;}
+export interface PersonalGoals {calories?:number;protein?:number;carbs?:number;fat?:number;workoutsPerWeek?:number;}
 export interface AppSettings extends Entity {
   theme: "dark" | "light";
   unit: "kg" | "lb";
   prefill: boolean;
   lastBackup?: string;
   backgroundColor?: string;
+  goals?: PersonalGoals;
 }
 export interface DataSet {
   profiles: UserProfile[];
@@ -129,6 +136,8 @@ export interface DataSet {
   sets: WorkoutLogSet[];
   settings: AppSettings[];
   meals: Meal[];
+  scheduledWorkouts: ScheduledWorkout[];
+  measurements: BodyMeasurement[];
 }
 export const TABLES: (keyof DataSet)[] = [
   "profiles",
@@ -143,6 +152,8 @@ export const TABLES: (keyof DataSet)[] = [
   "sets",
   "settings",
   "meals",
+  "scheduledWorkouts",
+  "measurements",
 ];
 export const uid = () => crypto.randomUUID();
 export const now = () => new Date().toISOString();

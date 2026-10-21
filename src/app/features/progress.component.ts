@@ -1,3 +1,6 @@
+import { DataChartComponent, DataPoint } from "../shared/data-chart.component";
+import { RouterLink } from "@angular/router";
+import { localDate } from "../models/domain";
 import { Component, computed, inject, signal } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import { Store } from "../services/store";
@@ -8,19 +11,28 @@ import { StatusComponent } from "../shared/status.component";
   standalone: true,
   imports: [
     FormsModule,
+    DataChartComponent,
+    RouterLink,
     ProgressChartComponent,
     IconComponent,
     StatusComponent,
   ],
-  template: `<div class="page-heading">
+  template: `<div class="page-heading compact-heading">
       <div>
         <p class="eyebrow">MISURA. MIGLIORA. RIPETI.</p>
-        <h1>I tuoi progressi</h1>
+        <h1>Progressi</h1>
         <p class="subtle">I numeri raccontano la tua costanza.</p>
       </div>
       <span class="pill green">DATI REALI · ARCHIVIO LOCALE</span>
     </div>
     <gt-status />
+    <div class="segmented progress-tabs"><button [class.active]="category()==='weight'" (click)="category.set('weight')">Peso</button><button [class.active]="category()==='strength'" (click)="category.set('strength')">Forza</button><button [class.active]="category()==='body'" (click)="category.set('body')">Corpo</button><button [class.active]="category()==='nutrition'" (click)="category.set('nutrition')">Alimentazione</button></div>
+    @if(category()!=='strength'){<div class="filters"><label>Periodo<select [ngModel]="period()" (ngModelChange)="period.set(+$event)"><option value="1">1 mese</option><option value="3">3 mesi</option><option value="6">6 mesi</option><option value="12">1 anno</option><option value="0">Tutto</option></select></label><a class="button ghost" routerLink="/profilo" [queryParams]="{section:category()==='nutrition'?'goals':'measurements'}">{{category()==='nutrition'?'Obiettivi':'Registra misurazione'}}</a></div>}
+    @if(category()==='weight'){<section class="card"><h2>Peso corporeo ({{s.settings().unit}})</h2><gt-data-chart [points]="weightPoints()" [unit]="s.settings().unit" title="Andamento del peso corporeo"/></section><div class="overview-primary" style="margin-top:16px"><div class="card"><p class="subtle">Peso attuale</p><strong class="record-value">{{s.profile().bodyWeight!==undefined?s.formatWeight(s.profile().bodyWeight!):'—'}} {{s.settings().unit}}</strong></div><div class="card"><p class="subtle">Rilevazioni nel periodo</p><strong class="record-value">{{measurements().length}}</strong></div></div>}
+    @if(category()==='body'){<section class="card"><h2>Girovita</h2><gt-data-chart [points]="waistPoints()" unit="cm" title="Misurazioni del girovita"/></section><section class="card" style="margin-top:16px"><h2>Massa grassa registrata</h2><gt-data-chart [points]="fatPoints()" unit="%" title="Percentuale di massa grassa inserita manualmente"/><p class="subtle">Valori inseriti da te, non dedotti da fotografie.</p></section>}
+    @if(category()==='nutrition'){<section class="card"><h2>Calorie registrate</h2><gt-data-chart [points]="nutritionPoints()" unit="kcal" title="Calorie dei giorni registrati"/><p class="subtle">Solo i giorni con pasti registrati. Un giorno senza dati non è considerato un giorno a zero calorie.</p></section><a class="button primary full-width" style="margin-top:18px" routerLink="/alimentazione">Apri diario alimentare</a>}
+    @if(category()==='strength'){
+
     <section class="card">
       <div class="card-head">
         <div>
@@ -176,9 +188,18 @@ import { StatusComponent } from "../shared/status.component";
         </div>
         <gt-progress-chart initialMetric="weekly" />
       </section>
-    </div>`,
+    </div>}
+    <div class="overview-primary" style="margin-top:18px"><div class="card"><p class="subtle">Volume totale</p><strong class="record-value">{{s.formatWeight(s.totalVolume())}} <small>{{s.settings().unit}}</small></strong></div><div class="card"><p class="subtle">Allenamenti completati</p><strong class="record-value">{{s.completed().length}}</strong></div></div>`,
 })
 export class ProgressComponent {
+  category=signal<'weight'|'strength'|'body'|'nutrition'>('weight');period=signal(3);
+  cutoff(){if(!this.period())return '';const d=new Date();d.setMonth(d.getMonth()-this.period());return localDate(d);}
+  measurements=computed(()=>this.s.data().measurements.filter(m=>!this.cutoff()||m.date>=this.cutoff()).sort((a,b)=>a.date.localeCompare(b.date)));
+  dateLabel(date:string){return new Date(date+'T12:00:00').toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit'});}
+  weightPoints=computed(()=>this.measurements().map(m=>({label:this.dateLabel(m.date),value:this.s.weight(m.weight)})));
+  waistPoints=computed(()=>this.measurements().filter(m=>m.waist!==undefined).map(m=>({label:this.dateLabel(m.date),value:m.waist!})));
+  fatPoints=computed(()=>this.measurements().filter(m=>m.bodyFat!==undefined).map(m=>({label:this.dateLabel(m.date),value:m.bodyFat!})));
+  nutritionPoints=computed(()=>{const totals=new Map<string,number>();for(const m of this.s.data().meals)if(!this.cutoff()||m.date>=this.cutoff())totals.set(m.date,(totals.get(m.date)||0)+m.calories);return [...totals].sort(([a],[b])=>a.localeCompare(b)).map(([date,value])=>({label:this.dateLabel(date),value}));});
   s = inject(Store);
   exerciseId = signal("");
   defaultId = computed(() => this.s.data().exercises[0]?.id || "");
