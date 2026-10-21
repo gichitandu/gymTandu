@@ -160,7 +160,7 @@ describe("Backup", () => {
   it("rifiuta JSON malformato e versioni future", async () => {
     await expect(importBackup("{")).rejects.toThrow("JSON");
     const raw = JSON.parse(await exportBackup(fixture()));
-    raw.schemaVersion = 2;
+    raw.schemaVersion = 3;
     await expect(importBackup(JSON.stringify(raw))).rejects.toThrow("recente");
   });
   it("rifiuta dati mancanti, numeri non validi e riferimenti orfani", async () => {
@@ -218,7 +218,7 @@ describe("IndexedDB e transazioni", () => {
     databases.push(db);
     const stored = await db.snapshot();
     expect(stored.plans[0].name).toBe("Forza aggiornata");
-    expect(stored.exercises.length).toBe(21);
+    expect(stored.exercises.length).toBe(97);
     expect(stored.sets.length).toBe(2);
   });
   it("rifiuta restore inconsistente senza modificare i dati correnti", async () => {

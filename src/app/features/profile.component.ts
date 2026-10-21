@@ -1,3 +1,4 @@
+import { IosStatusComponent } from "../shared/ios-status.component";
 import { ThemeService, DEFAULT_BACKGROUND } from "../services/theme";
 import { AuthService } from "../services/auth";
 import { A11yModule } from "@angular/cdk/a11y";
@@ -20,6 +21,7 @@ import { PwaService } from "../services/pwa";
   standalone: true,
   imports: [
     A11yModule,
+    IosStatusComponent,
     ReactiveFormsModule,
     FormsModule,
     RouterLink,
@@ -93,7 +95,7 @@ import { PwaService } from "../services/pwa";
           <div class="theme-picker"><h3>Colore dello sfondo</h3><p class="subtle">Scegli qualsiasi colore: viene salvato solo sul tuo account.</p>
           <div class="theme-swatches">@for(color of theme.presets;track color){<button type="button" class="swatch" [style.background]="color" [class.chosen]="theme.color()===color" [attr.aria-label]="'Sfondo '+color" [attr.aria-pressed]="theme.color()===color" [disabled]="theme.busy()" (click)="theme.save(color)">@if(theme.color()===color){<span>✓</span>}</button>}</div>
           <div class="color-custom"><label>Colore personalizzato<input type="color" [value]="theme.color()" (change)="theme.save($any($event.target).value)" [disabled]="theme.busy()" /></label><label>Codice HEX<input #backgroundHex type="text" [value]="theme.color()" maxlength="7" pattern="#[0-9a-fA-F]{6}" aria-label="Codice colore esadecimale" /></label><button [disabled]="theme.busy()" (click)="theme.save(backgroundHex.value)">Applica</button></div>
-          <div class="actions"><button class="ghost" [disabled]="theme.busy()" (click)="theme.save(defaultBackground)">Ripristina sfondo originale</button><span class="subtle" role="status">{{theme.busy()?'Salvataggio…':''}}</span></div>
+          <div class="actions"><button class="ghost" [disabled]="theme.busy()" (click)="theme.save(defaultBackground)">Ripristina sfondo originale</button><span class="subtle" role="status">{{theme.busy()?'Salvataggio…':theme.status()}}</span></div>
           @if(theme.error()){<p class="notice error" role="alert">{{theme.error()}}</p>}
           </div>
           <div class="setting-row" style="margin-top:20px">
@@ -184,8 +186,8 @@ import { PwaService } from "../services/pwa";
         sicuro.
       </div>
       <p class="subtle">
-        Il backup include profilo, piani, catalogo, immagini, allenamenti, serie
-        e impostazioni. L’importazione sostituisce l’intero archivio in un’unica
+        Il backup include profilo, piani, catalogo, immagini, allenamenti, serie,
+        impostazioni e alimentazione con foto. L’importazione sostituisce l’intero archivio in un’unica
         transazione.
       </p>
       <div class="actions">
@@ -199,8 +201,7 @@ import { PwaService } from "../services/pwa";
           (click)="backupInput.click()"
           [disabled]="working() || !s.ready()"
         >
-          Importa backup</button
-        ><input
+          Importa backup</button>@if(backupFile()){<button (click)="shareBackup()">Condividi JSON → Salva su File</button>}<input
           #backupInput
           type="file"
           accept="application/json,.json"
@@ -223,15 +224,17 @@ import { PwaService } from "../services/pwa";
       @if(accountError()) {<p class="notice error" role="alert">{{accountError()}}</p>}
       @if(accountMessage()) {<p class="notice success" role="status">{{accountMessage()}}</p>}
       @if(auth.user()?.role === 'SuperAdmin') {<div class="actions"><a class="button primary" routerLink="/utenti">Gestione utenti</a></div>}
+      @if(!auth.offlineMode()){<div class="actions"><button (click)="rememberOffline()">Consenti accesso offline su questo iPhone</button></div><p class="subtle">L’archivio sarà accessibile a chi usa questo dispositivo; le funzioni amministrative restano online.</p>
       <form (ngSubmit)="changePassword()" class="form-grid" style="margin-top:24px">
         <input type="text" name="username" [ngModel]="auth.user()?.email" autocomplete="username" hidden />
         <label class="wide">Password attuale<input name="current-password" type="password" autocomplete="current-password" [(ngModel)]="currentPassword" required maxlength="128" /></label>
         <label>Nuova password<input name="new-password" type="password" autocomplete="new-password" [(ngModel)]="newPassword" required minlength="8" maxlength="128" /></label>
         <label>Conferma nuova password<input name="confirm-password" type="password" autocomplete="new-password" [(ngModel)]="confirmPassword" required minlength="8" maxlength="128" /></label>
         <div class="actions wide"><button class="primary" [disabled]="accountBusy()">Aggiorna password</button><button type="button" (click)="logout()">Esci dall’account</button></div>
-      </form>
+      </form>} @else {<div class="actions"><button (click)="logout()">Esci dall’archivio locale</button></div>}
       <p class="subtle" style="margin-top:16px">Puoi salvare e compilare le credenziali con l’app Password di iOS. Gli allenamenti rimangono su questo dispositivo, separati per account.</p>
     </section>
+    <gt-ios-status />
     @if (pending(); as backup) {
       <div class="modal-backdrop">
         <section
@@ -248,7 +251,7 @@ import { PwaService } from "../services/pwa";
             Formato e riferimenti verificati. Contiene
             {{ backup.plans.length }} piani,
             {{ backup.exercises.length }} esercizi e
-            {{ backup.workouts.length }} sessioni.
+            {{ backup.workouts.length }} sessioni e {{backup.meals.length}} pasti.
           </p>
           <div class="notice error" style="margin-top:20px">
             Tutti i dati attuali saranno sostituiti. Esporta prima un backup se
@@ -282,11 +285,14 @@ export class ProfileComponent {
     this.accountBusy.set(true);
     try { await this.auth.request("auth/password", {currentPassword:this.currentPassword,password:this.newPassword}); this.currentPassword="";this.newPassword="";this.confirmPassword="";this.accountMessage.set("Password aggiornata. Le altre sessioni sono state chiuse."); } catch(e) { this.accountError.set((e as Error).message); } finally {this.accountBusy.set(false);}
   }
+  rememberOffline() {try{this.auth.enableOffline();this.accountMessage.set("Archivio abilitato per l’accesso offline su questo dispositivo.");}catch(e){this.accountError.set((e as Error).message);}}
   async logout() { try { await this.auth.logout(); } catch(e) {this.accountError.set((e as Error).message);} }
   pwa = inject(PwaService);
   fb = inject(FormBuilder);
   working = signal(false);
   pending = signal<DataSet | undefined>(undefined);
+  backupFile = signal<File | null>(null);
+  async shareBackup(){const file=this.backupFile();if(!file)return;try{if(navigator.canShare?.({files:[file]})){await navigator.share({files:[file],title:"Backup GymTrack"});}else{this.s.message.set("Usa il download del backup e spostalo in File dal menu Condividi di Safari.");}}catch(e){if((e as Error).name!=="AbortError")this.s.error.set("Condivisione non disponibile. Usa il download JSON.");}}
   today = new Date().toISOString().slice(0, 10);
   form = this.fb.group({
     name: ["", [Validators.required, Validators.pattern(/\S/)]],
@@ -351,7 +357,9 @@ export class ProfileComponent {
     try {
       const d = structuredClone(this.s.data());
       d.settings[0].lastBackup = new Date().toISOString();
+      d.settings[0].backgroundColor=this.theme.color();
       const text = await exportBackup(d);
+      this.backupFile.set(new File([text],"gymtrack-backup-"+this.today+".json",{type:"application/json"}));
       const url = URL.createObjectURL(
         new Blob([text], { type: "application/json" }),
       );
@@ -404,8 +412,10 @@ export class ProfileComponent {
           "Backup ripristinato.",
           false,
         )
-      )
+      ) {
+        if(d.settings[0].backgroundColor)await this.theme.save(d.settings[0].backgroundColor);
         this.pending.set(undefined);
+      }
     } finally {
       this.working.set(false);
     }

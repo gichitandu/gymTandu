@@ -2,7 +2,7 @@ import { validateIntegrity } from "./integrity";
 export { validateIntegrity } from "./integrity";
 import { z } from "zod";
 import { DataSet } from "../models/domain";
-export const BACKUP_VERSION = 1;
+export const BACKUP_VERSION = 2;
 const id = z.string().min(1).max(150);
 const text = z.string().max(10000);
 const nonempty = z.string().trim().min(1).max(200);
@@ -140,6 +140,7 @@ const schemas = {
     unit: z.enum(["kg", "lb"]),
     prefill: z.boolean(),
     lastBackup: time.optional(),
+    backgroundColor: z.string().regex(/^#[0-9a-fA-F]{6}$/).optional(),
   }),
 };
 const dataSchema = z.object({
@@ -154,6 +155,7 @@ const dataSchema = z.object({
   workoutExercises: z.array(schemas.workoutExercises).max(300000),
   sets: z.array(schemas.sets).max(1000000),
   settings: z.array(schemas.settings).length(1),
+  meals: z.array(z.object({id,date,name:nonempty,grams:z.number().positive().max(10000),calories:num.max(20000),protein:num.max(2000),carbs:num.max(3000),fat:num.max(2000),notes:text,photo:image.optional(),source:z.enum(["manual","photo-suggestion"]),createdAt:time})).max(10000),
 });
 async function base64(blob: Blob) {
   const bytes = new Uint8Array(await blob.arrayBuffer());
@@ -164,6 +166,10 @@ async function base64(blob: Blob) {
 }
 export async function exportBackup(data: DataSet) {
   validateIntegrity(data);
+  const imageBytes = data.exercises.reduce((n,e)=>n+(e.image?.size||0),0)+data.meals.reduce((n,e)=>n+(e.photo?.size||0),0);
+  if(imageBytes>25*1024*1024) throw Error("Troppe foto per un backup su questo dispositivo. Rimuovi alcune foto dei pasti e riprova.");
+  const meals=[];
+  for(const m of data.meals) meals.push({...m,photo:m.photo?{mime:m.photo.type,data:await base64(m.photo)}:undefined});
   const exercises = await Promise.all(
     data.exercises.map(async (e) => ({
       ...e,
@@ -177,14 +183,14 @@ export async function exportBackup(data: DataSet) {
       app: "GymTrack",
       schemaVersion: BACKUP_VERSION,
       exportedAt: new Date().toISOString(),
-      data: { ...data, exercises },
+      data: { ...data, exercises, meals },
     },
     null,
     2,
   );
 }
 // Add explicit vN -> vN+1 pure functions here when the on-disk format evolves.
-export const migrations: Record<number, (value: unknown) => unknown> = {};
+export const migrations: Record<number, (value: unknown) => unknown> = {1: value => ({...(value as object),meals:[]})};
 export async function importBackup(json: string): Promise<DataSet> {
   if (new Blob([json]).size > 50 * 1024 * 1024)
     throw Error("Backup troppo grande: limite 50 MB.");
@@ -225,7 +231,19 @@ export async function importBackup(json: string): Promise<DataSet> {
   const exercises = await Promise.all(
     data.exercises.map(async (e) => {
       if (!e.image) return { ...e, image: undefined };
-      const { mime, data: encoded } = e.image;
+      const blob = await decodeBackupImage(e.image);
+      return { ...e, image: blob };
+    }),
+  );
+  const meals = [];
+  for (const m of data.meals) meals.push({...m,photo:m.photo?await decodeBackupImage(m.photo):undefined});
+  const result: DataSet = { ...data, exercises, meals };
+  validateIntegrity(result);
+  return result;
+}
+
+async function decodeBackupImage(image: {mime:string;data:string}) {
+  const { mime, data: encoded } = image;
       let bytes: Uint8Array;
       try {
         bytes = Uint8Array.from(atob(encoded), (c) => c.charCodeAt(0));
@@ -252,10 +270,6 @@ export async function importBackup(json: string): Promise<DataSet> {
           throw Error("Contenuto immagine non decodificabile.");
         }
       }
-      return { ...e, image: blob };
-    }),
-  );
-  const result: DataSet = { ...data, exercises };
-  validateIntegrity(result);
-  return result;
+
+  return blob;
 }

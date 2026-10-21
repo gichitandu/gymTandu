@@ -84,7 +84,10 @@ export class Store {
       }
       if (this.auth?.user()) d.profiles[0].role = this.auth.user()!.role;
       this.data.set(d);
-      if (this.auth?.user()) { await this.refreshCatalog(); await this.theme?.load(); }
+      if (this.auth?.user() && !this.auth.offlineMode() && navigator.onLine) {
+        try {await this.refreshCatalog();} catch {this.message.set("Catalogo online non raggiungibile: uso la copia locale. Allenamenti e pasti restano disponibili.");}
+      }
+      await this.theme?.load();
       this.applyTheme();
       this.ready.set(true);
     } catch (e) {
@@ -454,9 +457,9 @@ export class Store {
       d.workouts = d.workouts.filter((w) => w.id !== id);
     }, "Allenamento eliminato.");
   }
-  canEditCatalog() { return !!this.auth?.user() && ["Admin","SuperAdmin"].includes(this.auth.user()!.role); }
+  canEditCatalog() { return !!this.auth?.user() && !this.auth.offlineMode() && ["Admin","SuperAdmin"].includes(this.auth.user()!.role); }
   async refreshCatalog() {
-    if (!this.auth?.user()) return;
+    if (!this.auth?.user() || this.auth.offlineMode()) return;
     const catalog=await this.auth.request('catalog');
     const exercises: Exercise[]=await Promise.all(catalog.exercises.map(async (e:any)=>{
       const {imageData,...item}=e;
@@ -492,7 +495,7 @@ export class Store {
     try{await this.auth!.request('catalog/group',{id,name});await this.refreshCatalog();this.message.set('Gruppo salvato.');}catch(e){this.error.set((e as Error).message);}
   }
   async savePlanExercise(e: TrainingPlanExercise) {
-    if(this.auth?.user()) {try{await this.refreshCatalog();}catch{this.error.set('Connettiti per verificare il catalogo aggiornato.');return false;}}
+    if(this.auth?.user() && !this.auth.offlineMode()) {try{await this.refreshCatalog();}catch{this.message.set('Modalità offline: scelta dal catalogo salvato su questo dispositivo.');}}
     if(!this.exercise(e.exerciseId)?.active) {this.error.set('Questo esercizio non è attivo nel catalogo.');return false;}
     return this.change((d) => {
       if (

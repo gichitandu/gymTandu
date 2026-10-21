@@ -16,21 +16,23 @@ import { ShellComponent } from './shell.component';
 <label for="login-password">{{auth.setup()?'Scegli una password':'Password'}}<input id="login-password" name="password" [type]="show()?'text':'password'" [attr.autocomplete]="auth.setup()?'new-password':'current-password'" [(ngModel)]="password" required [minlength]="auth.setup()?8:1" maxlength="128" /></label>
 <label class="password-toggle"><input type="checkbox" name="show" [ngModel]="show()" (ngModelChange)="show.set($event)" /> Mostra password</label>
 @if(auth.setup()) {<label>Conferma password<input name="confirm-password" type="password" autocomplete="new-password" [(ngModel)]="confirm" required minlength="8" maxlength="128" /></label>}
+<label class="password-toggle"><input type="checkbox" name="offline-access" [(ngModel)]="remember" /> Consenti di riaprire il mio archivio offline su questo iPhone</label><p class="subtle">L’archivio offline è accessibile a chi usa questo dispositivo. Nessuna password viene salvata dall’app; le funzioni admin richiedono sempre l’accesso online.</p>
 <button class="primary" [disabled]="busy()">{{busy()?'Attendi…':auth.setup()?'Attiva Super Admin':'Accedi'}}</button>
 </form>
 <p class="subtle" style="margin-top:22px">Su iPhone puoi salvare la password nell’app Password e compilarla con Face ID. Accetta la proposta di Safari dopo l’accesso.</p>
 @if(!auth.setup()) {<p class="subtle" style="margin-top:12px">Per un nuovo account o una password dimenticata contatta il Super Admin.</p>}
-<p class="subtle" style="margin-top:12px">L’accesso al sito resta protetto anche da ChatGPT.</p>
+<p class="subtle" style="margin-top:12px">Gli account condivisi usano il servizio online. Gli allenamenti e l’alimentazione possono essere usati anche senza account.</p>
 }
+<div class="actions"><button class="primary" (click)="auth.openLocal()">Usa GymTrack senza account</button>@if(auth.offlineAccount();as u){<button (click)="auth.openLocal(true)">Apri archivio offline · {{u.name}}</button>}</div><p class="subtle" style="margin-top:12px">La modalità senza account usa un archivio separato e non modifica i dati dell’account esistente.</p>
 </section></main>}
 `})
 export class AppComponent {
- auth=inject(AuthService);email='';password='';confirm='';busy=signal(false);error=signal('');show=signal(false);
+ auth=inject(AuthService);remember=false;email='';password='';confirm='';busy=signal(false);error=signal('');show=signal(false);
  async submit() {
   if(this.busy()) return;this.error.set('');
   if(this.auth.setup()&&this.password!==this.confirm) {this.error.set('Le password non coincidono.');return;}
   this.busy.set(true);
-  try {await this.auth.login(this.auth.setup()?this.auth.ownerEmail():this.email,this.password,this.auth.setup());this.password='';this.confirm='';}
+  try {await this.auth.login(this.auth.setup()?this.auth.ownerEmail():this.email,this.password,this.auth.setup(),this.remember);this.password='';this.confirm='';}
   catch(e) {this.error.set(e instanceof Error?e.message:'Accesso non riuscito.');}
   finally {this.busy.set(false);}
  }

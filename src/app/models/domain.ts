@@ -95,11 +95,25 @@ export interface WorkoutLogSet extends Entity {
   notes?: string;
   completed: boolean;
 }
+export interface Meal extends Entity {
+  date: string;
+  name: string;
+  grams: number;
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+  notes: string;
+  photo?: Blob;
+  source: "manual" | "photo-suggestion";
+  createdAt: string;
+}
 export interface AppSettings extends Entity {
   theme: "dark" | "light";
   unit: "kg" | "lb";
   prefill: boolean;
   lastBackup?: string;
+  backgroundColor?: string;
 }
 export interface DataSet {
   profiles: UserProfile[];
@@ -113,6 +127,7 @@ export interface DataSet {
   workoutExercises: WorkoutLogExercise[];
   sets: WorkoutLogSet[];
   settings: AppSettings[];
+  meals: Meal[];
 }
 export const TABLES: (keyof DataSet)[] = [
   "profiles",
@@ -126,6 +141,7 @@ export const TABLES: (keyof DataSet)[] = [
   "workoutExercises",
   "sets",
   "settings",
+  "meals",
 ];
 export const uid = () => crypto.randomUUID();
 export const now = () => new Date().toISOString();

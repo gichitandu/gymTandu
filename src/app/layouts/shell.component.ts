@@ -49,12 +49,12 @@ import { IconComponent } from "../shared/icon.component";
           }}</a>
         </div>
       </header>
-      <main><router-outlet /></main>
-      <footer>
+      <main>@if(auth.offlineMode()){<p class="local-mode-label">Archivio personale locale · funzioni condivise disabilitate</p>}<router-outlet /></main>
+      <div class="secondary-links"><a routerLink="/progressi">Progressi e statistiche ↗</a><a routerLink="/catalogo">Esercizi ↗</a></div><footer>
         OGNI RIPETIZIONE CONTA. <span>Costruisci il tuo prossimo livello.</span>
       </footer>
     </div>
-    <nav class="bottom-nav">
+    <nav class="bottom-nav" aria-label="Navigazione principale">
       @for (item of nav; track item.path) {
         <a
           [routerLink]="item.path"
@@ -73,7 +73,7 @@ export class ShellComponent {
     { path: "/", label: "Home", icon: "home" },
     { path: "/piani", label: "Piani", icon: "plans" },
     { path: "/allenamenti", label: "Allenamenti", icon: "weight" },
-    { path: "/progressi", label: "Progressi", icon: "chart" },
+    { path: "/alimentazione", label: "Pasti", icon: "activity" },
     { path: "/profilo", label: "Profilo", icon: "user" },
   ];
 }

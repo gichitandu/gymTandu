@@ -11,6 +11,7 @@ const types = {
   ".webmanifest": "application/manifest+json",
   ".png": "image/png",
   ".svg": "image/svg+xml",
+  ".webp": "image/webp",
 };
 http
   .createServer(async (req, res) => {

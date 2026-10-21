@@ -1,0 +1,7 @@
+TensorFlow.js 4.22.0 and MobileNet/ImageNet label references are provided by the TensorFlow authors under Apache License 2.0 (tensorflow-LICENSE.txt).
+Sources:
+https://github.com/tensorflow/tfjs
+https://github.com/tensorflow/tfjs-models/tree/master/mobilenet
+https://storage.googleapis.com/tfjs-models/tfjs/mobilenet_v1_0.25_224/model.json
+
+The optional model is downloaded only at the user's request. No model weights are included in the core application. Any measured speed shown by GymTrack is a runtime measurement on the current device, not a claimed iPhone benchmark.

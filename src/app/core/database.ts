@@ -17,6 +17,7 @@ export class GymDatabase extends Dexie {
       sets: "id,workoutExerciseId",
       settings: "id",
     });
+    this.version(2).stores({meals: "id,date,name"});
   }
   entity<K extends keyof DataSet>(name: K): Table<DataSet[K][number], string> {
     return this.table(name);

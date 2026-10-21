@@ -45,6 +45,9 @@ export function validateIntegrity(d: DataSet) {
   for (const s of d.sets)
     if (!exists("workoutExercises", s.workoutExerciseId))
       fail("esercizio della serie mancante");
+  for(const m of d.meals) {
+    if(!m.name.trim()||!/^\d{4}-\d{2}-\d{2}$/.test(m.date)||!Number.isFinite(m.grams)||m.grams<=0||m.grams>10000||[m.calories,m.protein,m.carbs,m.fat].some((v,i)=>!Number.isFinite(v)||v<0||v>[20000,2000,3000,2000][i])||m.photo && (m.photo.size>500*1024||!["image/jpeg","image/png","image/webp"].includes(m.photo.type))) fail("pasto non valido");
+  }
   const setKeys = d.sets.map((s) => s.workoutExerciseId + ":" + s.number);
   if (new Set(setKeys).size !== setKeys.length) fail("numeri serie duplicati");
 }

@@ -1,3 +1,4 @@
+import { compressPhoto } from "../services/images";
 import { ExerciseVideoComponent } from "../shared/exercise-video.component";
 import { A11yModule } from "@angular/cdk/a11y";
 import { Component, computed, inject, signal } from "@angular/core";
@@ -176,11 +177,12 @@ import { StatusComponent } from "../shared/status.component";
                   formControlName="tags"
                   maxlength="200" /></label
               ><label class="wide"
-                >Immagine (JPEG, PNG o WebP, massimo 2 MB)<input
+                >Foto (compressa sul dispositivo prima del salvataggio)<input
                   type="file"
-                  accept="image/jpeg,image/png,image/webp"
+                  accept="image/*"
                   (change)="image($event)"
               /></label>
+              <label class="wide">Scatta una foto<input type="file" accept="image/*" capture="environment" (change)="image($event)" /></label>
               @if (imageBlob) {
                 <div class="wide">
                   <span class="pill green">Immagine selezionata</span>
@@ -290,21 +292,8 @@ export class CatalogComponent {
   async image(event: Event) {
     const file = (event.target as HTMLInputElement).files?.[0];
     if (!file) return;
-    if (
-      !["image/jpeg", "image/png", "image/webp"].includes(file.type) ||
-      file.size > 2 * 1024 * 1024
-    ) {
-      this.s.error.set("Usa un’immagine JPEG, PNG o WebP entro 2 MB.");
-      (event.target as HTMLInputElement).value = "";
-      return;
-    }
-    try {
-      const bitmap = await createImageBitmap(file);
-      bitmap.close();
-      this.imageBlob = file;
-    } catch {
-      this.s.error.set("Il file non contiene un’immagine valida.");
-    }
+    try {this.imageBlob=await compressPhoto(file);}catch(e){this.s.error.set((e as Error).message);}
+    (event.target as HTMLInputElement).value='';
   }
   async save() {
     if (this.form.invalid || this.saving() || !this.s.canEditCatalog()) return;

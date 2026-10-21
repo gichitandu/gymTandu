@@ -15,6 +15,16 @@
           "/*.webp"
         ]
       }
+    },
+    {
+      "name": "local-ai-runtime",
+      "installMode": "lazy",
+      "updateMode": "lazy",
+      "resources": {
+        "files": [
+          "/vendor/*.js"
+        ]
+      }
     }
   ]
 }
