@@ -1,4 +1,5 @@
 import { defaultExercises, defaultGroups } from './default-catalog.js';
+import { archiveApi } from './archive.js';
 // The platform's ChatGPT access boundary remains in place. App sessions are
 // additionally bound to that authenticated visitor, and never stored in JS.
 const OWNER = 'giacomotanduo004@gmail.com';
@@ -76,9 +77,10 @@ export async function api(request,env) {
     if(request.method!=='GET' && request.headers.get('origin')!==url.origin) fail('Richiesta non autorizzata.',403);
     if(request.method!=='GET' && !request.headers.get('content-type')?.startsWith('application/json')) fail('Formato non supportato.',415);
     const me=await session(request,db);
+    if(path==='/api/archive')return await archiveApi(request,env,me);
     if(path==='/api/auth/me'&&request.method==='GET') {
       const owner=await db.prepare('SELECT id FROM users WHERE email=?').bind(OWNER).first();
-      return json({user:me?publicUser(me):null,setup:!owner && request.headers.get('oai-authenticated-user-email')?.toLowerCase()===OWNER,ownerEmail:OWNER});
+      return json({user:me?publicUser(me):null,setup:!owner && request.headers.get('oai-authenticated-user-email')?.toLowerCase()===OWNER,platformOwner:request.headers.get('oai-authenticated-user-email')?.toLowerCase()===OWNER,ownerEmail:OWNER});
     }
     if(request.method==='GET'&&path==='/api/catalog') {
       if(!me) fail('Accedi per consultare gli esercizi.',401);

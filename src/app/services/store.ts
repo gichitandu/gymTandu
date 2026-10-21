@@ -20,11 +20,14 @@ import { ArchiveConflictError } from "../core/database";
 import { WorkoutResumeService } from "./workout-resume";
 import { sessionVolume, exerciseRecords } from "./statistics";
 import { feedbackForContext, feedbackSignal } from "./feedback";
+import { AcceptedCatalogChanges, mergeCatalog } from "./catalog-merge";
+import { ArchiveSyncService } from "./archive-sync";
 @Injectable({ providedIn: "root" })
 export class Store {
   private theme = inject(ThemeService, { optional: true });
   private auth = inject(AuthService, { optional: true });
   private repo = inject(GYM_REPOSITORY);
+  private cloud = inject(ArchiveSyncService,{optional:true});
   private resume = inject(WorkoutResumeService,{optional:true})||new WorkoutResumeService();
   data = signal<DataSet>(seed());
   archiveKey(){return this.repo.storageKey||this.auth?.user()?.id||'local';}
@@ -114,6 +117,10 @@ export class Store {
         d.muscleGroups.push(...defaults.muscleGroups.filter(g=>!groupIds.has(g.id)));
         const revision=this.archiveRevision();await this.repo.replace(d);this.resume.rebase(this.archiveKey(),revision,this.archiveRevision());
       }
+      if(this.cloud){
+        const recovered=await this.cloud.open(this.archiveKey(),d);
+        if(recovered!==d){await this.repo.replace(recovered);this.resume.clear(this.archiveKey());d=recovered;}
+      }
       if (this.auth?.user()) d.profiles[0].role = this.auth.user()!.role;
       this.data.set(d);
       if (this.auth?.user() && !this.auth.offlineMode() && navigator.onLine) {
@@ -122,6 +129,7 @@ export class Store {
       await this.theme?.load();
       this.applyTheme();
       this.ready.set(true);
+      this.cloud?.changed(this.data());
     } catch (e) {
       this.error.set(
         e instanceof Error ? e.message : "Impossibile aprire l’archivio. Controlla la connessione e ricarica la pagina.",
@@ -144,12 +152,9 @@ export class Store {
         if(this.conflicted())throw new ArchiveConflictError();
         const next = structuredClone(this.data());
         await fn(next);
-        if(this.auth?.user()) {
-          const current=this.data(), ids=new Set(current.exercises.map(e=>e.id)), groups=new Map(next.muscleGroups.map(g=>[g.id,g]));
-          next.exercises=[...current.exercises,...next.exercises.filter(e=>!ids.has(e.id)).map(e=>({...e,active:false}))];
-          for(const g of current.muscleGroups) groups.set(g.id,g);
-          next.muscleGroups=[...groups.values()];next.profiles[0].role=this.auth.user()!.role;
-        }
+        // Local recovery and backup import preserve their complete catalog.
+        // Editing this private archive never grants write access to the shared API.
+        if(this.auth?.user()&&next.profiles[0])next.profiles[0].role=this.auth.user()!.role;
         if (touchPlans) {
           for (const plan of next.plans) {
             if (
@@ -163,6 +168,7 @@ export class Store {
         }
         const revision=this.archiveRevision();await this.repo.replace(next);this.resume.rebase(this.archiveKey(),revision,this.archiveRevision());
         this.data.set(next);
+        this.cloud?.changed(next);
         this.applyTheme();
         this.error.set("");
         if (message) this.message.set(message);
@@ -511,8 +517,9 @@ export class Store {
       for(const event of d.scheduledWorkouts)if(event.workoutId===id)delete event.workoutId;
     }, "Allenamento eliminato.");
   }
-  canEditCatalog() { return !!this.auth?.user() && !this.auth.offlineMode() && ["Admin","SuperAdmin"].includes(this.auth.user()!.role); }
-  async refreshCatalog() {
+  sharedCatalog() { return !!this.auth?.user() && !this.auth.offlineMode(); }
+  canEditCatalog() { return !this.sharedCatalog() || ["Admin","SuperAdmin"].includes(this.auth!.user()!.role); }
+  async refreshCatalog(accepted: AcceptedCatalogChanges = {}) {
     if (!this.auth?.user() || this.auth.offlineMode()) return;
     const request = ++this.catalogRequest;
     const catalog=await this.auth.request('catalog');
@@ -526,25 +533,20 @@ export class Store {
     // older weights, plans or meals over a concurrent save.
     const job=this.queue.then(async()=>{
       if(request!==this.catalogRequest)return;
-      const next=structuredClone(this.data());
-      const remoteIds=new Set(exercises.map(e=>e.id));
-      next.exercises=[...exercises,...next.exercises.filter(e=>!remoteIds.has(e.id)).map(e=>({...e,active:false}))];
-      const groups=new Map(next.muscleGroups.map(g=>[g.id,g]));
-      for(const g of catalog.muscleGroups) groups.set(g.id,g);
-      next.muscleGroups=[...groups.values()];
+      const next=await mergeCatalog(this.data(),{exercises,muscleGroups:catalog.muscleGroups},accepted);
       if(this.conflicted())throw new ArchiveConflictError();
-      try{const revision=this.archiveRevision();await this.repo.replace(next);this.resume.rebase(this.archiveKey(),revision,this.archiveRevision());this.data.set(next);}catch(error){this.rejectStaleArchive(error);throw error;}
+      try{const revision=this.archiveRevision();await this.repo.replace(next);this.resume.rebase(this.archiveKey(),revision,this.archiveRevision());this.data.set(next);this.cloud?.changed(next);}catch(error){this.rejectStaleArchive(error);throw error;}
     });
     this.queue=job.catch(()=>{});
     await job;
   }
   async saveExercise(e: Exercise) {
-    if (this.auth?.user()) {
+    if (this.sharedCatalog()) {
       if(!this.canEditCatalog()) {this.error.set('Solo Admin e Super Admin possono modificare il catalogo.');return false;}
       try {
         const {image,...item}=e;let imageData='';
         if(image) imageData=await new Promise<string>((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(r.result as string);r.onerror=()=>reject(Error('Immagine non leggibile.'));r.readAsDataURL(image);});
-        await this.auth.request('catalog/exercise',{...item,imageData});await this.refreshCatalog();this.message.set('Esercizio salvato nel catalogo condiviso.');this.error.set('');return true;
+        await this.auth!.request('catalog/exercise',{...item,imageData});await this.refreshCatalog({exercises:[e.id]});this.message.set('Esercizio salvato nel catalogo condiviso.');this.error.set('');return true;
       } catch(error){this.error.set((error as Error).message);return false;}
     }
     return this.change((d) => {
@@ -555,7 +557,8 @@ export class Store {
   }
   async saveMuscleGroup(id:string,name:string) {
     if(!this.canEditCatalog()) {this.error.set('Operazione riservata agli admin.');return;}
-    try{await this.auth!.request('catalog/group',{id,name});await this.refreshCatalog();this.message.set('Gruppo salvato.');}catch(e){this.error.set((e as Error).message);}
+    if(!this.sharedCatalog())return this.change(d=>{const group=d.muscleGroups.find(group=>group.id===id);if(group)group.name=name.trim();else d.muscleGroups.push({id,name:name.trim()});},'Gruppo personale salvato.',false);
+    try{await this.auth!.request('catalog/group',{id,name});await this.refreshCatalog({groups:[id]});this.message.set('Gruppo salvato.');}catch(e){this.error.set((e as Error).message);}
   }
   async scheduleWorkout(date:string,dayId:string,notes='',id:string=uid(),repeatCount=1) {
     return this.change(d=>{

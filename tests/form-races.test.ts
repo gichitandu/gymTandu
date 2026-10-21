@@ -14,7 +14,7 @@ afterEach(() => vi.restoreAllMocks());
 function setup() {
   const data = seed();
   const store = {
-    data: () => data, canEditCatalog: () => true, exercise: (id: string) => data.exercises.find(e => e.id === id),
+    data: () => data, canEditCatalog: () => true, sharedCatalog: () => false, exercise: (id: string) => data.exercises.find(e => e.id === id),
     savePlan: vi.fn(), saveExercise: vi.fn(), error: { set: vi.fn() },
   };
   const injector = createEnvironmentInjector([

@@ -45,7 +45,7 @@ it('can create a workout plan and meal offline without calling a server',async()
  const db=new GymDatabase('offline-store-'+crypto.randomUUID());
  const auth={user:signal({id:'device-local',name:'Atleta',role:'User',active:true,owner:false}),offlineMode:()=>true,request:vi.fn()};
  const injector=createEnvironmentInjector([{provide:GYM_REPOSITORY,useValue:{read:()=>db.snapshot(),replace:(d:any)=>db.replace(d)}},{provide:AuthService,useValue:auth},Store],null as unknown as EnvironmentInjector);
- try{const s=injector.get(Store);await vi.waitFor(()=>expect(s.ready()).toBe(true));expect(s.canEditCatalog()).toBe(false);expect(await s.savePlan('offline-plan','Piano offline','')).toBe(true);await s.saveDay('offline-day','offline-plan','Giorno 1');
+ try{const s=injector.get(Store);await vi.waitFor(()=>expect(s.ready()).toBe(true));expect(s.canEditCatalog()).toBe(true);expect(s.sharedCatalog()).toBe(false);expect(await s.savePlan('offline-plan','Piano offline','')).toBe(true);await s.saveDay('offline-day','offline-plan','Giorno 1');
  expect(await s.savePlanExercise({id:'pe',dayId:'offline-day',exerciseId:'exercise-0',sets:3,repsMin:8,repsMax:12,rest:90,notes:'',order:0})).toBe(true);
  expect(await s.start('offline-day')).toBe(true);expect(s.draft()).toBeTruthy();
  expect(await s.change(d=>{d.meals.push({id:'m',date:'2026-10-21',name:'Pasto offline',grams:100,calories:100,protein:5,carbs:10,fat:4,notes:'',source:'manual',createdAt:new Date().toISOString()});})).toBe(true);

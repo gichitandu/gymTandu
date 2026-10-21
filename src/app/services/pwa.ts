@@ -1,6 +1,7 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { SwUpdate } from '@angular/service-worker';
 import { Store } from './store';
+import { ArchiveSyncService } from './archive-sync';
 interface InstallEvent extends Event {prompt():Promise<void>;userChoice:Promise<{outcome:string}>}
 export interface AppUpdateEvent extends Event {waitUntil(save:Promise<boolean|void>):void}
 @Injectable({providedIn:'root'})
@@ -10,6 +11,7 @@ export class PwaService {
  online=signal(navigator.onLine);offlineReady=signal(false);updateReady=signal(false);updating=signal(false);storage=signal('Non ancora misurato');persisted=signal<boolean|null>(null);
  private updates=inject(SwUpdate);
  private store=inject(Store);
+ private cloud=inject(ArchiveSyncService,{optional:true});
  constructor(){
   window.addEventListener('online',()=>this.online.set(true));window.addEventListener('offline',()=>this.online.set(false));
   window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();this.event.set(e as InstallEvent);});window.addEventListener('appinstalled',()=>{this.installed.set(true);this.event.set(undefined);});
@@ -36,6 +38,7 @@ export class PwaService {
    let pending;
    do{pending=this.store.settled();await pending;}while(pending!==this.store.settled());
    if(this.store.error())throw Error('Aggiornamento sospeso: '+this.store.error());
+   if(this.cloud&&!await this.cloud.flush())throw Error('Aggiornamento sospeso: la copia server è ancora da completare o verificare. I dati locali sono conservati. Apri Profilo → Backup e ripristino.');
    location.reload();
   }catch(error){this.store.error.set(error instanceof Error?error.message:'Aggiornamento sospeso: salvataggio non riuscito. I dati presenti sono conservati.');}
   finally{this.updating.set(false);}

@@ -1,8 +1,12 @@
 # GymTrack
 
-Diario personale di palestra in italiano con Angular e TypeScript. Allenamenti, pasti, foto e impostazioni personali sono conservati sul dispositivo tramite IndexedDB/Dexie. Il Worker gestisce account, catalogo condiviso e preferenze del tema; non sincronizza il diario personale. Nessun allenamento dimostrativo viene inserito.
+Diario personale di palestra in italiano con Angular e TypeScript. L’archivio personale viene conservato in IndexedDB e copiato sul server quando rete e accesso sono disponibili. Il Worker usa D1 per account, revisioni e catalogo condiviso, e R2 per copie immutabili complete dell’archivio. Nessun allenamento dimostrativo viene inserito.
 
 ## Aggiornamenti e registrazione rapida
+
+La scelta dello spazio locale o dell’account viene conservata tra riaperture. In Home, Piani e Profilo, **Ritrova piani ed esercizi** controlla gli altri archivi autorizzati di questa installazione e aggiunge i dati mancanti senza cancellare le copie originali. Safari e l’app installata possono usare contenitori separati: il controllo deve essere eseguito anche nell’ambiente dove erano stati inseriti i dati.
+
+In **Profilo → Backup e ripristino**, Protezione dati mostra lo stato reale della copia server. Una copia popolata non viene sovrascritta da un archivio nuovo vuoto. Revisioni concorrenti vengono bloccate e le ultime dieci copie server restano conservate. Le modifiche offline restano locali finché la copia server non è confermata; l’aggiornamento esplicito dell’app attende anche tale conferma. La copia dello spazio senza account è legata all’identità ChatGPT verificata dal sito; quella dell’account richiede l’accesso allo stesso account GymTrack.
 
 Le nuove versioni mantengono lo stesso indirizzo, gli stessi nomi degli archivi e i dati esistenti. Le migrazioni aggiungono le nuove strutture senza reinizializzare l’archivio. Il comando di aggiornamento conserva la bozza attiva e attende il completamento dei salvataggi; un errore sospende il ricaricamento. Una seconda finestra con dati vecchi non può sovrascrivere una modifica già salvata da un’altra finestra. Il browser riceve anche la richiesta di archiviazione persistente. I dati personali restano locali: eliminare i dati del sito o usare un dispositivo, browser o archivio diverso richiede un backup per recuperarli.
 
@@ -12,7 +16,7 @@ I messaggi di salvataggio, modifica ed errore compaiono come popup e scompaiono 
 
 Durante una sessione, toccare un esercizio apre direttamente la prossima serie. Peso e ripetizioni hanno controlli vicini, i dettagli facoltativi sono richiudibili e il pulsante di conferma resta a portata di mano. I salvataggi ripetuti dello stesso modulo condividono la stessa operazione anziché creare nuove copie.
 
-Nel recupero, **Timer fuori app** apre una finestra flottante se il browser supporta Picture-in-Picture. In alternativa, con il consenso dell’utente, mostra una notifica con l’ora di fine. Una web app non può garantire Live Activities su iPhone, aggiornamenti continui o avvisi puntuali quando il sistema sospende il browser. Il tempo usa una scadenza assoluta e si riallinea al rientro.
+Gli avvisi del recupero fuori app sono attivi di default e disattivabili nelle impostazioni. iOS richiede il consenso alle notifiche da un tocco esplicito; ogni nuovo recupero mostra poi l’ora di fine. **Timer fuori app** apre anche Picture-in-Picture dove supportato. Il timer interattivo nella tendina con Pausa/Riprendi, come Orologio, richiede una versione iOS nativa con ActivityKit/WidgetKit: non è disponibile tramite le API web di questa PWA. Il tempo usa una scadenza assoluta e si riallinea al rientro.
 
 ## Avvio rapido
 
@@ -86,7 +90,7 @@ Dodici tabelle: profili, ruoli, piani, giorni, esercizi del piano, esercizi, gru
 
 I log conservano snapshot di nome piano, nome giorno, nome esercizio e modalità di carico. Cancellare un giorno non invalida lo storico. La validazione referenziale impone i riferimenti correnti dei piani, ma consente riferimenti storici a giorni non più presenti.
 
-I ruoli locali SuperAdmin/Admin/User sono una predisposizione e **non una barriera di sicurezza**. Non ci sono password né autenticazione fittizia. Backend, JWT, database SQL, condivisione e sincronizzazione non sono implementati.
+Il Worker verifica identità ChatGPT, sessioni dell’account e permessi prima delle operazioni condivise. I ruoli presenti in un backup locale non concedono permessi sul server. Catalogo e copie personali usano ambiti distinti; un visitatore non può scegliere l’identità o la chiave di archivio di un altro utente.
 
 ## PWA e offline
 
@@ -112,4 +116,4 @@ Puoi caricare la cartella `dist/gymtrack/browser` con un progetto statico oppure
 
 ## Limiti dell'archiviazione locale
 
-Dati separati per browser, profilo, dominio e dispositivo. Cambiare dominio o telefono non trasferisce i dati: esporta e importa un backup. Cancellazione dei dati del sito, navigazione privata, disinstallazione o pressione sullo spazio possono causare perdita. Il pulsante per richiedere archiviazione persistente è una richiesta al browser, non una garanzia. Nessuna sincronizzazione o copia remota viene effettuata. Non modificare simultaneamente da più schede. Per grandi raccolte di immagini/anni di dati, la sostituzione atomica dell'intero archivio può richiedere più memoria: esporta regolarmente e monitora lo spazio disponibile.
+Le copie locali restano separate per browser, installazione, profilo e dominio. La copia server confermata consente il recupero dallo stesso ambito di identità, ma non può recuperare retroattivamente dati mai caricati o mai esportati. Conserva anche un JSON in File. La richiesta di persistenza al browser non è una garanzia contro la cancellazione locale. Copie concorrenti diverse vengono conservate e segnalate per il recupero, senza una fusione automatica distruttiva.

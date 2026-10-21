@@ -141,7 +141,9 @@ const schemas = {
     completed: z.boolean(),
   }),
   settings: z.object({
+    catalogBaseline: z.object({exercises:z.record(id,z.string().regex(/^[a-f0-9]{64}$/)),groups:z.record(id,z.string().max(10000))}).optional(),
     id,
+    externalTimerEnabled: z.boolean().optional(),
     theme: z.enum(["dark", "light"]),
     unit: z.enum(["kg", "lb"]),
     prefill: z.boolean(),

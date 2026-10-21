@@ -2290,3 +2290,4 @@ gt-shell .training-journey .passed span {
     height: 22px;
   }
 }
+gt-shell .archive-sync-indicator{display:flex;align-items:center;justify-content:center;gap:7px;min-width:44px;min-height:44px;color:var(--muted);text-decoration:none;padding:4px;border-radius:10px}gt-shell .archive-sync-indicator>span{display:grid;place-items:center;width:22px;height:22px;border:1px solid currentColor;border-radius:50%;font-size:13px;font-weight:700}gt-shell .archive-sync-indicator small{font-size:10px}gt-shell .archive-sync-indicator.copy-confirmed{color:#49c99b}gt-shell .archive-sync-indicator.copy-warning{color:#edb85e}@media(max-width:800px),(pointer:coarse){gt-shell .archive-sync-indicator small{display:none}}

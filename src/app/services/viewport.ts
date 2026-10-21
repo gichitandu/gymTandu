@@ -20,8 +20,11 @@ export function viewportGeometry(layoutHeight: number, visibleHeight: number, to
 
 export function focusScrollDelta(fieldTop: number, fieldBottom: number, visibleTop: number, visibleBottom: number, padding = 16): number {
   const top = visibleTop + padding, bottom = visibleBottom - padding;
-  if (fieldTop < top) return fieldTop - top;
-  if (fieldBottom > bottom) return Math.min(fieldBottom - bottom, fieldTop - top);
+  // A margin is a target when uncovering a field, not a reason to move a field
+  // that is already readable. In particular Next/Previous must not scroll up
+  // just because the next input is near the top of the visible area.
+  if (fieldTop < visibleTop) return fieldTop - top;
+  if (fieldBottom > visibleBottom) return Math.max(0, Math.min(fieldBottom - bottom, fieldTop - top));
   return 0;
 }
 
@@ -37,23 +40,27 @@ function editable(element: Element | null): element is HTMLInputElement | HTMLTe
 export class ViewportService {
   private baseline = 0;
   private width = 0;
+  private editing = false;
+  private scrollSpace = 0;
   private revealTimer?: ReturnType<typeof setTimeout>;
-  private settleTimer?: ReturnType<typeof setTimeout>;
   private focusOutTimer?: ReturnType<typeof setTimeout>;
   private viewport = window.visualViewport;
   private geometry!: ViewportGeometry;
   private readonly resize = () => { this.update(); this.scheduleReveal(); };
   private readonly scroll = () => this.update();
   private readonly focusIn = () => {
+    clearTimeout(this.focusOutTimer);
+    this.focusOutTimer = undefined;
+    this.editing = editable(document.activeElement);
     this.update();
     this.scheduleReveal();
-    clearTimeout(this.settleTimer);
-    // Some Safari versions finish moving the viewport after focusin/resize.
-    this.settleTimer = setTimeout(() => { this.update(); this.revealFocused(); }, 350);
   };
   private readonly focusOut = () => {
+    clearTimeout(this.revealTimer);
     clearTimeout(this.focusOutTimer);
-    this.focusOutTimer = setTimeout(() => this.update(), 0);
+    // iOS can briefly focus body between two controls. Collapsing the keyboard
+    // spacer in that gap clamps scrollTop before the next input receives focus.
+    this.focusOutTimer = setTimeout(() => { this.focusOutTimer = undefined; this.update(); }, 200);
   };
 
   constructor() {
@@ -71,27 +78,37 @@ export class ViewportService {
     const layoutHeight = Math.max(window.innerHeight, document.documentElement.clientHeight || 0);
     if (this.width && Math.abs(window.innerWidth - this.width) > 80) this.baseline = layoutHeight;
     this.width = window.innerWidth;
-    if (!focused) this.baseline = Math.max(this.baseline, layoutHeight);
+    if (!focused && !this.editing) this.baseline = Math.max(this.baseline, layoutHeight);
     if (!this.baseline) this.baseline = layoutHeight;
-    this.geometry = viewportGeometry(layoutHeight, this.viewport?.height ?? window.innerHeight, this.viewport?.offsetTop ?? 0, this.baseline, focused, this.viewport?.scale ?? 1);
+    const height = this.viewport?.height ?? window.innerHeight, scale = this.viewport?.scale ?? 1;
+    const keyboardVisible = viewportGeometry(layoutHeight, height, this.viewport?.offsetTop ?? 0, this.baseline, true, scale).keyboardOpen;
+    if (focused) this.editing = true;
+    else if (!this.focusOutTimer && !keyboardVisible) this.editing = false;
+    this.geometry = viewportGeometry(layoutHeight, height, this.viewport?.offsetTop ?? 0, this.baseline, this.editing, scale);
+    // Safari changes offsetTop as it pans between inputs. Keep the document's
+    // extra scroll range stable for the whole keyboard session instead of
+    // shrinking it on every pan, which otherwise moves the form upwards.
+    this.scrollSpace = this.editing ? Math.max(this.scrollSpace, this.geometry.keyboardOpen ? layoutHeight - this.geometry.height : 0, this.geometry.keyboardInset) : 0;
     const style = document.documentElement.style;
     style.setProperty('--visible-height', `${this.geometry.height}px`);
     style.setProperty('--visible-top', `${this.geometry.top}px`);
     style.setProperty('--keyboard-inset', `${this.geometry.keyboardInset}px`);
-    style.setProperty('--form-scroll-top', focused ? '20px' : 'calc(76px + var(--safe-top))');
-    style.setProperty('--form-scroll-bottom', focused ? '20px' : 'calc(100px + var(--safe-bottom))');
+    style.setProperty('--keyboard-scroll-space', `${this.scrollSpace}px`);
+    style.setProperty('--form-scroll-top', this.editing ? '20px' : 'calc(76px + var(--safe-top))');
+    style.setProperty('--form-scroll-bottom', this.editing ? '20px' : 'calc(100px + var(--safe-bottom))');
     document.body.classList.toggle('keyboard-open', this.geometry.keyboardOpen);
-    document.body.classList.toggle('form-input-focused', focused);
+    document.body.classList.toggle('form-input-focused', this.editing);
   }
 
   private scheduleReveal() {
     clearTimeout(this.revealTimer);
-    this.revealTimer = setTimeout(() => this.revealFocused(), 60);
+    const field = document.activeElement;
+    this.revealTimer = setTimeout(() => { if (document.activeElement === field) this.revealFocused(); }, 60);
   }
 
   private revealFocused() {
     const field = document.activeElement;
-    if (!editable(field) || !field.getBoundingClientRect) return;
+    if (!editable(field) || !field.getBoundingClientRect || Math.abs((this.viewport?.scale ?? 1) - 1) >= .05) return;
     const modal = field.closest<HTMLElement>('.modal');
     const fieldRect = field.getBoundingClientRect();
     let top = this.geometry.top, bottom = this.geometry.bottom;
@@ -122,7 +139,7 @@ export class ViewportService {
   }
 
   ngOnDestroy() {
-    clearTimeout(this.revealTimer);clearTimeout(this.settleTimer);clearTimeout(this.focusOutTimer);
+    clearTimeout(this.revealTimer);clearTimeout(this.focusOutTimer);
     window.removeEventListener('resize', this.resize);
     window.removeEventListener('orientationchange', this.resize);
     this.viewport?.removeEventListener('resize', this.resize);

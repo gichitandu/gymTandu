@@ -56,7 +56,7 @@ import { StatusComponent } from "../shared/status.component";
     @if(scope()==='recent'){<p class="subtle">Esercizi delle ultime sessioni, incluse quelle in corso.</p>}
     <gt-exercise-families [query]="query()" (choose)="query.set($event);group.set('')"/>
     <nav class="muscle-tabs" aria-label="Zone muscolari"><button [class.selected]="!group()" (click)="group.set('')">Tutti</button>@for(g of s.data().muscleGroups;track g.id){<button [class.selected]="group()===g.id" (click)="group.set(g.id)">{{g.name}}</button>}</nav>
-    <p class="subtle" style="margin:16px 0">{{filtered().length}} esercizi {{s.canEditCatalog()?'· Catalogo condiviso':'· Disponibili per le tue schede'}}</p>
+    <p class="subtle" style="margin:16px 0">{{filtered().length}} esercizi {{s.sharedCatalog()?'· Catalogo condiviso':'· Catalogo personale'}}</p>
     <div class="catalog-grid">
       @for (e of filtered(); track e.id) {
         <article class="card catalog-exercise-card">
@@ -277,7 +277,7 @@ export class CatalogComponent {
       description: e?.description || "",
       tags: e?.tags.join(", ") || "",
       videoUrl: e?.videoUrl || "",
-      active: e?.active ?? false,
+      active: e?.active ?? !this.s.sharedCatalog(),
     });
     this.editing.set(true);
   }

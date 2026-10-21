@@ -1413,7 +1413,7 @@ body.custom-light .profile-cover .pill,body.custom-light .plan-card > .card-head
 :root {--safe-top:env(safe-area-inset-top,0px);--safe-right:env(safe-area-inset-right,0px);--safe-bottom:env(safe-area-inset-bottom,0px);--safe-left:env(safe-area-inset-left,0px);--phone-nav-height:76px;}
 html {-webkit-text-size-adjust:100%;scroll-padding-top:var(--form-scroll-top,calc(76px + var(--safe-top)));scroll-padding-bottom:var(--form-scroll-bottom,calc(100px + var(--safe-bottom)));}
 body {min-height:100vh;min-height:100dvh;}
-input,textarea,select {scroll-margin-block:110px;}
+input,textarea,select {scroll-margin-block:20px;}
 .topbar {height:calc(81px + var(--safe-top));padding-top:var(--safe-top);padding-left:max(24px,var(--safe-left));padding-right:max(24px,var(--safe-right));}
 .sidebar {padding-top:max(34px,var(--safe-top));padding-left:max(22px,var(--safe-left));padding-bottom:max(24px,var(--safe-bottom));}
 .auth-page {padding-top:max(24px,var(--safe-top));padding-bottom:max(24px,var(--safe-bottom));padding-left:max(16px,var(--safe-left));padding-right:max(16px,var(--safe-right));}
@@ -1770,7 +1770,8 @@ input,select,textarea {min-width:0;max-width:100%;}
 .table-wrap {max-width:100%;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;}
 .set-table {min-width:540px;}
 .set-table input {min-width:80px;}
-body.keyboard-open::after {content:'';display:block;height:calc(var(--keyboard-inset,0px) + 24px);pointer-events:none;}
+body.form-input-focused::after {content:'';display:block;height:calc(var(--keyboard-scroll-space,var(--keyboard-inset,0px)) + 24px);pointer-events:none;}
+body.form-input-focused {overflow-anchor:none;}
 body.form-input-focused input,body.form-input-focused select,body.form-input-focused textarea {scroll-margin-block:20px;}
 body.keyboard-open .entry-page {overflow:visible;}
 body.keyboard-open .modal-backdrop {align-items:flex-start;}

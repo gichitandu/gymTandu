@@ -19,7 +19,8 @@ afterEach(()=>sql.close());
 it('bootstrap is restricted to the verified owner and can run only once',async()=>{
  expect((await call('auth/setup',{password:'password-123456'},{email:'attacker@example.com'})).status).toBe(403);
  const cookie=await activate();expect((await call('auth/setup',{password:'another-password-123'})).status).toBe(409);
- const me=await (await call('auth/me',undefined,{cookie})).json();expect(me.user.role).toBe('SuperAdmin');
+ const me=await (await call('auth/me',undefined,{cookie})).json();expect(me.user.role).toBe('SuperAdmin');expect(me.platformOwner).toBe(true);
+ expect((await (await call('auth/me',undefined,{email:'client@example.com'})).json()).platformOwner).toBe(false);
  expect(cookie).not.toContain('owner-password');
 });
 it('denies clients and admins the entire user-management API, including forged role submissions',async()=>{

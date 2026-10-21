@@ -1,6 +1,8 @@
 import '@angular/compiler';
 import { afterEach, expect, it, vi } from 'vitest';
 import { ExternalTimerService, ExternalTimerState, externalTimerNotification, externalTimerSeconds } from '../src/app/services/external-timer';
+import { exportBackup, importBackup } from '../src/app/services/backup';
+import { seed } from '../src/app/core/seed';
 
 const instances: ExternalTimerService[] = [];
 afterEach(() => {
@@ -122,4 +124,53 @@ it('handles rejected notification delivery without leaving an active external ti
   await timer.open(state());
   expect(timer.active()).toBe(false);
   expect(timer.message()).toContain('non ha mostrato la notifica');
+});
+
+it('automatically shows each recovery after permission is granted and keeps the next timer enabled after a skip', async () => {
+  const notification={permission:'granted',requestPermission:vi.fn()};
+  browser({Notification:notification});vi.stubGlobal('Notification',notification);
+  const registration={showNotification:vi.fn().mockResolvedValue(undefined),getNotifications:vi.fn().mockResolvedValue([])};
+  vi.stubGlobal('navigator',{serviceWorker:{getRegistration:vi.fn().mockResolvedValue(registration)}});
+  const timer=service();timer.sync(state());
+  await vi.waitFor(()=>expect(timer.active()).toBe(true));
+  expect(registration.showNotification).toHaveBeenCalledOnce();expect(notification.requestPermission).not.toHaveBeenCalled();
+  timer.stop();timer.sync(state(120));
+  await vi.waitFor(()=>expect(registration.showNotification).toHaveBeenCalledTimes(2));
+  expect(timer.active()).toBe(true);
+  timer.setAutomaticEnabled(false);
+  expect(timer.active()).toBe(false);
+  timer.sync(state(90),false);
+  await Promise.resolve();expect(registration.showNotification).toHaveBeenCalledTimes(2);
+});
+
+it('requests permission directly on the user gesture before a timer exists, then starts automatic notifications', async () => {
+  let grant!:(permission:string)=>void;
+  const notification={permission:'default',requestPermission:vi.fn(()=>new Promise<string>(resolve=>grant=resolve))};
+  browser({Notification:notification});vi.stubGlobal('Notification',notification);
+  const registration={showNotification:vi.fn().mockResolvedValue(undefined),getNotifications:vi.fn().mockResolvedValue([])};
+  vi.stubGlobal('navigator',{serviceWorker:{getRegistration:vi.fn().mockResolvedValue(registration)}});
+  const timer=service(),permission=timer.requestAutomaticPermission();
+  expect(notification.requestPermission).toHaveBeenCalledOnce();
+  grant('granted');await permission;
+  expect(registration.showNotification).not.toHaveBeenCalled();
+  timer.sync(state());await vi.waitFor(()=>expect(timer.active()).toBe(true));
+  expect(registration.showNotification).toHaveBeenCalledOnce();
+});
+
+it('does not deliver an obsolete automatic notification when setup finishes after a skip', async () => {
+  const notification={permission:'granted'};
+  browser({Notification:notification});vi.stubGlobal('Notification',notification);
+  let ready!:(registration:unknown)=>void;
+  vi.stubGlobal('navigator',{serviceWorker:{getRegistration:vi.fn(()=>new Promise(resolve=>ready=resolve))}});
+  const registration={showNotification:vi.fn().mockResolvedValue(undefined),getNotifications:vi.fn().mockResolvedValue([])};
+  const timer=service();timer.sync(state());timer.stop();ready(registration);
+  await Promise.resolve();await Promise.resolve();
+  expect(registration.showNotification).not.toHaveBeenCalled();expect(timer.active()).toBe(false);
+});
+
+it('roundtrips an explicitly disabled automatic timer preference without requiring a data migration', async () => {
+  const data=seed();expect(data.settings[0].externalTimerEnabled!==false).toBe(true);
+  data.settings[0].externalTimerEnabled=false;
+  const restored=await importBackup(await exportBackup(data));
+  expect(restored.settings[0].externalTimerEnabled).toBe(false);
 });

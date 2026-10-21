@@ -6,10 +6,12 @@ import { PwaService } from "../services/pwa";
 import { Component, effect, inject, ViewEncapsulation } from "@angular/core";
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from "@angular/router";
 import { IconComponent } from "../shared/icon.component";
+import { ArchiveRecoveryComponent } from "../shared/archive-recovery.component";
+import { ArchiveSyncService } from "../services/archive-sync";
 @Component({
   selector: "gt-shell",
   standalone: true,
-  imports: [RouterLink, RouterLinkActive, RouterOutlet, IconComponent, AvatarComponent],
+  imports: [RouterLink, RouterLinkActive, RouterOutlet, IconComponent, AvatarComponent, ArchiveRecoveryComponent],
   styleUrls: ['./experience.css'],
   encapsulation: ViewEncapsulation.None,
   template: ` <aside class="sidebar">
@@ -30,8 +32,8 @@ import { IconComponent } from "../shared/icon.component";
         <div class="local-badge">
           <gt-icon name="shield" />
           <div>
-            <b>Solo sul tuo dispositivo</b
-            ><small>I tuoi dati. Il tuo controllo.</small>
+            <b>Il tuo archivio personale</b
+            ><small>Copia locale e protezione server.</small>
           </div>
           <i></i>
         </div>
@@ -45,11 +47,10 @@ import { IconComponent } from "../shared/icon.component";
           ><i class="brand-coordinate"></i> IL TUO PROSSIMO LIVELLO, OGNI GIORNO.</span
         >
         <div class="topbar-right">
-          <a class="header-calendar" routerLink="/calendario" aria-label="Apri calendario"><gt-icon name="calendar"/></a><span class="offline-label"><i></i> Archivio locale</span
-          ><a class="avatar" routerLink="/profilo" aria-label="Apri profilo"><gt-avatar [photo]="s.profile().photo" [name]="s.profile().name" /></a>
+          <a class="header-calendar" routerLink="/calendario" aria-label="Apri calendario"><gt-icon name="calendar"/></a><a class="archive-sync-indicator" [class.copy-confirmed]="cloud.status()==='saved'" [class.copy-warning]="cloud.status()==='offline'||cloud.status()==='conflict'" routerLink="/profilo" [queryParams]="{section:'backup'}" [attr.aria-label]="backupStatus()" [title]="backupStatus()"><span aria-hidden="true">{{cloud.status()==='saved'?'✓':cloud.status()==='offline'||cloud.status()==='conflict'?'!':'↻'}}</span><small>{{backupStatus()}}</small></a><a class="avatar" routerLink="/profilo" aria-label="Apri profilo"><gt-avatar [photo]="s.profile().photo" [name]="s.profile().name" /></a>
         </div>
       </header>
-      <main>@if(auth.offlineMode()){<p class="local-mode-label">Archivio personale locale · funzioni condivise disabilitate</p>}<router-outlet /></main>
+      <main>@if(auth.offlineMode()){<p class="local-mode-label">Archivio personale locale · funzioni condivise disabilitate</p>}<router-outlet />@if(['/','/piani','/profilo'].includes(router.url.split('?')[0])){<gt-archive-recovery/>}</main>
       <div class="secondary-links"><a routerLink="/calendario">Calendario ↗</a><a routerLink="/allenamenti">Storico allenamenti ↗</a><a routerLink="/catalogo">Esercizi ↗</a></div><footer>
         OGNI RIPETIZIONE CONTA. <span>Costruisci il tuo prossimo livello.</span>
       </footer>
@@ -73,6 +74,8 @@ export class ShellComponent {
   auth = inject(AuthService);
   s = inject(Store);
   pwa = inject(PwaService);
+  cloud = inject(ArchiveSyncService);
+  backupStatus(){return ({local:'Archivio sul dispositivo',syncing:'Copia server in corso',saved:'Copia server aggiornata',offline:'Copia server in attesa della rete',conflict:'Copie da verificare'})[this.cloud.status()];}
   nav = [
     {path:'/',label:'Home',icon:'home'},
     {path:'/piani',label:'Allenamenti',icon:'weight'},

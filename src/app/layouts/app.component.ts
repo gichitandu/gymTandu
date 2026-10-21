@@ -21,6 +21,7 @@ import { feedbackForContext, feedbackSignal } from '../services/feedback';
 <div class="entry-topline"><button class="entry-back" aria-label="Torna alla presentazione" (click)="welcome.set(true)" [disabled]="auth.setup()"><gt-icon name="back"/></button><span class="entry-language" lang="it">IT</span></div>
 <div class="entry-brand"><img src="/brand/gt-mark.png" alt="Logo GT GymTrack"/><div class="entry-wordmark">Gym<span>Track</span></div><p class="brand-tagline">ALLENAMENTO · NUTRIZIONE · PROGRESSI</p></div>
 <header class="entry-heading"><h1 id="entry-title">{{auth.setup()?'Attiva il tuo account':'Bentornato'}}</h1><p>{{auth.setup()?'Giacomo, prepara il tuo spazio Super Admin.':'Accedi e continua il tuo percorso.'}}</p></header>
+@if(auth.previousAccountArchive()){<p class="entry-help">Per ritrovare piani ed esercizi, accedi allo stesso account usato nell’ultima apertura. Lo spazio senza account è un archivio separato.</p>}
 @if(!auth.setup()){<div class="entry-tabs" role="tablist" aria-label="Modalità di accesso"><button id="account-tab" role="tab" [attr.aria-selected]="tab()==='account'" aria-controls="account-panel" [class.active]="tab()==='account'" (click)="tab.set('account')">Account</button><button id="local-tab" role="tab" [attr.aria-selected]="tab()==='local'" aria-controls="local-panel" [class.active]="tab()==='local'" (click)="tab.set('local')">Sul dispositivo</button></div>}
 @if(tab()==='account' || auth.setup()) {
 <div id="account-panel" role="tabpanel" [attr.aria-labelledby]="auth.setup()?null:'account-tab'" [attr.aria-label]="auth.setup()?'Attivazione account':null">
@@ -48,7 +49,7 @@ import { feedbackForContext, feedbackSignal } from '../services/feedback';
 </div>
 }
 <div class="entry-divider"><span>Il tuo percorso, al tuo ritmo</span></div>
-<div class="entry-trust"><gt-icon name="shield"/><div><b>I tuoi dati, sempre con te</b><p>Allenamenti e pasti sul dispositivo.<br/>Backup in File. Nessun abbonamento.</p></div></div>
+<div class="entry-trust"><gt-icon name="shield"/><div><b>I tuoi dati, sempre con te</b><p>Archivio locale e copia server.<br/>Backup esportabile in File.</p></div></div>
 @if(auth.setup()){<p class="entry-switch"><button class="entry-text-button" (click)="auth.openLocal()">Inizia senza account nello spazio locale</button></p>}
 @if(tab()==='account'&&!auth.setup()){<p class="entry-switch">Preferisci iniziare senza account? <button class="entry-text-button" (click)="tab.set('local')">Usa lo spazio locale</button></p>}
 </section>

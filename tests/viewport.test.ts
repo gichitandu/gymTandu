@@ -39,6 +39,8 @@ it('scrolls only the distance needed to uncover a focused field',()=>{
   expect(focusScrollDelta(300,360,40,340,20)).toBe(40);
   expect(focusScrollDelta(20,70,40,340,20)).toBe(-40);
   expect(focusScrollDelta(100,600,40,340,20)).toBe(40);
+  expect(focusScrollDelta(50,100,40,340,20)).toBe(0);
+  expect(focusScrollDelta(280,335,40,340,20)).toBe(0);
 });
 
 it('tracks Safari visual viewport pan and reveals the field above the keyboard without reacting to every user scroll',async()=>{
@@ -51,6 +53,8 @@ it('tracks Safari visual viewport pan and reveals the field above the keyboard w
   expect(b.styles.get('--keyboard-inset')).toBe('440px');
   await vi.advanceTimersByTimeAsync(60);
   expect(b.win.scrollBy).toHaveBeenCalledWith({top:408,behavior:'auto'});
+  await vi.advanceTimersByTimeAsync(400);
+  expect(b.win.scrollBy).toHaveBeenCalledTimes(1);
   b.win.scrollBy.mockClear();
   b.viewport.offsetTop=50;b.viewport.dispatchEvent(new Event('scroll'));
   expect(b.styles.get('--visible-top')).toBe('50px');expect(b.win.scrollBy).not.toHaveBeenCalled();
@@ -75,9 +79,56 @@ it('keeps horizontally scrolled workout table inputs within their own container'
 it('restores normal navigation on blur and removes listeners on destruction',async()=>{
   const b=browser();b.doc.activeElement=input(100,148);b.viewport.height=340;
   b.doc.dispatchEvent(new Event('focusin'));expect(b.classes.has('keyboard-open')).toBe(true);
-  b.doc.activeElement=null;b.doc.dispatchEvent(new Event('focusout'));await vi.advanceTimersByTimeAsync(0);
+  b.doc.activeElement=null;b.doc.dispatchEvent(new Event('focusout'));await vi.advanceTimersByTimeAsync(200);
+  expect(b.classes.has('keyboard-open')).toBe(true);
+  b.viewport.height=800;b.viewport.dispatchEvent(new Event('resize'));
   expect(b.classes.has('keyboard-open')).toBe(false);expect(b.classes.has('form-input-focused')).toBe(false);
   service!.ngOnDestroy();service=undefined;
   b.viewport.height=600;b.viewport.dispatchEvent(new Event('resize'));
-  expect(b.styles.get('--visible-height')).toBe('340px');
+  expect(b.styles.get('--visible-height')).toBe('800px');
+});
+
+it('keeps the editing layout and scroll range between fields while iOS briefly focuses body',async()=>{
+  const b=browser();b.viewport.height=340;
+  b.doc.activeElement=input(80,135);b.doc.dispatchEvent(new Event('focusin'));
+  await vi.advanceTimersByTimeAsync(60);
+  expect(b.win.scrollBy).not.toHaveBeenCalled();
+  const space=b.styles.get('--keyboard-scroll-space');
+  b.doc.activeElement=null;b.doc.dispatchEvent(new Event('focusout'));
+  await vi.advanceTimersByTimeAsync(120);
+  b.viewport.offsetTop=30;b.viewport.dispatchEvent(new Event('scroll'));
+  expect(b.classes.has('form-input-focused')).toBe(true);
+  expect(b.classes.has('keyboard-open')).toBe(true);
+  expect(b.styles.get('--form-scroll-top')).toBe('20px');
+  expect(b.styles.get('--keyboard-scroll-space')).toBe(space);
+  b.doc.activeElement=input(40,100);b.doc.dispatchEvent(new Event('focusin'));
+  await vi.advanceTimersByTimeAsync(500);
+  expect(b.classes.has('form-input-focused')).toBe(true);
+  expect(b.styles.get('--keyboard-scroll-space')).toBe(space);
+  expect(b.win.scrollBy).not.toHaveBeenCalled();
+});
+
+it('keeps keyboard spacing stable during viewport pan, animation and field transitions',async()=>{
+  const b=browser();b.viewport.height=340;b.viewport.offsetTop=20;
+  b.doc.activeElement=input(80,135);b.doc.dispatchEvent(new Event('focusin'));
+  expect(b.styles.get('--keyboard-scroll-space')).toBe('460px');
+  b.viewport.height=360;b.viewport.offsetTop=60;b.viewport.dispatchEvent(new Event('resize'));
+  expect(b.styles.get('--keyboard-inset')).toBe('380px');
+  expect(b.styles.get('--keyboard-scroll-space')).toBe('460px');
+  b.viewport.height=800;b.viewport.offsetTop=0;b.viewport.dispatchEvent(new Event('resize'));
+  expect(b.styles.get('--keyboard-scroll-space')).toBe('460px');
+  b.doc.activeElement=null;b.doc.dispatchEvent(new Event('focusout'));
+  await vi.advanceTimersByTimeAsync(200);
+  expect(b.styles.get('--keyboard-scroll-space')).toBe('0px');
+  expect(b.classes.has('form-input-focused')).toBe(false);
+});
+
+it('does not scroll a newly selected readable field upwards or let an old focus timer move it',async()=>{
+  const b=browser();b.viewport.height=340;b.viewport.offsetTop=40;
+  b.doc.activeElement=input(500,560);b.doc.dispatchEvent(new Event('focusin'));
+  await vi.advanceTimersByTimeAsync(30);
+  b.doc.activeElement=null;b.doc.dispatchEvent(new Event('focusout'));
+  b.doc.activeElement=input(50,110);b.doc.dispatchEvent(new Event('focusin'));
+  await vi.advanceTimersByTimeAsync(600);
+  expect(b.win.scrollBy).not.toHaveBeenCalled();
 });

@@ -127,7 +127,10 @@ export interface ExercisePreference extends Entity {favorite:boolean;machineSetu
 export interface WorkoutUiState extends Entity {step:'list'|'detail'|'record'|'rest';tab:'sets'|'history'|'notes';exerciseId:string;setId:string;restEnd:number;restTotal:number;paused:boolean;pausedSeconds:number;weight:number;reps:number;rpe?:number;setNotes:string;kind:'work'|'warmup';updatedAt:string;}
 export interface IphoneCheck {state:'todo'|'pass'|'fail';note?:string;checkedAt?:string;}
 export interface IphoneChecklist {device:string;ios:string;checks:Record<string,IphoneCheck>;}
+export interface CatalogBaseline { exercises: Record<string, string>; groups: Record<string, string> }
 export interface AppSettings extends Entity {
+  catalogBaseline?: CatalogBaseline;
+  externalTimerEnabled?: boolean;
   backupConfirmedAt?:string;
   backupReminderDays?:number;
   backupSnoozedUntil?:string;

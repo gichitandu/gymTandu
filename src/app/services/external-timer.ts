@@ -41,6 +41,11 @@ export class ExternalTimerService {
   private registration?: ServiceWorkerRegistration;
   private notification?: Notification;
   private notifications = false;
+  private automatic = true;
+  private permissionGranted = false;
+  private notificationSetup?: Promise<void>;
+  private notificationEpoch = 0;
+  private deliverySequence = 0;
   private lastNotification = '';
   private finished = false;
   private baseTitle = '';
@@ -53,7 +58,35 @@ export class ExternalTimerService {
     }
   }
 
-  sync(state: ExternalTimerState) {
+  setAutomaticEnabled(enabled: boolean) {
+    if (this.automatic && !enabled) this.stop();
+    this.automatic = enabled;
+  }
+
+  /** Call directly from a user click, before any save awaits, as iOS requires. */
+  async requestAutomaticPermission() {
+    if (!this.notificationSupported()) {
+      this.message.set('Su iPhone le notifiche richiedono GymTrack aggiunta alla schermata Home. La tendina con conto alla rovescia e Pausa/Riprendi richiede un’app iOS nativa.');
+      return;
+    }
+    try {
+      const permission = Notification.permission === 'default' ? await Notification.requestPermission() : Notification.permission;
+      this.permissionGranted = permission === 'granted';
+      if (!this.permissionGranted) {
+        this.message.set('Per gli avvisi fuori app consenti le notifiche di GymTrack nelle impostazioni dell’iPhone.');
+        return;
+      }
+      this.message.set('Notifiche consentite: i prossimi recuperi mostreranno l’ora di fine. Pausa e ripresa restano disponibili nell’app.');
+      if (this.automatic && this.state) await this.enableNotifications(false);
+    } catch {
+      this.message.set('Non posso attivare le notifiche qui. Apri GymTrack dalla schermata Home e riprova.');
+    }
+  }
+
+  private notificationSupported() { return typeof window !== 'undefined' && 'Notification' in window; }
+
+  sync(state: ExternalTimerState, automatic = this.automatic) {
+    this.setAutomaticEnabled(automatic);
     if (!state.end && !state.paused) {
       this.stop();
       return;
@@ -65,6 +98,10 @@ export class ExternalTimerService {
     if (!this.interval) this.interval = setInterval(() => this.tick(), 1000);
     this.tick();
     if (changed && this.notifications) void this.showNotification();
+    // Previously granted permission applies to every new recovery. A stop or
+    // skip clears only the old notification, never the user's permission.
+    if (this.automatic && !this.notifications && this.notificationSupported() && Notification.permission!=='denied' &&
+      (this.permissionGranted || Notification.permission === 'granted')) void this.enableNotifications(false);
     // Prepare the video before the user's click so PiP can retain user activation.
     if (typeof document !== 'undefined' && !this.video) this.prepareVideo();
   }
@@ -189,22 +226,35 @@ export class ExternalTimerService {
     }
   }
 
-  private async enableNotifications() {
+  private async enableNotifications(prompt = true) {
+    if (this.notificationSetup) return this.notificationSetup;
+    const epoch = this.notificationEpoch;
+    const setup = this.setupNotifications(prompt, epoch);
+    this.notificationSetup = setup;
+    try { await setup; }
+    finally { if (this.notificationSetup === setup) this.notificationSetup = undefined; }
+  }
+
+  private async setupNotifications(prompt: boolean, epoch: number) {
     if (!('Notification' in window)) {
       this.message.set('Questo browser non consente un timer flottante né notifiche. Il recupero resta salvato e si riallinea al rientro. Su iPhone prova GymTrack installata nella schermata Home per le notifiche.');
       return;
     }
     try {
-      const permission = Notification.permission === 'default' ? await Notification.requestPermission() : Notification.permission;
+      if (!prompt && !this.permissionGranted && Notification.permission !== 'granted') return;
+      const permission = Notification.permission==='denied'?'denied':this.permissionGranted ? 'granted' : Notification.permission === 'default' && prompt ? await Notification.requestPermission() : Notification.permission;
       if (permission !== 'granted') {
         this.message.set('Timer flottante non disponibile. Per vedere l’ora di fine fuori dall’app, abilita le notifiche di GymTrack nelle impostazioni del browser.');
         return;
       }
-      this.registration = await navigator.serviceWorker?.getRegistration();
+      this.permissionGranted = true;
+      const registration = await navigator.serviceWorker?.getRegistration();
+      if (epoch !== this.notificationEpoch || !this.state) return;
+      this.registration = registration;
       this.notifications = true;
       if (!await this.showNotification()) return;
       this.active.set(true);
-      this.message.set('Notifica con l’ora di fine attiva. Questo browser non offre un conto alla rovescia flottante; l’avviso finale può arrivare al rientro se il telefono sospende l’app.');
+      this.message.set('Notifica con l’ora di fine attiva. Su iPhone Pausa/Riprendi nella tendina richiede un’app iOS nativa; l’avviso finale può arrivare al rientro se il telefono sospende l’app.');
     } catch {
       this.notifications = false;
       this.active.set(false);
@@ -214,11 +264,12 @@ export class ExternalTimerService {
 
   private async showNotification() {
     if (!this.state || !this.notifications) return false;
+    const epoch=this.notificationEpoch,delivery=++this.deliverySequence;
     const body = externalTimerNotification(this.state);
     if (body === this.lastNotification) return true;
     const options: NotificationOptions = {
       body, tag: 'gymtrack-rest-timer', icon: '/icons/icon-192.png',
-      data: { onActionClick: { default: { operation: 'focusLastFocusedOrOpen', url: '/' } } },
+      data: { gymtrackTimerDelivery: delivery, onActionClick: { default: { operation: 'focusLastFocusedOrOpen', url: '/#/sessione' } } },
     };
     try {
       if (this.registration) await this.registration.showNotification('GymTrack · Recupero', options);
@@ -226,6 +277,10 @@ export class ExternalTimerService {
         this.notification?.close();
         this.notification = new Notification('GymTrack · Recupero', options);
         this.notification.onclick = () => { window.focus(); this.notification?.close(); };
+      }
+      if(epoch!==this.notificationEpoch){
+        if(this.registration)void this.registration.getNotifications({tag:'gymtrack-rest-timer'}).then(items=>items.filter(item=>item.data?.gymtrackTimerDelivery===delivery).forEach(item=>item.close())).catch(()=>{});
+        return false;
       }
       this.lastNotification = body;
       return true;
@@ -247,6 +302,8 @@ export class ExternalTimerService {
   }
 
   stop() {
+    this.notificationEpoch++;
+    this.notificationSetup = undefined;
     clearInterval(this.interval);
     this.interval = undefined;
     this.state = undefined;
@@ -261,7 +318,8 @@ export class ExternalTimerService {
     this.releaseVideo();
     this.notification?.close();
     this.notification = undefined;
-    if (this.registration) void this.registration.getNotifications({ tag: 'gymtrack-rest-timer' }).then(items => items.forEach(item => item.close())).catch(() => {});
+    const endedDelivery=this.deliverySequence;
+    if (this.registration) void this.registration.getNotifications({ tag: 'gymtrack-rest-timer' }).then(items => items.filter(item=>typeof item.data?.gymtrackTimerDelivery!=='number'||item.data.gymtrackTimerDelivery<=endedDelivery).forEach(item => item.close())).catch(() => {});
     this.notifications = false;
     this.lastNotification = '';
     this.active.set(false);

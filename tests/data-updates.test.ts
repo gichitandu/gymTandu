@@ -98,6 +98,25 @@ it('repairs missing bootstrap records without resetting plans, weights, meals or
  try{const store=injector.get(Store);await vi.waitFor(()=>expect(store.ready()).toBe(true));expect(saved?.plans).toEqual(data.plans);expect(saved?.sets).toEqual(data.sets);expect(saved?.meals).toEqual(data.meals);expect(saved?.exercises[0].name).toBe('La mia panca');expect(saved?.profiles[0].id).toBe('local');}finally{injector.destroy();}
 });
 
+it('restores modified catalog records and active personal exercises without silently stripping them for a signed-in local user',async()=>{
+ let persisted=editedArchive();
+ const repo:GymRepository={read:async()=>structuredClone(persisted),replace:async data=>{persisted=structuredClone(data);}};
+ const auth={user:signal({id:'device-local',role:'User',owner:false}),offlineMode:()=>true};
+ const injector=storeFor(repo,auth);
+ try{
+  const store=injector.get(Store);await vi.waitFor(()=>expect(store.ready()).toBe(true));
+  const imported=structuredClone(store.data());
+  imported.exercises[0].name='Nome recuperato dal backup';
+  imported.muscleGroups[0].name='Gruppo personale recuperato';
+  imported.exercises.push({...imported.exercises[0],id:'my-recovered-exercise',name:'Il mio esercizio aggiunto',active:true});
+  expect(await store.change(data=>Object.assign(data,imported),'',false)).toBe(true);
+  expect(persisted.exercises[0].name).toBe('Nome recuperato dal backup');
+  expect(persisted.exercises.find(exercise=>exercise.id==='my-recovered-exercise')?.active).toBe(true);
+  expect(persisted.muscleGroups[0].name).toBe('Gruppo personale recuperato');
+  expect(persisted.profiles[0].role).toBe('User');
+ }finally{injector.destroy();}
+});
+
 it('serializes a slow catalog refresh with personal edits so neither restores an older archive',async()=>{
  let persisted=editedArchive(),release!:()=>void,reached!:()=>void;
  const blocked=new Promise<void>(r=>release=r),started=new Promise<void>(r=>reached=r);let hold=true;
