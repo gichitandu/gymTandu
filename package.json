@@ -12,6 +12,7 @@
     "format": "prettier --write src tests tools *.json *.md .github/workflows/*.yml",
     "verify:build": "node tools/verify-build.mjs",
     "postbuild": "node tools/package-worker.mjs",
+    "package:deploy": "node tools/package-deploy.mjs",
     "db:generate": "drizzle-kit generate"
   },
   "keywords": [],

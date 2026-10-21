@@ -70,6 +70,8 @@ In **Profilo → Esporta backup**, scarica il JSON e verifica che il browser l'a
 
 Schema iniziale `schemaVersion: 1`. La mappa `migrations` in `backup.ts` è il punto di estensione per future trasformazioni pure vN → vN+1, da aggiungere con test quando cambia lo schema. Le versioni future o senza migrazione disponibile vengono rifiutate. Le versioni IndexedDB si evolvono separatamente in `database.ts`.
 
+Per pubblicare, dopo la build usare `npm run package:deploy`: l’archivio include anche `drizzle/` alla radice, con SQL e journal necessari alle migrazioni del database ospitato. Dopo il deploy controllare che siano presenti `archive_heads` e `archive_versions` prima di considerare disponibile la copia server.
+
 ## Architettura
 
 ```text
