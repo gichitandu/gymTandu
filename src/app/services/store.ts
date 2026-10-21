@@ -541,14 +541,14 @@ export class Store {
       );
     }, "Valori precedenti copiati.");
   }
-  async finish() {
+  async finish(allowWithoutCompletedSets = false) {
     return this.change((d) => {
       const w = d.workouts.find((w) => w.status === "draft");
       if (!w) return;
       const ids = new Set(
         d.workoutExercises.filter((e) => e.workoutId === w.id).map((e) => e.id),
       );
-      if (!d.sets.some((s) => ids.has(s.workoutExerciseId) && s.completed))
+      if (!allowWithoutCompletedSets && !d.sets.some((s) => ids.has(s.workoutExerciseId) && s.completed))
         throw Error("Completa almeno una serie prima di concludere.");
       w.status = "completed";
       d.workoutUi=d.workoutUi.filter(x=>x.id!==w.id);

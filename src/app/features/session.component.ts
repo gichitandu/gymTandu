@@ -29,7 +29,7 @@ import { parseLocalDate } from '../services/calendar';
             </p>
           </div>
           <button class="primary" (click)="finish()" [disabled]="s.busy() || finishing()">
-            Concludi <gt-icon name="check" />
+            Termina allenamento <gt-icon name="check" />
           </button>
         </div>
         <div class="progress-bars">
@@ -41,6 +41,10 @@ import { parseLocalDate } from '../services/calendar';
         @if(w.date < today){<label>Durata effettiva (minuti, facoltativa)<input type="number" inputmode="numeric" min="1" max="1440" [ngModel]="w.duration||null" (ngModelChange)="update(w.id,'duration',$event)" placeholder="Es. 60"/></label>}</div>
       </div>
       <gt-active-workout [workoutId]="w.id" (finish)="finish()" />
+      <div class="card session-completion" style="margin-top:16px">
+        <p class="subtle">{{ completedSets(w.id) }} / {{ allSets(w.id).length }} serie confermate. Per registrare un altro giorno, termina questa sessione: i valori inseriti resteranno conservati.</p>
+        <button class="primary full-width" style="margin-top:12px" (click)="finish()" [disabled]="s.busy() || finishing()">{{finishing()?'Salvataggio…':'Termina allenamento'}} <gt-icon name="check" /></button>
+      </div>
       <details class="card session-options"><summary>Data, note e salvataggio</summary>
         <h2 style="margin-top:16px">Il tuo allenamento</h2>
         <div class="form-grid" style="margin-top:18px">
@@ -54,8 +58,8 @@ import { parseLocalDate } from '../services/calendar';
         </div>
         <div class="actions">
           <button class="primary" (click)="finish()" [disabled]="s.busy() || finishing()">
-            Concludi allenamento</button
-          ><a class="button" routerLink="/">Salva e torna alla Home</a
+            Termina allenamento</button
+          ><a class="button" routerLink="/">Torna alla Home (sessione aperta)</a
           ><button class="danger ghost" (click)="discard(w.id)">
             Scarta sessione
           </button>
@@ -85,6 +89,7 @@ export class SessionComponent {
   allSets(id: string) {
     return this.s.workoutExercises(id).flatMap((e) => this.s.sets(e.id));
   }
+  completedSets(id:string){return this.allSets(id).filter(set=>set.completed).length;}
   update(id: string, key: "date" | "notes" | "duration", value: string | number | null) {
     if(key==='date'){try{parseLocalDate(String(value));if(String(value)>this.today)throw Error('Scegli oggi o una data passata.');}catch(error){this.s.error.set(error instanceof Error?error.message:'Data non valida.');return;}}
     if(key==='duration'&&(value===null||value===''||!Number.isInteger(+value)||+value<1||+value>1440))return;
@@ -100,7 +105,14 @@ export class SessionComponent {
       const active=this.activeWorkout();
       if(active&&!await active.flushForFinish())return;
       await this.s.settled();
-      if (await this.s.finish()) await this.router.navigateByUrl("/allenamenti");
+      const workout=this.s.draft();
+      if(!workout)return;
+      const withoutCompletedSets=this.completedSets(workout.id)===0;
+      if(withoutCompletedSets&&!confirm('Nessuna serie è stata segnata come completata. Vuoi terminare comunque l’allenamento? Tutti i valori inseriti saranno conservati nello storico e potrai registrare un altro giorno.'))return;
+      if (await this.s.finish(withoutCompletedSets)) {
+        active?.externalTimer?.stop();
+        await this.router.navigateByUrl("/allenamenti");
+      }
     } finally { this.finishing.set(false); }
   }
   async discard(id: string) {

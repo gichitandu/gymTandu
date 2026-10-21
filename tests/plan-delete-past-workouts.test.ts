@@ -99,3 +99,26 @@ it('moves directly to the next historical set without a rest timer or notificati
   await c.complete({timeStamp:1000} as MouseEvent);
   expect(c.recordingPast()).toBe(true);expect(c.step()).toBe('record');expect(c.currentSet()!.id).toBe(sets[1].id);expect(c.restEnd()).toBe(0);expect(timer.requestAutomaticPermission).not.toHaveBeenCalled();expect(s.sets(exercise.id)[0].completed).toBe(true);
 });
+it('closes an unconfirmed past session only after confirmation, preserving inputs and unlocking another date',async()=>{
+  const past=moveDate(localDate(),-4);await s.start('day-a',past);
+  const workout=s.draft()!,exercise=s.workoutExercises(workout.id)[0],set=s.sets(exercise.id)[0];
+  await s.updateSet(set.id,{weight:77.5,reps:9,notes:'Dati inseriti',completed:false});
+  const before=await db.snapshot();const confirm=vi.fn().mockReturnValue(false);vi.stubGlobal('confirm',confirm);
+  const session=runInInjectionContext(injector,()=>new SessionComponent());sessions.push(session);
+  await session.finish();expect(s.draft()?.id).toBe(workout.id);expect(await db.snapshot()).toEqual(before);
+  confirm.mockReturnValue(true);await Promise.all([session.finish(),session.finish()]);
+  expect(s.draft()).toBeUndefined();expect(s.completed()).toHaveLength(1);expect(s.completed()[0]).toMatchObject({id:workout.id,date:past});
+  expect(s.data().sets).toEqual(before.sets);expect(s.data().plans).toEqual(before.plans);expect(s.data().planExercises).toEqual(before.planExercises);
+  expect(confirm).toHaveBeenCalledTimes(2);
+  expect(await s.start('day-a',moveDate(localDate(),-2))).toBe(true);expect(s.draft()!.id).not.toBe(workout.id);
+  expect(s.data().sets.find(item=>item.id===set.id)).toMatchObject({weight:77.5,reps:9,notes:'Dati inseriti',completed:false});
+});
+it('flushes the final edits before closing a past workout and stops its external timer',async()=>{
+  await s.start('day-a',moveDate(localDate(),-3));const workout=s.draft()!;
+  const c=runInInjectionContext(injector,()=>new ActiveWorkoutComponent());active.push(c);Object.defineProperty(c,'workoutId',{value:()=>workout.id});
+  const stop=vi.fn();Object.defineProperty(c,'externalTimer',{value:{stop,sync:vi.fn()}});
+  c.quickRecord(s.workoutExercises(workout.id)[0]);c.weight=72.5;c.reps=12;c.inputChanged();
+  vi.stubGlobal('confirm',vi.fn().mockReturnValue(true));
+  const session=runInInjectionContext(injector,()=>new SessionComponent());sessions.push(session);Object.defineProperty(session,'activeWorkout',{value:()=>c});
+  await session.finish();expect(s.draft()).toBeUndefined();expect(s.data().sets.find(set=>set.id===c.setId())).toMatchObject({weight:72.5,reps:12});expect(stop).toHaveBeenCalled();
+});

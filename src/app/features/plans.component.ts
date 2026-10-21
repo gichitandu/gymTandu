@@ -52,6 +52,7 @@ type PlanEditorDraft = {
       </button>
     </gt-section-heading>
     <gt-status />
+    @if(s.draft();as openWorkout){<div class="card" role="status" style="margin-bottom:16px"><strong>Allenamento ancora aperto: {{openWorkout.dayName}} · {{openWorkout.date}}</strong><p class="subtle">I dati sono conservati. Termina questa sessione prima di registrarne un’altra.</p><a class="button primary" routerLink="/sessione" style="margin-top:10px">Riprendi e termina allenamento</a></div>}
     @if(draftNotice()){<p class="notice" role="status">{{draftNotice()}}</p>}
     <div class="segmented plan-tabs">
       <button [class.active]="!archived()" (click)="archived.set(false)">
