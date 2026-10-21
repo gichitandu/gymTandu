@@ -24,7 +24,8 @@
       "updateMode": "lazy",
       "resources": {
         "files": [
-          "/vendor/*.js"
+          "/vendor/*.js",
+          "/vendor/food-model/**"
         ]
       }
     }

@@ -18,7 +18,7 @@ beforeEach(() => {
   store = { data, ready: signal(true), busy: signal(false), change: vi.fn(async (fn: (draft: DataSet) => void) => {
     const draft = structuredClone(data()); fn(draft); data.set(draft); return true;
   }) };
-  ai.cancel.mockReset(); ai.run.mockReset();
+  ai.cancel.mockReset(); ai.run.mockReset(); ai.run.mockResolvedValue([]);
   vi.stubGlobal('window', { scrollTo: vi.fn() });
   injector = createEnvironmentInjector([
     { provide: Store, useValue: store }, { provide: LocalAiService, useValue: ai },
@@ -78,4 +78,52 @@ it('does not apply late AI suggestions after its photo is removed', async () => 
   const recognizing = component.recognize(); component.removePhoto();
   pending.resolve([{ label: 'banana', probability: .9 }]); await recognizing;
   expect(component.photo).toBeUndefined(); expect(component.suggestions()).toEqual([]); expect(component.error()).toBe('');
+});
+
+it('starts recognition automatically after acquiring a photo without a preparation step or changing entered values', async () => {
+  const photo = new Blob(['compressed'], { type: 'image/jpeg' });
+  vi.spyOn(images, 'compressPhoto').mockResolvedValue(photo);
+  ai.run.mockResolvedValue([{ label: 'banana', probability: .9 }]);
+  const input = { files: [new Blob(['file'], { type: 'image/jpeg' })], value: 'meal.jpg' };
+  await component.takePhoto({ target: input } as unknown as Event);
+  expect(input.value).toBe('');
+  expect(ai.run).toHaveBeenCalledExactlyOnceWith(photo, true);
+  expect(component.analysisState()).toBe('done');
+  expect(component.suggestions().map(food => food.id)).toEqual(['banana']);
+  expect(component.name).toBe('Pasto da salvare'); expect(component.calories).toBe(250);
+  expect(store.change).not.toHaveBeenCalled();
+});
+
+it('keeps a failed analysis retryable and preserves its photo and meal draft', async () => {
+  const photo = new Blob(['photo']); component.photo = photo;
+  ai.run.mockRejectedValueOnce(Error('Modello non disponibile: collegati e riprova.'));
+  await component.recognize();
+  expect(component.analysisState()).toBe('error');
+  expect(component.analysisMessage()).toContain('collegati e riprova');
+  expect(component.photo).toBe(photo); expect(component.name).toBe('Pasto da salvare');
+  component.error.set('');
+  expect(component.analysisMessage()).toContain('collegati e riprova');
+  ai.run.mockResolvedValueOnce([{ label: 'banana', probability: .9 }]);
+  await component.recognize();
+  expect(component.analysisState()).toBe('done'); expect(component.error()).toBe('');
+});
+
+it('cancels analysis without discarding the photo or accepting a late failure from the cancelled request', async () => {
+  let reject!: (reason: Error) => void;
+  const pending = new Promise<never>((_, fail) => { reject = fail; });
+  const photo = new Blob(['photo']); component.photo = photo; ai.run.mockReturnValue(pending);
+  const recognizing = component.recognize();
+  expect(component.analysisState()).toBe('running'); component.cancelAnalysis();
+  reject(Error('Prova annullata.')); await recognizing;
+  expect(component.analysisState()).toBe('cancelled'); expect(component.error()).toBe('');
+  expect(component.photo).toBe(photo); expect(component.name).toBe('Pasto da salvare');
+  expect(component.suggestions()).toEqual([]);
+});
+
+it('explains an unrecognized photo without treating a completed analysis as a loading failure', async () => {
+  component.photo = new Blob(['photo']); ai.run.mockResolvedValue([{ label: 'plate', probability: .9 }]);
+  await component.recognize();
+  expect(component.analysisState()).toBe('unrecognized');
+  expect(component.analysisMessage()).toContain('sufficiente sicurezza');
+  expect(component.error()).toBe(''); expect(component.suggestions()).toEqual([]);
 });

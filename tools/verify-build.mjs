@@ -25,6 +25,15 @@ assert.equal(manifest.name, "GymTrack");
 assert(html.includes('viewport-fit=cover'));
 assert(html.includes('apple-mobile-web-app-capable'));
 assert(sw.assetGroups.some(g=>g.name==='local-ai-runtime'&&g.installMode==='lazy'));
+const aiAssets = sw.assetGroups.find(g=>g.name==='local-ai-runtime').urls;
+for (const file of ['/vendor/food-model/model.json','/vendor/food-model/weights.bin']) {
+  assert(fs.existsSync(root + file), `${file} mancante`);
+  assert(aiAssets.includes(file), `${file} escluso dalla cache offline del riconoscimento`);
+  assert(sw.hashTable[file], `${file} senza hash di aggiornamento`);
+}
+const aiModel = JSON.parse(fs.readFileSync(root + '/vendor/food-model/model.json','utf8'));
+for (const group of aiModel.weightsManifest) for (const file of group.paths)
+  assert(fs.existsSync(root + '/vendor/food-model/' + file), `Pesi AI mancanti: ${file}`);
 assert(sw.assetGroups.find(g=>g.name==='app').urls.includes('/food-ai-worker.js'));
 const assets = Object.keys(sw.hashTable);
 for (const file of fs.readdirSync('public/exercises'))

@@ -4,4 +4,10 @@ https://github.com/tensorflow/tfjs
 https://github.com/tensorflow/tfjs-models/tree/master/mobilenet
 https://storage.googleapis.com/tfjs-models/tfjs/mobilenet_v1_0.25_224/model.json
 
-The optional model is downloaded only at the user's request. No model weights are included in the core application. Any measured speed shown by GymTrack is a runtime measurement on the current device, not a claimed iPhone benchmark.
+GymTrack bundles the original MobileNet v1 0.25 224 weights for same-origin loading at first photo analysis. The 55 original shards have been concatenated in manifest order into food-model/weights.bin, and their weight specifications retained in one manifest group. Topology and weight values are unchanged. Model files are loaded on demand and cached for offline use when the device permits it. Photos are processed on the device; no remote AI API receives them.
+
+Original model.json SHA-256: d14c680e069d74143e3771c291cf3fd153ee88b6ea9ee44bfaf84e2008ded44e
+Concatenated weights.bin SHA-256: eb49857447f6089e7e392f7991f3f4fdce1936efaf83d535f5eb8aaba9538e0b
+Weights: 1902176 bytes.
+
+MobileNet is a generic ImageNet image classifier, not a food-specific nutrition model. Suggestions require user confirmation; quantities and nutrition values are not measured from pixels. Any speed shown by GymTrack is measured on the current device, not a claimed iPhone benchmark.

@@ -18,6 +18,8 @@ Durante una sessione, toccare un esercizio apre direttamente la prossima serie. 
 
 Gli avvisi del recupero fuori app sono attivi di default e disattivabili nelle impostazioni. iOS richiede il consenso alle notifiche da un tocco esplicito; ogni nuovo recupero mostra poi l’ora di fine. **Timer fuori app** apre anche Picture-in-Picture dove supportato. Il timer interattivo nella tendina con Pausa/Riprendi, come Orologio, richiede una versione iOS nativa con ActivityKit/WidgetKit: non è disponibile tramite le API web di questa PWA. Il tempo usa una scadenza assoluta e si riallinea al rientro.
 
+In **Alimentazione**, scattare o scegliere una foto avvia il riconoscimento automaticamente. Il modello MobileNet gratuito è servito dallo stesso sito e viene caricato al primo utilizzo, senza preparazione manuale; il service worker conserva runtime e pesi per l’uso offline. La cache IndexedDB del modello è facoltativa: un errore della cache non interrompe l’analisi. Avanzamento, annullamento e ripetizione sono disponibili accanto alla foto; errori e timeout mantengono il pasto compilato. La foto viene preparata senza deformazioni e non è inviata a servizi AI. Il modello generico riconosce solo alcuni alimenti; le associazioni esatte escludono oggetti e animali omonimi, mentre quantità e valori rimangono sempre da confermare prima del salvataggio.
+
 ## Avvio rapido
 
 Requisiti: Node.js 24 LTS e npm. È necessaria una connessione per installare le dipendenze. Il diario personale funziona offline dopo il primo caricamento; account e catalogo condiviso richiedono la connessione.
