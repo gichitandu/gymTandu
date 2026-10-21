@@ -1,3 +1,5 @@
+import { AvatarComponent } from "../shared/avatar.component";
+import { compressPhoto } from "../services/images";
 import { IosStatusComponent } from "../shared/ios-status.component";
 import { ThemeService, DEFAULT_BACKGROUND } from "../services/theme";
 import { AuthService } from "../services/auth";
@@ -21,6 +23,7 @@ import { PwaService } from "../services/pwa";
   standalone: true,
   imports: [
     A11yModule,
+    AvatarComponent,
     IosStatusComponent,
     ReactiveFormsModule,
     FormsModule,
@@ -42,13 +45,16 @@ import { PwaService } from "../services/pwa";
       <section class="card">
         <div class="profile-head">
           <div class="profile-avatar">
-            {{ s.profile().name.slice(0, 2).toUpperCase() }}
+            <gt-avatar [photo]="photoDraft()===undefined?s.profile().photo:(photoDraft()||undefined)" [name]="s.profile().name" />
           </div>
           <div>
             <h2>{{ s.profile().name }}</h2>
             <span class="pill">{{ auth.user()?.role === "User" ? "Cliente" : auth.user()?.role }}</span>
           </div>
         </div>
+        <div class="actions profile-photo-actions"><button type="button" (click)="profileCamera.click()" [disabled]="photoBusy()">Scatta foto profilo</button><button type="button" (click)="profileGallery.click()" [disabled]="photoBusy()">Scegli da Foto</button><button type="button" class="ghost" (click)="photoDraft.set(null)" [disabled]="photoBusy()">Rimuovi foto</button></div>
+        <input #profileCamera type="file" accept="image/*" capture="environment" hidden (change)="selectPhoto($event)"/><input #profileGallery type="file" accept="image/*" hidden (change)="selectPhoto($event)"/>
+        <p class="subtle" style="margin:12px 0 22px" role="status">{{photoBusy()?'Compressione della foto…':'La foto resta nel tuo archivio locale e nel backup JSON. Premi Salva profilo per confermare.'}}</p>
         <form [formGroup]="form" (ngSubmit)="save()">
           <div class="form-grid">
             <label class="wide"
@@ -82,7 +88,7 @@ import { PwaService } from "../services/pwa";
           <div class="actions">
             <button
               class="primary"
-              [disabled]="form.invalid || !s.ready() || s.busy()"
+              [disabled]="form.invalid || !s.ready() || s.busy() || photoBusy()"
             >
               Salva profilo
             </button>
@@ -220,7 +226,8 @@ import { PwaService } from "../services/pwa";
       </p>
     </section>
     <section class="card" style="margin-top:20px">
-      <h2>Account e sicurezza</h2><p class="subtle" style="margin-top:12px">{{auth.user()?.email}}</p>
+      <h2>Account e sicurezza</h2>
+      @if(!auth.offlineMode()){<form (ngSubmit)="saveUsername()" class="stack" style="margin-top:20px"><label>Nome utente per il login<input name="account-username" autocomplete="username" autocapitalize="none" spellcheck="false" [ngModel]="usernameDraft()===null?(auth.user()?.username||''):usernameDraft()" (ngModelChange)="usernameDraft.set($event)" required minlength="3" maxlength="30" pattern="[A-Za-z0-9][A-Za-z0-9._-]{2,29}" /></label><p class="subtle">3–30 caratteri: lettere, numeri, punto, trattino o underscore. Deve essere univoco: maiuscole e minuscole sono equivalenti. Il nome visualizzato nel profilo può essere diverso.</p><button class="primary" [disabled]="usernameBusy()">{{usernameBusy()?'Salvataggio…':'Salva nome utente'}}</button></form>}<p class="subtle" style="margin-top:12px">{{auth.user()?.email}}</p>
       @if(accountError()) {<p class="notice error" role="alert">{{accountError()}}</p>}
       @if(accountMessage()) {<p class="notice success" role="status">{{accountMessage()}}</p>}
       @if(auth.user()?.role === 'SuperAdmin') {<div class="actions"><a class="button primary" routerLink="/utenti">Gestione utenti</a></div>}
@@ -269,6 +276,12 @@ import { PwaService } from "../services/pwa";
     }`,
 })
 export class ProfileComponent {
+  photoDraft = signal<Blob|null|undefined>(undefined);
+  photoBusy = signal(false);
+  usernameDraft = signal<string|null>(null);
+  usernameBusy = signal(false);
+  async selectPhoto(event:Event){const input=event.target as HTMLInputElement,file=input.files?.[0];input.value='';if(!file)return;this.photoBusy.set(true);try{this.photoDraft.set(await compressPhoto(file));this.s.error.set('');}catch(e){this.s.error.set((e as Error).message);}finally{this.photoBusy.set(false);}}
+  async saveUsername(){if(this.usernameBusy())return;this.accountError.set('');this.accountMessage.set('');this.usernameBusy.set(true);try{await this.auth.setUsername(this.usernameDraft()??this.auth.user()?.username??'');this.usernameDraft.set(null);this.accountMessage.set('Nome utente salvato. Puoi accedere con questo nome oppure con l’email.');}catch(e){this.accountError.set((e as Error).message);}finally{this.usernameBusy.set(false);}}
   theme = inject(ThemeService);
   defaultBackground = DEFAULT_BACKGROUND;
   auth = inject(AuthService);
@@ -320,7 +333,7 @@ export class ProfileComponent {
     });
   }
   async save() {
-    if (this.form.invalid) return;
+    if (this.form.invalid || this.photoBusy()) return;
     const v = this.form.getRawValue();
     if (v.birthDate && v.birthDate > this.today) {
       this.s.error.set("La data di nascita non può essere futura.");
@@ -331,15 +344,17 @@ export class ProfileComponent {
       this.s.error.set("Peso corporeo fuori intervallo.");
       return;
     }
-    await this.s.change((d) => {
+    const saved = await this.s.change((d) => {
       Object.assign(d.profiles[0], {
         name: v.name!.trim(),
+        photo: this.photoDraft()===undefined?d.profiles[0].photo:(this.photoDraft()||undefined),
         bodyWeight: bw,
         height: v.height ?? undefined,
         birthDate: v.birthDate || undefined,
         goal: v.goal?.trim() || "",
       });
     }, "Profilo salvato.");
+    if(saved)this.photoDraft.set(undefined);
   }
   setting(key: "theme" | "unit" | "prefill", value: string | boolean) {
     if(key === "theme") void this.theme.save(value === "light" ? "#edf3fa" : this.defaultBackground);

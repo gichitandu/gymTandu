@@ -9,6 +9,7 @@ import { AuthService, Account } from '../services/auth';
 <div class="split"><section class="card"><h2>{{editing?'Modifica account':'Nuovo account'}}</h2>
 <form (ngSubmit)="save()" class="stack" style="margin-top:20px" autocomplete="off">
 <label>Nome<input name="name" [(ngModel)]="name" required maxlength="80" /></label>
+<label>Nome utente univoco<input name="username" [(ngModel)]="username" required minlength="3" maxlength="30" autocapitalize="none" spellcheck="false" pattern="[A-Za-z0-9][A-Za-z0-9._-]{2,29}" /></label>
 <label>Email<input name="email" type="email" [(ngModel)]="email" required maxlength="254" autocapitalize="none" /></label>
 <label>Ruolo<select name="role" [(ngModel)]="role"><option value="User">Cliente</option><option value="Admin">Admin</option></select></label>
 <label>{{editing?'Nuova password (facoltativa)':'Password iniziale'}}<input name="new-password" type="password" autocomplete="new-password" [(ngModel)]="password" [required]="!editing" minlength="8" maxlength="128" /></label>
@@ -18,7 +19,7 @@ import { AuthService, Account } from '../services/auth';
 </form></section>
 <section class="card"><div class="card-head"><h2>Account registrati</h2><button (click)="load()" [disabled]="busy()">Aggiorna</button></div>
 @if(loading()) {<p role="status">Caricamento…</p>}
-<div class="list">@for(u of users();track u.id) {<article class="user-row"><div><h3>{{u.name}}</h3><p class="subtle">{{u.email}}</p><span class="pill">{{u.role==='User'?'Cliente':u.role==='SuperAdmin'?'Super Admin':'Admin'}}</span> <span class="pill" [class.green]="u.active">{{u.active?'Attivo':'Disattivato'}}</span></div>
+<div class="list">@for(u of users();track u.id) {<article class="user-row"><div><h3>{{u.name}}</h3><p class="subtle">{{u.username?"@"+u.username:"Nome utente non ancora scelto"}}</p><p class="subtle">{{u.email}}</p><span class="pill">{{u.role==='User'?'Cliente':u.role==='SuperAdmin'?'Super Admin':'Admin'}}</span> <span class="pill" [class.green]="u.active">{{u.active?'Attivo':'Disattivato'}}</span></div>
 @if(!u.owner) {<button (click)="edit(u)" [disabled]="busy()">Modifica</button>} @else {<small class="muted">Proprietario · protetto</small>}</article>}</div>
 <p class="notice" style="margin-top:20px">Il sito mantiene l’accesso privato attuale. Creare un account GymTrack non concede automaticamente l’accesso al sito: gli utenti devono essere autorizzati anche nella condivisione di Sites.</p>
 </section></div>
@@ -26,10 +27,10 @@ import { AuthService, Account } from '../services/auth';
 `})
 export class UsersComponent {
  auth=inject(AuthService);users=signal<Account[]>([]);error=signal('');message=signal('');busy=signal(false);loading=signal(false);
- editing='';name='';email='';role='User';password='';active=true;
+ editing='';name='';username='';email='';role='User';password='';active=true;
  constructor(){if(this.auth.user()?.role==='SuperAdmin') void this.load();}
  async load(){this.loading.set(true);this.error.set('');try{this.users.set((await this.auth.request('users')).users);}catch(e){this.error.set((e as Error).message);}finally{this.loading.set(false);}}
- reset(){this.editing='';this.name='';this.email='';this.role='User';this.password='';this.active=true;}
- edit(u:Account){this.editing=u.id;this.name=u.name;this.email=u.email;this.role=u.role;this.active=u.active;this.password='';this.message.set('');window.scrollTo({top:0,behavior:'smooth'});}
- async save(){if(this.busy())return;this.busy.set(true);this.error.set('');this.message.set('');try{await this.auth.request('users'+(this.editing?'/'+this.editing:''),{name:this.name,email:this.email,role:this.role,password:this.password,active:this.active},this.editing?'PATCH':'POST');this.reset();await this.load();this.message.set('Account salvato.');}catch(e){this.error.set((e as Error).message);}finally{this.busy.set(false);}}
+ reset(){this.editing='';this.name='';this.username='';this.email='';this.role='User';this.password='';this.active=true;}
+ edit(u:Account){this.editing=u.id;this.name=u.name;this.username=u.username||"";this.email=u.email;this.role=u.role;this.active=u.active;this.password='';this.message.set('');window.scrollTo({top:0,behavior:'smooth'});}
+ async save(){if(this.busy())return;this.busy.set(true);this.error.set('');this.message.set('');try{await this.auth.request('users'+(this.editing?'/'+this.editing:''),{name:this.name,username:this.username,email:this.email,role:this.role,password:this.password,active:this.active},this.editing?'PATCH':'POST');this.reset();await this.load();this.message.set('Account salvato.');}catch(e){this.error.set((e as Error).message);}finally{this.busy.set(false);}}
 }

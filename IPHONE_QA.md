@@ -45,3 +45,7 @@ Annotare modello iPhone, versione iOS, Safari/PWA, tempi CPU, output del test lo
 - [WebKit: policy di archiviazione](https://webkit.org/blog/14403/updates-to-storage-policy/)
 - [WebKit: Safari 17.2 e differenze degli archivi Home](https://webkit.org/blog/14787/webkit-features-in-safari-17-2/)
 - [TensorFlow.js: salvataggio modelli in IndexedDB](https://www.tensorflow.org/js/guide/save_load)
+
+## Aggiornamento foto profilo e username
+
+Da provare sul telefono: scegliere/scattare la foto, verificare anteprima senza salvataggio, confermare con Salva profilo, controllare avatar in alto e persistenza alla riapertura; rimuovere e verificare il backup v3/importazione da File. Per l’account online scegliere un username nel Profilo, uscire e accedere sia con username sia con email. Provare un duplicato con diversa capitalizzazione: deve essere rifiutato. I 40 test automatici attuali includono queste regole lato logica/API e il roundtrip del backup; non sostituiscono la prova Safari.

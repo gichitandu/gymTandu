@@ -1,6 +1,6 @@
 import { Injectable, signal } from '@angular/core';
 import { RoleName } from '../models/domain';
-export interface Account {id:string;name:string;email:string;role:RoleName;active:boolean;owner:boolean}
+export interface Account {id:string;name:string;email:string;username?:string|null;role:RoleName;active:boolean;owner:boolean}
 export const OFFLINE_ACCOUNT_KEY='gymtrack-offline-account-v1';
 @Injectable({providedIn:'root'})
 export class AuthService {
@@ -24,9 +24,13 @@ export class AuthService {
     catch(e) {this.error.set('Accesso online non disponibile. Puoi aprire l’archivio locale.');}
     finally {this.loading.set(false);}
   }
-  async login(email:string,password:string,setup=false,remember=false) {
-    const r=await this.request(setup?'auth/setup':'auth/login',{email,password});
+  async login(email:string,password:string,setup=false,remember=false,username?:string) {
+    const r=await this.request(setup?'auth/setup':'auth/login',{email,password,...(setup&&username?{username}:{})});
     this.user.set(r.user);this.setup.set(false);if(remember)this.enableOffline();
+  }
+  async setUsername(username:string) {
+    const result=await this.request('auth/username',{username});this.user.set(result.user);
+    if(this.offlineAccount()?.id===result.user.id)this.enableOffline();
   }
   enableOffline() {
     const u=this.user();if(!u||this.offlineMode())return;

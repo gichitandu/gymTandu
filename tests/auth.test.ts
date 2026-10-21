@@ -26,7 +26,7 @@ it('denies clients and admins the entire user-management API, including forged r
  const cookie=await activate();
  for(const role of ['Admin','User']){
   const email=role.toLowerCase()+'@example.com';
-  expect((await call('users',{name:role,email,role,password:'a-secure-password-123'},{cookie})).status).toBe(201);
+  expect((await call('users',{name:role,email,username:role.toLowerCase(),role,password:'a-secure-password-123'},{cookie})).status).toBe(201);
   const login=await call('auth/login',{email,password:'a-secure-password-123'},{visitor:role,email});const c=login.headers.get('set-cookie')!.split(';')[0];
   const opts={cookie:c,visitor:role,email};
   expect((await call('users',undefined,opts)).status).toBe(403);
@@ -36,7 +36,7 @@ it('denies clients and admins the entire user-management API, including forged r
 });
 it('isolates sessions by platform visitor and revokes sessions when an account is disabled',async()=>{
  const cookie=await activate();
- await call('users',{name:'Client',email:'client@example.com',role:'User',password:'a-secure-password-123'},{cookie});
+ await call('users',{name:'Client',email:'client@example.com',username:'client',role:'User',password:'a-secure-password-123'},{cookie});
  const r=await call('auth/login',{email:'client@example.com',password:'a-secure-password-123'},{visitor:'client',email:'client@example.com'});const clientCookie=r.headers.get('set-cookie')!.split(';')[0];
  expect(r.headers.get('set-cookie')).toContain('Secure; HttpOnly; SameSite=Strict');
  const stolen=await (await call('auth/me',undefined,{cookie:clientCookie})).json();expect(stolen.user).toBeNull();
@@ -65,8 +65,8 @@ it('accepts eight plain characters and rejects seven for setup, creation and pas
  expect((await call('auth/setup',{password:'abcdefg'})).status).toBe(400);
  const setup=await call('auth/setup',{password:'abcdefgh'});expect(setup.status).toBe(200);
  const cookie=setup.headers.get('set-cookie')!.split(';')[0];
- expect((await call('users',{name:'Client',email:'eight@example.com',role:'User',password:'abcdefg'},{cookie})).status).toBe(400);
- expect((await call('users',{name:'Client',email:'eight@example.com',role:'User',password:'abcdefgh'},{cookie})).status).toBe(201);
+ expect((await call('users',{name:'Client',email:'eight@example.com',username:'eight',role:'User',password:'abcdefg'},{cookie})).status).toBe(400);
+ expect((await call('users',{name:'Client',email:'eight@example.com',username:'eight',role:'User',password:'abcdefgh'},{cookie})).status).toBe(201);
  expect((await call('auth/password',{currentPassword:'abcdefgh',password:'abcdefg'},{cookie})).status).toBe(400);
  expect((await call('auth/password',{currentPassword:'abcdefgh',password:'ijklmnop'},{cookie})).status).toBe(200);
 });
@@ -74,7 +74,7 @@ it('accepts eight plain characters and rejects seven for setup, creation and pas
 it('shares the catalog, permits admin changes and hides inactive exercises from clients',async()=>{
  const cookie=await activate();
  const base=await (await call('catalog',undefined,{cookie})).json();expect(base.exercises).toHaveLength(97);expect(base.muscleGroups).toHaveLength(8);expect(base.exercises.every((e:any)=>e.videoUrl?.startsWith('https://www.youtube.com/watch?v='))).toBe(true);
- for(const role of ['Admin','User'])await call('users',{name:role,email:role.toLowerCase()+'@example.com',role,password:'abcdefgh'},{cookie});
+ for(const role of ['Admin','User'])await call('users',{name:role,email:role.toLowerCase()+'@example.com',username:role.toLowerCase(),role,password:'abcdefgh'},{cookie});
  const sessionFor=async(role:string)=>{const r=await call('auth/login',{email:role.toLowerCase()+'@example.com',password:'abcdefgh'},{visitor:role});return {cookie:r.headers.get('set-cookie')!.split(';')[0],visitor:role};};
  const admin=await sessionFor('Admin'),client=await sessionFor('User');
  const e={...base.exercises[0],active:false};
@@ -90,10 +90,34 @@ it('shares the catalog, permits admin changes and hides inactive exercises from 
 });
 it('saves a background per account, rejects invalid colors and preserves the default for others',async()=>{
  const cookie=await activate();
- await call('users',{name:'Client',email:'theme@example.com',role:'User',password:'abcdefgh'},{cookie});
+ await call('users',{name:'Client',email:'theme@example.com',username:'theme',role:'User',password:'abcdefgh'},{cookie});
  const r=await call('auth/login',{email:'theme@example.com',password:'abcdefgh'},{visitor:'client'});const client={cookie:r.headers.get('set-cookie')!.split(';')[0],visitor:'client'};
  expect((await call('preferences',{backgroundColor:'red;display:none'},{cookie})).status).toBe(400);
  expect((await call('preferences',{backgroundColor:'#123456'},{cookie})).status).toBe(200);
  expect((await (await call('preferences',undefined,{cookie})).json()).backgroundColor).toBe('#123456');
  expect((await (await call('preferences',undefined,client)).json()).backgroundColor).toBe('#050b12');
+});
+
+it('reserves normalized unique usernames and supports both username and email login',async()=>{
+ const cookie=await activate();
+ expect((await call('auth/username',{username:'Giacomo'},{cookie})).status).toBe(200);
+ const me=await (await call('auth/me',undefined,{cookie})).json();expect(me.user.username).toBe('giacomo');
+ expect((await call('auth/login',{email:'GIACOMO',password:'owner-password-123'})).status).toBe(200);
+ expect((await call('auth/login',{email:owner,password:'owner-password-123'})).status).toBe(200);
+ expect((await call('users',{name:'Other',email:'other@example.com',username:'GIACOMO',role:'User',password:'abcdefgh'},{cookie})).status).toBe(409);
+ expect((await call('users',{name:'Other',email:'other@example.com',username:'other.user',role:'User',password:'abcdefgh'},{cookie})).status).toBe(201);
+ const r=await call('auth/login',{identifier:'OTHER.USER',password:'abcdefgh'},{visitor:'other'});expect(r.status).toBe(200);const otherCookie=r.headers.get('set-cookie')!.split(';')[0];
+ expect((await call('auth/username',{username:'giacomo'},{cookie:otherCookie,visitor:'other'})).status).toBe(409);
+ expect((await call('auth/username',{username:'other.changed'},{cookie:otherCookie,visitor:'other'})).status).toBe(200);
+ expect((await call('auth/login',{email:'other.user',password:'abcdefgh'},{visitor:'other'})).status).toBe(401);
+ expect((await call('auth/login',{email:'other.changed',password:'abcdefgh'},{visitor:'other'})).status).toBe(200);
+ expect((await call('auth/username',{username:'invalid name'},{cookie})).status).toBe(400);
+ expect((await call('auth/username',{username:'x'},{cookie})).status).toBe(400);
+});
+it('enforces username uniqueness at the database level and on admin updates',async()=>{
+ const cookie=await activate();
+ for(const username of ['first','second'])expect((await call('users',{name:username,email:username+'@example.com',username,role:'User',password:'abcdefgh'},{cookie})).status).toBe(201);
+ const second=(await (await call('users',undefined,{cookie})).json()).users.find((u:any)=>u.username==='second');
+ expect((await call('users/'+second.id,{...second,username:'FIRST',active:true},{cookie,method:'PATCH'})).status).toBe(409);
+ expect(()=>sql.prepare('UPDATE users SET username=? WHERE id=?').run('first',second.id)).toThrow(/UNIQUE/);
 });

@@ -61,3 +61,9 @@ it('keeps a changed theme on the device when remote sync fails and retries it be
  try{const theme=injector.get(ThemeService);await theme.save('#123456');expect(theme.color()).toBe('#123456');request.mockResolvedValue({backgroundColor:'#050b12'});await theme.load();expect(request).toHaveBeenLastCalledWith('preferences',{backgroundColor:'#123456'});expect(theme.color()).toBe('#123456');}
  finally{const db=new Dexie('gymtrack-preferences-v1');db.version(1).stores({preferences:'id'});await db.table('preferences').delete(id);db.close();injector.destroy();}
 });
+
+it('preserves a compressed profile photo through backup and accepts older v2 backups without it',async()=>{
+ const data=seed(),bytes=new Uint8Array([255,216,255,224,0,16,74,70,73,70,0,0]);data.profiles[0].photo=new Blob([bytes],{type:'image/jpeg'});
+ const restored=await importBackup(await exportBackup(data));expect(await restored.profiles[0].photo!.arrayBuffer()).toEqual(bytes.buffer);
+ const old=JSON.parse(await exportBackup(seed()));old.schemaVersion=2;const result=await importBackup(JSON.stringify(old));expect(result.profiles[0].photo).toBeUndefined();expect(result.exercises).toHaveLength(97);
+});

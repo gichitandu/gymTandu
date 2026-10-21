@@ -10,6 +10,7 @@ export interface Role extends Entity {
 }
 export interface UserProfile extends Entity {
   name: string;
+  photo?: Blob;
   role: RoleName;
   bodyWeight?: number;
   height?: number;

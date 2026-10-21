@@ -12,7 +12,7 @@ import { ShellComponent } from './shell.component';
 <p class="subtle">{{auth.setup() ? 'Giacomo, imposta la password del tuo account Super Admin.' : 'Accedi con le credenziali del tuo account GymTrack.'}}</p>
 @if(auth.error() || error()) {<p class="notice error" role="alert" style="margin-top:20px">{{error() || auth.error()}}</p>}
 <form (ngSubmit)="submit()" class="stack" style="margin-top:24px" autocomplete="on">
-<label for="login-email">Email<input id="login-email" name="username" type="email" autocomplete="username" inputmode="email" autocapitalize="none" spellcheck="false" required maxlength="254" [readOnly]="auth.setup()" [ngModel]="auth.setup()?auth.ownerEmail():email" (ngModelChange)="email=$event" /></label>
+@if(auth.setup()){<label>Email dell’account<input name="email" type="email" autocomplete="email" [ngModel]="auth.ownerEmail()" readonly /></label><label for="setup-username">Scegli un nome utente<input id="setup-username" name="username" autocomplete="username" [(ngModel)]="username" autocapitalize="none" spellcheck="false" required minlength="3" maxlength="30" pattern="[A-Za-z0-9][A-Za-z0-9._-]{2,29}" /></label>}@else{<label for="login-identifier">Nome utente o email<input id="login-identifier" name="username" type="text" autocomplete="username" autocapitalize="none" spellcheck="false" required maxlength="254" [(ngModel)]="email" /></label>}
 <label for="login-password">{{auth.setup()?'Scegli una password':'Password'}}<input id="login-password" name="password" [type]="show()?'text':'password'" [attr.autocomplete]="auth.setup()?'new-password':'current-password'" [(ngModel)]="password" required [minlength]="auth.setup()?8:1" maxlength="128" /></label>
 <label class="password-toggle"><input type="checkbox" name="show" [ngModel]="show()" (ngModelChange)="show.set($event)" /> Mostra password</label>
 @if(auth.setup()) {<label>Conferma password<input name="confirm-password" type="password" autocomplete="new-password" [(ngModel)]="confirm" required minlength="8" maxlength="128" /></label>}
@@ -27,12 +27,13 @@ import { ShellComponent } from './shell.component';
 </section></main>}
 `})
 export class AppComponent {
- auth=inject(AuthService);remember=false;email='';password='';confirm='';busy=signal(false);error=signal('');show=signal(false);
+ auth=inject(AuthService);remember=false;username='';email='';password='';confirm='';busy=signal(false);error=signal('');show=signal(false);
  async submit() {
   if(this.busy()) return;this.error.set('');
   if(this.auth.setup()&&this.password!==this.confirm) {this.error.set('Le password non coincidono.');return;}
+  if(this.auth.setup() && !/^[a-zA-Z0-9][a-zA-Z0-9._-]{2,29}$/.test(this.username.trim())) {this.error.set("Scegli un nome utente valido di 3–30 caratteri.");return;}
   this.busy.set(true);
-  try {await this.auth.login(this.auth.setup()?this.auth.ownerEmail():this.email,this.password,this.auth.setup(),this.remember);this.password='';this.confirm='';}
+  try {await this.auth.login(this.auth.setup()?this.auth.ownerEmail():this.email,this.password,this.auth.setup(),this.remember,this.username);this.password='';this.confirm='';}
   catch(e) {this.error.set(e instanceof Error?e.message:'Accesso non riuscito.');}
   finally {this.busy.set(false);}
  }

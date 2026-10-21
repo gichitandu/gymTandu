@@ -1,3 +1,4 @@
+import { AvatarComponent } from "../shared/avatar.component";
 import { AuthService } from "../services/auth";
 import { Store } from "../services/store";
 import { PwaService } from "../services/pwa";
@@ -7,7 +8,7 @@ import { IconComponent } from "../shared/icon.component";
 @Component({
   selector: "gt-shell",
   standalone: true,
-  imports: [RouterLink, RouterLinkActive, RouterOutlet, IconComponent],
+  imports: [RouterLink, RouterLinkActive, RouterOutlet, IconComponent, AvatarComponent],
   template: ` <aside class="sidebar">
       <a class="brand" routerLink="/"
         ><span class="brand-icon"><gt-icon name="weight" /></span>Gym<span
@@ -44,9 +45,7 @@ import { IconComponent } from "../shared/icon.component";
         >
         <div class="topbar-right">
           <span class="offline-label"><i></i> Archivio locale</span
-          ><a class="avatar" routerLink="/profilo" aria-label="Apri profilo">{{
-            s.profile().name.slice(0, 2).toUpperCase()
-          }}</a>
+          ><a class="avatar" routerLink="/profilo" aria-label="Apri profilo"><gt-avatar [photo]="s.profile().photo" [name]="s.profile().name" /></a>
         </div>
       </header>
       <main>@if(auth.offlineMode()){<p class="local-mode-label">Archivio personale locale · funzioni condivise disabilitate</p>}<router-outlet /></main>

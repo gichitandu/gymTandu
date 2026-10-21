@@ -15,6 +15,13 @@
       "when": 1792540208431,
       "tag": "0001_mean_junta",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1792541447886,
+      "tag": "0002_lush_reaper",
+      "breakpoints": true
     }
   ]
 }

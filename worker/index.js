@@ -15,14 +15,24 @@ export async function passwordHash(password, salt) {
 function equal(a, b) { if(a.length !== b.length) return false; let d=0; for(let i=0;i<a.length;i++) d |= a.charCodeAt(i)^b.charCodeAt(i); return d===0; }
 function json(data, status=200, headers={}) { return Response.json(data,{status,headers:{'Cache-Control':'no-store','X-Content-Type-Options':'nosniff',...headers}}); }
 function fail(message,status=400) { throw Object.assign(new Error(message),{status}); }
-const publicUser = u => ({id:u.id,email:u.email,name:u.name,role:u.role,active:!!u.active,owner:u.email===OWNER});
+const publicUser = u => ({id:u.id,email:u.email,name:u.name,username:u.username||null,role:u.role,active:!!u.active,owner:u.email===OWNER});
 function validPassword(p) { if(typeof p!=='string'||p.length<8||p.length>128) fail('Usa una password da 8 a 128 caratteri.'); }
+function username(value) {
+  if(typeof value!=='string') fail('Inserisci un nome utente.');
+  const name=value.trim().toLowerCase();
+  if(!/^[a-z0-9][a-z0-9._-]{2,29}$/.test(name)) fail('Il nome utente deve avere 3–30 caratteri: lettere, numeri, punto, trattino o underscore.');
+  return name;
+}
+async function availableUsername(db,name,exclude='') {
+ const existing=await db.prepare('SELECT id FROM users WHERE username=? AND id<>?').bind(name,exclude).first();
+ if(existing) fail('Nome utente già utilizzato. Scegline un altro.',409);
+}
 function fields(body) {
   const email=String(body.email||'').trim().toLowerCase(), name=String(body.name||'').trim();
   if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)||email.length>254) fail('Email non valida.');
   if(!name||name.length>80) fail('Inserisci un nome entro 80 caratteri.');
   if(!['Admin','User'].includes(body.role)) fail('Seleziona Admin o Cliente.');
-  return {email,name,role:body.role};
+  return {email,name,username:username(body.username),role:body.role};
 }
 async function session(request,db) {
   const token=request.headers.get('cookie')?.split(';').map(s=>s.trim()).find(s=>s.startsWith(COOKIE+'='))?.slice(COOKIE.length+1);
@@ -95,22 +105,23 @@ export async function api(request,env) {
     if(path==='/api/auth/setup'&&request.method==='POST') {
       if(request.headers.get('oai-authenticated-user-email')?.toLowerCase()!==OWNER) fail('Solo il proprietario può attivare il Super Admin.',403);
       validPassword(b.password); const salt=random(), hash=await passwordHash(b.password,salt);
-      const u={id:crypto.randomUUID(),email:OWNER,name:'Giacomo Tanduo',role:'SuperAdmin',active:1};
-      const result=await db.prepare('INSERT OR IGNORE INTO users(id,email,name,role,active,salt,password_hash,created_at) VALUES(?,?,?,?,?,?,?,?)').bind(u.id,u.email,u.name,u.role,1,salt,hash,Date.now()).run();
+      const handle=b.username===undefined?null:username(b.username);if(handle)await availableUsername(db,handle);
+      const u={id:crypto.randomUUID(),email:OWNER,name:'Giacomo Tanduo',username:handle,role:'SuperAdmin',active:1};
+      const result=await db.prepare('INSERT OR IGNORE INTO users(id,email,name,username,role,active,salt,password_hash,created_at) VALUES(?,?,?,?,?,?,?,?,?)').bind(u.id,u.email,u.name,u.username,u.role,1,salt,hash,Date.now()).run();
       if(!result.meta.changes) fail('Account già attivato. Accedi con la password.',409);
       return startSession(request,db,u);
     }
     if(path==='/api/auth/login'&&request.method==='POST') {
-      const email=String(b.email||'').trim().toLowerCase(), password=String(b.password||'');
-      if(email.length>254||password.length>128) fail('Credenziali non valide.',401);
+      const identifier=String(b.identifier??b.email??b.username??'').trim().toLowerCase(), password=String(b.password||'');
+      if(identifier.length>254||password.length>128) fail('Credenziali non valide.',401);
       // One shared throttle key per platform visitor stops unknown-email flooding too.
       const key=request.headers.get('oai-authenticated-user-id'), now=Date.now();
       await db.prepare('INSERT INTO login_limits(id,attempts,reset_at) VALUES(?,1,?) ON CONFLICT(id) DO UPDATE SET attempts=CASE WHEN reset_at<? THEN 1 ELSE attempts+1 END, reset_at=CASE WHEN reset_at<? THEN excluded.reset_at ELSE reset_at END').bind(key,now+900000,now,now).run();
       const limit=await db.prepare('SELECT attempts FROM login_limits WHERE id=?').bind(key).first();
       if(limit.attempts>10) fail('Troppi tentativi. Riprova tra 15 minuti.',429);
-      const u=await db.prepare('SELECT * FROM users WHERE email=?').bind(email).first();
+      const u=await db.prepare(identifier.includes('@')?'SELECT * FROM users WHERE email=?':'SELECT * FROM users WHERE username=?').bind(identifier).first();
       const hash=await passwordHash(password,u?.salt||'unknown-account-dummy-salt');
-      if(!u||!u.active||!equal(hash,u.password_hash)) fail('Email o password non valide.',401);
+      if(!u||!u.active||!equal(hash,u.password_hash)) fail('Nome utente, email o password non validi.',401);
       await db.prepare('DELETE FROM login_limits WHERE id=?').bind(key).run();
       return startSession(request,db,u);
     }
@@ -140,6 +151,11 @@ export async function api(request,env) {
       await db.prepare('INSERT INTO catalog_groups(id,name) VALUES(?,?) ON CONFLICT(id) DO UPDATE SET name=excluded.name').bind(id,name).run();
       return json({ok:true});
     }
+    if(path==='/api/auth/username'&&request.method==='POST') {
+      const handle=username(b.username);await availableUsername(db,handle,me.id);
+      await db.prepare('UPDATE users SET username=? WHERE id=?').bind(handle,me.id).run();
+      return json({user:publicUser({...me,username:handle})});
+    }
     if(path==='/api/auth/password'&&request.method==='POST') {
       validPassword(b.password);
       if(!equal(await passwordHash(String(b.currentPassword||''),me.salt),me.password_hash)) fail('Password attuale errata.',403);
@@ -149,29 +165,32 @@ export async function api(request,env) {
     }
     if(me.role!=='SuperAdmin') fail('Accesso riservato al Super Admin.',403);
     if(path==='/api/users'&&request.method==='POST') {
-      const u=fields(b); validPassword(b.password);
+      const u=fields(b); validPassword(b.password);await availableUsername(db,u.username);
       if(u.email===OWNER) fail('Account proprietario già riservato.',409);
       const salt=random();
       const existing=await db.prepare('SELECT id FROM users WHERE email=?').bind(u.email).first();
       if(existing) fail('Questa email è già registrata.',409);
-      await db.prepare('INSERT INTO users(id,email,name,role,active,salt,password_hash,created_at) VALUES(?,?,?,?,1,?,?,?)').bind(crypto.randomUUID(),u.email,u.name,u.role,salt,await passwordHash(b.password,salt),Date.now()).run();
+      await db.prepare('INSERT INTO users(id,email,name,username,role,active,salt,password_hash,created_at) VALUES(?,?,?,?,?,1,?,?,?)').bind(crypto.randomUUID(),u.email,u.name,u.username,u.role,salt,await passwordHash(b.password,salt),Date.now()).run();
       return json({ok:true},201);
     }
     if(path.startsWith('/api/users/')&&request.method==='PATCH') {
       const id=path.slice('/api/users/'.length), target=await db.prepare('SELECT * FROM users WHERE id=?').bind(id).first();
       if(!target) fail('Utente non trovato.',404);
       if(target.email===OWNER||target.id===me.id) fail('Il Super Admin proprietario è protetto.',403);
-      const u=fields(b);
+      const u=fields(b);await availableUsername(db,u.username,id);
       if(u.email===OWNER) fail('Email riservata al proprietario.');
       if(typeof b.active!=='boolean') fail('Stato non valido.');
       const salt=b.password?random():target.salt;
       if(b.password) validPassword(b.password);
       const hash=b.password?await passwordHash(b.password,salt):target.password_hash;
-      await db.batch([db.prepare('UPDATE users SET name=?,email=?,role=?,active=?,salt=?,password_hash=? WHERE id=?').bind(u.name,u.email,u.role,b.active?1:0,salt,hash,id),db.prepare('DELETE FROM sessions WHERE user_id=?').bind(id)]);
+      await db.batch([db.prepare('UPDATE users SET name=?,email=?,username=?,role=?,active=?,salt=?,password_hash=? WHERE id=?').bind(u.name,u.email,u.username,u.role,b.active?1:0,salt,hash,id),db.prepare('DELETE FROM sessions WHERE user_id=?').bind(id)]);
       return json({ok:true});
     }
     fail('Operazione non trovata.',404);
-  } catch(e) { return json({error:e.status?e.message:'Servizio non disponibile. Riprova.'},e.status||503); }
+  } catch(e) {
+    if(/UNIQUE constraint failed: users.username|users_username_unique/.test(e.message||''))return json({error:'Nome utente già utilizzato. Scegline un altro.'},409);
+    if(/UNIQUE constraint failed: users.email/.test(e.message||''))return json({error:'Questa email è già registrata.'},409);
+    return json({error:e.status?e.message:'Servizio non disponibile. Riprova.'},e.status||503); }
 }
 // __ASSETS__ is replaced by the build, keeping this deployment dependency-free.
 const assets = /* __ASSETS__ */ {};

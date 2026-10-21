@@ -2,7 +2,7 @@ import { validateIntegrity } from "./integrity";
 export { validateIntegrity } from "./integrity";
 import { z } from "zod";
 import { DataSet } from "../models/domain";
-export const BACKUP_VERSION = 2;
+export const BACKUP_VERSION = 3;
 const id = z.string().min(1).max(150);
 const text = z.string().max(10000);
 const nonempty = z.string().trim().min(1).max(200);
@@ -33,6 +33,7 @@ const image = z.object({
 const schemas = {
   profiles: z.object({
     id,
+    photo: image.optional(),
     name: nonempty,
     role: z.enum(["SuperAdmin", "Admin", "User"]),
     bodyWeight: z.number().positive().max(700).optional(),
@@ -166,8 +167,10 @@ async function base64(blob: Blob) {
 }
 export async function exportBackup(data: DataSet) {
   validateIntegrity(data);
-  const imageBytes = data.exercises.reduce((n,e)=>n+(e.image?.size||0),0)+data.meals.reduce((n,e)=>n+(e.photo?.size||0),0);
+  const imageBytes = (data.profiles[0].photo?.size||0)+data.exercises.reduce((n,e)=>n+(e.image?.size||0),0)+data.meals.reduce((n,e)=>n+(e.photo?.size||0),0);
   if(imageBytes>25*1024*1024) throw Error("Troppe foto per un backup su questo dispositivo. Rimuovi alcune foto dei pasti e riprova.");
+  const profiles=[];
+  for(const p of data.profiles) profiles.push({...p,photo:p.photo?{mime:p.photo.type,data:await base64(p.photo)}:undefined});
   const meals=[];
   for(const m of data.meals) meals.push({...m,photo:m.photo?{mime:m.photo.type,data:await base64(m.photo)}:undefined});
   const exercises = await Promise.all(
@@ -183,14 +186,14 @@ export async function exportBackup(data: DataSet) {
       app: "GymTrack",
       schemaVersion: BACKUP_VERSION,
       exportedAt: new Date().toISOString(),
-      data: { ...data, exercises, meals },
+      data: { ...data, profiles, exercises, meals },
     },
     null,
     2,
   );
 }
 // Add explicit vN -> vN+1 pure functions here when the on-disk format evolves.
-export const migrations: Record<number, (value: unknown) => unknown> = {1: value => ({...(value as object),meals:[]})};
+export const migrations: Record<number, (value: unknown) => unknown> = {1: value => ({...(value as object),meals:[]}),2:value=>value};
 export async function importBackup(json: string): Promise<DataSet> {
   if (new Blob([json]).size > 50 * 1024 * 1024)
     throw Error("Backup troppo grande: limite 50 MB.");
@@ -237,7 +240,9 @@ export async function importBackup(json: string): Promise<DataSet> {
   );
   const meals = [];
   for (const m of data.meals) meals.push({...m,photo:m.photo?await decodeBackupImage(m.photo):undefined});
-  const result: DataSet = { ...data, exercises, meals };
+  const profiles=[];
+  for(const p of data.profiles) profiles.push({...p,photo:p.photo?await decodeBackupImage(p.photo):undefined});
+  const result: DataSet = { ...data, profiles, exercises, meals };
   validateIntegrity(result);
   return result;
 }
