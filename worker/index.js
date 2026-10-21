@@ -65,7 +65,6 @@ function exerciseFields(b,groups) {
   if(e.videoUrl && (!validHttps(e.videoUrl)||e.videoUrl.length>1000)) fail('Inserisci un link video HTTPS valido.');
   if(e.thumbnailUrl && (!validHttps(e.thumbnailUrl)||e.thumbnailUrl.length>1000)) fail('Immagine non valida.');
   if(typeof e.imageData!=='string'||e.imageData.length>2800000||e.imageData && !/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/.test(e.imageData)) fail('Immagine non valida.');
-  if(e.active && !e.videoUrl) fail('Per attivare l’esercizio inserisci un video dimostrativo.');
   return e;
 }
 export async function api(request,env) {

@@ -1,3 +1,5 @@
+import { defaultExercises, defaultGroups } from "./default-catalog";
+import { clearLegacyYoutube } from "./catalog-upgrade";
 import { validateIntegrity } from "../services/integrity";
 import Dexie, { Table } from "dexie";
 import { DataSet, Entity, TABLES } from "../models/domain";
@@ -19,6 +21,14 @@ export class GymDatabase extends Dexie {
     });
     this.version(2).stores({meals: "id,date,name"});
     this.version(3).stores({scheduledWorkouts:"id,date,dayId,workoutId",measurements:"id,&date"});
+    this.version(4).stores({}).upgrade(async tx=>{
+      const exercises=tx.table('exercises');
+      await exercises.toCollection().modify(e=>{clearLegacyYoutube(e);});
+      const ids=new Set(await exercises.toCollection().primaryKeys());
+      const groups=new Set(await tx.table('muscleGroups').toCollection().primaryKeys());
+      await tx.table('muscleGroups').bulkPut(defaultGroups.filter(g=>!groups.has(g.id)));
+      await exercises.bulkPut(defaultExercises.filter(e=>e.id.startsWith('variant-')&&!ids.has(e.id)));
+    });
   }
   entity<K extends keyof DataSet>(name: K): Table<DataSet[K][number], string> {
     return this.table(name);

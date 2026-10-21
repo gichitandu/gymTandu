@@ -65,3 +65,13 @@ La schermata esercizio mostra uno schema indicativo per zona muscolare e gli ult
 47 test automatici verificano anche il percorso reale del componente allenamento (dettaglio, serie, pausa/ripresa, riepilogo, persistenza), la modifica di un pasto composto e il suo roundtrip JSON. Il timer usa timestamp assoluti, quindi il conteggio recupera il tempo trascorso quando i callback vengono sospesi. Il timer non prosegue dopo la chiusura completa della pagina.
 
 Non sono stati eseguiti test visivi del browser o di un dispositivo iOS reale in questa sessione: il controllo browser previsto dall'ambiente non è disponibile. Restano da verificare fisicamente navigazione e layout a 320/375/390/430 px, tastiera, safe area, selezione foto, timer dopo blocco schermo, scorrimento del calendario sugli schermi più stretti e PWA installata. Non sono presenti pulsanti di social login o biometria applicativa; Face ID può essere usato dal gestore Password di iOS per compilare le credenziali.
+
+## Varianti esercizi e ripristino login
+
+Catalogo predefinito: 161 esercizi, incluse 64 nuove varianti. Panca con manubri: piana 0°, inclinata 15°/30°/45°/60°, declinata −15°/−30°, presa neutra 0°/30°/45°, alternata, unilaterale, a terra e squeeze press. Altre varianti per bilanciere, multipower e gruppi muscolari. Gli ID preesistenti restano validi e le serie storiche conservano i nomi registrati.
+
+Migrazione IndexedDB v4: pulizia dei riferimenti YouTube preesistenti, aggiunta delle nuove varianti mancanti, conservazione di immagini locali, campi personalizzati e flag Attivo. Migrazione D1 0003: stessa pulizia dei riferimenti del catalogo condiviso, senza eliminare esercizi o dati personali. Il link video è ora facoltativo anche per esercizi attivi. I nuovi link inseriti dagli amministratori dopo l'aggiornamento vengono conservati.
+
+Solo il foglio di stile della schermata di accesso torna alla versione con logo argentato/blu, sfondo geometrico e pulsante sfumato. Non sono aggiunte registrazione pubblica, social login o biometria applicativa. Nessuna variazione alla UI delle altre sezioni.
+
+50 test automatici e build strict passati, incluse migrazioni del catalogo locale/condiviso e accessibilità degli esercizi attivi senza video. Il confronto visivo e il test Safari/PWA su iPhone reale restano da eseguire.

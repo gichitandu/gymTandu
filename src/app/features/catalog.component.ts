@@ -104,7 +104,7 @@ import { StatusComponent } from "../shared/status.component";
       </div>
     </div>
     }
-    <p class="subtle" style="margin-top:20px">Video dimostrativi dei rispettivi autori YouTube · Riferimenti: <a class="link" href="https://github.com/rthepen/workout-database" target="_blank" rel="noopener noreferrer">Open-Source Workout Database</a>.</p>
+    <p class="subtle" style="margin-top:20px">I video sono facoltativi. Admin e Super Admin possono aggiungere un link HTTPS nella modifica dell’esercizio.</p>
     @if (editing() && s.canEditCatalog()) {
       <div class="modal-backdrop" (click)="close($event)">
         <section
@@ -169,9 +169,9 @@ import { StatusComponent } from "../shared/status.component";
                   formControlName="description"
                   maxlength="2000"
                 ></textarea></label
-              ><label class="wide">Video dimostrativo (link HTTPS)<input type="url" formControlName="videoUrl" maxlength="1000" placeholder="https://www.youtube.com/watch?v=…" /></label>
+              ><label class="wide">Video dimostrativo (link HTTPS facoltativo)<input type="url" formControlName="videoUrl" maxlength="1000" placeholder="Link video facoltativo" /></label>
               <label class="wide active-check"><input type="checkbox" formControlName="active" />Attivo · visibile ai clienti e selezionabile nelle schede</label>
-              <p class="subtle wide">Se la spunta non è selezionata, l’esercizio resta nel catalogo degli admin. Per attivarlo è necessario inserire il video.</p>
+              <p class="subtle wide">Se la spunta non è selezionata, l’esercizio resta nel catalogo degli admin. Il video è facoltativo: la visibilità dipende soltanto dalla spunta Attivo.</p>
               <label class="wide"
                 >Tag, separati da virgola<input
                   formControlName="tags"

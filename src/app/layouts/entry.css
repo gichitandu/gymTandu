@@ -113,24 +113,15 @@
  .entry-brand {margin-bottom:18px;}
  .entry-panel {max-width:460px;margin:auto;}
 }
+/* Login restored to the silver/blue GT reference; no athlete background. */
+.entry-panel{background:radial-gradient(ellipse at 55% 0%,#08336335,transparent 36%),linear-gradient(180deg,#030c15,#01060b);}
+.entry-brand{background:none;}
+.entry-brand .brand-tagline{font-size:7px;letter-spacing:1.7px;margin-top:12px;}
 @media(max-width:760px),(max-width:1100px) and (pointer:coarse){
- .entry-brand{min-height:225px;padding:100px 20px 15px;width:calc(100% + 40px);margin:0 -20px 12px;justify-content:flex-end;background:linear-gradient(180deg,#02070d12 0%,#02070d40 40%,#02070df2 100%),url('/gym-hero.webp') 72% 28%/cover;}
- .entry-brand>img{width:65px;height:65px;filter:drop-shadow(0 2px 15px #007aff60);}
- .entry-brand .entry-wordmark{font-size:27px;}
- .entry-brand .brand-tagline{font-size:7px;letter-spacing:1.7px;margin-top:10px;}
- .entry-panel>.entry-topline{position:absolute;top:0;left:0;right:0;}
- .entry-heading h1{font-size:22px;}.entry-heading p{font-size:11px;}
- .entry-tabs{margin-top:18px;}.entry-divider{margin-top:18px;}
+ .entry-panel{padding-top:0;background:radial-gradient(ellipse at 70% 5%,#053a681a,transparent 45%);}
+ .entry-brand{min-height:0;width:auto;margin:0 auto 24px;padding:0;background:none;}
+ .entry-brand>img{width:88px;height:88px;}
+ .entry-panel>.entry-topline{position:relative;top:auto;left:auto;right:auto;}
+ .entry-eye{min-height:44px;min-width:44px;}
+ .entry-tabs button{min-height:44px;}
 }
-/* Same midnight palette as the signed-in screens, without a device frame. */
-.entry-page{background:#050E17;--text:#fff;--muted:#B5C4D1;--line:#243B4B;}
-.entry-page::before,.entry-panel::before,.emblem-orbit,.emblem-orbit::before{display:none;}
-.entry-panel{background:#050E17;border:0;border-radius:0;box-shadow:none;}
-.entry-field{background:#102230;border-color:#243B4B;border-radius:10px;min-height:56px;}
-.entry-primary{background:#0675FF;border-color:#1683FF;border-radius:10px;box-shadow:0 4px 16px #0675ff26;}
-.entry-tabs button.active{background:#0675FF;border-color:#1683FF;box-shadow:none;}
-.entry-heading p,.entry-helper,.entry-device-hint{color:#B5C4D1;font-size:12px;}
-.entry-brand{min-height:240px;padding:105px 20px 16px;justify-content:flex-end;background:linear-gradient(180deg,#050e1700,#050e1730 40%,#050e17 100%),url('/gym-hero.webp') 72% 28%/cover;}
-.hero-emblem{background:linear-gradient(180deg,#050e1730,#050e17c0),url('/gym-hero.webp') 72% 28%/cover;border-radius:14px;}
-.entry-trust{border-radius:10px;background:#102230;border-color:#243B4B;box-shadow:none;}
-@media(max-width:760px),(max-width:1100px) and (pointer:coarse){.entry-brand{min-height:240px;background:linear-gradient(180deg,#050e1700,#050e1730 40%,#050e17 100%),url('/gym-hero.webp') 72% 28%/cover;}.entry-tabs button{min-height:44px;}.entry-eye{min-width:44px;min-height:44px;}.entry-panel{padding-bottom:24px;}}

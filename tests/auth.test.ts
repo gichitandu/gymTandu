@@ -73,7 +73,7 @@ it('accepts eight plain characters and rejects seven for setup, creation and pas
 
 it('shares the catalog, permits admin changes and hides inactive exercises from clients',async()=>{
  const cookie=await activate();
- const base=await (await call('catalog',undefined,{cookie})).json();expect(base.exercises).toHaveLength(97);expect(base.muscleGroups).toHaveLength(8);expect(base.exercises.every((e:any)=>e.videoUrl?.startsWith('https://www.youtube.com/watch?v='))).toBe(true);
+ const base=await (await call('catalog',undefined,{cookie})).json();expect(base.exercises).toHaveLength(161);expect(base.muscleGroups).toHaveLength(8);expect(base.exercises.every((e:any)=>e.videoUrl==='')).toBe(true);
  for(const role of ['Admin','User'])await call('users',{name:role,email:role.toLowerCase()+'@example.com',username:role.toLowerCase(),role,password:'abcdefgh'},{cookie});
  const sessionFor=async(role:string)=>{const r=await call('auth/login',{email:role.toLowerCase()+'@example.com',password:'abcdefgh'},{visitor:role});return {cookie:r.headers.get('set-cookie')!.split(';')[0],visitor:role};};
  const admin=await sessionFor('Admin'),client=await sessionFor('User');
@@ -83,7 +83,7 @@ it('shares the catalog, permits admin changes and hides inactive exercises from 
  expect((await call('catalog/exercise',e,admin)).status).toBe(200);
  const visible=await (await call('catalog',undefined,client)).json();expect(visible.exercises.find((x:any)=>x.id===e.id)).toBeUndefined();
  const managed=await (await call('catalog',undefined,admin)).json();expect(managed.exercises.find((x:any)=>x.id===e.id).active).toBe(false);
- expect((await call('catalog/exercise',{...e,id:'custom-test',name:'Esercizio test',active:true,videoUrl:''},admin)).status).toBe(400);
+ expect((await call('catalog/exercise',{...e,id:'custom-test',name:'Esercizio test',active:true,videoUrl:''},admin)).status).toBe(200);
  expect((await call('catalog/exercise',{...e,id:'custom-test',name:'Esercizio test',active:false,videoUrl:''},admin)).status).toBe(200);
  expect((await call('catalog/exercise',{...e,active:true},admin)).status).toBe(200);
  expect((await (await call('catalog',undefined,client)).json()).exercises.find((x:any)=>x.id===e.id)).toBeTruthy();
@@ -120,4 +120,12 @@ it('enforces username uniqueness at the database level and on admin updates',asy
  const second=(await (await call('users',undefined,{cookie})).json()).users.find((u:any)=>u.username==='second');
  expect((await call('users/'+second.id,{...second,username:'FIRST',active:true},{cookie,method:'PATCH'})).status).toBe(409);
  expect(()=>sql.prepare('UPDATE users SET username=? WHERE id=?').run('first',second.id)).toThrow(/UNIQUE/);
+});
+
+it('removes saved YouTube references with a one-time migration and preserves custom catalog fields',async()=>{
+ const cookie=await activate();const ex={id:'custom-legacy',name:'Esercizio personale',muscleGroupId:'muscle-0',equipment:'Manubri',secondaryMuscleIds:[],tags:['Privato'],active:false,loadMode:'external',description:'Istruzioni personali',videoUrl:'https://www.youtube.com/watch?v=abcdefghijk',videoTitle:'Vecchio titolo',thumbnailUrl:'https://i.ytimg.com/vi/abcdefghijk/hqdefault.jpg'};
+ const me=await (await call('auth/me',undefined,{cookie})).json();sql.prepare('INSERT INTO catalog_exercises VALUES(?,?,?,?,?)').run(ex.id,JSON.stringify(ex),0,me.user.id,Date.now());
+ sql.exec(readFileSync('drizzle/0003_optional_exercise_videos.sql','utf8'));
+ const data=await (await call('catalog',undefined,{cookie})).json();expect(data.exercises.find((e:any)=>e.id===ex.id)).toMatchObject({name:ex.name,active:false,description:ex.description,videoUrl:'',thumbnailUrl:''});
+ expect((await call('catalog/exercise',{...ex,videoUrl:'https://example.com/nuovo-video.mp4',thumbnailUrl:'',active:true},{cookie})).status).toBe(200);
 });

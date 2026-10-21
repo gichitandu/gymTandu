@@ -17,7 +17,7 @@ it('upgrades the existing Dexie v1 archive without losing plans, history or prof
  const name='ios-upgrade-'+crypto.randomUUID(),old=new Dexie(name);
  old.version(1).stores({profiles:'id,role',roles:'id,&name',plans:'id,userId,active,archived',days:'id,planId,order',planExercises:'id,dayId,exerciseId',exercises:'id,name,muscleGroupId,equipment,active',muscleGroups:'id,&name',workouts:'id,userId,planId,dayId,date,status',workoutExercises:'id,workoutId,exerciseId',sets:'id,workoutExerciseId',settings:'id'});
  const d=seed();d.plans.push({id:'old-plan',userId:'local',name:'Piano precedente',description:'Da conservare',createdAt:new Date().toISOString(),updatedAt:new Date().toISOString(),active:true,archived:false});d.days.push({id:'old-day',planId:'old-plan',name:'Giorno precedente',order:0});d.workouts.push({id:'old-workout',userId:'local',planId:'old-plan',dayId:'old-day',planName:'Piano precedente',dayName:'Giorno precedente',date:'2026-10-20',startedAt:new Date().toISOString(),endedAt:new Date().toISOString(),duration:100,notes:'Storico da conservare',status:'completed'});for(const [name,rows] of Object.entries(d))if(old.tables.some(t=>t.name===name))await old.table(name).bulkPut(rows);
- old.close();const db=new GymDatabase(name);try{const snapshot=await db.snapshot();expect(snapshot.profiles).toEqual(d.profiles);expect(snapshot.exercises.sort((a,b)=>a.id.localeCompare(b.id))).toEqual(d.exercises.sort((a,b)=>a.id.localeCompare(b.id)));expect(snapshot.plans).toEqual(d.plans);expect(snapshot.workouts).toEqual(d.workouts);expect(snapshot.meals).toEqual([]);expect(db.verno).toBe(3);}finally{await db.delete();}
+ old.close();const db=new GymDatabase(name);try{const snapshot=await db.snapshot();expect(snapshot.profiles).toEqual(d.profiles);expect(snapshot.exercises.sort((a,b)=>a.id.localeCompare(b.id))).toEqual(d.exercises.sort((a,b)=>a.id.localeCompare(b.id)));expect(snapshot.plans).toEqual(d.plans);expect(snapshot.workouts).toEqual(d.workouts);expect(snapshot.meals).toEqual([]);expect(db.verno).toBe(4);}finally{await db.delete();}
 });
 it('roundtrips nutrition photos and migrates existing v1 JSON backups',async()=>{
  const d=seed(),bytes=new Uint8Array([255,216,255,224,0,16,74,70,73,70,0,0]);
@@ -65,5 +65,5 @@ it('keeps a changed theme on the device when remote sync fails and retries it be
 it('preserves a compressed profile photo through backup and accepts older v2 backups without it',async()=>{
  const data=seed(),bytes=new Uint8Array([255,216,255,224,0,16,74,70,73,70,0,0]);data.profiles[0].photo=new Blob([bytes],{type:'image/jpeg'});
  const restored=await importBackup(await exportBackup(data));expect(await restored.profiles[0].photo!.arrayBuffer()).toEqual(bytes.buffer);
- const old=JSON.parse(await exportBackup(seed()));old.schemaVersion=2;const result=await importBackup(JSON.stringify(old));expect(result.profiles[0].photo).toBeUndefined();expect(result.exercises).toHaveLength(97);
+ const old=JSON.parse(await exportBackup(seed()));old.schemaVersion=2;const result=await importBackup(JSON.stringify(old));expect(result.profiles[0].photo).toBeUndefined();expect(result.exercises).toHaveLength(161);
 });
