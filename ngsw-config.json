@@ -12,7 +12,8 @@
           "/*.js",
           "/*.webmanifest",
           "/icons/**",
-          "/*.webp"
+          "/*.webp",
+          "/brand/**"
         ]
       }
     },

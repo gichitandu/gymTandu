@@ -1460,3 +1460,6 @@ input,textarea,select {scroll-margin-block:110px;}
 @supports not (height:100dvh){.modal{max-height:calc(var(--visible-height,90vh) - 24px);}}
 
 input[type=date],input[type=time],select {min-inline-size:0;max-inline-size:100%;}
+.app-brand-mark {display:block;width:36px;height:36px;object-fit:contain;margin-right:7px;flex-shrink:0;}
+.brand:has(.app-brand-mark) {font-style:italic;letter-spacing:-1px;}
+.mobile-brand .app-brand-mark {width:32px;height:32px;margin-right:5px;}

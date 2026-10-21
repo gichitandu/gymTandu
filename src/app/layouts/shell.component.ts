@@ -11,9 +11,7 @@ import { IconComponent } from "../shared/icon.component";
   imports: [RouterLink, RouterLinkActive, RouterOutlet, IconComponent, AvatarComponent],
   template: ` <aside class="sidebar">
       <a class="brand" routerLink="/"
-        ><span class="brand-icon"><gt-icon name="weight" /></span>Gym<span
-          >Track</span
-        ><i></i></a
+        ><img class="app-brand-mark" src="/brand/gt-mark.png" alt=""/>Gym<span>Track</span></a
       ><span class="nav-caption">IL TUO SPAZIO</span>
       <nav>
         @for (item of nav; track item.path) {
