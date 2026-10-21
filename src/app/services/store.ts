@@ -60,9 +60,8 @@ export class Store {
           b.startedAt.localeCompare(a.startedAt),
       ),
   );
-  draft = computed(() =>
-    this.data().workouts.find((w) => w.status === "draft"),
-  );
+  openWorkouts = computed(() => this.data().workouts.filter(w=>w.status==='draft'));
+  draft = computed(() => this.openWorkouts()[0]);
   activePlan = computed(() =>
     this.data().plans.find((p) => p.active && !p.archived),
   );
@@ -545,9 +544,9 @@ export class Store {
       );
     }, "Valori precedenti copiati.");
   }
-  async finish(allowWithoutCompletedSets = false) {
+  async finish(allowWithoutCompletedSets = false, workoutId = this.draft()?.id) {
     return this.change((d) => {
-      const w = d.workouts.find((w) => w.status === "draft");
+      const w = d.workouts.find((w) => w.id === workoutId && w.status === "draft");
       if (!w) return;
       const ids = new Set(
         d.workoutExercises.filter((e) => e.workoutId === w.id).map((e) => e.id),

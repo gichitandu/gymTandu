@@ -10,6 +10,7 @@ import {Store} from '../src/app/services/store';
 import {PlansComponent} from '../src/app/features/plans.component';
 import {CalendarComponent} from '../src/app/features/calendar.component';
 import {SessionComponent} from '../src/app/features/session.component';
+import {OpenWorkoutsComponent} from '../src/app/shared/open-workouts.component';
 import {ActiveWorkoutComponent} from '../src/app/shared/active-workout.component';
 import {localDate} from '../src/app/models/domain';
 import {calendarActivity,moveDate} from '../src/app/services/calendar';
@@ -108,7 +109,7 @@ it('closes an unconfirmed past session only after confirmation, preserving input
   await session.finish();expect(s.draft()?.id).toBe(workout.id);expect(await db.snapshot()).toEqual(before);
   confirm.mockReturnValue(true);await Promise.all([session.finish(),session.finish()]);
   expect(s.draft()).toBeUndefined();expect(s.completed()).toHaveLength(1);expect(s.completed()[0]).toMatchObject({id:workout.id,date:past});
-  expect(s.data().sets).toEqual(before.sets);expect(s.data().plans).toEqual(before.plans);expect(s.data().planExercises).toEqual(before.planExercises);
+  expect([...s.data().sets].sort((a,b)=>a.id.localeCompare(b.id))).toEqual([...before.sets].sort((a,b)=>a.id.localeCompare(b.id)));expect(s.data().plans).toEqual(before.plans);expect(s.data().planExercises).toEqual(before.planExercises);
   expect(confirm).toHaveBeenCalledTimes(2);
   expect(await s.start('day-a',moveDate(localDate(),-2))).toBe(true);expect(s.draft()!.id).not.toBe(workout.id);
   expect(s.data().sets.find(item=>item.id===set.id)).toMatchObject({weight:77.5,reps:9,notes:'Dati inseriti',completed:false});
@@ -130,4 +131,20 @@ it('identifies the blocking session and opens it directly when a different past 
   expect(s.error()).toContain('Piano Tandu');expect(s.error()).toContain('Giorno A');expect(s.error()).toContain('Termina allenamento');
   expect(injector.get(Router).navigateByUrl).toHaveBeenCalledWith('/sessione?requestedDate='+requestedDate);
   expect(await db.snapshot()).toEqual(before);expect(component.startingPast()).toBe(false);
+});
+
+it('lists an unfinished workout and closes only the selected session after confirmation',async()=>{
+  await complete(moveDate(localDate(),-7));await s.start('day-a',moveDate(localDate(),-4));const open=s.draft()!;
+  const exercise=s.workoutExercises(open.id)[0];await s.updateSet(s.sets(exercise.id)[0].id,{weight:92.5,reps:9});
+  const before=await db.snapshot();const component=runInInjectionContext(injector,()=>new OpenWorkoutsComponent());
+  expect(s.openWorkouts().map(w=>w.id)).toEqual([open.id]);const confirm=vi.fn().mockReturnValue(false);vi.stubGlobal('confirm',confirm);
+  await component.close(open.id);expect(await db.snapshot()).toEqual(before);
+  confirm.mockReturnValue(true);await Promise.all([component.close(open.id),component.close(open.id)]);
+  expect(s.openWorkouts()).toHaveLength(0);expect(s.completed()).toHaveLength(2);
+  expect([...s.data().sets].sort((a,b)=>a.id.localeCompare(b.id))).toEqual([...before.sets].sort((a,b)=>a.id.localeCompare(b.id)));
+  expect(s.data().plans).toEqual(before.plans);expect(s.data().workouts.find(w=>w.status==='completed'&&w.id!==open.id)).toEqual(before.workouts.find(w=>w.id!==open.id));
+  expect(confirm).toHaveBeenCalledTimes(2);expect(component.closing()).toBe('');expect(await s.start('day-a',moveDate(localDate(),-1))).toBe(true);
+});
+it('does not close the current session when the requested id no longer exists',async()=>{
+  await s.start('day-a');const before=await db.snapshot();await s.finish(true,'missing-session');expect(await db.snapshot()).toEqual(before);
 });

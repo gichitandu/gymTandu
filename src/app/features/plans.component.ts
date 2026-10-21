@@ -1,3 +1,4 @@
+import { OpenWorkoutsComponent } from '../shared/open-workouts.component';
 import { SectionHeadingComponent } from "../shared/section-heading.component";
 import {ExerciseScope,ExerciseScopeComponent} from "../shared/exercise-scope.component";
 import { ExerciseFamiliesComponent } from "../shared/exercise-families.component";
@@ -36,7 +37,7 @@ type PlanEditorDraft = {
 @Component({
   standalone: true,
   styleUrl: "./feature-polish.css",
-  imports: [SectionHeadingComponent,
+  imports: [OpenWorkoutsComponent,SectionHeadingComponent,
     A11yModule,ExerciseScopeComponent,
     ExerciseFamiliesComponent,
     ExerciseThumbComponent,
@@ -52,7 +53,7 @@ type PlanEditorDraft = {
       </button>
     </gt-section-heading>
     <gt-status />
-    @if(s.draft();as openWorkout){<div class="card" role="status" style="margin-bottom:16px"><strong>Allenamento ancora aperto: {{openWorkout.dayName}} · {{openWorkout.date}}</strong><p class="subtle">I dati sono conservati. Termina questa sessione prima di registrarne un’altra.</p><a class="button primary" routerLink="/sessione" style="margin-top:10px">Riprendi e termina allenamento</a></div>}
+    <gt-open-workouts />
     @if(draftNotice()){<p class="notice" role="status">{{draftNotice()}}</p>}
     <div class="segmented plan-tabs">
       <button [class.active]="!archived()" (click)="archived.set(false)">

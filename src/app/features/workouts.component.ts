@@ -1,3 +1,4 @@
+import { OpenWorkoutsComponent } from '../shared/open-workouts.component';
 import { SectionHeadingComponent } from "../shared/section-heading.component";
 import { Component, computed, inject, signal } from "@angular/core";
 import { FormsModule } from "@angular/forms";
@@ -11,7 +12,7 @@ import { ExerciseFilterComponent } from "../shared/exercise-filter.component";
 @Component({
   standalone: true,
   styleUrl: "./account-polish.css",
-  imports: [SectionHeadingComponent,
+  imports: [OpenWorkoutsComponent,SectionHeadingComponent,
     FormsModule,
     DatePipe,
     RouterLink,
@@ -23,12 +24,7 @@ import { ExerciseFilterComponent } from "../shared/exercise-filter.component";
   template: `<gt-section-heading index="07" eyebrow="STORICO ALLENAMENTI" title="Il lavoro che resta." description="Ogni sessione costruisce la tua storia. Ritrova tutti i dettagli."><a class="button primary" routerLink="/piani"><gt-icon name="plus"/> Allenati</a></gt-section-heading>
     <div class="archive-signal"><div><span>SESSIONI COMPLETATE</span><strong>{{s.completed().length}}</strong></div><div><span>VOLUME CON CARICHI ESTERNI</span><strong>{{s.formatWeight(s.totalVolume())}} <small>{{s.settings().unit}}</small></strong></div><span class="archive-signal-mark" aria-hidden="true"><gt-icon name="activity"/></span></div>
     <gt-status />
-    @if (s.draft()) {
-      <div class="notice">
-        Hai un allenamento in corso.
-        <a class="link" routerLink="/sessione">Riprendi la sessione →</a>
-      </div>
-    }
+    <gt-open-workouts />
     @if (selected(); as w) {
       <button
         class="ghost"
