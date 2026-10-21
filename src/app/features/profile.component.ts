@@ -7,6 +7,7 @@ import { AvatarComponent } from "../shared/avatar.component";
 import { compressPhoto } from "../services/images";
 import { IosStatusComponent } from "../shared/ios-status.component";
 import { ThemeService, DEFAULT_BACKGROUND } from "../services/theme";
+import { feedbackForContext, feedbackSignal } from "../services/feedback";
 import { AuthService } from "../services/auth";
 import { A11yModule } from "@angular/cdk/a11y";
 import { Component, effect, inject, signal } from "@angular/core";
@@ -50,7 +51,7 @@ import { PwaService } from "../services/pwa";
 <div class="profile-menu-group"><div class="account-section-label"><span>01 / IL PERCORSO</span><span>Allenati. Misura. Migliora.</span></div><nav class="profile-menu" aria-label="Percorso personale"><button (click)="panel.set('goals')"><gt-icon name="trophy"/><span><strong>Obiettivi</strong><small>La direzione dei tuoi progressi</small></span>›</button><button (click)="panel.set('measurements')"><gt-icon name="activity"/><span><strong>Misurazioni corporee</strong><small>Rilevazioni e storico personale</small></span>›</button><a routerLink="/catalogo"><gt-icon name="weight"/><span><strong>{{s.canEditCatalog()?'Gestione esercizi':'Catalogo esercizi'}}</strong><small>Varianti, preferiti e configurazioni</small></span>›</a><a routerLink="/calendario"><gt-icon name="calendar"/><span><strong>Calendario allenamenti</strong><small>Il tuo ritmo, giorno per giorno</small></span>›</a></nav></div>
 <div class="profile-menu-group"><div class="account-section-label"><span>02 / SU MISURA</span><span>La tua app, il tuo stile.</span></div><nav class="profile-menu" aria-label="Preferenze e dati"><button (click)="panel.set('theme')"><gt-icon name="palette"/><span><strong>Tema e personalizzazione</strong><small>Colori e aspetto del tuo spazio</small></span>›</button><button (click)="panel.set('settings')"><gt-icon name="settings"/><span><strong>Impostazioni</strong><small>Profilo, foto e unità di misura</small></span>›</button><button (click)="panel.set('backup')"><gt-icon name="download"/><span><strong>Backup e ripristino</strong><small>Porta al sicuro il tuo percorso</small></span>›</button><button (click)="panel.set('security')"><gt-icon name="shield"/><span><strong>Account e sicurezza</strong><small>Credenziali e accesso personale</small></span>›</button>@if(auth.user()?.role==='SuperAdmin'){<a routerLink="/utenti"><gt-icon name="user"/><span><strong>Gestione utenti</strong><small>Account, ruoli e autorizzazioni</small></span>›</a>}<button (click)="panel.set('info')"><gt-icon name="info"/><span><strong>Informazioni app e iPhone</strong><small>Installazione e verifiche dispositivo</small></span>›</button></nav></div>
 }
-@if(panel()==='goals'){<section class="card"><h2>I tuoi obiettivi</h2><p class="subtle" style="margin:12px 0 20px">Inserisci i tuoi riferimenti personali. Non vengono calcolati da una fotografia e non sono prescrizioni automatiche.</p><form [formGroup]="goalsForm" (ngSubmit)="saveGoals()" class="form-grid"><label>Calorie giornaliere (kcal)<input type="number" inputmode="numeric" formControlName="calories" min="1" max="20000"/></label><label>Proteine giornaliere (g)<input type="number" inputmode="decimal" formControlName="protein" min="1" max="2000"/></label><label>Carboidrati giornalieri (g)<input type="number" inputmode="decimal" formControlName="carbs" min="1" max="3000"/></label><label>Grassi giornalieri (g)<input type="number" inputmode="decimal" formControlName="fat" min="1" max="2000"/></label><label class="wide">Allenamenti per settimana<input type="number" inputmode="numeric" formControlName="workoutsPerWeek" min="1" max="14"/></label><button class="primary wide" [disabled]="goalsForm.invalid||s.busy()||!s.ready()">Salva obiettivi</button></form><p class="subtle" style="margin-top:14px">Lascia vuoto un campo per rimuovere quel riferimento.</p></section>}
+@if(panel()==='goals'){<section class="card"><h2>I tuoi obiettivi</h2><p class="subtle" style="margin:12px 0 20px">Inserisci i tuoi riferimenti personali. Non vengono calcolati da una fotografia e non sono prescrizioni automatiche.</p><form [formGroup]="goalsForm" (ngSubmit)="saveGoals()" class="form-grid"><label>Calorie giornaliere (kcal)<input type="number" inputmode="numeric" formControlName="calories" min="1" max="20000"/></label><label>Proteine giornaliere (g)<input type="number" inputmode="decimal" formControlName="protein" min="1" max="2000"/></label><label>Carboidrati giornalieri (g)<input type="number" inputmode="decimal" formControlName="carbs" min="1" max="3000"/></label><label>Grassi giornalieri (g)<input type="number" inputmode="decimal" formControlName="fat" min="1" max="2000"/></label><label class="wide">Allenamenti per settimana<input type="number" inputmode="numeric" formControlName="workoutsPerWeek" min="1" max="14"/></label><button class="primary wide" [disabled]="goalsForm.invalid||goalsSaving()||s.busy()||!s.ready()">Salva obiettivi</button></form><p class="subtle" style="margin-top:14px">Lascia vuoto un campo per rimuovere quel riferimento.</p></section>}
 @if(panel()==='measurements'){<section class="card"><h2>Registra misurazione</h2><form #measurementForm="ngForm" (ngSubmit)="saveMeasurement()" class="form-grid" style="margin-top:18px"><label>Data<input name="date" type="date" [(ngModel)]="measurementDate" required [max]="today"/></label><label>Peso ({{s.settings().unit}})<input name="weight" type="number" inputmode="decimal" [(ngModel)]="measurementWeight" min="1" max="1500" step="0.1" required/></label><label>Girovita (cm, facoltativo)<input name="waist" type="number" inputmode="decimal" [(ngModel)]="measurementWaist" min="1" max="300" step="0.1"/></label><label>Massa grassa (%, facoltativa)<input name="bodyfat" type="number" inputmode="decimal" [(ngModel)]="measurementBodyFat" min="1" max="80" step="0.1"/></label><button class="primary wide" [disabled]="measurementForm.invalid||s.busy()">Salva misurazione</button></form></section><section class="card" style="margin-top:18px"><h2>Storico misurazioni</h2><div class="list" style="margin-top:18px">@for(m of measurementHistory();track m.id){<div class="measurement-row"><div><strong>{{s.formatWeight(m.weight)}} {{s.settings().unit}}</strong><p class="subtle">{{m.date}}{{m.waist?' · Vita '+m.waist+' cm':''}}{{m.bodyFat?' · Massa grassa '+m.bodyFat+'%':''}}</p></div><button class="ghost danger" (click)="removeMeasurement(m.id)" aria-label="Rimuovi misurazione">×</button></div>}@empty{<p class="subtle">Nessuna misurazione registrata.</p>}</div></section>}
 @if(panel()==='settings'||panel()==='theme'||panel()==='info'){
     <div class="profile-settings-panels">
@@ -64,7 +65,7 @@ import { PwaService } from "../services/pwa";
             <span class="pill">{{ auth.user()?.role === "User" ? "Cliente" : auth.user()?.role }}</span>
           </div>
         </div>
-        <div class="actions profile-photo-actions"><button type="button" (click)="profileCamera.click()" [disabled]="photoBusy()">Scatta foto profilo</button><button type="button" (click)="profileGallery.click()" [disabled]="photoBusy()">Scegli da Foto</button><button type="button" class="ghost" (click)="photoDraft.set(null)" [disabled]="photoBusy()">Rimuovi foto</button></div>
+        <div class="actions profile-photo-actions"><button type="button" (click)="profileCamera.click()" [disabled]="photoBusy()">Scatta foto profilo</button><button type="button" (click)="profileGallery.click()" [disabled]="photoBusy()">Scegli da Foto</button><button type="button" class="ghost" (click)="removeProfilePhoto()" [disabled]="photoBusy()">Rimuovi foto</button></div>
         <input #profileCamera type="file" accept="image/*" capture="environment" hidden (change)="selectPhoto($event)"/><input #profileGallery type="file" accept="image/*" hidden (change)="selectPhoto($event)"/>
         <p class="subtle" style="margin:12px 0 22px" role="status">{{photoBusy()?'Compressione della foto…':'La foto resta nel tuo archivio locale e nel backup JSON. Premi Salva profilo per confermare.'}}</p>
         <form [formGroup]="form" (ngSubmit)="save()">
@@ -100,7 +101,7 @@ import { PwaService } from "../services/pwa";
           <div class="actions">
             <button
               class="primary"
-              [disabled]="form.invalid || !s.ready() || s.busy() || photoBusy()"
+              [disabled]="form.invalid || !s.ready() || s.busy() || photoBusy() || profileSaving()"
             >
               Salva profilo
             </button>
@@ -113,8 +114,7 @@ import { PwaService } from "../services/pwa";
           <div class="theme-picker"><h3>Colore dello sfondo</h3><p class="subtle">Scegli qualsiasi colore: viene salvato solo sul tuo account.</p>
           <div class="theme-swatches">@for(color of theme.presets;track color){<button type="button" class="swatch" [style.background]="color" [class.chosen]="theme.color()===color" [attr.aria-label]="'Sfondo '+color" [attr.aria-pressed]="theme.color()===color" [disabled]="theme.busy()" (click)="theme.save(color)">@if(theme.color()===color){<span>✓</span>}</button>}</div>
           <div class="color-custom"><label>Colore personalizzato<input type="color" [value]="theme.color()" (change)="theme.save($any($event.target).value)" [disabled]="theme.busy()" /></label><label>Codice HEX<input #backgroundHex type="text" [value]="theme.color()" maxlength="7" pattern="#[0-9a-fA-F]{6}" aria-label="Codice colore esadecimale" /></label><button [disabled]="theme.busy()" (click)="theme.save(backgroundHex.value)">Applica</button></div>
-          <div class="actions"><button class="ghost" [disabled]="theme.busy()" (click)="theme.save(defaultBackground)">Ripristina sfondo originale</button><span class="subtle" role="status">{{theme.busy()?'Salvataggio…':theme.status()}}</span></div>
-          @if(theme.error()){<p class="notice error" role="alert">{{theme.error()}}</p>}
+          <div class="actions"><button class="ghost" [disabled]="theme.busy()" (click)="theme.save(defaultBackground)">Ripristina sfondo originale</button>@if(theme.busy()){<span class="subtle" role="status">Salvataggio…</span>}</div>
           </div>
           <div class="setting-row" style="margin-top:20px">
             <div>
@@ -243,8 +243,6 @@ import { PwaService } from "../services/pwa";
     @if(panel()==='security'){<section class="card" style="margin-top:20px">
       <h2>Account e sicurezza</h2>
       @if(!auth.offlineMode()){<form (ngSubmit)="saveUsername()" class="stack" style="margin-top:20px"><label>Nome utente per il login<input name="account-username" autocomplete="username" autocapitalize="none" spellcheck="false" [ngModel]="usernameDraft()===null?(auth.user()?.username||''):usernameDraft()" (ngModelChange)="usernameDraft.set($event)" required minlength="3" maxlength="30" pattern="[A-Za-z0-9][A-Za-z0-9._-]{2,29}" /></label><p class="subtle">3–30 caratteri: lettere, numeri, punto, trattino o underscore. Deve essere univoco: maiuscole e minuscole sono equivalenti. Il nome visualizzato nel profilo può essere diverso.</p><button class="primary" [disabled]="usernameBusy()">{{usernameBusy()?'Salvataggio…':'Salva nome utente'}}</button></form>}<p class="subtle" style="margin-top:12px">{{auth.user()?.email}}</p>
-      @if(accountError()) {<p class="notice error" role="alert">{{accountError()}}</p>}
-      @if(accountMessage()) {<p class="notice success" role="status">{{accountMessage()}}</p>}
       @if(auth.user()?.role === 'SuperAdmin') {<div class="actions"><a class="button primary" routerLink="/utenti">Gestione utenti</a></div>}
       @if(!auth.offlineMode()){<div class="actions"><button (click)="rememberOffline()">Consenti accesso offline su questo iPhone</button></div><p class="subtle">L’archivio sarà accessibile a chi usa questo dispositivo; le funzioni amministrative restano online.</p>
       <form (ngSubmit)="changePassword()" class="form-grid" style="margin-top:24px">
@@ -296,16 +294,24 @@ export class ProfileComponent {
   confirmBackup(){void this.s.change(d=>{d.settings[0].backupConfirmedAt=new Date().toISOString();delete d.settings[0].backupSnoozedUntil;},"Copia in File confermata da te.",false);}
   photoDraft = signal<Blob|null|undefined>(undefined);
   photoBusy = signal(false);
+  profileSaving = signal(false);
+  goalsSaving = signal(false);
+  private photoRequest = 0;
+  private profileSignature = '';
+  private goalsSignature = '';
+  private profileUnit?: 'kg'|'lb';
   usernameDraft = signal<string|null>(null);
   usernameBusy = signal(false);
-  async selectPhoto(event:Event){const input=event.target as HTMLInputElement,file=input.files?.[0];input.value='';if(!file)return;this.photoBusy.set(true);try{this.photoDraft.set(await compressPhoto(file));this.s.error.set('');}catch(e){this.s.error.set((e as Error).message);}finally{this.photoBusy.set(false);}}
+  async selectPhoto(event:Event){const input=event.target as HTMLInputElement,file=input.files?.[0];input.value='';if(!file)return;const request=++this.photoRequest;this.photoBusy.set(true);try{const photo=await compressPhoto(file);if(request===this.photoRequest){this.photoDraft.set(photo);this.s.error.set('');}}catch(e){if(request===this.photoRequest)this.s.error.set((e as Error).message);}finally{if(request===this.photoRequest)this.photoBusy.set(false);}}
+  removeProfilePhoto(){this.photoRequest++;this.photoBusy.set(false);this.photoDraft.set(null);}
   async saveUsername(){if(this.usernameBusy())return;this.accountError.set('');this.accountMessage.set('');this.usernameBusy.set(true);try{await this.auth.setUsername(this.usernameDraft()??this.auth.user()?.username??'');this.usernameDraft.set(null);this.accountMessage.set('Nome utente salvato. Puoi accedere con questo nome oppure con l’email.');}catch(e){this.accountError.set((e as Error).message);}finally{this.usernameBusy.set(false);}}
   theme = inject(ThemeService);
   defaultBackground = DEFAULT_BACKGROUND;
   auth = inject(AuthService);
   s = inject(Store);
-  accountError = signal("");
-  accountMessage = signal("");
+  private feedback = feedbackForContext();
+  accountError = feedbackSignal('error', this.feedback);
+  accountMessage = feedbackSignal('success', this.feedback);
   currentPassword = "";
   newPassword = "";
   confirmPassword = "";
@@ -341,50 +347,54 @@ export class ProfileComponent {
   measurementDate=localDate();measurementWeight:number|null=null;measurementWaist:number|null=null;measurementBodyFat:number|null=null;
   measurementHistory(){return [...this.s.data().measurements].sort((a,b)=>b.date.localeCompare(a.date));}
   goalsForm=this.fb.group({calories:[null as number|null,[Validators.min(1),Validators.max(20000)]],protein:[null as number|null,[Validators.min(1),Validators.max(2000)]],carbs:[null as number|null,[Validators.min(1),Validators.max(3000)]],fat:[null as number|null,[Validators.min(1),Validators.max(2000)]],workoutsPerWeek:[null as number|null,[Validators.min(1),Validators.max(14)]]});
-  async saveGoals(){if(this.goalsForm.invalid)return;const value=this.goalsForm.getRawValue();if(value.workoutsPerWeek!==null&&!Number.isInteger(value.workoutsPerWeek)){this.s.error.set('Inserisci un numero intero di allenamenti.');return;}await this.s.change(d=>{d.settings[0].goals=Object.fromEntries(Object.entries(value).filter(([,v])=>v!==null));},'Obiettivi salvati.',false);}
-  async saveMeasurement(){const weight=this.measurementWeight===null?0:this.s.kg(this.measurementWeight);if(!Number.isFinite(weight)||weight<=0||weight>700||this.measurementDate>this.today){this.s.error.set('Controlla la data e il peso.');return;}await this.s.change(d=>{const old=d.measurements.find(m=>m.date===this.measurementDate);const measurement={id:old?.id||uid(),date:this.measurementDate,weight,waist:this.measurementWaist??undefined,bodyFat:this.measurementBodyFat??undefined};if(old)Object.assign(old,measurement);else d.measurements.push(measurement);const latest=[...d.measurements].sort((a,b)=>b.date.localeCompare(a.date))[0];if(latest)d.profiles[0].bodyWeight=latest.weight;},'Misurazione salvata.',false);}
+  async saveGoals(){if(this.goalsForm.invalid||this.goalsSaving())return;const value=this.goalsForm.getRawValue();if(value.workoutsPerWeek!==null&&!Number.isInteger(value.workoutsPerWeek)){this.s.error.set('Inserisci un numero intero di allenamenti.');return;}this.goalsSaving.set(true);try{if(await this.s.change(d=>{d.settings[0].goals=Object.fromEntries(Object.entries(value).filter(([,v])=>v!==null));},'Obiettivi salvati.',false)){for(const key of Object.keys(value) as (keyof typeof value)[]){const control=this.goalsForm.controls[key];if(control.value===value[key])control.markAsPristine();}this.syncForms();}}finally{this.goalsSaving.set(false);}}
+  async saveMeasurement(){const weight=this.measurementWeight===null?0:this.s.kg(this.measurementWeight),date=this.measurementDate,waist=this.measurementWaist??undefined,bodyFat=this.measurementBodyFat??undefined;if(!Number.isFinite(weight)||weight<=0||weight>700||date>this.today){this.s.error.set('Controlla la data e il peso.');return;}await this.s.change(d=>{const old=d.measurements.find(m=>m.date===date);const measurement={id:old?.id||uid(),date,weight,waist,bodyFat};if(old)Object.assign(old,measurement);else d.measurements.push(measurement);const latest=[...d.measurements].sort((a,b)=>b.date.localeCompare(a.date))[0];if(latest)d.profiles[0].bodyWeight=latest.weight;},'Misurazione salvata.',false);}
   async removeMeasurement(id:string){if(confirm('Rimuovere questa misurazione?'))await this.s.change(d=>{d.measurements=d.measurements.filter(m=>m.id!==id);},'Misurazione rimossa.',false);}
   constructor() {
     inject(ActivatedRoute).queryParamMap.pipe(takeUntilDestroyed()).subscribe(params=>{const section=params.get('section');if(section&&['backup','goals','settings','measurements','theme','security','info'].includes(section))this.panel.set(section);});
-    effect(() => {
-      if (!this.s.ready()) return;
-      const p = this.s.profile();
-      const unit = this.s.settings().unit;
-      this.goalsForm.reset({calories:this.s.settings().goals?.calories??null,protein:this.s.settings().goals?.protein??null,carbs:this.s.settings().goals?.carbs??null,fat:this.s.settings().goals?.fat??null,workoutsPerWeek:this.s.settings().goals?.workoutsPerWeek??null});
-      this.form.reset({
-        name: p.name,
-        bodyWeight:
-          p.bodyWeight === undefined ? null : this.s.weight(p.bodyWeight),
-        height: p.height ?? null,
-        birthDate: p.birthDate || "",
-        goal: p.goal || "",
-      });
-    });
+    effect(() => this.syncForms());
+  }
+  syncForms(){
+    if(!this.s.ready())return;
+    const p=this.s.profile(),settings=this.s.settings(),unit=settings.unit;
+    const profile={name:p.name,bodyWeight:p.bodyWeight===undefined?null:this.s.weight(p.bodyWeight),height:p.height??null,birthDate:p.birthDate||'',goal:p.goal||''};
+    // Store writes clone the whole archive. Only persisted values may refresh
+    // untouched controls; a meal, theme or autosave must not reset a draft.
+    if(this.profileUnit&&this.profileUnit!==unit){const control=this.form.controls.bodyWeight;if(control.dirty&&control.value!==null&&Number.isFinite(control.value)){const kg=this.profileUnit==='lb'?control.value/2.2046226218:control.value;control.setValue(unit==='lb'?kg*2.2046226218:kg,{emitEvent:false});}}
+    const profileSignature=JSON.stringify(profile);
+    if(profileSignature!==this.profileSignature){for(const key of Object.keys(profile) as (keyof typeof profile)[]){const control=this.form.controls[key];if(!control.dirty)control.setValue(profile[key] as never,{emitEvent:false});}this.profileSignature=profileSignature;}
+    this.profileUnit=unit;
+    const goals={calories:settings.goals?.calories??null,protein:settings.goals?.protein??null,carbs:settings.goals?.carbs??null,fat:settings.goals?.fat??null,workoutsPerWeek:settings.goals?.workoutsPerWeek??null};
+    const goalsSignature=JSON.stringify(goals);
+    if(goalsSignature!==this.goalsSignature){for(const key of Object.keys(goals) as (keyof typeof goals)[]){const control=this.goalsForm.controls[key];if(!control.dirty)control.setValue(goals[key],{emitEvent:false});}this.goalsSignature=goalsSignature;}
   }
   async save() {
-    if (this.form.invalid || this.photoBusy()) return;
+    if (this.form.invalid || this.photoBusy() || this.profileSaving()) return;
     const v = this.form.getRawValue();
     if (v.birthDate && v.birthDate > this.today) {
       this.s.error.set("La data di nascita non può essere futura.");
       return;
     }
-    const bw = v.bodyWeight === null ? undefined : this.s.kg(v.bodyWeight!);
+    const bw = v.bodyWeight === null ? undefined : (this.profileUnit??this.s.settings().unit)==='lb'?v.bodyWeight!/2.2046226218:v.bodyWeight!;
     if (bw !== undefined && bw > 700) {
       this.s.error.set("Peso corporeo fuori intervallo.");
       return;
     }
+    const photo=this.photoDraft();this.profileSaving.set(true);
+    try {
     const saved = await this.s.change((d) => {
       if(bw!==undefined&&bw!==d.profiles[0].bodyWeight){const old=d.measurements.find(m=>m.date===this.today);if(old)old.weight=bw;else d.measurements.push({id:uid(),date:this.today,weight:bw});}
       Object.assign(d.profiles[0], {
         name: v.name!.trim(),
-        photo: this.photoDraft()===undefined?d.profiles[0].photo:(this.photoDraft()||undefined),
+        photo: photo===undefined?d.profiles[0].photo:(photo||undefined),
         bodyWeight: bw,
         height: v.height ?? undefined,
         birthDate: v.birthDate || undefined,
         goal: v.goal?.trim() || "",
       });
     }, "Profilo salvato.");
-    if(saved)this.photoDraft.set(undefined);
+    if(saved){if(this.photoDraft()===photo)this.photoDraft.set(undefined);for(const key of Object.keys(v) as (keyof typeof v)[]){const control=this.form.controls[key];if(control.value===v[key])control.markAsPristine();}this.profileSignature='';this.syncForms();}
+    }finally{this.profileSaving.set(false);}
   }
   setting(key: "theme" | "unit" | "prefill", value: string | boolean) {
     if(key === "theme") void this.theme.save(value === "light" ? "#edf3fa" : this.defaultBackground);
@@ -481,4 +491,5 @@ export class ProfileComponent {
       );
     }
   }
+  ngOnDestroy(){this.photoRequest++;}
 }

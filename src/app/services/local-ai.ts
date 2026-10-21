@@ -1,10 +1,12 @@
 import { Injectable, signal } from '@angular/core';
 import { photoPixels } from './images';
+import { feedbackForContext, feedbackSignal } from './feedback';
 export interface AiReport {backend:string;model:string;milliseconds:number;loadMs:number;tensorBytes:number;cached:boolean;outputClasses:number}
 export interface Prediction {label:string;probability:number}
 @Injectable({providedIn:'root'})
 export class LocalAiService {
- busy=signal(false);status=signal('Non verificato su questo dispositivo.');report=signal<AiReport|null>(null);error=signal('');
+ private feedback=feedbackForContext();
+ busy=signal(false);status=signal('Non verificato su questo dispositivo.');report=signal<AiReport|null>(null);error=feedbackSignal('error',this.feedback);
  supported=typeof Worker!=='undefined'&&typeof indexedDB!=='undefined';
  private worker?:Worker;private cancelRun?:()=>void;
  async run(photo?:Blob,allowDownload=false):Promise<Prediction[]> {

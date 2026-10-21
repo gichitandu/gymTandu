@@ -8,6 +8,8 @@ Le nuove versioni mantengono lo stesso indirizzo, gli stessi nomi degli archivi 
 
 La selezione degli esercizi cerca tutte le parole digitate anche all’interno dei nomi, in qualsiasi ordine e senza distinguere maiuscole o accenti. I risultati mostrano foto personali, immagini del catalogo oppure illustrazioni locali del movimento, disponibili offline. Le illustrazioni indicano la famiglia del movimento; non rappresentano ogni variante di presa o macchina.
 
+I messaggi di salvataggio, modifica ed errore compaiono come popup e scompaiono dopo 3 secondi; ogni nuovo messaggio, anche identico, riavvia la durata. Chiudere il popup non cancella lo stato di errore necessario a proteggere i salvataggi. I campi e le finestre dei moduli seguono l’area visibile sopra la tastiera; durante la digitazione i comandi flottanti lasciano spazio al contenuto. Le bozze di profilo e obiettivi conservano le modifiche ancora in corso anche quando altre sezioni aggiornano l’archivio.
+
 Durante una sessione, toccare un esercizio apre direttamente la prossima serie. Peso e ripetizioni hanno controlli vicini, i dettagli facoltativi sono richiudibili e il pulsante di conferma resta a portata di mano. I salvataggi ripetuti dello stesso modulo condividono la stessa operazione anziché creare nuove copie.
 
 Nel recupero, **Timer fuori app** apre una finestra flottante se il browser supporta Picture-in-Picture. In alternativa, con il consenso dell’utente, mostra una notifica con l’ora di fine. Una web app non può garantire Live Activities su iPhone, aggiornamenti continui o avvisi puntuali quando il sistema sospende il browser. Il tempo usa una scadenza assoluta e si riallinea al rientro.

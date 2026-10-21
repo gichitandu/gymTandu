@@ -1,9 +1,13 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../services/auth';
+import { ViewportService } from '../services/viewport';
 import { ShellComponent } from './shell.component';
 import { IconComponent } from '../shared/icon.component';
-@Component({selector:'app-root',standalone:true,imports:[FormsModule,ShellComponent,IconComponent],styleUrl:'./entry.css',template:`
+import { FeedbackPopupsComponent } from '../shared/feedback-popups.component';
+import { feedbackForContext, feedbackSignal } from '../services/feedback';
+@Component({selector:'app-root',standalone:true,imports:[FormsModule,ShellComponent,IconComponent,FeedbackPopupsComponent],styleUrl:'./entry.css',template:`
+<gt-feedback-popups/>
 @if(auth.user()) { <gt-shell /> } @else {
 <main class="entry-page" [class.welcome-state]="welcome() && !auth.setup()">
 <div class="entry-layout">
@@ -21,7 +25,6 @@ import { IconComponent } from '../shared/icon.component';
 @if(tab()==='account' || auth.setup()) {
 <div id="account-panel" role="tabpanel" [attr.aria-labelledby]="auth.setup()?null:'account-tab'" [attr.aria-label]="auth.setup()?'Attivazione account':null">
 @if(auth.loading()){<p class="entry-status" role="status">Verifica dell’accesso online…</p>}
-@if(auth.error() || error()){<p class="entry-error" role="alert">{{error()||auth.error()}}</p>}
 <form #loginForm="ngForm" (ngSubmit)="submit()" autocomplete="on" class="entry-form">
 @if(auth.setup()){
 <div class="entry-field"><gt-icon name="mail"/><div><label for="setup-email">Email dell’account</label><input id="setup-email" name="email" type="email" autocomplete="email" [ngModel]="auth.ownerEmail()" readonly /></div></div>
@@ -53,7 +56,9 @@ import { IconComponent } from '../shared/icon.component';
 </main>}
 `})
 export class AppComponent {
- auth=inject(AuthService);welcome=signal(false);tab=signal<'account'|'local'>('account');help=signal(false);remember=false;username='';email='';password='';confirm='';busy=signal(false);error=signal('');show=signal(false);
+ private viewport=inject(ViewportService);
+ private feedback=feedbackForContext();
+ auth=inject(AuthService);welcome=signal(false);tab=signal<'account'|'local'>('account');help=signal(false);remember=false;username='';email='';password='';confirm='';busy=signal(false);error=feedbackSignal('error',this.feedback);show=signal(false);
  async submit() {
   if(this.busy()) return;this.error.set('');
   if(this.auth.setup()&&this.password!==this.confirm) {this.error.set('Le password non coincidono.');return;}

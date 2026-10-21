@@ -84,6 +84,20 @@ it('ignora Completa ripetuto durante e dopo il salvataggio e raggruppa tocchi co
   expect(s.sets(exercise.id)).toHaveLength(4);
   await s.addSet(exercise.id); expect(s.sets(exercise.id)).toHaveLength(5);
 });
+it('attende una nuova cifra durante la digitazione e mostra la validazione solo alla conferma esplicita', async () => {
+  const c = await setup();c.quickRecord(c.exercises()[0]);
+  const original = c.currentSet()!.weight;
+  c.weight = null as unknown as number;
+  expect(await c.saveDraft()).toBe(false);
+  expect(s.error()).toBe('');
+  expect(c.currentSet()!.weight).toBe(original);
+  await c.complete();
+  expect(s.error()).toBe('Controlla peso e ripetizioni.');
+  expect(c.currentSet()!.completed).toBe(false);
+  c.weight = 52.5;
+  expect(await c.saveDraft()).toBe(true);
+  expect(c.currentSet()!.weight).toBe(52.5);
+});
 it('conserva la navigazione scelta durante un salvataggio senza aprire il recupero della serie sbagliata', async () => {
   const c = await setup(); c.quickRecord(c.exercises()[0]);
   let release!: () => void;

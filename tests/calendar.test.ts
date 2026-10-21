@@ -12,7 +12,7 @@ import {seed} from '../src/app/core/seed';
 import {exportBackup,importBackup} from '../src/app/services/backup';
 let db:GymDatabase,injector:EnvironmentInjector,s:Store;let routeDate:string|null=null;
 beforeEach(async()=>{routeDate=null;vi.stubGlobal('document',{body:{classList:{toggle:()=>{}}}});db=new GymDatabase('calendar-test-'+crypto.randomUUID());injector=createEnvironmentInjector([{provide:GYM_REPOSITORY,useValue:{read:()=>db.snapshot(),replace:(d:any)=>db.replace(d)}},{provide:ActivatedRoute,useValue:{snapshot:{queryParamMap:{get:()=>routeDate}}}},{provide:Router,useValue:{navigateByUrl:vi.fn()}},Store],null as unknown as EnvironmentInjector);s=injector.get(Store);await vi.waitFor(()=>expect(s.ready()).toBe(true));});
-afterEach(async()=>{injector.destroy();await db.delete();vi.unstubAllGlobals();});
+afterEach(async()=>{await s.settled();injector.destroy();await db.delete();vi.restoreAllMocks();vi.unstubAllGlobals();});
 it('calculates daily, Monday-first weekly and month views including year and leap-day boundaries',()=>{
  expect(calendarDays('2026-10-21','day')).toEqual(['2026-10-21']);expect(calendarDays('2026-10-21','week')).toEqual(['2026-10-19','2026-10-20','2026-10-21','2026-10-22','2026-10-23','2026-10-24','2026-10-25']);
  const month=calendarDays('2024-02-29','month');expect(month).toHaveLength(42);expect(month).toContain('2024-02-29');expect(calendarDays('2027-01-01','week')[0]).toBe('2026-12-28');expect(movePeriod('2026-01-31','month',1)).toBe('2026-02-28');expect(movePeriod('2024-01-31','month',1)).toBe('2024-02-29');expect(moveDate('2026-12-31',1)).toBe('2027-01-01');expect(()=>parseLocalDate('2026-02-30')).toThrow();
@@ -57,4 +57,32 @@ it('filters linked sessions once and duplicates a program without changing histo
  const w={id:'historic',userId:'local',planId:'p',dayId:'day',planName:'Piano',dayName:'Giorno',date:'2026-10-22',startedAt:new Date().toISOString(),duration:60,notes:'',status:'completed' as const};
  await s.change(d=>{d.workouts.push(w);d.scheduledWorkouts[0].workoutId=w.id;},'',false);expect(c.completed()).toHaveLength(0);expect(c.completedCount()).toBe(1);c.filter.set('planned');expect(c.visibleEvents()).toHaveLength(0);
  await c.duplicate(s.data().scheduledWorkouts[0]);expect(c.selected()).toBe('2026-10-29');expect(c.filter()).toBe('all');expect(c.visibleEvents()).toHaveLength(1);expect(c.visibleEvents()[0].workoutId).toBeUndefined();expect(s.completed()[0]).toEqual(w);expect((await db.snapshot()).scheduledWorkouts).toHaveLength(2);
+});
+
+it('saves a calendar form once across concurrent taps and keeps the same id when retrying after a failure',async()=>{
+ await plan();const c=runInInjectionContext(injector,()=>new CalendarComponent());c.choose('2026-10-22');c.open();c.dayId='day';c.notes='Un solo allenamento';
+ const schedule=vi.spyOn(s,'scheduleWorkout');
+ await Promise.all([c.save(),c.save(),c.save()]);await c.save();
+ expect(schedule).toHaveBeenCalledTimes(1);expect(s.data().scheduledWorkouts).toHaveLength(1);expect(c.saving()).toBe(false);
+ c.choose('2026-10-23');c.open();c.dayId='day';schedule.mockResolvedValueOnce(false);
+ await c.save();const attemptedId=schedule.mock.lastCall![3];expect(c.modal()).toBe(true);expect(c.saving()).toBe(false);
+ await c.save();expect(schedule.mock.lastCall![3]).toBe(attemptedId);expect(s.data().scheduledWorkouts).toHaveLength(2);
+});
+
+it('a slow calendar save keeps a newer form and its selected date intact',async()=>{
+ await plan();const c=runInInjectionContext(injector,()=>new CalendarComponent());c.choose('2026-10-22');c.open();c.dayId='day';c.notes='Prima programmazione';
+ let release!:()=>void;const pending=new Promise<void>(resolve=>release=resolve),schedule=s.scheduleWorkout.bind(s);
+ vi.spyOn(s,'scheduleWorkout').mockImplementationOnce(async(...args)=>{await pending;return schedule(...args);});
+ const saving=c.save();expect(c.saving()).toBe(true);c.close();c.choose('2026-11-02');c.open();c.dayId='day';c.notes='Nuova bozza';
+ release();await saving;
+ expect(c.selected()).toBe('2026-11-02');expect(c.modal()).toBe(true);expect(c.eventDate).toBe('2026-11-02');expect(c.notes).toBe('Nuova bozza');
+ expect(s.data().scheduledWorkouts).toMatchObject([{date:'2026-10-22',notes:'Prima programmazione'}]);
+ await c.save();expect(s.data().scheduledWorkouts.map(e=>e.date).sort()).toEqual(['2026-10-22','2026-11-02']);
+});
+
+it('releases the calendar save lock after an unexpected failure and leaves the draft available',async()=>{
+ await plan();const c=runInInjectionContext(injector,()=>new CalendarComponent());c.choose('2026-10-22');c.open();c.dayId='day';c.notes='Da riprovare';
+ vi.spyOn(s,'scheduleWorkout').mockRejectedValueOnce(new Error('Archivio occupato'));
+ await c.save();expect(c.saving()).toBe(false);expect(c.modal()).toBe(true);expect(c.notes).toBe('Da riprovare');expect(s.error()).toBe('Archivio occupato');
+ await c.save();expect(s.data().scheduledWorkouts).toHaveLength(1);
 });

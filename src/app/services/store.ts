@@ -19,6 +19,7 @@ import { seed } from "../core/seed";
 import { ArchiveConflictError } from "../core/database";
 import { WorkoutResumeService } from "./workout-resume";
 import { sessionVolume, exerciseRecords } from "./statistics";
+import { feedbackForContext, feedbackSignal } from "./feedback";
 @Injectable({ providedIn: "root" })
 export class Store {
   private theme = inject(ThemeService, { optional: true });
@@ -38,8 +39,9 @@ export class Store {
   rememberWorkout(state:WorkoutUiState){return this.change(d=>{if(!d.workouts.some(w=>w.id===state.id&&w.status==='draft'))return;d.workoutUi=[structuredClone(state)];},'',false);}
 
   ready = signal(false);
-  error = signal("");
-  message = signal("");
+  private feedback = feedbackForContext();
+  error = feedbackSignal('error', this.feedback);
+  message = feedbackSignal('success', this.feedback);
   busy = signal(false);
   profile = computed(() => this.data().profiles[0]);
   settings = computed(() => this.data().settings[0]);

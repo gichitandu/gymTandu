@@ -1,10 +1,12 @@
 import { Injectable, inject, signal } from '@angular/core';
 import Dexie, { Table } from 'dexie';
 import { AuthService } from './auth';
+import { feedbackForContext, feedbackSignal } from './feedback';
 export const DEFAULT_BACKGROUND='#050E17';
 @Injectable({providedIn:'root'})
 export class ThemeService {
- auth=inject(AuthService); color=signal(DEFAULT_BACKGROUND);busy=signal(false);error=signal('');status=signal('');
+ private feedback=feedbackForContext();
+ auth=inject(AuthService); color=signal(DEFAULT_BACKGROUND);busy=signal(false);error=feedbackSignal('error',this.feedback);status=feedbackSignal('success',this.feedback);
  private db=new Dexie('gymtrack-preferences-v1');private preferences:Table<{id:string;color:string;dirty?:boolean},string>;
  constructor(){this.db.version(1).stores({preferences:'id'});this.preferences=this.db.table('preferences');}
  isLight(){const c=this.color();return [1,3,5].map(i=>parseInt(c.slice(i,i+2),16)).reduce((n,v,i)=>n+v*[.2126,.7152,.0722][i],0)>150;}

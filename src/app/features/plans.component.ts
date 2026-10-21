@@ -235,7 +235,7 @@ import { StatusComponent } from "../shared/status.component";
           class="modal"
           cdkTrapFocus
           [cdkTrapFocusAutoCapture]="true"
-          (keydown.escape)="modal.set('')"
+          (keydown.escape)="closeModal()"
           role="dialog"
           aria-modal="true"
           aria-labelledby="plan-modal"
@@ -250,7 +250,7 @@ import { StatusComponent } from "../shared/status.component";
                     : "Esercizio del piano"
               }}
             </h2>
-            <button (click)="modal.set('')" aria-label="Chiudi">×</button>
+            <button (click)="closeModal()" [disabled]="saving()" aria-label="Chiudi">×</button>
           </div>
           @if (modal() === "plan") {
             <form [formGroup]="planForm" (ngSubmit)="savePlan()">
@@ -475,6 +475,7 @@ export class PlansComponent {
     notes: [""],
   });
   openPlan(p?: TrainingPlan) {
+    if(this.saving())return;
     this.editId = p?.id || "";
     this.formSaveId = p?.id || uid();
     this.planForm.reset({
@@ -486,6 +487,7 @@ export class PlansComponent {
   async savePlan() {
     if (this.planForm.invalid || this.saving()) return;
     this.saving.set(true);
+    this.planForm.disable({emitEvent:false});
     try {
     const v = this.planForm.getRawValue();
     const id = this.formSaveId ||= this.editId || uid();
@@ -493,9 +495,10 @@ export class PlansComponent {
       this.expanded.set(id);
       this.modal.set("");
     }
-    } finally { this.saving.set(false); }
+    } finally { this.planForm.enable({emitEvent:false});this.saving.set(false); }
   }
   openDay(planId: string, day?: TrainingPlanDay) {
+    if(this.saving())return;
     this.parentId = planId;
     this.editId = day?.id || "";
     this.formSaveId = day?.id || uid();
@@ -508,6 +511,7 @@ export class PlansComponent {
   async saveDay() {
     if (this.dayForm.invalid || this.saving()) return;
     this.saving.set(true);
+    this.dayForm.disable({emitEvent:false});
     try {
     const v = this.dayForm.getRawValue();
     if (
@@ -521,7 +525,7 @@ export class PlansComponent {
       this.expanded.set(this.parentId);
       this.modal.set("");
     }
-    } finally { this.saving.set(false); }
+    } finally { this.dayForm.enable({emitEvent:false});this.saving.set(false); }
   }
   activate(id: string) {
     void this.s.change((d) => {
@@ -573,6 +577,7 @@ export class PlansComponent {
     });
   }
   openExercise(dayId: string, e?: TrainingPlanExercise) {
+    if(this.saving())return;
     this.parentId = dayId;
     this.editId = e?.id || "";
     this.formSaveId = e?.id || uid();
@@ -591,6 +596,7 @@ export class PlansComponent {
     });
     this.modal.set("exercise");
   }
+  closeModal(){if(!this.saving())this.modal.set('');}
   async saveExercise() {
     if (this.exerciseForm.invalid || this.saving()) return;
     const v = this.exerciseForm.getRawValue();
@@ -601,6 +607,7 @@ export class PlansComponent {
       return;
     }
     this.saving.set(true);
+    this.exerciseForm.disable({emitEvent:false});
     try {
     if (
       await this.s.savePlanExercise({
@@ -622,7 +629,7 @@ export class PlansComponent {
       })
     )
       this.modal.set("");
-    } finally { this.saving.set(false); }
+    } finally { this.exerciseForm.enable({emitEvent:false});this.saving.set(false); }
   }
   moveExercise(e: TrainingPlanExercise, dir: number) {
     void this.s.change((d) => {

@@ -1,0 +1,81 @@
+import '@angular/compiler';
+import { createEnvironmentInjector, EnvironmentInjector, runInInjectionContext, signal } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
+import { afterEach, beforeEach, expect, it, vi } from 'vitest';
+import { NutritionComponent } from '../src/app/features/nutrition.component';
+import { Store } from '../src/app/services/store';
+import { LocalAiService } from '../src/app/services/local-ai';
+import { FeedbackService } from '../src/app/services/feedback';
+import { seed } from '../src/app/core/seed';
+import { DataSet } from '../src/app/models/domain';
+import * as images from '../src/app/services/images';
+
+let injector: EnvironmentInjector, component: NutritionComponent;
+let data: ReturnType<typeof signal<DataSet>>, store: { data: typeof data; ready: ReturnType<typeof signal<boolean>>; busy: ReturnType<typeof signal<boolean>>; change: ReturnType<typeof vi.fn> };
+const ai = { cancel: vi.fn(), run: vi.fn() };
+beforeEach(() => {
+  data = signal(seed());
+  store = { data, ready: signal(true), busy: signal(false), change: vi.fn(async (fn: (draft: DataSet) => void) => {
+    const draft = structuredClone(data()); fn(draft); data.set(draft); return true;
+  }) };
+  ai.cancel.mockReset(); ai.run.mockReset();
+  vi.stubGlobal('window', { scrollTo: vi.fn() });
+  injector = createEnvironmentInjector([
+    { provide: Store, useValue: store }, { provide: LocalAiService, useValue: ai },
+    { provide: ActivatedRoute, useValue: { snapshot: { queryParamMap: { get: () => null } } } }, FeedbackService,
+  ], null as unknown as EnvironmentInjector);
+  component = runInInjectionContext(injector, () => new NutritionComponent());
+  component.openNew(); component.name = 'Pasto da salvare'; component.calories = 250;
+});
+afterEach(() => { component.ngOnDestroy(); injector.destroy(); vi.restoreAllMocks(); vi.unstubAllGlobals(); });
+
+function deferred<T>() { let resolve!: (value: T) => void; const promise = new Promise<T>(r => resolve = r); return { promise, resolve }; }
+
+it('saves a single meal during repeated submits and keeps the active form locked until the save completes', async () => {
+  const delayed = deferred<void>();
+  store.change.mockImplementationOnce(async (fn: (draft: DataSet) => void) => {
+    await delayed.promise; const draft = structuredClone(data()); fn(draft); data.set(draft); return true;
+  });
+  const first = component.save(); await component.save(); await component.save();
+  expect(store.change).toHaveBeenCalledTimes(1); expect(component.saving()).toBe(true);
+  component.closeForm(); component.openNew();
+  expect(component.showForm()).toBe(true); expect(component.name).toBe('Pasto da salvare');
+  delayed.resolve(); await first;
+  expect(data().meals).toHaveLength(1); expect(component.saving()).toBe(false);
+  await component.save(); expect(data().meals).toHaveLength(1);
+  component.openNew(); component.name = 'Pasto successivo'; await component.save();
+  expect(data().meals).toHaveLength(2); expect(new Set(data().meals.map(meal => meal.id)).size).toBe(2);
+});
+
+it('retains the same meal identifier and draft after a failed save so retry cannot create another copy', async () => {
+  let attemptedId = '';
+  store.change.mockImplementationOnce(async (fn: (draft: DataSet) => void) => {
+    const draft = structuredClone(data()); fn(draft); attemptedId = draft.meals[0].id; return false;
+  });
+  await component.save();
+  expect(component.showForm()).toBe(true); expect(component.saving()).toBe(false); expect(component.name).toBe('Pasto da salvare');
+  await component.save();
+  expect(data().meals.map(meal => meal.id)).toEqual([attemptedId]);
+});
+
+it('ignores an old photo compression after a new draft or later photo selection', async () => {
+  const first = deferred<Blob>(), second = deferred<Blob>();
+  vi.spyOn(images, 'compressPhoto').mockReturnValueOnce(first.promise).mockReturnValueOnce(second.promise);
+  const file = new Blob(['file'], { type: 'image/jpeg' });
+  const event = () => ({ target: { files: [file], value: 'photo.jpg' } }) as unknown as Event;
+  const oldPhoto = component.takePhoto(event());
+  component.closeForm(); component.openNew();
+  const currentPhoto = component.takePhoto(event()), photo = new Blob(['new photo'], { type: 'image/jpeg' });
+  second.resolve(photo); await currentPhoto;
+  expect(component.photo).toBe(photo); expect(component.photoBusy()).toBe(false);
+  first.resolve(new Blob(['old photo'], { type: 'image/jpeg' })); await oldPhoto;
+  expect(component.photo).toBe(photo); expect(component.photoBusy()).toBe(false);
+});
+
+it('does not apply late AI suggestions after its photo is removed', async () => {
+  const pending = deferred<{ label: string; probability: number }[]>();
+  ai.run.mockReturnValue(pending.promise); component.photo = new Blob(['photo']);
+  const recognizing = component.recognize(); component.removePhoto();
+  pending.resolve([{ label: 'banana', probability: .9 }]); await recognizing;
+  expect(component.photo).toBeUndefined(); expect(component.suggestions()).toEqual([]); expect(component.error()).toBe('');
+});

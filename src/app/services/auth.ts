@@ -1,10 +1,12 @@
 import { Injectable, signal } from '@angular/core';
 import { RoleName } from '../models/domain';
+import { feedbackForContext, feedbackSignal } from './feedback';
 export interface Account {id:string;name:string;email:string;username?:string|null;role:RoleName;active:boolean;owner:boolean}
 export const OFFLINE_ACCOUNT_KEY='gymtrack-offline-account-v1';
 @Injectable({providedIn:'root'})
 export class AuthService {
-  user=signal<Account|null>(null); loading=signal(true); setup=signal(false); error=signal(''); ownerEmail=signal('');
+  private feedback=feedbackForContext();
+  user=signal<Account|null>(null); loading=signal(true); setup=signal(false); error=feedbackSignal('error',this.feedback); ownerEmail=signal('');
   offlineMode=signal(false); offlineAccount=signal<Account|null>(null);
   constructor() {
     try{const raw=JSON.parse(localStorage.getItem(OFFLINE_ACCOUNT_KEY)||'null');if(raw&&typeof raw.id==='string'&&typeof raw.owner==='boolean'&&typeof raw.name==='string')this.offlineAccount.set(raw);}catch{}
@@ -21,7 +23,7 @@ export class AuthService {
   }
   async refresh() {
     try {if(!navigator.onLine)throw Error('Offline');const r=await this.request('auth/me');if(this.offlineMode())return;this.user.set(r.user);this.setup.set(r.setup);this.ownerEmail.set(r.ownerEmail);this.error.set('');}
-    catch(e) {this.error.set('Accesso online non disponibile. Puoi aprire l’archivio locale.');}
+    catch(e) {if(!this.offlineMode())this.error.set('Accesso online non disponibile. Puoi aprire l’archivio locale.');}
     finally {this.loading.set(false);}
   }
   async login(email:string,password:string,setup=false,remember=false,username?:string) {

@@ -2,11 +2,10 @@ import { SectionHeadingComponent } from "../shared/section-heading.component";
 import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { AuthService, Account } from '../services/auth';
+import { feedbackForContext, feedbackSignal } from '../services/feedback';
 @Component({standalone:true,imports:[FormsModule,SectionHeadingComponent],styleUrl:"./account-polish.css",template:`
 <gt-section-heading index="09" eyebrow="GESTIONE UTENTI / SUPER ADMIN" title="Persone. Potenziale." description="Gestisci gli account e assegna a ciascuno il proprio spazio."/>
 @if(auth.user()?.role==='SuperAdmin') {
-@if(error()) {<p class="notice error" role="alert">{{error()}}</p>}
-@if(message()) {<p class="notice success" role="status">{{message()}}</p>}
 <div class="account-admin-signal"><span class="eyebrow">GESTIONE ACCESSI</span><strong>{{users().length}} <small>account registrati</small></strong><p>Clienti e amministratori, con privilegi distinti.</p></div><div class="split users-panels"><section class="card"><span class="account-panel-index">01 / ACCOUNT</span><h2>{{editing?'Modifica account':'Nuovo account'}}</h2>
 <form (ngSubmit)="save()" class="stack" style="margin-top:20px" autocomplete="off">
 <label>Nome<input name="name" [(ngModel)]="name" required maxlength="80" /></label>
@@ -27,7 +26,8 @@ import { AuthService, Account } from '../services/auth';
 } @else {<p class="notice error" role="alert">Non hai il permesso di accedere a questa sezione.</p>}
 `})
 export class UsersComponent {
- auth=inject(AuthService);users=signal<Account[]>([]);error=signal('');message=signal('');busy=signal(false);loading=signal(false);
+ private feedback=feedbackForContext();
+ auth=inject(AuthService);users=signal<Account[]>([]);error=feedbackSignal('error',this.feedback);message=feedbackSignal('success',this.feedback);busy=signal(false);loading=signal(false);
  editing='';name='';username='';email='';role='User';password='';active=true;
  constructor(){if(this.auth.user()?.role==='SuperAdmin') void this.load();}
  async load(){this.loading.set(true);this.error.set('');try{this.users.set((await this.auth.request('users')).users);}catch(e){this.error.set((e as Error).message);}finally{this.loading.set(false);}}

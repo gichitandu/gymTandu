@@ -110,7 +110,7 @@ import { StatusComponent } from "../shared/status.component";
           class="modal"
           cdkTrapFocus
           [cdkTrapFocusAutoCapture]="true"
-          (keydown.escape)="editing.set(false)"
+          (keydown.escape)="dismiss()"
           role="dialog"
           aria-modal="true"
           aria-labelledby="exercise-title"
@@ -119,7 +119,7 @@ import { StatusComponent } from "../shared/status.component";
             <h2 id="exercise-title">
               {{ editId ? "Modifica esercizio" : "Nuovo esercizio" }}
             </h2>
-            <button (click)="editing.set(false)" aria-label="Chiudi">×</button>
+            <button (click)="dismiss()" [disabled]="saving()" aria-label="Chiudi">×</button>
           </div>
           <form [formGroup]="form" (ngSubmit)="save()">
             <div class="form-grid">
@@ -178,17 +178,19 @@ import { StatusComponent } from "../shared/status.component";
               ><label class="wide"
                 >Foto (compressa sul dispositivo prima del salvataggio)<input
                   type="file"
+                  [disabled]="saving()"
                   accept="image/*"
                   (change)="image($event)"
               /></label>
-              <label class="wide">Scatta una foto<input type="file" accept="image/*" capture="environment" (change)="image($event)" /></label>
+              <label class="wide">Scatta una foto<input type="file" accept="image/*" capture="environment" [disabled]="saving()" (change)="image($event)" /></label>
+              @if(imageLoading()){<p class="subtle wide" role="status">Preparazione della foto…</p>}
               @if (imageBlob) {
                 <div class="wide">
                   <span class="pill green">Immagine selezionata</span>
                   <button
                     type="button"
                     class="ghost"
-                    (click)="imageBlob = undefined"
+                    [disabled]="saving()" (click)="removeImage()"
                   >
                     Rimuovi immagine
                   </button>
@@ -203,10 +205,10 @@ import { StatusComponent } from "../shared/status.component";
               <button
                 class="primary"
                 type="submit"
-                [disabled]="form.invalid || s.busy() || saving()"
+                [disabled]="form.invalid || s.busy() || saving() || imageLoading()"
               >
                 Salva esercizio</button
-              ><button type="button" (click)="editing.set(false)">
+              ><button type="button" (click)="dismiss()" [disabled]="saving()">
                 Annulla
               </button>
             </div>
@@ -223,6 +225,8 @@ export class CatalogComponent {
   active = signal("active");
   editing = signal(false);
   saving = signal(false);
+  imageLoading = signal(false);
+  private imageRequest = 0;
   editId = "";
   private formSaveId = "";
   imageBlob?: Blob;
@@ -258,7 +262,8 @@ export class CatalogComponent {
     }[m];
   }
   open(e?: Exercise) {
-    if(!this.s.canEditCatalog()) return;
+    if(this.saving()||!this.s.canEditCatalog()) return;
+    this.imageRequest++;this.imageLoading.set(false);
     this.editId = e?.id || "";
     this.formSaveId = e?.id || uid();
     this.imageBlob = e?.image;
@@ -277,17 +282,25 @@ export class CatalogComponent {
     this.editing.set(true);
   }
   close(e: MouseEvent) {
-    if (e.target === e.currentTarget) this.editing.set(false);
+    if (e.target === e.currentTarget) this.dismiss();
   }
+  dismiss(){if(this.saving())return;this.imageRequest++;this.imageLoading.set(false);this.editing.set(false);}
+  removeImage(){if(this.saving())return;this.imageRequest++;this.imageLoading.set(false);this.imageBlob=undefined;}
   async image(event: Event) {
-    const file = (event.target as HTMLInputElement).files?.[0];
+    const input=event.target as HTMLInputElement;
+    const file = input.files?.[0];
     if (!file) return;
-    try {this.imageBlob=await compressPhoto(file);}catch(e){this.s.error.set((e as Error).message);}
-    (event.target as HTMLInputElement).value='';
+    input.value='';
+    if(this.saving())return;
+    const request=++this.imageRequest;this.imageLoading.set(true);
+    try {const photo=await compressPhoto(file);if(request===this.imageRequest)this.imageBlob=photo;}
+    catch(e){if(request===this.imageRequest)this.s.error.set((e as Error).message);}
+    finally{if(request===this.imageRequest)this.imageLoading.set(false);}
   }
   async save() {
-    if (this.form.invalid || this.saving() || !this.s.canEditCatalog()) return;
+    if (this.form.invalid || this.saving() || this.imageLoading() || !this.s.canEditCatalog()) return;
     this.saving.set(true);
+    this.form.disable({emitEvent:false});
     try {
     const v = this.form.getRawValue();
     const id = this.formSaveId ||= this.editId || uid();
@@ -321,11 +334,11 @@ export class CatalogComponent {
       })
     )
       this.editing.set(false);
-    } finally { this.saving.set(false); }
+    } finally { this.form.enable({emitEvent:false});this.saving.set(false); }
   }
   async toggle(e: Exercise) {
     if(this.saving() || !this.s.canEditCatalog())return;
-    this.saving.set(true);await this.s.saveExercise({...e,active:!e.active});this.saving.set(false);
+    this.saving.set(true);try{await this.s.saveExercise({...e,active:!e.active});}finally{this.saving.set(false);}
   }
   newGroup() {
     if(!this.s.canEditCatalog())return;

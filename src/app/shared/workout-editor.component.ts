@@ -1,10 +1,14 @@
 import {setupSummary} from "../services/training-flow";
 import { ExerciseVideoComponent } from "./exercise-video.component";
-import { Component, inject, input, signal } from "@angular/core";
+import { Component, HostListener, inject, input, signal } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import { Store } from "../services/store";
 import { WorkoutLogExercise, WorkoutLogSet } from "../models/domain";
 import { IconComponent } from "./icon.component";
+import type { AppUpdateEvent } from '../services/pwa';
+
+type NumberField = 'weight' | 'reps' | 'rpe' | 'rest';
+type SetDraft = Partial<Record<NumberField, number | null | undefined>> & { notes?: string; kind?: 'work' | 'warmup' };
 @Component({
   selector: "gt-workout-editor",
   standalone: true,
@@ -34,7 +38,7 @@ import { IconComponent } from "./icon.component";
             >
               <b>L’ultima volta</b
               ><button
-                (click)="s.copyPrevious(e.id)"
+                (click)="copyPrevious(e.id)" [disabled]="s.busy()"
                 style="font-size:10px;padding:6px 10px;min-height:32px"
               >
                 Copia valori
@@ -76,7 +80,7 @@ import { IconComponent } from "./icon.component";
             <tbody>
               @for (set of s.sets(e.id); track set.id) {
                 <tr>
-                  <td>{{set.number}}<select aria-label="Tipo di serie" [ngModel]="set.kind||'work'" (ngModelChange)="s.updateSet(set.id,{kind:$event})"><option value="work">Allenante</option><option value="warmup">Riscaldamento</option></select></td>
+                  <td>{{set.number}}<select aria-label="Tipo di serie" [ngModel]="kindValue(set)" (ngModelChange)="patchKind(set,$event)" (blur)="flushRow(set.id)"><option value="work">Allenante</option><option value="warmup">Riscaldamento</option></select></td>
                   <td>
                     @if (e.loadMode === "bodyweight") {
                       <span class="muted">Corpo libero</span>
@@ -89,8 +93,9 @@ import { IconComponent } from "./icon.component";
                         inputmode="decimal"
                         min="0"
                         step="0.5"
-                        [ngModel]="s.weight(set.weight)"
+                        [ngModel]="numberValue(set, 'weight')"
                         (ngModelChange)="patchNumber(set, 'weight', $event)"
+                        (blur)="flushRow(set.id)"
                       />
                     }
                   </td>
@@ -104,8 +109,9 @@ import { IconComponent } from "./icon.component";
                       min="1"
                       max="999"
                       step="1"
-                      [ngModel]="set.reps"
+                      [ngModel]="numberValue(set, 'reps')"
                       (ngModelChange)="patchNumber(set, 'reps', $event)"
+                      (blur)="flushRow(set.id)"
                     />
                   </td>
                   <td class="rpe-column">
@@ -117,8 +123,9 @@ import { IconComponent } from "./icon.component";
                       max="10"
                       step="0.5"
                       placeholder="—"
-                      [ngModel]="set.rpe"
+                      [ngModel]="numberValue(set, 'rpe')"
                       (ngModelChange)="patchNumber(set, 'rpe', $event)"
+                      (blur)="flushRow(set.id)"
                     />
                   </td>
                   <td>
@@ -130,6 +137,7 @@ import { IconComponent } from "./icon.component";
                         set.number
                       "
                       [attr.aria-pressed]="set.completed"
+                      [disabled]="toggling().has(set.id)"
                       (click)="toggle(set, e)"
                     >
                       <gt-icon name="check" />
@@ -165,21 +173,21 @@ import { IconComponent } from "./icon.component";
                   type="number"
                   min="0"
                   max="3600"
-                  [ngModel]="set.rest"
-                  (ngModelChange)="patchNumber(set, 'rest', $event)" /></label
+                  [ngModel]="numberValue(set, 'rest')"
+                  (ngModelChange)="patchNumber(set, 'rest', $event)" (blur)="flushRow(set.id)" /></label
               ><label
                 >Serie {{ set.number }} · RPE (1–10)<input
                   type="number"
                   min="1"
                   max="10"
                   step="0.5"
-                  [ngModel]="set.rpe"
-                  (ngModelChange)="patchNumber(set, 'rpe', $event)" /></label
+                  [ngModel]="numberValue(set, 'rpe')"
+                  (ngModelChange)="patchNumber(set, 'rpe', $event)" (blur)="flushRow(set.id)" /></label
               ><label class="wide"
                 >Note della serie<input
                   maxlength="500"
-                  [ngModel]="set.notes || ''"
-                  (ngModelChange)="s.updateSet(set.id, { notes: $event })"
+                  [ngModel]="notesValue(set)"
+                  (ngModelChange)="patchNotes(set, $event)" (blur)="flushRow(set.id)"
               /></label>
             </div>
           }
@@ -197,13 +205,24 @@ export class WorkoutEditorComponent {
   setupSummary=setupSummary;
   s = inject(Store);
   workoutId = input.required<string>();
+  private drafts = new Map<string, SetDraft>();
+  private timers = new Map<string, ReturnType<typeof setTimeout>>();
+  private writes = new Map<string, Promise<boolean>>();
+  toggling = signal(new Set<string>());
   restUntil = 0;
   private tick = setInterval(() => this.clock.set(Date.now()), 1000);
   clock = signal(Date.now());
   DateNow = () => this.clock();
   ngOnDestroy() {
     clearInterval(this.tick);
+    for (const timer of this.timers.values()) clearTimeout(timer);
+    this.timers.clear();
+    void this.flushAll(false);
   }
+  @HostListener('window:gymtrack:before-update', ['$event']) beforeUpdate(event: Event) {
+    (event as AppUpdateEvent).waitUntil(this.flushAll());
+  }
+  @HostListener('window:pagehide') flushOnHide() { void this.flushAll(false); }
   remaining() {
     return Math.max(0, Math.ceil((this.restUntil - this.clock()) / 1000));
   }
@@ -221,41 +240,87 @@ export class WorkoutEditorComponent {
   completeCount(id: string) {
     return this.s.sets(id).filter((s) => s.completed).length;
   }
-  patchNumber(
-    s: WorkoutLogSet,
-    key: "weight" | "reps" | "rpe" | "rest",
-    value: number | null,
-  ) {
-    if (value === null) {
-      if (key === "rpe" || key === "rest")
-        void this.s.updateSet(s.id, { [key]: undefined });
-      return;
+  numberValue(set: WorkoutLogSet, key: NumberField) {
+    const draft = this.drafts.get(set.id);
+    return draft && Object.hasOwn(draft, key) ? draft[key] : key === 'weight' ? this.s.weight(set.weight) : set[key];
+  }
+  notesValue(set: WorkoutLogSet) { return this.drafts.get(set.id)?.notes ?? set.notes ?? ''; }
+  kindValue(set: WorkoutLogSet) { return this.drafts.get(set.id)?.kind ?? set.kind ?? 'work'; }
+  patchNumber(set: WorkoutLogSet, key: NumberField, value: number | null) { this.queueDraft(set.id, { [key]: value }); }
+  patchNotes(set: WorkoutLogSet, notes: string) { this.queueDraft(set.id, { notes }); }
+  patchKind(set: WorkoutLogSet, kind: 'work' | 'warmup') { this.queueDraft(set.id, { kind }); }
+  private queueDraft(id: string, patch: SetDraft) {
+    this.drafts.set(id, { ...this.drafts.get(id), ...patch });
+    clearTimeout(this.timers.get(id));
+    this.timers.set(id, setTimeout(() => { this.timers.delete(id); void this.flushRow(id, false); }, 200));
+  }
+  private validatedPatch(draft: SetDraft): Partial<WorkoutLogSet> | undefined {
+    const patch: Partial<WorkoutLogSet> = {};
+    for (const key of ['weight', 'reps', 'rpe', 'rest'] as const) {
+      if (!Object.hasOwn(draft, key)) continue;
+      const value = draft[key];
+      if (value === null || value === undefined) {
+        if (key === 'rpe' || key === 'rest') { patch[key] = undefined; continue; }
+        return undefined;
+      }
+      if (!Number.isFinite(value) || value < 0 || key === 'reps' && (!Number.isInteger(value) || value < 1 || value > 999) || key === 'rpe' && (value < 1 || value > 10) || key === 'rest' && value > 3600) return undefined;
+      patch[key] = key === 'weight' ? this.s.kg(value) : value;
     }
-    if (
-      !Number.isFinite(value) ||
-      value < 0 ||
-      (key === "reps" &&
-        (!Number.isInteger(value) || value < 1 || value > 999)) ||
-      (key === "rpe" && (value < 1 || value > 10)) ||
-      (key === "rest" && value > 3600)
-    ) {
-      this.s.error.set("Valore non valido: controlla i limiti del campo.");
-      return;
+    if (draft.notes !== undefined) { if (draft.notes.length > 500) return undefined; patch.notes = draft.notes; }
+    if (draft.kind !== undefined) patch.kind = draft.kind;
+    return patch;
+  }
+  async flushRow(id: string, report = true): Promise<boolean> {
+    clearTimeout(this.timers.get(id)); this.timers.delete(id);
+    for (;;) {
+      const pending = this.writes.get(id);
+      if (pending) { try { if (!await pending) return false; } catch { return false; } continue; }
+      const draft = this.drafts.get(id);
+      if (!draft) return true;
+      const patch = this.validatedPatch(draft);
+      if (!patch) { if (report) this.s.error.set('Valore non valido: controlla i limiti del campo.'); return false; }
+      const job = this.s.updateSet(id, patch);
+      this.writes.set(id, job);
+      let saved = false;
+      try { saved = await job; }
+      catch (error) { this.s.error.set(error instanceof Error ? error.message : 'Modifiche alla serie non salvate. Riprova.'); }
+      finally { if (this.writes.get(id) === job) this.writes.delete(id); }
+      if (!saved) return false;
+      // Keep inputs typed while an older write was pending on screen. Only the
+      // exact draft accepted by this write can be removed from the local form.
+      if (this.drafts.get(id) === draft) this.drafts.delete(id);
     }
-    void this.s.updateSet(s.id, {
-      [key]: key === "weight" ? this.s.kg(value) : value,
-    });
+  }
+  async flushAll(report = true) {
+    const ids = new Set([...this.drafts.keys(), ...this.writes.keys()]);
+    const saved = await Promise.all([...ids].map(id => this.flushRow(id, report)));
+    return saved.every(Boolean);
   }
   async toggle(set: WorkoutLogSet, e: WorkoutLogExercise) {
-    if (await this.s.updateSet(set.id, { completed: !set.completed })) {
-      if (!set.completed && e.rest) {
-        this.clock.set(Date.now());
-        this.restUntil = this.clock() + (set.rest ?? e.rest) * 1000;
+    if (this.toggling().has(set.id)) return;
+    this.toggling.update(ids => new Set([...ids, set.id]));
+    try {
+      if (!await this.flushRow(set.id)) return;
+      const current = this.s.sets(e.id).find(item => item.id === set.id);
+      if (!current) return;
+      if (await this.s.updateSet(set.id, { completed: !current.completed })) {
+        if (!current.completed && (current.rest ?? e.rest)) {
+          this.clock.set(Date.now());
+          this.restUntil = this.clock() + (current.rest ?? e.rest) * 1000;
+        }
       }
-    }
+    } finally { this.toggling.update(ids => new Set([...ids].filter(id => id !== set.id))); }
   }
-  remove(set: WorkoutLogSet) {
-    if (!set.completed || confirm("Eliminare questa serie già completata?"))
-      void this.s.removeSet(set.id);
+  async copyPrevious(id: string) {
+    if (!await this.flushAll()) return;
+    const ids = this.s.sets(id).map(set => set.id);
+    if (await this.s.copyPrevious(id)) for (const key of ids) this.drafts.delete(key);
+  }
+  async remove(set: WorkoutLogSet) {
+    if (set.completed && !confirm('Eliminare questa serie già completata?')) return;
+    clearTimeout(this.timers.get(set.id)); this.timers.delete(set.id);
+    const pending = this.writes.get(set.id);
+    if (pending) await pending;
+    if (await this.s.removeSet(set.id)) this.drafts.delete(set.id);
   }
 }

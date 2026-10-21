@@ -1411,7 +1411,7 @@ body.custom-light .profile-cover .pill,body.custom-light .plan-card > .card-head
 
 /* iPhone: edge-to-edge content, notch/Dynamic Island and Home indicator. */
 :root {--safe-top:env(safe-area-inset-top,0px);--safe-right:env(safe-area-inset-right,0px);--safe-bottom:env(safe-area-inset-bottom,0px);--safe-left:env(safe-area-inset-left,0px);--phone-nav-height:76px;}
-html {-webkit-text-size-adjust:100%;scroll-padding-top:calc(76px + var(--safe-top));scroll-padding-bottom:calc(100px + var(--safe-bottom));}
+html {-webkit-text-size-adjust:100%;scroll-padding-top:var(--form-scroll-top,calc(76px + var(--safe-top)));scroll-padding-bottom:var(--form-scroll-bottom,calc(100px + var(--safe-bottom)));}
 body {min-height:100vh;min-height:100dvh;}
 input,textarea,select {scroll-margin-block:110px;}
 .topbar {height:calc(81px + var(--safe-top));padding-top:var(--safe-top);padding-left:max(24px,var(--safe-left));padding-right:max(24px,var(--safe-right));}
@@ -1748,3 +1748,41 @@ button,.button,.icon-btn {min-height:44px;}
 .scan-steps{list-style:none;padding:0;margin:0 0 22px;display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px;}.scan-steps li{padding:12px 8px;border-bottom:2px solid var(--line);color:var(--muted);}.scan-steps .done{border-color:#1FD799;}.scan-steps .active{color:var(--text);border-color:var(--blue);}
 button{min-width:44px;}.calendar-grid,.calendar-weekdays{min-width:320px;}.calendar-card{overflow-x:auto;}.calendar-cell{min-width:44px;}.calendar-cell.selected{min-width:44px;}
 .favorite-button{font-size:23px;color:var(--muted);min-width:44px;min-height:44px;padding:7px;background:transparent;border-color:var(--line)}.favorite-button.favorite-on{color:#f5c765;background:#f5c7650c;border-color:#f5c76544}.superset-tag{display:inline-flex;align-items:center;padding:4px 7px;border:1px solid #8c66ff44;background:#8c66ff18;color:#bfa7ff;border-radius:6px;font-size:10px;line-height:1.5;margin-top:6px}.superset-banner{font-size:12px;line-height:1.7;background:#8c66ff14;border:1px solid #8c66ff44;padding:12px;border-radius:11px;color:#c4b4f1}.series-kind{display:flex;justify-content:space-between;align-items:center;gap:12px;font-size:12px;margin-top:18px}.series-kind select{width:165px;max-width:60%;margin:0}.series-add-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:9px}.series-add-actions button{flex:1;font-size:11px}.warmup-row{color:#e5bd65}.warmup-help{font-size:11px;margin:12px 0;line-height:1.6}.setup-snapshot{padding:11px 12px;border-left:2px solid #3a96ed;font-size:11px;line-height:1.7;color:var(--muted);margin:12px 0}.set-table td:first-child select{width:115px;font-size:12px;min-height:44px;padding:6px;margin-top:5px}
+
+/* Use the visible viewport, including Safari's pan above its software keyboard. */
+body .modal-backdrop {
+  top: var(--visible-top, 0px);
+  bottom: auto;
+  height: var(--visible-height, 100dvh);
+  min-height: 0;
+  overflow: hidden;
+}
+body .modal {
+  min-width: 0;
+  min-height: 0;
+  max-height: 100%;
+  scroll-padding-block: 20px;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+.form-grid {grid-template-columns:minmax(0,1fr) minmax(0,1fr);}
+input,select,textarea {min-width:0;max-width:100%;}
+.table-wrap {max-width:100%;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;}
+.set-table {min-width:540px;}
+.set-table input {min-width:80px;}
+body.keyboard-open::after {content:'';display:block;height:calc(var(--keyboard-inset,0px) + 24px);pointer-events:none;}
+body.form-input-focused input,body.form-input-focused select,body.form-input-focused textarea {scroll-margin-block:20px;}
+body.keyboard-open .entry-page {overflow:visible;}
+body.keyboard-open .modal-backdrop {align-items:flex-start;}
+@media (max-width:800px), (pointer:coarse) {
+  body.form-input-focused gt-shell .session-header {position:static;}
+  body.keyboard-open gt-shell .bottom-nav,
+  body.form-input-focused .rest-timer,
+  body.form-input-focused .compact-rest-chip {display:none;}
+  gt-shell .set-table td:first-child select {width:145px;font-size:16px;}
+  body.form-input-focused .modal {scroll-padding-block:16px;}
+}
+@media(max-width:500px) {
+  .form-grid {grid-template-columns:minmax(0,1fr);}
+  .set-table {min-width:440px;}
+}
