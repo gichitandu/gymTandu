@@ -52,8 +52,8 @@ it('restores an unfinished meal, ingredients, entered amounts and photo after le
 
 it('asks before explicit discard, keeps a refused draft and removes a confirmed discard durably', async () => {
   const { component } = await mount(); component.openNew(); component.name = 'Bozza'; component.draftChanged();
-  vi.mocked(confirm).mockReturnValue(false); component.closeForm(); expect(component.showForm()).toBe(true); expect(component.name).toBe('Bozza');
-  vi.mocked(confirm).mockReturnValue(true); component.closeForm(); expect(component.showForm()).toBe(false);
+  vi.mocked(confirm).mockReturnValue(false); await component.closeForm(); expect(component.showForm()).toBe(true); expect(component.name).toBe('Bozza');
+  vi.mocked(confirm).mockReturnValue(true); await component.closeForm(); expect(component.showForm()).toBe(false);
   await service.flushAll(); const { component: reopened } = await mount(); expect(reopened.showForm()).toBe(false);
 });
 

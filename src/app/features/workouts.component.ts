@@ -1,3 +1,4 @@
+import { confirmationForContext } from '../services/confirmation';
 import { OpenWorkoutsComponent } from '../shared/open-workouts.component';
 import { SectionHeadingComponent } from "../shared/section-heading.component";
 import { Component, computed, inject, signal } from "@angular/core";
@@ -156,6 +157,7 @@ import { ExerciseFilterComponent } from "../shared/exercise-filter.component";
     }`,
 })
 export class WorkoutsComponent {
+ private confirmation=confirmationForContext();
   constructor(){const query=inject(ActivatedRoute).snapshot.queryParamMap;const workout=query.get("workout");if(workout)this.selectedId.set(workout);const date=query.get("date");if(date){this.from.set(date);this.to.set(date);}}
   s = inject(Store);
   plan = signal("");
@@ -220,7 +222,7 @@ export class WorkoutsComponent {
   }
   async remove(id: string) {
     if (
-      confirm(
+      await this.confirmation.ask(
         "Eliminare definitivamente questo allenamento e tutte le sue serie? Statistiche e record saranno ricalcolati.",
       )
     ) {

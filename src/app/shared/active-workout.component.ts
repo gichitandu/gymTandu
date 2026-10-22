@@ -1,3 +1,4 @@
+import { confirmationForContext } from '../services/confirmation';
 import { Component, computed, HostListener, inject, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Store } from '../services/store';
@@ -18,6 +19,7 @@ type ActiveSetDraft={weight:number;reps:number;rpe:number|undefined;setNotes:str
 interface ActiveDraftSnapshot {entries:[string,ActiveSetDraft][];exerciseId:string;setId:string;bases?:Record<string,string>}
 @Component({selector:'gt-active-workout',standalone:true,imports:[FormsModule,LoadProgressionComponent,MachineSetupComponent,MuscleMapComponent,ExerciseThumbComponent,ExerciseVideoComponent,IconComponent],templateUrl:'./active-workout.component.html',styleUrls:['./recording.css']})
 export class ActiveWorkoutComponent {
+ private confirmation=confirmationForContext();
  externalTimer=inject(ExternalTimerService,{optional:true});
  committing=signal(false);s=inject(Store);resume=inject(WorkoutResumeService,{optional:true})||new WorkoutResumeService();workoutId=input.required<string>();finish=output<void>();
  step=signal<WorkoutUiState['step']>('list');tab=signal<WorkoutUiState['tab']>('sets');exerciseId=signal('');setId=signal('');clock=signal(Date.now());restEnd=signal(0);paused=signal(false);pausedSeconds=signal(0);restTotal=signal(90);
@@ -65,6 +67,8 @@ export class ActiveWorkoutComponent {
  nextRecord(){const e=this.selected();if(!e)return;const sets=this.s.sets(e.id),set=sets.find(s=>!s.completed)||sets[0];if(set)this.record(set);}
  adjustWeight(delta:number){this.weight=Math.max(0,+(this.weight+delta).toFixed(2));this.inputChanged();}
  adjustReps(delta:number){this.reps=Math.min(999,Math.max(1,this.reps+delta));this.inputChanged();}
+ invalidWeight(){return !Number.isFinite(this.weight)||this.weight<0;}
+ invalidReps(){return !Number.isInteger(this.reps)||this.reps<1||this.reps>999;}
  async saveDraft(completed?:boolean,reportInvalid=false){const set=this.currentSet();if(!set)return false;this.captureInputs();return this.flushSet(set.id,reportInvalid||completed!==undefined,completed);}
  private async flushSet(id:string,reportInvalid:boolean,completed?:boolean):Promise<boolean>{
   for(;;){
@@ -89,8 +93,8 @@ export class ActiveWorkoutComponent {
  async showExternalTimer(){await this.externalTimer?.open({end:this.restEnd(),paused:this.paused(),pausedSeconds:this.pausedSeconds(),title:this.selected()?.name||'Recupero'});}
  formatSeconds=formatSeconds;
  advance(){this.externalTimer?.stop();this.restEnd.set(0);this.paused.set(false);const next=this.nextExercise();if(next){this.exerciseId.set(next.id);this.nextRecord();}else this.navigate('list');this.remember();}
- async usePrevious(id:string){if(this.count(id)&&!confirm('Sostituire le serie allenanti di questo esercizio con gli ultimi valori? Le serie di riscaldamento restano conservate.'))return;const ids=this.s.sets(id).map(s=>s.id);if(await this.s.copyPrevious(id)){for(const key of ids)this.inputDrafts.delete(key);}this.setId.set('');this.remember();}
+ async usePrevious(id:string){if(this.count(id)&&!await this.confirmation.ask('Sostituire le serie allenanti di questo esercizio con gli ultimi valori? Le serie di riscaldamento restano conservate.'))return;const ids=this.s.sets(id).map(s=>s.id);if(await this.s.copyPrevious(id)){for(const key of ids)this.inputDrafts.delete(key);}this.setId.set('');this.remember();}
  saveNotes(id:string,notes:string){void this.s.change(d=>{const e=d.workoutExercises.find(e=>e.id===id);if(e)e.notes=notes;},'',false);}
- async removeSet(set:WorkoutLogSet){if(!set.completed||confirm('Eliminare questa serie completata?'))if(await this.s.removeSet(set.id)){this.inputDrafts.delete(set.id);this.setId.set('');this.navigate('detail');}}
+ async removeSet(set:WorkoutLogSet){if(!set.completed||await this.confirmation.ask('Eliminare questa serie completata?'))if(await this.s.removeSet(set.id)){this.inputDrafts.delete(set.id);this.setId.set('');this.navigate('detail');}}
  ngOnDestroy(){clearInterval(this.timer);clearTimeout(this.inputTimer);clearTimeout(this.persistTimer);this.flush();void this.draftSession?.destroy();this.destroyed=true;}
 }

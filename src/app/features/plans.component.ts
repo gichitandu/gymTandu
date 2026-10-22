@@ -1,3 +1,4 @@
+import { confirmationForContext } from '../services/confirmation';
 import { OpenWorkoutsComponent } from '../shared/open-workouts.component';
 import { SectionHeadingComponent } from "../shared/section-heading.component";
 import {ExerciseScope,ExerciseScopeComponent} from "../shared/exercise-scope.component";
@@ -414,6 +415,7 @@ type PlanEditorDraft = {
     }`,
 })
 export class PlansComponent {
+ private confirmation=confirmationForContext();
   exerciseCount(id:string){return this.s.days(id).reduce((n,d)=>n+this.s.planExercises(d.id).length,0);}
   thumbnailExercise(id:string){const day=this.s.days(id)[0],entry=day?this.s.planExercises(day.id)[0]:undefined;return entry?this.s.exercise(entry.exerciseId):undefined;}
   s = inject(Store);
@@ -551,9 +553,9 @@ export class PlansComponent {
       this.selectedCatalogId.set(value.exercise.exerciseId||'');this.modal.set(value.kind);this.draftNotice.set('Bozza recuperata. Controlla i valori e salva quando sei pronto.');
     }finally{this.restoringDraft=false;}
   }
-  private beginEditor(){
+  private beginEditor(retry:()=>void){
     if(this.saving())return false;
-    if(this.hasChanges()&&!confirm('Scartare le modifiche non salvate prima di aprire un altro modulo?'))return false;
+    if(this.hasChanges()){void this.confirmation.ask('Scartare le modifiche non salvate prima di aprire un altro modulo?').then(ok=>{if(ok&&!this.destroyed&&!this.saving()){this.editorSaved();retry();}});return false;}
     if(this.modal())this.clearStoredDraft();
     clearTimeout(this.restoreTimer);this.draftNotice.set('');return true;
   }
@@ -562,7 +564,7 @@ export class PlansComponent {
   private editorSaved(){this.modal.set('');this.formBaseline='';this.draftNotice.set('');this.clearStoredDraft();}
   ngOnDestroy(){clearTimeout(this.restoreTimer);void this.draftSession?.destroy();this.destroyed=true;this.draftSubscriptions.forEach(subscription=>subscription.unsubscribe());}
   openPlan(p?: TrainingPlan) {
-    if(!this.beginEditor())return;
+    if(!this.beginEditor(()=>this.openPlan(p)))return;
     this.editId = p?.id || "";
     this.formSaveId = p?.id || uid();
     this.planForm.reset({
@@ -586,7 +588,7 @@ export class PlansComponent {
     } finally { this.planForm.enable({emitEvent:false});this.saving.set(false); }
   }
   openDay(planId: string, day?: TrainingPlanDay) {
-    if(!this.beginEditor())return;
+    if(!this.beginEditor(()=>this.openDay(planId, day)))return;
     this.parentId = planId;
     this.editId = day?.id || "";
     this.formSaveId = day?.id || uid();
@@ -621,10 +623,10 @@ export class PlansComponent {
       d.plans.forEach((p) => (p.active = p.id === id && !p.archived));
     }, "Piano attivo aggiornato.");
   }
-  archive(p: TrainingPlan) {
+  async archive(p: TrainingPlan) {
     if (
       !p.archived &&
-      !confirm(
+      !await this.confirmation.ask(
         "Archiviare il piano? Tutti gli allenamenti storici saranno conservati.",
       )
     )
@@ -641,14 +643,14 @@ export class PlansComponent {
   }
   async removePlan(plan:TrainingPlan){
     if(this.deletingPlan())return;
-    if(!confirm(`Eliminare definitivamente il piano “${plan.name}” con i suoi giorni e gli esercizi programmati? Gli allenamenti già registrati e le loro serie resteranno nello storico. Gli altri piani non saranno modificati.`))return;
+    if(!await this.confirmation.ask({title:'Eliminare il piano?',confirmLabel:'Elimina piano',detail:plan.name+' · '+this.s.days(plan.id).length+' giorni',message:`Eliminare il piano “${plan.name}” con i giorni e gli esercizi programmati? Gli allenamenti già registrati e le loro serie resteranno nello storico. Gli altri piani non saranno modificati.`,tone:'danger'}))return;
     this.deletingPlan.set(plan.id);
     try{if(await this.s.deletePlan(plan.id)){if(this.expanded()===plan.id)this.expanded.set('');}}
     finally{this.deletingPlan.set('');}
   }
-  removeDay(day: TrainingPlanDay) {
+  async removeDay(day: TrainingPlanDay) {
     if (
-      confirm(
+      await this.confirmation.ask(
         "Eliminare questo giorno e i suoi esercizi? Lo storico rimane disponibile.",
       )
     )
@@ -673,7 +675,7 @@ export class PlansComponent {
     });
   }
   openExercise(dayId: string, e?: TrainingPlanExercise) {
-    if(!this.beginEditor())return;
+    if(!this.beginEditor(()=>this.openExercise(dayId, e)))return;
     this.parentId = dayId;
     this.editId = e?.id || "";
     this.formSaveId = e?.id || uid();
@@ -693,7 +695,7 @@ export class PlansComponent {
     this.modal.set("exercise");
     this.editorOpened();
   }
-  closeModal(){if(this.saving())return;if(this.hasChanges()&&!confirm('Scartare le modifiche non salvate?'))return;this.editorSaved();}
+  async closeModal(){if(this.saving())return;if(this.hasChanges()&&!await this.confirmation.ask('Scartare le modifiche non salvate?'))return;this.editorSaved();}
   async saveExercise() {
     if (this.exerciseForm.invalid || this.saving()) return;
     const v = this.exerciseForm.getRawValue();
@@ -741,8 +743,8 @@ export class PlansComponent {
         ];
     });
   }
-  removeExercise(e: TrainingPlanExercise) {
-    if(!confirm('Rimuovere questo esercizio dal giorno del piano? Lo storico degli allenamenti resta conservato.'))return;
+  async removeExercise(e: TrainingPlanExercise) {
+    if(!await this.confirmation.ask('Rimuovere questo esercizio dal giorno del piano? Lo storico degli allenamenti resta conservato.'))return;
     void this.s.change((d) => {
       d.planExercises = d.planExercises.filter((x) => x.id !== e.id);
       d.planExercises

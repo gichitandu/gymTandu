@@ -1,3 +1,4 @@
+import { confirmationForContext } from '../services/confirmation';
 import {setupSummary} from "../services/training-flow";
 import { ExerciseVideoComponent } from "./exercise-video.component";
 import { Component, HostListener, inject, input, signal } from "@angular/core";
@@ -204,6 +205,7 @@ type SetDraft = Partial<Record<NumberField, number | null | undefined>> & { note
     }`,
 })
 export class WorkoutEditorComponent {
+ private confirmation=confirmationForContext();
   setupSummary=setupSummary;
   s = inject(Store);
   workoutId = input.required<string>();
@@ -327,13 +329,13 @@ export class WorkoutEditorComponent {
     } finally { this.toggling.update(ids => new Set([...ids].filter(id => id !== set.id))); }
   }
   async copyPrevious(id: string) {
-    if(this.s.sets(id).some(set=>set.kind!=='warmup')&&!confirm('Sostituire le serie allenanti con i valori precedenti? Nello storico verrà conservato lo stato delle serie completate; le serie di riscaldamento restano conservate.'))return;
+    if(this.s.sets(id).some(set=>set.kind!=='warmup')&&!await this.confirmation.ask('Sostituire le serie allenanti con i valori precedenti? Nello storico verrà conservato lo stato delle serie completate; le serie di riscaldamento restano conservate.'))return;
     if (!await this.flushAll()) return;
     const ids = this.s.sets(id).map(set => set.id);
     if (await this.s.copyPrevious(id)){for (const key of ids) this.drafts.delete(key);this.draftsChanged();}
   }
   async remove(set: WorkoutLogSet) {
-    if (set.completed && !confirm('Eliminare questa serie già completata?')) return;
+    if (set.completed && !await this.confirmation.ask('Eliminare questa serie già completata?')) return;
     clearTimeout(this.timers.get(set.id)); this.timers.delete(set.id);
     const pending = this.writes.get(set.id);
     if (pending) await pending;

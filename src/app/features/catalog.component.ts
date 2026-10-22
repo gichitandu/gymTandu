@@ -1,3 +1,4 @@
+import { confirmationForContext } from '../services/confirmation';
 import { SectionHeadingComponent } from "../shared/section-heading.component";
 import { ExerciseThumbComponent } from "../shared/exercise-thumb.component";
 import { matchesExercise } from "../services/exercise-search";
@@ -230,6 +231,7 @@ type CatalogEditorDraft = {
     }`,
 })
 export class CatalogComponent {
+ private confirmation=confirmationForContext();
   s = inject(Store);
   fb = inject(FormBuilder);
   query = signal("");scope=signal<ExerciseScope>("all");
@@ -308,9 +310,9 @@ export class CatalogComponent {
       this.draftNotice.set('Bozza recuperata. Controlla i valori e salva quando sei pronto.');
     }finally{this.restoringDraft=false;}
   }
-  private beginEditor(){
+  private beginEditor(retry:()=>void){
     if(this.saving()||!this.s.canEditCatalog())return false;
-    if(this.hasChanges()&&!confirm('Scartare le modifiche non salvate prima di aprire un altro modulo?'))return false;
+    if(this.hasChanges()){void this.confirmation.ask('Scartare le modifiche non salvate prima di aprire un altro modulo?').then(ok=>{if(ok&&!this.destroyed&&!this.saving()){this.editorSaved();retry();}});return false;}
     if(this.editing()||this.groupEditing())this.clearStoredDraft();
     clearTimeout(this.restoreTimer);this.editorRequest++;this.imageRequest++;this.imageLoading.set(false);this.pendingImage=undefined;this.editing.set(false);this.groupEditing.set(false);this.draftNotice.set('');return true;
   }
@@ -338,7 +340,7 @@ export class CatalogComponent {
     }[m];
   }
   open(e?: Exercise) {
-    if(!this.beginEditor())return;
+    if(!this.beginEditor(()=>this.open(e)))return;
     this.editId = e?.id || "";
     this.formSaveId = e?.id || uid();
     this.imageBlob = e?.image;
@@ -360,7 +362,7 @@ export class CatalogComponent {
   close(e: MouseEvent) {
     if (e.target === e.currentTarget) this.dismiss();
   }
-  dismiss(){if(this.saving())return;if(this.hasChanges()&&!confirm('Scartare le modifiche non salvate?'))return;this.editorSaved();}
+  async dismiss(){if(this.saving())return;if(this.hasChanges()&&!await this.confirmation.ask('Scartare le modifiche non salvate?'))return;this.editorSaved();}
   removeImage(){if(this.saving())return;this.imageRequest++;this.imageLoading.set(false);this.imageBlob=undefined;this.pendingImage=undefined;this.draftSession?.changed();}
   async image(event: Event) {
     const input=event.target as HTMLInputElement;
@@ -417,10 +419,10 @@ export class CatalogComponent {
     this.saving.set(true);try{await this.s.saveExercise({...e,active:!e.active});}finally{this.saving.set(false);}
   }
   newGroup() {
-    if(!this.beginEditor())return;this.editId='';this.formSaveId=uid();this.groupName='';this.formBaseline='';this.groupEditing.set(true);this.draftSession?.changed();
+    if(!this.beginEditor(()=>this.newGroup()))return;this.editId='';this.formSaveId=uid();this.groupName='';this.formBaseline='';this.groupEditing.set(true);this.draftSession?.changed();
   }
   renameGroup(id:string,current:string) {
-    if(!this.beginEditor())return;this.editId=id;this.formSaveId=id;this.groupName=current;this.formBaseline=current;this.groupEditing.set(true);this.draftSession?.changed();
+    if(!this.beginEditor(()=>this.renameGroup(id,current)))return;this.editId=id;this.formSaveId=id;this.groupName=current;this.formBaseline=current;this.groupEditing.set(true);this.draftSession?.changed();
   }
   async saveGroup(){if(this.saving()||!this.groupEditing()||!this.groupName.trim()||this.groupName.length>80||!this.s.canEditCatalog())return;this.saving.set(true);try{if(await this.s.saveMuscleGroup(this.formSaveId||=this.editId||uid(),this.groupName.trim()))this.editorSaved();}finally{this.saving.set(false);}}
 }

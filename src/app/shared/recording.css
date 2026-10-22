@@ -41,3 +41,5 @@
 @media(min-width:801px){.recording-save{bottom:16px;}}
 @media(max-width:360px){.recording-pad{padding:10px;}.recording-values{gap:8px;}.recording-value{padding:8px;}.recording-save button{font-size:12px;}}
 @media(max-height:700px){:host .focus-heading{margin:8px 0;}.recording-pad{padding:10px;}.recording-top gt-exercise-thumb{--thumb-height:40px;}.recording-save{padding-top:6px;}}
+
+.recording-field-error{padding:10px 12px;border:1px solid #ff697680;border-radius:12px;background:color-mix(in srgb,#ff6976 7%,var(--card));color:#ff8796;font-size:12px;line-height:1.5;margin:8px 0}.recording-value input[aria-invalid=true]{border-color:#ff6976;outline-color:#ff6976}

@@ -148,3 +148,13 @@ it('lists an unfinished workout and closes only the selected session after confi
 it('does not close the current session when the requested id no longer exists',async()=>{
   await s.start('day-a');const before=await db.snapshot();await s.finish(true,'missing-session');expect(await db.snapshot()).toEqual(before);
 });
+it('uses the custom dialog to await a decision without modifying the archive underneath it',async()=>{
+  const {ConfirmationService}=await import('../src/app/services/confirmation');const dialog=new ConfirmationService();
+  const child=createEnvironmentInjector([{provide:ConfirmationService,useValue:dialog}],injector);
+  await s.start('day-a',moveDate(localDate(),-1));const before=await db.snapshot(),id=s.draft()!.id;
+  const component=runInInjectionContext(child,()=>new OpenWorkoutsComponent());
+  const pending=component.close(id);expect(dialog.current()?.title).toBe('Terminare l’allenamento?');expect(dialog.current()?.detail).toContain('Piano Tandu');
+  expect(await db.snapshot()).toEqual(before);await component.close(id);dialog.answer(false);await pending;expect(await db.snapshot()).toEqual(before);
+  const accepted=component.close(id);dialog.answer(true);await accepted;expect(s.draft()).toBeUndefined();expect(s.completed()[0].id).toBe(id);
+  expect([...s.data().sets].sort((a,b)=>a.id.localeCompare(b.id))).toEqual([...before.sets].sort((a,b)=>a.id.localeCompare(b.id)));child.destroy();
+});

@@ -1,3 +1,4 @@
+import { confirmationForContext } from '../services/confirmation';
 import { Component, computed, effect, ElementRef, inject, signal } from '@angular/core';
 import { TodayService } from '../services/today';
 import { FormsModule } from '@angular/forms';
@@ -10,6 +11,7 @@ import { IconComponent } from '../shared/icon.component';
 import { StatusComponent } from '../shared/status.component';
 @Component({standalone:true,imports:[FormsModule,RouterLink,A11yModule,IconComponent,StatusComponent],templateUrl:'./calendar.component.html',styleUrl:'./calendar.component.css'})
 export class CalendarComponent {
+ private confirmation=confirmationForContext();
  s=inject(Store);router=inject(Router);
  private host=inject<ElementRef<HTMLElement>>(ElementRef,{optional:true});private scrollKey='';private frame:number|undefined;
  ngAfterViewChecked(){const key=this.view()+this.selected();if(!this.host||key===this.scrollKey)return;this.scrollKey=key;if(this.frame!==undefined)cancelAnimationFrame(this.frame);this.frame=requestAnimationFrame(()=>{const rail=this.host?.nativeElement.querySelector<HTMLElement>('[data-week-rail]'),active=rail?.querySelector<HTMLElement>('[aria-pressed="true"]');if(rail&&active)rail.scrollTo({left:Math.max(0,active.offsetLeft-(rail.clientWidth-active.offsetWidth)/2),behavior:'auto'});});}
@@ -72,6 +74,6 @@ export class CalendarComponent {
   finally{this.saving.set(false);}
  }
  async duplicate(e:ScheduledWorkout){const version=this.formVersion,date=moveDate(e.date,7);const saved=await this.s.scheduleWorkout(date,e.dayId,e.notes);if(this.formVersion!==version)return;if(saved){this.choose(date);this.filter.set('all');}else{this.open();this.eventDate=date;this.dayId=e.dayId;this.notes=e.notes;}}
- async start(e:ScheduledWorkout){if(e.date>this.today&&!confirm('Iniziare ora questo allenamento? La sessione verrà registrata nella data di oggi.'))return;const date=this.linked(e)?.status==='draft'||e.date>this.today?undefined:e.date;if(await this.s.startScheduled(e.id,date))await this.router.navigateByUrl('/sessione');}
- async remove(e:ScheduledWorkout){if(confirm('Rimuovere la programmazione? Gli allenamenti già registrati resteranno nello storico.'))await this.s.change(d=>{d.scheduledWorkouts=d.scheduledWorkouts.filter(x=>x.id!==e.id);},'Programmazione rimossa.',false);}
+ async start(e:ScheduledWorkout){if(e.date>this.today&&!await this.confirmation.ask('Iniziare ora questo allenamento? La sessione verrà registrata nella data di oggi.'))return;const date=this.linked(e)?.status==='draft'||e.date>this.today?undefined:e.date;if(await this.s.startScheduled(e.id,date))await this.router.navigateByUrl('/sessione');}
+ async remove(e:ScheduledWorkout){if(await this.confirmation.ask('Rimuovere la programmazione? Gli allenamenti già registrati resteranno nello storico.'))await this.s.change(d=>{d.scheduledWorkouts=d.scheduledWorkouts.filter(x=>x.id!==e.id);},'Programmazione rimossa.',false);}
 }

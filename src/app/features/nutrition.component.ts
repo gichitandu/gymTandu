@@ -1,3 +1,4 @@
+import { confirmationForContext } from '../services/confirmation';
 import { SectionHeadingComponent } from "../shared/section-heading.component";
 import { RouterLink } from "@angular/router";
 import { RingComponent } from "../shared/ring.component";
@@ -69,6 +70,7 @@ interface MealFormDraft {
 <p class="subtle" style="margin-top:14px">WebGPU non è richiesta. Su un dispositivo lento, con memoria ridotta o non supportato, puoi registrare tutto manualmente. Nessuna stima viene salvata automaticamente.</p></details>
 `})
 export class NutritionComponent {
+ private confirmation=confirmationForContext();
  ingredients:MealIngredient[]=[];composedName='';nutritionFields:{key:'calories'|'protein'|'carbs'|'fat';label:string}[]=[{key:'calories',label:'kcal'},{key:'protein',label:'Proteine (g)'},{key:'carbs',label:'Carboidrati (g)'},{key:'fat',label:'Grassi (g)'}];
  ingredientTotal(){try{return sumIngredients(this.ingredients);}catch{return null;}}
  addIngredient(){try{const item={id:uid(),name:this.name.trim(),grams:this.grams,calories:this.calories,protein:this.protein,carbs:this.carbs,fat:this.fat};sumIngredients([...this.ingredients,item]);this.ingredients=[...this.ingredients,item];this.clearFood();this.error.set('');this.draftChanged();}catch(e){this.error.set((e as Error).message);}}
@@ -152,9 +154,9 @@ export class NutritionComponent {
   try{if(await this.s.change(d=>{const bytes=d.meals.filter(x=>x.id!==m.id).reduce((n,x)=>n+(x.photo?.size||0),0)+(m.photo?.size||0);if(bytes>15*1024*1024)throw Error('Archivio foto oltre 15 MB. Rimuovi alcune foto o salva senza immagine.');const i=d.meals.findIndex(x=>x.id===m.id);if(i<0)d.meals.push(m);else d.meals[i]=m;},'Pasto salvato sul dispositivo.',false)){if(!this.destroyed&&version===this.formVersion){this.day=m.date;this.clearDraft();this.showForm.set(false);this.clearStoredDraft();}}}finally{this.saving.set(false);}
  }
  edit(m:Meal){if(this.saving())return;this.clearDraft();this.formSaveId=m.id;this.showForm.set(true);this.mealType=m.mealType||'breakfast';this.editing=m.id;this.mealDate=m.date;this.followMealDate=false;this.name=m.name;this.grams=m.grams;this.calories=m.calories;this.protein=m.protein;this.carbs=m.carbs;this.fat=m.fat;this.notes=m.notes;this.photo=m.photo;this.source=m.source;this.foodId='';this.ingredients=structuredClone(m.ingredients||[]);this.composedName=m.name;if(this.ingredients.length)this.clearFood();this.markBaseline();this.draftChanged();window.scrollTo({top:0,behavior:'smooth'});}
- async remove(m:Meal){if(confirm('Eliminare questo pasto e la sua foto?'))await this.s.change(d=>{d.meals=d.meals.filter(x=>x.id!==m.id);},'Pasto eliminato.',false);}
+ async remove(m:Meal){if(await this.confirmation.ask({title:'Eliminare il pasto?',confirmLabel:'Elimina pasto',message:'Il pasto e la sua foto saranno eliminati.',tone:'danger'}))await this.s.change(d=>{d.meals=d.meals.filter(x=>x.id!==m.id);},'Pasto eliminato.',false);}
  openNew(){if(this.saving()||!this.draftReady())return;this.reset();this.showForm.set(true);this.markBaseline();this.draftChanged();}
- closeForm(){if(this.saving())return;if(this.drafts&&this.hasMealChanges()&&!confirm('Scartare la bozza di questo pasto? I pasti già salvati restano conservati.'))return;this.reset();this.showForm.set(false);this.clearStoredDraft();}
+ async closeForm(){if(this.saving())return;if(this.drafts&&this.hasMealChanges()&&!await this.confirmation.ask('Scartare la bozza di questo pasto? I pasti già salvati restano conservati.'))return;this.reset();this.showForm.set(false);this.clearStoredDraft();}
  reset(){if(!this.saving())this.clearDraft();}
  private clearDraft(){this.formVersion++;this.photoRequest++;this.analysisRequest++;this.formSaveId=uid();this.ai.cancel();this.photoBusy.set(false);this.analysisState.set('idle');this.analysisMessage.set('');this.ingredients=[];this.composedName='';this.error.set('');this.editing='';this.name='';this.foodId='';this.grams=100;this.calories=0;this.protein=0;this.carbs=0;this.fat=0;this.notes='';this.photo=undefined;this.pendingPhoto=undefined;this.source='manual';this.mealDate=this.day;this.followMealDate=this.followDay&&this.day===this.today;this.suggestions.set([]);this.recoveredDraft.set(false);this.baseline='';this.baselinePhoto=undefined;}
  ngOnDestroy(){void this.draftSession?.destroy();this.destroyed=true;this.formVersion++;this.photoRequest++;this.ai.cancel();this.urls.forEach(url=>URL.revokeObjectURL(url));}

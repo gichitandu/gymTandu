@@ -1,3 +1,4 @@
+import { confirmationForContext } from '../services/confirmation';
 import { Component, inject, output, signal } from '@angular/core';
 import { DataSet } from '../models/domain';
 import { ArchiveSyncService, archiveSummary } from '../services/archive-sync';
@@ -17,6 +18,7 @@ export interface ArchiveRecoveryRequest {data:DataSet;scope:'device'|'account'}
   styles: [`:host{display:block;margin:12px 0}.archive-protection{padding:11px 14px;border:1px solid var(--line,#2b4055);border-radius:12px;background:var(--card,#102236);font-size:12px}.archive-protection summary{cursor:pointer;min-height:30px;line-height:1.5}.archive-protection summary span{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;background:#70561d;color:white;margin-right:6px}.archive-protection summary span.saved{background:#145a42}.archive-protection p{font-size:12px;line-height:1.6;margin:10px 0;color:var(--muted,#b0bfd0)}.archive-actions{display:flex;flex-wrap:wrap;gap:8px}.archive-actions button{font-size:12px;min-height:44px}.saved-date{font-size:11px!important}`],
 })
 export class ArchiveSyncComponent {
+ private confirmation=confirmationForContext();
   sync = inject(ArchiveSyncService);
   recover = output<ArchiveRecoveryRequest>();
   working = signal(false);localNotice = signal('');
@@ -29,7 +31,7 @@ export class ArchiveSyncComponent {
     try {
       const data = await this.sync.readRemote(scope);if (!data) return;
       const counts = archiveSummary(data);
-      if (!confirm(`La copia server contiene ${counts.plans} piani e ${counts.plannedExercises} esercizi nei piani. Aggiungere i piani e gli esercizi mantenendo i dati attuali e le copie originali? Pasti e storico attuali restano invariati.`)) return;
+      if (!await this.confirmation.ask(`La copia server contiene ${counts.plans} piani e ${counts.plannedExercises} esercizi nei piani. Aggiungere i piani e gli esercizi mantenendo i dati attuali e le copie originali? Pasti e storico attuali restano invariati.`)) return;
       this.recover.emit({data,scope});
     } finally { this.working.set(false); }
   }

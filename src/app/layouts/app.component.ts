@@ -1,3 +1,4 @@
+import { ConfirmationDialogComponent } from '../shared/confirmation-dialog.component';
 import { Component, effect, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../services/auth';
@@ -7,8 +8,8 @@ import { IconComponent } from '../shared/icon.component';
 import { FeedbackPopupsComponent } from '../shared/feedback-popups.component';
 import { feedbackForContext, feedbackSignal } from '../services/feedback';
 import { AppActivationUncertainError, AppReleaseService } from '../services/app-release';
-@Component({selector:'app-root',standalone:true,imports:[FormsModule,ShellComponent,IconComponent,FeedbackPopupsComponent],styleUrl:'./entry.css',template:`
-<gt-feedback-popups/>
+@Component({selector:'app-root',standalone:true,imports:[ConfirmationDialogComponent,FormsModule,ShellComponent,IconComponent,FeedbackPopupsComponent],styleUrl:'./entry.css',template:`
+<gt-feedback-popups/><gt-confirmation-dialog/>
 @if(auth.user()) { <gt-shell /> } @else {
 @if(auth.loggingOut()){<p class="entry-status" role="status">Uscita e aggiornamento…</p>}
 <main class="entry-page" [class.welcome-state]="welcome() && !auth.setup()" [attr.inert]="entryUpdating()||auth.loggingOut()?'':null">

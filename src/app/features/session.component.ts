@@ -1,3 +1,4 @@
+import { confirmationForContext } from '../services/confirmation';
 import { Component, inject, signal, viewChild } from "@angular/core";
 import { ActivatedRoute, Router, RouterLink } from "@angular/router";
 import { FormsModule } from "@angular/forms";
@@ -76,6 +77,7 @@ import { parseLocalDate } from '../services/calendar';
     }`,
 })
 export class SessionComponent {
+ private confirmation=confirmationForContext();
   s = inject(Store);
   requestedDate = inject(ActivatedRoute,{optional:true})?.snapshot.queryParamMap.get('requestedDate') || '';
   formatDate(date:string){try{return parseLocalDate(date).toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit',year:'numeric'});}catch{return date;}}
@@ -111,7 +113,7 @@ export class SessionComponent {
       const workout=this.s.draft();
       if(!workout)return;
       const withoutCompletedSets=this.completedSets(workout.id)===0;
-      if(withoutCompletedSets&&!confirm('Nessuna serie è stata segnata come completata. Vuoi terminare comunque l’allenamento? Tutti i valori inseriti saranno conservati nello storico e potrai registrare un altro giorno.'))return;
+      if(withoutCompletedSets&&!await this.confirmation.ask('Nessuna serie è stata segnata come completata. Vuoi terminare comunque l’allenamento? Tutti i valori inseriti saranno conservati nello storico e potrai registrare un altro giorno.'))return;
       if (await this.s.finish(withoutCompletedSets)) {
         active?.externalTimer?.stop();
         await this.router.navigateByUrl("/allenamenti");
@@ -120,7 +122,7 @@ export class SessionComponent {
   }
   async discard(id: string) {
     if (
-      confirm(
+      await this.confirmation.ask(
         "Scartare la sessione in corso? Le serie registrate saranno eliminate.",
       )
     ) {

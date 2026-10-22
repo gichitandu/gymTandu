@@ -1,3 +1,4 @@
+import { confirmationForContext } from '../services/confirmation';
 import { SectionHeadingComponent } from "../shared/section-heading.component";
 import {takeUntilDestroyed} from "@angular/core/rxjs-interop";
 import {BackupReminderComponent} from "../shared/backup-reminder.component";
@@ -315,6 +316,7 @@ interface ProfileFormDraft {
     }`,
 })
 export class ProfileComponent {
+ private confirmation=confirmationForContext();
   private archiveSync=inject(ArchiveSyncService,{optional:true});
   async recoverCloud(request:{data:DataSet;scope:'device'|'account'}){
     if(!this.archiveSync)return;
@@ -418,7 +420,7 @@ export class ProfileComponent {
       await this.persistDraftState();
     }}finally{this.measurementSaving.set(false);}
   }
-  async removeMeasurement(id:string){if(confirm('Rimuovere questa misurazione?'))await this.s.change(d=>{d.measurements=d.measurements.filter(m=>m.id!==id);},'Misurazione rimossa.',false);}
+  async removeMeasurement(id:string){if(await this.confirmation.ask('Rimuovere questa misurazione?'))await this.s.change(d=>{d.measurements=d.measurements.filter(m=>m.id!==id);},'Misurazione rimossa.',false);}
   constructor() {
     inject(ActivatedRoute).queryParamMap.pipe(takeUntilDestroyed()).subscribe(params=>{const section=params.get('section');if(section&&['backup','goals','settings','measurements','theme','security','info'].includes(section))this.panel.set(section);});
     effect(() => {this.syncForms();if(this.s.ready()&&this.formDrafts&&!this.draftSession){this.draftSession=this.formDrafts.bind(this.s.archiveKey(),'profile',()=>this.captureDraft(),value=>this.restoreDraft(value));this.draftSubscriptions.push(this.form.valueChanges.subscribe(()=>this.draftSession?.changed()),this.goalsForm.valueChanges.subscribe(()=>this.draftSession?.changed()));}});
@@ -447,7 +449,7 @@ export class ProfileComponent {
     this.syncForms();this.draftRestored.set(true);
   }
   private async persistDraftState(){if(!this.draftSession)return;try{if(this.captureDraft())await this.draftSession.flush();else{await this.draftSession.clear();this.draftRestored.set(false);}}catch(error){this.s.error.set(error instanceof Error?error.message:'Bozza non aggiornata. Riprova.');}}
-  async discardDraft(){if(this.profileSaving()||this.goalsSaving()||this.photoBusy()||!confirm('Eliminare la bozza e rileggere i dati già salvati?'))return;this.form.markAsPristine();this.goalsForm.markAsPristine();this.photoDraft.set(undefined);this.usernameDraft.set(null);this.measurementWeight=null;this.measurementWaist=null;this.measurementBodyFat=null;this.measurementDate=this.today;this.measurementDateChosen=false;this.profileSignature='';this.goalsSignature='';this.syncForms();await this.persistDraftState();}
+  async discardDraft(){if(this.profileSaving()||this.goalsSaving()||this.photoBusy()||!await this.confirmation.ask('Eliminare la bozza e rileggere i dati già salvati?'))return;this.form.markAsPristine();this.goalsForm.markAsPristine();this.photoDraft.set(undefined);this.usernameDraft.set(null);this.measurementWeight=null;this.measurementWaist=null;this.measurementBodyFat=null;this.measurementDate=this.today;this.measurementDateChosen=false;this.profileSignature='';this.goalsSignature='';this.syncForms();await this.persistDraftState();}
   syncForms(){
     if(!this.s.ready())return;
     const p=this.s.profile(),settings=this.s.settings(),unit=settings.unit;

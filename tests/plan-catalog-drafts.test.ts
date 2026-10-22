@@ -94,12 +94,12 @@ it('recovers all exercise-plan fields and rejects a draft whose day was removed'
 it('keeps plan edits open when discard is refused and requires confirmation before removing an exercise', async () => {
   const component = create(PlansComponent); await drafts.flushAll();
   component.openPlan(); component.planForm.patchValue({ name: 'Modifiche da conservare' });
-  vi.stubGlobal('confirm', () => false); component.closeModal(); component.openDay('other');
+  vi.stubGlobal('confirm', () => false); await component.closeModal(); component.openDay('other');
   expect(component.modal()).toBe('plan'); expect(component.planForm.controls.name.value).toBe('Modifiche da conservare');
   const item = { id: 'entry', dayId: 'day', exerciseId: 'exercise-0', sets: 3, repsMin: 8, repsMax: 12, rest: 90, notes: '', order: 0 };
-  data.planExercises.push(item); component.removeExercise(item);
+  data.planExercises.push(item); await component.removeExercise(item);
   expect(store.change).not.toHaveBeenCalled(); expect(data.planExercises).toHaveLength(1);
-  vi.stubGlobal('confirm', () => true); component.removeExercise(item);
+  vi.stubGlobal('confirm', () => true); await component.removeExercise(item);
   expect(data.planExercises).toHaveLength(0);
 });
 
