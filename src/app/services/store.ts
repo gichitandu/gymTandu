@@ -341,7 +341,8 @@ export class Store {
       if (day) {
         day.name = name.trim();
         day.weekday = weekday;
-      } else
+      } else {
+        if(d.days.filter(day=>day.planId===planId).length>=7)throw Error('Questo piano contiene già 7 allenamenti. Puoi modificare quelli esistenti.');
         d.days.push({
           id,
           planId,
@@ -349,8 +350,9 @@ export class Store {
           weekday,
           order: d.days.filter((x) => x.planId === planId).length,
         });
+      }
       p.updatedAt = now();
-    }, "Giorno salvato.");
+    }, "Allenamento del piano salvato.");
   }
   async deletePlan(id:string){
     return this.change(d=>{
@@ -393,6 +395,7 @@ export class Store {
     await this.change((d) => {
       const source = d.days.find((x) => x.id === id);
       if (!source) return;
+      if(d.days.filter(day=>day.planId===source.planId).length>=7)throw Error('Questo piano contiene già 7 allenamenti. Puoi modificare quelli esistenti.');
       const did = uid();
       d.days.push({
         ...source,

@@ -69,7 +69,7 @@ type PlanEditorDraft = {
     <div class="list plan-collection">
       @for (p of plans(); track p.id; let planIndex=$index) {
         <section class="card plan-card" [class.plan-active]="p.active" [class.is-open]="expanded()===p.id">
-          <div class="plan-topline"><span class="plan-edition">PERCORSO <b>{{(planIndex+1).toString().padStart(2,'0')}}</b></span><div class="plan-day-markers" aria-hidden="true">@for(day of s.days(p.id);track day.id){<i></i>}</div><small>{{s.days(p.id).length}} giorni</small></div>
+          <div class="plan-topline"><span class="plan-edition">PERCORSO <b>{{(planIndex+1).toString().padStart(2,'0')}}</b></span><div class="plan-day-markers" aria-hidden="true">@for(day of s.days(p.id);track day.id){<i></i>}</div><small>{{s.days(p.id).length}} / 7 allenamenti</small></div>
           <div class="card-head"><gt-exercise-thumb [exercise]="thumbnailExercise(p.id)"/>
             <div>
               <span class="pill" [class.green]="p.active">{{
@@ -92,7 +92,7 @@ type PlanEditorDraft = {
                 <button (click)="activate(p.id)">Attiva piano</button>
               }
               <button (click)="openPlan(p)">Modifica</button
-              ><button (click)="openDay(p.id)">+ Giorno</button>
+              ><button type="button" class="primary" (click)="openDay(p.id)" [disabled]="s.days(p.id).length>=7||s.busy()">+ Aggiungi allenamento</button>
             }
             <button class="ghost" (click)="s.duplicatePlan(p.id)">
               Duplica</button
@@ -227,6 +227,7 @@ type PlanEditorDraft = {
                 </button>
               </div>
             }
+            @if(!p.archived){<div class="card" style="margin-top:16px"><strong>{{s.days(p.id).length}} / 7 allenamenti nel piano</strong><p class="subtle">Puoi creare un allenamento per ogni giorno della settimana, con esercizi diversi per ciascuno.</p><button type="button" class="primary full-width" (click)="openDay(p.id)" [disabled]="s.days(p.id).length>=7||s.busy()">{{s.days(p.id).length>=7?'Tutti i 7 allenamenti sono inseriti':'+ Aggiungi allenamento '+(s.days(p.id).length+1)+' di 7'}}</button></div>}
           }
         </section>
       } @empty {
@@ -303,7 +304,7 @@ type PlanEditorDraft = {
             <form [formGroup]="dayForm" (ngSubmit)="saveDay()">
               <div class="form-grid">
                 <label class="wide"
-                  >Nome del giorno<input
+                  >Nome dell’allenamento<input
                     formControlName="name"
                     maxlength="80"
                     placeholder="Es. Giorno A · Push" /></label
@@ -323,7 +324,7 @@ type PlanEditorDraft = {
                   class="primary"
                   [disabled]="dayForm.invalid || saving() || s.busy()"
                 >
-                  Salva giorno
+                  Salva allenamento
                 </button>
               </div>
             </form>

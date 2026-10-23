@@ -158,3 +158,19 @@ it('uses the custom dialog to await a decision without modifying the archive und
   const accepted=component.close(id);dialog.answer(true);await accepted;expect(s.draft()).toBeUndefined();expect(s.completed()[0].id).toBe(id);
   expect([...s.data().sets].sort((a,b)=>a.id.localeCompare(b.id))).toEqual([...before.sets].sort((a,b)=>a.id.localeCompare(b.id)));child.destroy();
 });
+it('adds seven distinct workouts to one plan through the editor without replacing existing entries',async()=>{
+  await complete(moveDate(localDate(),-1));const before=await db.snapshot();
+  const component=runInInjectionContext(injector,()=>new PlansComponent());
+  for(let index=1;index<7;index++){
+    component.openDay('tandu-plan');component.dayForm.patchValue({name:'Allenamento '+(index+1),weekday:String(index)});await component.saveDay();
+    expect(s.days('tandu-plan')).toHaveLength(index+1);
+  }
+  expect(new Set(s.days('tandu-plan').map(day=>day.id)).size).toBe(7);
+  expect(s.days('tandu-plan').map(day=>day.order)).toEqual([0,1,2,3,4,5,6]);
+  const after=await db.snapshot();for(const table of ['workouts','workoutExercises','sets','planExercises'] as const)expect(after[table]).toEqual(before[table]);
+  expect(after.days.find(day=>day.id==='day-a')).toEqual(before.days[0]);
+  expect(await s.saveDay('eighth','tandu-plan','Ottavo')).toBe(false);expect(s.days('tandu-plan')).toHaveLength(7);
+  await s.duplicateDay('day-a');expect(s.days('tandu-plan')).toHaveLength(7);
+  expect(await s.saveDay('day-a','tandu-plan','Primo aggiornato',0)).toBe(true);expect(s.days('tandu-plan')).toHaveLength(7);
+  const restored=await importBackup(await exportBackup(s.data()));expect(restored.days).toHaveLength(7);expect(restored.workouts).toEqual(before.workouts);
+});
