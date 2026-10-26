@@ -1,3 +1,4 @@
+import { cloneForEdit } from './edit-snapshot';
 import { setupKey,setupSummary,hasSetup } from "./training-flow";
 import { weightProgression } from "./progression";
 import { MachineSetup,WorkoutUiState } from "../models/domain";
@@ -180,7 +181,7 @@ export class Store {
       try {
         if (!this.ready()) throw Error("Archivio non ancora pronto");
         if(this.conflicted())throw new ArchiveConflictError();
-        const next = structuredClone(this.data());
+        const next = cloneForEdit(this.data());
         await fn(next);
         // Local recovery and backup import preserve their complete catalog.
         // Editing this private archive never grants write access to the shared API.

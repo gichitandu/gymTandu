@@ -1,3 +1,4 @@
+import { DateFieldComponent } from '../shared/date-field.component';
 import { confirmationForContext } from '../services/confirmation';
 import { SectionHeadingComponent } from "../shared/section-heading.component";
 import { RouterLink } from "@angular/router";
@@ -22,9 +23,9 @@ interface MealFormDraft {
  grams:number;calories:number;protein:number;carbs:number;fat:number;notes:string;foodId:string;source:Meal['source'];
  photo?:Blob;pendingPhoto?:Blob;ingredients:MealIngredient[];composedName:string;followDay:boolean;followMealDate:boolean;
 }
-@Component({standalone:true,styleUrl:"./feature-polish.css",imports:[SectionHeadingComponent,RouterLink,FormsModule,StatusComponent,RingComponent,IconComponent],template:`
+@Component({standalone:true,styleUrl:"./feature-polish.css",imports: [DateFieldComponent,SectionHeadingComponent,RouterLink,FormsModule,StatusComponent,RingComponent,IconComponent],template:`
 <gt-section-heading index="04" eyebrow="Energia per il tuo percorso" title="Alimentazione" description="Un giorno alla volta, il tuo equilibrio prende forma."/>
-<div class="nutrition-day-selector"><button class="icon-btn ghost" aria-label="Giorno precedente" (click)="moveDay(-1)"><gt-icon name="back"/></button><label class="nutrition-date-heading"><strong>{{day===today?'Oggi':dayLabel()}}</strong><input aria-label="Data alimentazione" type="date" [ngModel]="day" (ngModelChange)="selectDay($event)"/><span>{{dayLabel()}}</span></label><button class="icon-btn ghost" aria-label="Giorno successivo" (click)="moveDay(1)">›</button></div><gt-status/>
+<div class="nutrition-day-selector"><button class="icon-btn ghost" aria-label="Giorno precedente" (click)="moveDay(-1)"><gt-icon name="back"/></button><label class="nutrition-date-heading"><strong>{{day===today?'Oggi':dayLabel()}}</strong><gt-date-field aria-label="Data alimentazione" [ngModel]="day" (ngModelChange)="selectDay($event)"></gt-date-field><span>{{dayLabel()}}</span></label><button class="icon-btn ghost" aria-label="Giorno successivo" (click)="moveDay(1)">›</button></div><gt-status/>
 <input #camera hidden type="file" accept="image/*" capture="environment" (change)="takePhoto($event)"/><input #gallery hidden type="file" accept="image/*" (change)="takePhoto($event)"/>
 @if(!showForm()){
 <section class="nutrition-dashboard nutrition-observatory">
@@ -51,7 +52,7 @@ interface MealFormDraft {
 <form (ngSubmit)="save()"><div class="form-grid"><label class="wide">Tipo di pasto<select name="meal-type" [(ngModel)]="mealType"><option value="breakfast">Colazione</option><option value="lunch">Pranzo</option><option value="dinner">Cena</option><option value="snack">Spuntino</option></select></label>
 <label class="wide">Alimento di riferimento (facoltativo)<select name="food" [(ngModel)]="foodId" (ngModelChange)="choose($event)"><option value="">Inserimento manuale / etichetta</option>@for(food of foods;track food.id){<option [value]="food.id">{{food.name}}</option>}</select></label>
 <label class="wide">{{ingredients.length?'Alimento da aggiungere':'Nome del pasto'}}<input name="name" [(ngModel)]="name" [required]="!ingredients.length" maxlength="100" /></label>
-<label>Quantità (g)<input name="grams" type="number" inputmode="decimal" [(ngModel)]="grams" required min="1" max="10000" /></label><label>Data del pasto<input name="meal-date" type="date" [ngModel]="mealDate" (ngModelChange)="selectMealDate($event)" required /></label>
+<label>Quantità (g)<input name="grams" type="number" inputmode="decimal" [(ngModel)]="grams" required min="1" max="10000" /></label><label>Data del pasto<gt-date-field name="meal-date" [ngModel]="mealDate" (ngModelChange)="selectMealDate($event)" required ></gt-date-field></label>
 @if(foodId){<button type="button" class="wide" (click)="recalculate()">Ricalcola per questi grammi dal riferimento</button>}
 <label>Calorie totali (kcal)<input name="calories" type="number" inputmode="decimal" [(ngModel)]="calories" required min="0" max="20000" step="0.1" /></label>
 <label>Proteine totali (g)<input name="protein" type="number" inputmode="decimal" [(ngModel)]="protein" required min="0" max="2000" step="0.1" /></label>

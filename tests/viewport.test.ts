@@ -132,3 +132,14 @@ it('does not scroll a newly selected readable field upwards or let an old focus 
   await vi.advanceTimersByTimeAsync(600);
   expect(b.win.scrollBy).not.toHaveBeenCalled();
 });
+
+it('does not move the layout or scroll when a native date picker receives focus',async()=>{
+  const b=browser();b.doc.activeElement={...input(700,748),type:'date'};b.doc.dispatchEvent(new Event('focusin'));
+  b.viewport.height=340;b.viewport.dispatchEvent(new Event('resize'));await vi.advanceTimersByTimeAsync(100);
+  expect(b.classes.has('form-input-focused')).toBe(false);expect(b.classes.has('keyboard-open')).toBe(false);expect(b.win.scrollBy).not.toHaveBeenCalled();
+});
+it('does not rewrite viewport CSS on repeated scroll events with unchanged geometry',()=>{
+  const b=browser();const write=vi.spyOn(b.doc.documentElement.style,'setProperty');
+  for(let index=0;index<5;index++)b.viewport.dispatchEvent(new Event('scroll'));
+  expect(write).not.toHaveBeenCalled();
+});

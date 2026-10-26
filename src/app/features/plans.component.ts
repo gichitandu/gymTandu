@@ -1,3 +1,4 @@
+import { DateFieldComponent } from '../shared/date-field.component';
 import { confirmationForContext } from '../services/confirmation';
 import { OpenWorkoutsComponent } from '../shared/open-workouts.component';
 import { SectionHeadingComponent } from "../shared/section-heading.component";
@@ -38,7 +39,7 @@ type PlanEditorDraft = {
 @Component({
   standalone: true,
   styleUrl: "./feature-polish.css",
-  imports: [OpenWorkoutsComponent,SectionHeadingComponent,
+  imports: [DateFieldComponent,OpenWorkoutsComponent,SectionHeadingComponent,
     A11yModule,ExerciseScopeComponent,
     ExerciseFamiliesComponent,
     ExerciseThumbComponent,
@@ -212,7 +213,7 @@ type PlanEditorDraft = {
                 <details class="past-workout-entry" style="margin-top:14px">
                   <summary style="min-height:44px;align-content:center;cursor:pointer">Registra un allenamento passato</summary>
                   <p class="subtle" style="margin:10px 0">Scegli la data in cui ti sei allenato, poi inserisci e conferma le serie effettuate.</p>
-                  <div class="form-grid"><label>Data dell’allenamento<input type="date" [max]="today" [ngModel]="pastDates[day.id]||''" (ngModelChange)="pastDates[day.id]=$event" [attr.aria-label]="'Data allenamento passato · '+day.name"/></label><button type="button" class="primary" (click)="startPast(day.id)" [disabled]="!pastDates[day.id]||!s.planExercises(day.id).length||s.busy()||startingPast()">{{startingPast()?'Apertura…':'Registra per questa data'}}</button></div>
+                  <div class="form-grid"><label>Data dell’allenamento<gt-date-field [max]="today" [ngModel]="pastDates[day.id]||''" (ngModelChange)="pastDates[day.id]=$event" [aria-label]="'Data allenamento passato · '+day.name"></gt-date-field></label><button type="button" class="primary" (click)="startPast(day.id)" [disabled]="!pastDates[day.id]||!s.planExercises(day.id).length||s.busy()||startingPast()">{{startingPast()?'Apertura…':'Registra per questa data'}}</button></div>
                   @if(s.draft()){<p class="subtle" style="margin-top:10px">La sessione aperta è conservata. <a routerLink="/sessione">Riprendila</a> prima di iniziarne un’altra.</p>}
                 </details>
               </div>

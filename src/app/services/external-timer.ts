@@ -102,8 +102,6 @@ export class ExternalTimerService {
     // skip clears only the old notification, never the user's permission.
     if (this.automatic && !this.notifications && this.notificationSupported() && Notification.permission!=='denied' &&
       (this.permissionGranted || Notification.permission === 'granted')) void this.enableNotifications(false);
-    // Prepare the video before the user's click so PiP can retain user activation.
-    if (typeof document !== 'undefined' && !this.video) this.prepareVideo();
   }
 
   async open(state: ExternalTimerState) {
@@ -139,8 +137,10 @@ export class ExternalTimerService {
         this.message.set('Timer nella finestra flottante. Il tempo si riallinea quando il dispositivo riprende l’app.');
         this.tick();
         return;
-      } catch { /* Try the browser's video PiP, then a system notification. */ }
+      } catch { /* Try video PiP without substituting a notification. */ }
     }
+    // Media is created only on an explicit floating-window request.
+    if (!this.video && typeof document !== 'undefined') this.prepareVideo();
     if (this.video) {
       try {
         await this.video.play();
@@ -157,7 +157,8 @@ export class ExternalTimerService {
         return;
       } catch { /* Some phones do not permit a canvas video in PiP. */ }
     }
-    await this.enableNotifications();
+    this.releaseVideo();
+    this.message.set('Questo browser non offre una finestra timer. Su iPhone il cronometro nel Centro Notifiche richiede un’app iOS con Live Activities: le notifiche web mostrano solo un avviso statico. Il timer resta disponibile nell’allenamento.');
   }
 
   private prepareVideo() {

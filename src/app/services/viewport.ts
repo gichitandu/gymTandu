@@ -32,7 +32,7 @@ function editable(element: Element | null): element is HTMLInputElement | HTMLTe
   if (!element) return false;
   const field = element as HTMLInputElement;
   return (['INPUT', 'TEXTAREA', 'SELECT'].includes(element.tagName) || (element as HTMLElement).isContentEditable === true)
-    && !field.disabled && !field.readOnly && !['checkbox', 'radio', 'file', 'color', 'range', 'button', 'submit', 'reset', 'hidden'].includes(field.type);
+    && !field.disabled && !field.readOnly && !['checkbox', 'radio', 'file', 'color', 'range', 'button', 'submit', 'reset', 'hidden', 'date', 'time', 'datetime-local', 'month', 'week'].includes(field.type);
 }
 
 /** Keeps all forms, including the login screen, inside the area above the keyboard. */
@@ -46,6 +46,8 @@ export class ViewportService {
   private focusOutTimer?: ReturnType<typeof setTimeout>;
   private viewport = window.visualViewport;
   private geometry!: ViewportGeometry;
+  private appliedStyles=new Map<string,string>();
+  private setStyle(key:string,value:string){if(this.appliedStyles.get(key)===value)return;document.documentElement.style.setProperty(key,value);this.appliedStyles.set(key,value);}
   private readonly resize = () => { this.update(); this.scheduleReveal(); };
   private readonly scroll = () => this.update();
   private readonly focusIn = () => {
@@ -89,13 +91,12 @@ export class ViewportService {
     // extra scroll range stable for the whole keyboard session instead of
     // shrinking it on every pan, which otherwise moves the form upwards.
     this.scrollSpace = this.editing ? Math.max(this.scrollSpace, this.geometry.keyboardOpen ? layoutHeight - this.geometry.height : 0, this.geometry.keyboardInset) : 0;
-    const style = document.documentElement.style;
-    style.setProperty('--visible-height', `${this.geometry.height}px`);
-    style.setProperty('--visible-top', `${this.geometry.top}px`);
-    style.setProperty('--keyboard-inset', `${this.geometry.keyboardInset}px`);
-    style.setProperty('--keyboard-scroll-space', `${this.scrollSpace}px`);
-    style.setProperty('--form-scroll-top', this.editing ? '20px' : 'calc(76px + var(--safe-top))');
-    style.setProperty('--form-scroll-bottom', this.editing ? '20px' : 'calc(100px + var(--safe-bottom))');
+    this.setStyle('--visible-height', `${this.geometry.height}px`);
+    this.setStyle('--visible-top', `${this.geometry.top}px`);
+    this.setStyle('--keyboard-inset', `${this.geometry.keyboardInset}px`);
+    this.setStyle('--keyboard-scroll-space', `${this.scrollSpace}px`);
+    this.setStyle('--form-scroll-top', this.editing ? '20px' : 'calc(76px + var(--safe-top))');
+    this.setStyle('--form-scroll-bottom', this.editing ? '20px' : 'calc(100px + var(--safe-bottom))');
     document.body.classList.toggle('keyboard-open', this.geometry.keyboardOpen);
     document.body.classList.toggle('form-input-focused', this.editing);
   }

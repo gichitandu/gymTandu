@@ -1,3 +1,4 @@
+import { DateFieldComponent } from '../shared/date-field.component';
 import { confirmationForContext } from '../services/confirmation';
 import { SectionHeadingComponent } from "../shared/section-heading.component";
 import {takeUntilDestroyed} from "@angular/core/rxjs-interop";
@@ -42,7 +43,7 @@ interface ProfileFormDraft {
 @Component({
   standalone: true,
   styleUrl: "./account-polish.css",
-  imports: [SectionHeadingComponent,BackupReminderComponent,ArchiveSyncComponent,AppUpdatesComponent,
+  imports: [DateFieldComponent,SectionHeadingComponent,BackupReminderComponent,ArchiveSyncComponent,AppUpdatesComponent,
     A11yModule,
     AvatarComponent,
     IosStatusComponent,
@@ -67,7 +68,7 @@ interface ProfileFormDraft {
 <div class="profile-menu-group"><div class="account-section-label"><span>02 / SU MISURA</span><span>La tua app, il tuo stile.</span></div><nav class="profile-menu" aria-label="Preferenze e dati"><button (click)="panel.set('theme')"><gt-icon name="palette"/><span><strong>Tema e personalizzazione</strong><small>Colori e aspetto del tuo spazio</small></span>›</button><button (click)="panel.set('settings')"><gt-icon name="settings"/><span><strong>Impostazioni</strong><small>Profilo, foto e unità di misura</small></span>›</button><button (click)="panel.set('backup')"><gt-icon name="download"/><span><strong>Backup e ripristino</strong><small>Porta al sicuro il tuo percorso</small></span>›</button><button (click)="panel.set('security')"><gt-icon name="shield"/><span><strong>Account e sicurezza</strong><small>Credenziali e accesso personale</small></span>›</button>@if(auth.user()?.role==='SuperAdmin'){<a routerLink="/utenti"><gt-icon name="user"/><span><strong>Gestione utenti</strong><small>Account, ruoli e autorizzazioni</small></span>›</a>}<button (click)="panel.set('info')"><gt-icon name="info"/><span><strong>Informazioni app e iPhone</strong><small>Installazione e verifiche dispositivo</small></span>›</button></nav></div>
 }
 @if(panel()==='goals'){<section class="card"><h2>I tuoi obiettivi</h2><p class="subtle" style="margin:12px 0 20px">Inserisci i tuoi riferimenti personali. Non vengono calcolati da una fotografia e non sono prescrizioni automatiche.</p><form [formGroup]="goalsForm" (ngSubmit)="saveGoals()" class="form-grid"><label>Calorie giornaliere (kcal)<input type="number" inputmode="numeric" formControlName="calories" min="1" max="20000"/></label><label>Proteine giornaliere (g)<input type="number" inputmode="decimal" formControlName="protein" min="1" max="2000"/></label><label>Carboidrati giornalieri (g)<input type="number" inputmode="decimal" formControlName="carbs" min="1" max="3000"/></label><label>Grassi giornalieri (g)<input type="number" inputmode="decimal" formControlName="fat" min="1" max="2000"/></label><label class="wide">Allenamenti per settimana<input type="number" inputmode="numeric" formControlName="workoutsPerWeek" min="1" max="14"/></label><button class="primary wide" [disabled]="goalsForm.invalid||goalsSaving()||s.busy()||!s.ready()">Salva obiettivi</button></form><p class="subtle" style="margin-top:14px">Lascia vuoto un campo per rimuovere quel riferimento.</p></section>}
-@if(panel()==='measurements'){<section class="card"><h2>Registra misurazione</h2><form #measurementForm="ngForm" (ngSubmit)="saveMeasurement()" class="form-grid" style="margin-top:18px"><label>Data<input name="date" type="date" [ngModel]="measurementDate" (ngModelChange)="chooseMeasurementDate($event)" required [max]="today"/></label><label>Peso ({{s.settings().unit}})<input name="weight" type="number" inputmode="decimal" [(ngModel)]="measurementWeight" min="1" max="1500" step="0.1" required/></label><label>Girovita (cm, facoltativo)<input name="waist" type="number" inputmode="decimal" [(ngModel)]="measurementWaist" min="1" max="300" step="0.1"/></label><label>Massa grassa (%, facoltativa)<input name="bodyfat" type="number" inputmode="decimal" [(ngModel)]="measurementBodyFat" min="1" max="80" step="0.1"/></label><button class="primary wide" [disabled]="measurementForm.invalid||s.busy()">Salva misurazione</button></form></section><section class="card" style="margin-top:18px"><h2>Storico misurazioni</h2><div class="list" style="margin-top:18px">@for(m of measurementHistory();track m.id){<div class="measurement-row"><div><strong>{{s.formatWeight(m.weight)}} {{s.settings().unit}}</strong><p class="subtle">{{m.date}}{{m.waist?' · Vita '+m.waist+' cm':''}}{{m.bodyFat?' · Massa grassa '+m.bodyFat+'%':''}}</p></div><button class="ghost danger" (click)="removeMeasurement(m.id)" aria-label="Rimuovi misurazione">×</button></div>}@empty{<p class="subtle">Nessuna misurazione registrata.</p>}</div></section>}
+@if(panel()==='measurements'){<section class="card"><h2>Registra misurazione</h2><form #measurementForm="ngForm" (ngSubmit)="saveMeasurement()" class="form-grid" style="margin-top:18px"><label>Data<gt-date-field name="date" [ngModel]="measurementDate" (ngModelChange)="chooseMeasurementDate($event)" required [max]="today"></gt-date-field></label><label>Peso ({{s.settings().unit}})<input name="weight" type="number" inputmode="decimal" [(ngModel)]="measurementWeight" min="1" max="1500" step="0.1" required/></label><label>Girovita (cm, facoltativo)<input name="waist" type="number" inputmode="decimal" [(ngModel)]="measurementWaist" min="1" max="300" step="0.1"/></label><label>Massa grassa (%, facoltativa)<input name="bodyfat" type="number" inputmode="decimal" [(ngModel)]="measurementBodyFat" min="1" max="80" step="0.1"/></label><button class="primary wide" [disabled]="measurementForm.invalid||s.busy()">Salva misurazione</button></form></section><section class="card" style="margin-top:18px"><h2>Storico misurazioni</h2><div class="list" style="margin-top:18px">@for(m of measurementHistory();track m.id){<div class="measurement-row"><div><strong>{{s.formatWeight(m.weight)}} {{s.settings().unit}}</strong><p class="subtle">{{m.date}}{{m.waist?' · Vita '+m.waist+' cm':''}}{{m.bodyFat?' · Massa grassa '+m.bodyFat+'%':''}}</p></div><button class="ghost danger" (click)="removeMeasurement(m.id)" aria-label="Rimuovi misurazione">×</button></div>}@empty{<p class="subtle">Nessuna misurazione registrata.</p>}</div></section>}
 @if(panel()==='settings'||panel()==='theme'||panel()==='info'){
     <div class="profile-settings-panels">
       <section class="card" [hidden]="panel()!=='settings'">
@@ -101,10 +102,9 @@ interface ProfileFormDraft {
                 max="300"
                 formControlName="height" /></label
             ><label class="wide"
-              >Data di nascita (opzionale)<input
-                type="date"
+              >Data di nascita (opzionale)<gt-date-field
                 formControlName="birthDate"
-                [max]="today" /></label
+                [max]="today" ></gt-date-field></label
             ><label class="wide"
               >Il tuo obiettivo<textarea
                 formControlName="goal"
@@ -169,8 +169,8 @@ interface ProfileFormDraft {
           </div>
           <div class="setting-row">
             <div>
-              <b>Avvisi del recupero fuori app</b>
-              <p>Attivi di default. Dopo il consenso, ogni recupero mostra una notifica con l’ora di fine.</p>
+              <b>Notifiche statiche del recupero</b>
+              <p>Avvisi con l’ora di fine: non mostrano un cronometro che scorre nel Centro Notifiche.</p>
             </div>
             <mat-slide-toggle aria-label="Avvisi automatici del recupero fuori app"
               [checked]="s.settings().externalTimerEnabled!==false" (change)="timerSetting($event.checked)"/>

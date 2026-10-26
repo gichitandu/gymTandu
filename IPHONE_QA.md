@@ -123,3 +123,28 @@ Solo il pulsante Conferma applica la proposta, alle serie allenanti ancora da co
 Da provare fisicamente su Safari/PWA: composizione a 320/375/390/430 px, accesso ai giorni della traccia settimanale (scorribile su schermi stretti), temi personali chiari e scuri, navigazione e tastiera, moduli sovrapposti e barra Programma, cinque fasi della sessione, scelta incremento 1,25 kg e in lb, conferma e riapertura offline. Non sono stati eseguiti test visivi browser o su iPhone reale in questa sessione. Le prove automatiche non sostituiscono questi controlli.
 
 Verifica automatica della versione: 77 test superati in 9 file, inclusi 12 controlli specifici della progressione e del suo pulsante di conferma. Login, schema IndexedDB e formato backup verificati invariati. Build produzione e verifica dei bundle PWA completate; test fisici Safari/PWA ancora da eseguire.
+
+## Timer di sistema e campi data
+
+GymTrack installata da Safari resta una web app. Le sue notifiche di recupero
+sono avvisi statici con l'ora di fine: non sono un cronometro nel Centro
+Notifiche. L'esperienza Live Activities richiede un'app iOS e una widget
+extension con ActivityKit/SwiftUI; non si attiva aggiungendo Web Push.
+Riferimenti: https://developer.apple.com/documentation/activitykit/displaying-live-data-with-live-activities
+ e https://webkit.org/blog/13878/web-push-for-web-apps-on-ios-and-ipados/
+
+La richiesta esplicita di una finestra flottante prova solo i meccanismi PiP
+compatibili e non abilita silenziosamente notifiche come sostituzione.
+La sincronizzazione normale non crea o riproduce un video nascosto.
+
+Da verificare su un iPhone reale (i test automatici non sostituiscono questa prova):
+- Date di sessione, allenamenti passati, filtri storico, calendario, pasti,
+  nascita e misurazioni: testo gg/mm/aaaa completo, nessuno sbordo, selettore
+  nativo ancora utilizzabile e conservazione del valore dopo riapertura.
+- Cambio data da calendario e alimentazione: l'area cliccabile resta sulla
+  rispettiva etichetta, senza comparsa di un secondo campo visibile.
+- Passaggio tra peso/ripetizioni/data: nessun cambio di posizionamento della
+  testata e nessuna riscrittura ripetuta delle dimensioni del viewport a parità
+  di geometria.
+- Recupero normale: nessun video invisibile attivato automaticamente; le
+  notifiche statiche già autorizzate restano governate dalla preferenza account.

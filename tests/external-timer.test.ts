@@ -56,7 +56,7 @@ it('requests notification permission only on an explicit click and keeps an accu
   const timer = service(), initial = state();
   timer.sync(initial);
   expect(notification.requestPermission).not.toHaveBeenCalled();
-  await timer.open(initial);
+  await timer.requestAutomaticPermission();
   expect(notification.requestPermission).toHaveBeenCalledOnce();
   expect(timer.active()).toBe(true);
   expect(registration.showNotification.mock.calls[0][1].body).toBe(externalTimerNotification(initial));
@@ -112,7 +112,7 @@ it('reports unavailable platform features without claiming the timer is external
   const timer = service();
   await timer.open(state());
   expect(timer.active()).toBe(false);
-  expect(timer.message()).toContain('non consente un timer flottante né notifiche');
+  expect(timer.message()).toContain('Live Activities');
 });
 
 it('handles rejected notification delivery without leaving an active external timer', async () => {
@@ -121,7 +121,7 @@ it('handles rejected notification delivery without leaving an active external ti
   vi.stubGlobal('Notification', notification);
   vi.stubGlobal('navigator', { serviceWorker: { getRegistration: vi.fn().mockResolvedValue({ showNotification: vi.fn().mockRejectedValue(Error('Not supported')), getNotifications: vi.fn().mockResolvedValue([]) }) } });
   const timer = service();
-  await timer.open(state());
+  timer.sync(state());await timer.requestAutomaticPermission();
   expect(timer.active()).toBe(false);
   expect(timer.message()).toContain('non ha mostrato la notifica');
 });
@@ -173,4 +173,13 @@ it('roundtrips an explicitly disabled automatic timer preference without requiri
   data.settings[0].externalTimerEnabled=false;
   const restored=await importBackup(await exportBackup(data));
   expect(restored.settings[0].externalTimerEnabled).toBe(false);
+});
+
+it('does not create hidden media when only synchronizing the recovery',()=>{
+  const {document}=browser();const create=vi.spyOn(document,'createElement');const timer=service();
+  timer.sync(state());timer.sync(state());expect(create).not.toHaveBeenCalled();
+});
+it('does not silently substitute a notification when the requested floating timer is unavailable',async()=>{
+  const notification={permission:'default',requestPermission:vi.fn()};browser({Notification:notification});vi.stubGlobal('Notification',notification);
+  const timer=service();await timer.open(state());expect(notification.requestPermission).not.toHaveBeenCalled();expect(timer.active()).toBe(false);expect(timer.message()).toContain('Live Activities');
 });

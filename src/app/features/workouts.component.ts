@@ -1,3 +1,4 @@
+import { DateFieldComponent } from '../shared/date-field.component';
 import { confirmationForContext } from '../services/confirmation';
 import { OpenWorkoutsComponent } from '../shared/open-workouts.component';
 import { SectionHeadingComponent } from "../shared/section-heading.component";
@@ -12,7 +13,7 @@ import { ExerciseFilterComponent } from "../shared/exercise-filter.component";
 @Component({
   standalone: true,
   styleUrl: "./account-polish.css",
-  imports: [OpenWorkoutsComponent,SectionHeadingComponent,
+  imports: [DateFieldComponent,OpenWorkoutsComponent,SectionHeadingComponent,
     FormsModule,
     DatePipe,
     RouterLink,
@@ -76,16 +77,14 @@ import { ExerciseFilterComponent } from "../shared/exercise-filter.component";
           </select></label
         ><gt-exercise-filter [exercises]="s.data().exercises" [value]="exercise()"
           [includeAll]="true" (choose)="exercise.set($event)" /><label
-          >Dal<input
-            type="date"
+          >Dal<gt-date-field
             [ngModel]="from()"
-            (ngModelChange)="from.set($event)" /></label
+            (ngModelChange)="from.set($event)" ></gt-date-field></label
         ><label
-          >Al<input
-            type="date"
+          >Al<gt-date-field
             [ngModel]="to()"
             (ngModelChange)="to.set($event)"
-        /></label>
+        ></gt-date-field></label>
       </div>
       <p class="subtle" style="margin-bottom:16px">
         {{ filtered().length }} allenamenti trovati

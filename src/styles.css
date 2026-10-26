@@ -1777,7 +1777,7 @@ body.form-input-focused input,body.form-input-focused select,body.form-input-foc
 body.keyboard-open .entry-page {overflow:visible;}
 body.keyboard-open .modal-backdrop {align-items:flex-start;}
 @media (max-width:800px), (pointer:coarse) {
-  body.form-input-focused gt-shell .session-header {position:static;}
+  gt-shell .session-header {position:relative;}
   body.keyboard-open gt-shell .bottom-nav,
   body.form-input-focused .rest-timer,
   body.form-input-focused .compact-rest-chip {display:none;}
@@ -1789,9 +1789,11 @@ body.keyboard-open .modal-backdrop {align-items:flex-start;}
   .set-table {min-width:440px;}
 }
 
-/* Keep native date controls inside their grid cells on iPhone. */
+/* Shared date fields use stable visible text and an overlaid native picker. */
 .form-grid>label,.filters>label{min-width:0;align-self:start}
-input[type=date],input[type=time],input[type=datetime-local]{display:block;box-sizing:border-box;width:100%;min-width:0;max-width:100%;min-height:48px;text-align:left;line-height:1.4;padding:12px;font-size:16px}
-input[type=date]::-webkit-date-and-time-value,input[type=time]::-webkit-date-and-time-value{text-align:left;min-height:1.4em}
-.nutrition-date-heading input[type=date]{position:absolute;height:100%;padding:0}
+.nutrition-date-heading>gt-date-field,.cal-date-jump>gt-date-field{position:absolute;inset:0;z-index:1;margin:0;height:100%;opacity:0}
 @media(max-width:480px){.form-grid{grid-template-columns:minmax(0,1fr)}.session-header .form-grid{gap:10px}.history-filters{grid-template-columns:minmax(0,1fr)}}
+body.form-input-focused gt-workout-clock{display:none}
+.session-clock{font-variant-numeric:tabular-nums;display:inline-block;min-width:8ch}
+
+.past-workout-entry .form-grid>button{align-self:end}

@@ -1,3 +1,4 @@
+import { DateFieldComponent } from '../shared/date-field.component';
 import { confirmationForContext } from '../services/confirmation';
 import { Component, inject, signal, viewChild } from "@angular/core";
 import { ActivatedRoute, Router, RouterLink } from "@angular/router";
@@ -10,7 +11,7 @@ import { localDate } from '../models/domain';
 import { parseLocalDate } from '../services/calendar';
 @Component({
   standalone: true,
-  imports: [
+  imports: [DateFieldComponent,
     FormsModule,
     RouterLink,
     StatusComponent,
@@ -26,7 +27,7 @@ import { parseLocalDate } from '../services/calendar';
             <p class="eyebrow">{{ w.date < today ? 'REGISTRAZIONE DI UN ALLENAMENTO PASSATO':'ALLENAMENTO IN CORSO'}}</p>
             <h1>{{ w.dayName }}</h1>
             <p class="subtle">
-              {{ w.planName }} · {{ w.duration>0 ? w.duration+" min registrati" : elapsed(w.startedAt) }} ·
+              {{ w.planName }} · <span class="session-clock">{{ w.duration>0 ? w.duration+" min registrati" : elapsed(w.startedAt) }}</span> ·
               {{ s.busy() ? "Salvataggio…" : "Salvato sul dispositivo" }}
             </p>
           </div>
@@ -39,7 +40,7 @@ import { parseLocalDate } from '../services/calendar';
             <i [class.done]="set.completed"></i>
           }
         </div>
-        <div class="form-grid" style="margin-top:14px"><label>Data effettiva dell’allenamento<input type="date" [max]="today" [ngModel]="w.date" (ngModelChange)="update(w.id,'date',$event)"/></label>
+        <div class="form-grid" style="margin-top:14px"><label>Data effettiva dell’allenamento<gt-date-field [max]="today" [ngModel]="w.date" (ngModelChange)="update(w.id,'date',$event)"></gt-date-field></label>
         @if(w.date < today){<label>Durata effettiva (minuti, facoltativa)<input type="number" inputmode="numeric" min="1" max="1440" [ngModel]="w.duration||null" (ngModelChange)="update(w.id,'duration',$event)" placeholder="Es. 60"/></label>}</div>
       </div>
       <gt-active-workout [workoutId]="w.id" (finish)="finish()" />
