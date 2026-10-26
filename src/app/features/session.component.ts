@@ -40,7 +40,7 @@ import { parseLocalDate } from '../services/calendar';
             <i [class.done]="set.completed"></i>
           }
         </div>
-        <div class="form-grid" style="margin-top:14px"><label>Data effettiva dell’allenamento<gt-date-field [max]="today" [ngModel]="w.date" (ngModelChange)="update(w.id,'date',$event)"></gt-date-field></label>
+        <div class="form-grid session-date-fields" style="margin-top:14px"><label class="session-date-label">Data effettiva dell’allenamento<gt-date-field aria-label="Data effettiva dell’allenamento" [max]="today" [ngModel]="w.date" (ngModelChange)="update(w.id,'date',$event)"></gt-date-field></label>
         @if(w.date < today){<label>Durata effettiva (minuti, facoltativa)<input type="number" inputmode="numeric" min="1" max="1440" [ngModel]="w.duration||null" (ngModelChange)="update(w.id,'duration',$event)" placeholder="Es. 60"/></label>}</div>
       </div>
       <gt-active-workout [workoutId]="w.id" (finish)="finish()" />

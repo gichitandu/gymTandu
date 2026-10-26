@@ -1797,3 +1797,10 @@ body.form-input-focused gt-workout-clock{display:none}
 .session-clock{font-variant-numeric:tabular-nums;display:inline-block;min-width:8ch}
 
 .past-workout-entry .form-grid>button{align-self:end}
+
+/* A session date owns one full grid row; Safari must not size it from the
+   native date picker's intrinsic width. Keep the label inside the card padding. */
+gt-shell .session-header .session-date-fields{grid-template-columns:minmax(0,1fr);box-sizing:border-box;width:100%;min-width:0;max-width:100%}
+gt-shell .session-header .session-date-fields>label{display:grid;grid-template-columns:minmax(0,1fr);align-content:start;box-sizing:border-box;width:100%;min-width:0;max-width:100%}
+gt-shell .session-header .session-date-fields gt-date-field{box-sizing:border-box;width:100%;min-width:0;max-width:100%}
+gt-shell .session-header input[type=date]{box-sizing:border-box;width:100%;min-width:0;max-width:100%;inline-size:100%;min-inline-size:0;max-inline-size:100%}
