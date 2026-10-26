@@ -1,3 +1,4 @@
+import {AuthService} from '../services/auth';
 import { DateFieldComponent } from '../shared/date-field.component';
 import { confirmationForContext } from '../services/confirmation';
 import { Component, inject, signal, viewChild } from "@angular/core";
@@ -21,7 +22,7 @@ import { parseLocalDate } from '../services/calendar';
   styleUrl:'./session-simple.css',
   template: `<gt-status />
     @if(s.draft();as w){
-      @if(s.conflicted()){<p class="notice" role="alert">Archivio da verificare. <a routerLink="/profilo" [queryParams]="{section:'backup'}">Apri backup e ripristino</a></p>}
+      @if(s.conflicted()){<p class="notice" role="alert">Archivio da verificare. @if(auth?.canManageBackups()){<a routerLink="/profilo" [queryParams]="{section:'backup'}">Apri backup e ripristino</a>}@else{Contatta un Super Admin.}</p>}
       @if(requestedDate){<p class="notice" role="status">Sessione aperta: <strong>{{w.dayName}} · {{formatDate(w.date)}}</strong>. Terminala prima di registrare il {{formatDate(requestedDate)}}.</p>}
       <header class="session-header session-compact">
         <div class="simple-session-heading"><a class="button ghost" routerLink="/piani" aria-label="Torna ai piani"><gt-icon name="back"/></a><div><h1>{{w.dayName}}</h1><p>{{w.planName}}</p></div><button class="ghost session-finish" aria-label="Termina allenamento" (click)="finish()" [disabled]="s.busy()||finishing()">{{finishing()?'Salvataggio…':'Termina'}}</button></div>
@@ -39,6 +40,7 @@ import { parseLocalDate } from '../services/calendar';
     }`,
 })
 export class SessionComponent {
+  auth=inject(AuthService,{optional:true});
  private confirmation=confirmationForContext();
   s = inject(Store);
   requestedDate = inject(ActivatedRoute,{optional:true})?.snapshot.queryParamMap.get('requestedDate') || '';

@@ -65,7 +65,7 @@ interface ProfileFormDraft {
  @if(s.profile().goal){<div class="identity-goal"><span>LA TUA DIREZIONE</span><p>{{s.profile().goal}}</p></div>}
 </section>
 <div class="profile-menu-group"><div class="account-section-label"><span>01 / IL PERCORSO</span><span>Allenati. Misura. Migliora.</span></div><nav class="profile-menu" aria-label="Percorso personale"><button (click)="panel.set('goals')"><gt-icon name="trophy"/><span><strong>Obiettivi</strong><small>La direzione dei tuoi progressi</small></span>›</button><button (click)="panel.set('measurements')"><gt-icon name="activity"/><span><strong>Misurazioni corporee</strong><small>Rilevazioni e storico personale</small></span>›</button><a routerLink="/catalogo"><gt-icon name="weight"/><span><strong>{{s.canEditCatalog()?'Gestione esercizi':'Catalogo esercizi'}}</strong><small>Varianti, preferiti e configurazioni</small></span>›</a><a routerLink="/calendario"><gt-icon name="calendar"/><span><strong>Calendario allenamenti</strong><small>Il tuo ritmo, giorno per giorno</small></span>›</a></nav></div>
-<div class="profile-menu-group"><div class="account-section-label"><span>02 / SU MISURA</span><span>La tua app, il tuo stile.</span></div><nav class="profile-menu" aria-label="Preferenze e dati"><button (click)="panel.set('theme')"><gt-icon name="palette"/><span><strong>Tema e personalizzazione</strong><small>Colori e aspetto del tuo spazio</small></span>›</button><button (click)="panel.set('settings')"><gt-icon name="settings"/><span><strong>Impostazioni</strong><small>Profilo, foto e unità di misura</small></span>›</button><button (click)="panel.set('backup')"><gt-icon name="download"/><span><strong>Backup e ripristino</strong><small>Porta al sicuro il tuo percorso</small></span>›</button><button (click)="panel.set('security')"><gt-icon name="shield"/><span><strong>Account e sicurezza</strong><small>Credenziali e accesso personale</small></span>›</button>@if(auth.uiRole()==='SuperAdmin'){<a routerLink="/utenti"><gt-icon name="user"/><span><strong>Gestione utenti</strong><small>Account, ruoli e autorizzazioni</small></span>›</a>}<button (click)="panel.set('info')"><gt-icon name="info"/><span><strong>Informazioni app e iPhone</strong><small>Installazione e verifiche dispositivo</small></span>›</button></nav></div>
+<div class="profile-menu-group"><div class="account-section-label"><span>02 / SU MISURA</span><span>La tua app, il tuo stile.</span></div><nav class="profile-menu" aria-label="Preferenze e dati"><button (click)="panel.set('theme')"><gt-icon name="palette"/><span><strong>Tema e personalizzazione</strong><small>Colori e aspetto del tuo spazio</small></span>›</button><button (click)="panel.set('settings')"><gt-icon name="settings"/><span><strong>Impostazioni</strong><small>Profilo, foto e unità di misura</small></span>›</button>@if(auth.canManageBackups()){ <button (click)="panel.set('backup')"><gt-icon name="download"/><span><strong>Backup e ripristino</strong><small>Porta al sicuro il tuo percorso</small></span>›</button> }<button (click)="panel.set('security')"><gt-icon name="shield"/><span><strong>Account e sicurezza</strong><small>Credenziali e accesso personale</small></span>›</button>@if(auth.uiRole()==='SuperAdmin'){<a routerLink="/utenti"><gt-icon name="user"/><span><strong>Gestione utenti</strong><small>Account, ruoli e autorizzazioni</small></span>›</a>}<button (click)="panel.set('info')"><gt-icon name="info"/><span><strong>Informazioni app e iPhone</strong><small>Installazione e verifiche dispositivo</small></span>›</button></nav></div>
 }
 @if(panel()==='goals'){<section class="card"><h2>I tuoi obiettivi</h2><p class="subtle" style="margin:12px 0 20px">Inserisci i tuoi riferimenti personali. Non vengono calcolati da una fotografia e non sono prescrizioni automatiche.</p><form [formGroup]="goalsForm" (ngSubmit)="saveGoals()" class="form-grid"><label>Calorie giornaliere (kcal)<input type="number" inputmode="numeric" formControlName="calories" min="1" max="20000"/></label><label>Proteine giornaliere (g)<input type="number" inputmode="decimal" formControlName="protein" min="1" max="2000"/></label><label>Carboidrati giornalieri (g)<input type="number" inputmode="decimal" formControlName="carbs" min="1" max="3000"/></label><label>Grassi giornalieri (g)<input type="number" inputmode="decimal" formControlName="fat" min="1" max="2000"/></label><label class="wide">Allenamenti per settimana<input type="number" inputmode="numeric" formControlName="workoutsPerWeek" min="1" max="14"/></label><button class="primary wide" [disabled]="goalsForm.invalid||goalsSaving()||s.busy()||!s.ready()">Salva obiettivi</button></form><p class="subtle" style="margin-top:14px">Lascia vuoto un campo per rimuovere quel riferimento.</p></section>}
 @if(panel()==='measurements'){<section class="card"><h2>Registra misurazione</h2><form #measurementForm="ngForm" (ngSubmit)="saveMeasurement()" class="form-grid" style="margin-top:18px"><label>Data<gt-date-field name="date" [ngModel]="measurementDate" (ngModelChange)="chooseMeasurementDate($event)" required [max]="today"></gt-date-field></label><label>Peso ({{s.settings().unit}})<input name="weight" type="number" inputmode="decimal" [(ngModel)]="measurementWeight" min="1" max="1500" step="0.1" required/></label><label>Girovita (cm, facoltativo)<input name="waist" type="number" inputmode="decimal" [(ngModel)]="measurementWaist" min="1" max="300" step="0.1"/></label><label>Massa grassa (%, facoltativa)<input name="bodyfat" type="number" inputmode="decimal" [(ngModel)]="measurementBodyFat" min="1" max="80" step="0.1"/></label><button class="primary wide" [disabled]="measurementForm.invalid||s.busy()">Salva misurazione</button></form></section><section class="card" style="margin-top:18px"><h2>Storico misurazioni</h2><div class="list" style="margin-top:18px">@for(m of measurementHistory();track m.id){<div class="measurement-row"><div><strong>{{s.formatWeight(m.weight)}} {{s.settings().unit}}</strong><p class="subtle">{{m.date}}{{m.waist?' · Vita '+m.waist+' cm':''}}{{m.bodyFat?' · Massa grassa '+m.bodyFat+'%':''}}</p></div><button class="ghost danger" (click)="removeMeasurement(m.id)" aria-label="Rimuovi misurazione">×</button></div>}@empty{<p class="subtle">Nessuna misurazione registrata.</p>}</div></section>}
@@ -217,7 +217,7 @@ interface ProfileFormDraft {
     </div>
     }
     @if(panel()==='settings'){<gt-app-updates/><section class="card" style="margin-top:20px"><h2>Accesso all’app</h2><p class="subtle" style="margin:12px 0">Le bozze vengono conservate prima dell’uscita. Piani, esercizi e allenamenti rimangono nel tuo archivio.</p><button type="button" class="full-width" [disabled]="loggingOut()" (click)="logout()">{{loggingOut()?'Salvataggio e uscita…':'Esci dall’app'}}</button></section>}
-    @if(panel()==='backup'){<gt-archive-sync (recover)="recoverCloud($event)"/><gt-backup-reminder mode="settings"/><section class="card" style="margin-top:20px">
+    @if(panel()==='backup'&&auth.canManageBackups()){<gt-archive-sync (recover)="recoverCloud($event)"/><gt-backup-reminder mode="settings"/><section class="card" style="margin-top:20px">
       <div class="card-head">
         <div>
           <h2>Backup e ripristino</h2>
@@ -282,7 +282,7 @@ interface ProfileFormDraft {
     </section>
     }
     @if(panel()==='info'){<gt-ios-status />}
-    @if (pending(); as backup) {
+    @if (auth.canManageBackups() && pending(); as backup) {
       <div class="modal-backdrop">
         <section
           class="modal"
@@ -319,7 +319,7 @@ export class ProfileComponent {
  private confirmation=confirmationForContext();
   private archiveSync=inject(ArchiveSyncService,{optional:true});
   async recoverCloud(request:{data:DataSet;scope:'device'|'account'}){
-    if(!this.archiveSync)return;
+    if(!this.auth.canManageBackups()||!this.archiveSync)return;
     try{
       if(await this.s.change(async current=>{Object.assign(current,await mergeRecoveredArchive(current,request.data,'server:'+request.scope));},'Piani ed esercizi recuperati. Le copie precedenti sono conservate.',false)){
         await this.archiveSync.acceptRemote(request.data,request.scope);
@@ -329,7 +329,7 @@ export class ProfileComponent {
     }catch(error){this.s.error.set(error instanceof Error?error.message:'Recupero non riuscito. Le copie sono conservate.');}
   }
   resume=inject(WorkoutResumeService);
-  confirmBackup(){void this.s.change(d=>{d.settings[0].backupConfirmedAt=new Date().toISOString();delete d.settings[0].backupSnoozedUntil;},"Copia in File confermata da te.",false);}
+  confirmBackup(){if(!this.auth.canManageBackups())return;void this.s.change(d=>{d.settings[0].backupConfirmedAt=new Date().toISOString();delete d.settings[0].backupSnoozedUntil;},"Copia in File confermata da te.",false);}
   photoDraft = signal<Blob|null|undefined>(undefined);
   private formDrafts=inject(FormDraftService,{optional:true});
   private draftSession?:DraftSession<ProfileFormDraft>;
@@ -387,7 +387,7 @@ export class ProfileComponent {
   working = signal(false);
   pending = signal<DataSet | undefined>(undefined);
   backupFile = signal<File | null>(null);
-  async shareBackup(){const file=this.backupFile();if(!file)return;try{if(navigator.canShare?.({files:[file]})){await navigator.share({files:[file],title:"Backup GymTrack"});}else{this.s.message.set("Usa il download del backup e spostalo in File dal menu Condividi di Safari.");}}catch(e){if((e as Error).name!=="AbortError")this.s.error.set("Condivisione non disponibile. Usa il download JSON.");}}
+  async shareBackup(){if(!this.auth.canManageBackups())return;const file=this.backupFile();if(!file)return;try{if(navigator.canShare?.({files:[file]})){await navigator.share({files:[file],title:"Backup GymTrack"});}else{this.s.message.set("Usa il download del backup e spostalo in File dal menu Condividi di Safari.");}}catch(e){if((e as Error).name!=="AbortError")this.s.error.set("Condivisione non disponibile. Usa il download JSON.");}}
   private todayClock=inject(TodayService,{optional:true});
   get today(){return this.todayClock?.date()||localDate();}
   private lastToday=this.today;
@@ -422,7 +422,8 @@ export class ProfileComponent {
   }
   async removeMeasurement(id:string){if(await this.confirmation.ask('Rimuovere questa misurazione?'))await this.s.change(d=>{d.measurements=d.measurements.filter(m=>m.id!==id);},'Misurazione rimossa.',false);}
   constructor() {
-    inject(ActivatedRoute).queryParamMap.pipe(takeUntilDestroyed()).subscribe(params=>{const section=params.get('section');if(section&&['backup','goals','settings','measurements','theme','security','info'].includes(section))this.panel.set(section);});
+    effect(()=>{if(!this.auth.canManageBackups()){if(this.panel()==='backup')this.panel.set('overview');this.pending.set(undefined);this.backupFile.set(null);}});
+    inject(ActivatedRoute).queryParamMap.pipe(takeUntilDestroyed()).subscribe(params=>{const section=params.get('section');if(section&&(section!=='backup'||this.auth.canManageBackups())&&['backup','goals','settings','measurements','theme','security','info'].includes(section))this.panel.set(section);});
     effect(() => {this.syncForms();if(this.s.ready()&&this.formDrafts&&!this.draftSession){this.draftSession=this.formDrafts.bind(this.s.archiveKey(),'profile',()=>this.captureDraft(),value=>this.restoreDraft(value));this.draftSubscriptions.push(this.form.valueChanges.subscribe(()=>this.draftSession?.changed()),this.goalsForm.valueChanges.subscribe(()=>this.draftSession?.changed()));}});
     if(this.todayClock)effect(()=>{const today=this.today,previous=this.lastToday;this.lastToday=today;if(today!==previous&&!this.measurementDateChosen&&this.measurementDate===previous&&this.measurementWeight===null&&this.measurementWaist===null&&this.measurementBodyFat===null)this.measurementDate=today;});
   }
@@ -511,6 +512,7 @@ export class ProfileComponent {
     return new Date(this.s.settings().lastBackup!).toLocaleString("it-IT");
   }
   async export() {
+    if(!this.auth.canManageBackups())return;
     this.working.set(true);
     try {
       await this.s.settled();
@@ -539,6 +541,7 @@ export class ProfileComponent {
     }
   }
   async prepareImport(event: Event) {
+    if(!this.auth.canManageBackups())return;
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
     input.value = "";
@@ -559,6 +562,7 @@ export class ProfileComponent {
     }
   }
   async restore() {
+    if(!this.auth.canManageBackups())return;
     const d = this.pending();
     if (!d) return;
     this.working.set(true);

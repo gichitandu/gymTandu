@@ -3,6 +3,7 @@ import {createEnvironmentInjector,EnvironmentInjector,runInInjectionContext} fro
 import {afterEach,expect,it,vi} from 'vitest';
 import {AuthService,ARCHIVE_CHOICE_KEY,Account} from '../src/app/services/auth';
 import {Store} from '../src/app/services/store';
+import {ProfileComponent} from '../src/app/features/profile.component';
 import {UsersComponent} from '../src/app/features/users.component';
 const superAdmin:Account={id:'super',name:'Tandu',email:'super@example.test',role:'SuperAdmin',active:true,owner:true};
 afterEach(()=>{vi.restoreAllMocks();vi.unstubAllGlobals();});
@@ -34,4 +35,18 @@ it('prevents direct administration loads and saves in preview mode',async()=>{
 });
 it('starts new access in super admin view and clears preview on logout without touching stored archives',async()=>{
  const {auth,storage}=context();auth.setClientView(true);await auth.login('super@example.test','password');expect(auth.viewAsClient()).toBe(false);expect(auth.uiRole()).toBe('SuperAdmin');auth.setClientView(true);await auth.logout({reload:false});expect(auth.viewAsClient()).toBe(false);expect(storage.get('archive-preservation')).toBe('unchanged');
+});
+
+it.each(['User','Admin','SuperAdmin'] as const)('allows manual backups only for SuperAdmin, including preview transitions (%s)',async role=>{
+ const {auth,storage}=context({...superAdmin,role});const before=[...storage];
+ expect(auth.canManageBackups()).toBe(role==='SuperAdmin');
+ auth.setClientView(true);expect(auth.canManageBackups()).toBe(false);
+ const component={auth};
+ // Unauthorized calls must stop before reading files, archives, writing settings or downloading.
+ for(const method of ['export','prepareImport','restore','shareBackup','confirmBackup','recoverCloud'] as const){
+   await (ProfileComponent.prototype[method] as Function).call(component);
+ }
+ expect([...storage]).toEqual(before);
+ auth.setClientView(false);expect(auth.canManageBackups()).toBe(role==='SuperAdmin');
+ auth.user.set(null);expect(auth.canManageBackups()).toBe(false);
 });

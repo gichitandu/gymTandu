@@ -18,6 +18,7 @@ export class AuthService {
   private clientViewRequested=signal(false);
   readonly viewAsClient=computed(()=>this.clientViewRequested()&&this.user()?.role==='SuperAdmin'&&!this.offlineMode());
   readonly uiRole=computed(()=>this.viewAsClient()?'User':this.user()?.role||'User');
+  readonly canManageBackups=computed(()=>this.user()?.role==='SuperAdmin'&&!this.viewAsClient());
   setClientView(enabled:boolean){this.clientViewRequested.set(enabled&&this.user()?.role==='SuperAdmin'&&!this.offlineMode());}
   private pendingLogoutRequest?:Promise<void>;
   private lifecycle=0;

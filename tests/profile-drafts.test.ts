@@ -30,7 +30,7 @@ beforeEach(async()=>{
   injector=createEnvironmentInjector([
     {provide:GYM_REPOSITORY,useValue:{read:()=>db.snapshot(),replace:(data:any)=>db.replace(data)}},
     {provide:ActivatedRoute,useValue:{queryParamMap:of(convertToParamMap({}))}},
-    {provide:AuthService,useValue:{user:()=>null,offlineMode:()=>true}},
+    {provide:AuthService,useValue:{user:()=>null,offlineMode:()=>true,canManageBackups:()=>false}},
     {provide:ThemeService,useValue:{load:async()=>{},apply:()=>{},color:signal('#050E17')}},
     {provide:PwaService,useValue:{}},FormBuilder,Store,WorkoutResumeService,
   ],null as unknown as EnvironmentInjector);
