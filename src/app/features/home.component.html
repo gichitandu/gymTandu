@@ -3,6 +3,9 @@
   <p>{{ todayLabel }}</p>
 </header>
 <gt-status />
+@if(auth?.user()?.role==='SuperAdmin'&&!auth!.offlineMode()){
+  <label class="client-view-toggle"><input type="checkbox" [checked]="auth!.viewAsClient()" (change)="auth!.setClientView($any($event.target).checked)"/><span><strong>Visualizza come cliente</strong><small>{{auth!.viewAsClient()?'Vista cliente attiva · usi i tuoi dati':'Vista Super Admin'}}</small></span></label>
+}
 <section class="today-training" aria-label="Allenamento">
   @if (s.draft(); as draft) {
     <span class="today-state resume-state">Da riprendere</span>

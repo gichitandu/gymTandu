@@ -1,3 +1,4 @@
+import { AuthService } from '../services/auth';
 import { BackupReminderComponent } from "../shared/backup-reminder.component";
 import { Component, computed, inject } from "@angular/core";
 import { Router, RouterLink } from "@angular/router";
@@ -19,6 +20,7 @@ import { TodayService } from '../services/today';
 })
 export class HomeComponent {
   s = inject(Store);
+  auth=inject(AuthService,{optional:true});
   router = inject(Router);
   private todayClock = inject(TodayService,{optional:true});
   get today() { return this.todayClock?.date() || localDate(); }

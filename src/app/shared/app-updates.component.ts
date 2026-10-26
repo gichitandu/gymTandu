@@ -12,7 +12,7 @@ import { AppReleaseService } from '../services/app-release';
   <button type="button" (click)="release.check(true)" [disabled]="release.checking()||pwa.updating()">{{release.checking()?'Controllo…':'Controlla aggiornamenti'}}</button>
   @if(release.updateReady()||pwa.updateReady()){<button type="button" class="primary" (click)="pwa.reload()" [disabled]="pwa.updating()">{{pwa.updating()?'Salvataggio e aggiornamento…':'Aggiorna questo dispositivo'}}</button>}
  </div>
- @if(auth.user()?.role==='SuperAdmin'&&!auth.offlineMode()){
+ @if(auth.uiRole()==='SuperAdmin'&&!auth.offlineMode()){
   <div class="release-distribution"><h4>Distribuzione agli utenti</h4>
    <p>Richiedi l’ultima versione già pubblicata. Gli utenti autorizzati la applicheranno alla riapertura o al logout; un allenamento in corso rimane aperto.</p>
    <button type="button" class="primary" (click)="release.distribute()" [disabled]="release.distributing()||release.checking()||pwa.updating()">{{release.distributing()?'Distribuzione…':'Distribuisci ultima versione'}}</button>

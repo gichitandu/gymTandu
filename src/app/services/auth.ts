@@ -1,4 +1,4 @@
-import { Injectable, signal } from '@angular/core';
+import { computed, Injectable, signal } from '@angular/core';
 import { RoleName } from '../models/domain';
 import { feedbackForContext, feedbackSignal } from './feedback';
 export interface Account {id:string;name:string;email:string;username?:string|null;role:RoleName;active:boolean;owner:boolean}
@@ -14,6 +14,11 @@ export class AuthService {
   readonly platformOwner=signal(false);
   readonly archiveChoice=signal<ArchiveChoice|null>(null);
   readonly loggingOut=signal(false);
+  // Presentation only: never serialize this flag into account or archive data.
+  private clientViewRequested=signal(false);
+  readonly viewAsClient=computed(()=>this.clientViewRequested()&&this.user()?.role==='SuperAdmin'&&!this.offlineMode());
+  readonly uiRole=computed(()=>this.viewAsClient()?'User':this.user()?.role||'User');
+  setClientView(enabled:boolean){this.clientViewRequested.set(enabled&&this.user()?.role==='SuperAdmin'&&!this.offlineMode());}
   private pendingLogoutRequest?:Promise<void>;
   private lifecycle=0;
   constructor() {
@@ -39,12 +44,13 @@ export class AuthService {
   }
   async refresh() {
     const generation=this.lifecycle;
-    try {if(!navigator.onLine)throw Error('Offline');if(this.hasPendingLogout())await this.flushPendingLogout();if(generation!==this.lifecycle||this.loggingOut())return;const r=await this.request('auth/me');if(generation!==this.lifecycle||this.loggingOut()||this.archiveChoice()?.mode==='signed-out')return;this.platformOwner.set(r.platformOwner===true);if(this.offlineMode())return;const choice=this.archiveChoice();if(r.user&&choice?.accountId&&choice.accountId!==r.user.id){this.user.set(null);this.setup.set(false);this.ownerEmail.set(r.ownerEmail);this.error.set('L’ultimo archivio appartiene a un altro account. Accedi allo stesso account per ritrovare i tuoi dati.');return;}this.user.set(r.user);this.setup.set(r.setup);this.ownerEmail.set(r.ownerEmail);this.error.set('');if(r.user)this.rememberChoice({mode:'account',accountId:r.user.id});}
+    try {if(!navigator.onLine)throw Error('Offline');if(this.hasPendingLogout())await this.flushPendingLogout();if(generation!==this.lifecycle||this.loggingOut())return;const r=await this.request('auth/me');if(generation!==this.lifecycle||this.loggingOut()||this.archiveChoice()?.mode==='signed-out')return;this.platformOwner.set(r.platformOwner===true);if(this.offlineMode())return;const choice=this.archiveChoice();if(r.user&&choice?.accountId&&choice.accountId!==r.user.id){this.user.set(null);this.setup.set(false);this.ownerEmail.set(r.ownerEmail);this.error.set('L’ultimo archivio appartiene a un altro account. Accedi allo stesso account per ritrovare i tuoi dati.');return;}if(!r.user||r.user.id!==this.user()?.id||r.user.role!=='SuperAdmin')this.clientViewRequested.set(false);this.user.set(r.user);this.setup.set(r.setup);this.ownerEmail.set(r.ownerEmail);this.error.set('');if(r.user)this.rememberChoice({mode:'account',accountId:r.user.id});}
     catch(e) {if(generation!==this.lifecycle||this.loggingOut())return;if(!this.offlineMode()){const choice=this.archiveChoice(),saved=this.offlineAccount();if(choice?.mode==='account'&&saved?.id===choice.accountId)this.openLocal(true,false);else this.error.set('Accesso online non disponibile. Puoi aprire l’archivio locale.');}}
     finally {if(generation===this.lifecycle)this.loading.set(false);}
   }
   async login(email:string,password:string,setup=false,remember=false,username?:string) {
     if(this.loggingOut())throw Error('Uscita in corso. Attendi la riapertura dell’app.');
+    this.clientViewRequested.set(false);
     const generation=++this.lifecycle;
     if(this.hasPendingLogout())await this.flushPendingLogout();
     const r=await this.request(setup?'auth/setup':'auth/login',{email,password,...(setup&&username?{username}:{})});
@@ -60,6 +66,7 @@ export class AuthService {
     try {localStorage.setItem(OFFLINE_ACCOUNT_KEY,JSON.stringify({...u,role:'User'}));this.offlineAccount.set({...u,role:'User'});}catch{throw Error('Il browser non consente di ricordare questo archivio.');}
   }
   openLocal(saved=false,rememberChoice=true) {
+    this.clientViewRequested.set(false);
     if(this.loggingOut())return;
     const u=saved?this.offlineAccount():{id:'device-local',name:'Atleta',email:'Solo su questo dispositivo',role:'User' as const,active:true,owner:false};
     if(!u)return;this.lifecycle++;if(rememberChoice)this.rememberChoice(saved?{mode:'account-offline',accountId:u.id}:{mode:'device'});this.offlineMode.set(true);this.user.set({...u,role:'User'});this.loading.set(false);if(rememberChoice)void this.refresh();
@@ -73,6 +80,7 @@ export class AuthService {
   }
   async logout(options:{reload?:boolean}={}) {
     if(this.loggingOut())return;
+    this.clientViewRequested.set(false);
     this.loggingOut.set(true);this.lifecycle++;let completed=false;
     try{
       if(navigator.onLine){await this.request('auth/logout',{});try{localStorage.removeItem(PENDING_LOGOUT_KEY);}catch{}}

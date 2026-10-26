@@ -587,7 +587,7 @@ export class Store {
     }, "Allenamento eliminato.");
   }
   sharedCatalog() { return !!this.auth?.user() && !this.auth.offlineMode(); }
-  canEditCatalog() { return !this.sharedCatalog() || ["Admin","SuperAdmin"].includes(this.auth!.user()!.role); }
+  canEditCatalog() { return !this.auth?.viewAsClient?.() && (!this.sharedCatalog() || ["Admin","SuperAdmin"].includes(this.auth!.user()!.role)); }
   async refreshCatalog(accepted: AcceptedCatalogChanges = {}) {
     if (!this.auth?.user() || this.auth.offlineMode()) return;
     const request = ++this.catalogRequest;
