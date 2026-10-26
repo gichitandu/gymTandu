@@ -4,11 +4,10 @@ import { SectionHeadingComponent } from "../shared/section-heading.component";
 import { Component, computed, inject, signal } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import { DatePipe } from "@angular/common";
-import { ActivatedRoute, RouterLink } from "@angular/router";
+import { ActivatedRoute, Router, RouterLink } from "@angular/router";
 import { Store } from "../services/store";
 import { IconComponent } from "../shared/icon.component";
 import { StatusComponent } from "../shared/status.component";
-import { WorkoutEditorComponent } from "../shared/workout-editor.component";
 import { ExerciseFilterComponent } from "../shared/exercise-filter.component";
 @Component({
   standalone: true,
@@ -19,7 +18,6 @@ import { ExerciseFilterComponent } from "../shared/exercise-filter.component";
     RouterLink,
     IconComponent,
     StatusComponent,
-    WorkoutEditorComponent,
     ExerciseFilterComponent,
   ],
   template: `<gt-section-heading index="07" eyebrow="STORICO ALLENAMENTI" title="Il lavoro che resta." description="Ogni sessione costruisce la tua storia. Ritrova tutti i dettagli."><a class="button primary" routerLink="/piani"><gt-icon name="plus"/> Allenati</a></gt-section-heading>
@@ -42,27 +40,7 @@ import { ExerciseFilterComponent } from "../shared/exercise-filter.component";
           </div>
           <span class="pill green">COMPLETATO</span>
         </div>
-        <div class="form-grid">
-          <label
-            >Data<input
-              type="date"
-              [ngModel]="w.date"
-              (ngModelChange)="edit(w.id, 'date', $event)" /></label
-          ><label
-            >Durata (minuti)<input
-              type="number"
-              min="1"
-              max="1440"
-              [ngModel]="w.duration"
-              (ngModelChange)="edit(w.id, 'duration', $event)" /></label
-          ><label class="wide"
-            >Note generali<textarea
-              maxlength="2000"
-              [ngModel]="w.notes"
-              (ngModelChange)="edit(w.id, 'notes', $event)"
-            ></textarea>
-          </label>
-        </div>
+        <p class="subtle">Durata: {{w.duration}} minuti</p>@if(w.notes){<p>{{w.notes}}</p>}
         <p class="subtle" style="margin-top:14px">
           Inizio: {{ w.startedAt | date: "HH:mm" }} · Fine:
           {{ w.endedAt | date: "HH:mm" }} · Volume:
@@ -70,14 +48,13 @@ import { ExerciseFilterComponent } from "../shared/exercise-filter.component";
         </p>
         <div class="actions">
           <span class="pill">{{
-            s.busy() ? "Salvataggio…" : "Modifiche salvate automaticamente"
+            s.busy() ? "Salvataggio…" : "Allenamento terminato · sola lettura"
           }}</span
-          ><button class="danger ghost" (click)="remove(w.id)">
-            Elimina allenamento
-          </button>
+          ><button class="primary" (click)="reopen(w.id)" [disabled]="s.busy()||reopening()">{{reopening()?'Riapertura…':'Riapri allenamento'}}</button>
         </div>
       </div>
-      <gt-workout-editor [workoutId]="w.id" />
+      <p class="subtle">Per modificare o eliminare questa sessione, riaprila prima.</p>
+      @for(exercise of s.workoutExercises(w.id);track exercise.id){<section class="card" style="margin-top:12px"><h3>{{exercise.name}}</h3>@for(set of s.sets(exercise.id);track set.id){<p>Serie {{set.number}} · {{s.formatWeight(set.weight)}} {{s.settings().unit}} × {{set.reps}} · {{set.completed?'Confermata':'Non eseguita'}}</p>}</section>}
     } @else {
       <div class="filters history-filters">
         <label
@@ -160,6 +137,7 @@ export class WorkoutsComponent {
  private confirmation=confirmationForContext();
   constructor(){const query=inject(ActivatedRoute).snapshot.queryParamMap;const workout=query.get("workout");if(workout)this.selectedId.set(workout);const date=query.get("date");if(date){this.from.set(date);this.to.set(date);}}
   s = inject(Store);
+  router=inject(Router);reopening=signal(false);
   plan = signal("");
   day = signal("");
   exercise = signal("");
@@ -219,6 +197,11 @@ export class WorkoutsComponent {
       if (key === "duration") w.duration = +value;
       else w[key] = String(value);
     });
+  }
+  async reopen(id:string){
+    if(this.reopening())return;
+    this.reopening.set(true);
+    try{if(await this.s.reopenWorkout(id)){this.selectedId.set('');await this.router.navigateByUrl('/sessione');}}finally{this.reopening.set(false);}
   }
   async remove(id: string) {
     if (

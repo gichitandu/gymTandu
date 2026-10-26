@@ -1,3 +1,4 @@
+import { WorkoutClockComponent } from '../shared/workout-clock.component';
 import {WorkoutResumeService} from "../services/workout-resume";
 import { AvatarComponent } from "../shared/avatar.component";
 import { AuthService } from "../services/auth";
@@ -12,10 +13,10 @@ import { canResumeAtHome, MobileNavigationService } from "../services/mobile-nav
 @Component({
   selector: "gt-shell",
   standalone: true,
-  imports: [RouterLink, RouterLinkActive, RouterOutlet, IconComponent, AvatarComponent, ArchiveRecoveryComponent],
+  imports: [WorkoutClockComponent,RouterLink, RouterLinkActive, RouterOutlet, IconComponent, AvatarComponent, ArchiveRecoveryComponent],
   styleUrls: ['./experience.css'],
   encapsulation: ViewEncapsulation.None,
-  template: ` <aside class="sidebar">
+  template: ` <gt-workout-clock/><aside class="sidebar">
       <a class="brand" routerLink="/"
         ><img class="app-brand-mark" src="/brand/gt-mark.png" alt=""/>Gym<span>Track</span></a
       ><div class="sidebar-signature" aria-hidden="true"><i></i><i></i><i></i><span>OGNI RIPETIZIONE.<br/>UNA NUOVA VERSIONE DI TE.</span></div><span class="nav-caption">IL TUO SPAZIO</span>

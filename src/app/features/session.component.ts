@@ -26,7 +26,7 @@ import { parseLocalDate } from '../services/calendar';
             <p class="eyebrow">{{ w.date < today ? 'REGISTRAZIONE DI UN ALLENAMENTO PASSATO':'ALLENAMENTO IN CORSO'}}</p>
             <h1>{{ w.dayName }}</h1>
             <p class="subtle">
-              {{ w.planName }} · {{ elapsed(w.startedAt) }} ·
+              {{ w.planName }} · {{ w.duration>0 ? w.duration+" min registrati" : elapsed(w.startedAt) }} ·
               {{ s.busy() ? "Salvataggio…" : "Salvato sul dispositivo" }}
             </p>
           </div>

@@ -1788,3 +1788,10 @@ body.keyboard-open .modal-backdrop {align-items:flex-start;}
   .form-grid {grid-template-columns:minmax(0,1fr);}
   .set-table {min-width:440px;}
 }
+
+/* Keep native date controls inside their grid cells on iPhone. */
+.form-grid>label,.filters>label{min-width:0;align-self:start}
+input[type=date],input[type=time],input[type=datetime-local]{display:block;box-sizing:border-box;width:100%;min-width:0;max-width:100%;min-height:48px;text-align:left;line-height:1.4;padding:12px;font-size:16px}
+input[type=date]::-webkit-date-and-time-value,input[type=time]::-webkit-date-and-time-value{text-align:left;min-height:1.4em}
+.nutrition-date-heading input[type=date]{position:absolute;height:100%;padding:0}
+@media(max-width:480px){.form-grid{grid-template-columns:minmax(0,1fr)}.session-header .form-grid{gap:10px}.history-filters{grid-template-columns:minmax(0,1fr)}}

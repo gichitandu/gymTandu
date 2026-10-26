@@ -124,6 +124,8 @@ it("elimina allenamento e serie, ricalcola statistiche e impedisce valori invali
   await s.updateSet(set.id, { completed: true });
   await s.finish();
   expect(s.recordCount()).toBe(1);
+  expect(await s.deleteWorkout(w.id)).toBe(false);
+  await s.reopenWorkout(w.id);
   await s.deleteWorkout(w.id);
   expect(s.data().workoutExercises).toHaveLength(0);
   expect(s.data().sets).toHaveLength(0);

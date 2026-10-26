@@ -169,8 +169,30 @@ it('adds seven distinct workouts to one plan through the editor without replacin
   expect(s.days('tandu-plan').map(day=>day.order)).toEqual([0,1,2,3,4,5,6]);
   const after=await db.snapshot();for(const table of ['workouts','workoutExercises','sets','planExercises'] as const)expect(after[table]).toEqual(before[table]);
   expect(after.days.find(day=>day.id==='day-a')).toEqual(before.days[0]);
-  expect(await s.saveDay('eighth','tandu-plan','Ottavo')).toBe(false);expect(s.days('tandu-plan')).toHaveLength(7);
-  await s.duplicateDay('day-a');expect(s.days('tandu-plan')).toHaveLength(7);
-  expect(await s.saveDay('day-a','tandu-plan','Primo aggiornato',0)).toBe(true);expect(s.days('tandu-plan')).toHaveLength(7);
-  const restored=await importBackup(await exportBackup(s.data()));expect(restored.days).toHaveLength(7);expect(restored.workouts).toEqual(before.workouts);
+  expect(await s.saveDay('eighth','tandu-plan','Ottavo')).toBe(true);expect(s.days('tandu-plan')).toHaveLength(8);
+  await s.duplicateDay('day-a');expect(s.days('tandu-plan')).toHaveLength(9);
+  expect(await s.saveDay('day-a','tandu-plan','Primo aggiornato',0)).toBe(true);expect(s.days('tandu-plan')).toHaveLength(9);
+  const restored=await importBackup(await exportBackup(s.data()));expect(restored.days).toHaveLength(9);expect(restored.workouts).toEqual(before.workouts);
+});
+
+it('protects finished workouts from deletion and reopens them without losing any recorded data',async()=>{
+  const id=await complete(moveDate(localDate(),-3));const before=await db.snapshot();
+  expect(await s.deleteWorkout(id)).toBe(false);expect(await db.snapshot()).toEqual(before);
+  expect(await s.reopenWorkout(id)).toBe(true);expect(s.draft()!.id).toBe(id);expect(s.draft()!.date).toBe(before.workouts[0].date);expect(s.draft()!.endedAt).toBeUndefined();
+  const after=await db.snapshot();expect(after.sets).toEqual(before.sets);expect(after.workoutExercises).toEqual(before.workoutExercises);expect(after.plans).toEqual(before.plans);
+  expect(await s.finish()).toBe(true);expect(s.completed()[0].id).toBe(id);
+});
+it('does not replace a session already open when reopening a completed workout',async()=>{
+  const id=await complete();await s.start('day-a');const before=await db.snapshot();expect(await s.reopenWorkout(id)).toBe(false);expect(await db.snapshot()).toEqual(before);
+});
+
+it('shows a live recovery clock after navigation and freezes elapsed time when paused',async()=>{
+  const {WorkoutClockComponent}=await import('../src/app/shared/workout-clock.component');await s.start('day-a');const id=s.draft()!.id;
+  const end=Date.now()+90000;
+  const state={id,step:'rest' as const,tab:'sets' as const,exerciseId:'',setId:'',restEnd:end,restTotal:90,paused:false,pausedSeconds:0,weight:0,reps:8,setNotes:'',kind:'work' as const,updatedAt:new Date().toISOString()};
+  await s.rememberWorkout(state);const widget=runInInjectionContext(injector,()=>new WorkoutClockComponent());
+  try{widget.clock.set(end-45000);expect(widget.elapsed()).toBe(45);expect(widget.remaining()).toBe(45);
+  widget.clock.set(end+15000);expect(widget.elapsed()).toBe(105);expect(widget.remaining()).toBe(0);
+  await s.rememberWorkout({...state,paused:true,pausedSeconds:30});widget.clock.set(end+30000);expect(widget.elapsed()).toBe(60);expect(widget.remaining()).toBe(30);
+  }finally{widget.ngOnDestroy();}
 });

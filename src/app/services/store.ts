@@ -342,7 +342,6 @@ export class Store {
         day.name = name.trim();
         day.weekday = weekday;
       } else {
-        if(d.days.filter(day=>day.planId===planId).length>=7)throw Error('Questo piano contiene già 7 allenamenti. Puoi modificare quelli esistenti.');
         d.days.push({
           id,
           planId,
@@ -395,7 +394,6 @@ export class Store {
     await this.change((d) => {
       const source = d.days.find((x) => x.id === id);
       if (!source) return;
-      if(d.days.filter(day=>day.planId===source.planId).length>=7)throw Error('Questo piano contiene già 7 allenamenti. Puoi modificare quelli esistenti.');
       const did = uid();
       d.days.push({
         ...source,
@@ -565,8 +563,18 @@ export class Store {
       );
     }, "Allenamento salvato. Ottimo lavoro!");
   }
+  async reopenWorkout(id:string){
+    return this.change(d=>{
+      const workout=d.workouts.find(w=>w.id===id);
+      if(!workout)throw Error('Allenamento non trovato.');
+      if(workout.status==='draft')return;
+      if(d.workouts.some(w=>w.status==='draft'))throw Error('Termina la sessione già aperta prima di riaprire questo allenamento.');
+      workout.status='draft';delete workout.endedAt;
+    },'Allenamento riaperto. Serie e data sono conservate.',false);
+  }
   async deleteWorkout(id: string) {
     return this.change((d) => {
+      if(d.workouts.find(w=>w.id===id)?.status==='completed')throw Error('Un allenamento terminato può essere solo riaperto. Riaprilo prima di eliminarlo.');
       const ids = new Set(
         d.workoutExercises.filter((e) => e.workoutId === id).map((e) => e.id),
       );
