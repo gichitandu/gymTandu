@@ -1,7 +1,6 @@
 import { DateFieldComponent } from '../shared/date-field.component';
 import { confirmationForContext } from '../services/confirmation';
 import { OpenWorkoutsComponent } from '../shared/open-workouts.component';
-import { SectionHeadingComponent } from "../shared/section-heading.component";
 import {ExerciseScope,ExerciseScopeComponent} from "../shared/exercise-scope.component";
 import { ExerciseFamiliesComponent } from "../shared/exercise-families.component";
 import { ExerciseThumbComponent } from "../shared/exercise-thumb.component";
@@ -38,8 +37,8 @@ type PlanEditorDraft = {
 };
 @Component({
   standalone: true,
-  styleUrl: "./feature-polish.css",
-  imports: [DateFieldComponent,OpenWorkoutsComponent,SectionHeadingComponent,
+  styleUrls: ["./feature-polish.css", "./plans-simple.css"],
+  imports: [DateFieldComponent,OpenWorkoutsComponent,
     A11yModule,ExerciseScopeComponent,
     ExerciseFamiliesComponent,
     ExerciseThumbComponent,
@@ -49,209 +48,51 @@ type PlanEditorDraft = {
     IconComponent,
     StatusComponent,
   ],
-  template: `<gt-section-heading index="02" eyebrow="Disegna la tua evoluzione" title="Piani di allenamento" description="La struttura del tuo percorso. Il prossimo livello si costruisce qui.">
-      <button class="primary create-plan" (click)="openPlan()" [disabled]="!s.ready()">
-        <gt-icon name="plus" /> <span class="desktop-button-label">Nuovo piano</span>
-      </button>
-    </gt-section-heading>
+  template: `<div class="compact-plans">
+    <header class="plans-heading"><h1>Allenati</h1><button type="button" class="primary new-plan" (click)="openPlan()" [disabled]="!s.ready()" aria-label="Nuovo piano"><gt-icon name="plus"/></button></header>
     <gt-status />
     <gt-open-workouts />
     @if(draftNotice()){<p class="notice" role="status">{{draftNotice()}}</p>}
-    <div class="segmented plan-tabs">
-      <button [class.active]="!archived()" (click)="archived.set(false)">
-        Attivi</button
-      ><button [class.active]="archived()" (click)="archived.set(true)">
-        Archivio</button
-      ><a class="button ghost" routerLink="/catalogo"
-        >Catalogo esercizi <gt-icon name="arrow"
-      /></a>
-    </div>
-    <div class="plan-collection-label"><span>{{archived()?'La tua memoria di allenamento':'La tua collezione personale'}}</span><b>{{plans().length.toString().padStart(2,'0')}} <small>piani</small></b></div>
-    <div class="list plan-collection">
-      @for (p of plans(); track p.id; let planIndex=$index) {
-        <section class="card plan-card" [class.plan-active]="p.active" [class.is-open]="expanded()===p.id">
-          <div class="plan-topline"><span class="plan-edition">PERCORSO <b>{{(planIndex+1).toString().padStart(2,'0')}}</b></span><div class="plan-day-markers" aria-hidden="true">@for(day of s.days(p.id);track day.id){<i></i>}</div><small>{{s.days(p.id).length}} allenamenti</small></div>
-          <div class="card-head"><gt-exercise-thumb [exercise]="thumbnailExercise(p.id)"/>
-            <div>
-              <span class="pill" [class.green]="p.active">{{
-                p.active
-                  ? "PIANO ATTIVO"
-                  : p.archived
-                    ? "ARCHIVIATO"
-                    : "PIANO PERSONALE"
-              }}</span>
-              <h2>{{ p.name }}</h2><p class="plan-subtitle">{{p.description || "Programma personalizzato"}}</p><small class="plan-count">{{s.days(p.id).length}} giorni · {{exerciseCount(p.id)}} esercizi</small>
-            </div>
-            <button [attr.aria-label]="(expanded()===p.id?'Chiudi ':'Apri ')+p.name" [attr.aria-expanded]="expanded()===p.id" (click)="expanded.set(expanded() === p.id ? '' : p.id)">
-              <span aria-hidden="true">{{ expanded() === p.id ? "⌃" : "›" }}</span>
-            </button>
+    <nav class="plans-navigation" aria-label="Allenamenti"><div class="segmented"><button type="button" [class.active]="!archived()" (click)="archived.set(false)">Piani</button><a class="button ghost" routerLink="/allenamenti">Storico</a></div><button type="button" class="ghost archive-toggle" [class.selected]="archived()" (click)="archived.set(!archived())">{{archived()?'Torna ai piani':'Archivio'}}</button></nav>
+    <div class="list simple-plan-list">
+      @for(p of plans();track p.id){
+        <section class="card simple-plan">
+          <div class="simple-plan-top">
+            <button type="button" class="simple-plan-title" [attr.aria-expanded]="expanded()===p.id" (click)="expanded.set(expanded()===p.id?'':p.id)"><span><strong>{{p.name}}</strong><small>{{s.days(p.id).length}} allenamenti</small></span><span class="plan-chevron" aria-hidden="true">{{expanded()===p.id?'⌃':'›'}}</span></button>
+            @if(p.active){<span class="pill green">Attivo</span>}
+            <details class="simple-menu" #planMenu><summary [attr.aria-label]="'Gestisci '+p.name">⋯</summary><div class="simple-menu-panel">
+              @if(!p.archived){@if(!p.active){<button type="button" (click)="planMenu.open=false;activate(p.id)">Attiva piano</button>}<button type="button" (click)="planMenu.open=false;openPlan(p)">Modifica piano</button>}
+              <button type="button" (click)="planMenu.open=false;s.duplicatePlan(p.id)">Duplica piano</button><button type="button" (click)="planMenu.open=false;archive(p)">{{p.archived?'Ripristina':'Archivia'}}</button>
+              <button type="button" class="danger" (click)="planMenu.open=false;removePlan(p)" [disabled]="s.busy()||!!deletingPlan()">Elimina piano</button>
+            </div></details>
           </div>
-          <div class="plan-day-preview" aria-label="Giorni del piano">@for(day of s.days(p.id);track day.id){<span><b>{{(day.order+1).toString().padStart(2,'0')}}</b>{{day.name}}</span>}@empty{<span>Il primo giorno ti aspetta</span>}</div>
-          <div class="actions plan-management-actions">
-            @if (!p.archived) {
-              @if (!p.active) {
-                <button (click)="activate(p.id)">Attiva piano</button>
-              }
-              <button (click)="openPlan(p)">Modifica</button
-              ><button type="button" class="primary" (click)="openDay(p.id)" [disabled]="s.busy()">+ Aggiungi allenamento</button>
-            }
-            <button class="ghost" (click)="s.duplicatePlan(p.id)">
-              Duplica</button
-            ><button class="ghost" (click)="archive(p)">
-              {{ p.archived ? "Ripristina" : "Archivia" }}
-            </button>
-            <button type="button" class="ghost danger" (click)="removePlan(p)" [disabled]="s.busy()||!!deletingPlan()">{{deletingPlan()===p.id?'Eliminazione…':'Elimina piano'}}</button>
-          </div>
-          @if (expanded() === p.id) {
-            @for (day of s.days(p.id); track day.id) {
-              <div class="day plan-training-day">
-                <div class="day-head">
-                  <div>
-                    <h3>{{ day.order + 1 }}. {{ day.name }}</h3>
-                    <small class="muted">{{
-                      day.weekday === undefined
-                        ? "Rotazione libera"
-                        : weekdays[day.weekday]
-                    }}</small>
+          @if(expanded()===p.id){
+            @if(p.description){<p class="simple-plan-description">{{p.description}}</p>}
+            <div class="simple-days">
+              @for(day of s.days(p.id);track day.id){
+                <details class="simple-day">
+                  <summary class="simple-day-summary"><span><strong>{{day.name}}</strong><small>{{day.weekday===undefined?s.planExercises(day.id).length+' esercizi':weekdays[day.weekday]+' · '+s.planExercises(day.id).length+' esercizi'}}</small></span><span class="day-chevron" aria-hidden="true">›</span></summary>
+                  <div class="simple-day-body"><div class="simple-day-tools">
+                    @if(!p.archived){<details class="simple-menu" #dayMenu><summary [attr.aria-label]="'Gestisci '+day.name">⋯</summary><div class="simple-menu-panel"><button type="button" (click)="dayMenu.open=false;openDay(p.id,day)">Modifica allenamento</button><button type="button" (click)="dayMenu.open=false;s.duplicateDay(day.id)">Duplica</button><button type="button" (click)="dayMenu.open=false;moveDay(day,-1)" [disabled]="day.order===0">Sposta prima</button><button type="button" (click)="dayMenu.open=false;moveDay(day,1)" [disabled]="day.order===s.days(p.id).length-1">Sposta dopo</button><button type="button" class="danger" (click)="dayMenu.open=false;removeDay(day)">Elimina allenamento</button></div></details>}
                   </div>
-                  <div class="inline-actions">
-                    @if (!p.archived) {
-                      <button
-                        (click)="moveDay(day, -1)"
-                        aria-label="Sposta giorno prima"
-                        [disabled]="day.order === 0"
-                      >
-                        ↑</button
-                      ><button
-                        (click)="moveDay(day, 1)"
-                        aria-label="Sposta giorno dopo"
-                        [disabled]="day.order === s.days(p.id).length - 1"
-                      >
-                        ↓</button
-                      ><button (click)="openDay(p.id, day)">Modifica</button
-                      ><button (click)="s.duplicateDay(day.id)">Duplica</button
-                      ><button class="danger" (click)="removeDay(day)">
-                        Elimina
-                      </button>
-                    }
+                  <div class="simple-exercises"><div>
+                    @for(pe of s.planExercises(day.id);track pe.id){<div class="simple-exercise-row"><gt-exercise-thumb [exercise]="s.exercise(pe.exerciseId)"/><div><strong>{{s.exercise(pe.exerciseId)?.name}}</strong><small>{{pe.sets}} × {{pe.repsMin}}–{{pe.repsMax}} rip · {{pe.rest}} s</small>@if(pe.targetWeight!==undefined){<small>{{s.formatWeight(pe.targetWeight)}} {{s.settings().unit}}</small>}@if(pe.superset){<small>Superset {{pe.superset}}</small>}@if(pe.warmupSets){<small>{{pe.warmupSets}} serie di riscaldamento</small>}@if(pe.rpe){<small>RPE {{pe.rpe}}</small>}@if(pe.notes){<small>{{pe.notes}}</small>}</div>
+                      @if(!p.archived){<details class="simple-menu" #exerciseMenu><summary [attr.aria-label]="'Gestisci '+s.exercise(pe.exerciseId)?.name">⋯</summary><div class="simple-menu-panel"><button type="button" (click)="exerciseMenu.open=false;openExercise(day.id,pe)">Modifica esercizio</button><button type="button" (click)="exerciseMenu.open=false;moveExercise(pe,-1)" [disabled]="pe.order===0">Sposta prima</button><button type="button" (click)="exerciseMenu.open=false;moveExercise(pe,1)" [disabled]="pe.order===s.planExercises(day.id).length-1">Sposta dopo</button><button type="button" class="danger" (click)="exerciseMenu.open=false;removeExercise(pe)">Rimuovi esercizio</button></div></details>}
+                    </div>}@empty{<p class="subtle">Nessun esercizio.</p>}
+                    @if(!p.archived){<button type="button" class="ghost full-width" (click)="openExercise(day.id)">+ Esercizio</button>}
+                  </div></div>
+                  @if(!p.archived){<div class="simple-day-start">@if(s.planExercises(day.id).length){<button type="button" class="primary full-width" (click)="start(day.id)" [disabled]="s.busy()">{{s.draft()?'Riprendi sessione':'Inizia'}}</button>}</div>}
+                  <details class="past-workout-entry"><summary>Registra per un’altra data</summary><div class="form-grid"><label>Data<gt-date-field [max]="today" [ngModel]="pastDates[day.id]||''" (ngModelChange)="pastDates[day.id]=$event" [aria-label]="'Data allenamento passato · '+day.name"></gt-date-field></label><button type="button" class="primary" (click)="startPast(day.id)" [disabled]="!pastDates[day.id]||!s.planExercises(day.id).length||s.busy()||startingPast()">{{startingPast()?'Apertura…':'Registra'}}</button></div>@if(s.draft()){<p class="subtle"><a routerLink="/sessione">Riprendi la sessione aperta</a> prima di registrarne un’altra.</p>}</details>
                   </div>
-                </div>
-                @for (pe of s.planExercises(day.id); track pe.id) {
-                  <div class="exercise-row plan-exercise-row">
-                    <div class="exercise-info">
-                      <gt-exercise-thumb [exercise]="s.exercise(pe.exerciseId)"/>
-                      <div>
-                        <strong>{{ s.exercise(pe.exerciseId)?.name }}</strong
-                        ><small
-                          >{{ pe.sets }} serie allenanti × {{ pe.repsMin }}–{{
-                            pe.repsMax
-                          }}
-                          rip · {{ pe.rest }} s recupero
-                          @if (pe.targetWeight !== undefined) {
-                            · {{ s.formatWeight(pe.targetWeight) }}
-                            {{ s.settings().unit }}
-                          }
-                          @if (pe.rpe) {
-                            · RPE {{ pe.rpe }}
-                          }
-                        </small>
-                        @if(pe.superset){<span class="superset-tag">Superset {{pe.superset}}</span>}@if(pe.warmupSets){<small>+ {{pe.warmupSets}} serie di riscaldamento</small>}
-                        @if (pe.notes) {
-                          <small>{{ pe.notes }}</small>
-                        }
-                      </div>
-                    </div>
-                    @if (!p.archived) {
-                      <div class="inline-actions">
-                        <button
-                          (click)="moveExercise(pe, -1)"
-                          [disabled]="pe.order === 0"
-                          aria-label="Sposta esercizio prima"
-                        >
-                          ↑</button
-                        ><button
-                          (click)="moveExercise(pe, 1)"
-                          [disabled]="
-                            pe.order === s.planExercises(day.id).length - 1
-                          "
-                          aria-label="Sposta esercizio dopo"
-                        >
-                          ↓</button
-                        ><button (click)="openExercise(day.id, pe)">
-                          Modifica</button
-                        ><button
-                          (click)="removeExercise(pe)"
-                          class="danger"
-                          aria-label="Rimuovi esercizio"
-                        >
-                          ×
-                        </button>
-                      </div>
-                    }
-                  </div>
-                } @empty {
-                  <p class="subtle">
-                    Aggiungi il primo esercizio a questo giorno.
-                  </p>
-                }
-                @if (!p.archived) {
-                  <div class="actions">
-                    <button (click)="openExercise(day.id)">
-                      <gt-icon name="plus" /> Aggiungi esercizio</button
-                    ><button
-                      class="primary"
-                      [disabled]="!s.planExercises(day.id).length || s.busy()"
-                      (click)="start(day.id)"
-                    >
-                      {{
-                        s.draft() ? "Riprendi sessione" : "Inizia allenamento"
-                      }}
-                      <gt-icon name="arrow" />
-                    </button>
-                  </div>
-                }
-                <details class="past-workout-entry" style="margin-top:14px">
-                  <summary style="min-height:44px;align-content:center;cursor:pointer">Registra un allenamento passato</summary>
-                  <p class="subtle" style="margin:10px 0">Scegli la data in cui ti sei allenato, poi inserisci e conferma le serie effettuate.</p>
-                  <div class="form-grid"><label>Data dell’allenamento<gt-date-field [max]="today" [ngModel]="pastDates[day.id]||''" (ngModelChange)="pastDates[day.id]=$event" [aria-label]="'Data allenamento passato · '+day.name"></gt-date-field></label><button type="button" class="primary" (click)="startPast(day.id)" [disabled]="!pastDates[day.id]||!s.planExercises(day.id).length||s.busy()||startingPast()">{{startingPast()?'Apertura…':'Registra per questa data'}}</button></div>
-                  @if(s.draft()){<p class="subtle" style="margin-top:10px">La sessione aperta è conservata. <a routerLink="/sessione">Riprendila</a> prima di iniziarne un’altra.</p>}
                 </details>
-              </div>
-            } @empty {
-              <div class="empty">
-                <h3>Da dove vuoi iniziare?</h3>
-                <p>
-                  Crea un giorno, ad esempio Push, Pull, Legs oppure Giorno A.
-                </p>
-                <button (click)="openDay(p.id)">
-                  Aggiungi il primo giorno
-                </button>
-              </div>
-            }
-            @if(!p.archived){<div class="card" style="margin-top:16px"><strong>{{s.days(p.id).length}} allenamenti nel piano</strong><p class="subtle">Aggiungi tutti gli allenamenti che vuoi, con esercizi diversi per ciascuno.</p><button type="button" class="primary full-width" (click)="openDay(p.id)" [disabled]="s.busy()">+ Aggiungi allenamento</button></div>}
+              }@empty{<p class="subtle plan-empty">Nessun allenamento nel piano.</p>}
+            </div>
           }
+          @if(!p.archived){<button type="button" class="ghost add-plan-workout" (click)="openDay(p.id)" [disabled]="s.busy()">+ Allenamento</button>}
         </section>
-      } @empty {
-        <div class="card empty">
-          <gt-icon name="plans" />
-          <h3>
-            {{
-              archived()
-                ? "Nessun piano archiviato"
-                : "Il tuo prossimo livello parte da qui"
-            }}
-          </h3>
-          <p>
-            Crea una scheda su misura, scegli gli esercizi e imposta la tua
-            rotazione.
-          </p>
-          @if (!archived()) {
-            <button class="primary" (click)="openPlan()">
-              Crea il primo piano
-            </button>
-          }
-        </div>
-      }
+      }@empty{<div class="card empty"><h2>{{archived()?'Nessun piano archiviato':'Nessun piano'}}</h2>@if(!archived()){<button type="button" class="primary" (click)="openPlan()">Crea piano</button>}</div>}
+    </div>
+    <a class="button ghost catalog-entry" routerLink="/catalogo"><gt-icon name="weight"/>Catalogo esercizi<gt-icon name="arrow"/></a>
     </div>
     @if (modal()) {
       <div class="modal-backdrop">
@@ -424,7 +265,7 @@ export class PlansComponent {
   router = inject(Router);
   fb = inject(FormBuilder);
   archived = signal(false);
-  expanded = signal("");
+  expanded = signal(this.s.activePlan?.()?.id||"");
   modal = signal("");
   saving = signal(false);
   deletingPlan=signal('');startingPast=signal(false);pastDates:Record<string,string>={};

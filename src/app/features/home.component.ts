@@ -5,7 +5,6 @@ import { Store } from "../services/store";
 import { localDate } from "../models/domain";
 import { IconComponent } from "../shared/icon.component";
 import { StatusComponent } from "../shared/status.component";
-import { RingComponent } from "../shared/ring.component";
 import { TodayService } from '../services/today';
 @Component({
   standalone: true,
@@ -14,9 +13,9 @@ import { TodayService } from '../services/today';
     RouterLink,
     IconComponent,
     StatusComponent,
-    RingComponent,
   ],
   templateUrl: "./home.component.html",
+  styleUrl: "./home-simple.css",
 })
 export class HomeComponent {
   s = inject(Store);

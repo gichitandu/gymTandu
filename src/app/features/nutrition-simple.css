@@ -1,0 +1,46 @@
+:host{display:block;min-width:0}
+:host .meals-heading{margin:0 0 20px}
+:host .meals-heading h1{margin:0;font-size:30px;line-height:1.2;letter-spacing:-.9px}
+:host .nutrition-day-selector{margin-bottom:24px;gap:10px}
+:host .nutrition-date-heading{min-height:48px;background:var(--card);border:1px solid var(--line);padding:10px 6px}
+:host .nutrition-date-heading strong{font-size:14px;font-weight:600;line-height:1.4}
+:host .meal-summary{padding:0 0 24px;min-width:0}
+:host .meal-calories{line-height:1.3;margin-bottom:12px;letter-spacing:-.5px}
+:host .meal-calories strong{font-size:32px;font-weight:700;color:var(--text)}
+:host .meal-calories>span{font-size:17px;color:var(--muted)}
+:host .meal-progress{height:10px;overflow:hidden;border-radius:20px;background:var(--line)}
+:host .meal-progress>span{display:block;height:100%;background:var(--blue);border-radius:inherit}
+:host .meal-macros{font-size:13px;line-height:1.6;margin:12px 0 8px;color:var(--muted)}
+:host .meal-goal-link{display:inline-flex;align-items:center;min-height:36px;font-size:12px;color:#70b1ff}
+:host .meal-list-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
+:host .meal-list-heading h2{margin:0;font-size:22px;letter-spacing:-.5px}
+:host .meal-list-heading>span{font-size:12px;color:var(--muted)}
+:host .meal-diary-list{display:grid;gap:10px}
+:host .meal-diary-list .meal-diary-row{display:flex;align-items:center;gap:12px;padding:12px;border-radius:16px;min-width:0;margin:0;background:var(--card)}
+:host .meal-diary-list .meal-diary-row>img,:host .meal-diary-list .meal-fallback{width:52px;height:52px;flex-shrink:0;border-radius:12px;object-fit:cover;background:var(--raised)}
+:host .meal-diary-main{flex:1;min-width:0;min-height:48px;background:none;border:0;box-shadow:none;padding:2px 0;text-align:left}
+:host .meal-diary-main strong{display:block;font-size:15px;line-height:1.4}
+:host .meal-diary-main>span{display:block;font-size:12px;line-height:1.5;margin-top:4px;color:var(--muted);overflow-wrap:anywhere}
+:host .meal-chevron{font-size:24px;color:var(--muted);flex-shrink:0}
+:host .meal-empty{padding:24px 16px}
+:host .meal-empty h3{font-size:16px}
+:host .meal-empty p{font-size:13px;color:var(--muted);margin:8px 0 0}
+:host .meal-add{margin:22px 0}
+:host .meal-add>.primary{min-height:52px;border-radius:14px;font-size:16px}
+:host .meal-capture-choices{display:grid;gap:8px;margin-top:10px;padding:12px;border:1px solid var(--line);border-radius:16px;background:var(--card)}
+:host .meal-capture-choices>button{min-height:48px;justify-content:flex-start;gap:10px;border-radius:11px}
+:host .meal-editor{padding:20px 16px}
+:host .meal-editor>.card-head h2{font-size:22px;line-height:1.25;margin:0}
+:host .meal-photo-options,:host .meal-form-details{border:1px solid var(--line);border-radius:12px;padding:0 12px;margin:12px 0}
+:host .meal-photo-options>summary,:host .meal-form-details>summary{display:list-item;align-content:center;min-height:44px;cursor:pointer;font-size:13px;color:var(--muted);line-height:1.5;padding:10px 0}
+:host .meal-photo-options .actions,:host .meal-form-details>label{margin:0 0 12px}
+:host .meal-form-details>label{display:block}
+:host .meal-estimate-note{font-size:12px;line-height:1.5;color:#eacb72;border-left:2px solid #eacb72;padding:8px 10px;margin:14px 0}
+:host .meal-error{color:#ff9aa5;border-color:#ff6976}
+:host .meal-editor .form-grid{gap:14px;margin-top:18px}
+:host .meal-editor form>.actions{margin-top:18px}
+:host .meal-editor form>.actions>.primary{flex:1;min-height:50px}
+:host .meal-editor .form-grid>.meal-form-details{margin:0}
+:host .ai-details{margin-top:24px}
+:host .ai-details>summary{font-size:12px;min-height:44px;align-content:center;cursor:pointer;color:var(--muted)}
+@media(min-width:801px){:host .meal-summary,:host .meal-list-heading,:host .meal-diary-list,:host .meal-add,:host .meal-editor,:host .ai-details{max-width:760px}}

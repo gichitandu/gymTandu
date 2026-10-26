@@ -18,63 +18,24 @@ import { parseLocalDate } from '../services/calendar';
     IconComponent,
     ActiveWorkoutComponent,
   ],
+  styleUrl:'./session-simple.css',
   template: `<gt-status />
-    @if (s.draft(); as w) {
-      @if(requestedDate){<div class="card" role="status" style="margin-bottom:16px"><strong>Non è stato aperto un nuovo allenamento per il {{formatDate(requestedDate)}}.</strong><p>Questa è la sessione che blocca la registrazione: <strong>{{w.planName}} · {{w.dayName}} · {{formatDate(w.date)}}</strong>.</p><p class="subtle">Controlla i dati e premi “Termina allenamento”. Le serie inserite resteranno conservate; poi potrai registrare l’altra data dai Piani.</p></div>}
-      <div class="session-header">
-        <div class="page-heading">
-          <div>
-            <p class="eyebrow">{{ w.date < today ? 'REGISTRAZIONE DI UN ALLENAMENTO PASSATO':'ALLENAMENTO IN CORSO'}}</p>
-            <h1>{{ w.dayName }}</h1>
-            <p class="subtle">
-              {{ w.planName }} · <span class="session-clock">{{ w.duration>0 ? w.duration+" min registrati" : elapsed(w.startedAt) }}</span> ·
-              {{ s.busy() ? "Salvataggio…" : "Salvato sul dispositivo" }}
-            </p>
-          </div>
-          <button class="primary" (click)="finish()" [disabled]="s.busy() || finishing()">
-            Termina allenamento <gt-icon name="check" />
-          </button>
-        </div>
-        <div class="progress-bars">
-          @for (set of allSets(w.id); track set.id) {
-            <i [class.done]="set.completed"></i>
-          }
-        </div>
-        <div class="form-grid session-date-fields" style="margin-top:14px"><label class="session-date-label">Data effettiva dell’allenamento<gt-date-field aria-label="Data effettiva dell’allenamento" [max]="today" [ngModel]="w.date" (ngModelChange)="update(w.id,'date',$event)"></gt-date-field></label>
-        @if(w.date < today){<label>Durata effettiva (minuti, facoltativa)<input type="number" inputmode="numeric" min="1" max="1440" [ngModel]="w.duration||null" (ngModelChange)="update(w.id,'duration',$event)" placeholder="Es. 60"/></label>}</div>
-      </div>
+    @if(s.draft();as w){
+      @if(s.conflicted()){<p class="notice" role="alert">Archivio da verificare. <a routerLink="/profilo" [queryParams]="{section:'backup'}">Apri backup e ripristino</a></p>}
+      @if(requestedDate){<p class="notice" role="status">Sessione aperta: <strong>{{w.dayName}} · {{formatDate(w.date)}}</strong>. Terminala prima di registrare il {{formatDate(requestedDate)}}.</p>}
+      <header class="session-header session-compact">
+        <div class="simple-session-heading"><a class="button ghost" routerLink="/piani" aria-label="Torna ai piani"><gt-icon name="back"/></a><div><h1>{{w.dayName}}</h1><p>{{w.planName}}</p></div><button class="ghost session-finish" aria-label="Termina allenamento" (click)="finish()" [disabled]="s.busy()||finishing()">{{finishing()?'Salvataggio…':'Termina'}}</button></div>
+        <div class="simple-session-meta"><gt-date-field class="compact" aria-label="Data allenamento" [max]="today" [ngModel]="w.date" (ngModelChange)="update(w.id,'date',$event)"/><span>{{completedSets(w.id)}} / {{allSets(w.id).length}} serie</span></div>
+      </header>
       <gt-active-workout [workoutId]="w.id" (finish)="finish()" />
-      <div class="card session-completion" style="margin-top:16px">
-        <p class="subtle">{{ completedSets(w.id) }} / {{ allSets(w.id).length }} serie confermate. Per registrare un altro giorno, termina questa sessione: i valori inseriti resteranno conservati.</p>
-        <button class="primary full-width" style="margin-top:12px" (click)="finish()" [disabled]="s.busy() || finishing()">{{finishing()?'Salvataggio…':'Termina allenamento'}} <gt-icon name="check" /></button>
-      </div>
-      <details class="card session-options"><summary>Data, note e salvataggio</summary>
-        <h2 style="margin-top:16px">Il tuo allenamento</h2>
-        <div class="form-grid" style="margin-top:18px">
-          <label class="wide"
-            >Note generali<textarea
-              maxlength="2000"
-              [ngModel]="w.notes"
-              (ngModelChange)="update(w.id, 'notes', $event)"
-            ></textarea>
-          </label>
-        </div>
-        <div class="actions">
-          <button class="primary" (click)="finish()" [disabled]="s.busy() || finishing()">
-            Termina allenamento</button
-          ><a class="button" routerLink="/">Torna alla Home (sessione aperta)</a
-          ><button class="danger ghost" (click)="discard(w.id)">
-            Scarta sessione
-          </button>
-        </div>
+      <details class="session-options session-simple-options"><summary>Note e dettagli dell’allenamento</summary>
+        <div class="form-grid"><label class="wide">Note<textarea maxlength="2000" [ngModel]="w.notes" (ngModelChange)="update(w.id,'notes',$event)"></textarea></label>
+        @if(w.date < today){<label>Durata (minuti)<input type="number" inputmode="numeric" min="1" max="1440" [ngModel]="w.duration||null" (ngModelChange)="update(w.id,'duration',$event)" placeholder="Es. 60"/></label>}
+        </div><p class="subtle">{{w.duration>0?w.duration+' min registrati':elapsed(w.startedAt)}}</p>
+        <div class="actions"><a class="button ghost" routerLink="/">Torna alla Home</a><button class="danger ghost" (click)="discard(w.id)">Elimina sessione aperta</button></div>
       </details>
-    } @else if (s.ready()) {
-      <div class="card empty">
-        <gt-icon name="weight" />
-        <h3>Pronto per allenarti?</h3>
-        <p>Scegli un giorno dal tuo piano per iniziare una nuova sessione.</p>
-        <a class="button primary" routerLink="/piani">Vai ai piani</a>
-      </div>
+    }@else if(s.ready()){
+      <div class="card empty"><gt-icon name="weight"/><h3>Nessun allenamento aperto</h3><a class="button primary" routerLink="/piani">Scegli allenamento</a></div>
     }`,
 })
 export class SessionComponent {

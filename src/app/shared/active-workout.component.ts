@@ -1,3 +1,4 @@
+import { NgTemplateOutlet } from '@angular/common';
 import { confirmationForContext } from '../services/confirmation';
 import { Component, computed, HostListener, inject, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -17,7 +18,7 @@ import type { AppUpdateEvent } from '../services/pwa';
 import { FormDraftService } from '../services/form-drafts';
 type ActiveSetDraft={weight:number;reps:number;rpe:number|undefined;setNotes:string;kind:'work'|'warmup'};
 interface ActiveDraftSnapshot {entries:[string,ActiveSetDraft][];exerciseId:string;setId:string;bases?:Record<string,string>}
-@Component({selector:'gt-active-workout',standalone:true,imports:[FormsModule,LoadProgressionComponent,MachineSetupComponent,MuscleMapComponent,ExerciseThumbComponent,ExerciseVideoComponent,IconComponent],templateUrl:'./active-workout.component.html',styleUrls:['./recording.css']})
+@Component({selector:'gt-active-workout',standalone:true,imports:[NgTemplateOutlet,FormsModule,LoadProgressionComponent,MachineSetupComponent,MuscleMapComponent,ExerciseThumbComponent,ExerciseVideoComponent,IconComponent],templateUrl:'./active-workout.component.html',styleUrls:['./recording.css','./recording-simple.css']})
 export class ActiveWorkoutComponent {
  private confirmation=confirmationForContext();
  externalTimer=inject(ExternalTimerService,{optional:true});

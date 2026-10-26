@@ -19,7 +19,7 @@ import { canResumeAtHome, MobileNavigationService } from "../services/mobile-nav
   template: ` <gt-workout-clock/><aside class="sidebar">
       <a class="brand" routerLink="/"
         ><img class="app-brand-mark" src="/brand/gt-mark.png" alt=""/>Gym<span>Track</span></a
-      ><div class="sidebar-signature" aria-hidden="true"><i></i><i></i><i></i><span>OGNI RIPETIZIONE.<br/>UNA NUOVA VERSIONE DI TE.</span></div><span class="nav-caption">IL TUO SPAZIO</span>
+      >
       <nav>
         @for (item of desktopNav; track item.path) {
           <a
@@ -30,32 +30,15 @@ import { canResumeAtHome, MobileNavigationService } from "../services/mobile-nav
           >
         }
       </nav>
-      <div class="sidebar-bottom">
-        <div class="local-badge">
-          <gt-icon name="shield" />
-          <div>
-            <b>Il tuo archivio personale</b
-            ><small>Copia locale e protezione server.</small>
-          </div>
-          <i></i>
-        </div>
-        <span class="version">GYMTRACK / IL TUO PROSSIMO LIVELLO</span>
-      </div>
     </aside>
     <div class="app-main">
-      <header class="topbar">
+      @if(!router.url.startsWith('/sessione')){<header class="topbar">
         <a class="mobile-brand brand" routerLink="/"><img class="app-brand-mark" src="/brand/gt-mark.png" alt=""/>Gym<span>Track</span></a
-        ><span class="desktop-only breadcrumb"
-          ><i class="brand-coordinate"></i> IL TUO PROSSIMO LIVELLO, OGNI GIORNO.</span
-        >
-        <div class="topbar-right">
-          <a class="header-calendar" routerLink="/calendario" aria-label="Apri calendario"><gt-icon name="calendar"/></a><a class="archive-sync-indicator" [class.copy-confirmed]="cloud.status()==='saved'" [class.copy-warning]="cloud.status()==='offline'||cloud.status()==='conflict'" routerLink="/profilo" [queryParams]="{section:'backup'}" [attr.aria-label]="backupStatus()" [title]="backupStatus()"><span aria-hidden="true">{{cloud.status()==='saved'?'✓':cloud.status()==='offline'||cloud.status()==='conflict'?'!':'↻'}}</span><small>{{backupStatus()}}</small></a><a class="avatar" routerLink="/profilo" aria-label="Apri profilo"><gt-avatar [photo]="s.profile().photo" [name]="s.profile().name" /></a>
+        >        <div class="topbar-right">
+          <a class="archive-sync-indicator" [class.copy-confirmed]="cloud.status()==='saved'" [class.copy-warning]="cloud.status()==='offline'||cloud.status()==='conflict'" routerLink="/profilo" [queryParams]="{section:'backup'}" [attr.aria-label]="backupStatus()" [title]="backupStatus()"><span aria-hidden="true">{{cloud.status()==='saved'?'✓':cloud.status()==='offline'||cloud.status()==='conflict'?'!':'↻'}}</span><small>{{backupStatus()}}</small></a><a class="avatar" routerLink="/profilo" aria-label="Apri profilo"><gt-avatar [photo]="s.profile().photo" [name]="s.profile().name" /></a>
         </div>
-      </header>
-      <main>@if(s.ready()){@if(auth.offlineMode()){<p class="local-mode-label">Archivio personale locale · funzioni condivise disabilitate</p>}<router-outlet />@if(['/','/piani','/profilo'].includes(router.url.split('?')[0])){<gt-archive-recovery/>}}@else{<section class="card archive-opening" role="status" aria-live="polite"><h1>Apertura del tuo archivio</h1><p>Sto caricando i dati salvati su questo dispositivo…</p>@if(s.error()){<p class="notice">{{s.error()}}</p>}</section>}</main>
-      <div class="secondary-links"><a routerLink="/calendario">Calendario ↗</a><a routerLink="/allenamenti">Storico allenamenti ↗</a><a routerLink="/catalogo">Esercizi ↗</a></div><footer>
-        OGNI RIPETIZIONE CONTA. <span>Costruisci il tuo prossimo livello.</span>
-      </footer>
+      </header>}
+      <main [class.session-main]="router.url.startsWith('/sessione')">@if(s.ready()){@if(auth.offlineMode()){<p class="local-mode-label">Archivio personale locale · funzioni condivise disabilitate</p>}<router-outlet />@if(router.url.split('?')[0]==='/profilo'){<gt-archive-recovery/>}}@else{<section class="card archive-opening" role="status" aria-live="polite"><h1>Apertura del tuo archivio</h1><p>Sto caricando i dati salvati su questo dispositivo…</p>@if(s.error()){<p class="notice">{{s.error()}}</p>}</section>}</main>
     </div>
     <nav class="bottom-nav" aria-label="Navigazione principale">
       @for (item of nav; track item.path) {

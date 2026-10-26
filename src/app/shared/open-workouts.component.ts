@@ -5,14 +5,8 @@ import { RouterLink } from '@angular/router';
 import { ExternalTimerService } from '../services/external-timer';
 import { Store } from '../services/store';
 @Component({standalone:true,selector:'gt-open-workouts',imports:[DatePipe,RouterLink],template:`
-@if(s.openWorkouts().length){<section class="card" style="margin-bottom:20px" aria-label="Allenamenti rimasti aperti">
-<h2>Allenamenti rimasti aperti ({{s.openWorkouts().length}})</h2>
-<p class="subtle">Queste sessioni bloccano la registrazione di un altro giorno. Puoi controllarle o chiuderle conservando tutti i valori inseriti.</p>
-<div class="list" style="margin-top:16px">@for(w of s.openWorkouts();track w.id){<article class="card">
-<h3>{{w.dayName}}</h3><p>{{w.planName}} · {{w.date | date:'dd/MM/yyyy'}}</p>
-<p class="subtle">{{completed(w.id)}} / {{sets(w.id).length}} serie confermate · Aperto il {{w.startedAt | date:'dd/MM/yyyy HH:mm'}}</p>
-<div class="actions" style="margin-top:12px"><a class="button" routerLink="/sessione" [queryParams]="{workout:w.id}">Apri e controlla</a><button class="primary" (click)="close(w.id)" [disabled]="!!closing() || s.busy()">{{closing()===w.id?'Chiusura…':'Termina allenamento'}}</button></div>
-</article>}</div></section>}`})
+@for(w of s.openWorkouts();track w.id){<section class="card pending-session" aria-label="Allenamento da riprendere"><div><span class="pill">Da riprendere</span><h3>{{w.dayName}}</h3><p>{{w.planName}} · {{w.date | date:'dd/MM/yyyy'}}</p><small>{{completed(w.id)}} / {{sets(w.id).length}} serie</small></div><div class="pending-actions"><a class="button primary" routerLink="/sessione" [queryParams]="{workout:w.id}">Riprendi</a><details><summary aria-label="Opzioni sessione aperta">⋯</summary><button class="ghost" (click)="close(w.id)" [disabled]="!!closing()||s.busy()">{{closing()===w.id?'Chiusura…':'Termina allenamento'}}</button></details></div></section>}
+`,styles:[`.pending-session{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px;padding:16px}.pending-session>div:first-child{min-width:0}.pending-session .pill{font-size:10px;color:#eac16b}.pending-session h3{font-size:17px;margin:8px 0 4px;overflow-wrap:anywhere}.pending-session p,.pending-session small{font-size:12px;color:var(--muted);margin:0;line-height:1.5}.pending-actions{display:flex;gap:8px;align-items:center;flex:none}.pending-actions>a{min-height:44px;padding:10px 12px;font-size:13px}.pending-actions details{position:relative}.pending-actions summary{min-width:44px;min-height:44px;display:grid;place-items:center;cursor:pointer;list-style:none;font-size:22px}.pending-actions summary::-webkit-details-marker{display:none}.pending-actions details>button{position:absolute;right:0;top:100%;z-index:8;min-width:190px;box-shadow:0 12px 32px #0006;background:var(--raised);white-space:nowrap}@media(max-width:400px){.pending-session{flex-wrap:wrap}.pending-actions{margin-left:auto}}`]})
 export class OpenWorkoutsComponent {
  private confirmation=confirmationForContext();
  s=inject(Store);closing=signal('');private timer=inject(ExternalTimerService,{optional:true});

@@ -21,8 +21,7 @@ import { ExerciseFilterComponent } from "../shared/exercise-filter.component";
     StatusComponent,
     ExerciseFilterComponent,
   ],
-  template: `<gt-section-heading index="07" eyebrow="STORICO ALLENAMENTI" title="Il lavoro che resta." description="Ogni sessione costruisce la tua storia. Ritrova tutti i dettagli."><a class="button primary" routerLink="/piani"><gt-icon name="plus"/> Allenati</a></gt-section-heading>
-    <div class="archive-signal"><div><span>SESSIONI COMPLETATE</span><strong>{{s.completed().length}}</strong></div><div><span>VOLUME CON CARICHI ESTERNI</span><strong>{{s.formatWeight(s.totalVolume())}} <small>{{s.settings().unit}}</small></strong></div><span class="archive-signal-mark" aria-hidden="true"><gt-icon name="activity"/></span></div>
+  template: `<gt-section-heading index="07" title="Storico"><a class="button primary" routerLink="/piani"><gt-icon name="plus"/> Allenati</a></gt-section-heading>
     <gt-status />
     <gt-open-workouts />
     @if (selected(); as w) {
