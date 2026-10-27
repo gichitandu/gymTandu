@@ -1,4 +1,4 @@
-import {Component,effect,inject,signal,untracked} from '@angular/core';
+import {Component,effect,inject,Input,signal,untracked} from '@angular/core';
 import {FormsModule} from '@angular/forms';
 import {DomSanitizer} from '@angular/platform-browser';
 import {AuthService} from '../services/auth';
@@ -7,7 +7,7 @@ import {ArchiveSyncService} from '../services/archive-sync';
 import {confirmationForContext} from '../services/confirmation';
 interface CalendarSubscription {configured:boolean;enabled:boolean;url?:string;updatedAt?:number;canConfigure?:boolean}
 @Component({selector:'gt-calendar-subscription',standalone:true,imports:[FormsModule],template:`
-<details class="card calendar-link" (toggle)="opened($event)">
+<details class="card calendar-link" [open]="panelOpen()" (toggle)="opened($event)">
  <summary>Calendario iPhone</summary>
  <p>Visualizza gli allenamenti programmati in Calendario. Le modifiche si fanno in GymTrack; iOS aggiorna con i propri tempi.</p>
  @if(!auth.user()||auth.offlineMode()){<p>Accedi online al tuo account per collegarlo.</p>}
@@ -27,7 +27,7 @@ interface CalendarSubscription {configured:boolean;enabled:boolean;url?:string;u
     <p class="subtle">Il link è personale: chi lo possiede può leggere il calendario. Per rimuoverlo dall’iPhone, elimina anche l’abbonamento in Calendario.</p>
    }@else{<p>Condividerai con Calendario solo titolo e data degli allenamenti programmati.</p><button class="primary" type="button" (click)="connect()" [disabled]="busy()">Collega il mio calendario</button>}
   }
-  @if(!state()&&!busy()){<button type="button" (click)="load()">Controlla collegamento</button>}
+  @if(!state()&&!busy()&&!failed()){<button type="button" (click)="load()">Controlla collegamento</button>}
   @if(busy()){<p role="status">Attendi…</p>}
   @if(notice()){<p role="status">{{notice()}}</p>}
   @if(failed()){<button type="button" (click)="load()" [disabled]="busy()">Riprova</button>}
@@ -36,6 +36,7 @@ interface CalendarSubscription {configured:boolean;enabled:boolean;url?:string;u
 export class CalendarSubscriptionComponent{
  auth=inject(AuthService);private store=inject(Store);private cloud=inject(ArchiveSyncService);private sanitizer=inject(DomSanitizer);private confirmation=confirmationForContext();
  serviceKey='';panelOpen=signal(false);manual=signal(false);
+ @Input() set expanded(value:boolean){this.panelOpen.set(value);}
  state=signal<CalendarSubscription|null>(null);busy=signal(false);notice=signal('');failed=signal(false);private generation=0;
  constructor(){effect(()=>{const account=this.auth.user()?.id,offline=this.auth.offlineMode(),open=this.panelOpen();if(this.auth.uiRole()!=='SuperAdmin')this.serviceKey='';this.generation++;this.state.set(null);this.busy.set(false);this.notice.set('');this.failed.set(false);this.manual.set(false);if(open&&account&&!offline)untracked(()=>void this.load());});}
 

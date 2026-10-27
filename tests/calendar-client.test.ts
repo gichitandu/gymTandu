@@ -11,12 +11,16 @@ const effects=vi.hoisted(()=>[] as (()=>void)[]);
 vi.mock('@angular/core',async original=>({...await original<typeof import('@angular/core')>(),effect:(callback:()=>void)=>{effects.push(callback);return{destroy:()=>{}};}}));
 afterEach(()=>{effects.length=0;vi.unstubAllGlobals();});
 const url='https://calendar.example.test/calendar/'+'a'.repeat(64)+'.ics';
-function setup(){
- const state={configured:true,enabled:true,url,updatedAt:1},request=vi.fn().mockResolvedValue(state),auth={user:signal({id:'u',role:'User'}),offlineMode:signal(false),uiRole:()=> 'User',request};
+function setup(role='User',uiRole=role){
+ const state={configured:true,enabled:true,url,updatedAt:1},request=vi.fn().mockResolvedValue(state),auth={user:signal({id:'u',role}),offlineMode:signal(false),uiRole:()=>uiRole,request};
  const snapshot={plans:['existing-plan'],history:['existing-workout']},store={settled:vi.fn().mockResolvedValue(true),data:()=>snapshot},cloud={flush:vi.fn().mockResolvedValue(false),status:signal('conflict')};
  const injector=createEnvironmentInjector([{provide:AuthService,useValue:auth},{provide:Store,useValue:store},{provide:ArchiveSyncService,useValue:cloud},{provide:DomSanitizer,useValue:{bypassSecurityTrustUrl:(value:string)=>value}},{provide:ConfirmationService,useValue:{ask:vi.fn().mockResolvedValue(false)}}],null as unknown as EnvironmentInjector);
  const component=runInInjectionContext(injector,()=>new CalendarSubscriptionComponent());effects.forEach(f=>f());return{component,auth,store,cloud,snapshot,state,injector};
 }
+it.each([['SuperAdmin','SuperAdmin'],['Admin','Admin'],['User','User'],['SuperAdmin','User']])('opens and loads the dedicated calendar panel for %s with %s view without waiting for a browser toggle',async(role,uiRole)=>{
+ const t=setup(role,uiRole);t.component.expanded=true;effects.forEach(f=>f());
+ try{await vi.waitFor(()=>expect(t.component.state()?.enabled).toBe(true));expect(t.component.panelOpen()).toBe(true);expect(t.auth.request).toHaveBeenCalledExactlyOnceWith('calendar-subscription');expect(t.cloud.flush).not.toHaveBeenCalled();}finally{t.injector.destroy();}
+});
 it('refreshes an existing account calendar without forcing a conflicting phone archive upload',async()=>{
  const t=setup();t.component.state.set(t.state);const before=JSON.stringify(t.snapshot);
  try{await t.component.connect();expect(t.cloud.flush).not.toHaveBeenCalled();expect(t.auth.request).toHaveBeenCalledWith('calendar-subscription',{},'POST');expect(t.component.failed()).toBe(false);expect(t.component.notice()).toContain('dati già sincronizzati');expect(JSON.stringify(t.snapshot)).toBe(before);}finally{t.injector.destroy();}

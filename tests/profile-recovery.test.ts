@@ -3,7 +3,7 @@ import 'fake-indexeddb/auto';
 import {createEnvironmentInjector,EnvironmentInjector,runInInjectionContext,signal} from '@angular/core';
 import {FormBuilder} from '@angular/forms';
 import {ActivatedRoute,convertToParamMap} from '@angular/router';
-import {of} from 'rxjs';
+import {BehaviorSubject} from 'rxjs';
 import {afterEach,beforeEach,expect,it,vi} from 'vitest';
 import Dexie from 'dexie';
 import {GymDatabase} from '../src/app/core/database';
@@ -20,16 +20,17 @@ const effects=vi.hoisted(()=>[] as (()=>void)[]);
 vi.mock('@angular/core',async original=>({...await original<typeof import('@angular/core')>(),effect:(callback:()=>void)=>{effects.push(callback);return{destroy:()=>{}};}}));
 let injector:EnvironmentInjector,db:GymDatabase,s:Store,c:ProfileComponent,drafts:FormDraftService,draftName:string;
 let clock:ReturnType<typeof signal<string>>;
+let routeParams:BehaviorSubject<ReturnType<typeof convertToParamMap>>;
 const sync=()=>effects.forEach(callback=>callback());
-async function reopen(){c.ngOnDestroy();await drafts.flushAll();effects.length=0;c=runInInjectionContext(injector,()=>new ProfileComponent());sync();await drafts.flushAll();}
+async function reopen(section?:string){c.ngOnDestroy();await drafts.flushAll();if(section)routeParams.next(convertToParamMap({section}));effects.length=0;c=runInInjectionContext(injector,()=>new ProfileComponent());sync();await drafts.flushAll();}
 beforeEach(async()=>{
   effects.length=0;
   vi.stubGlobal('window',Object.assign(new EventTarget(),{scrollTo:vi.fn()}));
   vi.stubGlobal('document',Object.assign(new EventTarget(),{visibilityState:'visible',body:{classList:{toggle:()=>{}}}}));
-  db=new GymDatabase('profile-recovery-'+crypto.randomUUID());draftName='profile-form-'+crypto.randomUUID();clock=signal('2026-10-21');
+  db=new GymDatabase('profile-recovery-'+crypto.randomUUID());draftName='profile-form-'+crypto.randomUUID();clock=signal('2026-10-21');routeParams=new BehaviorSubject(convertToParamMap({}));
   injector=createEnvironmentInjector([
     {provide:GYM_REPOSITORY,useValue:{storageKey:db.name,read:()=>db.snapshot(),replace:(data:any)=>db.replace(data)}},
-    {provide:ActivatedRoute,useValue:{queryParamMap:of(convertToParamMap({}))}},
+    {provide:ActivatedRoute,useValue:{queryParamMap:routeParams}},
     {provide:AuthService,useValue:{user:()=>null,offlineMode:()=>true,canManageBackups:()=>false}},
     {provide:ThemeService,useValue:{load:async()=>{},apply:()=>{},color:signal('#050E17')}},
     {provide:PwaService,useValue:{updating:signal(false)}},{provide:TodayService,useValue:{date:clock}},
@@ -49,6 +50,11 @@ it('recovers unfinished profile/goals/photo after leaving, while excluding all p
   expect(c.form.controls.name.value).toBe('Nome in bozza');expect(c.form.controls.name.dirty).toBe(true);
   expect(c.goalsForm.controls.calories.value).toBe(2400);expect(await c.photoDraft()!.text()).toBe('photo');
   expect(c.currentPassword).toBe('');expect(s.profile().name).not.toBe('Nome in bozza');
+});
+it('opens the calendar deep link while recovering an unfinished profile without redirecting to its old form',async()=>{
+  c.form.controls.name.setValue('Nome ancora in bozza');c.form.controls.name.markAsDirty();c.panel.set('settings');c.draftChanged();await drafts.flushAll();
+  await reopen('calendar');
+  expect(c.panel()).toBe('calendar');expect(c.panelLabel()).toBe('Calendario iPhone');expect(c.form.controls.name.value).toBe('Nome ancora in bozza');expect(c.form.controls.name.dirty).toBe(true);expect(s.profile().name).not.toBe('Nome ancora in bozza');
 });
 it('removes only accepted drafts and retains goals still awaiting confirmation',async()=>{
   c.form.controls.name.setValue('Nome confermato');c.form.controls.name.markAsDirty();
