@@ -1,3 +1,4 @@
+import {stopDevicePushForLogout} from './push-device';
 import { computed, Injectable, signal } from '@angular/core';
 import { RoleName } from '../models/domain';
 import { feedbackForContext, feedbackSignal } from './feedback';
@@ -85,6 +86,7 @@ export class AuthService {
     this.clientViewRequested.set(false);
     this.loggingOut.set(true);this.lifecycle++;let completed=false;
     try{
+      await stopDevicePushForLogout();
       let revoked=false;
       if(navigator.onLine){
         try{await this.request('auth/logout',{});revoked=true;}catch{/* Save the exit intent if a reported connection cannot reach the server. */}

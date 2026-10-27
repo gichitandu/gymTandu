@@ -1,5 +1,5 @@
 // The relay URL is configured by hosting; users cannot redirect the shared secret.
-async function calendarRuntimeEnv(env){
+export async function calendarRuntimeEnv(env){
  if(calendarConfigured(env)||!env.CALENDAR_RELAY_URL||!env.DB)return env;
  const row=await env.DB.prepare('SELECT secret FROM calendar_service_config WHERE id=?').bind('current').first();
  return row?{...env,CALENDAR_RELAY_SECRET:row.secret}:env;
@@ -37,10 +37,10 @@ async function calendarAccountKey(env,user){
  return [...new Uint8Array(await crypto.subtle.sign('HMAC',key,encoder.encode('gymtrack-calendar:account:'+user.id)))].map(n=>n.toString(16).padStart(2,'0')).join('');
 }
 function calendarRelayError(message,reason,status=502,extra={}){return Object.assign(new Error(message),{calendarReason:reason,status,...extra});}
-async function calendarRelay(env,user,method='GET',body){
+export async function calendarRelay(env,user,method='GET',body,suffix=''){
  const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),4000);
  try{
-  const response=await fetch(new URL('/manage/'+await calendarAccountKey(env,user),env.CALENDAR_RELAY_URL),{method,redirect:'manual',signal:controller.signal,headers:{Authorization:'Bearer '+env.CALENDAR_RELAY_SECRET,'Content-Type':'application/json','User-Agent':'GymTrack-calendar/1.0'},...(body?{body:JSON.stringify(body)}:{})});
+  const response=await fetch(new URL('/manage/'+await calendarAccountKey(env,user)+suffix,env.CALENDAR_RELAY_URL),{method,redirect:'manual',signal:controller.signal,headers:{Authorization:'Bearer '+env.CALENDAR_RELAY_SECRET,'Content-Type':'application/json','User-Agent':'GymTrack-calendar/1.0'},...(body?{body:JSON.stringify(body)}:{})});
   if(response.status>=300&&response.status<400)throw calendarRelayError('Il servizio calendario reindirizza la richiesta. Occorre verificare l’indirizzo; la chiave non è stata inoltrata.','relay_redirect');
   if(!response.ok){
    // Bound and discard error bodies; only a recognized Cloudflare error number
@@ -69,8 +69,9 @@ export function calendarProjection(data){
 export async function calendarPublish(env,user,text,revision,updatedAt){
  if(!user)return;env=await calendarRuntimeEnv(env);
  if(!calendarConfigured(env))return;
- const state=await calendarRelay(env,user);if(!state.enabled)return;
- await calendarRelay(env,user,'POST',{events:calendarProjection(JSON.parse(text).data),revision,updatedAt});
+ const state=await calendarRelay(env,user);if(!state.enabled&&!state.needsEvents)return;
+ const events=calendarProjection(JSON.parse(text).data);
+ await calendarRelay(env,user,'POST',{events:state.enabled?events:events.map(e=>({...e,title:'Allenamento'})),revision,updatedAt});
 }
 export async function calendarApi(request,env,user,readArchive){
  const reply=(data,status=200)=>Response.json(data,{status,headers:{'Cache-Control':'private, no-store','Referrer-Policy':'no-referrer'}});

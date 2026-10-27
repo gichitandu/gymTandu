@@ -1,0 +1,24 @@
+AGGIORNAMENTO NOTIFICHE PUSH — WINDOWS
+
+Prima di iniziare: questo aggiornamento usa il servizio calendario già creato su Cloudflare Free. Non devi rigenerare o ricopiare la chiave calendario. Le notifiche restano da attivare su ogni dispositivo dopo l'aggiornamento.
+
+1. Estrai lo ZIP dell'aggiornamento push in una cartella temporanea.
+2. Copia TUTTI i file estratti nella tua cartella calendar-relay ORIGINALE, quella con AVVIA-WINDOWS.cmd, wrangler.jsonc già configurato e la cartella .installer. Conferma la sostituzione dei file index.js e schema.sql. Il pacchetto NON contiene wrangler.jsonc: non sostituirlo e non cancellare nulla.
+3. Fai doppio clic su AGGIORNA-PUSH.cmd. Se richiesto, autorizza Cloudflare nel browser con lo stesso account usato per il calendario.
+4. La procedura aggiunge due tabelle, pubblica il servizio e imposta un controllo ogni minuto. Mantiene intatti database, calendari, link personali e chiavi esistenti. Genera soltanto la chiave tecnica push se manca e la carica come segreto su Cloudflare; non devi vederla, copiarla o inviarla in chat.
+5. Attendi il messaggio “Aggiornamento completato”. I Cron Trigger appena creati possono richiedere fino a circa 15 minuti per propagarsi su Cloudflare.
+6. Aggiorna GymTrack dalle Impostazioni. Sull'iPhone aprila dall'icona nella Home, con iOS 16.4 o successivo.
+7. Accedi al tuo account. Apri Profilo > Impostazioni > Promemoria allenamento.
+8. L'orario iniziale è 08:30, fuso Roma (ora legale/solare gestita automaticamente). Puoi modificare l'orario e scegliere il fuso del tuo dispositivo. Per impostazione predefinita il promemoria arriva nei giorni con allenamenti PROGRAMMATI nel calendario GymTrack; per riceverlo anche negli altri giorni attiva l'opzione dedicata.
+9. Premi “Attiva su questo dispositivo” e poi Consenti nel messaggio di iOS.
+10. Premi “Invia prova”. Poi chiudi l'app senza fare logout e controlla le notifiche. “Invio accettato” significa che Apple/Google/Mozilla hanno accettato l'invio, non che l'iPhone abbia già mostrato l'avviso.
+
+Il servizio è disponibile a Clienti, Admin e Super Admin. Orario e scelta dei giorni sono personali per account; il consenso va attivato su ciascun dispositivo. “Disattiva qui” e il logout disattivano l'iscrizione su quel dispositivo; chiudere l'app dalla Home non la disattiva. Dopo il logout, attivala di nuovo al prossimo accesso se desideri ricevere gli avvisi.
+
+Il badge dell'icona viene impostato a 1 se il dispositivo lo consente e cancellato quando apri l'app. Le impostazioni Notifiche, Full immersion, Riepilogo programmato e la connessione dell'iPhone possono ritardare o nascondere gli avvisi. Non è un timer Live Activity.
+
+La programmazione degli allenamenti deve essere sincronizzata online. Le modifiche effettuate mentre sei offline potranno incidere sui promemoria solo dopo il successivo salvataggio online. I messaggi push non contengono titoli esercizi, profilo o pasti: la notifica generica viene composta dal service worker sul dispositivo. Il servizio memorizza solo le date necessarie al promemoria e gli indirizzi di iscrizione dei dispositivi, protetti dall'accesso tecnico del server.
+
+Nessun account Apple Developer, OneSignal o piano Cloudflare Paid viene attivato da questa procedura. Restano i limiti del piano Free (richieste, CPU e database). Gli invii sono elaborati in piccoli gruppi, con ritentativi limitati, e possono arrivare dopo l'orario scelto. Prima dell'uso reale occorre eseguire “Invia prova” su un iPhone reale: durante lo sviluppo sono stati verificati test automatici e il motore workerd, non la consegna sul tuo dispositivo.
+
+Se una fase fallisce, non rigenerare le chiavi: invia solo il messaggio d'errore, senza password o chiavi. La procedura può essere rieseguita e mantiene le chiavi già presenti.

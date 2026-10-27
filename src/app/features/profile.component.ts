@@ -1,3 +1,4 @@
+import {PushReminderComponent} from '../shared/push-reminder.component';
 import {CalendarSubscriptionComponent} from '../shared/calendar-subscription.component';
 import { DateFieldComponent } from '../shared/date-field.component';
 import { confirmationForContext } from '../services/confirmation';
@@ -44,7 +45,7 @@ interface ProfileFormDraft {
 @Component({
   standalone: true,
   styleUrl: "./account-polish.css",
-  imports: [CalendarSubscriptionComponent,DateFieldComponent,SectionHeadingComponent,BackupReminderComponent,ArchiveSyncComponent,AppUpdatesComponent,
+  imports: [PushReminderComponent,CalendarSubscriptionComponent,DateFieldComponent,SectionHeadingComponent,BackupReminderComponent,ArchiveSyncComponent,AppUpdatesComponent,
     A11yModule,
     AvatarComponent,
     IosStatusComponent,
@@ -217,7 +218,7 @@ interface ProfileFormDraft {
       </div>
     </div>
     }
-    @if(panel()==='settings'){<gt-calendar-subscription/><gt-app-updates/><section class="card" style="margin-top:20px"><h2>Accesso all’app</h2><p class="subtle" style="margin:12px 0">Le bozze vengono conservate prima dell’uscita. Piani, esercizi e allenamenti rimangono nel tuo archivio.</p><button type="button" class="full-width" [disabled]="loggingOut()" (click)="logout()">{{loggingOut()?'Salvataggio e uscita…':'Esci dall’app'}}</button></section>}
+    @if(panel()==='settings'){<gt-push-reminder/><gt-calendar-subscription/><gt-app-updates/><section class="card" style="margin-top:20px"><h2>Accesso all’app</h2><p class="subtle" style="margin:12px 0">Le bozze vengono conservate prima dell’uscita. Piani, esercizi e allenamenti rimangono nel tuo archivio.</p><button type="button" class="full-width" [disabled]="loggingOut()" (click)="logout()">{{loggingOut()?'Salvataggio e uscita…':'Esci dall’app'}}</button></section>}
     @if(panel()==='backup'&&auth.canManageBackups()){<gt-archive-sync (recover)="recoverCloud($event)"/><gt-backup-reminder mode="settings"/><section class="card" style="margin-top:20px">
       <div class="card-head">
         <div>

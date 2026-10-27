@@ -1,4 +1,5 @@
 import { defaultExercises, defaultGroups } from './default-catalog.js';
+import { pushReminderApi } from './push.js';
 import { archiveApi } from './archive.js';
 import { calendarApi, calendarPublish, calendarConfigure } from './calendar.js';
 // The platform's ChatGPT access boundary remains in place. App sessions are
@@ -80,6 +81,7 @@ export async function api(request,env,ctx) {
     if(request.method!=='GET' && request.headers.get('origin')!==url.origin) fail('Richiesta non autorizzata.',403);
     if(request.method!=='GET' && !request.headers.get('content-type')?.startsWith('application/json')) fail('Formato non supportato.',415);
     const me=await session(request,db);
+    if(path==='/api/push-reminder')return await pushReminderApi(request,env,me,()=>archiveApi(new Request(url.origin+'/api/archive?scope=account',{headers:request.headers}),env,me));
     if(path==='/api/calendar-config')return await calendarConfigure(request,env,me);
     if(path==='/api/calendar-subscription')return await calendarApi(request,env,me,()=>archiveApi(new Request(url.origin+'/api/archive?scope=account',{headers:request.headers}),env,me));
     if(path==='/api/archive')return await archiveApi(request,env,me,async(text,revision,at)=>{const publish=calendarPublish(env,me,text,revision,at).catch(()=>{});if(ctx?.waitUntil)ctx.waitUntil(publish);else await publish;});
@@ -218,5 +220,5 @@ export default {async fetch(request,env,ctx) {
   if(!['GET','HEAD'].includes(request.method)) return new Response('Method not allowed',{status:405});
   const asset=assets[path==='/'?'/index.html':path];
   if(!asset) return new Response('Not found',{status:404});
-  return new Response(request.method==='HEAD'?null:Uint8Array.from(atob(asset.body),c=>c.charCodeAt(0)),{headers:{'Content-Type':asset.type,'Cache-Control':path==='/ngsw.json'||path==='/index.html'||path==='/'?'no-cache':'public,max-age=3600','X-Content-Type-Options':'nosniff','Referrer-Policy':'same-origin'}});
+  return new Response(request.method==='HEAD'?null:Uint8Array.from(atob(asset.body),c=>c.charCodeAt(0)),{headers:{'Content-Type':asset.type,'Cache-Control':path==='/gymtrack-sw.js'||path==='/ngsw-worker.js'||path==='/ngsw.json'||path==='/index.html'||path==='/'?'no-cache':'public,max-age=3600','X-Content-Type-Options':'nosniff','Referrer-Policy':'same-origin'}});
 }};

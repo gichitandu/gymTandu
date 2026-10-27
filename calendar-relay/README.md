@@ -61,3 +61,13 @@ Usa due account di prova e programmazioni sintetiche. Controlla sottoscrizione s
 Se il servizio esterno è irraggiungibile, il salvataggio dell'archivio GymTrack rimane riuscito; viene ritentato l'aggiornamento al prossimo salvataggio online. “Aggiorna collegamento” permette un tentativo manuale e mantiene lo stesso link. “Ultima pubblicazione” indica lo stato inviato al servizio, non l'ultimo aggiornamento effettuato dall'iPhone.
 
 Il Worker esterno non ha un elenco pubblico e non accetta scritture anonime. Gli accessi ai feed richiedono un token casuale di 256 bit; la gestione richiede il segreto server. La configurazione disabilita i log automatici per evitare di registrare i link personali. Se abiliti altri strumenti di logging, oscura sempre i percorsi `/calendar/…`.
+
+## Promemoria push alle 08:30
+
+Il calendario in abbonamento e il promemoria push sono funzioni indipendenti. Per il promemoria occorre aggiornare il Worker esterno con `AGGIORNA-PUSH.cmd` e i file elencati in `ISTRUZIONI-PUSH.txt`, mantenendo la configurazione e la chiave calendario originali. La chiave VAPID viene generata e salvata automaticamente su Cloudflare, senza copie in chat o nel browser. Il Cron Trigger controlla le scadenze ogni minuto.
+
+Ogni utente, di qualsiasi ruolo, deve poi consentire le notifiche sul proprio dispositivo. Orario iniziale 08:30, fuso Europe/Rome, solo giorni con allenamenti programmati; può scegliere un altro orario, fuso o gli avvisi ogni giorno. Su iPhone usare l'app installata nella Home, con iOS 16.4 o successivo. Il logout disattiva gli avvisi sul dispositivo; la semplice chiusura dell'app li mantiene attivi. Il badge usa la Badging API, se consentita.
+
+I messaggi sono Web Push senza contenuto personale: il service worker compone localmente un messaggio generico. Il server memorizza solo le date e gli indirizzi tecnici di iscrizione necessari, in tabelle separate dal calendario; nessuna modifica a profili o allenamenti. TTL 15 minuti, topic stabile per dispositivo/giorno, controllo dei doppioni tramite lease e ultima data inviata; errori temporanei vengono ritentati al massimo due volte, iscrizioni scadute 404/410 rimosse. I risultati HTTP 2xx indicano accettazione del provider, non conferma di visualizzazione su iPhone. Nei cambi d'ora un orario inesistente viene spostato in avanti; gli avvisi già inviati non vengono ripetuti nello stesso giorno.
+
+La consegna con app chiusa non è verificabile senza consenso su un dispositivo reale: usare “Invia prova” dopo l'aggiornamento. Rete, Full immersion, impostazioni Notifiche e limiti Cloudflare Free possono ritardare o impedire la visualizzazione. Il codice non abilita piani a pagamento.

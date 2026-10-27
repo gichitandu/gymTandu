@@ -71,3 +71,6 @@ console.log(
 
 const serverConfig=JSON.parse(fs.readFileSync('dist/server/wrangler.json','utf8'));
 assert(serverConfig.compatibility_flags.includes('global_fetch_strictly_public'),'Collegamento pubblico tra Workers non abilitato');
+
+assert(assets.includes('/gymtrack-sw.js'),'Worker notifiche escluso dalla cache offline');
+assert(fs.readFileSync(root+'/gymtrack-sw.js','utf8').includes("importScripts('/ngsw-worker.js')"),'Worker Angular non mantenuto dal worker notifiche');

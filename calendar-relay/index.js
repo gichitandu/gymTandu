@@ -1,3 +1,4 @@
+import {pushApi,pushNeedsEvents,updatePushEvents,dispatchPushReminders} from './push.js';
 // Separate public Worker. No GymTrack account cookies or platform credentials.
 const calEncoder=new TextEncoder();
 export async function tokenHash(value){return [...new Uint8Array(await crypto.subtle.digest('SHA-256',calEncoder.encode(value)))].map(n=>n.toString(16).padStart(2,'0')).join('');}
@@ -31,14 +32,15 @@ export default {async fetch(request,env){
    if(!row)return calReply({error:'Calendar unavailable'},404);
    return new Response(request.method==='HEAD'?null:renderCalendar(JSON.parse(row.events),row.revision,row.updated_at,row.account_key),{headers:{'Content-Type':'text/calendar; charset=utf-8','Cache-Control':'private, no-store','Content-Disposition':'inline; filename="gymtrack.ics"','X-Content-Type-Options':'nosniff','Referrer-Policy':'no-referrer','X-Robots-Tag':'noindex, nofollow'}});
   }
-  const manage=/^\/manage\/([a-f0-9]{64})$/.exec(path);
+  const manage=/^\/manage\/([a-f0-9]{64})(\/push)?$/.exec(path);
   if(!manage)return calReply({error:'Not found'},404);
   const secret=env.CALENDAR_RELAY_SECRET;
   if(!secret||secret.length<32||!calEqual(request.headers.get('Authorization')||'','Bearer '+secret))return calReply({error:'Unauthorized'},401);
   const key=manage[1];
+  if(manage[2])return await pushApi(request,env,key);
   if(request.method==='GET'){
    const row=await env.DB.prepare('SELECT token,enabled,revision,updated_at FROM feeds WHERE account_key=?').bind(key).first();
-   return calReply({enabled:!!row?.enabled,token:row?.enabled?row.token:null,revision:row?.revision||0,updatedAt:row?.updated_at||null});
+   return calReply({enabled:!!row?.enabled,token:row?.enabled?row.token:null,revision:row?.revision||0,updatedAt:row?.updated_at||null,needsEvents:await pushNeedsEvents(env,key)});
   }
   if(request.method==='DELETE'){
    await env.DB.prepare("UPDATE feeds SET enabled=0,token=NULL,token_hash=NULL,events='[]' WHERE account_key=?").bind(key).run();
@@ -60,6 +62,7 @@ export default {async fetch(request,env){
    // Ordinary archive saves never enable/re-enable a subscription.
    await env.DB.prepare('UPDATE feeds SET events=?,revision=?,updated_at=? WHERE account_key=? AND enabled=1 AND revision<=?').bind(JSON.stringify(events),body.revision,body.updatedAt,key,body.revision).run();
   }
+  await updatePushEvents(env,key,events,body.revision);
   return calReply({ok:true});
- }catch{return calReply({error:'Calendar request failed'},400);}
-}};
+ }catch(error){return calReply({error:error.status?error.message:'Calendar request failed'},error.status||400);}
+},async scheduled(_event,env,ctx){ctx.waitUntil(dispatchPushReminders(env));}};
