@@ -40,7 +40,8 @@ function calendarRelayError(message,reason,status=502,extra={}){return Object.as
 async function calendarRelay(env,user,method='GET',body){
  const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),4000);
  try{
-  const response=await fetch(new URL('/manage/'+await calendarAccountKey(env,user),env.CALENDAR_RELAY_URL),{method,redirect:'error',signal:controller.signal,headers:{Authorization:'Bearer '+env.CALENDAR_RELAY_SECRET,'Content-Type':'application/json','User-Agent':'GymTrack-calendar/1.0'},...(body?{body:JSON.stringify(body)}:{})});
+  const response=await fetch(new URL('/manage/'+await calendarAccountKey(env,user),env.CALENDAR_RELAY_URL),{method,redirect:'manual',signal:controller.signal,headers:{Authorization:'Bearer '+env.CALENDAR_RELAY_SECRET,'Content-Type':'application/json','User-Agent':'GymTrack-calendar/1.0'},...(body?{body:JSON.stringify(body)}:{})});
+  if(response.status>=300&&response.status<400)throw calendarRelayError('Il servizio calendario reindirizza la richiesta. Occorre verificare l’indirizzo; la chiave non è stata inoltrata.','relay_redirect');
   if(!response.ok){
    // Bound and discard error bodies; only a recognized Cloudflare error number
    // is used for diagnostics. Never return an upstream body to the browser.

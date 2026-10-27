@@ -111,3 +111,13 @@ it('reports network errors without echoing exception details containing secrets'
  const response=await calendarConfigure(new Request('https://gymtrack.test/api/calendar-config',{method:'POST',body:JSON.stringify({secret:key})}),{...env,CALENDAR_RELAY_URL:origin,CALENDAR_RELAY_SECRET:undefined},{id:'sa',role:'SuperAdmin'});
  expect(response.status).toBe(502);expect(await response.text()).not.toContain(key);expect(JSON.stringify(warn.mock.calls)).not.toContain(key);
 });
+
+it('uses the supported manual redirect mode and never follows a relay redirect with the key',async()=>{
+ const key='f'.repeat(64),warn=vi.spyOn(console,'warn').mockImplementation(()=>{});
+ const fetch=vi.spyOn(globalThis,'fetch').mockImplementation(async(_url,init)=>{
+  if(init?.redirect!=='manual')throw TypeError('Invalid redirect value in workerd');
+  return new Response(null,{status:307,headers:{Location:'https://elsewhere.invalid'}});
+ });
+ const response=await calendarConfigure(new Request('https://gymtrack.test/api/calendar-config',{method:'POST',body:JSON.stringify({secret:key})}),{...env,CALENDAR_RELAY_URL:origin,CALENDAR_RELAY_SECRET:undefined},{id:'sa',role:'SuperAdmin'});
+ expect(response.status).toBe(502);expect((await response.json() as any).error).toContain('non è stata inoltrata');expect(fetch).toHaveBeenCalledOnce();expect(sql.prepare('SELECT count(*) AS n FROM calendar_service_config').get()?.n).toBe(0);expect(JSON.stringify(warn.mock.calls)).not.toContain(key);
+});
