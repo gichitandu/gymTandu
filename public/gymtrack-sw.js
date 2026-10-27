@@ -1,5 +1,13 @@
 // Angular continues to own offline assets and updates. Only our payload-free
-// morning reminder is handled here; existing timer notifications stay intact.
+// morning reminder is handled here. Retired recovery alerts are removed on update.
+self.addEventListener('activate',event=>{
+ event.waitUntil((async()=>{
+  try{
+   const alerts=await self.registration.getNotifications({tag:'gymtrack-rest-timer'});
+   alerts.filter(alert=>alert.tag==='gymtrack-rest-timer').forEach(alert=>alert.close());
+  }catch{} // Cleanup is optional on browsers without notification enumeration.
+ })());
+});
 function reminderGrant(){return new Promise(resolve=>{
  const open=indexedDB.open('gymtrack-push-device-v1',1);
  open.onupgradeneeded=()=>{if(!open.result.objectStoreNames.contains('settings'))open.result.createObjectStore('settings');};

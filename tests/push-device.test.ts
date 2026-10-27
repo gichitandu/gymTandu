@@ -14,11 +14,18 @@ beforeEach(async()=>{await pushDeviceGrant({accountId:'u',id,enabled:false});});
 afterEach(()=>vi.unstubAllGlobals());
 function worker(){
  const handlers:any={},notification=vi.fn().mockResolvedValue(undefined),badge=vi.fn().mockResolvedValue(undefined),clearBadge=vi.fn().mockResolvedValue(undefined),focus=vi.fn().mockResolvedValue(undefined),open=vi.fn().mockResolvedValue(undefined);
- const self={registration:{showNotification:notification},navigator:{setAppBadge:badge,clearAppBadge:clearBadge},location:{origin:'https://gymtrack.test'},clients:{matchAll:async()=>[{url:'https://gymtrack.test/sessione',focus}],openWindow:open},addEventListener:(type:string,handler:any)=>handlers[type]=handler};
+ const getNotifications=vi.fn().mockResolvedValue([]);
+ const self={registration:{showNotification:notification,getNotifications},navigator:{setAppBadge:badge,clearAppBadge:clearBadge},location:{origin:'https://gymtrack.test'},clients:{matchAll:async()=>[{url:'https://gymtrack.test/sessione',focus}],openWindow:open},addEventListener:(type:string,handler:any)=>handlers[type]=handler};
  vm.runInNewContext(readFileSync('public/gymtrack-sw.js','utf8'),{self,indexedDB,URL,importScripts:vi.fn()});
- return{handlers,notification,badge,clearBadge,focus,open};
+ return{handlers,notification,getNotifications,badge,clearBadge,focus,open};
 }
 async function push(w:ReturnType<typeof worker>,data:any=null){let job=Promise.resolve();w.handlers.push({data,waitUntil:(p:Promise<void>)=>job=p});await job;}
+it('removes only retired recovery alerts on upgrade and keeps workout reminders available',async()=>{
+ const w=worker(),rest={tag:'gymtrack-rest-timer',close:vi.fn()},reminder={tag:'gymtrack-daily-workout',close:vi.fn()};
+ w.getNotifications.mockResolvedValue([rest,reminder]);let job=Promise.resolve();w.handlers.activate({waitUntil:(p:Promise<void>)=>job=p});await job;
+ expect(w.getNotifications).toHaveBeenCalledWith({tag:'gymtrack-rest-timer'});expect(rest.close).toHaveBeenCalledOnce();expect(reminder.close).not.toHaveBeenCalled();expect(w.clearBadge).not.toHaveBeenCalled();
+ await pushDeviceGrant({accountId:'u',id,enabled:true});await push(w);expect(w.notification).toHaveBeenCalledOnce();expect(w.notification.mock.calls[0][1].tag).toBe('gymtrack-daily-workout');
+});
 it('shows a generic background reminder and badge only after device opt-in',async()=>{
  const w=worker();await push(w);expect(w.notification).not.toHaveBeenCalled();await pushDeviceGrant({accountId:'u',id,enabled:true});await push(w);
  expect(w.notification).toHaveBeenCalledOnce();expect(w.badge).toHaveBeenCalledWith(1);expect(w.notification.mock.calls[0][1].tag).toBe('gymtrack-daily-workout');

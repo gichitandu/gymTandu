@@ -32,7 +32,6 @@ import { DataSet, localDate, uid } from "../models/domain";
 import { StatusComponent } from "../shared/status.component";
 import { IconComponent } from "../shared/icon.component";
 import { PwaService } from "../services/pwa";
-import { ExternalTimerService } from "../services/external-timer";
 import { ArchiveSyncService } from "../services/archive-sync";
 import { ArchiveSyncComponent } from "../shared/archive-sync.component";
 import { mergeRecoveredArchive } from "../services/archive-recovery";
@@ -171,17 +170,6 @@ interface ProfileFormDraft {
               (change)="setting('prefill', $event.checked)"
             />
           </div>
-          <div class="setting-row">
-            <div>
-              <b>Notifiche statiche del recupero</b>
-              <p>Avvisi con l’ora di fine: non mostrano un cronometro che scorre nel Centro Notifiche.</p>
-            </div>
-            <mat-slide-toggle aria-label="Avvisi automatici del recupero fuori app"
-              [checked]="s.settings().externalTimerEnabled!==false" (change)="timerSetting($event.checked)"/>
-          </div>
-          <p class="subtle" style="margin-top:12px">Su iPhone apri GymTrack dalla schermata Home. Il conto alla rovescia e i comandi Pausa/Riprendi nella tendina, come Orologio, richiedono un’app iOS nativa; nella versione web metti in pausa e riprendi dall’allenamento.</p>
-          @if(s.settings().externalTimerEnabled!==false){<div class="actions"><button type="button" (click)="externalTimer?.requestAutomaticPermission()">Consenti notifiche su questo dispositivo</button></div>}
-          @if(externalTimer?.message()){<p class="subtle" role="status" style="margin-top:10px">{{externalTimer.message()}}</p>}
           <div class="setting-row">
             <div>
               <b>Catalogo esercizi</b>
@@ -386,7 +374,6 @@ export class ProfileComponent {
     finally{if(!exited){if(root)root.inert=priorInert||false;this.pwa.updating.set(false);}this.loggingOut.set(false);}
   }
   pwa = inject(PwaService);
-  externalTimer = inject(ExternalTimerService,{optional:true});
   fb = inject(FormBuilder);
   working = signal(false);
   pending = signal<DataSet | undefined>(undefined);
@@ -504,13 +491,6 @@ export class ProfileComponent {
       if (key === "unit") d.settings[0].unit = value as "kg" | "lb";
       if (key === "prefill") d.settings[0].prefill = !!value;
     });
-  }
-  async timerSetting(enabled:boolean){
-    const before=this.s.settings().externalTimerEnabled!==false;
-    this.externalTimer?.setAutomaticEnabled(enabled);
-    // Keep the permission call on the toggle gesture, before persistence awaits.
-    if(enabled)void this.externalTimer?.requestAutomaticPermission();
-    if(!await this.s.change(d=>{d.settings[0].externalTimerEnabled=enabled;},enabled?'Avvisi automatici del recupero attivati.':'Avvisi automatici del recupero disattivati.',false))this.externalTimer?.setAutomaticEnabled(before);
   }
   backupDate() {
     return new Date(this.s.settings().lastBackup!).toLocaleString("it-IT");

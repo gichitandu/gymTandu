@@ -130,6 +130,7 @@ export interface IphoneChecklist {device:string;ios:string;checks:Record<string,
 export interface CatalogBaseline { exercises: Record<string, string>; groups: Record<string, string> }
 export interface AppSettings extends Entity {
   catalogBaseline?: CatalogBaseline;
+  /** Legacy notification preference, retained only for archive compatibility. */
   externalTimerEnabled?: boolean;
   backupConfirmedAt?:string;
   backupReminderDays?:number;

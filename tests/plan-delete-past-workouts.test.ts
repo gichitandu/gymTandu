@@ -100,6 +100,16 @@ it('moves directly to the next historical set without a rest timer or notificati
   await c.complete({timeStamp:1000} as MouseEvent);
   expect(c.recordingPast()).toBe(true);expect(c.step()).toBe('record');expect(c.currentSet()!.id).toBe(sets[1].id);expect(c.restEnd()).toBe(0);expect(timer.requestAutomaticPermission).not.toHaveBeenCalled();expect(s.sets(exercise.id)[0].completed).toBe(true);
 });
+it.each([true,false,undefined])('keeps the in-app recovery working without requesting notification permission with legacy preference %s',async enabled=>{
+  await s.change(data=>{data.settings[0].externalTimerEnabled=enabled;},'',false);await s.start('day-a');const workout=s.draft()!,plans=structuredClone(s.data().plans);
+  const c=runInInjectionContext(injector,()=>new ActiveWorkoutComponent());active.push(c);Object.defineProperty(c,'workoutId',{value:()=>workout.id});
+  const timer={requestAutomaticPermission:vi.fn(),stop:vi.fn(),sync:vi.fn()};Object.defineProperty(c,'externalTimer',{value:timer});
+  const exercise=s.workoutExercises(workout.id)[0],set=s.sets(exercise.id)[0];c.open(exercise);c.record(set);c.weight=80;c.reps=8;
+  await c.complete({timeStamp:1000} as MouseEvent);
+  expect(c.step()).toBe('rest');expect(c.remaining()).toBeGreaterThan(0);expect(timer.requestAutomaticPermission).not.toHaveBeenCalled();
+  c.pauseRest();const paused=c.remaining();expect(c.paused()).toBe(true);c.adjustRest(15);expect(c.remaining()).toBe(paused+15);c.pauseRest();expect(c.paused()).toBe(false);expect(c.remaining()).toBe(paused+15);
+  expect(s.sets(exercise.id)[0]).toMatchObject({id:set.id,completed:true,weight:80,reps:8});expect(s.data().plans).toEqual(plans);
+});
 it('closes an unconfirmed past session only after confirmation, preserving inputs and unlocking another date',async()=>{
   const past=moveDate(localDate(),-4);await s.start('day-a',past);
   const workout=s.draft()!,exercise=s.workoutExercises(workout.id)[0],set=s.sets(exercise.id)[0];
