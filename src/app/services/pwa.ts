@@ -59,15 +59,11 @@ export class PwaService {
    if(this.drafts)saves.push(this.drafts.flushAll());
    if((await Promise.all(saves)).some(result=>result===false))throw Error('Salva o correggi i dati del modulo prima di continuare.');
    await this.waitForLocalWrites();
-   // Manual updates reuse the durable local archive without waiting for an
-   // online copy or requiring a JSON export. Pending sync metadata stays put.
-   if(!(reason==='update'&&allowPendingSync)&&this.cloud&&!await this.cloud.flush()){
-    if(reason==='update'){
-     this.updateNotice.set('Aggiornamento automatico in attesa della sincronizzazione online. Puoi usare “Aggiorna questo dispositivo”: non serve un backup manuale.');
-     return false;
-    }
-    // Explicit offline logout keeps drafts and the pending server copy.
-    if(navigator.onLine!==false)throw Error('Sincronizzazione online da completare o verificare. I dati sul dispositivo sono conservati.');
+   // Logout and manual updates reuse the durable local archive. Only automatic
+   // updates wait for online sync. Pending sync metadata stays untouched.
+   if(reason==='update'&&!allowPendingSync&&this.cloud&&!await this.cloud.flush()){
+    this.updateNotice.set('Aggiornamento automatico in attesa della sincronizzazione online. Puoi usare “Aggiorna questo dispositivo”: non serve un backup manuale.');
+    return false;
    }
    // A save accepted while waiting may have cleared or revised its form draft.
    // Persist that final state as well before revoking the cookie or reloading.
@@ -109,10 +105,11 @@ export class PwaService {
   finally{if(root&&!reloading)root.inert=priorInert||false;this.updating.set(false);}
  }
  async finishLogoutUpdate():Promise<void>{
-  // Called after prepareExit succeeded and the account cookie was revoked.
-  try{await this.releases.check();await this.releases.activateReady();}
-  catch{/* The next opening can retry; logout must still complete. */}
-  finally{location.reload();}
+  // The exit is already durable and the cookie revoked or marked pending.
+  // A new document adopts the newest downloaded worker version; do not keep
+  // the signed-out screen inert while downloading/checking over the network.
+  location.reload();
  }
+
  ngOnDestroy(){this.destroyed=true;clearTimeout(this.autoTimer);for(const subscription of this.subscriptions)subscription.unsubscribe();window.removeEventListener('online',this.onOnline);window.removeEventListener('offline',this.onOffline);window.removeEventListener('beforeinstallprompt',this.onInstall);window.removeEventListener('appinstalled',this.onInstalled);document.removeEventListener('visibilitychange',this.onVisibility);}
 }

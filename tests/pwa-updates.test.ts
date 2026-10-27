@@ -50,17 +50,17 @@ it('does not bypass local conflicts or failed queued writes during a manual upda
  const t=setup();t.store.conflicted.set(true);
  try{await t.pwa.reload();expect(t.reload).not.toHaveBeenCalled();t.store.conflicted.set(false);t.queue(Promise.resolve(false));await t.pwa.reload();expect(t.reload).not.toHaveBeenCalled();expect(t.pwa.updateError()).toContain('salvataggio sul dispositivo');}finally{t.injector.destroy();}
 });
-it('keeps a disconnected logout possible only after local drafts have been durably flushed',async()=>{
- const t=setup();vi.stubGlobal('navigator',{onLine:false});t.cloud.flush.mockResolvedValue(false);
- try{expect(await t.pwa.prepareExit('logout')).toBe(true);expect(t.drafts.flushAll).toHaveBeenCalledTimes(2);expect(t.cloud.flush).toHaveBeenCalledOnce();expect(t.reload).not.toHaveBeenCalled();t.drafts.flushAll.mockResolvedValue(false);expect(await t.pwa.prepareExit('logout')).toBe(false);expect(t.pwa.updateError()).toContain('Uscita sospesa');}finally{t.injector.destroy();}
+it.each([true,false])('finishes logout after local writes without waiting on sync (online=%s)',async online=>{
+ const t=setup();vi.stubGlobal('navigator',{onLine:online});t.cloud.flush.mockResolvedValue(false);
+ try{expect(await t.pwa.prepareExit('logout')).toBe(true);expect(t.drafts.flushAll).toHaveBeenCalledTimes(2);expect(t.cloud.flush).not.toHaveBeenCalled();expect(t.reload).not.toHaveBeenCalled();t.drafts.flushAll.mockResolvedValue(false);expect(await t.pwa.prepareExit('logout')).toBe(false);expect(t.pwa.updateError()).toContain('Uscita sospesa');}finally{t.injector.destroy();}
 });
 it('defers a requested automatic update while a workout is open and applies it after the workout ends',async()=>{
  vi.useFakeTimers();const t=setup();t.store.draft.set({id:'active'});t.release.autoUpdateReady=()=>true;t.release.downloadedBuild=()=> 'b'.repeat(64);t.release.policy=()=>({requestedBuildId:'b'.repeat(64)} as any);t.release.activateReady.mockResolvedValue(true);
  try{t.release.checked.next();await Promise.resolve();expect(t.reload).not.toHaveBeenCalled();expect(t.release.activateReady).not.toHaveBeenCalled();t.store.draft.set(null);await vi.advanceTimersByTimeAsync(30000);expect(t.release.activateReady).toHaveBeenCalledExactlyOnceWith('b'.repeat(64));expect(t.reload).toHaveBeenCalledOnce();}finally{t.injector.destroy();vi.useRealTimers();}
 });
-it('finishes logout with a hard reload even when the release service fails',async()=>{
- const t=setup();t.release.check.mockRejectedValue(Error('Network unavailable'));
- try{await t.pwa.finishLogoutUpdate();expect(t.reload).toHaveBeenCalledOnce();}finally{t.injector.destroy();}
+it('finishes logout without waiting for an update download or activation',async()=>{
+ const t=setup();t.release.check.mockImplementation(()=>new Promise(()=>{}));t.release.activateReady.mockImplementation(()=>new Promise(()=>{}));
+ try{await t.pwa.finishLogoutUpdate();expect(t.reload).toHaveBeenCalledOnce();expect(t.release.check).not.toHaveBeenCalled();expect(t.release.activateReady).not.toHaveBeenCalled();}finally{t.injector.destroy();}
 });
 it('freezes input before capturing drafts and restores interaction after a rejected exit',async()=>{
  const t=setup(),root={inert:false};Object.assign(document,{querySelector:()=>root});

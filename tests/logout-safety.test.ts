@@ -20,12 +20,21 @@ it('logs out once, keeps saved data, and allows the update coordinator to contro
   expect(auth.user()).toBeNull();expect(auth.archiveChoice()?.mode).toBe('signed-out');
   expect(t.storage.get('gymtrack-saved-data')).toBe('keep-me');expect(t.reload).not.toHaveBeenCalled();
 });
-it('retains the current session when online revocation fails so retry is possible',async()=>{
-  const t=browser();const auth=new AuthService();const user={id:'u',name:'Atleta',email:'u@test.it',role:'User' as const,active:true,owner:false};auth.user.set(user);
+it('signs out locally when online revocation fails, preserving archives and revoking before the next login',async()=>{
+  const t=browser();const auth=new AuthService();auth.user.set({id:'u',name:'Atleta',email:'u@test.it',role:'User',active:true,owner:false});
   t.fetch.mockRejectedValueOnce(Error('Network failed'));
-  await expect(auth.logout({reload:false})).rejects.toThrow('Network failed');
-  expect(auth.user()).toEqual(user);expect(auth.loggingOut()).toBe(false);
-  await auth.logout({reload:false});expect(auth.user()).toBeNull();
+  await auth.logout({reload:false});expect(auth.user()).toBeNull();expect(auth.archiveChoice()?.mode).toBe('signed-out');expect(t.storage.get(PENDING_LOGOUT_KEY)).toBe('1');expect(t.storage.get('gymtrack-saved-data')).toBe('keep-me');
+  const reopened=new AuthService();await reopened.login('new@test.it','password');
+  expect(t.fetch.mock.calls.map(call=>call[0])).toEqual(['/api/auth/logout','/api/auth/logout','/api/auth/login']);expect(t.storage.has(PENDING_LOGOUT_KEY)).toBe(false);
+});
+it('retains the current page if neither cookie revocation nor durable local sign-out can succeed',async()=>{
+  const t=browser();const auth=new AuthService();const user={id:'u',name:'Atleta',email:'u@test.it',role:'User' as const,active:true,owner:false};auth.user.set(user);
+  t.fetch.mockRejectedValueOnce(Error('Network failed'));(localStorage as any).setItem=()=>{throw Error('Storage blocked');};
+  await expect(auth.logout({reload:false})).rejects.toThrow('non consente di ricordarla');expect(auth.user()).toEqual(user);expect(auth.loggingOut()).toBe(false);expect(t.storage.get('gymtrack-saved-data')).toBe('keep-me');
+});
+it('never logs into another account while offline revocation is pending',async()=>{
+  const t=browser(false);t.storage.set(PENDING_LOGOUT_KEY,'1');const auth=new AuthService();
+  await expect(auth.login('new@test.it','password')).rejects.toThrow('Riconnettiti');expect(t.fetch).not.toHaveBeenCalled();expect(t.storage.get(PENDING_LOGOUT_KEY)).toBe('1');expect(auth.user()).toBeNull();
 });
 it('records an offline exit and revokes its pending cookie before a later login',async()=>{
   const t=browser(false);t.storage.set(OFFLINE_ACCOUNT_KEY,JSON.stringify({id:'old',name:'Old',owner:false}));
@@ -44,4 +53,10 @@ it('ignores a refresh started before logout and keeps the transition locked unti
   await Promise.resolve();await Promise.resolve();
   expect(auth.user()).toBeNull();expect(auth.archiveChoice()?.mode).toBe('signed-out');expect(auth.platformOwner()).toBe(false);expect(auth.loggingOut()).toBe(true);
   await expect(auth.login('other@test.it','password')).rejects.toThrow('Uscita in corso');auth.openLocal();expect(auth.user()).toBeNull();
+});
+
+it('keeps the next login blocked while pending cookie revocation still fails',async()=>{
+ const t=browser();t.storage.set(PENDING_LOGOUT_KEY,'1');t.fetch.mockRejectedValue(Error('Service unavailable'));
+ const auth=new AuthService();await expect(auth.login('new@test.it','password')).rejects.toThrow('Service unavailable');
+ expect(t.fetch.mock.calls.every(call=>call[0]==='/api/auth/logout')).toBe(true);expect(t.storage.get(PENDING_LOGOUT_KEY)).toBe('1');expect(auth.user()).toBeNull();expect(t.storage.get('gymtrack-saved-data')).toBe('keep-me');
 });

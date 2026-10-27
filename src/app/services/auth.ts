@@ -74,7 +74,8 @@ export class AuthService {
   }
   private hasPendingLogout(){try{return localStorage.getItem(PENDING_LOGOUT_KEY)==='1';}catch{return false;}}
   private flushPendingLogout():Promise<void>{
-    if(!this.hasPendingLogout()||!navigator.onLine)return Promise.resolve();
+    if(!this.hasPendingLogout())return Promise.resolve();
+    if(!navigator.onLine)return Promise.reject(Error('Riconnettiti per completare l’uscita precedente prima di accedere.'));
     if(this.pendingLogoutRequest)return this.pendingLogoutRequest;
     const job=this.request('auth/logout',{}).then(()=>{localStorage.removeItem(PENDING_LOGOUT_KEY);}).finally(()=>{if(this.pendingLogoutRequest===job)this.pendingLogoutRequest=undefined;});
     this.pendingLogoutRequest=job;return job;
@@ -84,12 +85,19 @@ export class AuthService {
     this.clientViewRequested.set(false);
     this.loggingOut.set(true);this.lifecycle++;let completed=false;
     try{
-      if(navigator.onLine){await this.request('auth/logout',{});try{localStorage.removeItem(PENDING_LOGOUT_KEY);}catch{}}
+      let revoked=false;
+      if(navigator.onLine){
+        try{await this.request('auth/logout',{});revoked=true;}catch{/* Save the exit intent if a reported connection cannot reach the server. */}
+      }
+      if(revoked){try{localStorage.removeItem(PENDING_LOGOUT_KEY);}catch{}}
       else {
-        // iOS cannot revoke an HttpOnly cookie offline. Remember the exit and
-        // revoke that same session before any later login or online re-entry.
-        try{localStorage.setItem(PENDING_LOGOUT_KEY,'1');localStorage.setItem(ARCHIVE_CHOICE_KEY,JSON.stringify({mode:'signed-out'}));}
-        catch{throw Error('Uscita non completata: il dispositivo non consente di ricordarla. Riprova con una connessione.');}
+        // Keep account archives untouched. Never reopen the still-valid cookie:
+        // persist local sign-out and revoke it before another login or refresh.
+        try{
+          localStorage.setItem(PENDING_LOGOUT_KEY,'1');
+          localStorage.setItem(ARCHIVE_CHOICE_KEY,JSON.stringify({mode:'signed-out'}));
+          if(localStorage.getItem(PENDING_LOGOUT_KEY)!=='1'||JSON.parse(localStorage.getItem(ARCHIVE_CHOICE_KEY)||'null')?.mode!=='signed-out')throw Error('Exit not persisted');
+        }catch{throw Error('Uscita non completata: il dispositivo non consente di ricordarla. Riprova con una connessione.');}
       }
       try{localStorage.removeItem(OFFLINE_ACCOUNT_KEY);}catch{}
       this.offlineAccount.set(null);this.rememberChoice({mode:'signed-out'});this.user.set(null);this.platformOwner.set(false);this.offlineMode.set(false);this.setup.set(false);
