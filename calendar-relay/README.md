@@ -2,6 +2,21 @@
 
 L'integrazione nell'app e il servizio sono pronti nel codice. Il calendario NON è attivo finché questo servizio non è pubblicato e le due variabili server non sono configurate. Non occorre l'abbonamento Apple Developer. Questa procedura usa Cloudflare Workers Free e D1 Free; non attivare il piano Paid. I limiti gratuiti si applicano: https://developers.cloudflare.com/workers/platform/pricing/ .
 
+## Avvio guidato Windows
+
+1. Installa Node.js LTS 22 o successivo da https://nodejs.org .
+2. Estrai TUTTO lo ZIP, poi apri la cartella `calendar-relay`.
+3. Fai doppio clic su `AVVIA-WINDOWS.cmd`. Non servono privilegi di amministratore e non va cambiata la policy PowerShell.
+4. Autorizza Cloudflare nel browser quando richiesto. Se hai più account, seleziona quello destinato a GymTrack.
+5. La procedura crea o riusa il database `gymtrack-calendar`, prepara lo schema senza cancellare record e pubblica il Worker. Se Cloudflare chiede di scegliere un sottodominio `workers.dev`, segui il prompt; non occorre acquistare domini o piani.
+6. Quando richiesto, copia l'URL HTTPS `workers.dev` mostrato da Wrangler e incollalo nella finestra della procedura.
+7. Alla prima configurazione viene generata una chiave tecnica casuale: viene copiata negli appunti Windows, MA NON stampata o salvata nei file. Conservala nel tuo gestore password, poi premi Invio. La chiave viene caricata come segreto su Cloudflare e gli appunti vengono svuotati. Non inviarla in chat.
+8. Segui la sezione “Collegare GymTrack” sotto: la sola pubblicazione Cloudflare NON attiva ancora la sincronizzazione nell'app. Se non trovi le impostazioni di hosting, fermati qui e comunica solo l'URL pubblico del Worker: occorre individuare un canale sicuro per configurare il segreto.
+
+Se riesegui la procedura e trova già `CALENDAR_RELAY_SECRET`, la mantiene e non può leggerla né ricopiarla negli appunti. Usa la copia conservata nel tuo gestore password. La cartella `.installer` contiene gli strumenti npm scaricati sul tuo PC; l'autorizzazione Cloudflare resta gestita da Wrangler sul tuo PC. Nessun dato di allenamento viene letto durante questa configurazione.
+
+Verifica tecnica eseguita con comandi Cloudflare simulati; l'avvio su Windows e la pubblicazione sul tuo account richiedono ancora la tua esecuzione. Il programma non attiva piani Paid. Restano applicabili i limiti gratuiti del provider.
+
 ## 1. Account e pubblicazione (sul proprio computer)
 
 1. Crea l'account gratuito su https://dash.cloudflare.com/sign-up .
