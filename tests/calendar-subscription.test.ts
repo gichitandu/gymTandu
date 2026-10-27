@@ -1,0 +1,67 @@
+import {beforeEach,afterEach,it,expect,vi} from 'vitest';
+import {DatabaseSync} from 'node:sqlite';
+import {readFileSync} from 'node:fs';
+import relay,{renderCalendar} from '../calendar-relay/index.js';
+import {calendarApi,calendarProjection,calendarConfigured,calendarPublish} from '../worker/calendar.js';
+let sql:DatabaseSync,env:any;
+const key='a'.repeat(64),other='b'.repeat(64),origin='https://calendar.example.test',secret='s'.repeat(64);
+const events=[{id:'event-1',title:'Gambe, forza; prova\nBEGIN:VEVENT 🏋️',date:'2026-10-31'}];
+function request(method='GET',body?:any,account=key,authorized=true){return new Request(origin+'/manage/'+account,{method,headers:{'Content-Type':'application/json',...(authorized?{Authorization:'Bearer '+secret}:{})},...(body?{body:JSON.stringify(body)}:{})});}
+async function enable(account=key,revision=1){await relay.fetch(request('POST',{enable:true,events,revision,updatedAt:1793059200000},account),env);return (await (await relay.fetch(request('GET',undefined,account),env)).json()) as any;}
+async function read(token:string){return relay.fetch(new Request(origin+'/calendar/'+token+'.ics'),env);}
+beforeEach(()=>{sql=new DatabaseSync(':memory:');sql.exec(readFileSync('calendar-relay/schema.sql','utf8'));env={CALENDAR_RELAY_SECRET:secret,DB:{prepare:(query:string)=>{let args:any[]=[];return{bind(...values:any[]){args=values;return this;},first:async()=>sql.prepare(query).get(...args),run:async()=>sql.prepare(query).run(...args)}}}};});
+afterEach(()=>{sql.close();vi.restoreAllMocks();});
+it('requires authorization for management and never provides a listing',async()=>{
+ expect((await relay.fetch(request('GET',undefined,key,false),env)).status).toBe(401);
+ expect((await relay.fetch(new Request(origin+'/'),env)).status).toBe(404);
+ expect((await read('c'.repeat(64))).status).toBe(404);
+});
+it('isolates two accounts and keeps tokens stable until revocation',async()=>{
+ const a=await enable(),b=await enable(other);expect(a.token).not.toBe(b.token);expect((await enable()).token).toBe(a.token);
+ expect((await read(a.token)).headers.get('content-type')).toContain('text/calendar');
+ await relay.fetch(request('DELETE'),env);expect((await read(a.token)).status).toBe(404);expect((await read(b.token)).status).toBe(200);
+ const c=await enable();expect(c.token).not.toBe(a.token);expect((await read(a.token)).status).toBe(404);
+});
+it('publishes date changes/removal without duplicating UIDs and rejects older snapshots',async()=>{
+ const a=await enable();const changed=[{...events[0],date:'2026-11-01'}];
+ await relay.fetch(request('POST',{events:changed,revision:3,updatedAt:1793059200000}),env);
+ await relay.fetch(request('POST',{events,revision:2,updatedAt:1793059200000}),env);
+ let text=await (await read(a.token)).text();expect(text).toContain('DTSTART;VALUE=DATE:20261101');expect(text).toContain('DTEND;VALUE=DATE:20261102');expect(text.match(/^UID:/gm)).toHaveLength(1);
+ await relay.fetch(request('POST',{events:[],revision:4,updatedAt:1793059200000}),env);text=await (await read(a.token)).text();expect(text).not.toContain('BEGIN:VEVENT');
+});
+it('never enables a subscription through ordinary saves, including after revocation',async()=>{
+ const body={events,revision:9,updatedAt:1793059200000};await relay.fetch(request('POST',body),env);expect((await (await relay.fetch(request(),env)).json() as any).enabled).toBe(false);
+ const a=await enable();await relay.fetch(request('DELETE'),env);await relay.fetch(request('POST',body),env);expect((await read(a.token)).status).toBe(404);
+});
+it('escapes ICS injection, folds UTF-8 lines and handles leap year/DST as all-day dates',()=>{
+ const text=renderCalendar([{...events[0],title:'🏋️'.repeat(49)+events[0].title,date:'2028-02-29'}],2,1793059200000,key);
+ expect(text.match(/^BEGIN:VEVENT$/gm)).toHaveLength(1);expect(text).toContain('DTEND;VALUE=DATE:20280301');expect(text).toContain('\\nBEGIN:VEVENT');expect(text).toContain('\\,');expect(text.split('\r\n').every(line=>new TextEncoder().encode(line).length<=75)).toBe(true);
+ expect(()=>renderCalendar([{...events[0],date:'2027-02-29'}],1,1793059200000,key)).toThrow();
+});
+it('projects only scheduled titles and dates, excluding completed sessions and private notes',()=>{
+ const data={scheduledWorkouts:[{...events[0],dayName:'Gambe',notes:'private',workoutId:'completed'},{id:'next',date:'2026-11-01',dayName:'Petto',planName:'private plan',notes:'private'}],workouts:[{id:'completed',status:'completed'}]};
+ expect(calendarProjection(data)).toEqual([{id:'next',date:'2026-11-01',title:'Petto'}]);
+});
+it('does not create any connection while unconfigured or unauthorized',async()=>{
+ const fetch=vi.spyOn(globalThis,'fetch');const getter=vi.fn();const req=new Request('https://gymtrack.test/api/calendar-subscription');
+ expect(calendarConfigured({})).toBe(false);expect((await calendarApi(req,{},null,getter)).status).toBe(401);
+ expect(await (await calendarApi(req,{}, {id:'alice'},getter)).json()).toEqual({configured:false,enabled:false});expect(getter).not.toHaveBeenCalled();expect(fetch).not.toHaveBeenCalled();
+ await calendarPublish({}, {id:'alice'},'invalid',1,1);expect(fetch).not.toHaveBeenCalled();
+});
+it('uses distinct opaque account identities and keeps external secrets out of the client response',async()=>{
+ const realFetch=globalThis.fetch;const seen:string[]=[];
+ vi.spyOn(globalThis,'fetch').mockImplementation(async(input:any,options:any)=>{const req=new Request(input,options);seen.push(new URL(req.url).pathname);return relay.fetch(req,env);});
+ const main={CALENDAR_RELAY_URL:origin,CALENDAR_RELAY_SECRET:secret};
+ const backup={data:{scheduledWorkouts:[{id:'e1',dayName:'Gambe',date:'2026-10-31',notes:'private'}],workouts:[]}};
+ const archive=async()=>Response.json({backup:JSON.stringify(backup),revision:1,updatedAt:1793059200000});
+ const response=await calendarApi(new Request('https://gymtrack.test/api/calendar-subscription',{method:'POST'}),main,{id:'alice'},archive);const state=await response.json() as any;
+ expect(state.enabled).toBe(true);expect(state.url).toMatch(/^https:\/\/calendar.example.test\/calendar\/[a-f0-9]{64}\.ics$/);expect(JSON.stringify(state)).not.toContain(secret);expect(seen.every(p=>!p.includes('alice'))).toBe(true);
+ await calendarApi(new Request('https://gymtrack.test/api/calendar-subscription'),main,{id:'bob'},archive);expect(seen.at(-1)).not.toBe(seen[0]);
+ expect(realFetch).toBeTypeOf('function');
+});
+
+it('does not send event data for an account that has never enabled the calendar',async()=>{
+ const fetch=vi.spyOn(globalThis,'fetch').mockResolvedValue(Response.json({enabled:false}));
+ await calendarPublish({CALENDAR_RELAY_URL:origin,CALENDAR_RELAY_SECRET:secret},{id:'alice'},'not parsed before opt-in',1,1793059200000);
+ expect(fetch).toHaveBeenCalledOnce();expect(fetch.mock.calls[0][1]?.method).toBe('GET');expect(fetch.mock.calls[0][1]?.body).toBeUndefined();
+});

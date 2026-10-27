@@ -1,5 +1,6 @@
 import { defaultExercises, defaultGroups } from './default-catalog.js';
 import { archiveApi } from './archive.js';
+import { calendarApi, calendarPublish } from './calendar.js';
 // The platform's ChatGPT access boundary remains in place. App sessions are
 // additionally bound to that authenticated visitor, and never stored in JS.
 const OWNER = 'giacomotanduo004@gmail.com';
@@ -70,7 +71,7 @@ function exerciseFields(b,groups) {
   if(typeof e.imageData!=='string'||e.imageData.length>2800000||e.imageData && !/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/.test(e.imageData)) fail('Immagine non valida.');
   return e;
 }
-export async function api(request,env) {
+export async function api(request,env,ctx) {
   try {
     const url=new URL(request.url), path=url.pathname, db=env.DB;
     if(!db) fail('Servizio account non ancora configurato.',503);
@@ -79,7 +80,8 @@ export async function api(request,env) {
     if(request.method!=='GET' && request.headers.get('origin')!==url.origin) fail('Richiesta non autorizzata.',403);
     if(request.method!=='GET' && !request.headers.get('content-type')?.startsWith('application/json')) fail('Formato non supportato.',415);
     const me=await session(request,db);
-    if(path==='/api/archive')return await archiveApi(request,env,me);
+    if(path==='/api/calendar-subscription')return await calendarApi(request,env,me,()=>archiveApi(new Request(url.origin+'/api/archive?scope=account',{headers:request.headers}),env,me));
+    if(path==='/api/archive')return await archiveApi(request,env,me,async(text,revision,at)=>{const publish=calendarPublish(env,me,text,revision,at).catch(()=>{});if(ctx?.waitUntil)ctx.waitUntil(publish);else await publish;});
     if(path==='/api/app-release'&&request.method==='GET') {
       const release=await db.prepare('SELECT build_id,generation,requested_at FROM app_releases WHERE id=?').bind('current').first();
       return json({buildId:APP_BUILD_ID,requestedBuildId:release?.build_id||null,generation:release?.generation||0,requestedAt:release?.requested_at||null});
@@ -209,9 +211,9 @@ export async function api(request,env) {
 }
 // __ASSETS__ is replaced by the build, keeping this deployment dependency-free.
 const assets = /* __ASSETS__ */ {};
-export default {async fetch(request,env) {
+export default {async fetch(request,env,ctx) {
   const path=new URL(request.url).pathname;
-  if(path.startsWith('/api/')) return api(request,env);
+  if(path.startsWith('/api/')) return api(request,env,ctx);
   if(!['GET','HEAD'].includes(request.method)) return new Response('Method not allowed',{status:405});
   const asset=assets[path==='/'?'/index.html':path];
   if(!asset) return new Response('Not found',{status:404});

@@ -58,7 +58,7 @@ async function archiveCleanup(db,bucket,scope) {
  }catch{/* A later successful upload can retry best-effort retention cleanup. */}
 }
 
-export async function archiveApi(request,env,me) {
+export async function archiveApi(request,env,me,onSaved) {
  const url=new URL(request.url),kind=url.searchParams.get('scope')||'device',visitor=request.headers.get('oai-authenticated-user-id');
  if(!visitor)archiveFail('Accedi prima con ChatGPT.',401);
  if(!['device','account'].includes(kind))archiveFail('Archivio non valido.');
@@ -107,5 +107,7 @@ export async function archiveApi(request,env,me) {
   return archiveJson({error:'La copia persistente è cambiata durante il salvataggio. Le modifiche locali sono conservate.',revision:current?.revision||0},409);
  }
  await archiveCleanup(db,env.BUCKET,scope);
+ // Optional external calendar must never make a committed archive look unsaved.
+ if(kind==='account'&&onSaved){try{await onSaved(body.text,revision,at);}catch{/* Retry on next save or reconnect. Archive remains durable. */}}
  return archiveJson({revision,updatedAt:at,contentHash:hash},200,{ETag:'"'+revision+'"'});
 }

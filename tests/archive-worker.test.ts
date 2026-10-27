@@ -2,7 +2,7 @@ import { beforeEach, afterEach, it, expect, vi } from 'vitest';
 import { DatabaseSync } from 'node:sqlite';
 import { readFileSync, readdirSync } from 'node:fs';
 import { api } from '../worker/index.js';
-import { ARCHIVE_LIMIT_BYTES } from '../worker/archive.js';
+import { archiveApi, ARCHIVE_LIMIT_BYTES } from '../worker/archive.js';
 import { seed } from '../src/app/core/seed';
 import { exportBackup } from '../src/app/services/backup';
 
@@ -98,4 +98,12 @@ it('accepts quoted revision preconditions and detects missing or corrupted objec
  expect((await get()).response.status).toBe(503);
  objects.delete(key);expect((await get()).response.status).toBe(503);
  expect(sql.prepare('SELECT revision FROM archive_heads').get()!.revision).toBe(1);
+});
+
+it('keeps a committed account archive readable when the optional calendar service fails',async()=>{
+ const cookie=await activate();const me=sql.prepare('SELECT * FROM users LIMIT 1').get() as any;
+ const hook=vi.fn(async()=>{throw Error('calendar offline');});
+ const response=await archiveApi(request('account',backup,{cookie}),env,me,hook);
+ expect(response.status).toBe(200);expect(hook).toHaveBeenCalledOnce();
+ const saved=await get('account',{cookie});expect(saved.response.status).toBe(200);expect(saved.data.backup).toBe(backup);expect(saved.data.revision).toBe(1);
 });

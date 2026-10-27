@@ -3,7 +3,7 @@
     <div class="cal-heading-copy"><span class="cal-eyebrow"><span class="cal-section-mark" aria-hidden="true">↗</span> IL TUO RITMO</span><h1>Calendario<span class="cal-title-dot" aria-hidden="true"></span></h1><p>Il tempo che dedichi a te.</p></div>
     <button class="cal-today" (click)="choose(today)" [class.is-today]="selected()===today"><gt-icon name="calendar"/> Oggi</button>
   </header>
-  @if(!modal()){<gt-status/>}
+  @if(!modal()){<gt-status/><gt-calendar-subscription/>}
   <section class="cal-spotlight" aria-label="Riepilogo del periodo">
     <div class="cal-spotlight-copy"><span class="cal-eyebrow">{{periodTitle()}}</span><h2>{{monthLabel()}}</h2><p>{{periodStats().planned?periodStats().planned+' '+(periodStats().planned===1?'allenamento ti aspetta.':'allenamenti ti aspettano.'):'Il prossimo passo parte da qui.'}}</p><div class="cal-mini-stats"><span><i class="cal-state-dot done"></i><b>{{periodStats().completed}}</b><small>Svolti</small></span><span><i class="cal-state-dot planned"></i><b>{{periodStats().planned}}</b><small>In programma</small></span></div></div>
     <div class="cal-score" [style.--cal-progress]="scoreProgress()+'%'" role="img" [attr.aria-label]="periodStats().completed+' allenamenti svolti'+(target()?' su un obiettivo settimanale di '+target():' nel periodo')"><div><gt-icon name="bolt"/><strong>{{periodStats().completed}}</strong><span>{{target()?'obiettivo '+target():'allenamenti'}}</span></div></div>

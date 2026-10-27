@@ -1,3 +1,4 @@
+import {CalendarSubscriptionComponent} from '../shared/calendar-subscription.component';
 import { DateFieldComponent } from '../shared/date-field.component';
 import { confirmationForContext } from '../services/confirmation';
 import { Component, computed, effect, ElementRef, inject, signal } from '@angular/core';
@@ -10,7 +11,7 @@ import { localDate, ScheduledWorkout, uid } from '../models/domain';
 import { CalendarView, calendarDays, calendarActivity, DayActivity, moveDate, movePeriod, parseLocalDate, weeklyDates } from '../services/calendar';
 import { IconComponent } from '../shared/icon.component';
 import { StatusComponent } from '../shared/status.component';
-@Component({standalone:true,imports: [DateFieldComponent,FormsModule,RouterLink,A11yModule,IconComponent,StatusComponent],templateUrl:'./calendar.component.html',styleUrl:'./calendar.component.css'})
+@Component({standalone:true,imports: [CalendarSubscriptionComponent,DateFieldComponent,FormsModule,RouterLink,A11yModule,IconComponent,StatusComponent],templateUrl:'./calendar.component.html',styleUrl:'./calendar.component.css'})
 export class CalendarComponent {
  private confirmation=confirmationForContext();
  s=inject(Store);router=inject(Router);
