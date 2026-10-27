@@ -14,11 +14,12 @@ import { AppReleaseService } from '../services/app-release';
  </div>
  @if(auth.uiRole()==='SuperAdmin'&&!auth.offlineMode()){
   <div class="release-distribution"><h4>Distribuzione agli utenti</h4>
-   <p>Richiedi l’ultima versione già pubblicata. Gli utenti autorizzati la applicheranno alla riapertura o al logout; un allenamento in corso rimane aperto.</p>
+   <p>Richiedi l’ultima versione già pubblicata. Gli utenti autorizzati la applicheranno alla riapertura o al logout; un allenamento in corso rimane aperto. Non serve un backup manuale.</p>
    <button type="button" class="primary" (click)="release.distribute()" [disabled]="release.distributing()||release.checking()||pwa.updating()">{{release.distributing()?'Distribuzione…':'Distribuisci ultima versione'}}</button>
    @if(release.policy()?.requestedAt){<small>Ultima richiesta: {{date(release.policy()!.requestedAt!)}}</small>}
   </div>
  }
+ @if(pwa.updateNotice()){<p role="status">{{pwa.updateNotice()}}</p>}
  @if(pwa.updateError()){<p class="update-problem" role="status">{{pwa.updateError()}}</p>}
  @if(release.error()){<p class="update-problem" role="status">{{release.error()}}</p>}
  <p>Il controllo riparte quando torna la connessione. L’aggiornamento conserva l’archivio e le bozze salvate sul dispositivo.</p>

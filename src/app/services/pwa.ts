@@ -13,6 +13,7 @@ export class PwaService {
  event=signal<InstallEvent|undefined>(undefined);
  installed=signal(matchMedia('(display-mode: standalone)').matches || !!(navigator as Navigator&{standalone?:boolean}).standalone);
  online=signal(navigator.onLine);offlineReady=signal(false);updateReady=signal(false);updating=signal(false);storage=signal('Non ancora misurato');persisted=signal<boolean|null>(null);
+ readonly updateNotice=signal('');
  updateError=feedbackSignal('error',feedbackForContext());
  private updates=inject(SwUpdate);
  private store=inject(Store);
@@ -42,8 +43,14 @@ export class PwaService {
  async measureStorage(){try{const e=await navigator.storage?.estimate?.();this.storage.set(e?.usage!==undefined&&e.quota?`${(e.usage/1048576).toFixed(1)} MB usati su ${(e.quota/1048576).toFixed(0)} MB disponibili al sito`:'Misura dello spazio non disponibile in questo Safari');this.persisted.set(await navigator.storage?.persisted?.()??null);}catch{this.storage.set('Misura dello spazio non disponibile');}}
  async install(){const event=this.event();if(event){await event.prompt();await event.userChoice;this.event.set(undefined);}}
  async requestPersistence(){try{if(navigator.storage?.persist&&!(await navigator.storage.persisted()))this.persisted.set(await navigator.storage.persist());}catch{/* The archive remains available even when this browser cannot grant persistence. */}}
- async prepareExit(reason:'update'|'logout'='update'):Promise<boolean>{
-  this.updateError.set('');
+ private async waitForLocalWrites(){
+  let pending;
+  do{pending=this.store.settled();if(await pending===false)throw Error('L’ultimo salvataggio sul dispositivo non è riuscito. Riprova prima di aggiornare.');}while(pending!==this.store.settled());
+  if(this.store.conflicted?.())throw Error('Archivio locale modificato da un’altra finestra. Verifica i salvataggi prima di continuare.');
+  if(this.store.error())throw Error(this.store.error());
+ }
+ async prepareExit(reason:'update'|'logout'='update',allowPendingSync=false):Promise<boolean>{
+  this.updateError.set('');this.updateNotice.set('');
   try{
    if(!this.store.ready())throw Error('Attendi l’apertura dell’archivio prima di continuare.');
    const saves:Promise<boolean|void>[]=[];
@@ -51,16 +58,22 @@ export class PwaService {
    window.dispatchEvent(event);
    if(this.drafts)saves.push(this.drafts.flushAll());
    if((await Promise.all(saves)).some(result=>result===false))throw Error('Salva o correggi i dati del modulo prima di continuare.');
-   let pending;
-   do{pending=this.store.settled();await pending;}while(pending!==this.store.settled());
-   if(this.store.error())throw Error(this.store.error());
-   if(this.cloud&&!await this.cloud.flush()){
-    // Explicit offline logout keeps local drafts and the pending server copy.
-    if(reason!=='logout'||navigator.onLine!==false)throw Error('La copia server è ancora da completare o verificare. I dati locali sono conservati. Apri Profilo → Backup e ripristino.');
+   await this.waitForLocalWrites();
+   // Manual updates reuse the durable local archive without waiting for an
+   // online copy or requiring a JSON export. Pending sync metadata stays put.
+   if(!(reason==='update'&&allowPendingSync)&&this.cloud&&!await this.cloud.flush()){
+    if(reason==='update'){
+     this.updateNotice.set('Aggiornamento automatico in attesa della sincronizzazione online. Puoi usare “Aggiorna questo dispositivo”: non serve un backup manuale.');
+     return false;
+    }
+    // Explicit offline logout keeps drafts and the pending server copy.
+    if(navigator.onLine!==false)throw Error('Sincronizzazione online da completare o verificare. I dati sul dispositivo sono conservati.');
    }
    // A save accepted while waiting may have cleared or revised its form draft.
    // Persist that final state as well before revoking the cookie or reloading.
    if(this.drafts&&!await this.drafts.flushAll())throw Error('Bozza non salvata. Resta nell’app e riprova.');
+   await this.waitForLocalWrites();
+   if(reason==='update'&&allowPendingSync)this.updateNotice.set('Dati e bozze salvati sul dispositivo. La sincronizzazione online riprenderà alla riapertura.');
    return true;
   }catch(error){
    this.updateError.set((reason==='logout'?'Uscita sospesa: ':'Aggiornamento sospeso: ')+(error instanceof Error?error.message:'Salvataggio non riuscito. I dati presenti sono conservati.'));
@@ -87,7 +100,7 @@ export class PwaService {
    // Freeze before the snapshot: typing while the server copy is pending must
    // not create a newer draft between the last flush and the page reload.
    if(root)root.inert=true;
-   if(!await this.prepareExit('update'))return;
+   if(!await this.prepareExit('update',!automatic))return;
    if(automatic&&this.store.draft?.()){this.scheduleAuto();return;}
    const activated=await this.releases.activateReady(automatic?this.releases.policy()?.requestedBuildId||undefined:undefined);
    if(automatic&&!activated)return;

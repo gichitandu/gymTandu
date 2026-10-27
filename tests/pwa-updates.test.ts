@@ -17,7 +17,7 @@ function setup(released=false){
  vi.stubGlobal('navigator',{onLine:true,storage:{persisted:async()=>true,estimate:async()=>({usage:1,quota:100})}});
  const reload=vi.fn();vi.stubGlobal('location',{reload});
  let pending:Promise<unknown>=Promise.resolve();
- const store={ready:()=>true,error:signal(''),settled:()=>pending,draft:signal<any>(null),busy:()=>false};
+ const store={ready:()=>true,error:signal(''),settled:()=>pending,draft:signal<any>(null),busy:()=>false,conflicted:signal(false)};
  const release={checked:new Subject<void>(),updateReady:()=>released,autoUpdateReady:()=>released,downloadedBuild:()=>released?'b'.repeat(64):null,policy:()=>released?{requestedBuildId:'b'.repeat(64)}:null,check:vi.fn().mockResolvedValue(false),activateReady:vi.fn().mockResolvedValue(released)};
  const cloud={flush:vi.fn().mockResolvedValue(true)},drafts={flushAll:vi.fn().mockResolvedValue(true)};
  const injector=createEnvironmentInjector([{provide:Store,useValue:store},{provide:AppReleaseService,useValue:release},{provide:ArchiveSyncService,useValue:cloud},{provide:FormDraftService,useValue:drafts},{provide:SwUpdate,useValue:{versionUpdates:new Subject()}},PwaService],null as unknown as EnvironmentInjector);
@@ -38,9 +38,17 @@ it('keeps the app open when an editor rejects its draft even if a later write cl
  try{await t.pwa.reload();expect(t.reload).not.toHaveBeenCalled();expect(t.pwa.updateError()).toContain('correggi i dati');}finally{t.injector.destroy();}
 });
 
-it('retries a transient failed server copy without poisoning the archive error state',async()=>{
- const t=setup();t.cloud.flush.mockResolvedValueOnce(false);
- try{await t.pwa.reload();expect(t.reload).not.toHaveBeenCalled();expect(t.pwa.updateError()).toContain('copia server');expect(t.store.error()).toBe('');await t.pwa.reload();expect(t.reload).toHaveBeenCalledOnce();expect(t.cloud.flush).toHaveBeenCalledTimes(2);}finally{t.injector.destroy();}
+it('updates manually from saved local data without requiring a server copy or a backup export',async()=>{
+ const t=setup();t.cloud.flush.mockResolvedValue(false);
+ try{await t.pwa.reload();expect(t.reload).toHaveBeenCalledOnce();expect(t.cloud.flush).not.toHaveBeenCalled();expect(t.drafts.flushAll).toHaveBeenCalledTimes(2);expect(t.pwa.updateError()).toBe('');}finally{t.injector.destroy();}
+});
+it('defers automatic updates with pending server sync without presenting it as a failed distribution',async()=>{
+ const t=setup(true);t.cloud.flush.mockResolvedValue(false);
+ try{await vi.waitFor(()=>expect(t.cloud.flush).toHaveBeenCalledOnce());expect(t.reload).not.toHaveBeenCalled();expect(t.release.activateReady).not.toHaveBeenCalled();expect(t.pwa.updateError()).toBe('');expect(t.pwa.updateNotice()).toContain('non serve un backup manuale');}finally{t.injector.destroy();}
+});
+it('does not bypass local conflicts or failed queued writes during a manual update',async()=>{
+ const t=setup();t.store.conflicted.set(true);
+ try{await t.pwa.reload();expect(t.reload).not.toHaveBeenCalled();t.store.conflicted.set(false);t.queue(Promise.resolve(false));await t.pwa.reload();expect(t.reload).not.toHaveBeenCalled();expect(t.pwa.updateError()).toContain('salvataggio sul dispositivo');}finally{t.injector.destroy();}
 });
 it('keeps a disconnected logout possible only after local drafts have been durably flushed',async()=>{
  const t=setup();vi.stubGlobal('navigator',{onLine:false});t.cloud.flush.mockResolvedValue(false);
@@ -67,7 +75,7 @@ it('reloads coherently after an ambiguous activation instead of resuming an old 
  const t=setup(),root={inert:false};Object.assign(document,{querySelector:()=>root});t.release.activateReady.mockRejectedValue(new AppActivationUncertainError());
  try{await t.pwa.reload();expect(t.reload).toHaveBeenCalledOnce();expect(root.inert).toBe(true);expect(t.store.error()).toBe('');}finally{t.injector.destroy();}
 });
-it('retains the page if the final draft state cannot be written after waiting for the server copy',async()=>{
+it('retains the page if the final draft state cannot be written during manual update',async()=>{
  const t=setup();t.drafts.flushAll.mockResolvedValueOnce(true).mockResolvedValueOnce(false);
- try{await t.pwa.reload();expect(t.cloud.flush).toHaveBeenCalledOnce();expect(t.reload).not.toHaveBeenCalled();expect(t.pwa.updateError()).toContain('Bozza non salvata');}finally{t.injector.destroy();}
+ try{await t.pwa.reload();expect(t.cloud.flush).not.toHaveBeenCalled();expect(t.reload).not.toHaveBeenCalled();expect(t.pwa.updateError()).toContain('Bozza non salvata');}finally{t.injector.destroy();}
 });
