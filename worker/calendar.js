@@ -19,7 +19,11 @@ export async function calendarConfigure(request,env,user){
  if(typeof secret!=='string'||!/^[a-f0-9]{64}$/i.test(secret.trim()))return reply({error:'Incolla la chiave tecnica generata dalla procedura Windows.'},400);
  const candidate={...env,CALENDAR_RELAY_SECRET:secret.trim()};
  if(!calendarConfigured(candidate))return reply({error:'Indirizzo del servizio non valido.'},503);
- try{await calendarRelay(candidate,user);}catch{return reply({error:'Verifica non riuscita. Controlla la chiave e che la procedura Windows sia terminata.'},400);}
+ try{await calendarRelay(candidate,user);}catch(error){
+  // Log only classification, never URLs, request headers, bodies or the key.
+  console.warn(JSON.stringify({event:'calendar_setup_failed',reason:error.calendarReason||'relay_network',httpStatus:error.httpStatus||null,cloudflareCode:error.cloudflareCode||null}));
+  return reply({error:error.calendarReason?error.message:'Collegamento a Cloudflare non riuscito. Riprova senza rigenerare la chiave.'},error.status||502);
+ }
  const result=await env.DB.prepare('INSERT INTO calendar_service_config(id,secret,configured_by,configured_at) VALUES(?,?,?,?) ON CONFLICT(id) DO NOTHING').bind('current',candidate.CALENDAR_RELAY_SECRET,user.id,Date.now()).run();
  if(!result.meta?.changes)return reply({error:'Servizio già configurato da un altro accesso. Riapri questa sezione.'},409);
  return reply({configured:true});
@@ -32,11 +36,29 @@ async function calendarAccountKey(env,user){
  const encoder=new TextEncoder(),key=await crypto.subtle.importKey('raw',encoder.encode(env.CALENDAR_RELAY_SECRET),{name:'HMAC',hash:'SHA-256'},false,['sign']);
  return [...new Uint8Array(await crypto.subtle.sign('HMAC',key,encoder.encode('gymtrack-calendar:account:'+user.id)))].map(n=>n.toString(16).padStart(2,'0')).join('');
 }
+function calendarRelayError(message,reason,status=502,extra={}){return Object.assign(new Error(message),{calendarReason:reason,status,...extra});}
 async function calendarRelay(env,user,method='GET',body){
  const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),4000);
  try{
-  const response=await fetch(new URL('/manage/'+await calendarAccountKey(env,user),env.CALENDAR_RELAY_URL),{method,redirect:'error',signal:controller.signal,headers:{Authorization:'Bearer '+env.CALENDAR_RELAY_SECRET,'Content-Type':'application/json'},...(body?{body:JSON.stringify(body)}:{})});
-  if(!response.ok)throw Error('Calendario iPhone momentaneamente non disponibile. Riprova.');return await response.json();
+  const response=await fetch(new URL('/manage/'+await calendarAccountKey(env,user),env.CALENDAR_RELAY_URL),{method,redirect:'error',signal:controller.signal,headers:{Authorization:'Bearer '+env.CALENDAR_RELAY_SECRET,'Content-Type':'application/json','User-Agent':'GymTrack-calendar/1.0'},...(body?{body:JSON.stringify(body)}:{})});
+  if(!response.ok){
+   // Bound and discard error bodies; only a recognized Cloudflare error number
+   // is used for diagnostics. Never return an upstream body to the browser.
+   let text='',bytes=0;const reader=response.body?.getReader();
+   if(reader){try{while(bytes<4096){const item=await reader.read();if(item.done)break;const part=item.value.subarray(0,4096-bytes);bytes+=part.length;text+=new TextDecoder().decode(part);}}finally{await reader.cancel().catch(()=>{});}}
+   const match=/error(?:\s+code)?\s*:?\s*(1042|1021|1022|1024|1027|1101|1102)\b/i.exec(text.replace(/<[^>]*>/g,' ')),cfCode=match?Number(match[1]):null;
+   const extra={httpStatus:response.status,cloudflareCode:cfCode};
+   if(cfCode===1042)throw calendarRelayError('Cloudflare blocca il collegamento tra i servizi (1042). Non rigenerare la chiave: occorre correggere il collegamento del servizio.','relay_cloudflare_1042',502,extra);
+   if(response.status===401)throw calendarRelayError('Cloudflare non riconosce la chiave. Incolla quella dell’ultimo ripristino completato.','relay_key_rejected',400,extra);
+   if(response.status===403)throw calendarRelayError('Cloudflare blocca l’accesso al servizio calendario (403). La verifica della chiave non è stata completata.','relay_access_blocked',502,extra);
+   if(response.status===404)throw calendarRelayError('Il servizio calendario non è stato trovato (404). Occorre verificare indirizzo e pubblicazione.','relay_not_found',502,extra);
+   throw calendarRelayError('Il servizio calendario risponde con errore '+response.status+'. Riprova senza rigenerare la chiave.','relay_http_error',502,extra);
+  }
+  try{return await response.json();}catch{throw calendarRelayError('Il servizio calendario ha restituito una risposta non valida.','relay_invalid_response');}
+ }catch(error){
+  if(error.calendarReason)throw error;
+  if(controller.signal.aborted)throw calendarRelayError('Cloudflare non ha risposto in tempo. Riprova con la stessa chiave.','relay_timeout',504);
+  throw calendarRelayError('Collegamento al servizio calendario non riuscito. Riprova con la stessa chiave.','relay_network');
  }finally{clearTimeout(timer);}
 }
 export function calendarProjection(data){

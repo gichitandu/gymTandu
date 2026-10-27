@@ -91,3 +91,23 @@ it('adds server calendar configuration without changing existing archive heads o
  sql.exec(readFileSync('drizzle/0006_calendar_service_config.sql','utf8'));
  expect(sql.prepare('SELECT * FROM archive_heads').all()).toEqual(before);expect(sql.prepare('SELECT * FROM archive_versions').all()).toEqual(versions);
 });
+
+it.each([
+ {http:401,body:'Unauthorized',status:400,reason:'relay_key_rejected',text:'non riconosce la chiave'},
+ {http:403,body:'Forbidden',status:502,reason:'relay_access_blocked',text:'blocca l’accesso'},
+ {http:403,body:'error code: 1042',status:502,reason:'relay_cloudflare_1042',text:'1042'},
+ {http:404,body:'Not found',status:502,reason:'relay_not_found',text:'non è stato trovato'},
+ {http:200,body:'<html>Login page</html>',status:502,reason:'relay_invalid_response',text:'risposta non valida'},
+])('distinguishes relay error $reason without storing or logging a key',async({http,body,status,reason,text})=>{
+ const warn=vi.spyOn(console,'warn').mockImplementation(()=>{}),key='d'.repeat(64);
+ vi.spyOn(globalThis,'fetch').mockResolvedValue(new Response(body,{status:http}));
+ const response=await calendarConfigure(new Request('https://gymtrack.test/api/calendar-config',{method:'POST',body:JSON.stringify({secret:key})}),{...env,CALENDAR_RELAY_URL:origin,CALENDAR_RELAY_SECRET:undefined},{id:'sa',role:'SuperAdmin'});
+ expect(response.status).toBe(status);expect((await response.json() as any).error).toContain(text);
+ expect(JSON.stringify(warn.mock.calls)).toContain(reason);expect(JSON.stringify(warn.mock.calls)).not.toContain(key);expect(sql.prepare('SELECT count(*) AS n FROM calendar_service_config').get()?.n).toBe(0);
+});
+it('reports network errors without echoing exception details containing secrets',async()=>{
+ const warn=vi.spyOn(console,'warn').mockImplementation(()=>{}),key='e'.repeat(64);
+ vi.spyOn(globalThis,'fetch').mockRejectedValue(Error('request failed '+key));
+ const response=await calendarConfigure(new Request('https://gymtrack.test/api/calendar-config',{method:'POST',body:JSON.stringify({secret:key})}),{...env,CALENDAR_RELAY_URL:origin,CALENDAR_RELAY_SECRET:undefined},{id:'sa',role:'SuperAdmin'});
+ expect(response.status).toBe(502);expect(await response.text()).not.toContain(key);expect(JSON.stringify(warn.mock.calls)).not.toContain(key);
+});

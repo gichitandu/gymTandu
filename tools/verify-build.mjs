@@ -68,3 +68,6 @@ assert(
 console.log(
   `Build PWA verificata: ${scripts.length} bundle JavaScript in precache, manifest, icone e service worker presenti. Non sostituisce una prova offline in browser.`,
 );
+
+const serverConfig=JSON.parse(fs.readFileSync('dist/server/wrangler.json','utf8'));
+assert(serverConfig.compatibility_flags.includes('global_fetch_strictly_public'),'Collegamento pubblico tra Workers non abilitato');
