@@ -107,3 +107,14 @@ it('keeps a committed account archive readable when the optional calendar servic
  expect(response.status).toBe(200);expect(hook).toHaveBeenCalledOnce();
  const saved=await get('account',{cookie});expect(saved.response.status).toBe(200);expect(saved.data.backup).toBe(backup);expect(saved.data.revision).toBe(1);
 });
+
+it('keeps origin and role checks on calendar activation',async()=>{
+ const cookie=await activate();
+ const body=JSON.stringify({secret:'a'.repeat(64)});
+ const url=origin+'/api/calendar-config';
+ const headers={'oai-authenticated-user-id':'owner-visitor','Content-Type':'application/json',Cookie:cookie};
+ const foreign=await api(new Request(url,{method:'POST',headers:{...headers,Origin:'https://elsewhere.test'},body}),env);expect(foreign.status).toBe(403);
+ sql.prepare("UPDATE users SET role='User'").run();
+ const denied=await api(new Request(url,{method:'POST',headers:{...headers,Origin:origin},body}),env);expect(denied.status).toBe(403);
+ expect(sql.prepare('SELECT count(*) AS n FROM calendar_service_config').get()?.n).toBe(0);
+});

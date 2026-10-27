@@ -39,14 +39,14 @@ export async function provision({run,writeConfig,ask,clipboard,log,secretFactory
   await clipboard(secret);
   try{
   log('La chiave tecnica e\u0300 negli appunti di Windows. Non incollarla in chat.');
-  log('Salvala nel tuo gestore password: servira\u0300 nel campo segreto CALENDAR_RELAY_SECRET dell’hosting GymTrack.');
+  log('Salvala nel tuo gestore password: servira\u0300 nel campo Chiave del servizio calendario delle Impostazioni GymTrack.');
   await ask('Premi Invio dopo aver conservato la chiave nel gestore password.');
   await run(['secret','put','CALENDAR_RELAY_SECRET'],{input:secret+'\n',sensitive:true});}
   finally{await clipboard('');}
   log('Chiave caricata su Cloudflare; appunti svuotati.');
  }
  log('\nSERVIZIO CLOUDFLARE PUBBLICATO: '+url);
- log('Il collegamento a GymTrack richiede ancora CALENDAR_RELAY_URL e CALENDAR_RELAY_SECRET nelle variabili server dell’hosting e una nuova pubblicazione.');
+ log('Comunica solo questo URL al gestore di GymTrack. Poi apri Profilo > Impostazioni > Calendario iPhone e inserisci la chiave nel campo protetto (solo Super Admin).');
  log('Puoi comunicare in chat SOLO l’URL sopra. Non inviare la chiave.');
  return url;
 }

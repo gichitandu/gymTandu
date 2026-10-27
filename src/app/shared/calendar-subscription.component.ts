@@ -1,18 +1,23 @@
 import {Component,effect,inject,signal} from '@angular/core';
+import {FormsModule} from '@angular/forms';
 import {DomSanitizer} from '@angular/platform-browser';
 import {AuthService} from '../services/auth';
 import {Store} from '../services/store';
 import {ArchiveSyncService} from '../services/archive-sync';
 import {confirmationForContext} from '../services/confirmation';
-interface CalendarSubscription {configured:boolean;enabled:boolean;url?:string;updatedAt?:number}
-@Component({selector:'gt-calendar-subscription',standalone:true,template:`
+interface CalendarSubscription {configured:boolean;enabled:boolean;url?:string;updatedAt?:number;canConfigure?:boolean}
+@Component({selector:'gt-calendar-subscription',standalone:true,imports:[FormsModule],template:`
 <details class="card calendar-link" (toggle)="opened($event)">
  <summary>Calendario iPhone</summary>
  <p>Visualizza gli allenamenti programmati in Calendario. Le modifiche si fanno in GymTrack; iOS aggiorna con i propri tempi.</p>
  @if(!auth.user()||auth.offlineMode()){<p>Accedi online al tuo account per collegarlo.</p>}
  @else{
   @if(state();as status){
-   @if(!status.configured){<p role="status">Collegamento non ancora disponibile. Sarà utilizzabile dopo l’attivazione da parte dell’amministratore.</p>}
+   @if(!status.configured){
+    @if(status.canConfigure&&auth.uiRole()==='SuperAdmin'){
+     <form (ngSubmit)="configure()" autocomplete="off"><label for="calendar-service-key">Chiave del servizio calendario</label><input id="calendar-service-key" name="calendarServiceKey" type="password" autocomplete="new-password" [spellcheck]="false" [(ngModel)]="serviceKey" maxlength="64" [disabled]="busy()"/><p>Incolla la chiave salvata durante la procedura Windows. Verrà verificata e conservata solo sul server.</p><button class="primary" type="submit" [disabled]="busy()||!serviceKey.trim()">Verifica e attiva servizio</button></form>
+    }@else{<p role="status">Collegamento non ancora disponibile. Sarà utilizzabile dopo l’attivazione da parte dell’amministratore.</p>}
+   }
    @else if(status.enabled){
     <p role="status">Collegamento attivo. {{lastUpdate()}}</p>
     @if(subscriptionUrl()){<a class="button primary" [href]="subscriptionUrl()" rel="noreferrer">Apri in Calendario iPhone</a><button type="button" (click)="copy()" [disabled]="busy()">Copia link</button>}
@@ -28,8 +33,9 @@ interface CalendarSubscription {configured:boolean;enabled:boolean;url?:string;u
 </details>`,styles:[`.calendar-link{margin-top:16px;padding:16px}.calendar-link summary{min-height:32px;align-content:center;cursor:pointer;font-weight:650}.calendar-link p{font-size:13px;color:var(--muted);line-height:1.6;margin:12px 0}.calendar-link button,.calendar-link a{margin:4px 6px 4px 0;min-height:44px;white-space:normal}.calendar-link .subtle{font-size:12px}`]})
 export class CalendarSubscriptionComponent{
  auth=inject(AuthService);private store=inject(Store);private cloud=inject(ArchiveSyncService);private sanitizer=inject(DomSanitizer);private confirmation=confirmationForContext();
+ serviceKey='';
  state=signal<CalendarSubscription|null>(null);busy=signal(false);notice=signal('');failed=signal(false);private generation=0;
- constructor(){effect(()=>{this.auth.user()?.id;this.auth.offlineMode();this.generation++;this.state.set(null);this.busy.set(false);this.notice.set('');this.failed.set(false);});}
+ constructor(){effect(()=>{this.auth.user()?.id;this.auth.offlineMode();if(this.auth.uiRole()!=='SuperAdmin')this.serviceKey='';this.generation++;this.state.set(null);this.busy.set(false);this.notice.set('');this.failed.set(false);});}
  private async run(operation:()=>Promise<CalendarSubscription>){
   if(this.busy()||!this.auth.user()||this.auth.offlineMode())return;
   const generation=++this.generation,account=this.auth.user()!.id;this.busy.set(true);this.failed.set(false);this.notice.set('');
@@ -37,6 +43,7 @@ export class CalendarSubscriptionComponent{
   catch(error){if(generation===this.generation){this.failed.set(true);this.notice.set(error instanceof Error?error.message:'Collegamento non disponibile.');}}
   finally{if(generation===this.generation)this.busy.set(false);}
  }
+ async configure(){if(this.auth.uiRole()!=='SuperAdmin'||this.busy())return;const secret=this.serviceKey.trim();this.serviceKey='';await this.run(async()=>{await this.auth.request('calendar-config',{secret},'POST');return this.auth.request('calendar-subscription');});}
  opened(event:Event){if((event.target as HTMLDetailsElement).open&&!this.state())void this.load();}
  load(){return this.run(()=>this.auth.request('calendar-subscription'));}
  connect(){const account=this.auth.user()?.id;return this.run(async()=>{

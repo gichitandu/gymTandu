@@ -1,6 +1,6 @@
 import { defaultExercises, defaultGroups } from './default-catalog.js';
 import { archiveApi } from './archive.js';
-import { calendarApi, calendarPublish } from './calendar.js';
+import { calendarApi, calendarPublish, calendarConfigure } from './calendar.js';
 // The platform's ChatGPT access boundary remains in place. App sessions are
 // additionally bound to that authenticated visitor, and never stored in JS.
 const OWNER = 'giacomotanduo004@gmail.com';
@@ -80,6 +80,7 @@ export async function api(request,env,ctx) {
     if(request.method!=='GET' && request.headers.get('origin')!==url.origin) fail('Richiesta non autorizzata.',403);
     if(request.method!=='GET' && !request.headers.get('content-type')?.startsWith('application/json')) fail('Formato non supportato.',415);
     const me=await session(request,db);
+    if(path==='/api/calendar-config')return await calendarConfigure(request,env,me);
     if(path==='/api/calendar-subscription')return await calendarApi(request,env,me,()=>archiveApi(new Request(url.origin+'/api/archive?scope=account',{headers:request.headers}),env,me));
     if(path==='/api/archive')return await archiveApi(request,env,me,async(text,revision,at)=>{const publish=calendarPublish(env,me,text,revision,at).catch(()=>{});if(ctx?.waitUntil)ctx.waitUntil(publish);else await publish;});
     if(path==='/api/app-release'&&request.method==='GET') {

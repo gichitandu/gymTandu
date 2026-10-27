@@ -16,3 +16,6 @@ export const archiveVersions = sqliteTable('archive_versions', {
 export const appReleases = sqliteTable('app_releases', {
  id:text('id').primaryKey(),buildId:text('build_id').notNull(),generation:integer('generation').notNull().default(1),requestedAt:integer('requested_at').notNull(),requestedBy:text('requested_by').references(()=>users.id)
 });
+
+// Server-only integration secret, never part of personal archives or API reads.
+export const calendarServiceConfig=sqliteTable('calendar_service_config',{id:text('id').primaryKey(),secret:text('secret').notNull(),configuredBy:text('configured_by').notNull(),configuredAt:integer('configured_at').notNull()});

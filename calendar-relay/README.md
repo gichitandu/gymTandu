@@ -11,7 +11,7 @@ L'integrazione nell'app e il servizio sono pronti nel codice. Il calendario NON 
 5. La procedura crea o riusa il database `gymtrack-calendar`, prepara lo schema senza cancellare record e pubblica il Worker. Se Cloudflare chiede di scegliere un sottodominio `workers.dev`, segui il prompt; non occorre acquistare domini o piani.
 6. Quando richiesto, copia l'URL HTTPS `workers.dev` mostrato da Wrangler e incollalo nella finestra della procedura.
 7. Alla prima configurazione viene generata una chiave tecnica casuale: viene copiata negli appunti Windows, MA NON stampata o salvata nei file. Conservala nel tuo gestore password, poi premi Invio. La chiave viene caricata come segreto su Cloudflare e gli appunti vengono svuotati. Non inviarla in chat.
-8. Segui la sezione “Collegare GymTrack” sotto: la sola pubblicazione Cloudflare NON attiva ancora la sincronizzazione nell'app. Se non trovi le impostazioni di hosting, fermati qui e comunica solo l'URL pubblico del Worker: occorre individuare un canale sicuro per configurare il segreto.
+8. Segui la sezione “Collegare GymTrack” sotto: la sola pubblicazione Cloudflare NON attiva ancora la sincronizzazione nell’app. Comunica solo l’URL pubblico del Worker; la chiave va inserita nel campo protetto dell’app.
 
 Se riesegui la procedura e trova già `CALENDAR_RELAY_SECRET`, la mantiene e non può leggerla né ricopiarla negli appunti. Usa la copia conservata nel tuo gestore password. La cartella `.installer` contiene gli strumenti npm scaricati sul tuo PC; l'autorizzazione Cloudflare resta gestita da Wrangler sul tuo PC. Nessun dato di allenamento viene letto durante questa configurazione.
 
@@ -25,18 +25,23 @@ Verifica tecnica eseguita con comandi Cloudflare simulati; l'avvio su Windows e 
 4. Esegui `npx wrangler@4 d1 create gymtrack-calendar`.
 5. Copia il `database_id` restituito al posto di `REPLACE_WITH_CREATED_DATABASE_ID` in `wrangler.jsonc`. Mantieni il binding `DB`.
 6. Esegui `npx wrangler@4 d1 execute gymtrack-calendar --remote --file=schema.sql`.
-7. Genera una password casuale di almeno 32 caratteri con il tuo gestore password. Questa è una chiave tecnica condivisa solo tra i due server, diversa dalla password del tuo account.
+7. Genera una chiave casuale di 64 caratteri esadecimali (0–9, a–f); la procedura Windows lo fa automaticamente. Questa è una chiave tecnica condivisa solo tra i due server, diversa dalla password del tuo account.
 8. Esegui `npx wrangler@4 secret put CALENDAR_RELAY_SECRET` e incolla la chiave nel prompt nascosto. Conservala nel gestore password, non nei sorgenti.
 9. Esegui `npx wrangler@4 deploy`. Conserva l'URL HTTPS `https://gymtrack-calendar.<tuo-sottodominio>.workers.dev` restituito.
 
 ## 2. Collegare GymTrack
 
-Nelle impostazioni di hosting del sito GymTrack, nelle variabili di ambiente server, aggiungi:
+L'indirizzo del Worker viene configurato dal gestore dell'hosting come `CALENDAR_RELAY_URL`. Comunica in chat SOLO l'URL pubblico del tuo Worker, senza la chiave.
 
-- `CALENDAR_RELAY_URL`: URL HTTPS del Worker, senza percorsi o parametri.
-- `CALENDAR_RELAY_SECRET`: la stessa chiave del punto 8, contrassegnata come segreto.
+Dopo la pubblicazione dell'aggiornamento di GymTrack:
 
-Le variabili non vanno in `.openai/hosting.json`, nel browser o nel backup. Per applicarle serve una nuova pubblicazione di GymTrack. Puoi comunicare in chat l'URL pubblico del Worker e l'avvenuta configurazione, MA NON LA CHIAVE, così possiamo completare la pubblicazione e la verifica. Il sito principale resta privato: non cambiare il suo pubblico.
+1. Accedi come Super Admin, con “Visualizza come cliente” disattivato.
+2. Apri Profilo → Impostazioni → Calendario iPhone.
+3. Nel campo “Chiave del servizio calendario” incolla la chiave salvata nel tuo gestore password durante la procedura Windows.
+4. Premi “Verifica e attiva servizio”. GymTrack controlla l'accesso al Worker prima di conservarla sul proprio server. Il campo viene svuotato e la chiave non viene restituita nelle risposte o inclusa nei backup personali.
+5. Premi “Collega il mio calendario” per creare il tuo abbonamento personale.
+
+Se è già configurato il segreto server `CALENDAR_RELAY_SECRET` tramite l'hosting, quello ha precedenza e il campo di attivazione non compare. La configurazione esistente non viene sovrascritta. Il sito principale resta privato: non cambiare il suo pubblico. Non inviare mai la chiave in chat.
 
 ## 3. Abbonamento su iPhone (ogni utente)
 

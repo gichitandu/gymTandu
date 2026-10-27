@@ -43,6 +43,13 @@
       "when": 1792588520829,
       "tag": "0005_dusty_praxagora",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1793108786630,
+      "tag": "0006_calendar_service_config",
+      "breakpoints": true
     }
   ]
 }
