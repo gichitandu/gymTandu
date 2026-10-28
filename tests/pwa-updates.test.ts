@@ -50,9 +50,15 @@ it('does not bypass local conflicts or failed queued writes during a manual upda
  const t=setup();t.store.conflicted.set(true);
  try{await t.pwa.reload();expect(t.reload).not.toHaveBeenCalled();t.store.conflicted.set(false);t.queue(Promise.resolve(false));await t.pwa.reload();expect(t.reload).not.toHaveBeenCalled();expect(t.pwa.updateError()).toContain('salvataggio sul dispositivo');}finally{t.injector.destroy();}
 });
-it.each([true,false])('finishes logout after local writes without waiting on sync (online=%s)',async online=>{
+it.each([true,false])('finishes logout without backup, sync or draft validation (online=%s)',async online=>{
  const t=setup();vi.stubGlobal('navigator',{onLine:online});t.cloud.flush.mockResolvedValue(false);
- try{expect(await t.pwa.prepareExit('logout')).toBe(true);expect(t.drafts.flushAll).toHaveBeenCalledTimes(2);expect(t.cloud.flush).not.toHaveBeenCalled();expect(t.reload).not.toHaveBeenCalled();t.drafts.flushAll.mockResolvedValue(false);expect(await t.pwa.prepareExit('logout')).toBe(false);expect(t.pwa.updateError()).toContain('Uscita sospesa');}finally{t.injector.destroy();}
+ t.store.error.set('Errore precedente');t.store.conflicted.set(true);t.queue(Promise.resolve(false));t.drafts.flushAll.mockResolvedValue(false);
+ const validate=vi.fn((event:Event)=>(event as AppUpdateEvent).waitUntil(Promise.resolve(false)));t.target.addEventListener('gymtrack:before-update',validate);
+ try{expect(await t.pwa.prepareExit('logout')).toBe(true);expect(t.drafts.flushAll).toHaveBeenCalledOnce();expect(validate).not.toHaveBeenCalled();expect(t.cloud.flush).not.toHaveBeenCalled();expect(t.pwa.updateError()).toBe('');expect(t.store.error()).toBe('Errore precedente');}finally{t.injector.destroy();}
+});
+it('leaves after one second even when the automatic local draft save never acknowledges',async()=>{
+ vi.useFakeTimers();const t=setup();t.drafts.flushAll.mockImplementation(()=>new Promise(()=>{}));
+ try{const exit=t.pwa.prepareExit('logout');await vi.advanceTimersByTimeAsync(1000);expect(await exit).toBe(true);expect(t.cloud.flush).not.toHaveBeenCalled();expect(t.pwa.updateError()).toBe('');}finally{t.injector.destroy();vi.useRealTimers();}
 });
 it('defers a requested automatic update while a workout is open and applies it after the workout ends',async()=>{
  vi.useFakeTimers();const t=setup();t.store.draft.set({id:'active'});t.release.autoUpdateReady=()=>true;t.release.downloadedBuild=()=> 'b'.repeat(64);t.release.policy=()=>({requestedBuildId:'b'.repeat(64)} as any);t.release.activateReady.mockResolvedValue(true);

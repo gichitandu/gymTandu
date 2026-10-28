@@ -73,13 +73,13 @@ it('converts a measurement draft across unit changes and keeps a date selected b
 it('rolls an untouched default measurement date forward on resume',()=>{
   expect(c.measurementDate).toBe('2026-10-21');clock.set('2026-10-22');sync();expect(c.measurementDate).toBe('2026-10-22');
 });
-it('freezes editing before the logout snapshot and restores it when saving cannot finish',async()=>{
+it('logs out even with a pending photo and a rejected local save instead of blocking on backup checks',async()=>{
   const root={inert:false};(document as any).querySelector=()=>root;
   const pwa=injector.get(PwaService) as any,auth=injector.get(AuthService) as any;
   pwa.prepareExit=vi.fn(async()=>{expect(root.inert).toBe(true);return false;});
-  auth.logout=vi.fn();pwa.finishLogoutUpdate=vi.fn();
+  auth.logout=vi.fn();pwa.finishLogoutUpdate=vi.fn();c.photoBusy.set(true);
   await c.logout();
-  expect(root.inert).toBe(false);expect(c.loggingOut()).toBe(false);expect(pwa.updating()).toBe(false);expect(auth.logout).not.toHaveBeenCalled();
+  expect(root.inert).toBe(true);expect(c.loggingOut()).toBe(false);expect(auth.logout).toHaveBeenCalledExactlyOnceWith({reload:false});expect(pwa.finishLogoutUpdate).toHaveBeenCalledOnce();
 });
 it('keeps the interface frozen between cookie revocation and the final reload',async()=>{
   const root={inert:false};(document as any).querySelector=()=>root;

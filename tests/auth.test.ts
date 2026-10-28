@@ -1,13 +1,13 @@
 import { beforeEach, afterEach, it, expect } from 'vitest';
 import { DatabaseSync } from 'node:sqlite';
 import { readFileSync, readdirSync } from 'node:fs';
-import { api } from '../worker/index.js';
+import { api, IOS_LOGOUT_RECOVERY_BEFORE } from '../worker/index.js';
 let sql: DatabaseSync;
 let env: any;
 const origin='https://gymtrack.test';
 const owner='giacomotanduo004@gmail.com';
-function request(path:string,body?:unknown,opts:{cookie?:string;email?:string;visitor?:string;method?:string;origin?:string}={}) {
- return new Request(origin+'/api/'+path,{method:opts.method||(body?'POST':'GET'),headers:{'oai-authenticated-user-id':opts.visitor||'owner-visitor','oai-authenticated-user-email':opts.email||owner,...(body?{'Content-Type':'application/json',Origin:opts.origin||origin}:{}),...(opts.cookie?{Cookie:opts.cookie}:{})},body:body?JSON.stringify(body):undefined});
+function request(path:string,body?:unknown,opts:{cookie?:string;email?:string;visitor?:string;method?:string;origin?:string;agent?:string}={}) {
+ return new Request(origin+'/api/'+path,{method:opts.method||(body?'POST':'GET'),headers:{'oai-authenticated-user-id':opts.visitor||'owner-visitor','oai-authenticated-user-email':opts.email||owner,...(body?{'Content-Type':'application/json',Origin:opts.origin||origin}:{}),...(opts.cookie?{Cookie:opts.cookie}:{}),...(opts.agent?{'User-Agent':opts.agent}:{})},body:body?JSON.stringify(body):undefined});
 }
 async function call(path:string,body?:unknown,opts:any={}){return api(request(path,body,opts),env);}
 async function activate(){const r=await call('auth/setup',{password:'owner-password-123'});expect(r.status).toBe(200);return r.headers.get('set-cookie')!.split(';')[0];}
@@ -129,4 +129,28 @@ it('removes saved YouTube references with a one-time migration and preserves cus
  sql.exec(readFileSync('drizzle/0003_optional_exercise_videos.sql','utf8'));
  const data=await (await call('catalog',undefined,{cookie})).json();expect(data.exercises.find((e:any)=>e.id===ex.id)).toMatchObject({name:ex.name,active:false,description:ex.description,videoUrl:'',thumbnailUrl:''});
  expect((await call('catalog/exercise',{...ex,videoUrl:'https://example.com/nuovo-video.mp4',thumbnailUrl:'',active:true},{cookie})).status).toBe(200);
+});
+
+it('recovers only the old owner iPhone cookie, leaving PC sessions and all account data untouched',async()=>{
+ const old=await activate();sql.prepare('UPDATE sessions SET expires_at=?').run(IOS_LOGOUT_RECOVERY_BEFORE+30*86400000-1);
+ await call('preferences',{backgroundColor:'#123456'},{cookie:old});
+ const login=await call('auth/login',{email:owner,password:'owner-password-123'}),pc=login.headers.get('set-cookie')!.split(';')[0];
+ const before=sql.prepare('SELECT * FROM users').all(),preferences=sql.prepare('SELECT * FROM user_preferences').all();
+ Object.defineProperty(env,'BUCKET',{get:()=>{throw Error('Recovery must not access personal archives');}});
+ expect((await (await call('auth/device-recovery',{},{cookie:old,agent:'Windows NT Chrome'})).json()).signedOut).toBe(false);
+ const recovered=await call('auth/device-recovery',{},{cookie:old,agent:'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X)'});
+ expect((await recovered.json()).signedOut).toBe(true);expect(recovered.headers.get('set-cookie')).toContain('Max-Age=0');
+ expect((await (await call('auth/me',undefined,{cookie:old})).json()).user).toBeNull();expect((await (await call('auth/me',undefined,{cookie:pc})).json()).user.role).toBe('SuperAdmin');
+ expect(sql.prepare('SELECT * FROM users').all()).toEqual(before);expect(sql.prepare('SELECT * FROM user_preferences').all()).toEqual(preferences);
+ expect((await (await call('auth/device-recovery',{},{cookie:pc,agent:'iPhone'})).json()).signedOut).toBe(false);
+ expect((await (await call('auth/device-recovery',{},{cookie:old,agent:'iPhone'})).json()).signedOut).toBe(false);
+});
+it('rejects cross-origin recovery and never revokes another user or another platform visitor',async()=>{
+ const ownerCookie=await activate();await call('users',{name:'Client',email:'recovery@example.com',username:'recover',role:'User',password:'abcdefgh'},{cookie:ownerCookie});
+ const login=await call('auth/login',{email:'recover',password:'abcdefgh'},{visitor:'client'}),cookie=login.headers.get('set-cookie')!.split(';')[0];
+ sql.prepare('UPDATE sessions SET expires_at=?').run(IOS_LOGOUT_RECOVERY_BEFORE+30*86400000-1);
+ const count=()=>sql.prepare('SELECT COUNT(*) AS total FROM sessions').get()!.total;
+ expect((await call('auth/device-recovery',{},{cookie:ownerCookie,agent:'iPhone',origin:'https://attacker.test'})).status).toBe(403);
+ expect((await (await call('auth/device-recovery',{},{cookie:ownerCookie,visitor:'different',agent:'iPhone'})).json()).signedOut).toBe(false);
+ expect((await (await call('auth/device-recovery',{},{cookie,visitor:'client',agent:'iPhone'})).json()).signedOut).toBe(false);expect(count()).toBe(2);
 });

@@ -7,6 +7,9 @@ import { calendarApi, calendarPublish, calendarConfigure } from './calendar.js';
 const OWNER = 'giacomotanduo004@gmail.com';
 const COOKIE = '__Host-gymtrack';
 const TTL = 60 * 60 * 24 * 30;
+// One-time recovery requested by the owner for the iPhone session stuck on the
+// old backup gate. Logins created after this cutoff are never signed out.
+export const IOS_LOGOUT_RECOVERY_BEFORE = Date.parse('2026-10-28T08:00:00Z');
 // Replaced by the packager with the identity of these exact published assets.
 const APP_BUILD_ID = /* __APP_BUILD_ID__ */ 'development';
 const encoder = new TextEncoder();
@@ -81,6 +84,17 @@ export async function api(request,env,ctx) {
     if(request.method!=='GET' && request.headers.get('origin')!==url.origin) fail('Richiesta non autorizzata.',403);
     if(request.method!=='GET' && !request.headers.get('content-type')?.startsWith('application/json')) fail('Formato non supportato.',415);
     const me=await session(request,db);
+    if(path==='/api/auth/device-recovery'&&request.method==='POST'){
+      if(me?.email!==OWNER||! /iPhone/i.test(request.headers.get('user-agent')||''))return json({signedOut:false});
+      const token=request.headers.get('cookie')?.split(';').map(s=>s.trim()).find(s=>s.startsWith(COOKIE+'='))?.slice(COOKIE.length+1);
+      const result=await db.prepare('DELETE FROM sessions WHERE token_hash=? AND user_id=? AND expires_at<=?').bind(await digest(token),me.id,IOS_LOGOUT_RECOVERY_BEFORE+TTL*1000).run();
+      if(!result.meta.changes)return json({signedOut:false});
+      const response=json({signedOut:true},200,{'Set-Cookie':`${COOKIE}=; Path=/; Secure; HttpOnly; SameSite=Strict; Max-Age=0`});
+      // The new document consumes this short-lived marker to close remembered
+      // offline access too. It contains no credentials or personal data.
+      response.headers.append('Set-Cookie','__Host-gymtrack-recovered=1; Path=/; Secure; SameSite=Strict; Max-Age=600');
+      return response;
+    }
     if(path==='/api/push-reminder')return await pushReminderApi(request,env,me,()=>archiveApi(new Request(url.origin+'/api/archive?scope=account',{headers:request.headers}),env,me));
     if(path==='/api/calendar-config')return await calendarConfigure(request,env,me);
     if(path==='/api/calendar-subscription')return await calendarApi(request,env,me,()=>archiveApi(new Request(url.origin+'/api/archive?scope=account',{headers:request.headers}),env,me));
@@ -220,5 +234,5 @@ export default {async fetch(request,env,ctx) {
   if(!['GET','HEAD'].includes(request.method)) return new Response('Method not allowed',{status:405});
   const asset=assets[path==='/'?'/index.html':path];
   if(!asset) return new Response('Not found',{status:404});
-  return new Response(request.method==='HEAD'?null:Uint8Array.from(atob(asset.body),c=>c.charCodeAt(0)),{headers:{'Content-Type':asset.type,'Cache-Control':path==='/gymtrack-sw.js'||path==='/ngsw-worker.js'||path==='/ngsw.json'||path==='/index.html'||path==='/'?'no-cache':'public,max-age=3600','X-Content-Type-Options':'nosniff','Referrer-Policy':'same-origin'}});
+  return new Response(request.method==='HEAD'?null:Uint8Array.from(atob(asset.body),c=>c.charCodeAt(0)),{headers:{'Content-Type':asset.type,'Cache-Control':path==='/gymtrack-sw.js'||path==='/ngsw-worker.js'||path==='/gymtrack-session-recovery.js'||path==='/ngsw.json'||path==='/index.html'||path==='/'?'no-cache':'public,max-age=3600','X-Content-Type-Options':'nosniff','Referrer-Policy':'same-origin'}});
 }};

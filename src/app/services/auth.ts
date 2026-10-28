@@ -24,9 +24,19 @@ export class AuthService {
   private pendingLogoutRequest?:Promise<void>;
   private lifecycle=0;
   constructor() {
+    if(typeof window!=='undefined')window.addEventListener?.('online',()=>{void this.flushPendingLogout().catch(()=>{});});
+    let recovered=false;
+    try{recovered=typeof document!=='undefined'&&(document.cookie||'').split(';').some(value=>value.trim()==='__Host-gymtrack-recovered=1');}catch{}
+    if(recovered){
+      // Server-confirmed recovery closes only identity metadata. Named IndexedDB
+      // archives, local draft databases and cloud copies remain untouched.
+      try{localStorage.removeItem(OFFLINE_ACCOUNT_KEY);localStorage.removeItem(PENDING_LOGOUT_KEY);}catch{}
+      this.rememberChoice({mode:'signed-out'});this.loading.set(false);
+      try{document.cookie='__Host-gymtrack-recovered=; Path=/; Secure; SameSite=Strict; Max-Age=0';}catch{}
+      void stopDevicePushForLogout();return;
+    }
     try{const raw=JSON.parse(localStorage.getItem(OFFLINE_ACCOUNT_KEY)||'null');if(raw&&typeof raw.id==='string'&&typeof raw.owner==='boolean'&&typeof raw.name==='string')this.offlineAccount.set(raw);}catch{}
     try{const raw=JSON.parse(localStorage.getItem(ARCHIVE_CHOICE_KEY)||'null');if(raw&&['device','account','account-offline','signed-out'].includes(raw.mode)&&(raw.accountId===undefined||typeof raw.accountId==='string'))this.archiveChoice.set(raw);}catch{}
-    if(typeof window!=='undefined')window.addEventListener?.('online',()=>{void this.flushPendingLogout().catch(()=>{});});
     const choice=this.archiveChoice(),saved=this.offlineAccount();
     if(choice?.mode==='device'){this.openLocal(false,false);void this.refresh();return;}
     if(choice?.mode==='signed-out'){if(navigator.onLine&&this.hasPendingLogout())void this.flushPendingLogout().catch(()=>{}).finally(()=>this.loading.set(false));else this.loading.set(false);return;}

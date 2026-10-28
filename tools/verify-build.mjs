@@ -74,3 +74,5 @@ assert(serverConfig.compatibility_flags.includes('global_fetch_strictly_public')
 
 assert(assets.includes('/gymtrack-sw.js'),'Worker notifiche escluso dalla cache offline');
 assert(fs.readFileSync(root+'/gymtrack-sw.js','utf8').includes("importScripts('/ngsw-worker.js')"),'Worker Angular non mantenuto dal worker notifiche');
+assert(fs.readFileSync(root+'/ngsw-worker.js','utf8').includes("importScripts('/gymtrack-session-recovery.js')"),'Recupero sessione non raggiungibile dalle vecchie installazioni');
+assert(sw.hashTable['/gymtrack-session-recovery.js'],'Script recupero sessione mancante dal precache');

@@ -11,6 +11,11 @@ function browser(online=true){
   vi.stubGlobal('navigator',navigator);vi.stubGlobal('fetch',fetch);vi.stubGlobal('location',{reload});
   return {storage,fetch,navigator,reload};
 }
+it('consumes server-confirmed iPhone recovery before remembered offline access can reopen, preserving the archive',()=>{
+ const t=browser();t.storage.set(ARCHIVE_CHOICE_KEY,JSON.stringify({mode:'account-offline',accountId:'tandu'}));t.storage.set(OFFLINE_ACCOUNT_KEY,JSON.stringify({id:'tandu',name:'Tandu',owner:true}));
+ const doc={cookie:'__Host-gymtrack-recovered=1'};vi.stubGlobal('document',doc);const auth=new AuthService();
+ expect(auth.user()).toBeNull();expect(auth.offlineAccount()).toBeNull();expect(auth.loading()).toBe(false);expect(auth.archiveChoice()?.mode).toBe('signed-out');expect(t.fetch).not.toHaveBeenCalled();expect(t.storage.get('gymtrack-saved-data')).toBe('keep-me');expect(t.storage.has(OFFLINE_ACCOUNT_KEY)).toBe(false);expect(doc.cookie).toContain('Max-Age=0');
+});
 it('logs out once, keeps saved data, and allows the update coordinator to control reloading',async()=>{
   const t=browser();const auth=new AuthService();auth.user.set({id:'u',name:'Atleta',email:'u@test.it',role:'User',active:true,owner:false});
   let finish!:(value:unknown)=>void;t.fetch.mockReturnValueOnce(new Promise(resolve=>finish=resolve));

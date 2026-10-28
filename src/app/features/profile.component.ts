@@ -208,7 +208,7 @@ interface ProfileFormDraft {
       </div>
     </div>
     }
-    @if(panel()==='settings'){<gt-push-reminder/><gt-app-updates/><section class="card" style="margin-top:20px"><h2>Accesso all’app</h2><p class="subtle" style="margin:12px 0">Le bozze vengono conservate prima dell’uscita. Piani, esercizi e allenamenti rimangono nel tuo archivio.</p><button type="button" class="full-width" [disabled]="loggingOut()" (click)="logout()">{{loggingOut()?'Salvataggio e uscita…':'Esci dall’app'}}</button></section>}
+    @if(panel()==='settings'){<gt-push-reminder/><gt-app-updates/><section class="card" style="margin-top:20px"><h2>Accesso all’app</h2><p class="subtle" style="margin:12px 0">Puoi uscire senza fare un backup. Piani, esercizi e allenamenti salvati restano nel tuo archivio.</p><button type="button" class="full-width" [disabled]="loggingOut()" (click)="logout()">{{loggingOut()?'Uscita…':'Esci dall’app'}}</button></section>}
     @if(panel()==='backup'&&auth.canManageBackups()){<gt-archive-sync (recover)="recoverCloud($event)"/><gt-backup-reminder mode="settings"/><section class="card" style="margin-top:20px">
       <div class="card-head">
         <div>
@@ -360,15 +360,14 @@ export class ProfileComponent {
   }
   rememberOffline() {try{this.auth.enableOffline();this.accountMessage.set("Archivio abilitato per l’accesso offline su questo dispositivo.");}catch(e){this.accountError.set((e as Error).message);}}
   async logout() {
-    if(this.loggingOut()||this.pwa.updating())return;
+    if(this.loggingOut())return;
     this.loggingOut.set(true);this.pwa.updating.set(true);
     const root=typeof document==='undefined'?null:document.querySelector?.('app-root') as HTMLElement|null,priorInert=root?.inert;
     let exited=false;
     try {
-      if(this.photoBusy())throw Error('Attendi la preparazione della foto prima di uscire.');
-      // Freeze editing before taking snapshots, including during a slow cloud copy.
+      // Freeze new input while existing local autosaves get a bounded head start.
       if(root)root.inert=true;
-      if(!await this.pwa.prepareExit('logout'))return;
+      try{await this.pwa.prepareExit('logout');}catch{/* Local save errors never veto logout. */}
       await this.auth.logout({reload:false});exited=true;await this.pwa.finishLogoutUpdate();
     }catch(e){this.accountError.set((e as Error).message);}
     finally{if(!exited){if(root)root.inert=priorInert||false;this.pwa.updating.set(false);}this.loggingOut.set(false);}

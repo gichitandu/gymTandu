@@ -51,6 +51,17 @@ export class PwaService {
  }
  async prepareExit(reason:'update'|'logout'='update',allowPendingSync=false):Promise<boolean>{
   this.updateError.set('');this.updateNotice.set('');
+  if(reason==='logout'){
+   // Logout never depends on backup, sync, validation, or a save acknowledgement.
+   // Give automatic local saves a short opportunity to finish, then exit anyway.
+   let timer:ReturnType<typeof setTimeout>|undefined;
+   const save=Promise.resolve().then(async()=>{
+    if(this.drafts)await this.drafts.flushAll();
+    await this.store.settled();
+   }).catch(()=>{});
+   try{await Promise.race([save,new Promise<void>(resolve=>{timer=setTimeout(resolve,1000);})]);}finally{clearTimeout(timer);}
+   return true;
+  }
   try{
    if(!this.store.ready())throw Error('Attendi l’apertura dell’archivio prima di continuare.');
    const saves:Promise<boolean|void>[]=[];
@@ -59,7 +70,7 @@ export class PwaService {
    if(this.drafts)saves.push(this.drafts.flushAll());
    if((await Promise.all(saves)).some(result=>result===false))throw Error('Salva o correggi i dati del modulo prima di continuare.');
    await this.waitForLocalWrites();
-   // Logout and manual updates reuse the durable local archive. Only automatic
+   // Manual updates reuse the durable local archive. Only automatic
    // updates wait for online sync. Pending sync metadata stays untouched.
    if(reason==='update'&&!allowPendingSync&&this.cloud&&!await this.cloud.flush()){
     this.updateNotice.set('Aggiornamento automatico in attesa della sincronizzazione online. Puoi usare “Aggiorna questo dispositivo”: non serve un backup manuale.');
@@ -72,7 +83,7 @@ export class PwaService {
    if(reason==='update'&&allowPendingSync)this.updateNotice.set('Dati e bozze salvati sul dispositivo. La sincronizzazione online riprenderà alla riapertura.');
    return true;
   }catch(error){
-   this.updateError.set((reason==='logout'?'Uscita sospesa: ':'Aggiornamento sospeso: ')+(error instanceof Error?error.message:'Salvataggio non riuscito. I dati presenti sono conservati.'));
+   this.updateError.set('Aggiornamento sospeso: '+(error instanceof Error?error.message:'Salvataggio non riuscito. I dati presenti sono conservati.'));
    return false;
   }
  }
