@@ -28,6 +28,13 @@ function fixture(local:DataSet,fetch:ReturnType<typeof vi.fn>,replace?:(data:Dat
  const injector=createEnvironmentInjector([{provide:AuthService,useValue:auth},{provide:GYM_REPOSITORY,useValue:repo},ArchiveSyncService,Store],null as unknown as EnvironmentInjector);injectors.push(injector);
  return {store:injector.get(Store),cloud:injector.get(ArchiveSyncService),saved:()=>persisted};
 }
+it('reopens, edits and reopens the same local plan entirely offline without contacting the server',async()=>{
+ const firstFetch=vi.fn().mockRejectedValue(Error('No connection')),first=fixture(plans('Piano Tandu'),firstFetch);vi.stubGlobal('navigator',{onLine:false});
+ await vi.waitFor(()=>expect(first.store.ready()).toBe(true));expect(firstFetch).not.toHaveBeenCalled();expect(first.store.data().plans[0].name).toBe('Piano Tandu');
+ expect(await first.store.savePlan('p','Piano Tandu modificato offline','')).toBe(true);
+ const secondFetch=vi.fn().mockRejectedValue(Error('No connection')),reopened=fixture(first.saved(),secondFetch);vi.stubGlobal('navigator',{onLine:false});
+ await vi.waitFor(()=>expect(reopened.store.ready()).toBe(true));expect(reopened.store.data().plans[0].name).toBe('Piano Tandu modificato offline');expect(secondFetch).not.toHaveBeenCalled();
+});
 
 it('shows the populated local archive and accepts writes while a slow server check is pending',async()=>{
  const head=deferred<Response>(),fetch=vi.fn(()=>head.promise),t=fixture(plans('Piano sul telefono'),fetch);

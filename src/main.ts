@@ -5,12 +5,14 @@ import { provideServiceWorker } from "@angular/service-worker";
 import { isDevMode } from "@angular/core";
 import { AppComponent } from "./app/layouts/app.component";
 import { routes } from "./app/core/routes";
+import {restoreOfflineLaunchUrl} from './app/services/launch-url';
+restoreOfflineLaunchUrl();
 bootstrapApplication(AppComponent, {
   providers: [
     provideRouter(routes, withHashLocation()),
     provideServiceWorker("gymtrack-sw.js", {
       enabled: !isDevMode(),
-      registrationStrategy: "registerWhenStable:3000",
+      registrationStrategy: "registerImmediately",
     }),
   ],
 }).catch(console.error);
