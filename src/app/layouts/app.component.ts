@@ -40,20 +40,20 @@ import { AppActivationUncertainError, AppReleaseService } from '../services/app-
 <div class="entry-field"><gt-icon name="lock"/><div><label for="login-password">{{auth.setup()?'Scegli una password':'Password'}}</label><input id="login-password" name="password" [type]="show()?'text':'password'" [attr.autocomplete]="auth.setup()?'new-password':'current-password'" [(ngModel)]="password" required [minlength]="auth.setup()?8:1" maxlength="128" placeholder="••••••••" /></div><button class="entry-eye" type="button" [attr.aria-label]="show()?'Nascondi password':'Mostra password'" [attr.aria-pressed]="show()" (click)="show.set(!show())"><gt-icon [name]="show()?'eye-off':'eye'"/></button></div>
 @if(auth.setup()) {<div class="entry-field"><gt-icon name="lock"/><div><label for="confirm-password">Conferma password</label><input id="confirm-password" name="confirm-password" type="password" autocomplete="new-password" [(ngModel)]="confirm" required minlength="8" maxlength="128" placeholder="Ripeti la password" /></div></div><p class="entry-helper">Almeno 8 caratteri, senza obbligo di caratteri speciali.</p>}
 <div class="entry-options"><label class="remember-option"><input type="checkbox" name="offline-access" [(ngModel)]="remember"/><span>Ricordami su questo iPhone</span></label>@if(!auth.setup()){<button type="button" class="entry-text-button" (click)="help.set(!help())" [attr.aria-expanded]="help()">Password dimenticata?</button>}</div>
-@if(remember){<p class="entry-helper">Potrai riaprire l’archivio offline anche senza login: sarà accessibile a chi usa questo iPhone. L’app non salva la password.</p>}
+@if(remember){<p class="entry-helper">Puoi riaprire i dati salvati su questo dispositivo anche senza Internet: non serve un backup sul server. L’archivio sarà accessibile a chi usa questo iPhone; la password non viene salvata.</p>}
 @if(help()&&!auth.setup()){<p class="entry-help" role="status">Per recuperare l’accesso o richiedere un account, contatta il Super Admin della palestra.</p>}
 <button class="entry-primary" [disabled]="busy()||auth.loading()||loginForm.invalid">{{busy()?'Accesso in corso…':auth.setup()?'Attiva account':'Accedi'}} <gt-icon name="arrow"/></button>
 </form>
 <p class="entry-device-hint">Su iPhone puoi salvare le credenziali nell’app Password e compilarle con Face ID.</p>
 </div>
 } @else {
-<div id="local-panel" role="tabpanel" aria-labelledby="local-tab" class="entry-local"><h2>Il tuo spazio personale</h2><p>Allenamenti e progressi sul dispositivo, anche offline dopo il primo caricamento. Puoi iniziare senza account.</p>
+<div id="local-panel" role="tabpanel" aria-labelledby="local-tab" class="entry-local"><h2>Il tuo spazio personale</h2><p>Allenamenti e progressi sono salvati su questo dispositivo. Dopo il primo caricamento puoi usarli offline, senza caricare o ripristinare backup.</p>
 @if(auth.offlineAccount();as u){<button class="entry-primary" (click)="auth.openLocal(true)"><gt-icon name="user"/><span>Continua come {{u.name}}</span><gt-icon name="arrow"/></button>}
 <button [class.entry-primary]="!auth.offlineAccount()" [class.entry-secondary]="!!auth.offlineAccount()" (click)="auth.openLocal()">{{auth.offlineAccount()?'Apri lo spazio senza account':'Inizia senza account'}} <gt-icon name="arrow"/></button><p class="entry-helper">Lo spazio senza account è separato dagli archivi degli account condivisi. Le funzioni amministrative richiedono l’accesso online.</p>
 </div>
 }
 <div class="entry-divider"><span>Il tuo percorso, al tuo ritmo</span></div>
-<div class="entry-trust"><gt-icon name="shield"/><div><b>I tuoi dati, sempre con te</b><p>Archivio locale e copia server.<br/>Backup esportabile in File.</p></div></div>
+<div class="entry-trust"><gt-icon name="shield"/><div><b>I tuoi dati, sempre con te</b><p>Salvataggio automatico sul dispositivo.<br/>Copia server quando disponibile.</p></div></div>
 @if(auth.setup()){<p class="entry-switch"><button class="entry-text-button" (click)="auth.openLocal()">Inizia senza account nello spazio locale</button></p>}
 @if(tab()==='account'&&!auth.setup()){<p class="entry-switch">Preferisci iniziare senza account? <button class="entry-text-button" (click)="tab.set('local')">Usa lo spazio locale</button></p>}
 </section>
@@ -64,7 +64,7 @@ export class AppComponent {
  features=inject(AppFeaturesService,{optional:true});
  private viewport=inject(ViewportService);
  private feedback=feedbackForContext();
- auth=inject(AuthService);welcome=signal(false);tab=signal<'account'|'local'>('account');help=signal(false);remember=false;username='';email='';password='';confirm='';busy=signal(false);error=feedbackSignal('error',this.feedback);show=signal(false);
+ auth=inject(AuthService);welcome=signal(false);tab=signal<'account'|'local'>('account');help=signal(false);remember=true;username='';email='';password='';confirm='';busy=signal(false);error=feedbackSignal('error',this.feedback);show=signal(false);
  private releases=inject(AppReleaseService);entryUpdating=signal(false);private attemptedEntryBuild='';
  constructor(){effect(()=>{if(!this.auth.loading()&&!this.auth.loggingOut()&&!this.auth.user()&&!this.busy()&&this.releases.autoUpdateReady())queueMicrotask(()=>void this.updateSignedOut());});}
  private async updateSignedOut(){

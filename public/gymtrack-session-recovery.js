@@ -1,5 +1,6 @@
 // This also runs when an old installation still registers ngsw-worker.js.
-// The server permits only the owner's pre-2026-10-28 iPhone cookie to recover.
+// The server permits only the owner's pre-fix iPhone cookie to recover once.
+// Recovery changes identity metadata only; backups and local archives are not prerequisites.
 (()=>{
  let checked=false,needsReload=false,job;
  const reloadWindows=async()=>{

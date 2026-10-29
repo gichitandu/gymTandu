@@ -10,7 +10,7 @@ const COOKIE = '__Host-gymtrack';
 const TTL = 60 * 60 * 24 * 30;
 // One-time recovery requested by the owner for the iPhone session stuck on the
 // old backup gate. Logins created after this cutoff are never signed out.
-export const IOS_LOGOUT_RECOVERY_BEFORE = Date.parse('2026-10-28T08:00:00Z');
+export const IOS_LOGOUT_RECOVERY_BEFORE = Date.parse('2026-10-29T21:41:00Z');
 // Replaced by the packager with the identity of these exact published assets.
 const APP_BUILD_ID = /* __APP_BUILD_ID__ */ 'development';
 const encoder = new TextEncoder();

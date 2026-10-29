@@ -13,9 +13,11 @@ const serverCatalogSource=await readFile('worker/default-catalog.js','utf8');
 const manifest=JSON.parse(await readFile(root+'/ngsw.json','utf8'));
 // Older iPhone installs still update this worker directly instead of our push
 // wrapper. A byte change delivers the scoped recovery without clearing storage.
-const workerPath=root+'/ngsw-worker.js',recoveryImport="\nimportScripts('/gymtrack-session-recovery.js');\n";
-let angularWorker=await readFile(workerPath,'utf8');
-if(!angularWorker.includes(recoveryImport.trim())){angularWorker+=recoveryImport;await writeFile(workerPath,angularWorker);}
+const workerPath=root+'/ngsw-worker.js';
+const recoveryVersion=createHash('sha256').update(workerSource).update(await readFile(root+'/gymtrack-session-recovery.js')).digest('hex').slice(0,16);
+const recoveryImport="\n// GymTrack device recovery "+recoveryVersion+"\nimportScripts('/gymtrack-session-recovery.js');\n";
+let angularWorker=(await readFile(workerPath,'utf8')).replace(/\n(?:\/\/ GymTrack device recovery [a-f0-9]+\n)?importScripts\('\/gymtrack-session-recovery.js'\);\n/g,'');
+angularWorker+=recoveryImport;await writeFile(workerPath,angularWorker);
 if(manifest.hashTable['/ngsw-worker.js'])manifest.hashTable['/ngsw-worker.js']=createHash('sha1').update(angularWorker).digest('hex');
 // Derive a stable version from the shipped assets and server behavior. Ignore
 // our own generated descriptor so packaging the same build twice is stable.

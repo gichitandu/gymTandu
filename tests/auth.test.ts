@@ -1,4 +1,4 @@
-import { beforeEach, afterEach, it, expect } from 'vitest';
+import { beforeEach, afterEach, it, expect, vi } from 'vitest';
 import { DatabaseSync } from 'node:sqlite';
 import { readFileSync, readdirSync } from 'node:fs';
 import { api, IOS_LOGOUT_RECOVERY_BEFORE } from '../worker/index.js';
@@ -153,4 +153,15 @@ it('rejects cross-origin recovery and never revokes another user or another plat
  expect((await call('auth/device-recovery',{},{cookie:ownerCookie,agent:'iPhone',origin:'https://attacker.test'})).status).toBe(403);
  expect((await (await call('auth/device-recovery',{},{cookie:ownerCookie,visitor:'different',agent:'iPhone'})).json()).signedOut).toBe(false);
  expect((await (await call('auth/device-recovery',{},{cookie,visitor:'client',agent:'iPhone'})).json()).signedOut).toBe(false);expect(count()).toBe(2);
+});
+
+it('recovers the owner iPhone session from the October 29 blocked release once, while a new login stays active',async()=>{
+ const clock=vi.spyOn(Date,'now').mockReturnValue(Date.parse('2026-10-29T22:00:00Z'));
+ try{
+  const old=await activate();sql.prepare('UPDATE sessions SET expires_at=?').run(Date.parse('2026-10-29T20:00:00Z')+30*86400000);
+  const login=await call('auth/login',{email:owner,password:'owner-password-123'}),fresh=login.headers.get('set-cookie')!.split(';')[0];
+  expect((await (await call('auth/device-recovery',{},{cookie:old,agent:'iPhone'})).json()).signedOut).toBe(true);
+  expect((await (await call('auth/device-recovery',{},{cookie:fresh,agent:'iPhone'})).json()).signedOut).toBe(false);
+  expect((await (await call('auth/me',undefined,{cookie:fresh})).json()).user.role).toBe('SuperAdmin');
+ }finally{clock.mockRestore();}
 });

@@ -2,7 +2,6 @@ import { Injectable, inject, signal } from '@angular/core';
 import { SwUpdate } from '@angular/service-worker';
 import { Subscription } from 'rxjs';
 import { Store } from './store';
-import { ArchiveSyncService } from './archive-sync';
 import { AppActivationUncertainError, AppReleaseService } from './app-release';
 import { FormDraftService } from './form-drafts';
 import { feedbackForContext, feedbackSignal } from './feedback';
@@ -17,7 +16,6 @@ export class PwaService {
  updateError=feedbackSignal('error',feedbackForContext());
  private updates=inject(SwUpdate);
  private store=inject(Store);
- private cloud=inject(ArchiveSyncService,{optional:true});
  private drafts=inject(FormDraftService,{optional:true});
  readonly releases=inject(AppReleaseService);
  private subscriptions:Subscription[]=[];
@@ -47,9 +45,8 @@ export class PwaService {
   let pending;
   do{pending=this.store.settled();if(await pending===false)throw Error('L’ultimo salvataggio sul dispositivo non è riuscito. Riprova prima di aggiornare.');}while(pending!==this.store.settled());
   if(this.store.conflicted?.())throw Error('Archivio locale modificato da un’altra finestra. Verifica i salvataggi prima di continuare.');
-  if(this.store.error())throw Error(this.store.error());
  }
- async prepareExit(reason:'update'|'logout'='update',allowPendingSync=false):Promise<boolean>{
+ async prepareExit(reason:'update'|'logout'='update'):Promise<boolean>{
   this.updateError.set('');this.updateNotice.set('');
   if(reason==='logout'){
    // Logout never depends on backup, sync, validation, or a save acknowledgement.
@@ -70,17 +67,14 @@ export class PwaService {
    if(this.drafts)saves.push(this.drafts.flushAll());
    if((await Promise.all(saves)).some(result=>result===false))throw Error('Salva o correggi i dati del modulo prima di continuare.');
    await this.waitForLocalWrites();
-   // Manual updates reuse the durable local archive. Only automatic
-   // updates wait for online sync. Pending sync metadata stays untouched.
-   if(reason==='update'&&!allowPendingSync&&this.cloud&&!await this.cloud.flush()){
-    this.updateNotice.set('Aggiornamento automatico in attesa della sincronizzazione online. Puoi usare “Aggiorna questo dispositivo”: non serve un backup manuale.');
-    return false;
-   }
+   // Both manual and automatic updates reopen the durable device archive.
+   // Missing cloud backups, sync failures and pending restores never gate them.
+   // Pending sync metadata remains intact and resumes after the new app opens.
    // A save accepted while waiting may have cleared or revised its form draft.
    // Persist that final state as well before revoking the cookie or reloading.
    if(this.drafts&&!await this.drafts.flushAll())throw Error('Bozza non salvata. Resta nell’app e riprova.');
    await this.waitForLocalWrites();
-   if(reason==='update'&&allowPendingSync)this.updateNotice.set('Dati e bozze salvati sul dispositivo. La sincronizzazione online riprenderà alla riapertura.');
+   this.updateNotice.set('Dati e bozze salvati sul dispositivo. Non serve un backup o un ripristino per aggiornare.');
    return true;
   }catch(error){
    this.updateError.set('Aggiornamento sospeso: '+(error instanceof Error?error.message:'Salvataggio non riuscito. I dati presenti sono conservati.'));
@@ -107,7 +101,7 @@ export class PwaService {
    // Freeze before the snapshot: typing while the server copy is pending must
    // not create a newer draft between the last flush and the page reload.
    if(root)root.inert=true;
-   if(!await this.prepareExit('update',!automatic))return;
+   if(!await this.prepareExit('update'))return;
    if(automatic&&this.store.draft?.()){this.scheduleAuto();return;}
    const activated=await this.releases.activateReady(automatic?this.releases.policy()?.requestedBuildId||undefined:undefined);
    if(automatic&&!activated)return;

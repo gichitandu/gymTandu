@@ -91,3 +91,11 @@ it('keeps the interface frozen between cookie revocation and the final reload',a
   expect(auth.logout).toHaveBeenCalledExactlyOnceWith({reload:false});expect(root.inert).toBe(true);expect(c.loggingOut()).toBe(true);expect(pwa.updating()).toBe(true);
   finish();await first;expect(root.inert).toBe(true);
 });
+
+it('never lets an unresolved local save or restore flow veto or indefinitely postpone logout',async()=>{
+ vi.useFakeTimers();
+ const root={inert:false};(document as any).querySelector=()=>root;
+ const pwa=injector.get(PwaService) as any,auth=injector.get(AuthService) as any;
+ pwa.prepareExit=vi.fn(()=>new Promise(()=>{}));auth.logout=vi.fn().mockResolvedValue(undefined);pwa.finishLogoutUpdate=vi.fn().mockResolvedValue(undefined);
+ const exiting=c.logout();await Promise.resolve();expect(auth.logout).toHaveBeenCalledExactlyOnceWith({reload:false});await vi.advanceTimersByTimeAsync(1000);await exiting;expect(pwa.finishLogoutUpdate).toHaveBeenCalledOnce();expect(root.inert).toBe(true);vi.useRealTimers();
+});

@@ -29,7 +29,7 @@ it('flushes the active draft and waits for all queued writes before reloading th
  try{const updating=t.pwa.reload();expect(t.reload).not.toHaveBeenCalled();expect(t.pwa.updating()).toBe(true);await t.pwa.reload();expect(t.reload).not.toHaveBeenCalled();finish();await updating;expect(t.reload).toHaveBeenCalledTimes(1);}finally{t.injector.destroy();}
 });
 it('keeps the app open when a pending save failed',async()=>{
- const t=setup();t.store.error.set('Spazio locale esaurito');
+ const t=setup();t.store.error.set('Spazio locale esaurito');t.queue(Promise.resolve(false));
  try{await t.pwa.reload();expect(t.reload).not.toHaveBeenCalled();expect(t.store.error()).toBe('Spazio locale esaurito');expect(t.pwa.updateError()).toContain('Aggiornamento sospeso');}finally{t.injector.destroy();}
 });
 it('keeps the app open when an editor rejects its draft even if a later write clears the global error',async()=>{
@@ -42,9 +42,9 @@ it('updates manually from saved local data without requiring a server copy or a 
  const t=setup();t.cloud.flush.mockResolvedValue(false);
  try{await t.pwa.reload();expect(t.reload).toHaveBeenCalledOnce();expect(t.cloud.flush).not.toHaveBeenCalled();expect(t.drafts.flushAll).toHaveBeenCalledTimes(2);expect(t.pwa.updateError()).toBe('');}finally{t.injector.destroy();}
 });
-it('defers automatic updates with pending server sync without presenting it as a failed distribution',async()=>{
+it('applies automatic updates with saved device data even when cloud backup and sync are unavailable',async()=>{
  const t=setup(true);t.cloud.flush.mockResolvedValue(false);
- try{await vi.waitFor(()=>expect(t.cloud.flush).toHaveBeenCalledOnce());expect(t.reload).not.toHaveBeenCalled();expect(t.release.activateReady).not.toHaveBeenCalled();expect(t.pwa.updateError()).toBe('');expect(t.pwa.updateNotice()).toContain('non serve un backup manuale');}finally{t.injector.destroy();}
+ try{await vi.waitFor(()=>expect(t.reload).toHaveBeenCalledOnce());expect(t.cloud.flush).not.toHaveBeenCalled();expect(t.release.activateReady).toHaveBeenCalledOnce();expect(t.pwa.updateError()).toBe('');expect(t.pwa.updateNotice()).toContain('Non serve un backup o un ripristino');}finally{t.injector.destroy();}
 });
 it('does not bypass local conflicts or failed queued writes during a manual update',async()=>{
  const t=setup();t.store.conflicted.set(true);
@@ -84,4 +84,9 @@ it('reloads coherently after an ambiguous activation instead of resuming an old 
 it('retains the page if the final draft state cannot be written during manual update',async()=>{
  const t=setup();t.drafts.flushAll.mockResolvedValueOnce(true).mockResolvedValueOnce(false);
  try{await t.pwa.reload();expect(t.cloud.flush).not.toHaveBeenCalled();expect(t.reload).not.toHaveBeenCalled();expect(t.pwa.updateError()).toContain('Bozza non salvata');}finally{t.injector.destroy();}
+});
+
+it('ignores a historical form or server error after local writes and drafts are durable',async()=>{
+ const t=setup();t.store.error.set('Ripristino server non disponibile');t.cloud.flush.mockImplementation(()=>new Promise(()=>{}));
+ try{await t.pwa.reload();expect(t.reload).toHaveBeenCalledOnce();expect(t.cloud.flush).not.toHaveBeenCalled();expect(t.store.error()).toBe('Ripristino server non disponibile');}finally{t.injector.destroy();}
 });

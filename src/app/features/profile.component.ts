@@ -57,7 +57,7 @@ interface ProfileFormDraft {
     StatusComponent,
     IconComponent,
   ],
-  template: `<gt-section-heading index="06" eyebrow="IL TUO SPAZIO PERSONALE" [title]="panelLabel()" description="Un percorso che ti assomiglia, in ogni dettaglio.">@if(panel()!=='overview'){<button class="icon-btn ghost" aria-label="Torna al profilo" (click)="panel.set('overview')">‹</button>}@if(panel()==='overview'){<button class="ghost" (click)="panel.set('settings')">Modifica profilo</button>}</gt-section-heading><gt-status/>
+  template: `<gt-section-heading index="06" eyebrow="IL TUO SPAZIO PERSONALE" [title]="panelLabel()" description="Un percorso che ti assomiglia, in ogni dettaglio.">@if(panel()!=='overview'){<button class="icon-btn ghost" aria-label="Torna al profilo" (click)="panel.set('overview')">‹</button>}@if(panel()==='overview'){<button type="button" class="ghost" (click)="panel.set('settings')">Modifica profilo</button><button type="button" class="ghost" [disabled]="loggingOut()" (click)="logout()">{{loggingOut()?'Uscita…':'Esci'}}</button>}</gt-section-heading><gt-status/>
 @if(draftRestored()){<div class="notice" role="status">Bozza recuperata: controlla i valori e salva per confermarli.<button type="button" class="ghost" (click)="discardDraft()">Elimina bozza</button></div>}
 @if(panel()==='overview'){
 <section class="card profile-dashboard identity-card">
@@ -368,10 +368,14 @@ export class ProfileComponent {
     const root=typeof document==='undefined'?null:document.querySelector?.('app-root') as HTMLElement|null,priorInert=root?.inert;
     let exited=false;
     try {
-      // Freeze new input while existing local autosaves get a bounded head start.
+      // Automatic local saves continue independently: they can never veto or
+      // indefinitely postpone sign-out, including an unresolved restore prompt.
       if(root)root.inert=true;
-      try{await this.pwa.prepareExit('logout');}catch{/* Local save errors never veto logout. */}
-      await this.auth.logout({reload:false});exited=true;await this.pwa.finishLogoutUpdate();
+      let saving:Promise<unknown>;try{saving=Promise.resolve(this.pwa.prepareExit('logout')).catch(()=>{});}catch{saving=Promise.resolve();}
+      await this.auth.logout({reload:false});exited=true;
+      let timer:ReturnType<typeof setTimeout>|undefined;
+      try{await Promise.race([saving,new Promise<void>(resolve=>{timer=setTimeout(resolve,1000);})]);}finally{clearTimeout(timer);}
+      await this.pwa.finishLogoutUpdate();
     }catch(e){this.accountError.set((e as Error).message);}
     finally{if(!exited){if(root)root.inert=priorInert||false;this.pwa.updating.set(false);}this.loggingOut.set(false);}
   }
@@ -575,8 +579,8 @@ export class ProfileComponent {
       const ok = await navigator.storage?.persist?.();
       this.s.message.set(
         ok
-          ? "Archiviazione persistente concessa. Continua comunque a esportare backup."
-          : "Il browser non ha concesso l’archiviazione persistente. Il backup resta indispensabile.",
+          ? "Archiviazione persistente concessa. I dati continuano a essere salvati sul dispositivo."
+          : "Il browser non ha concesso l’archiviazione persistente. Puoi usare l’app e salvare sul dispositivo; il backup esportabile resta facoltativo.",
       );
     } catch {
       this.s.error.set(
