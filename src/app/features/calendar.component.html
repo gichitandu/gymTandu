@@ -37,6 +37,7 @@
         <div class="cal-workout-main"><span class="cal-workout-symbol"><gt-icon [name]="linked(event)?.status==='completed'?'check':'weight'"/></span><div><p>{{event.planName}}</p><h3>{{event.dayName}}</h3><span>{{daySummary(event.dayId)}}</span></div></div>
         @if(muscles(event.dayId)){<p class="cal-muscles">{{muscles(event.dayId)}}</p>}
         @if(event.notes){<p class="cal-event-notes"><gt-icon name="note"/>{{event.notes}}</p>}
+        @if(linked(event)?.status!=='completed'){<a class="button ghost cal-preview" routerLink="/anteprima-allenamento" [queryParams]="{scheduled:event.id}"><gt-icon name="eye"/>Vedi allenamento<gt-icon name="arrow"/></a>}
         @if(linked(event)?.status==='completed'){
           @if(linked(event)?.date!==event.date){<p class="cal-record-date">Registrato il {{shortLabel(linked(event)!.date)}}</p>}
           <a class="cal-complete-action" routerLink="/allenamenti" [queryParams]="{workout:event.workoutId}"><span>{{s.formatWeight(s.volume(event.workoutId!))}} {{s.settings().unit}} di volume</span> Vedi sessione <gt-icon name="arrow"/></a>

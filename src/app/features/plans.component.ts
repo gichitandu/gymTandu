@@ -74,7 +74,7 @@ type PlanEditorDraft = {
               @for(day of visibleDays(p);track day.id){
                 <details class="simple-day">
                   <summary class="simple-day-summary"><span><strong>{{day.name}}</strong><small>{{day.sessionDate?dateLabel(dayDate(day))+' · ':day.weekday===undefined?'':weekdays[day.weekday]+' · '}}{{s.planExercises(day.id).length}} esercizi</small></span><span class="day-chevron" aria-hidden="true">›</span></summary>
-                  <div class="simple-day-body">@if(day.phase||day.notes){<div class="day-guidance">@if(day.phase){<span class="pill">{{day.phase}}</span>}@if(day.notes){<details><summary>Indicazioni della seduta</summary><p>{{day.notes}}</p></details>}</div>}<div class="simple-day-tools">
+                  <div class="simple-day-body">@if(day.phase||day.notes){<div class="day-guidance">@if(day.phase){<span class="pill">{{day.phase}}</span>}@if(day.notes){<details><summary>Indicazioni della seduta</summary><p>{{day.notes}}</p></details>}</div>}<div class="simple-day-tools"><a class="button ghost plan-preview-link" routerLink="/anteprima-allenamento" [queryParams]="{day:day.id,return:'piani'}">Vedi allenamento<gt-icon name="arrow"/></a>
                     @if(!p.archived&&!p.completedAt){<details class="simple-menu" #dayMenu><summary [attr.aria-label]="'Gestisci '+day.name">⋯</summary><div class="simple-menu-panel"><button type="button" (click)="dayMenu.open=false;openDay(p.id,day)">Modifica allenamento</button><button type="button" (click)="dayMenu.open=false;s.duplicateDay(day.id)">Duplica</button><button type="button" (click)="dayMenu.open=false;moveDay(day,-1)" [disabled]="day.order===0">Sposta prima</button><button type="button" (click)="dayMenu.open=false;moveDay(day,1)" [disabled]="day.order===s.days(p.id).length-1">Sposta dopo</button><button type="button" class="danger" (click)="dayMenu.open=false;removeDay(day)">Elimina allenamento</button></div></details>}
                   </div>
                   <div class="simple-exercises"><div>
@@ -358,7 +358,7 @@ export class PlansComponent {
   });
   ngOnInit(){
     const selected=this.route?.snapshot?.queryParamMap?.get('plan');
-    if(selected){this.expanded.set(selected);const plan=this.s.data().plans.find(p=>p.id===selected);if(plan)this.archived.set(plan.archived);}
+    if(selected){this.expanded.set(selected);const plan=this.s.data().plans.find(p=>p.id===selected);if(plan){this.archived.set(plan.archived);const week=Number(this.route?.snapshot?.queryParamMap?.get('week'));if(plan.program&&Number.isInteger(week)&&week>=1&&week<=plan.program.weeks)this.selectWeek(plan.id,week);}}
     if(!this.drafts)return;
     this.draftSession=this.drafts.bind(this.s.archiveKey(),'plans-editor',()=>this.captureDraft(),value=>this.restoreDraft(value));
     const changed=()=>{if(!this.restoringDraft)this.draftSession?.changed();};

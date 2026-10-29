@@ -16,16 +16,22 @@
     <span class="today-state">{{ event.date === today ? 'Oggi' : dateLabel(event.date) }}</span>
     <h2>{{ event.dayName }}</h2>
     <p>{{ event.planName }}</p>
-    <button class="primary today-action" (click)="startEvent(event.id)" [disabled]="!s.ready() || s.busy()">
-      {{ event.date === today ? 'Inizia allenamento' : 'Apri programmazione' }} <gt-icon name="arrow" />
-    </button>
+    <div class="today-training-actions">
+      <a class="button ghost today-preview" routerLink="/anteprima-allenamento" [queryParams]="{scheduled:event.id,return:'home'}">Vedi allenamento <gt-icon name="eye" /></a>
+      <button class="primary today-action" (click)="startEvent(event.id)" [disabled]="!s.ready() || s.busy()">
+        {{ event.date === today ? 'Inizia allenamento' : 'Apri programmazione' }} <gt-icon name="arrow" />
+      </button>
+    </div>
   } @else if (nextDay(); as day) {
     <span class="today-state">Prossimo allenamento</span>
     <h2>{{ day.name }}</h2>
     <p>{{ s.activePlan()?.name }} · {{ s.planExercises(day.id).length }} esercizi</p>
-    <button class="primary today-action" (click)="start(day.id)" [disabled]="!s.ready() || s.busy() || !s.planExercises(day.id).length">
-      Inizia allenamento <gt-icon name="play" />
-    </button>
+    <div class="today-training-actions">
+      <a class="button ghost today-preview" routerLink="/anteprima-allenamento" [queryParams]="{day:day.id,return:'home'}">Vedi allenamento <gt-icon name="eye" /></a>
+      <button class="primary today-action" (click)="start(day.id)" [disabled]="!s.ready() || s.busy() || !s.planExercises(day.id).length">
+        Inizia allenamento <gt-icon name="play" />
+      </button>
+    </div>
   } @else {
     <h2>Il tuo primo allenamento</h2>
     <p>Crea un piano per iniziare.</p>

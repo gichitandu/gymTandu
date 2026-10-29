@@ -1,0 +1,29 @@
+<div class="workout-preview">
+  <header class="preview-heading"><a class="icon-btn ghost" [routerLink]="backPath()" [queryParams]="backParams()" aria-label="Torna alla schermata precedente"><gt-icon name="back"/></a><span class="preview-readonly"><gt-icon name="eye"/>Sola lettura</span></header>
+  @if(!s.ready()){
+    <section class="card preview-empty" role="status"><p>Caricamento allenamento…</p></section>
+  }@else{
+    @let workout=preview();
+    <section class="card preview-summary">
+      @if(workout.planName){<p class="preview-plan">{{workout.planName}}</p>}
+      <h1>{{workout.title}}</h1>
+      @if(workout.date){<p class="preview-date"><gt-icon name="calendar"/>{{date(workout.date!)}}</p>}
+      @if(workout.week||workout.phase){<p class="preview-phase">@if(workout.week){<span>Settimana {{workout.week}}</span>}@if(workout.phase){<span>{{workout.phase}}</span>}</p>}
+      @if(workout.available){<div class="preview-totals"><span><strong>{{workout.exercises.length}}</strong> esercizi</span><span><strong>{{workout.workSets}}</strong> serie di lavoro</span>@if(workout.warmupSets){<span><strong>{{workout.warmupSets}}</strong> riscaldamento</span>}</div>}
+    </section>
+    @if(!workout.available){<section class="card preview-empty" role="status"><gt-icon name="info"/><p>{{workout.message}}</p><a class="button ghost" [routerLink]="backPath()" [queryParams]="backParams()">Torna indietro</a></section>}
+    @if(workout.notes.length){<details class="card preview-guidance"><summary><gt-icon name="note"/>Note e consigli dell’allenamento</summary><div class="guidance-content">@for(note of workout.notes;track note.title){<section><h2>{{note.title}}</h2><p>{{note.text}}</p></section>}</div></details>}
+    @if(workout.available){<div class="preview-exercises">@for(row of workout.exercises;track row.id;let number=$index){
+      @let item=row.prescription;
+      <article class="card preview-exercise">
+        <header><gt-exercise-thumb [exercise]="row.exercise"/><div class="exercise-title"><span class="exercise-number">{{number+1}} / {{workout.exercises.length}}</span><h2>{{row.name}}</h2><p>{{row.muscle}}{{row.muscle&&row.exercise?.equipment?' · ':''}}{{row.exercise?.equipment}}</p></div></header>
+        <dl class="prescription-grid"><div><dt>Serie</dt><dd>{{item.sets}}</dd></div><div><dt>Ripetizioni</dt><dd>{{range(item.repsMin,item.repsMax)}}</dd></div><div><dt>Recupero</dt><dd>{{rest(item.rest)}}</dd></div></dl>
+        @if(item.rirMin!==undefined||item.rirMax!==undefined||item.rpe!==undefined||item.superset||item.warmupSets){<div class="prescription-tags">@if(item.rirMin!==undefined||item.rirMax!==undefined){<span title="Ripetizioni in riserva">RIR {{range(item.rirMin,item.rirMax)}}</span>}@if(item.rpe!==undefined){<span>RPE {{item.rpe}}</span>}@if(item.superset){<span>Superset {{item.superset}}</span>}@if(item.warmupSets){<span>{{item.warmupSets}} serie di riscaldamento</span>}</div>}
+        @if(item.targetWeight!==undefined){<p class="preview-load"><span>Carico previsto</span><strong>{{s.formatWeight(item.targetWeight)}} {{s.settings().unit}}</strong></p>}
+        @if(item.loadUnit){<p class="preview-unit">Unità della scheda: {{item.loadUnit}}</p>}
+        @if(hasAdvice(item,row.exercise?.description)){<details class="exercise-advice"><summary>Riscaldamento, note e tecnica <gt-icon name="arrow"/></summary><dl>@if(item.warmupNotes){<dt>Riscaldamento</dt><dd>{{item.warmupNotes}}</dd>}@if(item.reference){<dt>Riferimento della scheda</dt><dd>{{item.reference}}</dd>}@if(item.notes){<dt>Note e consigli</dt><dd>{{item.notes}}</dd>}@if(row.exercise?.description){<dt>Esecuzione</dt><dd>{{row.exercise!.description}}</dd>}</dl></details>}
+      </article>
+    }@empty{<section class="card preview-empty"><p>Non sono ancora presenti esercizi in questo allenamento.</p></section>}</div>}
+    <p class="preview-footnote">Consultare la scheda non avvia né registra un allenamento.</p>
+  }
+</div>
