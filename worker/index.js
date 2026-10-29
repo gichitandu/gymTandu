@@ -11,6 +11,7 @@ const TTL = 60 * 60 * 24 * 30;
 // One-time recovery requested by the owner for the iPhone session stuck on the
 // old backup gate. Logins created after this cutoff are never signed out.
 export const IOS_LOGOUT_RECOVERY_BEFORE = Date.parse('2026-10-29T21:41:00Z');
+export const IOS_REFRESH_RECOVERY_ID = 'logout-offline-v2';
 // Replaced by the packager with the identity of these exact published assets.
 const APP_BUILD_ID = /* __APP_BUILD_ID__ */ 'development';
 const encoder = new TextEncoder();
@@ -88,11 +89,16 @@ export async function api(request,env,ctx) {
     if(path.startsWith('/api/excel-imports'))return await excelImportsApi(request,env,me);
     if(path==='/api/app-features')return await appFeaturesApi(request,env,me);
     if(path==='/api/auth/device-recovery'&&request.method==='POST'){
-      if(me?.email!==OWNER||! /iPhone/i.test(request.headers.get('user-agent')||''))return json({signedOut:false});
+      const ownerDevice= /iPhone/i.test(request.headers.get('user-agent')||'') && (me?me.email===OWNER:request.headers.get('oai-authenticated-user-email')?.toLowerCase()===OWNER);
+      if(!ownerDevice)return json({signedOut:false});
       const token=request.headers.get('cookie')?.split(';').map(s=>s.trim()).find(s=>s.startsWith(COOKIE+'='))?.slice(COOKIE.length+1);
-      const result=await db.prepare('DELETE FROM sessions WHERE token_hash=? AND user_id=? AND expires_at<=?').bind(await digest(token),me.id,IOS_LOGOUT_RECOVERY_BEFORE+TTL*1000).run();
-      if(!result.meta.changes)return json({signedOut:false});
-      const response=json({signedOut:true},200,{'Set-Cookie':`${COOKIE}=; Path=/; Secure; HttpOnly; SameSite=Strict; Max-Age=0`});
+      const result=me&&token?await db.prepare('DELETE FROM sessions WHERE token_hash=? AND user_id=? AND expires_at<=?').bind(await digest(token),me.id,IOS_LOGOUT_RECOVERY_BEFORE+TTL*1000).run():null;
+      const signedOut=!!result?.meta.changes;
+      // A recent login can still run an old cached application. Refreshing that
+      // document is independent of cookie revocation and never needs an archive.
+      const response=json({signedOut,refreshRequired:true,recoveryId:IOS_REFRESH_RECOVERY_ID});
+      if(!signedOut)return response;
+      response.headers.append('Set-Cookie',`${COOKIE}=; Path=/; Secure; HttpOnly; SameSite=Strict; Max-Age=0`);
       // The new document consumes this short-lived marker to close remembered
       // offline access too. It contains no credentials or personal data.
       response.headers.append('Set-Cookie','__Host-gymtrack-recovered=1; Path=/; Secure; SameSite=Strict; Max-Age=600');

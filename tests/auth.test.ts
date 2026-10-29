@@ -1,7 +1,7 @@
 import { beforeEach, afterEach, it, expect, vi } from 'vitest';
 import { DatabaseSync } from 'node:sqlite';
 import { readFileSync, readdirSync } from 'node:fs';
-import { api, IOS_LOGOUT_RECOVERY_BEFORE } from '../worker/index.js';
+import { api, IOS_LOGOUT_RECOVERY_BEFORE, IOS_REFRESH_RECOVERY_ID } from '../worker/index.js';
 let sql: DatabaseSync;
 let env: any;
 const origin='https://gymtrack.test';
@@ -164,4 +164,25 @@ it('recovers the owner iPhone session from the October 29 blocked release once, 
   expect((await (await call('auth/device-recovery',{},{cookie:fresh,agent:'iPhone'})).json()).signedOut).toBe(false);
   expect((await (await call('auth/me',undefined,{cookie:fresh})).json()).user.role).toBe('SuperAdmin');
  }finally{clock.mockRestore();}
+});
+
+it('refreshes an old iPhone document even with a recent valid login, without revoking it or opening any archive',async()=>{
+ const clock=vi.spyOn(Date,'now').mockReturnValue(Date.parse('2026-10-29T22:00:00Z'));
+ try{
+  const cookie=await activate(),before=sql.prepare('SELECT * FROM sessions').all();
+  Object.defineProperty(env,'BUCKET',{get:()=>{throw Error('Refresh must not access archives');}});
+  const r=await call('auth/device-recovery',{},{cookie,agent:'iPhone'});
+  expect(await r.json()).toEqual({signedOut:false,refreshRequired:true,recoveryId:IOS_REFRESH_RECOVERY_ID});
+  expect(r.headers.get('set-cookie')).toBeNull();expect(sql.prepare('SELECT * FROM sessions').all()).toEqual(before);
+  expect((await (await call('auth/me',undefined,{cookie})).json()).user.role).toBe('SuperAdmin');
+ }finally{clock.mockRestore();}
+});
+it('refreshes the owner iPhone after a previous logout, without requiring an app cookie or a server backup',async()=>{
+ const cookie=await activate();await call('auth/logout',{},{cookie});
+ Object.defineProperty(env,'BUCKET',{get:()=>{throw Error('Refresh must not access archives');}});
+ const r=await call('auth/device-recovery',{},{agent:'iPhone'});
+ expect(await r.json()).toEqual({signedOut:false,refreshRequired:true,recoveryId:IOS_REFRESH_RECOVERY_ID});
+ expect(r.headers.get('set-cookie')).toBeNull();
+ const unrelated=await call('auth/device-recovery',{},{agent:'iPhone',email:'client@example.com',visitor:'client'});
+ expect(await unrelated.json()).toEqual({signedOut:false});
 });
