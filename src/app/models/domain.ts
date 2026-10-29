@@ -25,14 +25,41 @@ export interface TrainingPlan extends Entity {
   updatedAt: string;
   active: boolean;
   archived: boolean;
+  program?: ExcelProgramMetadata;
+  completedAt?: string;
+  completionReason?: 'automatic' | 'manual';
+}
+export interface ExcelProgramMetadata {
+  importId: string;
+  sourceName: string;
+  sourceKind: 'original' | 'GT-1';
+  startDate: string;
+  endDate: string;
+  weeks: number;
+  fileHash: string;
+  importedAt: string;
+  sessionCount: number;
+  createdExerciseIds?: string[];
+  createdGroupIds?: string[];
+}
+export interface ExercisePrescriptionDetails {
+  rirMin?: number;
+  rirMax?: number;
+  warmupNotes?: string;
+  reference?: string;
+  loadUnit?: string;
 }
 export interface TrainingPlanDay extends Entity {
   planId: string;
   name: string;
   order: number;
   weekday?: number;
+  week?: number;
+  sessionDate?: string;
+  phase?: string;
+  notes?: string;
 }
-export interface TrainingPlanExercise extends Entity {
+export interface TrainingPlanExercise extends Entity, ExercisePrescriptionDetails {
   superset?: string;
   warmupSets?: number;
   dayId: string;
@@ -78,8 +105,10 @@ export interface WorkoutLog extends Entity {
   notes: string;
   status: "draft" | "completed";
   bodyWeight?: number;
+  programWeek?: number;
+  programPhase?: string;
 }
-export interface WorkoutLogExercise extends Entity {
+export interface WorkoutLogExercise extends Entity, ExercisePrescriptionDetails {
   superset?: string;
   machineSetup?: MachineSetup;
   workoutId: string;
@@ -89,6 +118,8 @@ export interface WorkoutLogExercise extends Entity {
   order: number;
   rest: number;
   notes: string;
+  repsMin?: number;
+  repsMax?: number;
 }
 export interface WorkoutLogSet extends Entity {
   kind?: "work" | "warmup";
@@ -129,6 +160,7 @@ export interface IphoneCheck {state:'todo'|'pass'|'fail';note?:string;checkedAt?
 export interface IphoneChecklist {device:string;ios:string;checks:Record<string,IphoneCheck>;}
 export interface CatalogBaseline { exercises: Record<string, string>; groups: Record<string, string> }
 export interface AppSettings extends Entity {
+  archiveResetId?: string;
   catalogBaseline?: CatalogBaseline;
   /** Legacy notification preference, retained only for archive compatibility. */
   externalTimerEnabled?: boolean;

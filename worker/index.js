@@ -1,5 +1,7 @@
 import { defaultExercises, defaultGroups } from './default-catalog.js';
 import { pushReminderApi } from './push.js';
+import {excelImportsApi,appFeaturesApi} from './program-imports.js';
+import {performTanduReset} from './maintenance-once.js';
 import { archiveApi } from './archive.js';
 import { calendarApi, calendarPublish, calendarConfigure } from './calendar.js';
 // The platform's ChatGPT access boundary remains in place. App sessions are
@@ -84,6 +86,8 @@ export async function api(request,env,ctx) {
     if(request.method!=='GET' && request.headers.get('origin')!==url.origin) fail('Richiesta non autorizzata.',403);
     if(request.method!=='GET' && !request.headers.get('content-type')?.startsWith('application/json')) fail('Formato non supportato.',415);
     const me=await session(request,db);
+    if(path.startsWith('/api/excel-imports'))return await excelImportsApi(request,env,me);
+    if(path==='/api/app-features')return await appFeaturesApi(request,env,me);
     if(path==='/api/auth/device-recovery'&&request.method==='POST'){
       if(me?.email!==OWNER||! /iPhone/i.test(request.headers.get('user-agent')||''))return json({signedOut:false});
       const token=request.headers.get('cookie')?.split(';').map(s=>s.trim()).find(s=>s.startsWith(COOKIE+'='))?.slice(COOKIE.length+1);
@@ -224,12 +228,13 @@ export async function api(request,env,ctx) {
   } catch(e) {
     if(/UNIQUE constraint failed: users.username|users_username_unique/.test(e.message||''))return json({error:'Nome utente già utilizzato. Scegline un altro.'},409);
     if(/UNIQUE constraint failed: users.email/.test(e.message||''))return json({error:'Questa email è già registrata.'},409);
-    return json({error:e.status?e.message:'Servizio non disponibile. Riprova.'},e.status||503); }
+    return json({error:e.status?e.message:'Servizio non disponibile. Riprova.',...(e.code==='PLAN_OVERLAP'?{code:e.code}:{})},e.status||503); }
 }
 // __ASSETS__ is replaced by the build, keeping this deployment dependency-free.
 const assets = /* __ASSETS__ */ {};
 export default {async fetch(request,env,ctx) {
   const path=new URL(request.url).pathname;
+  if(path==='/api/maintenance/tandu-reset')return performTanduReset(request,env,catalog,archiveApi,calendarPublish);
   if(path.startsWith('/api/')) return api(request,env,ctx);
   if(!['GET','HEAD'].includes(request.method)) return new Response('Method not allowed',{status:405});
   const asset=assets[path==='/'?'/index.html':path];

@@ -12,6 +12,7 @@
           "/*.js",
           "/*.webmanifest",
           "/icons/**",
+          "/templates/**",
           "/*.webp",
           "/brand/**",
           "/exercises/**"

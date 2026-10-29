@@ -1,0 +1,3 @@
+The two GT-1 workbooks are the downloadable blank template and the approved eight-week example. The original-format fixture is generated with the same four-day/eight-week prescriptions (32 sessions, 208 exercise prescriptions, 536 work sets), namespace-prefixed SpreadsheetML elements, a cached auxiliary formula and a demonstration previous-set range of 6–7 repetitions.
+
+The original-format fixture deliberately omits physical-profile measurements and does not reproduce an identified user's trial history. The exact uploaded workbook was also exercised during implementation; its namespace-prefix serialization is the reason for this permanent regression fixture.

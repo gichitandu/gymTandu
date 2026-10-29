@@ -1,3 +1,4 @@
+import {validateImportedProgramOverlaps} from './program-imports.js';
 export const ARCHIVE_LIMIT_BYTES = 50 * 1024 * 1024;
 const ARCHIVE_RETAINED_VERSIONS = 10;
 const archiveTables = ['profiles','roles','plans','days','planExercises','exercises','muscleGroups','workouts','workoutExercises','sets','settings','meals','scheduledWorkouts','measurements','exercisePreferences','workoutUi'];
@@ -46,11 +47,26 @@ function archiveValidate(text) {
  for(const workout of data.workouts)if(!ids.profiles.has(workout.userId)||!nonempty(workout.planName)||!nonempty(workout.dayName)||!['draft','completed'].includes(workout.status))archiveFail('Allenamento della copia non valido.');
  for(const exercise of data.workoutExercises)if(!ids.workouts.has(exercise.workoutId)||!nonempty(exercise.name))archiveFail('Esercizio registrato della copia non valido.');
  for(const set of data.sets)if(!ids.workoutExercises.has(set.workoutExerciseId)||!Number.isInteger(set.number)||set.number<1||!numeric(set.weight)||!Number.isInteger(set.reps)||set.reps<1||set.reps>999||typeof set.completed!=='boolean')archiveFail('Serie della copia non valida.');
+ const date=value=>typeof value==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(value)&&Number.isFinite(Date.parse(value+'T12:00:00Z'))&&new Date(value+'T12:00:00Z').toISOString().slice(0,10)===value;
+ for(const plan of data.plans){
+  if(plan.program){const p=plan.program;if(typeof p.importId!=='string'||!p.importId||typeof p.sourceName!=='string'||!p.sourceName||!['original','GT-1'].includes(p.sourceKind)||!date(p.startDate)||!date(p.endDate)||p.startDate>p.endDate||!Number.isInteger(p.weeks)||p.weeks<1||p.weeks>10000||!Number.isInteger(p.sessionCount)||p.sessionCount<1||p.sessionCount>10000||!/^[a-f0-9]{64}$/.test(p.fileHash||'')||!Number.isFinite(Date.parse(p.importedAt)))archiveFail('Prescrizioni del programma Excel non valide.');}
+  if(plan.completedAt!==undefined&&!Number.isFinite(Date.parse(plan.completedAt)))archiveFail('Data di conclusione del piano non valida.');
+ }
+ for(const day of data.days)if(day.week!==undefined&&(!Number.isInteger(day.week)||day.week<1)||day.sessionDate!==undefined&&!date(day.sessionDate))archiveFail('Settimana o data del programma non valida.');
+ for(const e of [...data.planExercises,...data.workoutExercises]){
+  if(e.rirMin!==undefined&&(!Number.isFinite(e.rirMin)||e.rirMin<0||e.rirMin>10)||e.rirMax!==undefined&&(!Number.isFinite(e.rirMax)||e.rirMax<0||e.rirMax>10)||e.rirMin!==undefined&&e.rirMax!==undefined&&e.rirMin>e.rirMax)archiveFail('RIR non valido.');
+  for(const key of ['warmupNotes','reference','loadUnit'])if(e[key]!==undefined&&(typeof e[key]!=='string'||e[key].length>10000))archiveFail('Note della prescrizione non valide.');
+  if(e.repsMin!==undefined&&(!Number.isInteger(e.repsMin)||e.repsMin<1||e.repsMin>999)||e.repsMax!==undefined&&(!Number.isInteger(e.repsMax)||e.repsMax<1||e.repsMax>999)||e.repsMin!==undefined&&e.repsMax!==undefined&&e.repsMin>e.repsMax)archiveFail('Ripetizioni della prescrizione non valide.');
+ }
+ for(const w of data.workouts)if(w.programWeek!==undefined&&(!Number.isInteger(w.programWeek)||w.programWeek<1||w.programWeek>10000)||w.programPhase!==undefined&&(typeof w.programPhase!=='string'||w.programPhase.length>200))archiveFail('Contesto della settimana non valido.');
+ validateImportedProgramOverlaps(data);
 }
 async function archiveCleanup(db,bucket,scope) {
  // Cleanup is outside the successful head transaction. A cleanup failure leaves
  // extra recovery copies, never a missing current or previous snapshot.
  try {
+  const expired=await db.prepare('SELECT id,recovery_key FROM account_archive_resets WHERE scope=? AND recovery_key IS NOT NULL AND completed_at IS NOT NULL AND retain_until<?').bind(scope,Date.now()).all();
+  for(const row of expired.results||[]){await bucket.delete(row.recovery_key);await db.prepare('UPDATE account_archive_resets SET recovery_key=NULL WHERE id=?').bind(row.id).run();}
   const old=await db.prepare('SELECT id,object_key FROM archive_versions WHERE scope=? ORDER BY revision DESC LIMIT 100 OFFSET ?').bind(scope,ARCHIVE_RETAINED_VERSIONS).all();
   if(!old.results?.length)return;
   await db.batch(old.results.map(row=>db.prepare('DELETE FROM archive_versions WHERE id=? AND scope=?').bind(row.id,scope)));
@@ -88,6 +104,10 @@ export async function archiveApi(request,env,me,onSaved) {
  const base=archiveRevision(request.headers.get('if-match'));
  if(base!==(head?.revision||0))return archiveJson({error:'La copia persistente è cambiata in un’altra finestra. Le modifiche locali sono conservate.',revision:head?.revision||0},409);
  const body=await archiveBody(request);archiveValidate(body.text);
+ if(kind==='account'){
+  const reset=await db.prepare('SELECT reset_id FROM account_archive_resets WHERE user_id=?').bind(me.id).first();
+  if(reset&&JSON.parse(body.text).data.settings[0]?.archiveResetId!==reset.reset_id)return archiveJson({error:'L’archivio è stato reimpostato su richiesta. Riapri l’app per caricare i nuovi dati.',code:'account_reset',revision:head?.revision||0},409);
+ }
  const revision=base+1,at=Date.now(),hash=await archiveDigest(body.text),id=crypto.randomUUID(),key=`archives/${scope}/${revision}/${id}.json`;
  await env.BUCKET.put(key,body.text,{httpMetadata:{contentType:'application/json; charset=utf-8'},customMetadata:{revision:String(revision),sha256:hash}});
  let result;

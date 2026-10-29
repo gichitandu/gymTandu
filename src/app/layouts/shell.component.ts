@@ -1,3 +1,4 @@
+import {AppFeaturesService} from '../services/app-features';
 import { WorkoutClockComponent } from '../shared/workout-clock.component';
 import {WorkoutResumeService} from "../services/workout-resume";
 import { AvatarComponent } from "../shared/avatar.component";
@@ -40,7 +41,7 @@ import { canResumeAtHome, MobileNavigationService } from "../services/mobile-nav
       </header>}
       <main [class.session-main]="router.url.startsWith('/sessione')">@if(s.ready()){@if(auth.offlineMode()){<p class="local-mode-label">Archivio personale locale · funzioni condivise disabilitate</p>}<router-outlet />@if(router.url.split('?')[0]==='/profilo'&&auth.canManageBackups()){<gt-archive-recovery/>}}@else{<section class="card archive-opening" role="status" aria-live="polite"><h1>Apertura del tuo archivio</h1><p>Sto caricando i dati salvati su questo dispositivo…</p>@if(s.error()){<p class="notice">{{s.error()}}</p>}</section>}</main>
     </div>
-    <nav class="bottom-nav" aria-label="Navigazione principale">
+    <nav class="bottom-nav" aria-label="Navigazione principale" [style.grid-template-columns]="'repeat('+nav.length+',minmax(0,1fr))'">
       @for (item of nav; track item.path) {
         <a
           [routerLink]="item.path"
@@ -56,19 +57,21 @@ import { canResumeAtHome, MobileNavigationService } from "../services/mobile-nav
 export class ShellComponent {
   private resume=inject(WorkoutResumeService);private firstOpen=true;
   private navigation=inject(MobileNavigationService);
-  constructor(){effect(()=>{if(!this.s.ready()||!this.firstOpen||!this.navigation.resolved())return;this.firstOpen=false;const w=this.s.draft();if(w&&canResumeAtHome(this.navigation.url(),this.navigation.resolved())&&this.resume.read(this.s.archiveKey(),w.id,this.s.data().workoutUi.find(x=>x.id===w.id),this.s.archiveRevision()))void this.router.navigateByUrl('/sessione');});}
+  constructor(){effect(()=>{if(!this.s.ready()||!this.firstOpen||!this.navigation.resolved())return;this.firstOpen=false;const w=this.s.draft();if(w&&canResumeAtHome(this.navigation.url(),this.navigation.resolved())&&this.resume.read(this.s.archiveKey(),w.id,this.s.data().workoutUi.find(x=>x.id===w.id),this.s.archiveRevision()))void this.router.navigateByUrl('/sessione');});effect(()=>{if(this.features?.ready()&&!this.features.nutritionEnabled()&&this.router.url.split('?')[0]==='/alimentazione')void this.router.navigateByUrl('/');});}
   router=inject(Router);
   auth = inject(AuthService);
+  features=inject(AppFeaturesService,{optional:true});
   s = inject(Store);
   pwa = inject(PwaService);
   cloud = inject(ArchiveSyncService);
   backupStatus(){return ({local:'Archivio sul dispositivo',syncing:'Copia server in corso',saved:'Copia server aggiornata',offline:'Copia server in attesa della rete',conflict:'Copie da verificare'})[this.cloud.status()];}
-  nav: {path:string;label:string;mobileLabel?:string;icon:string}[] = [
+  private navItems: {path:string;label:string;mobileLabel?:string;icon:string}[] = [
     {path:'/',label:'Home',icon:'home'},
     {path:'/piani',label:'Allenamenti',mobileLabel:'Allenati',icon:'weight'},
     {path:'/alimentazione',label:'Alimentazione',mobileLabel:'Pasti',icon:'nutrition'},
     {path:'/progressi',label:'Progressi',icon:'chart'},
     {path:'/profilo',label:'Profilo',icon:'user'},
   ];
-  desktopNav=[...this.nav,{path:'/calendario',label:'Calendario',icon:'calendar'},{path:'/allenamenti',label:'Storico',icon:'clock'}];
+  get nav(){return this.navItems.filter(item=>item.path!=='/alimentazione'||this.features?.nutritionEnabled());}
+  get desktopNav(){return [...this.nav,{path:'/calendario',label:'Calendario',icon:'calendar'},{path:'/allenamenti',label:'Storico',icon:'clock'}];}
 }

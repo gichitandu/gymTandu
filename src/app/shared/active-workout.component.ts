@@ -32,6 +32,12 @@ export class ActiveWorkoutComponent {
  private lastCompletionClick=-Infinity;
  private destroyed=false;private timer=setInterval(()=>this.clock.set(Date.now()),1000);private persistTimer:ReturnType<typeof setTimeout>|undefined;private inputTimer:ReturnType<typeof setTimeout>|undefined;
  exercises=computed(()=>this.s.workoutExercises(this.workoutId()));selected=computed(()=>this.exercises().find(e=>e.id===this.exerciseId()));allSets=computed(()=>this.exercises().flatMap(e=>this.s.sets(e.id)));completedSets=computed(()=>this.allSets().filter(s=>s.completed).length);currentSet=computed(()=>this.allSets().find(s=>s.id===this.setId()));
+ workout=computed(()=>this.s.data().workouts.find(workout=>workout.id===this.workoutId()));
+ programContext=computed(()=>{const workout=this.workout();if(!workout)return null;const day=this.s.data().days.find(day=>day.id===workout.dayId),plan=this.s.data().plans.find(plan=>plan.id===workout.planId),week=workout.programWeek??day?.week,phase=workout.programPhase??day?.phase;return week||phase?{week,phase,weeks:plan?.program?.weeks,notes:workout.notes}:null;});
+ hasPrescription(exercise:WorkoutLogExercise){return exercise.rirMin!==undefined||exercise.repsMin!==undefined||!!(exercise.warmupNotes||exercise.reference||exercise.loadUnit||exercise.notes);}
+ rirLabel(exercise:WorkoutLogExercise){return exercise.rirMin===undefined?'':exercise.rirMin+(exercise.rirMax!==undefined&&exercise.rirMax!==exercise.rirMin?'–'+exercise.rirMax:'');}
+ repTarget(exercise:WorkoutLogExercise){return exercise.repsMin===undefined?'':exercise.repsMin+(exercise.repsMax!==undefined&&exercise.repsMax!==exercise.repsMin?'–'+exercise.repsMax:'');}
+ warmupLines(exercise:WorkoutLogExercise){return(exercise.warmupNotes||'').split(/;|\n/).map(line=>line.trim()).filter(Boolean);}
  flowIndex=computed(()=>this.step()==='list'?(this.allSets().length>0&&this.completedSets()===this.allSets().length?4:0):this.step()==='detail'?1:this.step()==='record'?2:3);
  previous=computed(()=>{const e=this.selected();return e?this.s.previous(e.exerciseId,e.workoutId,e.machineSetup):[];});
  remaining=computed(()=>this.paused()?this.pausedSeconds():remainingSeconds(this.restEnd(),this.clock()));restRatio=computed(()=>Math.min(100,this.remaining()/Math.max(1,this.restTotal())*100));

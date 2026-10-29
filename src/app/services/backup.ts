@@ -2,7 +2,7 @@ import { validateIntegrity } from "./integrity";
 export { validateIntegrity } from "./integrity";
 import { z } from "zod";
 import { DataSet } from "../models/domain";
-export const BACKUP_VERSION = 5;
+export const BACKUP_VERSION = 6;
 const id = z.string().min(1).max(150);
 const text = z.string().max(10000);
 const nonempty = z.string().trim().min(1).max(200);
@@ -31,6 +31,8 @@ const image = z.object({
     .regex(/^[A-Za-z0-9+/]*={0,2}$/),
 });
 const machineSetup=z.object({machine:z.string().max(120).optional(),seat:z.string().max(80).optional(),backrest:z.string().max(80).optional(),grip:z.string().max(120).optional(),notes:z.string().max(500).optional()});
+const prescriptionDetails={rirMin:z.number().min(0).max(10).optional(),rirMax:z.number().min(0).max(10).optional(),warmupNotes:text.optional(),reference:text.optional(),loadUnit:z.string().max(120).optional()};
+const program=z.object({importId:id,sourceName:z.string().min(1).max(255),sourceKind:z.enum(['original','GT-1']),startDate:date,endDate:date,weeks:z.number().int().min(1).max(10000),fileHash:z.string().regex(/^[a-f0-9]{64}$/),importedAt:time,sessionCount:z.number().int().min(1).max(10000),createdExerciseIds:z.array(id).max(10000).optional(),createdGroupIds:z.array(id).max(1000).optional()}).refine(value=>value.endDate>=value.startDate);
 const schemas = {
   profiles: z.object({
     id,
@@ -56,6 +58,7 @@ const schemas = {
     updatedAt: time,
     active: z.boolean(),
     archived: z.boolean(),
+    program:program.optional(),completedAt:time.optional(),completionReason:z.enum(['automatic','manual']).optional(),
   }),
   days: z.object({
     id,
@@ -63,6 +66,7 @@ const schemas = {
     name: nonempty,
     order: int,
     weekday: z.number().int().min(0).max(6).optional(),
+    week:z.number().int().positive().max(10000).optional(),sessionDate:date.optional(),phase:z.string().max(200).optional(),notes:text.optional(),
   }),
   planExercises: z
     .object({
@@ -71,11 +75,12 @@ const schemas = {
       exerciseId: id,
       superset:z.enum(["A","B","C","D"]).optional(),
       warmupSets:z.number().int().min(0).max(5).optional(),
+      ...prescriptionDetails,
       sets: z.number().int().min(1).max(30),
       repsMin: z.number().int().min(1).max(999),
       repsMax: z.number().int().min(1).max(999),
       targetWeight: num.optional(),
-      rest: num.max(3600),
+      rest: num.max(7200),
       rpe,
       notes: text,
       order: int,
@@ -114,10 +119,12 @@ const schemas = {
       notes: text,
       status: z.enum(["draft", "completed"]),
       bodyWeight: z.number().positive().max(700).optional(),
+      programWeek:z.number().int().positive().max(10000).optional(),programPhase:z.string().max(200).optional(),
     })
     .refine((w) => w.status !== "completed" || !!w.endedAt)
     .refine((w) => !w.endedAt || new Date(w.endedAt) >= new Date(w.startedAt)),
   workoutExercises: z.object({
+    ...prescriptionDetails,
     superset:z.enum(["A","B","C","D"]).optional(),machineSetup:machineSetup.optional(),
     id,
     workoutId: id,
@@ -125,8 +132,9 @@ const schemas = {
     name: nonempty,
     loadMode: mode,
     order: int,
-    rest: num.max(3600),
+    rest: num.max(7200),
     notes: text,
+    repsMin:z.number().int().min(1).max(999).optional(),repsMax:z.number().int().min(1).max(999).optional(),
   }),
   sets: z.object({
     kind:z.enum(["work","warmup"]).optional(),
@@ -136,11 +144,12 @@ const schemas = {
     weight: num,
     reps: z.number().int().min(1).max(999),
     rpe,
-    rest: num.max(3600).optional(),
+    rest: num.max(7200).optional(),
     notes: text.optional(),
     completed: z.boolean(),
   }),
   settings: z.object({
+    archiveResetId:id.optional(),
     catalogBaseline: z.object({exercises:z.record(id,z.string().regex(/^[a-f0-9]{64}$/)),groups:z.record(id,z.string().max(10000))}).optional(),
     id,
     externalTimerEnabled: z.boolean().optional(),
@@ -206,7 +215,7 @@ export async function exportBackup(data: DataSet) {
   );
 }
 // Add explicit vN -> vN+1 pure functions here when the on-disk format evolves.
-export const migrations: Record<number, (value: unknown) => unknown> = {1: value => ({...(value as object),meals:[]}),2:value=>value,3:value=>({...value as object,scheduledWorkouts:[],measurements:[]}),4:value=>({...value as object,exercisePreferences:[],workoutUi:[]})};
+export const migrations: Record<number, (value: unknown) => unknown> = {1: value => ({...(value as object),meals:[]}),2:value=>value,3:value=>({...value as object,scheduledWorkouts:[],measurements:[]}),4:value=>({...value as object,exercisePreferences:[],workoutUi:[]}),5:value=>value};
 export async function importBackup(json: string): Promise<DataSet> {
   if (new Blob([json]).size > 50 * 1024 * 1024)
     throw Error("Backup troppo grande: limite 50 MB.");

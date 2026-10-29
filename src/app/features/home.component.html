@@ -19,7 +19,7 @@
     <button class="primary today-action" (click)="startEvent(event.id)" [disabled]="!s.ready() || s.busy()">
       {{ event.date === today ? 'Inizia allenamento' : 'Apri programmazione' }} <gt-icon name="arrow" />
     </button>
-  } @else if (s.nextDay(); as day) {
+  } @else if (nextDay(); as day) {
     <span class="today-state">Prossimo allenamento</span>
     <h2>{{ day.name }}</h2>
     <p>{{ s.activePlan()?.name }} · {{ s.planExercises(day.id).length }} esercizi</p>
@@ -44,11 +44,11 @@
   </div>
   <a class="today-calendar" routerLink="/calendario"><gt-icon name="calendar" /><span>Calendario</span><gt-icon name="arrow" /></a>
 </section>
-<section class="today-section" aria-label="Alimentazione di oggi">
+@if(features?.nutritionEnabled()){<section class="today-section" aria-label="Alimentazione di oggi">
   <h2>Oggi</h2>
   <div class="today-nutrition">
     <a routerLink="/alimentazione"><strong>{{ totals().calories.toLocaleString('it-IT',{maximumFractionDigits:0}) }}</strong><span>kcal</span></a>
     <a routerLink="/alimentazione"><strong>{{ totals().protein.toLocaleString('it-IT',{maximumFractionDigits:0}) }} <small>g</small></strong><span>proteine</span></a>
   </div>
-</section>
+</section>}
 @if(auth?.canManageBackups()){<gt-backup-reminder />}

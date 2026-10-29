@@ -3,6 +3,7 @@ import { AuthService } from './auth';
 import { exportBackup, importBackup } from './backup';
 import { DataSet } from '../models/domain';
 import { defaultExercises, defaultGroups } from '../core/default-catalog';
+import { FormDraftService } from './form-drafts';
 
 export type ArchiveSyncState = 'local' | 'syncing' | 'saved' | 'offline' | 'conflict';
 interface SyncMeta { revision: number; fingerprint: string; pending: boolean; blocked?: boolean }
@@ -47,11 +48,14 @@ export function archiveHasContent(data: DataSet): boolean {
 @Injectable({ providedIn: 'root' })
 export class ArchiveSyncService {
   private auth = inject(AuthService, { optional: true });
+  private drafts=inject(FormDraftService,{optional:true});
   readonly status = signal<ArchiveSyncState>('local');
   readonly message = signal('');
   readonly lastSaved = signal<number | null>(null);
   readonly revision = signal(0);
   readonly remoteSummary = signal<ReturnType<typeof archiveSummary> | null>(null);
+  readonly lastErrorCode=signal('');
+  readonly lastErrorMessage=signal('');
   private archive = '';
   private scope: 'device' | 'account' | undefined;
   private meta?: SyncMeta;
@@ -172,6 +176,21 @@ export class ArchiveSyncService {
       if (generation !== this.generation) return local;
       this.knownHead = true;this.revision.set(head.revision);this.lastSaved.set(head.updatedAt ?? null);
       if (remote) this.remoteSummary.set(archiveSummary(remote));
+      const reset=remote?.settings[0]?.archiveResetId;
+      if(remote&&reset&&reset!==local.settings[0]?.archiveResetId){
+        // An explicit one-time account reset is authoritative. A stale phone
+        // must never merge its old personal archive back over that decision.
+        if(!acceptRestore){this.conflict();this.message.set('L’archivio è stato reimpostato su richiesta. Riapri l’app per caricare il nuovo stato.');if(typeof location!=='undefined')location.reload();return local;}
+        const accepted=await acceptRestore(remote);
+        if(generation!==this.generation)return local;
+        if(!accepted){this.conflict();return local;}
+        await this.drafts?.discardScope(this.archive);
+        if(generation!==this.generation)return local;
+        this.localChanges=0;this.latest=structuredClone(remote);this.pending=undefined;
+        this.meta={revision:head.revision,fingerprint:remoteFingerprint,pending:false};this.saveMeta();this.saved(head.updatedAt);
+        if(typeof location!=='undefined')location.reload();
+        return remote;
+      }
       if (!remote) {
         this.meta = { revision: head.revision, fingerprint: '', pending: archiveHasContent(local) || !!previous?.pending };
         this.saveMeta();
@@ -226,6 +245,7 @@ export class ArchiveSyncService {
     this.message.set('Copia server aggiornata.');
   }
   changed(data: DataSet) {
+    if(this.latest?.settings[0]?.archiveResetId&&data.settings[0]?.archiveResetId!==this.latest.settings[0].archiveResetId){this.conflict();this.message.set('Questa copia precede la reimpostazione richiesta. Riapri l’app per usare l’archivio aggiornato.');return;}
     if (this.destroyed || !this.archive || !this.scope) return;
     this.localChanges++;
     if (!archiveHasContent(data) && !this.uploading && !this.meta?.fingerprint && !this.meta?.blocked) {
@@ -259,6 +279,7 @@ export class ArchiveSyncService {
     return this.uploadPending();
   }
   private async uploadPending(): Promise<boolean> {
+    this.lastErrorCode.set('');this.lastErrorMessage.set('');
     while (this.pending) {
       const job = this.pending;this.pending = undefined;
       this.uploading=true;
@@ -270,6 +291,7 @@ export class ArchiveSyncService {
         }
         const response = await this.request('POST', backup);
         if (job.generation !== this.generation) return false;
+        if(!response.ok){const failure=await response.json() as {code?:string;error?:string};this.lastErrorCode.set(failure?.code||'');this.lastErrorMessage.set(failure?.error||'Copia server non salvata.');}
         if (response.status === 409) {
           // An acknowledgement can be lost after a successful server commit.
           // Reconcile only an identical snapshot; never retry over a different head.
@@ -277,6 +299,7 @@ export class ArchiveSyncService {
           const check = await this.request();
           if (check.ok) {
             const head = await check.json() as ArchiveHead;
+            if(head.backup){const reset=JSON.parse(head.backup).data?.settings?.[0]?.archiveResetId;if(reset&&reset!==job.data.settings[0]?.archiveResetId){this.message.set('Reimpostazione dell’account disponibile. Riapri l’app per usare il nuovo archivio.');if(typeof location!=='undefined')location.reload();return false;}}
             if (head.backup && await archiveFingerprint(head.backup) === fingerprint) {
               if(this.pending===job)this.pending=undefined;
               this.revision.set(head.revision);this.meta={revision:head.revision,fingerprint,pending:!!this.pending};this.saveMeta();

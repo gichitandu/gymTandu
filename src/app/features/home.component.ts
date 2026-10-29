@@ -1,3 +1,4 @@
+import {AppFeaturesService} from '../services/app-features';
 import { AuthService } from '../services/auth';
 import { BackupReminderComponent } from "../shared/backup-reminder.component";
 import { Component, computed, inject } from "@angular/core";
@@ -20,11 +21,14 @@ import { TodayService } from '../services/today';
 })
 export class HomeComponent {
   s = inject(Store);
+  features=inject(AppFeaturesService,{optional:true});
   auth=inject(AuthService,{optional:true});
   router = inject(Router);
   private todayClock = inject(TodayService,{optional:true});
   get today() { return this.todayClock?.date() || localDate(); }
   goals = computed(() => this.s.settings().goals);
+  private concluded(planId:string){return !!this.s.data().plans.find(plan=>plan.id===planId)?.completedAt;}
+  nextDay=computed(()=>{const day=this.s.nextDay();return day&&!this.concluded(day.planId)?day:undefined;});
   Math = Math;
   firstName = computed(
     () => this.s.profile().name.trim().split(/\s+/)[0] || "atleta",
@@ -55,6 +59,7 @@ export class HomeComponent {
         .scheduledWorkouts.filter(
           (e) =>
             e.date >= this.today &&
+            !this.concluded(e.planId)&&
             !this.s.completed().some((w) => w.id === e.workoutId),
         )
         .sort((a, b) => a.date.localeCompare(b.date))[0],
@@ -86,6 +91,7 @@ export class HomeComponent {
       .scheduledWorkouts.some(
         (e) =>
           e.date === date &&
+          !this.concluded(e.planId)&&
           !this.s.completed().some((w) => w.id === e.workoutId),
       );
   }
@@ -108,10 +114,12 @@ export class HomeComponent {
     });
   }
   async start(id: string) {
+    const day=this.s.data().days.find(day=>day.id===id);if(day&&this.concluded(day.planId)){await this.router.navigateByUrl('/piano/'+encodeURIComponent(day.planId));return;}
     if (await this.s.start(id)) await this.router.navigateByUrl("/sessione");
   }
   async startEvent(id: string) {
     const e = this.s.data().scheduledWorkouts.find((e) => e.id === id);
+    if(e&&this.concluded(e.planId)){await this.router.navigateByUrl('/piano/'+encodeURIComponent(e.planId));return;}
     if (e?.date !== this.today) {
       await this.router.navigate(["/calendario"], {
         queryParams: { date: e?.date },

@@ -80,7 +80,8 @@ export class SessionComponent {
       if(withoutCompletedSets&&!await this.confirmation.ask('Nessuna serie è stata segnata come completata. Vuoi terminare comunque l’allenamento? Tutti i valori inseriti saranno conservati nello storico e potrai registrare un altro giorno.'))return;
       if (await this.s.finish(withoutCompletedSets)) {
         active?.externalTimer?.stop();
-        await this.router.navigateByUrl("/allenamenti");
+        const plan=this.s.data().plans.find(plan=>plan.id===workout.planId);
+        await this.router.navigateByUrl(plan?.completedAt?'/piano/'+encodeURIComponent(plan.id):'/allenamenti');
       }
     } finally { this.finishing.set(false); }
   }

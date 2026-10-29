@@ -25,6 +25,8 @@ import { AcceptedCatalogChanges, mergeCatalog } from "./catalog-merge";
 import { ArchiveSyncService, archiveFingerprint } from "./archive-sync";
 import { exportBackup } from "./backup";
 import { TodayService } from "./today";
+import { ExcelProgramDraft } from '../models/excel-import';
+import { autoCompletePlan,effectiveProgramRange,excelProgramConflicts,normalizedExerciseName,prescriptionDetails,scheduleConflicts,validateExcelProgram } from './plan-program';
 @Injectable({ providedIn: "root" })
 export class Store {
   private theme = inject(ThemeService, { optional: true });
@@ -100,6 +102,9 @@ export class Store {
   private queue: Promise<unknown> = Promise.resolve();
   private catalogRequest = 0;
   private initialization = 0;
+  // Remains latched after an authoritative reset until a fresh document opens.
+  // Old component callbacks must never write themselves into the clean archive.
+  private resetInProgress=false;
   settled(){return this.queue;}
   constructor() {
     void this.init();
@@ -134,20 +139,24 @@ export class Store {
       void (async()=>{
         if(this.cloud){
           await this.cloud.open(this.archiveKey(),local,true,async recovered=>{
+            if(initialization!==this.initialization)return false;
+            const accountReset=!!recovered.settings[0]?.archiveResetId&&recovered.settings[0].archiveResetId!==this.data().settings[0]?.archiveResetId;
+            if(accountReset)this.resetInProgress=true;
             // A user may have saved a plan while the remote copy was loading.
             // Serialize restoration with those writes and reject a stale
             // snapshot before either the database or the cloud baseline moves.
             const job=this.queue.then(async()=>{
               if(initialization!==this.initialization)return false;
-              if(this.data()!==local||this.archiveRevision()!==localRevision){
+              if(!accountReset&&(this.data()!==local||this.archiveRevision()!==localRevision)){
                 // A catalog receipt is bookkeeping, not a personal edit. It
                 // may arrive from another open section during the GET.
                 const current=await archiveFingerprint(await exportBackup(this.data()),true);
                 if(current!==await archiveFingerprint(await exportBackup(local),true))return false;
               }
               if(this.auth?.user())recovered.profiles[0].role=this.auth.user()!.role;
-              try{await this.repo.replace(recovered);this.resume.clear(this.archiveKey());this.data.set(recovered);return true;}
-              catch(error){this.rejectStaleArchive(error);this.error.set(error instanceof Error?error.message:'Copia server non ripristinata. I dati locali sono conservati.');return false;}
+              let committed=false;
+              try{await this.repo.replace(recovered);committed=true;this.resume.clear(this.archiveKey());this.data.set(recovered);return true;}
+              catch(error){if(accountReset&&!committed)this.resetInProgress=false;this.rejectStaleArchive(error);this.error.set(error instanceof Error?error.message:'Copia server non ripristinata. I dati locali sono conservati.');return false;}
             });
             this.queue=job;
             return job;
@@ -176,13 +185,16 @@ export class Store {
     message = "",
     touchPlans = true,
   ): Promise<boolean> {
+    if(this.resetInProgress){this.error.set('Il nuovo archivio è in apertura. Riapri l’app per continuare.');return false;}
     const job = this.queue.then(async () => {
       this.busy.set(true);
       try {
+        if(this.resetInProgress)throw Error('Il nuovo archivio è in apertura. Riapri l’app per continuare.');
         if (!this.ready()) throw Error("Archivio non ancora pronto");
         if(this.conflicted())throw new ArchiveConflictError();
         const next = cloneForEdit(this.data());
         await fn(next);
+        if(this.resetInProgress)throw Error('Il nuovo archivio è in apertura. Riapri l’app per continuare.');
         // Local recovery and backup import preserve their complete catalog.
         // Editing this private archive never grants write access to the shared API.
         if(this.auth?.user()&&next.profiles[0])next.profiles[0].role=this.auth.user()!.role;
@@ -328,6 +340,78 @@ export class Store {
         });
     }, "Piano salvato.");
   }
+  excelProgramConflicts(draft:ExcelProgramDraft){
+    try{validateExcelProgram(draft);const existing=this.data().plans.find(plan=>plan.program?.fileHash===draft.fileHash&&plan.program.startDate===draft.startDate);return existing?[]:excelProgramConflicts(this.data(),draft);}
+    catch(error){return[error instanceof Error?error.message:'Programma non valido.'];}
+  }
+  async importExcelProgram(draft:ExcelProgramDraft,importId:string,exerciseMatches:Record<string,string>={}):Promise<string|null>{
+    const account=this.auth?.user()?.id;
+    let planId:string|null=null;
+    const accepted=await this.change(d=>{
+      if(this.auth?.user()?.id!==account)throw Error('L’account è cambiato durante l’importazione. Riapri il file nel tuo account.');
+      validateExcelProgram(draft);
+      if(!/^[a-zA-Z0-9_-]{1,100}$/.test(importId))throw Error('Identificativo dell’importazione non valido.');
+      const existing=d.plans.find(plan=>plan.program&&(plan.program.importId===importId||plan.program.fileHash===draft.fileHash&&plan.program.startDate===draft.startDate));
+      if(existing){
+        if(existing.program!.fileHash!==draft.fileHash||existing.program!.startDate!==draft.startDate)throw Error('Questo identificativo di importazione appartiene a un altro file o a un’altra data. Riapri la procedura.');
+        planId=existing.id;return;
+      }
+      const conflicts=excelProgramConflicts(d,draft);
+      if(conflicts.length)throw Error('Importazione bloccata: i piani non possono sovrapporsi. '+conflicts.slice(0,5).join(' ')+(conflicts.length>5?` Altri ${conflicts.length-5} conflitti.`:''));
+      const at=now(),pid='excel-plan-'+importId,createdExerciseIds:string[]=[],createdGroupIds:string[]=[];
+      if(d.plans.some(plan=>plan.id===pid))throw Error('Identificativo piano già utilizzato.');
+      const plan={id:pid,userId:'local',name:draft.name.trim(),description:draft.description.trim(),createdAt:at,updatedAt:at,active:!d.plans.some(plan=>plan.active&&!plan.archived),archived:false,program:{importId,sourceName:draft.sourceName,sourceKind:draft.sourceKind,startDate:draft.startDate,endDate:draft.endDate,weeks:draft.weeks,fileHash:draft.fileHash,importedAt:at,sessionCount:draft.sessions.length,createdExerciseIds,createdGroupIds}};
+      const personal=new Map<string,string>();
+      d.plans.push(plan);
+      for(const [index,session] of draft.sessions.entries()){
+        const did=uid();
+        d.days.push({id:did,planId:pid,name:session.title,order:index,weekday:(session.weekday+6)%7,week:session.week,sessionDate:session.date,phase:session.phase,notes:session.notes});
+        for(const item of session.exercises){
+          const key=normalizedExerciseName(item.name),chosen=Object.hasOwn(exerciseMatches,item.sourceId)?exerciseMatches[item.sourceId]:undefined;
+          let exercise=chosen?d.exercises.find(ex=>ex.id===chosen&&ex.active):d.exercises.find(ex=>ex.active&&normalizedExerciseName(ex.name)===key);
+          if(chosen&&!exercise)throw Error(`L’associazione per “${item.name}” non è più disponibile. Controlla il catalogo.`);
+          if(!exercise){
+            const previous=personal.get(key);exercise=previous?d.exercises.find(ex=>ex.id===previous):undefined;
+            if(!exercise){
+              let group=d.muscleGroups.find(group=>group.name==='Da classificare (Excel)');
+              if(!group){group={id:uid(),name:'Da classificare (Excel)'};d.muscleGroups.push(group);createdGroupIds.push(group.id);}
+              exercise={id:uid(),name:item.name.trim(),muscleGroupId:group.id,secondaryMuscleIds:[],description:'Esercizio personale importato. Verifica attrezzatura e modalità di carico prima di confrontare i risultati.',equipment:'Da verificare',tags:['Importato da Excel','Da verificare'],active:true,createdAt:at,loadMode:'external'};
+              d.exercises.push(exercise);createdExerciseIds.push(exercise.id);personal.set(key,exercise.id);
+            }
+          }
+          const details=prescriptionDetails(item);
+          if(!details.loadUnit&&exercise.tags.includes('Da verificare'))details.loadUnit='Da verificare';
+          d.planExercises.push({id:uid(),dayId:did,exerciseId:exercise.id,sets:item.sets,repsMin:item.repsMin,repsMax:item.repsMax,rest:item.rest,notes:item.notes,order:item.order,...details});
+        }
+        d.scheduledWorkouts.push({id:uid(),date:session.date,planId:pid,dayId:did,planName:plan.name,dayName:session.title,notes:session.notes});
+      }
+      planId=pid;
+    },'Piano importato e calendario programmato.',false);
+    return accepted?planId:null;
+  }
+  async removeUnconfirmedExcelImport(importId:string){
+    return this.change(d=>{
+      const plan=d.plans.find(plan=>plan.id==='excel-plan-'+importId&&plan.program?.importId===importId);
+      if(!plan)return;
+      if(d.workouts.some(workout=>workout.planId===plan.id)||d.scheduledWorkouts.some(event=>event.planId===plan.id&&event.workoutId))throw Error('L’importazione contiene già allenamenti registrati e non può essere annullata automaticamente.');
+      const days=new Set(d.days.filter(day=>day.planId===plan.id).map(day=>day.id));
+      d.planExercises=d.planExercises.filter(item=>!days.has(item.dayId));d.days=d.days.filter(day=>day.planId!==plan.id);d.scheduledWorkouts=d.scheduledWorkouts.filter(event=>event.planId!==plan.id);d.plans=d.plans.filter(item=>item.id!==plan.id);
+      const createdExercises=new Set(plan.program?.createdExerciseIds||[]),createdGroups=new Set(plan.program?.createdGroupIds||[]);
+      const usedExercises=new Set([...d.planExercises.map(item=>item.exerciseId),...d.workoutExercises.map(item=>item.exerciseId),...d.exercisePreferences.map(item=>item.id)]);
+      d.exercises=d.exercises.filter(item=>!createdExercises.has(item.id)||usedExercises.has(item.id));
+      const usedGroups=new Set(d.exercises.flatMap(item=>[item.muscleGroupId,...item.secondaryMuscleIds]));
+      d.muscleGroups=d.muscleGroups.filter(item=>!createdGroups.has(item.id)||usedGroups.has(item.id));
+    },'',false);
+  }
+  async finishPlan(id:string,cancelFuture=true){
+    return this.change(d=>{
+      const plan=d.plans.find(plan=>plan.id===id);if(!plan)throw Error('Piano non trovato.');
+      if(plan.completedAt)return;
+      if(d.workouts.some(workout=>workout.planId===id&&workout.status==='draft'))throw Error('Termina la sessione aperta di questo piano prima di concluderlo. Le serie registrate sono conservate.');
+      if(cancelFuture)d.scheduledWorkouts=d.scheduledWorkouts.filter(event=>event.planId!==id||!!event.workoutId||event.date<localDate());
+      plan.completedAt=now();plan.completionReason='manual';plan.active=false;plan.archived=true;plan.updatedAt=plan.completedAt;
+    },'Piano concluso. Allenamenti e statistiche sono conservati.',false);
+  }
   async saveDay(id: string, planId: string, name: string, weekday?: number) {
     return this.change((d) => {
       const p = d.plans.find((p) => p.id === planId);
@@ -373,6 +457,7 @@ export class Store {
       const pid = uid();
       d.plans.push({
         ...source,
+        program:undefined,completedAt:undefined,completionReason:undefined,
         id: pid,
         name: source.name + " · copia",
         active: false,
@@ -382,7 +467,7 @@ export class Store {
       });
       for (const day of [...d.days].filter((x) => x.planId === id)) {
         const did = uid();
-        d.days.push({ ...day, id: did, planId: pid });
+        d.days.push({ ...day, id: did, planId: pid,week:undefined,sessionDate:undefined });
         d.planExercises.push(
           ...d.planExercises
             .filter((e) => e.dayId === day.id)
@@ -433,6 +518,14 @@ export class Store {
         throw Error(
           "Aggiungi almeno un esercizio al giorno prima di iniziare.",
         );
+      if(plan.completedAt)throw Error('Questo piano è concluso. Puoi consultare le sue sedute nello storico.');
+      const conflicts=plan.program?scheduleConflicts(d,[workoutDate],plan.id):d.plans.filter(other=>other.id!==plan.id&&other.program).flatMap(other=>{
+        const range=effectiveProgramRange(d,other);
+        return range&&workoutDate>=range.startDate&&workoutDate<=range.endDate?[`Il periodo è già occupato dal piano “${other.name}”.`]:[];
+      });
+      if(conflicts.length)throw Error('Data occupata da un altro piano. '+conflicts[0]);
+      const programEvent=plan.program?d.scheduledWorkouts.find(event=>event.dayId===dayId&&event.planId===plan.id):undefined;
+      if(programEvent?.workoutId)throw Error('Questa seduta del programma è già stata registrata. Riaprila dallo storico per modificarla.');
       const wid = uid();
       d.workouts.push({
         id: wid,
@@ -444,10 +537,12 @@ export class Store {
         date: workoutDate,
         startedAt: now(),
         duration: 0,
-        notes: "",
+        notes: day.notes||"",
         status: "draft",
         bodyWeight: d.profiles[0].bodyWeight,
+        programWeek:day.week,programPhase:day.phase,
       });
+      if(programEvent)programEvent.workoutId=wid;
       for (const item of entries) {
         const ex = d.exercises.find((e) => e.id === item.exerciseId);
         if (!ex) throw Error("Esercizio del piano non trovato");
@@ -463,6 +558,8 @@ export class Store {
           order: item.order,
           rest: item.rest,
           notes: item.notes,
+          repsMin:item.repsMin,repsMax:item.repsMax,
+          ...prescriptionDetails(item),
         });
         const prev = this.settings().prefill ? this.previous(ex.id,undefined,d.exercisePreferences.find(p=>p.id===ex.id)?.machineSetup,workoutDate) : [];
         const warmups=item.warmupSets||0;
@@ -562,6 +659,7 @@ export class Store {
         1,
         Math.round((Date.now() - new Date(w.startedAt).getTime()) / 60000),
       );
+      autoCompletePlan(d,d.plans.find(plan=>plan.id===w.planId));
     }, "Allenamento salvato. Ottimo lavoro!");
   }
   async reopenWorkout(id:string){
@@ -571,6 +669,8 @@ export class Store {
       if(workout.status==='draft')return;
       if(d.workouts.some(w=>w.status==='draft'))throw Error('Termina la sessione già aperta prima di riaprire questo allenamento.');
       workout.status='draft';delete workout.endedAt;
+      const plan=d.plans.find(plan=>plan.id===workout.planId);
+      if(plan?.completionReason==='automatic'){delete plan.completedAt;delete plan.completionReason;plan.archived=false;}
     },'Allenamento riaperto. Serie e data sono conservate.',false);
   }
   async deleteWorkout(id: string) {
@@ -589,7 +689,7 @@ export class Store {
   sharedCatalog() { return !!this.auth?.user() && !this.auth.offlineMode(); }
   canEditCatalog() { return !this.auth?.viewAsClient?.() && (!this.sharedCatalog() || ["Admin","SuperAdmin"].includes(this.auth!.user()!.role)); }
   async refreshCatalog(accepted: AcceptedCatalogChanges = {}) {
-    if (!this.auth?.user() || this.auth.offlineMode()) return;
+    if (this.resetInProgress||!this.auth?.user() || this.auth.offlineMode()) return;
     const request = ++this.catalogRequest;
     const catalog=await this.auth.request('catalog');
     const exercises: Exercise[]=await Promise.all(catalog.exercises.map(async (e:any)=>{
@@ -601,8 +701,9 @@ export class Store {
     // the snapshot when this job runs so a slow catalog request cannot restore
     // older weights, plans or meals over a concurrent save.
     const job=this.queue.then(async()=>{
-      if(request!==this.catalogRequest)return;
+      if(this.resetInProgress||request!==this.catalogRequest)return;
       const next=await mergeCatalog(this.data(),{exercises,muscleGroups:catalog.muscleGroups},accepted);
+      if(this.resetInProgress)return;
       if(this.conflicted())throw new ArchiveConflictError();
       try{const revision=this.archiveRevision();await this.repo.replace(next);this.resume.rebase(this.archiveKey(),revision,this.archiveRevision());this.data.set(next);this.cloud?.changed(next);}catch(error){this.rejectStaleArchive(error);throw error;}
     });
@@ -637,6 +738,8 @@ export class Store {
       const index=d.scheduledWorkouts.findIndex(e=>e.id===id);
       if(index>=0&&d.scheduledWorkouts[index].workoutId)throw Error('Una programmazione già avviata non può essere modificata.');
       if(index>=0&&repeatCount!==1)throw Error('Per ripetere l’allenamento crea una nuova programmazione.');
+      const conflicts=scheduleConflicts(d,dates,plan.id,id);
+      if(conflicts.length)throw Error('Programmazione bloccata: data occupata da un altro piano. '+conflicts[0]);
       if(notes.length>2000)throw Error('Le note possono contenere al massimo 2000 caratteri.');
       if(dates.some(value=>d.scheduledWorkouts.some(e=>e.date===value&&e.dayId===dayId&&e.id!==id)))throw Error('Questo allenamento è già programmato in una delle date scelte. Nessuna nuova programmazione è stata aggiunta.');
       const events=dates.map((value,i)=>({id:i===0?id:uid(),date:value,dayId,planId:plan.id,planName:plan.name,dayName:day.name,notes:notes.trim()}));

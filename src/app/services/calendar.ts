@@ -12,11 +12,12 @@ export function weeklyDates(start:string,count:number){
 }
 
 export interface DayActivity {planned:number;completed:number;meals:number;calories:number;}
-export function calendarActivity(data:Pick<DataSet,'scheduledWorkouts'|'workouts'|'meals'>){
+export function calendarActivity(data:Pick<DataSet,'scheduledWorkouts'|'workouts'|'meals'>&Partial<Pick<DataSet,'plans'>>){
  const result=new Map<string,DayActivity>();
  const day=(date:string)=>{let value=result.get(date);if(!value){value={planned:0,completed:0,meals:0,calories:0};result.set(date,value);}return value;};
  const workouts=new Map(data.workouts.map(w=>[w.id,w]));
- for(const event of data.scheduledWorkouts)if(workouts.get(event.workoutId||'')?.status!=='completed')day(event.date).planned++;
+ const concluded=new Set((data.plans||[]).filter(plan=>plan.completedAt).map(plan=>plan.id));
+ for(const event of data.scheduledWorkouts){const workout=workouts.get(event.workoutId||'');if(workout?.status==='completed'||!workout&&concluded.has(event.planId))continue;day(event.date).planned++;}
  for(const workout of data.workouts)if(workout.status==='completed')day(workout.date).completed++;
  for(const meal of data.meals){const value=day(meal.date);value.meals++;value.calories+=meal.calories;}
  return result;

@@ -1,9 +1,10 @@
+import {AppFeaturesService} from '../services/app-features';
 import { SectionHeadingComponent } from "../shared/section-heading.component";
 import {setupKey} from "../services/training-flow";
 import { DataChartComponent, DataPoint } from "../shared/data-chart.component";
-import { RouterLink } from "@angular/router";
+import { Router, RouterLink } from "@angular/router";
 import { localDate } from "../models/domain";
-import { Component, computed, inject, signal } from "@angular/core";
+import { Component, computed, effect, inject, signal } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import { Store } from "../services/store";
 import { ProgressChartComponent } from "../shared/progress-chart.component";
@@ -24,13 +25,13 @@ import { ExerciseFilterComponent } from "../shared/exercise-filter.component";
   ],
   template: `<gt-section-heading index="05" eyebrow="Ogni dato ha una storia" title="Progressi" description="La costanza lascia il segno. Qui puoi vederlo."><span class="data-source-label"><i></i>Dati reali</span></gt-section-heading>
     <section class="progress-ledger" aria-label="Il tuo percorso in numeri"><div class="ledger-primary"><span class="panel-kicker">IL TUO PERCORSO, FIN QUI</span><div class="ledger-number">{{s.completed().length.toString().padStart(2,'0')}}<span>allenamenti<br>completati</span></div></div><div class="ledger-secondary"><span>VOLUME CUMULATIVO</span><strong>{{s.formatWeight(s.totalVolume())}} <small>{{s.settings().unit}}</small></strong><i aria-hidden="true"></i><span>MISURAZIONI CORPOREE</span><strong>{{s.data().measurements.length}} <small>registrate</small></strong></div><span class="ledger-corner" aria-hidden="true">↗</span></section>
-    <gt-status />
-    <div class="segmented progress-tabs"><button [class.active]="category()==='weight'" (click)="category.set('weight')">Peso</button><button [class.active]="category()==='strength'" (click)="category.set('strength')">Forza</button><button [class.active]="category()==='body'" (click)="category.set('body')">Corpo</button><button [class.active]="category()==='nutrition'" (click)="category.set('nutrition')">Alimentazione</button></div>
-    @if(category()!=='strength'){<div class="filters"><label>Periodo<select [ngModel]="period()" (ngModelChange)="period.set(+$event)"><option value="1">1 mese</option><option value="3">3 mesi</option><option value="6">6 mesi</option><option value="12">1 anno</option><option value="0">Tutto</option></select></label><a class="button ghost" routerLink="/profilo" [queryParams]="{section:category()==='nutrition'?'goals':'measurements'}">{{category()==='nutrition'?'Obiettivi':'Registra misurazione'}}</a></div>}
+    <gt-status /><section class="card" style="margin-bottom:18px"><label>Statistiche per piano<select [ngModel]="''" (ngModelChange)="openPlan($event)"><option value="">Scegli un piano</option>@for(plan of s.data().plans;track plan.id){<option [value]="plan.id">{{plan.name}}{{plan.program?' · '+plan.program.startDate:''}}{{plan.completedAt?' · Concluso':''}}</option>}</select></label></section>
+    <div class="segmented progress-tabs"><button [class.active]="category()==='weight'" (click)="category.set('weight')">Peso</button><button [class.active]="category()==='strength'" (click)="category.set('strength')">Forza</button><button [class.active]="category()==='body'" (click)="category.set('body')">Corpo</button>@if(features?.nutritionEnabled()){<button [class.active]="category()==='nutrition'" (click)="category.set('nutrition')">Alimentazione</button>}</div>
+    @if(category()!=='strength'&&(category()!=='nutrition'||features?.nutritionEnabled())){<div class="filters"><label>Periodo<select [ngModel]="period()" (ngModelChange)="period.set(+$event)"><option value="1">1 mese</option><option value="3">3 mesi</option><option value="6">6 mesi</option><option value="12">1 anno</option><option value="0">Tutto</option></select></label><a class="button ghost" routerLink="/profilo" [queryParams]="{section:category()==='nutrition'?'goals':'measurements'}">{{category()==='nutrition'?'Obiettivi':'Registra misurazione'}}</a></div>}
     @if(category()==='weight'){<section class="card performance-chart-card"><div class="chart-section-label"><span>01 / ANDAMENTO</span><i></i></div><h2>Peso corporeo ({{s.settings().unit}})</h2><gt-data-chart [points]="weightPoints()" [unit]="s.settings().unit" title="Andamento del peso corporeo"/></section><div class="overview-primary" style="margin-top:16px"><div class="card"><p class="subtle">Peso attuale</p><strong class="record-value">{{s.profile().bodyWeight!==undefined?s.formatWeight(s.profile().bodyWeight!):'—'}} {{s.settings().unit}}</strong></div><div class="card"><p class="subtle">Rilevazioni nel periodo</p><strong class="record-value">{{measurements().length}}</strong></div></div>}
     @if(category()==='weight'&&recordCards().length){<div class="section-title"><h2>Record personali</h2><button class="ghost" (click)="category.set('strength')">Vedi tutti ›</button></div><div class="overview-primary">@for(record of recordCards();track record.id){<div class="card"><p class="subtle">{{record.name}}</p><strong class="record-value">{{s.formatWeight(record.weight)}} <small>{{s.settings().unit}}</small></strong></div>}</div>}
     @if(category()==='body'){<section class="card performance-chart-card"><div class="chart-section-label"><span>01 / MISURAZIONI</span><i></i></div><h2>Girovita</h2><gt-data-chart [points]="waistPoints()" unit="cm" title="Misurazioni del girovita"/></section><section class="card" style="margin-top:16px"><h2>Massa grassa registrata</h2><gt-data-chart [points]="fatPoints()" unit="%" title="Percentuale di massa grassa inserita manualmente"/><p class="subtle">Valori inseriti da te, non dedotti da fotografie.</p></section>}
-    @if(category()==='nutrition'){<section class="card performance-chart-card"><div class="chart-section-label"><span>01 / ENERGIA</span><i></i></div><h2>Calorie registrate</h2><gt-data-chart [points]="nutritionPoints()" unit="kcal" title="Calorie dei giorni registrati"/><p class="subtle">Solo i giorni con pasti registrati. Un giorno senza dati non è considerato un giorno a zero calorie.</p></section><a class="button primary full-width" style="margin-top:18px" routerLink="/alimentazione">Apri diario alimentare</a>}
+    @if(features?.nutritionEnabled()&&category()==='nutrition'){<section class="card performance-chart-card"><div class="chart-section-label"><span>01 / ENERGIA</span><i></i></div><h2>Calorie registrate</h2><gt-data-chart [points]="nutritionPoints()" unit="kcal" title="Calorie dei giorni registrati"/><p class="subtle">Solo i giorni con pasti registrati. Un giorno senza dati non è considerato un giorno a zero calorie.</p></section><a class="button primary full-width" style="margin-top:18px" routerLink="/alimentazione">Apri diario alimentare</a>}
     @if(category()==='strength'){
 
     <section class="card performance-chart-card">
@@ -186,6 +187,10 @@ import { ExerciseFilterComponent } from "../shared/exercise-filter.component";
     <p class="progress-archive-note"><gt-icon name="shield"/> Il tuo percorso è custodito nel tuo archivio personale.</p>`,
 })
 export class ProgressComponent {
+  private router=inject(Router);
+  openPlan(id:string){if(id)void this.router.navigate(['/piano',id]);}
+  features=inject(AppFeaturesService,{optional:true});
+  constructor(){effect(()=>{if(!this.features?.nutritionEnabled()&&this.category()==='nutrition')this.category.set('weight');});}
   recordCards=computed(()=>[...new Set(this.s.completed().flatMap(w=>this.s.workoutExercises(w.id).map(e=>e.exerciseId)))].map(id=>({id,name:this.s.exercise(id)?.name||this.s.data().workoutExercises.find(e=>e.exerciseId===id)?.name||'Esercizio',weight:this.s.records(id).maxWeight,mode:this.s.exercise(id)?.loadMode})).filter(r=>r.weight>0&&(r.mode==='external'||r.mode==='weighted-bodyweight'||!r.mode)).slice(0,2));
   category=signal<'weight'|'strength'|'body'|'nutrition'>('weight');period=signal(3);
   cutoff(){if(!this.period())return '';const d=new Date();d.setMonth(d.getMonth()-this.period());return localDate(d);}

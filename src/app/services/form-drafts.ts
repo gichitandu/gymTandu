@@ -193,6 +193,14 @@ export class FormDraftService {
     return saved;
   }
 
+  /** Only used for an explicitly authorized, server-confirmed archive reset. */
+  async discardScope(scope:string):Promise<void>{
+    for(const id of [...this.owners.keys()]){try{if(JSON.parse(id)[0]===scope)this.owners.delete(id);}catch{}}
+    for(const [id,entry] of this.pending)if(entry.scope===scope)this.pending.delete(id);
+    const job=this.queue.then(async()=>{await this.db.drafts.where('scope').equals(scope).delete();});
+    this.queue=job;await job;
+  }
+
   private message(error: unknown) { return error instanceof Error ? error.message : 'Controlla lo spazio disponibile sul dispositivo.'; }
   ngOnDestroy() { this.disposeListeners.forEach(dispose => dispose()); this.disposeListeners = []; void this.flushAll().finally(() => this.db.close()); }
 }

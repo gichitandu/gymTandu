@@ -42,6 +42,20 @@ async function setup() {
   Object.defineProperty(active, 'workoutId', { value: () => id });
   return active;
 }
+it('shows snapshotted weekly guidance during quick recording without changing the entered values or following later plan edits',async()=>{
+ await s.savePlan('p','Piano','');await s.saveDay('d','p','Giorno');
+ await s.change(data=>{data.days[0].week=2;data.days[0].phase='Rientro';data.days[0].notes='Note della settimana';},'',false);
+ await s.savePlanExercise({id:'pe',dayId:'d',exerciseId:'exercise-0',sets:2,repsMin:6,repsMax:8,rest:180,notes:'Tecnica prima del carico',order:0,rirMin:3,rirMax:3,warmupNotes:'Barra × 12; 35 kg × 6',reference:'55 kg dalla prova',loadUnit:'Totale'});
+ await s.start('d');active=runInInjectionContext(injector,()=>new ActiveWorkoutComponent());const id=s.draft()!.id;Object.defineProperty(active,'workoutId',{value:()=>id});active.quickRecord(active.exercises()[0]);
+ await s.change(data=>{data.days[0].week=8;data.days[0].phase='Progressione';data.planExercises[0].repsMin=12;data.planExercises[0].repsMax=15;},'',false);
+ expect(active.programContext()).toMatchObject({week:2,phase:'Rientro',notes:'Note della settimana'});expect(active.repTarget(active.selected()!)).toBe('6–8');expect(active.rirLabel(active.selected()!)).toBe('3');expect(active.warmupLines(active.selected()!)).toEqual(['Barra × 12','35 kg × 6']);
+ active.weight=55;active.reps=7;await active.saveDraft();expect(active.weight).toBe(55);expect(active.reps).toBe(7);expect(active.selected()?.reference).toBe('55 kg dalla prova');expect(active.currentSet()).toMatchObject({weight:55,reps:7,completed:false});
+});
+it('preserves imported prescription details when its ordinary exercise form is edited',async()=>{
+ await s.savePlan('p','Piano','');await s.saveDay('d','p','Giorno');const entry={id:'pe',dayId:'d',exerciseId:'exercise-0',sets:2,repsMin:6,repsMax:8,rest:5400,notes:'Originale',order:0,rirMin:1,rirMax:3,warmupNotes:'Barra × 12',reference:'Da confermare',loadUnit:'Da verificare'};await s.savePlanExercise(entry);
+ const component=runInInjectionContext(injector,()=>new PlansComponent());component.openExercise('d',entry);component.exerciseForm.controls.notes.setValue('Nota aggiornata');await component.saveExercise();
+ expect(s.planExercises('d')[0]).toMatchObject({...entry,notes:'Nota aggiornata'});component.ngOnDestroy();
+});
 it('salva un solo esercizio anche con invii concorrenti e un invio tardivo dello stesso modulo', async () => {
   await s.savePlan('p', 'Piano', ''); await s.saveDay('d', 'p', 'Giorno');
   const component = runInInjectionContext(injector, () => new PlansComponent());

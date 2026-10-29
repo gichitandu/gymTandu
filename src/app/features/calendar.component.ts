@@ -1,3 +1,4 @@
+import {AppFeaturesService} from '../services/app-features';
 import {CalendarSubscriptionComponent} from '../shared/calendar-subscription.component';
 import { DateFieldComponent } from '../shared/date-field.component';
 import { confirmationForContext } from '../services/confirmation';
@@ -14,7 +15,7 @@ import { StatusComponent } from '../shared/status.component';
 @Component({standalone:true,imports: [CalendarSubscriptionComponent,DateFieldComponent,FormsModule,RouterLink,A11yModule,IconComponent,StatusComponent],templateUrl:'./calendar.component.html',styleUrl:'./calendar.component.css'})
 export class CalendarComponent {
  private confirmation=confirmationForContext();
- s=inject(Store);router=inject(Router);
+ s=inject(Store);router=inject(Router);features=inject(AppFeaturesService,{optional:true});
  private host=inject<ElementRef<HTMLElement>>(ElementRef,{optional:true});private scrollKey='';private frame:number|undefined;
  ngAfterViewChecked(){const key=this.view()+this.selected();if(!this.host||key===this.scrollKey)return;this.scrollKey=key;if(this.frame!==undefined)cancelAnimationFrame(this.frame);this.frame=requestAnimationFrame(()=>{const rail=this.host?.nativeElement.querySelector<HTMLElement>('[data-week-rail]'),active=rail?.querySelector<HTMLElement>('[aria-pressed="true"]');if(rail&&active)rail.scrollTo({left:Math.max(0,active.offsetLeft-(rail.clientWidth-active.offsetWidth)/2),behavior:'auto'});});}
  ngOnDestroy(){if(this.frame!==undefined)cancelAnimationFrame(this.frame);}
@@ -48,12 +49,13 @@ export class CalendarComponent {
  monthLabel(){return parseLocalDate(this.selected()).toLocaleDateString('it-IT',{month:'long',year:'numeric'});}
  periodLabel(){const dates=this.dates();if(this.view()==='day')return this.shortLabel(this.selected());if(this.view()==='month')return this.monthLabel();const first=parseLocalDate(dates[0]),last=parseLocalDate(dates[6]);return first.getMonth()===last.getMonth()?`${first.getDate()}–${last.getDate()} ${last.toLocaleDateString('it-IT',{month:'long',year:'numeric'})}`:`${first.toLocaleDateString('it-IT',{day:'numeric',month:'short',...(first.getFullYear()!==last.getFullYear()?{year:'numeric' as const}:{})})} – ${last.toLocaleDateString('it-IT',{day:'numeric',month:'short',year:'numeric'})}`;}
  periodTitle(){return this.view()==='week'?'La tua settimana':this.view()==='month'?'Il tuo mese':'Il tuo giorno';}
- dayHint(date:string){const a=this.day(date);return a.completed?`${a.completed} ${a.completed===1?'svolto':'svolti'}`:a.planned?`${a.planned} in programma`:a.meals?`${a.meals} pasti`:'Libero';}
- dayAria(date:string){const a=this.day(date);return `${this.label(date)}, ${a.planned} programmati, ${a.completed} svolti, ${a.meals} pasti`+(date===this.today?', oggi':'');}
+ dayHint(date:string){const a=this.day(date);return a.completed?`${a.completed} ${a.completed===1?'svolto':'svolti'}`:a.planned?`${a.planned} in programma`:this.features?.nutritionEnabled()&&a.meals?`${a.meals} pasti`:'Libero';}
+ dayAria(date:string){const a=this.day(date);return `${this.label(date)}, ${a.planned} programmati, ${a.completed} svolti`+(this.features?.nutritionEnabled()?`, ${a.meals} pasti`:'')+(date===this.today?', oggi':'');}
  move(direction:number){this.followsToday=false;this.selected.set(movePeriod(this.selected(),this.view(),direction));}
  choose(date:string){try{parseLocalDate(date);this.followsToday=date===this.today;this.selected.set(date);}catch{}}
  tomorrow(){this.choose(moveDate(this.today,1));}
  linked(e:ScheduledWorkout){return this.s.data().workouts.find(w=>w.id===e.workoutId);}
+ ended(e:ScheduledWorkout){return !!this.s.data().plans.find(p=>p.id===e.planId)?.completedAt;}
  available(e:ScheduledWorkout){return this.availableDays().some(d=>d.id===e.dayId);}
  planName(id:string){return this.s.data().plans.find(p=>p.id===id)?.name||'';}
  daySummary(id:string){const exercises=this.s.planExercises(id);return exercises.length?`${exercises.length} esercizi · ${exercises.reduce((n,e)=>n+e.sets,0)} serie`:'Programmazione salvata';}
