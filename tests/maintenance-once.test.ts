@@ -1,9 +1,9 @@
-// Temporary capability tests: remove this file with worker/maintenance-once.js
+// Audit tests for the completed one-off reset; helper is excluded from deployment.
 // after the approved production operation has been performed and verified.
 import {afterEach,beforeEach,expect,it,vi} from 'vitest';
 import {DatabaseSync} from 'node:sqlite';
 import {readFileSync,readdirSync} from 'node:fs';
-import {performTanduReset} from '../worker/maintenance-once.js';
+import {performTanduReset} from '../tools/maintenance-tandu-reset.mjs';
 import {archiveApi} from '../worker/archive.js';
 import {exportBackup,importBackup} from '../src/app/services/backup';
 import {seed} from '../src/app/core/seed';

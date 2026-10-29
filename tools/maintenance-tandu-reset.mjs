@@ -1,5 +1,5 @@
-// Temporary deployment-only maintenance capability. Removed after the approved
-// one-off operation; never exposed in the application or ordinary imports.
+// Audit helper for the completed, explicitly authorized one-off Tandu reset.
+// Not imported by the application or deployment bundle; retained only for tests.
 export async function performTanduReset(request,env,catalog,archiveApi,calendarPublish){
  const reply=(data,status=200)=>Response.json(data,{status,headers:{'Cache-Control':'no-store'}});
  const secret=env.GYMTRACK_MAINTENANCE_SECRET;
