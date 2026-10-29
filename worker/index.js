@@ -237,11 +237,12 @@ export async function api(request,env,ctx) {
 }
 // __ASSETS__ is replaced by the build, keeping this deployment dependency-free.
 const assets = /* __ASSETS__ */ {};
+const freshAssets=new Set(['/', '/index.html', '/ngsw.json', '/app-build.json', '/ngsw-worker.js', '/gymtrack-sw.js', '/gymtrack-app-worker-v3.js', '/gymtrack-offline-engine-v3.js', '/gymtrack-worker-migration.js', '/gymtrack-session-recovery.js', '/gymtrack-update-now.js', '/aggiorna.html']);
 export default {async fetch(request,env,ctx) {
   const path=new URL(request.url).pathname;
   if(path.startsWith('/api/')) return api(request,env,ctx);
   if(!['GET','HEAD'].includes(request.method)) return new Response('Method not allowed',{status:405});
   const asset=assets[path==='/'?'/index.html':path];
   if(!asset) return new Response('Not found',{status:404});
-  return new Response(request.method==='HEAD'?null:Uint8Array.from(atob(asset.body),c=>c.charCodeAt(0)),{headers:{'Content-Type':asset.type,'Cache-Control':path==='/gymtrack-sw.js'||path==='/ngsw-worker.js'||path==='/gymtrack-session-recovery.js'||path==='/ngsw.json'||path==='/index.html'||path==='/'?'no-cache':'public,max-age=3600','X-Content-Type-Options':'nosniff','Referrer-Policy':'same-origin'}});
+  return new Response(request.method==='HEAD'?null:Uint8Array.from(atob(asset.body),c=>c.charCodeAt(0)),{headers:{'Content-Type':asset.type,'Cache-Control':freshAssets.has(path)?'no-cache':'public,max-age=3600','X-Content-Type-Options':'nosniff','Referrer-Policy':'same-origin'}});
 }};

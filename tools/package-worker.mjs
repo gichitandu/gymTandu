@@ -11,14 +11,22 @@ const archiveSource=(await readFile('worker/archive.js','utf8')).replace("import
 const programSource=await readFile('worker/program-imports.js','utf8');
 const serverCatalogSource=await readFile('worker/default-catalog.js','utf8');
 const manifest=JSON.parse(await readFile(root+'/ngsw.json','utf8'));
-// Older iPhone installs still update this worker directly instead of our push
-// wrapper. A byte change delivers the scoped recovery without clearing storage.
-const workerPath=root+'/ngsw-worker.js';
-const recoveryVersion=createHash('sha256').update(workerSource).update(await readFile(root+'/gymtrack-session-recovery.js')).digest('hex').slice(0,16);
-const recoveryImport="\n// GymTrack device recovery "+recoveryVersion+"\nimportScripts('/gymtrack-session-recovery.js');\n";
-let angularWorker=(await readFile(workerPath,'utf8')).replace(/\n(?:\/\/ GymTrack device recovery [a-f0-9]+\n)?importScripts\('\/gymtrack-session-recovery.js'\);\n/g,'');
-angularWorker+=recoveryImport;await writeFile(workerPath,angularWorker);
-if(manifest.hashTable['/ngsw-worker.js'])manifest.hashTable['/ngsw-worker.js']=createHash('sha1').update(angularWorker).digest('hex');
+// The legacy URLs become a storage-preserving migration worker. A fresh app
+// uses a new registration URL and a separately retained Angular offline engine.
+const workerPath=root+'/ngsw-worker.js',enginePath=root+'/gymtrack-offline-engine-v3.js';
+let angularWorker=await readFile(workerPath,'utf8');
+if(angularWorker.includes("importScripts('/gymtrack-worker-migration.js')"))angularWorker=await readFile(enginePath,'utf8');
+angularWorker=angularWorker.replace(/\n(?:\/\/ GymTrack device recovery [a-f0-9]+\n)?importScripts\('\/gymtrack-session-recovery.js'\);\n/g,'');
+if(!angularWorker.includes('ngsw:')||!angularWorker.includes('skipWaiting')||angularWorker.includes("importScripts('/gymtrack-worker-migration.js')"))throw Error('Real Angular offline engine not available. Rebuild before packaging.');
+await writeFile(enginePath,angularWorker);
+const migrationVersion=createHash('sha256').update(workerSource).update(await readFile(root+'/gymtrack-worker-migration.js')).update(await readFile(root+'/gymtrack-app-worker-v3.js')).digest('hex').slice(0,16);
+const legacyWorker="// GymTrack legacy registration migration "+migrationVersion+"\nimportScripts('/gymtrack-worker-migration.js');\n";
+await writeFile(workerPath,legacyWorker);await writeFile(root+'/gymtrack-sw.js',legacyWorker);
+const appGroup=manifest.assetGroups.find(group=>group.name==='app');
+for(const url of ['/ngsw-worker.js','/gymtrack-sw.js','/gymtrack-offline-engine-v3.js','/gymtrack-app-worker-v3.js','/gymtrack-worker-migration.js']){
+ manifest.hashTable[url]=createHash('sha1').update(await readFile(root+url)).digest('hex');
+ if(!appGroup.urls.includes(url))appGroup.urls.push(url);
+}
 // Derive a stable version from the shipped assets and server behavior. Ignore
 // our own generated descriptor so packaging the same build twice is stable.
 delete manifest.hashTable['/app-build.json'];
@@ -27,7 +35,6 @@ const buildDescriptor=JSON.stringify({buildId});
 await writeFile(root+'/app-build.json',buildDescriptor);
 manifest.appData={...(manifest.appData||{}),buildId};
 manifest.hashTable['/app-build.json']=createHash('sha1').update(buildDescriptor).digest('hex');
-const appGroup=manifest.assetGroups.find(group=>group.name==='app');
 if(!appGroup.urls.includes('/app-build.json'))appGroup.urls.push('/app-build.json');
 await writeFile(root+'/ngsw.json',JSON.stringify(manifest,null,2));
 const types={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.json':'application/json','.webmanifest':'application/manifest+json','.svg':'image/svg+xml','.png':'image/png','.webp':'image/webp','.ico':'image/x-icon','.txt':'text/plain','.xlsx':'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'};

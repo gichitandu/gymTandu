@@ -16,7 +16,7 @@ function worker(){
  const handlers:any={},notification=vi.fn().mockResolvedValue(undefined),badge=vi.fn().mockResolvedValue(undefined),clearBadge=vi.fn().mockResolvedValue(undefined),focus=vi.fn().mockResolvedValue(undefined),open=vi.fn().mockResolvedValue(undefined);
  const getNotifications=vi.fn().mockResolvedValue([]);
  const self={registration:{showNotification:notification,getNotifications},navigator:{setAppBadge:badge,clearAppBadge:clearBadge},location:{origin:'https://gymtrack.test'},clients:{matchAll:async()=>[{url:'https://gymtrack.test/sessione',focus}],openWindow:open},addEventListener:(type:string,handler:any)=>handlers[type]=handler};
- vm.runInNewContext(readFileSync('public/gymtrack-sw.js','utf8'),{self,indexedDB,URL,importScripts:vi.fn()});
+ vm.runInNewContext(readFileSync('public/gymtrack-app-worker-v3.js','utf8'),{self,indexedDB,URL,importScripts:vi.fn()});
  return{handlers,notification,getNotifications,badge,clearBadge,focus,open};
 }
 async function push(w:ReturnType<typeof worker>,data:any=null){let job=Promise.resolve();w.handlers.push({data,waitUntil:(p:Promise<void>)=>job=p});await job;}

@@ -6,6 +6,9 @@ const root = "dist/gymtrack/browser";
 for (const file of [
   "index.html",
   "ngsw-worker.js",
+  "gymtrack-app-worker-v3.js",
+  "gymtrack-offline-engine-v3.js",
+  "gymtrack-worker-migration.js",
   "ngsw.json",
   "manifest.webmanifest",
   "icons/icon-192.png",
@@ -72,7 +75,16 @@ console.log(
 const serverConfig=JSON.parse(fs.readFileSync('dist/server/wrangler.json','utf8'));
 assert(serverConfig.compatibility_flags.includes('global_fetch_strictly_public'),'Collegamento pubblico tra Workers non abilitato');
 
-assert(assets.includes('/gymtrack-sw.js'),'Worker notifiche escluso dalla cache offline');
-assert(fs.readFileSync(root+'/gymtrack-sw.js','utf8').includes("importScripts('/ngsw-worker.js')"),'Worker Angular non mantenuto dal worker notifiche');
-assert(fs.readFileSync(root+'/ngsw-worker.js','utf8').includes("importScripts('/gymtrack-session-recovery.js')"),'Recupero sessione non raggiungibile dalle vecchie installazioni');
-assert(sw.hashTable['/gymtrack-session-recovery.js'],'Script recupero sessione mancante dal precache');
+for(const file of ['gymtrack-sw.js','ngsw-worker.js','gymtrack-app-worker-v3.js','gymtrack-offline-engine-v3.js','gymtrack-worker-migration.js']){
+ const source=fs.readFileSync(root+'/'+file,'utf8');
+ assert.equal(sw.hashTable['/'+file],createHash('sha1').update(source).digest('hex'),file+' differs from its offline hash');
+ assert(sw.assetGroups.find(g=>g.name==='app').urls.includes('/'+file),file+' excluded from offline precache');
+}
+assert(fs.readFileSync(root+'/gymtrack-sw.js','utf8').includes("importScripts('/gymtrack-worker-migration.js')"),'Legacy push registration not retired');
+assert(fs.readFileSync(root+'/ngsw-worker.js','utf8').includes("importScripts('/gymtrack-worker-migration.js')"),'Legacy Angular registration not retired');
+assert(fs.readFileSync(root+'/gymtrack-app-worker-v3.js','utf8').includes("importScripts('/gymtrack-offline-engine-v3.js')"),'Canonical worker does not retain Angular offline engine');
+const engine=fs.readFileSync(root+'/gymtrack-offline-engine-v3.js','utf8');
+assert(engine.includes('ngsw:')&&engine.includes('skipWaiting'),'Real Angular offline engine missing');
+assert(!engine.includes("importScripts('/gymtrack-session-recovery.js')"),'Retired API recovery still active in canonical worker');
+assert(html.includes('name="gymtrack-worker" content="/gymtrack-app-worker-v3.js"'),'Canonical HTML bootstrap marker missing');
+assert(fs.readFileSync('src/main.ts','utf8').includes('provideServiceWorker("gymtrack-app-worker-v3.js"'),'Application still registers retired worker');

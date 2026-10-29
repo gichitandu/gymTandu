@@ -10,7 +10,7 @@ restoreOfflineLaunchUrl();
 bootstrapApplication(AppComponent, {
   providers: [
     provideRouter(routes, withHashLocation()),
-    provideServiceWorker("gymtrack-sw.js", {
+    provideServiceWorker("gymtrack-app-worker-v3.js", {
       enabled: !isDevMode(),
       registrationStrategy: "registerImmediately",
     }),

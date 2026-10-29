@@ -25,7 +25,7 @@ export class PushReminderService{
   // Keep this call directly in the click gesture: iOS rejects delayed prompts.
   const permission=await Notification.requestPermission();if(permission!=='granted')throw Error('Notifiche non consentite. Puoi abilitarle dalle Impostazioni dell’iPhone.');
   const registration=await navigator.serviceWorker.ready;
-  if(!registration.active?.scriptURL.endsWith('/gymtrack-sw.js'))throw Error('Aggiorna GymTrack e riaprila prima di attivare le notifiche.');
+  if(!registration.active?.scriptURL.endsWith('/gymtrack-app-worker-v3.js'))throw Error('Aggiorna GymTrack e riaprila prima di attivare le notifiche.');
   let sub=await registration.pushManager.getSubscription();const old=await pushDeviceGrant();
   if(sub&&old?.accountId!==account){if(!await sub.unsubscribe())throw Error('Impossibile disattivare le notifiche del precedente account. Riprova.');sub=null;}
   if(!sub)sub=await registration.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:pushKeyBytes(state.publicKey)});

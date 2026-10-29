@@ -22,6 +22,7 @@ import { AppReleaseService } from '../services/app-release';
  @if(pwa.updateNotice()){<p role="status">{{pwa.updateNotice()}}</p>}
  @if(pwa.updateError()){<p class="update-problem" role="status">{{pwa.updateError()}}</p>}
  @if(release.error()){<p class="update-problem" role="status">{{release.error()}}</p>}
+ @if(pwa.updateError()||release.error()){<a class="button ghost" href="/aggiorna.html?ngsw-bypass=1&v=3">Apri aggiornamento diretto</a>}
  <p>Il controllo riparte quando torna la connessione. L’aggiornamento conserva l’archivio e le bozze salvate sul dispositivo.</p>
 </section>`,styles:[`.app-updates{margin-top:20px}.app-updates h3{font-size:17px}.app-updates h4{font-size:14px;margin:0 0 8px}.app-updates p{font-size:13px;line-height:1.6;margin:10px 0;color:var(--muted);overflow-wrap:anywhere}.app-updates small{display:block;font-size:12px;line-height:1.6;color:var(--muted);margin:8px 0}.app-updates .actions{margin:12px 0;flex-wrap:wrap}.app-updates button{min-height:44px}.release-distribution{border-top:1px solid var(--line);margin-top:18px;padding-top:16px}.app-updates .update-problem{color:var(--danger,#ff7e95)}`]})
 export class AppUpdatesComponent {
