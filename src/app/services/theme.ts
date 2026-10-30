@@ -34,7 +34,7 @@ export class ThemeService{
   if(this.loadedAccount!==id){this.loadedAccount=id;this.config.set({...DEFAULT_THEME});this.apply();}
   let cached:ThemePreference|undefined;
   try{await this.cacheWrites;cached=await this.preferences.get(id);if(!current())return;if(cached&&/^#[0-9a-fA-F]{6}$/.test(cached.color)){this.config.set(this.cacheConfig(cached));this.apply();}}catch{}
-  if(!current()||this.auth.offlineMode()||!navigator.onLine)return;
+  if(!current()||id==='device-local'||this.auth.offlineMode()||!navigator.onLine)return;
   if(cached?.dirty){try{if(await this.syncPreference(cached,current))await this.writeCache({...cached,dirty:false},current);}catch{}return;}
   try{
    const remote=await this.auth.request('preferences');if(!current()||!/^#[0-9a-fA-F]{6}$/.test(remote.backgroundColor))return;
@@ -60,7 +60,7 @@ export class ThemeService{
   try{
    if(!await this.writeCache(value,current))return false;
    this.loadedAccount=id;this.config.set(config);this.apply();this.status.set('Tema salvato sul dispositivo.');
-   if(!this.auth.offlineMode()&&navigator.onLine){try{if(await this.syncPreference(value,current)&&await this.writeCache({...value,dirty:false},current))this.status.set('Tema salvato anche sull’account.');else if(current())this.status.set('Salvato sul dispositivo. La sincronizzazione riprenderà con la rete.');}catch{if(current())this.status.set('Salvato sul dispositivo. La sincronizzazione riprenderà con la rete.');}}
+   if(id!=='device-local'&&!this.auth.offlineMode()&&navigator.onLine){try{if(await this.syncPreference(value,current)&&await this.writeCache({...value,dirty:false},current))this.status.set('Tema salvato anche sull’account.');else if(current())this.status.set('Salvato sul dispositivo. La sincronizzazione riprenderà con la rete.');}catch{if(current())this.status.set('Salvato sul dispositivo. La sincronizzazione riprenderà con la rete.');}}
    return current();
   }catch(error){if(current())this.error.set(error instanceof Error?error.message:'Tema non salvato. Riprova.');return false;}
   finally{this.busy.set(false);this.savingAccount='';}

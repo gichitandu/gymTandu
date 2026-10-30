@@ -84,3 +84,10 @@ it('retries a queued preference automatically when the browser comes online',asy
  await vi.waitFor(async()=>expect((await t.preference()).dirty).toBe(false));
  expect(t.request).toHaveBeenCalledExactlyOnceWith('preferences',{backgroundColor:'#0D1725',themeConfig:{palette:'artico',mode:'dark'}});
 });
+
+it('keeps device-local preferences separate from any cookie still present before login',async()=>{
+ const t=await setup();t.ids.push('device-local');t.account.set({id:'device-local'});
+ await t.theme.saveConfig({palette:'sabbia',mode:'light'});await t.theme.load();t.emitOnline();
+ await vi.waitFor(async()=>expect((await t.preference()).config).toEqual({palette:'sabbia',mode:'light'}));
+ expect(t.request).not.toHaveBeenCalled();expect((await t.preference()).dirty).toBe(false);
+});
