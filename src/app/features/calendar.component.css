@@ -1,4 +1,4 @@
-:host{display:block;--cal-blue:#0675ff;--cal-green:#36dbad;--cal-amber:#f5c765;--cal-soft:color-mix(in srgb,var(--card) 80%,var(--bg));}
+:host{display:block;--cal-blue:var(--accent,#0675ff);--cal-green:var(--green,#36dbad);--cal-amber:var(--warning,#f5c765);--cal-soft:color-mix(in srgb,var(--card) 80%,var(--bg));}
 .cal-page{max-width:1000px;margin:0 auto;padding-bottom:18px;}
 .cal-heading{display:flex;align-items:center;justify-content:space-between;gap:16px;margin:0 0 20px;}
 .cal-eyebrow{display:block;font-size:10px;letter-spacing:1.7px;font-weight:700;color:var(--muted);line-height:1.5;}
@@ -225,3 +225,54 @@
 .cal-date-jump>gt-date-field{position:absolute;inset:0;width:100%;height:100%;margin:0;opacity:0}.cal-sheet-date>label{min-width:0;flex:1}.cal-sheet-date gt-date-field{width:100%;min-width:0;margin-top:8px}
 
 .cal-preview{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;min-width:0;min-height:46px;margin-top:16px;padding:12px 14px;border-radius:13px;font-size:13px;white-space:normal;overflow-wrap:anywhere;text-align:center}.cal-preview gt-icon{width:17px;height:17px;flex:none}.cal-preview gt-icon:last-child{margin-left:auto}.cal-preview gt-icon:first-child{margin-right:auto}.cal-preview+.cal-start{margin-top:10px}.cal-preview+.button{margin-top:10px}
+
+/* Keep the calendar within the selected palette; status markers remain semantic. */
+:host-context(body.theme-ready) .cal-spotlight {
+  background: var(--card);
+  border-color: var(--line);
+  color: var(--text);
+}
+:host-context(body.theme-ready) .cal-spotlight::before {
+  background: linear-gradient(90deg, transparent calc(100% - 1px), var(--accent-soft) 0), linear-gradient(0deg, transparent calc(100% - 1px), var(--accent-soft) 0);
+  background-size: 36px 36px;
+}
+:host-context(body.theme-ready) .cal-spotlight::after { background: var(--accent-text); box-shadow: 48px 0 var(--accent-soft); }
+:host-context(body.theme-ready) :is(.cal-title-dot, .cal-week-day.today::after, .planned, .cal-agenda-heading .cal-eyebrow::before, .cal-rhythm-stroke i) { background: var(--accent-text); box-shadow: none; }
+:host-context(body.theme-ready) :is(.cal-today gt-icon, .cal-spotlight .cal-eyebrow, .cal-score gt-icon, .cal-date-jump, .cal-day-focus > strong, .cal-workout-status, .cal-workout-symbol, .cal-muscles, .cal-upcoming-row > gt-icon, .cal-sheet-date > gt-icon, .cal-sheet-preview > gt-icon, .cal-section-mark) { color: var(--accent-text); }
+:host-context(body.theme-ready) :is(.cal-spotlight p, .cal-mini-stats, .cal-mini-stats small, .cal-score span, .cal-rhythm-line) { color: var(--muted); }
+:host-context(body.theme-ready) :is(.cal-mini-stats b, .cal-rhythm-line b) { color: var(--text); }
+:host-context(body.theme-ready) .cal-score { background: conic-gradient(from -90deg, var(--cal-green) var(--cal-progress, 0%), var(--line) 0); box-shadow: 0 0 0 8px var(--accent-soft); }
+:host-context(body.theme-ready) .cal-score > div { background: var(--card); border-color: var(--card); color: var(--text); }
+:host-context(body.theme-ready) .cal-score::before { border-color: var(--line); border-top-color: var(--accent-text); border-bottom-color: var(--accent-text); }
+:host-context(body.theme-ready) .cal-score::after { background: var(--accent-text); box-shadow: none; }
+:host-context(body.theme-ready) .cal-orbit { border-color: color-mix(in srgb, var(--accent-text) 9%, transparent); }
+:host-context(body.theme-ready) .cal-orbital-axis { background: linear-gradient(transparent, var(--accent-soft), transparent); }
+:host-context(body.theme-ready) .cal-rhythm-line { border-top-color: var(--line); }
+:host-context(body.theme-ready) :is(.cal-today.is-today, .cal-week-day.has-plan .cal-week-icon, .cal-month-day.has-plan, .cal-now-label, .cal-add-day, .cal-sheet-date, .cal-repeat-preview, .cal-section-mark, .cal-empty > button) {
+  background: var(--accent-soft);
+  border-color: color-mix(in srgb, var(--accent-text) 30%, var(--line));
+  color: var(--accent-text);
+}
+:host-context(body.theme-ready) :is(.cal-week-day.today:not(.selected), .cal-month-day.today) { border-color: var(--accent-text); }
+:host-context(body.theme-ready) :is(.cal-view-switch button.active, .cal-week-day.selected, .cal-month-day.selected) {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-ink);
+  box-shadow: none;
+}
+:host-context(body.theme-ready) .cal-week-day.selected :is(.cal-week-name, .cal-week-count, .cal-week-icon) { color: var(--accent-ink); }
+:host-context(body.theme-ready) .cal-week-day.selected .cal-week-icon { background: color-mix(in srgb, var(--accent-ink) 9%, transparent); }
+:host-context(body.theme-ready) :is(.cal-week-day.selected::after, .cal-week-day.selected::before, .cal-month-day.selected .planned) { background: var(--accent-ink); }
+:host-context(body.theme-ready) :is(.cal-workout-card, .cal-empty) { background: var(--card); border-color: var(--line); }
+:host-context(body.theme-ready) .cal-workout-card { border-left-color: var(--accent-text); }
+:host-context(body.theme-ready) :is(.cal-workout-symbol, .cal-empty-art) { background: var(--accent-soft); border-color: color-mix(in srgb, var(--accent-text) 22%, var(--line)); color: var(--accent-text); box-shadow: none; }
+:host-context(body.theme-ready) .cal-agenda-filters button.active { border-color: var(--accent-text); }
+:host-context(body.theme-ready) .cal-workout-card.is-complete { border-left-color: var(--cal-green); }
+:host-context(body.theme-ready) .is-complete .cal-workout-status { color: var(--cal-green); }
+:host-context(body.theme-ready) .is-complete .cal-workout-symbol { background: color-mix(in srgb, var(--cal-green) 10%, var(--card)); border-color: color-mix(in srgb, var(--cal-green) 30%, var(--line)); color: var(--cal-green); }
+:host-context(body.theme-ready) .cal-workout-card.is-running { border-left-color: var(--cal-amber); }
+:host-context(body.theme-ready) .is-running .cal-workout-status { color: var(--cal-amber); }
+:host-context(body.theme-ready) .cal-month-day.has-done:not(.selected) { background: color-mix(in srgb, var(--cal-green) 10%, var(--card)); }
+:host-context(body.theme-ready) .cal-week-day.has-done:not(.selected) .cal-week-icon { background: color-mix(in srgb, var(--cal-green) 10%, var(--card)); color: var(--cal-green); }
+:host-context(body.theme-ready) .cal-quick-bar { background: var(--nav-bg); border-color: var(--line); }
+:host-context(body.theme-ready) :is(.cal-sheet-date, .cal-repeat-preview) { background: var(--accent-soft); }

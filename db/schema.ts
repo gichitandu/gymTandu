@@ -6,7 +6,7 @@ export const sessions = sqliteTable('sessions', {tokenHash:text('token_hash').pr
 export const limits = sqliteTable('login_limits',{id:text('id').primaryKey(),attempts:integer('attempts').notNull(),resetAt:integer('reset_at').notNull()});
 export const catalogExercises = sqliteTable('catalog_exercises',{id:text('id').primaryKey(),payload:text('payload').notNull(),active:integer('active').notNull(),updatedBy:text('updated_by').notNull().references(()=>users.id),updatedAt:integer('updated_at').notNull()});
 export const catalogGroups = sqliteTable('catalog_groups',{id:text('id').primaryKey(),name:text('name').notNull()});
-export const preferences = sqliteTable('user_preferences',{userId:text('user_id').primaryKey().references(()=>users.id),backgroundColor:text('background_color').notNull().default('#050b12')});
+export const preferences = sqliteTable('user_preferences',{userId:text('user_id').primaryKey().references(()=>users.id),backgroundColor:text('background_color').notNull().default('#050b12'),themeConfig:text('theme_config')});
 export const archiveHeads = sqliteTable('archive_heads', {
  scope:text('scope').primaryKey(),revision:integer('revision').notNull(),objectKey:text('object_key').notNull(),updatedAt:integer('updated_at').notNull(),sizeBytes:integer('size_bytes').notNull(),contentHash:text('content_hash').notNull()
 });

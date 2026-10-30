@@ -1,3 +1,4 @@
+import {ThemePickerComponent} from '../shared/theme-picker.component';
 import {AppFeaturesService} from '../services/app-features';
 import {AppFeaturesComponent} from '../shared/app-features.component';
 import {PushReminderComponent} from '../shared/push-reminder.component';
@@ -46,7 +47,7 @@ interface ProfileFormDraft {
 @Component({
   standalone: true,
   styleUrl: "./account-polish.css",
-  imports: [AppFeaturesComponent,PushReminderComponent,CalendarSubscriptionComponent,DateFieldComponent,SectionHeadingComponent,BackupReminderComponent,ArchiveSyncComponent,AppUpdatesComponent,
+  imports: [ThemePickerComponent,AppFeaturesComponent,PushReminderComponent,CalendarSubscriptionComponent,DateFieldComponent,SectionHeadingComponent,BackupReminderComponent,ArchiveSyncComponent,AppUpdatesComponent,
     A11yModule,
     AvatarComponent,
     IosStatusComponent,
@@ -129,24 +130,9 @@ interface ProfileFormDraft {
         </form>
       </section>
       <div class="stack">
-        <section class="card" [hidden]="panel()==='info'">
-          <h2>Aspetto e preferenze</h2>
-          <div class="theme-picker"><h3>Colore dello sfondo</h3><p class="subtle">Scegli qualsiasi colore: viene salvato solo sul tuo account.</p>
-          <div class="theme-swatches">@for(color of theme.presets;track color){<button type="button" class="swatch" [style.background]="color" [class.chosen]="theme.color()===color" [attr.aria-label]="'Sfondo '+color" [attr.aria-pressed]="theme.color()===color" [disabled]="theme.busy()" (click)="theme.save(color)">@if(theme.color()===color){<span>✓</span>}</button>}</div>
-          <div class="color-custom"><label>Colore personalizzato<input type="color" [value]="theme.color()" (change)="theme.save($any($event.target).value)" [disabled]="theme.busy()" /></label><label>Codice HEX<input #backgroundHex type="text" [value]="theme.color()" maxlength="7" pattern="#[0-9a-fA-F]{6}" aria-label="Codice colore esadecimale" /></label><button [disabled]="theme.busy()" (click)="theme.save(backgroundHex.value)">Applica</button></div>
-          <div class="actions"><button class="ghost" [disabled]="theme.busy()" (click)="theme.save(defaultBackground)">Ripristina sfondo originale</button>@if(theme.busy()){<span class="subtle" role="status">Salvataggio…</span>}</div>
-          </div>
-          <div class="setting-row" style="margin-top:20px">
-            <div>
-              <b>Tema scuro</b>
-              <p>Il tuo allenamento, senza distrazioni.</p>
-            </div>
-            <mat-slide-toggle
-              aria-label="Tema scuro"
-              [checked]="!theme.isLight()"
-              (change)="setting('theme', $event.checked ? 'dark' : 'light')"
-            />
-          </div>
+        <section class="card" [class.theme-settings-card]="panel()==='theme'" [hidden]="panel()==='info'">
+          @if(panel()==='theme'){<gt-theme-picker/>}@else{<h2>Aspetto e preferenze</h2><button type="button" class="ghost" (click)="panel.set('theme')"><gt-icon name="palette"/>Tema e colori</button>}
+          @if(panel()!=='theme'){
           <div class="setting-row">
             <div>
               <b>Unità di peso</b>
@@ -181,6 +167,7 @@ interface ProfileFormDraft {
               >{{s.canEditCatalog()?"Gestisci":"Esplora"}} <gt-icon name="arrow"
             /></a>
           </div>
+          }
         </section>
         <section class="card" [hidden]="panel()!=='info'">
           <h2>Porta GymTrack con te</h2>
@@ -509,6 +496,7 @@ export class ProfileComponent {
       const d = structuredClone(this.s.data());
       d.settings[0].lastBackup = new Date().toISOString();
       d.settings[0].backgroundColor=this.theme.color();
+      d.settings[0].themeConfig=structuredClone(this.theme.config());
       const text = await exportBackup(d);
       this.backupFile.set(new File([text],"gymtrack-backup-"+this.today+".json",{type:"application/json"}));
       const url = URL.createObjectURL(
@@ -567,7 +555,8 @@ export class ProfileComponent {
         )
       ) {
         this.resume.clear(this.s.archiveKey());
-        if(d.settings[0].backgroundColor)await this.theme.save(d.settings[0].backgroundColor);
+        if(d.settings[0].themeConfig)await this.theme.saveConfig(d.settings[0].themeConfig);
+        else if(d.settings[0].backgroundColor)await this.theme.save(d.settings[0].backgroundColor);
         this.pending.set(undefined);
       }
     } finally {

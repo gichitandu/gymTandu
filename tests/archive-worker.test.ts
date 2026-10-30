@@ -118,3 +118,16 @@ it('keeps origin and role checks on calendar activation',async()=>{
  const denied=await api(new Request(url,{method:'POST',headers:{...headers,Origin:origin},body}),env);expect(denied.status).toBe(403);
  expect(sql.prepare('SELECT count(*) AS n FROM calendar_service_config').get()?.n).toBe(0);
 });
+
+it('retains a full theme in account archives and rejects malformed themes before replacing the head',async()=>{
+ const cookie=await activate(),themeConfig={palette:'prugna',mode:'system',background:'#1D1424',accent:'#F0A6A0'};
+ const content=JSON.parse(backup);content.data.settings[0].themeConfig=themeConfig;
+ const text=JSON.stringify(content);
+ expect((await put(text,0,'account',{cookie})).response.status).toBe(200);
+ expect(JSON.parse((await get('account',{cookie})).data.backup).data.settings[0].themeConfig).toEqual(themeConfig);
+ for(const value of [null,[],{...themeConfig,palette:'other'},{...themeConfig,mode:'auto'},{...themeConfig,accent:'red'},{...themeConfig,background:'url(x)'},{...themeConfig,unknown:true}]){
+  content.data.settings[0].themeConfig=value;
+  expect((await put(JSON.stringify(content),1,'account',{cookie})).response.status).toBe(400);
+ }
+ const loaded=await get('account',{cookie});expect(loaded.data.revision).toBe(1);expect(loaded.data.backup).toBe(text);
+});

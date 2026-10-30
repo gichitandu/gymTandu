@@ -1181,3 +1181,13 @@
 }
 .exercise-picker{min-width:0}.exercise-picker>p{margin:0 0 8px}.exercise-picker-results{max-height:252px;overflow:auto;overscroll-behavior:contain;display:grid;gap:7px;padding:2px}.exercise-pick{width:100%;display:flex;align-items:center;gap:12px;text-align:left;min-height:78px;border:1px solid var(--border,#284058);border-radius:12px;padding:8px 12px;background:var(--surface,#102236);color:inherit}.exercise-pick gt-exercise-thumb{--thumb-width:86px;--thumb-height:64px}.exercise-pick>span:nth-child(2){min-width:0;flex:1}.exercise-pick strong,.exercise-pick small,.exercise-selection strong,.exercise-selection small{display:block}.exercise-pick strong{font-size:14px;line-height:1.3}.exercise-pick small,.exercise-selection small{font-size:11px;opacity:.72;line-height:1.4;margin-top:4px}.exercise-picked{border-color:#44b8ff;box-shadow:inset 0 0 0 1px #44b8ff}.pick-check{font-size:20px;color:#4db6ff}.exercise-selection{display:flex;gap:12px;align-items:center;margin-top:12px;padding:12px;border-radius:12px;background:color-mix(in srgb,#4db6ff 10%,transparent)}.exercise-selection gt-exercise-thumb{--thumb-width:128px;--thumb-height:96px}.exercise-selection strong{font-size:14px;line-height:1.4}@media(max-width:480px){.exercise-picker-results{max-height:236px}.exercise-pick{gap:9px;padding:7px}.exercise-pick gt-exercise-thumb{--thumb-width:70px;--thumb-height:56px}.exercise-selection gt-exercise-thumb{--thumb-width:104px;--thumb-height:82px}}
 .meal-ai-status{margin:12px 0;line-height:1.5;color:var(--muted);overflow-wrap:anywhere}.meal-ai-status:empty{display:none}.meal-ai-status strong{color:var(--text)}.meal-ai-status p{margin:4px 0}
+
+/* Decorative accents and catalogue selection follow the saved theme. */
+:host-context(body.theme-ready) { --feature-cyan: var(--accent-text); }
+:host-context(body.theme-ready) .energy-panel { background: radial-gradient(ellipse at 88% 48%, var(--accent-soft), transparent 60%), var(--card); }
+:host-context(body.theme-ready) .energy-orbit .calorie-ring { filter: none; }
+:host-context(body.theme-ready) .orbit-tick { box-shadow: 0 0 9px var(--accent-soft); }
+:host-context(body.theme-ready) .exercise-pick { border-color: var(--line); background: var(--card); color: var(--text); }
+:host-context(body.theme-ready) .exercise-picked { border-color: var(--accent-text); box-shadow: inset 0 0 0 1px var(--accent-text); }
+:host-context(body.theme-ready) .pick-check { color: var(--accent-text); }
+:host-context(body.theme-ready) .exercise-selection { background: var(--accent-soft); }

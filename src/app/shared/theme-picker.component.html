@@ -1,0 +1,159 @@
+<section
+  class="theme-studio"
+  [style.color-scheme]="colors().light ? 'light' : 'dark'"
+  [style.--preview-bg]="colors().background"
+  [style.--preview-card]="colors().card"
+  [style.--preview-raised]="colors().raised"
+  [style.--preview-line]="colors().line"
+  [style.--preview-accent]="colors().accent"
+  [style.--preview-accent-text]="colors().accentText"
+  [style.--preview-text]="colors().text"
+  [style.--preview-muted]="colors().muted"
+  [style.--preview-ink]="colors().buttonText"
+  [style.--preview-soft]="colors().accentSoft"
+  aria-labelledby="theme-studio-title"
+>
+  <header class="studio-header">
+    <h2 id="theme-studio-title">Tema e colori</h2>
+    <span>Anteprima</span>
+  </header>
+  <div class="appearance-modes" role="group" aria-label="Aspetto dell’app">
+    @for (mode of modes; track mode.value) {
+      <button
+        type="button"
+        [class.active]="draft().mode === mode.value"
+        [attr.aria-pressed]="draft().mode === mode.value"
+        (click)="chooseMode(mode.value)"
+      >
+        {{ mode.label }}
+      </button>
+    }
+  </div>
+  <fieldset class="palette-picker">
+    <legend>Palette</legend>
+    <div class="palette-grid">
+      @for (palette of palettes; track palette.id) {
+        <button
+          class="palette-tile"
+          type="button"
+          [class.chosen]="draft().palette === palette.id"
+          [attr.aria-pressed]="draft().palette === palette.id"
+          [attr.aria-label]="'Tema ' + palette.name"
+          [style.--tile-bg]="palette.background"
+          [style.--tile-card]="palette.card"
+          [style.--tile-text]="palette.text"
+          [style.--tile-muted]="palette.muted"
+          [style.--tile-accent]="palette.accent"
+          [style.--tile-ink]="palette.buttonText"
+          (click)="choosePalette(palette.id)"
+        >
+          <span class="tile-label">{{ palette.name }}</span>
+          @if (draft().palette === palette.id) {
+            <span class="tile-check" aria-hidden="true"
+              ><gt-icon name="check"
+            /></span>
+          }
+          <span class="mini-interface" aria-hidden="true"
+            ><span class="mini-left"><i></i><i></i><b></b></span
+            ><span class="mini-card"
+              ><i class="mini-mark"></i><i></i><i></i
+              ><span><b></b><b></b><b></b></span></span
+          ></span>
+        </button>
+      }
+    </div>
+  </fieldset>
+  <div class="color-controls">
+    <label class="color-control"
+      ><span class="color-control-title">Colore principale</span
+      ><span class="color-control-value"
+        ><i [style.background]="colors().accent"></i
+        ><span>{{ colors().accent }}</span
+        ><gt-icon name="arrow" /></span
+      ><input
+        type="color"
+        aria-label="Scegli il colore principale"
+        [value]="colors().accent"
+        (input)="setColor('accent', $any($event.target).value)"
+    /></label>
+    <label class="color-control"
+      ><span class="color-control-title">Sfondo</span
+      ><span class="color-control-value"
+        ><i [style.background]="colors().background"></i
+        ><span>{{ colors().background }}</span
+        ><gt-icon name="arrow" /></span
+      ><input
+        type="color"
+        aria-label="Scegli il colore dello sfondo"
+        [value]="colors().background"
+        (input)="setColor('background', $any($event.target).value)"
+    /></label>
+  </div>
+  <details class="advanced-colors">
+    <summary>
+      <gt-icon name="settings" /><span>Personalizza ancora</span
+      ><gt-icon name="arrow" />
+    </summary>
+    <div class="advanced-content">
+      <label
+        >Colore principale · HEX<input
+          type="text"
+          inputmode="text"
+          autocapitalize="characters"
+          autocomplete="off"
+          spellcheck="false"
+          maxlength="7"
+          [value]="draft().accent || colors().accent"
+          (change)="setColor('accent', $any($event.target).value)"
+          placeholder="#7DE2C7" /></label
+      ><label
+        >Sfondo · HEX<input
+          type="text"
+          inputmode="text"
+          autocapitalize="characters"
+          autocomplete="off"
+          spellcheck="false"
+          maxlength="7"
+          [value]="draft().background || colors().background"
+          (change)="setColor('background', $any($event.target).value)"
+          placeholder="#101416"
+      /></label>
+      <p>Testi e contrasto si adattano ai colori scelti.</p>
+      <button class="reset-colors" type="button" (click)="resetColors()">
+        Ripristina colori della palette
+      </button>
+    </div>
+  </details>
+  <div class="live-example">
+    <h3>Così apparirà l’app</h3>
+    <div class="example-card">
+      <span class="example-mark"><gt-icon name="weight" /></span>
+      <div>
+        <strong>Panca con manubri</strong
+        ><small>3 serie · 8–10 rip. · 90 s</small>
+      </div>
+      <span class="sample-button" aria-hidden="true">Salva serie</span>
+    </div>
+  </div>
+  @if (issue()) {
+    <p class="theme-issue" role="alert">{{ issue() }}</p>
+  }
+  <footer class="theme-actions">
+    <button
+      type="button"
+      class="cancel-theme"
+      (click)="cancel()"
+      [disabled]="saving() || !dirty()"
+    >
+      Annulla</button
+    ><button
+      type="button"
+      class="save-theme"
+      (click)="save()"
+      [disabled]="saving() || !dirty()"
+    >
+      {{ saving() ? "Salvataggio…" : "Salva tema" }}
+    </button>
+  </footer>
+  <p class="preview-hint">I colori vengono applicati quando salvi il tema.</p>
+</section>

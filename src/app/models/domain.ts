@@ -176,6 +176,7 @@ export interface AppSettings extends Entity {
   prefill: boolean;
   lastBackup?: string;
   backgroundColor?: string;
+  themeConfig?: {palette:string;mode:'dark'|'light'|'system';background?:string;accent?:string};
   goals?: PersonalGoals;
 }
 export interface DataSet {

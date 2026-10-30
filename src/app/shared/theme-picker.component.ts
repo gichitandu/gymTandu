@@ -1,0 +1,122 @@
+import {
+  Component,
+  computed,
+  effect,
+  inject,
+  signal,
+  untracked,
+} from "@angular/core";
+import { ThemeService } from "../services/theme";
+import { AuthService } from "../services/auth";
+import {
+  ThemeConfig,
+  ThemeMode,
+  THEME_PALETTES,
+  resolveTheme,
+  validThemeConfig,
+} from "../services/theme-palettes";
+import { IconComponent } from "./icon.component";
+
+@Component({
+  selector: "gt-theme-picker",
+  standalone: true,
+  imports: [IconComponent],
+  templateUrl: "./theme-picker.component.html",
+  styleUrl: "./theme-picker.component.css",
+})
+export class ThemePickerComponent {
+  readonly theme = inject(ThemeService);
+  private auth = inject(AuthService);
+  readonly palettes = THEME_PALETTES;
+  readonly modes: { value: ThemeMode; label: string }[] = [
+    { value: "dark", label: "Scuro" },
+    { value: "light", label: "Chiaro" },
+    { value: "system", label: "Sistema" },
+  ];
+  readonly draft = signal<ThemeConfig>(structuredClone(this.theme.config()));
+  private baseline = signal(JSON.stringify(this.theme.config()));
+  readonly dirty = computed(
+    () => JSON.stringify(this.draft()) !== this.baseline(),
+  );
+  readonly colors = computed(() =>
+    resolveTheme(this.draft(), this.theme.systemLight()),
+  );
+  readonly saving = signal(false);
+  readonly issue = signal("");
+  private account = "";
+  private generation = 0;
+  constructor() {
+    effect(() => {
+      const saved = this.theme.config(),
+        id = this.auth.user()?.id || "device-local";
+      untracked(() => {
+        if (id !== this.account) {
+          this.account = id;
+          this.generation++;
+          this.reset(saved);
+        } else if (!this.dirty()) this.reset(saved);
+      });
+    });
+  }
+  private reset(config: ThemeConfig) {
+    this.draft.set(structuredClone(config));
+    this.baseline.set(JSON.stringify(config));
+    this.issue.set("");
+  }
+  choosePalette(id: string) {
+    const palette = this.palettes.find((p) => p.id === id);
+    if (!palette) return;
+    this.issue.set("");
+    this.draft.set({
+      palette: id,
+      mode: this.draft().mode === "system" ? "system" : palette.tone,
+    });
+  }
+  chooseMode(mode: ThemeMode) {
+    this.issue.set("");
+    this.draft.update(({ background, ...config }) => ({ ...config, mode }));
+  }
+  setColor(key: "background" | "accent", value: string) {
+    let hex = value.trim();
+    if (/^[a-f0-9]{6}$/i.test(hex)) hex = "#" + hex;
+    if (!/^#[a-f0-9]{6}$/i.test(hex)) {
+      this.issue.set("Usa un codice HEX come #101416.");
+      return;
+    }
+    this.issue.set("");
+    this.draft.update((config) => ({ ...config, [key]: hex.toUpperCase() }));
+  }
+  resetColors() {
+    this.issue.set("");
+    this.draft.set({ palette: this.draft().palette, mode: this.draft().mode });
+  }
+  cancel() {
+    if (!this.saving()) this.reset(this.theme.config());
+  }
+  async save() {
+    if (this.saving() || !this.dirty() || !validThemeConfig(this.draft()))
+      return;
+    const snapshot = structuredClone(this.draft()),
+      serialized = JSON.stringify(snapshot),
+      account = this.account,
+      generation = this.generation;
+    this.saving.set(true);
+    this.issue.set("");
+    try {
+      const ok = await this.theme.saveConfig(snapshot);
+      if (account !== this.account || generation !== this.generation) return;
+      if (ok) {
+        this.baseline.set(serialized);
+        if (JSON.stringify(this.draft()) === serialized)
+          this.draft.set(structuredClone(snapshot));
+      }
+    } catch {
+      if (account === this.account && generation === this.generation)
+        this.issue.set(
+          "Tema non salvato. La scelta precedente resta conservata. Riprova.",
+        );
+    } finally {
+      this.saving.set(false);
+    }
+  }
+}

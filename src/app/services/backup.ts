@@ -2,7 +2,7 @@ import { validateIntegrity } from "./integrity";
 export { validateIntegrity } from "./integrity";
 import { z } from "zod";
 import { DataSet } from "../models/domain";
-export const BACKUP_VERSION = 7;
+export const BACKUP_VERSION = 8;
 const id = z.string().min(1).max(150);
 const text = z.string().max(10000);
 const nonempty = z.string().trim().min(1).max(200);
@@ -160,6 +160,7 @@ const schemas = {
     lastBackup: time.optional(),backupConfirmedAt:time.optional(),backupSnoozedUntil:time.optional(),backupReminderDays:z.union([z.literal(0),z.literal(7),z.literal(14),z.literal(30)]).optional(),
     iphoneChecklist:z.object({device:z.string().max(120),ios:z.string().max(80),checks:z.record(z.string().max(80),z.object({state:z.enum(['todo','pass','fail']),note:z.string().max(500).optional(),checkedAt:time.optional()}))}).optional(),
     backgroundColor: z.string().regex(/^#[0-9a-fA-F]{6}$/).optional(),
+    themeConfig:z.object({palette:z.enum(['carbonio','artico','prugna','petrolio','sabbia','ghiaccio']),mode:z.enum(['dark','light','system']),background:z.string().regex(/^#[0-9a-fA-F]{6}$/).optional(),accent:z.string().regex(/^#[0-9a-fA-F]{6}$/).optional()}).strict().optional(),
     goals:z.object({calories:z.number().positive().max(20000).optional(),protein:z.number().positive().max(2000).optional(),carbs:z.number().positive().max(3000).optional(),fat:z.number().positive().max(2000).optional(),workoutsPerWeek:z.number().int().min(1).max(14).optional()}).optional(),
   }),
 };
@@ -216,7 +217,7 @@ export async function exportBackup(data: DataSet) {
   );
 }
 // Add explicit vN -> vN+1 pure functions here when the on-disk format evolves.
-export const migrations: Record<number, (value: unknown) => unknown> = {1: value => ({...(value as object),meals:[]}),2:value=>value,3:value=>({...value as object,scheduledWorkouts:[],measurements:[]}),4:value=>({...value as object,exercisePreferences:[],workoutUi:[]}),5:value=>value,6:value=>value};
+export const migrations: Record<number, (value: unknown) => unknown> = {1: value => ({...(value as object),meals:[]}),2:value=>value,3:value=>({...value as object,scheduledWorkouts:[],measurements:[]}),4:value=>({...value as object,exercisePreferences:[],workoutUi:[]}),5:value=>value,6:value=>value,7:value=>value};
 export async function importBackup(json: string): Promise<DataSet> {
   if (new Blob([json]).size > 50 * 1024 * 1024)
     throw Error("Backup troppo grande: limite 50 MB.");

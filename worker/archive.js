@@ -1,5 +1,8 @@
 import {validateImportedProgramOverlaps} from './program-imports.js';
 export const ARCHIVE_LIMIT_BYTES = 50 * 1024 * 1024;
+function archiveValidThemeConfig(value) {
+ return !!value&&typeof value==='object'&&!Array.isArray(value)&&Object.keys(value).every(key=>['palette','mode','background','accent'].includes(key))&&['carbonio','artico','prugna','petrolio','sabbia','ghiaccio'].includes(value.palette)&&['dark','light','system'].includes(value.mode)&&['background','accent'].every(key=>value[key]===undefined||typeof value[key]==='string'&&/^#[0-9a-fA-F]{6}$/.test(value[key]));
+}
 const ARCHIVE_RETAINED_VERSIONS = 10;
 const archiveTables = ['profiles','roles','plans','days','planExercises','exercises','muscleGroups','workouts','workoutExercises','sets','settings','meals','scheduledWorkouts','measurements','exercisePreferences','workoutUi'];
 const archiveRowLimits={profiles:1,roles:3,plans:10000,days:100000,planExercises:100000,exercises:10000,muscleGroups:1000,workouts:100000,workoutExercises:300000,sets:1000000,settings:1,meals:10000,scheduledWorkouts:10000,measurements:10000,exercisePreferences:10000,workoutUi:1};
@@ -47,6 +50,7 @@ function archiveValidate(text) {
  for(const workout of data.workouts)if(!ids.profiles.has(workout.userId)||!nonempty(workout.planName)||!nonempty(workout.dayName)||!['draft','completed'].includes(workout.status))archiveFail('Allenamento della copia non valido.');
  for(const exercise of data.workoutExercises)if(!ids.workouts.has(exercise.workoutId)||!nonempty(exercise.name))archiveFail('Esercizio registrato della copia non valido.');
  for(const set of data.sets)if(!ids.workoutExercises.has(set.workoutExerciseId)||!Number.isInteger(set.number)||set.number<1||!numeric(set.weight)||!Number.isInteger(set.reps)||set.reps<1||set.reps>999||typeof set.completed!=='boolean')archiveFail('Serie della copia non valida.');
+ if(settings.themeConfig!==undefined&&!archiveValidThemeConfig(settings.themeConfig))archiveFail('Tema della copia non valido.');
  if(settings.gymMode!==undefined&&typeof settings.gymMode!=='boolean')archiveFail('Modalità palestra non valida.');
  for(const p of data.exercisePreferences)if(p.weightStep!==undefined&&(!Number.isFinite(p.weightStep)||p.weightStep<=0||p.weightStep>50))archiveFail('Incremento carico non valido.');
  for(const row of data.workoutExercises)if(row.substitutedFrom&&(!nonempty(row.substitutedFrom.exerciseId)||!nonempty(row.substitutedFrom.name)))archiveFail('Origine sostituzione non valida.');

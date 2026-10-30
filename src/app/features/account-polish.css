@@ -1,8 +1,13 @@
 :host {
   display: block;
-  --signal-blue: #0675ff;
-  --signal-cyan: #44d9f1;
+  --signal-blue: var(--accent-text);
+  --signal-cyan: var(--green);
   min-width: 0;
+}
+.theme-settings-card {
+  padding: 0 !important;
+  max-width: 520px;
+  overflow: hidden;
 }
 .identity-card {
   position: relative;
@@ -13,7 +18,7 @@
   border-radius: 25px !important;
   background: var(--card);
   background:
-    linear-gradient(125deg, rgba(6, 117, 255, 0.13), transparent 63%),
+    linear-gradient(125deg, color-mix(in srgb, var(--accent) 13%, transparent), transparent 63%),
     var(--card);
 }
 .identity-card::before {
@@ -21,15 +26,15 @@
   position: absolute;
   width: 310px;
   height: 310px;
-  border: 1px solid rgba(70, 158, 255, 0.12);
+  border: 1px solid color-mix(in srgb, var(--accent) 12%, transparent);
   border-radius: 50%;
   right: -170px;
   top: -160px;
   box-shadow:
-    0 0 0 34px rgba(6, 117, 255, 0.025),
-    0 0 0 35px rgba(70, 158, 255, 0.08),
-    0 0 0 76px rgba(6, 117, 255, 0.018),
-    0 0 0 77px rgba(70, 158, 255, 0.06);
+    0 0 0 34px color-mix(in srgb, var(--accent) 2.5%, transparent),
+    0 0 0 35px color-mix(in srgb, var(--accent) 8%, transparent),
+    0 0 0 76px color-mix(in srgb, var(--accent) 1.8%, transparent),
+    0 0 0 77px color-mix(in srgb, var(--accent) 6%, transparent);
   z-index: -1;
   pointer-events: none;
 }
@@ -58,7 +63,7 @@
   height: 5px;
   border-radius: 50%;
   background: var(--signal-cyan);
-  box-shadow: 0 0 8px rgba(68, 217, 241, 0.4);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--green) 40%, transparent);
 }
 .identity-card .profile-head {
   display: flex;
@@ -70,7 +75,7 @@
   position: relative;
   flex-shrink: 0;
   padding: 10px;
-  border: 1px solid rgba(6, 117, 255, 0.45);
+  border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent);
   border-radius: 50%;
   transform: rotate(-22deg);
 }
@@ -78,7 +83,7 @@
   content: "";
   position: absolute;
   inset: 4px;
-  border: 1px dashed rgba(68, 217, 241, 0.23);
+  border: 1px dashed color-mix(in srgb, var(--green) 23%, transparent);
   border-radius: 50%;
   pointer-events: none;
 }
@@ -89,7 +94,7 @@
   border-radius: 50%;
   overflow: hidden;
   transform: rotate(22deg);
-  box-shadow: 0 0 0 1px rgba(68, 217, 241, 0.3);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--green) 30%, transparent);
 }
 .avatar-orbit-node {
   position: absolute;
@@ -181,8 +186,8 @@
   background: linear-gradient(
       135deg,
       transparent 42%,
-      #0675ff 43%,
-      #0675ff 48%,
+      var(--accent) 43%,
+      var(--accent) 48%,
       transparent 49%
     )
     0 0/13px 100%;
@@ -297,7 +302,7 @@
   margin: 0 0 25px;
   border-block: 1px solid var(--line);
   position: relative;
-  background: linear-gradient(90deg, rgba(6, 117, 255, 0.07), transparent);
+  background: linear-gradient(90deg, color-mix(in srgb, var(--accent) 7%, transparent), transparent);
 }
 .archive-signal > div {
   min-width: 0;
@@ -357,7 +362,7 @@
   bottom: 8px;
   width: 1px;
   left: 3px;
-  background: linear-gradient(#0675ff, var(--line));
+  background: linear-gradient(var(--accent), var(--line));
 }
 .history-session {
   position: relative;
@@ -374,7 +379,7 @@
   border: 2px solid var(--card);
   background: var(--signal-blue);
   border-radius: 50%;
-  box-shadow: 0 0 0 1px rgba(6, 117, 255, 0.4);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 40%, transparent);
 }
 .history-session .card-head {
   align-items: flex-start;
@@ -451,7 +456,7 @@
   padding: 25px 5px;
   margin-bottom: 25px;
   min-width: 0;
-  background: linear-gradient(90deg, rgba(6, 117, 255, 0.06), transparent);
+  background: linear-gradient(90deg, color-mix(in srgb, var(--accent) 6%, transparent), transparent);
 }
 .catalog-intro > .catalog-orbit {
   flex-shrink: 0;
@@ -461,7 +466,7 @@
   height: 80px;
   display: grid;
   place-items: center;
-  border: 1px solid rgba(6, 117, 255, 0.35);
+  border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
   border-radius: 50%;
   position: relative;
 }
@@ -469,7 +474,7 @@
   content: "";
   position: absolute;
   inset: 8px;
-  border: 1px dashed rgba(68, 217, 241, 0.3);
+  border: 1px dashed color-mix(in srgb, var(--green) 30%, transparent);
   border-radius: 50%;
 }
 .catalog-orbit gt-icon {
@@ -485,7 +490,7 @@
   height: 7px;
   background: var(--signal-blue);
   border-radius: 50%;
-  box-shadow: 0 0 12px rgba(6, 117, 255, 0.4);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--accent) 40%, transparent);
 }
 .catalog-intro .eyebrow {
   display: block;
@@ -518,7 +523,7 @@
   padding: 21px !important;
   border-radius: 19px !important;
   overflow: hidden;
-  border-top-color: rgba(6, 117, 255, 0.4) !important;
+  border-top-color: color-mix(in srgb, var(--accent) 40%, transparent) !important;
 }
 .catalog-exercise-card::before {
   content: "";
@@ -530,7 +535,7 @@
   pointer-events: none;
   background: linear-gradient(
     225deg,
-    rgba(6, 117, 255, 0.1) 49%,
+    color-mix(in srgb, var(--accent) 10%, transparent) 49%,
     transparent 50%
   );
 }
@@ -558,7 +563,7 @@
   flex-shrink: 0;
   border-radius: 12px;
   border: 1px solid var(--line);
-  background: rgba(6, 117, 255, 0.05);
+  background: color-mix(in srgb, var(--accent) 5%, transparent);
 }
 .catalog-exercise-card .exercise-thumb gt-icon {
   color: var(--signal-blue);
@@ -589,7 +594,7 @@
   border: 1px solid var(--line);
   border-left: 3px solid var(--signal-blue);
   border-radius: 3px 22px 22px 3px;
-  background: linear-gradient(90deg, rgba(6, 117, 255, 0.1), transparent);
+  background: linear-gradient(90deg, color-mix(in srgb, var(--accent) 10%, transparent), transparent);
 }
 .account-admin-signal .eyebrow {
   font-size: 9px;
@@ -641,8 +646,8 @@
   height: 42px;
   display: grid;
   place-items: center;
-  background: rgba(6, 117, 255, 0.12);
-  border: 1px solid rgba(6, 117, 255, 0.25);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent) 25%, transparent);
   color: var(--signal-cyan);
   border-radius: 14px;
   font-size: 18px;
@@ -874,19 +879,4 @@
     scroll-behavior: auto !important;
     transition: none !important;
   }
-}
-/* Cyan is decorative on dark surfaces; light themes use a readable teal. */
-:host-context(body.custom-light) {
-  --signal-cyan: #006980;
-  --signal-blue: #075fc8;
-}
-:host-context(body.custom-light) .identity-name > .eyebrow,
-:host-context(body.custom-light) .identity-goal > span,
-:host-context(body.custom-light) .account-admin-signal .eyebrow,
-:host-context(body.custom-light) .user-monogram {
-  color: #006980;
-}
-:host-context(body.custom-light) .identity-status i,
-:host-context(body.custom-light) .avatar-orbit-node {
-  background: #006980;
 }

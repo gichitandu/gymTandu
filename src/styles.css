@@ -1804,3 +1804,111 @@ gt-shell .session-header .session-date-fields{grid-template-columns:minmax(0,1fr
 gt-shell .session-header .session-date-fields>label{display:grid;grid-template-columns:minmax(0,1fr);align-content:start;box-sizing:border-box;width:100%;min-width:0;max-width:100%}
 gt-shell .session-header .session-date-fields gt-date-field{box-sizing:border-box;width:100%;min-width:0;max-width:100%}
 gt-shell .session-header input[type=date]{box-sizing:border-box;width:100%;min-width:0;max-width:100%;inline-size:100%;min-inline-size:0;max-inline-size:100%}
+
+/* Saved palettes supply every app surface, including light and custom themes. */
+body.theme-ready {
+  background: var(--bg);
+  color: var(--text);
+  accent-color: var(--accent-text);
+  --warning: #f5c765;
+}
+body.theme-ready.custom-light { --warning: #946100; }
+body.theme-ready :is(main, .app-main, .topbar, .sidebar) {
+  background: var(--bg);
+  color: var(--text);
+}
+body.theme-ready :is(.card, .modal, .profile-menu, .overview-tile, .last-session-inline) {
+  background: var(--card);
+  border-color: var(--line);
+  color: var(--text);
+}
+body.theme-ready :is(.bottom-nav, .simple-menu-panel, .cal-event-menu > div) {
+  background: var(--nav-bg);
+  border-color: var(--line);
+  color: var(--text);
+}
+body.theme-ready :is(button, .button) { border-color: var(--line); }
+body.theme-ready :is(button, .button):hover { border-color: color-mix(in srgb, var(--accent-text) 48%, var(--line)); }
+body.theme-ready :is(button.primary, .button.primary) {
+  background: var(--accent) !important;
+  border-color: var(--accent) !important;
+  color: var(--accent-ink) !important;
+  box-shadow: 0 4px 16px color-mix(in srgb, var(--accent) 16%, transparent);
+}
+body.theme-ready :is(button.primary, .button.primary) :is(gt-icon, span) { color: inherit; }
+body.theme-ready :is(button.ghost, .button.ghost) { background: transparent; }
+body.theme-ready :is(button.danger, .danger-text) { color: var(--danger); }
+body.theme-ready :is(input, select, textarea) {
+  min-width: 0;
+  max-width: 100%;
+  background: var(--raised);
+  border-color: var(--line);
+  color: var(--text);
+  caret-color: var(--accent-text);
+}
+body.theme-ready :is(input, textarea)::placeholder { color: var(--muted); opacity: 1; }
+body.theme-ready :is(input, select, textarea):focus {
+  border-color: var(--accent-text);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+body.theme-ready :is(input[type="checkbox"], input[type="radio"]) { accent-color: var(--accent-text); }
+body.theme-ready :is(input, select, textarea)[aria-invalid="true"] { border-color: var(--danger); outline-color: var(--danger); }
+body.theme-ready :is(.segmented, .banner, .calendar-legend, .ingredient-item, .meal-diary-row) { background: var(--card); border-color: var(--line); }
+body.theme-ready :is(.segmented > button.active, .calendar-cell.selected, .week-day i.done) {
+  background: var(--accent);
+  border-color: var(--accent-text);
+  color: var(--accent-ink);
+  box-shadow: none;
+}
+body.theme-ready :is(.sidebar nav a.selected, .bottom-nav a.selected, .bottom-nav a.training-selected) {
+  background: var(--accent-soft);
+  color: var(--accent-text);
+  border-color: color-mix(in srgb, var(--accent-text) 22%, var(--line));
+}
+body.theme-ready :is(.link, .banner > gt-icon, .last-session-inline > .ghost, .brand > span:not(.brand-icon)) { color: var(--accent-text); }
+body.theme-ready .brand-icon { background: var(--accent); color: var(--accent-ink); }
+body.theme-ready :is(.avatar, .profile-avatar) {
+  background: var(--accent-soft);
+  border-color: color-mix(in srgb, var(--accent-text) 28%, var(--line));
+  color: var(--accent-text);
+}
+body.theme-ready :is(.pill:not(.green):not(.purple):not(.orange), .meal-confirm-totals) {
+  background: var(--accent-soft);
+  border-color: color-mix(in srgb, var(--accent-text) 25%, var(--line));
+  color: var(--accent-text);
+}
+body.theme-ready :is(.notice, .recording-field-error) {
+  border-color: color-mix(in srgb, var(--accent-text) 38%, var(--line));
+  background: var(--accent-soft);
+  color: var(--text);
+}
+body.theme-ready :is(.notice.error, .recording-field-error) {
+  background: var(--danger-soft);
+  border-color: color-mix(in srgb, var(--danger) 42%, var(--line));
+  color: var(--danger);
+}
+body.theme-ready :is(.notice.success, .pill.green) {
+  background: color-mix(in srgb, var(--green) 10%, var(--card));
+  border-color: color-mix(in srgb, var(--green) 35%, var(--line));
+  color: var(--green);
+}
+body.theme-ready .set-done {
+  background: color-mix(in srgb, var(--green) 12%, var(--card)) !important;
+  border-color: color-mix(in srgb, var(--green) 45%, var(--line)) !important;
+  color: var(--green) !important;
+}
+body.theme-ready :is(.week-day i, .progress-bars i) { background: var(--raised); border-color: var(--line); color: var(--muted); }
+body.theme-ready .week-day i.today { border-color: var(--accent-text); color: var(--accent-text); }
+body.theme-ready .progress-bars i.done { background: var(--green); }
+body.theme-ready .session-header { background: color-mix(in srgb, var(--bg) 96%, transparent); }
+body.theme-ready .focus-set-row.is-complete { background: var(--accent-soft); color: var(--text); }
+body.theme-ready :is(.compact-rest-chip, .meal-fallback) { background: var(--card); border-color: var(--accent-text); color: var(--accent-text); }
+body.theme-ready .setup-snapshot { border-left-color: var(--accent-text); }
+body.theme-ready :is(.today-state.resume-state, .warmup-row) { color: var(--warning); }
+body.theme-ready .today-state.resume-state { background: color-mix(in srgb, var(--warning) 12%, transparent); }
+body.theme-ready :is(.card-head > div, .page-heading > div, .modal-head > div, .form-grid > label, .setting-row > div, .recording-top > div) { min-width: 0; }
+body.theme-ready :is(.modal, .simple-menu-panel, .cal-event-menu > div) { overflow-wrap: anywhere; }
+body.theme-ready :is(.recording-value input, .nutrition-date-heading input, .cal-date-jump input) { background: transparent; }
+body.theme-ready .pill.orange { color: var(--warning); background: color-mix(in srgb, var(--warning) 10%, var(--card)); }
+body.theme-ready.custom-light :is(.superset-tag, .superset-banner, .pill.purple) { color: #69449a; }
+body.theme-ready.custom-light .favorite-button.favorite-on { color: var(--warning); border-color: color-mix(in srgb, var(--warning) 35%, var(--line)); }

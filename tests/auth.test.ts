@@ -186,3 +186,36 @@ it('refreshes the owner iPhone after a previous logout, without requiring an app
  const unrelated=await call('auth/device-recovery',{},{agent:'iPhone',email:'client@example.com',visitor:'client'});
  expect(await unrelated.json()).toEqual({signedOut:false});
 });
+
+it('persists full theme preferences per account for every role without modifying user permissions',async()=>{
+ const cookie=await activate();
+ const sessions=[{cookie}];
+ for(const role of ['Admin','User']){
+  const name='palette-'+role.toLowerCase();
+  expect((await call('users',{name,email:name+'@example.com',username:name,role,password:'abcdefgh'},{cookie})).status).toBe(201);
+  const login=await call('auth/login',{email:name,password:'abcdefgh'},{visitor:name});
+  sessions.push({cookie:login.headers.get('set-cookie')!.split(';')[0],visitor:name} as any);
+ }
+ const before=sql.prepare('SELECT * FROM users ORDER BY id').all();
+ for(let index=0;index<sessions.length;index++){
+  const themeConfig={palette:['carbonio','sabbia','ghiaccio'][index],mode:['dark','light','system'][index],accent:'#445566',background:'#112233'};
+  expect((await call('preferences',{backgroundColor:'#112233',themeConfig},sessions[index])).status).toBe(200);
+  const saved=await (await call('preferences',undefined,sessions[index])).json();
+  expect(saved).toEqual({backgroundColor:'#112233',themeConfig});
+ }
+ expect(sql.prepare('SELECT * FROM users ORDER BY id').all()).toEqual(before);
+ expect((await call('preferences',undefined)).status).toBe(401);
+ expect((await call('preferences',{backgroundColor:'#112233',themeConfig:{palette:'carbonio',mode:'dark'}})).status).toBe(401);
+});
+
+it('rejects invalid theme configurations atomically and accepts legacy background-only writes',async()=>{
+ const cookie=await activate(),themeConfig={palette:'petrolio',mode:'system',accent:'#70D6C5'};
+ expect((await call('preferences',{backgroundColor:'#0C1F22',themeConfig},{cookie})).status).toBe(200);
+ for(const invalid of [null,[],{}, {...themeConfig,palette:'unknown'}, {...themeConfig,mode:'auto'}, {...themeConfig,accent:'red'}, {...themeConfig,background:'url(x)'}, {...themeConfig,role:'SuperAdmin'}]){
+  expect((await call('preferences',{backgroundColor:'#FFFFFF',themeConfig:invalid},{cookie})).status).toBe(400);
+  expect((await (await call('preferences',undefined,{cookie})).json()).themeConfig).toEqual(themeConfig);
+ }
+ expect((await call('preferences',{backgroundColor:'#ABCDEF'},{cookie})).status).toBe(200);
+ expect(await (await call('preferences',undefined,{cookie})).json()).toEqual({backgroundColor:'#ABCDEF',themeConfig:null});
+ expect(sql.prepare('SELECT theme_config FROM user_preferences').get()!.theme_config).toBeNull();
+});

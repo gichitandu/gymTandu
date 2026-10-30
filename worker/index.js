@@ -25,6 +25,9 @@ export async function passwordHash(password, salt) {
 function equal(a, b) { if(a.length !== b.length) return false; let d=0; for(let i=0;i<a.length;i++) d |= a.charCodeAt(i)^b.charCodeAt(i); return d===0; }
 function json(data, status=200, headers={}) { return Response.json(data,{status,headers:{'Cache-Control':'no-store','X-Content-Type-Options':'nosniff',...headers}}); }
 function fail(message,status=400) { throw Object.assign(new Error(message),{status}); }
+function validThemeConfig(value) {
+  return !!value&&typeof value==='object'&&!Array.isArray(value)&&Object.keys(value).every(key=>['palette','mode','background','accent'].includes(key))&&['carbonio','artico','prugna','petrolio','sabbia','ghiaccio'].includes(value.palette)&&['dark','light','system'].includes(value.mode)&&['background','accent'].every(key=>value[key]===undefined||typeof value[key]==='string'&&/^#[0-9a-fA-F]{6}$/.test(value[key]));
+}
 const publicUser = u => ({id:u.id,email:u.email,name:u.name,username:u.username||null,role:u.role,active:!!u.active,owner:u.email===OWNER});
 function validPassword(p) { if(typeof p!=='string'||p.length<8||p.length>128) fail('Usa una password da 8 a 128 caratteri.'); }
 function username(value) {
@@ -124,8 +127,9 @@ export async function api(request,env,ctx) {
     }
     if(request.method==='GET'&&path==='/api/preferences') {
       if(!me) fail('Accedi per caricare il tema.',401);
-      const p=await db.prepare('SELECT background_color FROM user_preferences WHERE user_id=?').bind(me.id).first();
-      return json({backgroundColor:p?.background_color||'#050E17'});
+      const p=await db.prepare('SELECT background_color,theme_config FROM user_preferences WHERE user_id=?').bind(me.id).first();
+      let themeConfig=null;try{const value=JSON.parse(p?.theme_config||'null');if(validThemeConfig(value))themeConfig=value;}catch{}
+      return json({backgroundColor:p?.background_color||'#050E17',themeConfig});
     }
     if(request.method==='GET'&&path==='/api/users') {
       if(me?.role!=='SuperAdmin') fail('Accesso riservato al Super Admin.',403);
@@ -176,8 +180,10 @@ export async function api(request,env,ctx) {
     }
     if(path==='/api/preferences'&&request.method==='POST') {
       if(typeof b.backgroundColor!=='string'||!/^#[0-9a-fA-F]{6}$/.test(b.backgroundColor)) fail('Colore non valido.');
-      await db.prepare('INSERT INTO user_preferences(user_id,background_color) VALUES(?,?) ON CONFLICT(user_id) DO UPDATE SET background_color=excluded.background_color').bind(me.id,b.backgroundColor).run();
-      return json({backgroundColor:b.backgroundColor});
+      if(Object.hasOwn(b,'themeConfig')&&!validThemeConfig(b.themeConfig))fail('Tema non valido.');
+      const themeConfig=b.themeConfig||null;
+      await db.prepare('INSERT INTO user_preferences(user_id,background_color,theme_config) VALUES(?,?,?) ON CONFLICT(user_id) DO UPDATE SET background_color=excluded.background_color,theme_config=excluded.theme_config').bind(me.id,b.backgroundColor,themeConfig?JSON.stringify(themeConfig):null).run();
+      return json({backgroundColor:b.backgroundColor,themeConfig});
     }
     if(path==='/api/catalog/exercise'&&request.method==='POST') {
       if(!isEditor(me)) fail('Solo Admin e Super Admin possono modificare il catalogo.',403);
