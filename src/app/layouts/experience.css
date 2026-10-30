@@ -2448,3 +2448,10 @@ body.theme-ready gt-shell .weight-orbit {
 }
 body.theme-ready gt-shell .weight-orbit::before { border-color: var(--line); }
 body.theme-ready gt-shell :is(.weight-orbit input, .reps-entry input) { background: transparent; box-shadow: none; }
+
+/* The calendar keeps its selected destination visible without changing other pages. */
+gt-shell .bottom-nav.calendar-navigation a { min-width: 0; padding-inline: 3px; }
+gt-shell .bottom-nav.calendar-navigation a > span { font-size: 10px; white-space: nowrap; }
+@media (max-width: 359px) {
+  gt-shell .bottom-nav.calendar-navigation a > span { font-size: 9px; }
+}

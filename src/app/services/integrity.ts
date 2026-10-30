@@ -1,4 +1,5 @@
 import {validThemeConfig} from "./theme-palettes";
+import {validateCalendarEvent} from './calendar-event-data';
 import {validWorkoutUi} from "./workout-resume";
 import { sumIngredients } from './nutrition';
 import { DataSet, TABLES } from "../models/domain";
@@ -63,7 +64,7 @@ export function validateIntegrity(d: DataSet) {
     if(m.ingredients){const totals=sumIngredients(m.ingredients);for(const key of ['grams','calories','protein','carbs','fat'] as const)if(Math.abs(totals[key]-m[key])>.11)fail("totali del pasto diversi dagli alimenti");}
     if(!m.name.trim()||!/^\d{4}-\d{2}-\d{2}$/.test(m.date)||!Number.isFinite(m.grams)||m.grams<=0||m.grams>10000||[m.calories,m.protein,m.carbs,m.fat].some((v,i)=>!Number.isFinite(v)||v<0||v>[20000,2000,3000,2000][i])||m.photo && (m.photo.size>500*1024||!["image/jpeg","image/png","image/webp"].includes(m.photo.type))) fail("pasto non valido");
   }
-  for(const e of d.scheduledWorkouts)if(!e.planId||!e.dayId||!e.planName.trim()||!e.dayName.trim()||!/^\d{4}-\d{2}-\d{2}$/.test(e.date))fail("evento calendario non valido");
+  for(const e of d.scheduledWorkouts){try{validateCalendarEvent(e);}catch{fail('evento calendario non valido');}}
   if(new Set(d.measurements.map(m=>m.date)).size!==d.measurements.length)fail("misurazioni duplicate nella stessa data");
   for(const m of d.measurements)if(!Number.isFinite(m.weight)||m.weight<=0||m.weight>700||(m.waist!==undefined&&(!Number.isFinite(m.waist)||m.waist<=0||m.waist>300))||(m.bodyFat!==undefined&&(!Number.isFinite(m.bodyFat)||m.bodyFat<1||m.bodyFat>80))||!/^\d{4}-\d{2}-\d{2}$/.test(m.date))fail("misurazione non valida");
   if(d.settings[0].themeConfig!==undefined&&!validThemeConfig(d.settings[0].themeConfig))fail('tema non valido');

@@ -42,6 +42,19 @@ it('projects only scheduled titles and dates, excluding completed sessions and p
  const data={scheduledWorkouts:[{...events[0],dayName:'Gambe',notes:'private',workoutId:'completed'},{id:'next',date:'2026-11-01',dayName:'Petto',planName:'private plan',notes:'private'}],workouts:[{id:'completed',status:'completed'}]};
  expect(calendarProjection(data)).toEqual([{id:'next',date:'2026-11-01',title:'Petto'}]);
 });
+it('projects only planned training activities so rest and personal notes never become workout reminders',()=>{
+ const data={scheduledWorkouts:[
+  {id:'cardio-done',kind:'cardio',dayName:'Cardio concluso',date:'2026-10-30',done:true,time:'08:00',estimatedCalories:320,notes:'Privato'},
+  {id:'mobility-next',kind:'mobility',dayName:'Mobilità',date:'2026-10-31',done:false,time:'17:30',durationMinutes:20,notes:'Privato'},
+  {id:'cardio-next',kind:'cardio',dayName:'Corsa',date:'2026-11-01',time:'07:30',estimatedCalories:220,notes:'Privato'},
+  {id:'rest',kind:'rest',dayName:'Riposo',date:'2026-11-01',notes:'Privato'},
+  {id:'note',kind:'other',dayName:'Nota personale',date:'2026-11-01',notes:'Privato'},
+ ],workouts:[]};
+ expect(calendarProjection(data)).toEqual([
+  {id:'mobility-next',date:'2026-10-31',title:'Mobilità'},
+  {id:'cardio-next',date:'2026-11-01',title:'Corsa'},
+ ]);
+});
 it('does not create any connection while unconfigured or unauthorized',async()=>{
  const fetch=vi.spyOn(globalThis,'fetch');const getter=vi.fn();const req=new Request('https://gymtrack.test/api/calendar-subscription');
  expect(calendarConfigured({})).toBe(false);expect((await calendarApi(req,{},null,getter)).status).toBe(401);

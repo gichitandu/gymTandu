@@ -64,7 +64,7 @@ export async function calendarRelay(env,user,method='GET',body,suffix=''){
 }
 export function calendarProjection(data){
  const completed=new Set(data.workouts.filter(w=>w.status==='completed').map(w=>w.id));
- return data.scheduledWorkouts.filter(e=>!completed.has(e.workoutId)).map(e=>({id:e.id,date:e.date,title:String(e.dayName||'Allenamento').slice(0,200)}));
+ return data.scheduledWorkouts.filter(e=>['workout','cardio','mobility'].includes(e.kind??'workout')&&!completed.has(e.workoutId)&&!e.done).map(e=>({id:e.id,date:e.date,title:String(e.dayName||'Allenamento').slice(0,200)}));
 }
 export async function calendarPublish(env,user,text,revision,updatedAt){
  if(!user)return;env=await calendarRuntimeEnv(env);

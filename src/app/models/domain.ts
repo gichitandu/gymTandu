@@ -150,8 +150,13 @@ export interface Meal extends Entity {
   source: "manual" | "photo-suggestion";
   createdAt: string;
 }
-export interface ScheduledWorkout extends Entity {
+export type CalendarEventKind = 'workout' | 'cardio' | 'mobility' | 'rest' | 'other';
+export interface CalendarEventOptions {time?:string;durationMinutes?:number;estimatedCalories?:number;}
+export interface CalendarActivityInput extends CalendarEventOptions {id?:string;date:string;kind:Exclude<CalendarEventKind,'workout'>;title:string;notes?:string;done?:boolean;}
+export interface ScheduledWorkout extends Entity, CalendarEventOptions {
   date: string; planId:string; dayId:string; planName:string; dayName:string; notes:string; workoutId?:string;
+  kind?:CalendarEventKind;
+  done?:boolean;
 }
 export interface BodyMeasurement extends Entity {date:string;weight:number;waist?:number;bodyFat?:number;}
 export interface PersonalGoals {calories?:number;protein?:number;carbs?:number;fat?:number;workoutsPerWeek?:number;}

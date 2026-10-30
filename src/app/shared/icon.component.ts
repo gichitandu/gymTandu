@@ -31,6 +31,11 @@ import { Component, input } from "@angular/core";
 export class IconComponent {
   name = input("activity");
   paths: Record<string, string> = {
+    moon:"M20 15a9 9 0 0 1-11-11A9 9 0 1 0 20 15z",
+    fire:"M12 3c1 4 6 5 6 11a6 6 0 0 1-12 0c0-3 2-5 4-7 0 3 1 4 2 4 2-2 2-5 0-8z",
+    move:"M12 3v18M3 12h18M8 7l4-4 4 4M8 17l4 4 4-4M7 8l-4 4 4 4m10-8 4 4-4 4",
+    more:"M5 12h.01M12 12h.01M19 12h.01",
+    circle:"M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0",
     minus:"M5 12h14",
     play:"m9 5 11 7-11 7z",
     copy:"M8 8h13v13H8zM16 8V3H3v13h5",

@@ -1,7 +1,8 @@
 import { cloneForEdit } from './edit-snapshot';
 import { setupKey,setupSummary,hasSetup } from "./training-flow";
 import { weightProgression } from "./progression";
-import { MachineSetup,WorkoutUiState,WorkoutLogExercise } from "../models/domain";
+import { MachineSetup,WorkoutUiState,WorkoutLogExercise,CalendarActivityInput,CalendarEventOptions,ScheduledWorkout } from "../models/domain";
+import {calendarEventOptions,calendarWorkoutDuplicate,existingCalendarOptions,validateCalendarEvent} from './calendar-event-data';
 import { parseLocalDate, weeklyDates } from "./calendar";
 import { ThemeService } from "./theme";
 import { AuthService } from "./auth";
@@ -753,24 +754,74 @@ export class Store {
     if(!this.sharedCatalog())return this.change(d=>{const group=d.muscleGroups.find(group=>group.id===id);if(group)group.name=name.trim();else d.muscleGroups.push({id,name:name.trim()});},'Gruppo personale salvato.',false);
     try{await this.auth!.request('catalog/group',{id,name});await this.refreshCatalog({groups:[id]});this.message.set('Gruppo salvato.');return true;}catch(e){this.error.set((e as Error).message);return false;}
   }
-  async scheduleWorkout(date:string,dayId:string,notes='',id:string=uid(),repeatCount=1) {
+  async scheduleWorkout(date:string,dayId:string,notes='',id:string=uid(),repeatCount=1,options?:CalendarEventOptions) {
     return this.change(d=>{
       const day=d.days.find(x=>x.id===dayId),plan=d.plans.find(p=>p.id===day?.planId);
       if(!day||!plan||plan.archived)throw Error('Seleziona un giorno valido di un piano disponibile.');
       const dates=weeklyDates(date,repeatCount);
       const index=d.scheduledWorkouts.findIndex(e=>e.id===id);
+      const previous=d.scheduledWorkouts[index];
+      if(previous&&(previous.kind??'workout')!=='workout')throw Error('Questa voce è un’attività personale, non un allenamento del piano.');
+      if(plan.program&&(repeatCount!==1||d.scheduledWorkouts.some(event=>event.id!==id&&event.planId===plan.id&&event.dayId===dayId))||previous&&d.plans.some(item=>item.id===previous.planId&&item.program)&&previous.dayId!==dayId)throw Error('Questa seduta del piano importato è già programmata. Usa Sposta per cambiare data o ora.');
       if(index>=0&&d.scheduledWorkouts[index].workoutId)throw Error('Una programmazione già avviata non può essere modificata.');
       if(index>=0&&repeatCount!==1)throw Error('Per ripetere l’allenamento crea una nuova programmazione.');
       const conflicts=scheduleConflicts(d,dates,plan.id,id);
       if(conflicts.length)throw Error('Programmazione bloccata: data occupata da un altro piano. '+conflicts[0]);
-      if(notes.length>2000)throw Error('Le note possono contenere al massimo 2000 caratteri.');
-      if(dates.some(value=>d.scheduledWorkouts.some(e=>e.date===value&&e.dayId===dayId&&e.id!==id)))throw Error('Questo allenamento è già programmato in una delle date scelte. Nessuna nuova programmazione è stata aggiunta.');
-      const events=dates.map((value,i)=>({id:i===0?id:uid(),date:value,dayId,planId:plan.id,planName:plan.name,dayName:day.name,notes:notes.trim()}));
+      if(typeof notes!=='string')throw Error('Le note non sono valide.');
+      if(notes.length>2000&&notes!==previous?.notes)throw Error('Le note possono contenere al massimo 2000 caratteri.');
+      const metadata=options===undefined?existingCalendarOptions(previous):calendarEventOptions(options);
+      const events:ScheduledWorkout[]=dates.map((value,i)=>({id:i===0?id:uid(),date:value,dayId,planId:plan.id,planName:plan.name,dayName:day.name,notes:notes===previous?.notes?notes:notes.trim(),...(previous?.kind?{kind:previous.kind}:{}),...metadata}));
+      for(const event of events)validateCalendarEvent(event);
+      if(events.some(event=>calendarWorkoutDuplicate(d.scheduledWorkouts,event)))throw Error('Questo allenamento è già programmato in una delle date scelte. Scegli un orario diverso per una seconda seduta. Nessuna nuova programmazione è stata aggiunta.');
       if(index>=0)d.scheduledWorkouts[index]=events[0];else d.scheduledWorkouts.push(...events);
     },repeatCount>1?'Allenamenti programmati per '+repeatCount+' settimane.':'Allenamento programmato.',false);
   }
+  async scheduleCalendarActivity(input:CalendarActivityInput,repeatCount=1) {
+    return this.change(d=>{
+      if(!input||typeof input!=='object'||!['cardio','mobility','rest','other'].includes(input.kind))throw Error('Scegli un tipo di attività valido.');
+      if(typeof input.title!=='string'||typeof input.notes!=='undefined'&&typeof input.notes!=='string')throw Error('Titolo o note dell’attività non validi.');
+      const id=input.id||uid(),dates=weeklyDates(input.date,repeatCount),index=d.scheduledWorkouts.findIndex(event=>event.id===id),previous=d.scheduledWorkouts[index];
+      if(previous&&(previous.kind??'workout')==='workout')throw Error('Un allenamento del piano non può essere sostituito con un’attività personale.');
+      if(previous?.workoutId||previous?.done)throw Error('Segna l’attività come da fare prima di modificarla.');
+      if(previous&&repeatCount!==1)throw Error('Per ripetere l’attività crea una nuova programmazione.');
+      const metadata=calendarEventOptions({time:input.time,durationMinutes:input.durationMinutes,estimatedCalories:input.estimatedCalories});
+      const events:ScheduledWorkout[]=dates.map((date,i)=>({id:i===0?id:uid(),date,kind:input.kind,dayName:input.title.trim(),planId:'',dayId:'',planName:'',notes:(input.notes||'').trim(),...metadata,...(input.done!==undefined?{done:input.done}:{})}));
+      for(const event of events)validateCalendarEvent(event);
+      if(events.some(event=>d.scheduledWorkouts.some(other=>other.id!==id&&other.kind===event.kind&&other.date===event.date&&other.dayName.toLocaleLowerCase('it')===event.dayName.toLocaleLowerCase('it')&&(!other.time||!event.time||other.time===event.time))))throw Error('Questa attività è già presente nella data scelta. Scegli un orario diverso per una seconda attività.');
+      if(previous)d.scheduledWorkouts[index]=events[0];else d.scheduledWorkouts.push(...events);
+    },repeatCount>1?'Attività programmate per '+repeatCount+' settimane.':'Attività salvata nel calendario.',false);
+  }
+  async moveCalendarEvent(id:string,date:string,time?:string) {
+    return this.change(d=>{
+      const event=d.scheduledWorkouts.find(item=>item.id===id);if(!event)throw Error('Voce del calendario non trovata.');
+      if(event.workoutId||event.done)throw Error('Puoi spostare soltanto una programmazione non ancora iniziata.');
+      const candidate:ScheduledWorkout={...event,date};if(time!==undefined){if(time)candidate.time=time;else delete candidate.time;}
+      validateCalendarEvent(candidate);
+      if((event.kind??'workout')==='workout'){
+        const plan=d.plans.find(plan=>plan.id===event.planId);if(!plan||plan.archived||!d.days.some(day=>day.id===event.dayId&&day.planId===plan.id))throw Error('Il giorno del piano non è più disponibile. La programmazione è conservata.');
+        const conflicts=scheduleConflicts(d,[date],event.planId,id);if(conflicts.length)throw Error('Spostamento bloccato: '+conflicts[0]);
+        if(calendarWorkoutDuplicate(d.scheduledWorkouts,candidate))throw Error('Questo allenamento è già programmato nella data e nell’orario scelti.');
+      }else if(d.scheduledWorkouts.some(other=>other.id!==id&&other.kind===candidate.kind&&other.date===candidate.date&&other.dayName.toLocaleLowerCase('it')===candidate.dayName.toLocaleLowerCase('it')&&(!other.time||!candidate.time||other.time===candidate.time)))throw Error('Questa attività è già presente nella data scelta.');
+      Object.assign(event,candidate);if(candidate.time===undefined)delete event.time;
+    },'Programmazione spostata.',false);
+  }
+  async removeCalendarEvent(id:string) {
+    return this.change(d=>{
+      const event=d.scheduledWorkouts.find(item=>item.id===id);if(!event)throw Error('Voce del calendario non trovata.');
+      if(event.done||d.workouts.some(workout=>workout.id===event.workoutId&&workout.status==='completed'))throw Error('Le attività completate restano nel calendario e nello storico.');
+      d.scheduledWorkouts=d.scheduledWorkouts.filter(item=>item.id!==id);
+    },'Programmazione rimossa. Gli allenamenti registrati restano conservati.',false);
+  }
+  async toggleCalendarActivity(id:string) {
+    return this.change(d=>{
+      const event=d.scheduledWorkouts.find(item=>item.id===id);if(!event)throw Error('Voce del calendario non trovata.');
+      if(!['cardio','mobility','other'].includes(event.kind||'workout')||event.workoutId)throw Error('Per completare un allenamento usa la registrazione delle serie.');
+      event.done=!event.done;validateCalendarEvent(event);
+    },'Stato dell’attività aggiornato.',false);
+  }
   async startScheduled(id:string,date?:string) {
     const event=this.data().scheduledWorkouts.find(e=>e.id===id);if(!event)return false;
+    if((event.kind??'workout')!=='workout'){this.error.set('Questa è un’attività personale del calendario. Usa il comando per segnarla come completata.');return false;}
     const linked=this.data().workouts.find(w=>w.id===event.workoutId);if(linked?.status==='completed'){this.error.set('Questa sessione è già stata completata.');return false;}
     if(this.draft()&&this.data().scheduledWorkouts.some(e=>e.id!==id&&e.workoutId===this.draft()!.id)){this.error.set('La sessione in corso è già associata a un’altra programmazione.');return false;}
     if(this.draft()&&this.draft()!.id!==event.workoutId&&this.draft()!.dayId!==event.dayId){this.error.set('Concludi o riprendi prima la sessione già in corso.');return false;}

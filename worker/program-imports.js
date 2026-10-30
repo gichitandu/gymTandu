@@ -110,7 +110,7 @@ export async function excelImportsApi(request,env,user) {
 /** Shared by commit validation and file finalization: schedules use whole dates. */
 export function validateImportedProgramOverlaps(data) {
  const schedules=Array.isArray(data?.scheduledWorkouts)?data.scheduledWorkouts:[],workouts=Array.isArray(data?.workouts)?data.workouts:[];
- const entries=[...schedules,...workouts].filter(entry=>programDate(entry.date)).sort((a,b)=>a.date.localeCompare(b.date));
+ const entries=[...schedules.filter(entry=>entry.kind===undefined||entry.kind==='workout'),...workouts].filter(entry=>programDate(entry.date)).sort((a,b)=>a.date.localeCompare(b.date));
  const retained=new Map();for(const entry of entries){const bounds=retained.get(entry.planId);if(bounds)bounds[1]=entry.date;else retained.set(entry.planId,[entry.date,entry.date]);}
  const allWindows=(data?.plans||[]).map(plan=>{
   const kept=retained.get(plan.id);

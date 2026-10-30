@@ -131,3 +131,34 @@ it('retains a full theme in account archives and rejects malformed themes before
  }
  const loaded=await get('account',{cookie});expect(loaded.data.revision).toBe(1);expect(loaded.data.backup).toBe(text);
 });
+
+it('retains timed calendar activities and legacy workout snapshots without changing their data',async()=>{
+ const content=JSON.parse(backup);
+ content.data.scheduledWorkouts=[
+  {id:'legacy',date:'2026-10-30',planId:'retired-plan',dayId:'retired-day',planName:'Piano conservato',dayName:'Parte alta',notes:'x'.repeat(10000)},
+  {id:'timed-workout',kind:'workout',date:'2026-10-30',planId:'retired-plan',dayId:'retired-day',planName:'Piano conservato',dayName:'Parte alta',notes:'',time:'11:30',durationMinutes:80,estimatedCalories:450},
+  {id:'cardio',kind:'cardio',date:'2026-10-30',planId:'',dayId:'',planName:'',dayName:'Cardio HIIT',notes:'Tapis roulant',time:'07:00',durationMinutes:20,estimatedCalories:180,done:true},
+  {id:'mobility',kind:'mobility',date:'2026-10-30',planId:'',dayId:'',planName:'',dayName:'Mobilità',notes:'',time:'19:00',durationMinutes:10,done:false},
+  {id:'rest',kind:'rest',date:'2026-10-30',planId:'',dayId:'',planName:'',dayName:'Riposo',notes:'Recupero attivo'},
+  {id:'other',kind:'other',date:'2026-10-30',planId:'',dayId:'',planName:'',dayName:'Appuntamento',notes:'',time:'23:59',estimatedCalories:0,done:false},
+ ];
+ const text=JSON.stringify(content);
+ expect((await put(text)).response.status).toBe(200);
+ const loaded=await get();expect(loaded.data.backup).toBe(text);expect(JSON.parse(loaded.data.backup).data.scheduledWorkouts).toEqual(content.data.scheduledWorkouts);
+});
+
+it('rejects invalid calendar activity metadata atomically while retaining the saved archive',async()=>{
+ expect((await put()).response.status).toBe(200);
+ const base={id:'activity',kind:'cardio',date:'2026-10-30',planId:'',dayId:'',planName:'',dayName:'Cardio',notes:'',time:'11:30',durationMinutes:20,estimatedCalories:150,done:false};
+ for(const patch of [
+  {id:' '},{kind:'unknown'},{kind:null},{kind:'workout'},{kind:'rest'},
+  {date:'2026-02-30'},{date:'30/10/2026'},{time:'24:00'},{time:'7:00'},{time:null},
+  {durationMinutes:0},{durationMinutes:1441},{durationMinutes:null},{durationMinutes:'20'},
+  {estimatedCalories:-1},{estimatedCalories:20001},{estimatedCalories:null},{estimatedCalories:'150'},
+  {done:'yes'},{done:null},{workoutId:'historic-workout'},{dayName:''},{notes:'x'.repeat(2001)},{planId:null},{dayId:null},{planName:12},{planId:'other-plan'},{dayId:'other-day'},{planName:'Altro piano'},
+ ]){
+  const content=JSON.parse(backup);content.data.scheduledWorkouts=[{...base,...patch}];
+  expect((await put(JSON.stringify(content),1)).response.status,JSON.stringify(patch)).toBe(400);
+ }
+ const loaded=await get();expect(loaded.data.revision).toBe(1);expect(loaded.data.backup).toBe(backup);expect(objects.size).toBe(1);
+});

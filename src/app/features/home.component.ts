@@ -58,7 +58,7 @@ export class HomeComponent {
         .data()
         .scheduledWorkouts.filter(
           (e) =>
-            e.date >= this.today &&
+            (e.kind??'workout')==='workout' && e.date >= this.today &&
             !this.concluded(e.planId)&&
             !this.s.completed().some((w) => w.id === e.workoutId),
         )
@@ -90,7 +90,7 @@ export class HomeComponent {
       .data()
       .scheduledWorkouts.some(
         (e) =>
-          e.date === date &&
+          (e.kind??'workout')==='workout' && e.date === date &&
           !this.concluded(e.planId)&&
           !this.s.completed().some((w) => w.id === e.workoutId),
       );

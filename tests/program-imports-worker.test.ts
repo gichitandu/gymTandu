@@ -96,6 +96,15 @@ it('frees the cancelled future of a completed plan but keeps retained future ses
  const data={plans:[{id:'old',name:'Concluso',completedAt:'2026-11-10T20:00:00Z',program:{startDate:'2026-11-02',endDate:'2026-12-25'}},{id:'new',name:'Nuovo',program:{startDate:'2026-11-16',endDate:'2027-01-08'}}],scheduledWorkouts:[{planId:'old',date:'2026-11-09'}],workouts:[]};
  expect(()=>validateImportedProgramOverlaps(data)).not.toThrow();data.scheduledWorkouts.push({planId:'old',date:'2026-11-23'});expect(()=>validateImportedProgramOverlaps(data)).toThrow('Sovrapposizione');
 });
+it('keeps non-workout calendar activities outside plan overlap checks while preserving workout conflicts',()=>{
+ const data:any={plans:[{id:'imported',name:'Programma',program:{startDate:'2026-11-02',endDate:'2026-12-25'}}],scheduledWorkouts:['cardio','mobility','rest','other'].map(kind=>({id:kind,kind,planId:'',dayId:'',planName:'',dayName:kind,date:'2026-11-03',notes:''})),workouts:[]};
+ expect(()=>validateImportedProgramOverlaps(data)).not.toThrow();
+ for(const kind of [undefined,'workout']){
+  const candidate={...data,scheduledWorkouts:[...data.scheduledWorkouts,{id:'real-workout',kind,planId:'other-plan',dayId:'other-day',planName:'Altro piano',dayName:'Gambe',date:'2026-11-03',notes:''}]};
+  expect(()=>validateImportedProgramOverlaps(candidate)).toThrow('Sovrapposizione');
+ }
+ data.workouts.push({id:'historic',planId:'other-plan',date:'2026-11-03'});expect(()=>validateImportedProgramOverlaps(data)).toThrow('Sovrapposizione');
+});
 it('defaults nutrition to hidden, permits only Super Admin changes and keeps repeat settings idempotent',async()=>{
  expect(await (await appFeaturesApi(request('/api/app-features'),env,alice)).json()).toEqual({nutritionEnabled:false,revision:0,updatedAt:null});
  for(const role of ['User','Admin'])expect((await appFeaturesApi(request('/api/app-features','POST',{nutritionEnabled:true}),env,{...alice,role})).status).toBe(403);

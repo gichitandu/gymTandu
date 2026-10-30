@@ -56,6 +56,18 @@ function archiveValidate(text) {
  for(const row of data.workoutExercises)if(row.substitutedFrom&&(!nonempty(row.substitutedFrom.exerciseId)||!nonempty(row.substitutedFrom.name)))archiveFail('Origine sostituzione non valida.');
  for(const w of data.workouts)if(w.durationUnknown!==undefined&&typeof w.durationUnknown!=='boolean')archiveFail('Indicazione durata non valida.');
  const date=value=>typeof value==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(value)&&Number.isFinite(Date.parse(value+'T12:00:00Z'))&&new Date(value+'T12:00:00Z').toISOString().slice(0,10)===value;
+ for(const event of data.scheduledWorkouts){
+  const kind=event.kind===undefined?'workout':event.kind;
+  if(!['workout','cardio','mobility','rest','other'].includes(kind)||!nonempty(event.id)||!date(event.date)||!nonempty(event.dayName)||event.dayName.length>200||typeof event.notes!=='string'||event.notes.length>(kind==='workout'?10000:2000))archiveFail('Evento calendario non valido.');
+  if(['planId','dayId'].some(key=>typeof event[key]!=='string'||event[key].length>150)||typeof event.planName!=='string'||event.planName.length>200)archiveFail('Riferimenti del calendario non validi.');
+  if(kind==='workout'&&(!nonempty(event.planId)||!nonempty(event.dayId)||!nonempty(event.planName)))archiveFail('Piano del calendario non valido.');
+  if(kind!=='workout'&&[event.planId,event.dayId,event.planName].some(value=>value!==''))archiveFail('Le attività personali non possono essere associate a un piano.');
+  if(event.workoutId!==undefined&&(kind!=='workout'||!nonempty(event.workoutId)||event.workoutId.length>150))archiveFail('Collegamento dell’allenamento non valido.');
+  if(event.time!==undefined&&(typeof event.time!=='string'||!/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(event.time)))archiveFail('Orario del calendario non valido.');
+  if(event.durationMinutes!==undefined&&(!Number.isFinite(event.durationMinutes)||event.durationMinutes<=0||event.durationMinutes>1440))archiveFail('Durata del calendario non valida.');
+  if(event.estimatedCalories!==undefined&&(!Number.isFinite(event.estimatedCalories)||event.estimatedCalories<0||event.estimatedCalories>20000))archiveFail('Stima calorie non valida.');
+  if(event.done!==undefined&&(typeof event.done!=='boolean'||kind==='workout'||kind==='rest'))archiveFail('Stato dell’attività non valido.');
+ }
  for(const plan of data.plans){
   if(plan.program){const p=plan.program;if(typeof p.importId!=='string'||!p.importId||typeof p.sourceName!=='string'||!p.sourceName||!['original','GT-1'].includes(p.sourceKind)||!date(p.startDate)||!date(p.endDate)||p.startDate>p.endDate||!Number.isInteger(p.weeks)||p.weeks<1||p.weeks>10000||!Number.isInteger(p.sessionCount)||p.sessionCount<1||p.sessionCount>10000||!/^[a-f0-9]{64}$/.test(p.fileHash||'')||!Number.isFinite(Date.parse(p.importedAt)))archiveFail('Prescrizioni del programma Excel non valide.');}
   if(plan.completedAt!==undefined&&!Number.isFinite(Date.parse(plan.completedAt)))archiveFail('Data di conclusione del piano non valida.');

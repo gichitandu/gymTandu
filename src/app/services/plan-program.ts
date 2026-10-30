@@ -47,7 +47,7 @@ export function excelProgramConflicts(data:DataSet,draft:Pick<ExcelProgramDraft,
   if(range&&range.startDate<=draft.endDate&&range.endDate>=draft.startDate)messages.push(`Il piano “${plan.name}” occupa già il periodo ${dateLabel(range.startDate)} – ${dateLabel(range.endDate)}.`);
  }
  const seen=new Set<string>();
- const occupied=[...data.scheduledWorkouts.map(item=>({date:item.date,planId:item.planId,planName:item.planName,title:item.dayName})),...data.workouts.map(item=>({date:item.date,planId:item.planId,planName:item.planName,title:item.dayName}))];
+ const occupied=[...data.scheduledWorkouts.filter(item=>(item.kind??'workout')==='workout').map(item=>({date:item.date,planId:item.planId,planName:item.planName,title:item.dayName})),...data.workouts.map(item=>({date:item.date,planId:item.planId,planName:item.planName,title:item.dayName}))];
  for(const item of occupied){
   if(item.planId===ignorePlanId||item.date<draft.startDate||item.date>draft.endDate)continue;
   const key=item.date+':'+item.planId+':'+item.title;if(seen.has(key))continue;seen.add(key);
@@ -59,7 +59,7 @@ export function scheduleConflicts(data:DataSet,dates:string[],planId:string,igno
  const messages:string[]=[];
  for(const date of dates){
   for(const plan of data.plans){const range=effectiveProgramRange(data,plan);if(plan.id!==planId&&range&&date>=range.startDate&&date<=range.endDate)messages.push(`${dateLabel(date)}: il periodo è già occupato dal piano “${plan.name}”.`);}
-  for(const entry of data.scheduledWorkouts)if(entry.id!==ignoreEventId&&entry.planId!==planId&&entry.date===date)messages.push(`${dateLabel(date)}: “${entry.dayName}” del piano “${entry.planName}” è già programmato.`);
+  for(const entry of data.scheduledWorkouts)if((entry.kind??'workout')==='workout'&&entry.id!==ignoreEventId&&entry.planId!==planId&&entry.date===date)messages.push(`${dateLabel(date)}: “${entry.dayName}” del piano “${entry.planName}” è già programmato.`);
   for(const entry of data.workouts)if(entry.planId!==planId&&entry.date===date)messages.push(`${dateLabel(date)}: “${entry.dayName}” del piano “${entry.planName}” è già registrato.`);
  }
  return [...new Set(messages)];

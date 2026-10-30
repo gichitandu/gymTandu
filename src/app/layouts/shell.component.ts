@@ -42,7 +42,7 @@ import { canResumeAtHome, MobileNavigationService } from "../services/mobile-nav
       </header>}
       <main [class.session-main]="router.url.startsWith('/sessione')">@if(s.ready()){<gt-data-status/>@if(auth.offlineMode()){<p class="local-mode-label">Archivio personale locale · funzioni condivise disabilitate</p>}<router-outlet />@if(router.url.split('?')[0]==='/profilo'&&auth.canManageBackups()){<gt-archive-recovery/>}}@else{<section class="card archive-opening" role="status" aria-live="polite"><h1>Apertura del tuo archivio</h1><p>Sto caricando i dati salvati su questo dispositivo…</p>@if(s.error()){<p class="notice">{{s.error()}}</p>}</section>}</main>
     </div>
-    <nav class="bottom-nav" aria-label="Navigazione principale" [style.grid-template-columns]="'repeat('+nav.length+',minmax(0,1fr))'">
+    <nav class="bottom-nav" [class.calendar-navigation]="router.url.split('?')[0]==='/calendario'" aria-label="Navigazione principale" [style.grid-template-columns]="'repeat('+nav.length+',minmax(0,1fr))'">
       @for (item of nav; track item.path) {
         <a
           [routerLink]="item.path"
@@ -73,6 +73,6 @@ export class ShellComponent {
     {path:'/progressi',label:'Progressi',icon:'chart'},
     {path:'/profilo',label:'Profilo',icon:'user'},
   ];
-  get nav(){return this.navItems.filter(item=>item.path!=='/alimentazione'||this.features?.nutritionEnabled());}
-  get desktopNav(){return [...this.nav,{path:'/calendario',label:'Calendario',icon:'calendar'},{path:'/allenamenti',label:'Storico',icon:'clock'}];}
+  get nav(){const items=this.navItems.filter(item=>item.path!=='/alimentazione'||this.features?.nutritionEnabled());if(this.router.url.split('?')[0]==='/calendario')items.splice(2,0,{path:'/calendario',label:'Calendario',icon:'calendar'});return items;}
+  get desktopNav(){return [...this.nav.filter(item=>item.path!=='/calendario'),{path:'/calendario',label:'Calendario',icon:'calendar'},{path:'/allenamenti',label:'Storico',icon:'clock'}];}
 }

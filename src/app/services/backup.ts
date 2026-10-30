@@ -2,7 +2,7 @@ import { validateIntegrity } from "./integrity";
 export { validateIntegrity } from "./integrity";
 import { z } from "zod";
 import { DataSet } from "../models/domain";
-export const BACKUP_VERSION = 8;
+export const BACKUP_VERSION = 9;
 const id = z.string().min(1).max(150);
 const text = z.string().max(10000);
 const nonempty = z.string().trim().min(1).max(200);
@@ -178,7 +178,7 @@ const dataSchema = z.object({
   workoutExercises: z.array(schemas.workoutExercises).max(300000),
   sets: z.array(schemas.sets).max(1000000),
   settings: z.array(schemas.settings).length(1),
-  scheduledWorkouts:z.array(z.object({id,date,planId:id,dayId:id,planName:nonempty,dayName:nonempty,notes:text,workoutId:id.optional()})).max(10000),
+  scheduledWorkouts:z.array(z.object({id,date,planId:z.string().max(150),dayId:z.string().max(150),planName:z.string().max(200),dayName:nonempty,notes:text,workoutId:id.optional(),kind:z.enum(['workout','cardio','mobility','rest','other']).optional(),time:z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/).optional(),durationMinutes:z.number().positive().max(1440).optional(),estimatedCalories:z.number().min(0).max(20000).optional(),done:z.boolean().optional()})).max(10000),
   measurements:z.array(z.object({id,date,weight:z.number().positive().max(700),waist:z.number().positive().max(300).optional(),bodyFat:z.number().min(1).max(80).optional()})).max(10000),
   meals: z.array(z.object({id,date,ingredients:z.array(z.object({id,name:nonempty,grams:z.number().positive().max(10000),calories:num.max(20000),protein:num.max(2000),carbs:num.max(3000),fat:num.max(2000)})).min(1).max(30).optional(),mealType:z.enum(["breakfast","lunch","dinner","snack"]).optional(),name:nonempty,grams:z.number().positive().max(10000),calories:num.max(20000),protein:num.max(2000),carbs:num.max(3000),fat:num.max(2000),notes:text,photo:image.optional(),source:z.enum(["manual","photo-suggestion"]),createdAt:time})).max(10000),
 });
@@ -217,7 +217,7 @@ export async function exportBackup(data: DataSet) {
   );
 }
 // Add explicit vN -> vN+1 pure functions here when the on-disk format evolves.
-export const migrations: Record<number, (value: unknown) => unknown> = {1: value => ({...(value as object),meals:[]}),2:value=>value,3:value=>({...value as object,scheduledWorkouts:[],measurements:[]}),4:value=>({...value as object,exercisePreferences:[],workoutUi:[]}),5:value=>value,6:value=>value,7:value=>value};
+export const migrations: Record<number, (value: unknown) => unknown> = {1: value => ({...(value as object),meals:[]}),2:value=>value,3:value=>({...value as object,scheduledWorkouts:[],measurements:[]}),4:value=>({...value as object,exercisePreferences:[],workoutUi:[]}),5:value=>value,6:value=>value,7:value=>value,8:value=>value};
 export async function importBackup(json: string): Promise<DataSet> {
   if (new Blob([json]).size > 50 * 1024 * 1024)
     throw Error("Backup troppo grande: limite 50 MB.");
