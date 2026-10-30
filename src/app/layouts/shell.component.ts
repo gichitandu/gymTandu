@@ -1,3 +1,4 @@
+import {DataStatusComponent} from '../shared/data-status.component';
 import {AppFeaturesService} from '../services/app-features';
 import { WorkoutClockComponent } from '../shared/workout-clock.component';
 import {WorkoutResumeService} from "../services/workout-resume";
@@ -14,7 +15,7 @@ import { canResumeAtHome, MobileNavigationService } from "../services/mobile-nav
 @Component({
   selector: "gt-shell",
   standalone: true,
-  imports: [WorkoutClockComponent,RouterLink, RouterLinkActive, RouterOutlet, IconComponent, AvatarComponent, ArchiveRecoveryComponent],
+  imports: [DataStatusComponent,WorkoutClockComponent,RouterLink, RouterLinkActive, RouterOutlet, IconComponent, AvatarComponent, ArchiveRecoveryComponent],
   styleUrls: ['./experience.css'],
   encapsulation: ViewEncapsulation.None,
   template: ` <gt-workout-clock/><aside class="sidebar">
@@ -36,10 +37,10 @@ import { canResumeAtHome, MobileNavigationService } from "../services/mobile-nav
       @if(!router.url.startsWith('/sessione')){<header class="topbar">
         <a class="mobile-brand brand" routerLink="/"><img class="app-brand-mark" src="/brand/gt-mark.png" alt=""/>Gym<span>Track</span></a
         >        <div class="topbar-right">
-          @if(auth.canManageBackups()){<a class="archive-sync-indicator" [class.copy-confirmed]="cloud.status()==='saved'" [class.copy-warning]="cloud.status()==='offline'||cloud.status()==='conflict'" routerLink="/profilo" [queryParams]="{section:'backup'}" [attr.aria-label]="backupStatus()" [title]="backupStatus()"><span aria-hidden="true">{{cloud.status()==='saved'?'✓':cloud.status()==='offline'||cloud.status()==='conflict'?'!':'↻'}}</span><small>{{backupStatus()}}</small></a>}<a class="avatar" routerLink="/profilo" aria-label="Apri profilo"><gt-avatar [photo]="s.profile().photo" [name]="s.profile().name" /></a>
+          <a class="avatar" routerLink="/profilo" aria-label="Apri profilo"><gt-avatar [photo]="s.profile().photo" [name]="s.profile().name" /></a>
         </div>
       </header>}
-      <main [class.session-main]="router.url.startsWith('/sessione')">@if(s.ready()){@if(auth.offlineMode()){<p class="local-mode-label">Archivio personale locale · funzioni condivise disabilitate</p>}<router-outlet />@if(router.url.split('?')[0]==='/profilo'&&auth.canManageBackups()){<gt-archive-recovery/>}}@else{<section class="card archive-opening" role="status" aria-live="polite"><h1>Apertura del tuo archivio</h1><p>Sto caricando i dati salvati su questo dispositivo…</p>@if(s.error()){<p class="notice">{{s.error()}}</p>}</section>}</main>
+      <main [class.session-main]="router.url.startsWith('/sessione')">@if(s.ready()){<gt-data-status/>@if(auth.offlineMode()){<p class="local-mode-label">Archivio personale locale · funzioni condivise disabilitate</p>}<router-outlet />@if(router.url.split('?')[0]==='/profilo'&&auth.canManageBackups()){<gt-archive-recovery/>}}@else{<section class="card archive-opening" role="status" aria-live="polite"><h1>Apertura del tuo archivio</h1><p>Sto caricando i dati salvati su questo dispositivo…</p>@if(s.error()){<p class="notice">{{s.error()}}</p>}</section>}</main>
     </div>
     <nav class="bottom-nav" aria-label="Navigazione principale" [style.grid-template-columns]="'repeat('+nav.length+',minmax(0,1fr))'">
       @for (item of nav; track item.path) {

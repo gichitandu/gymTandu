@@ -205,5 +205,5 @@ it('non perde il comando Completa se il salvataggio automatico della stessa seri
   let release!:()=>void;const held=new Promise<void>(resolve=>{release=resolve;}),update=s.updateSet.bind(s);
   vi.spyOn(s,'updateSet').mockImplementationOnce(async(id,patch)=>{await held;return update(id,patch);});
   const automatic=c.saveDraft();const completing=c.complete();release();await automatic;await completing;
-  expect(c.currentSet()).toMatchObject({weight:70,reps:10,completed:true});expect(c.step()).toBe('rest');
+  expect(s.sets(c.selected()!.id)[0]).toMatchObject({weight:70,reps:10,completed:true});expect(c.step()).toBe('record');
 });

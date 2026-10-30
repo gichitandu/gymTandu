@@ -40,7 +40,7 @@ import { ExerciseFilterComponent } from "../shared/exercise-filter.component";
           </div>
           <span class="pill green">COMPLETATO</span>
         </div>
-        <p class="subtle">Durata: {{w.duration}} minuti</p>@if(w.notes){<p>{{w.notes}}</p>}
+        <p class="subtle">Durata: {{w.duration>0?w.duration+' minuti':'non indicata'}}</p>@if(w.notes){<p>{{w.notes}}</p>}
         <p class="subtle" style="margin-top:14px">
           Inizio: {{ w.startedAt | date: "HH:mm" }} · Fine:
           {{ w.endedAt | date: "HH:mm" }} · Volume:
@@ -53,8 +53,8 @@ import { ExerciseFilterComponent } from "../shared/exercise-filter.component";
           ><button class="primary" (click)="reopen(w.id)" [disabled]="s.busy()||reopening()">{{reopening()?'Riapertura…':'Riapri allenamento'}}</button>
         </div>
       </div>
-      <p class="subtle">Per modificare o eliminare questa sessione, riaprila prima.</p>
-      @for(exercise of s.workoutExercises(w.id);track exercise.id){<section class="card" style="margin-top:12px"><h3>{{exercise.name}}</h3>@for(set of s.sets(exercise.id);track set.id){<p>Serie {{set.number}} · {{s.formatWeight(set.weight)}} {{s.settings().unit}} × {{set.reps}} · {{set.completed?'Confermata':'Non eseguita'}}</p>}</section>}
+      <a class="button ghost" [routerLink]="['/riepilogo',w.id]">Riepilogo allenamento</a><p class="subtle">Per modificare o eliminare questa sessione, riaprila prima.</p>
+      @for(exercise of s.workoutExercises(w.id);track exercise.id){<section class="card" style="margin-top:12px"><h3>{{exercise.name}}</h3>@if(exercise.substitutedFrom){<p class="subtle">Al posto di {{exercise.substitutedFrom.name}} · solo questa seduta</p>}@for(set of s.sets(exercise.id);track set.id){<p>Serie {{set.number}} · {{s.formatWeight(set.weight)}} {{s.settings().unit}} × {{set.reps}} · {{set.completed?'Confermata':'Non eseguita'}}</p>}</section>}
     } @else {
       <div class="filters history-filters">
         <label
@@ -110,7 +110,7 @@ import { ExerciseFilterComponent } from "../shared/exercise-filter.component";
                 }}
                 esercizi</span
               ><span>{{ setCount(w.id) }} serie</span
-              ><span><gt-icon name="clock" />{{ w.duration }} min</span
+              ><span><gt-icon name="clock" />{{w.duration>0?w.duration+' min':'Durata non indicata'}}</span
               ><span
                 >{{ s.formatWeight(s.volume(w.id)) }}
                 {{ s.settings().unit }}</span

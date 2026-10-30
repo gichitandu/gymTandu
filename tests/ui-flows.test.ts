@@ -24,7 +24,7 @@ it('percorre dettaglio, serie, pausa e riepilogo conservando lo storico',async()
  await s.savePlan('p','Piano di prova','');await s.saveDay('d','p','Giorno 1');
  await s.savePlanExercise({id:'pe',dayId:'d',exerciseId:'exercise-0',sets:1,repsMin:8,repsMax:8,rest:120,notes:'',order:0,targetWeight:80});
  await s.start('d');const id=s.draft()!.id;
- active=runInInjectionContext(injector,()=>new ActiveWorkoutComponent());Object.defineProperty(active,'workoutId',{value:()=>id});
+ active=runInInjectionContext(injector,()=>new ActiveWorkoutComponent());active.gymMode.set(false);Object.defineProperty(active,'workoutId',{value:()=>id});
  const e=s.workoutExercises(id)[0];active.open(e);expect(active.step()).toBe('detail');active.nextRecord();expect(active.step()).toBe('record');active.weight=82.5;active.reps=8;active.rpe=8.5;
  expect(await active.saveDraft()).toBe(true);await active.complete();expect(active.step()).toBe('rest');expect(active.remaining()).toBe(120);
  active.pauseRest();active.clock.set(Date.now()+45000);expect(active.remaining()).toBe(120);active.adjustRest(-15);expect(active.remaining()).toBe(105);active.pauseRest();

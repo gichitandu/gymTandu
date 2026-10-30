@@ -102,6 +102,7 @@ export interface WorkoutLog extends Entity {
   startedAt: string;
   endedAt?: string;
   duration: number;
+  durationUnknown?:boolean;
   notes: string;
   status: "draft" | "completed";
   bodyWeight?: number;
@@ -109,6 +110,7 @@ export interface WorkoutLog extends Entity {
   programPhase?: string;
 }
 export interface WorkoutLogExercise extends Entity, ExercisePrescriptionDetails {
+  substitutedFrom?: {exerciseId:string;name:string};
   superset?: string;
   machineSetup?: MachineSetup;
   workoutId: string;
@@ -154,12 +156,13 @@ export interface ScheduledWorkout extends Entity {
 export interface BodyMeasurement extends Entity {date:string;weight:number;waist?:number;bodyFat?:number;}
 export interface PersonalGoals {calories?:number;protein?:number;carbs?:number;fat?:number;workoutsPerWeek?:number;}
 export interface MachineSetup {machine?:string;seat?:string;backrest?:string;grip?:string;notes?:string;}
-export interface ExercisePreference extends Entity {favorite:boolean;machineSetup?:MachineSetup;}
+export interface ExercisePreference extends Entity {favorite:boolean;machineSetup?:MachineSetup;weightStep?:number;}
 export interface WorkoutUiState extends Entity {step:'list'|'detail'|'record'|'rest';tab:'sets'|'history'|'notes';exerciseId:string;setId:string;restEnd:number;restTotal:number;paused:boolean;pausedSeconds:number;weight:number;reps:number;rpe?:number;setNotes:string;kind:'work'|'warmup';updatedAt:string;}
 export interface IphoneCheck {state:'todo'|'pass'|'fail';note?:string;checkedAt?:string;}
 export interface IphoneChecklist {device:string;ios:string;checks:Record<string,IphoneCheck>;}
 export interface CatalogBaseline { exercises: Record<string, string>; groups: Record<string, string> }
 export interface AppSettings extends Entity {
+  gymMode?:boolean;
   archiveResetId?: string;
   catalogBaseline?: CatalogBaseline;
   /** Legacy notification preference, retained only for archive compatibility. */

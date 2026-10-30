@@ -14,6 +14,7 @@ const pages: Routes = [
   },
   {path:'importa-excel',loadComponent:()=>import('../features/excel-import.component').then(m=>m.ExcelImportComponent)},
   {path:'piano/:id',loadComponent:()=>import('../features/plan-dashboard.component').then(m=>m.PlanDashboardComponent)},
+  {path:'riepilogo/:id',loadComponent:()=>import('../features/workout-summary.component').then(m=>m.WorkoutSummaryComponent)},
   {path:'anteprima-allenamento',loadComponent:()=>import('../features/workout-preview.component').then(m=>m.WorkoutPreviewComponent)},
   {
     path: "allenamenti",

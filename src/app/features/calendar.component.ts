@@ -32,7 +32,7 @@ export class CalendarComponent {
  private formId='';private formVersion=0;
  events=computed(()=>this.s.data().scheduledWorkouts.filter(e=>e.date===this.selected()));
  completed=computed(()=>this.s.completed().filter(w=>w.date===this.selected()&&!this.events().some(e=>e.workoutId===w.id)));
- visibleEvents=computed(()=>this.events().filter(e=>this.filter()==='all'||(this.filter()==='completed')===(this.linked(e)?.status==='completed')));
+ visibleEvents=computed(()=>this.events().filter(e=>this.filter()==='all'||(this.filter()==='completed'?this.linked(e)?.status==='completed':this.linked(e)?.status!=='completed'&&!this.ended(e))));
  visibleCompleted=computed(()=>this.filter()==='planned'?[]:this.completed());
  completedCount=computed(()=>this.completed().length+this.events().filter(e=>this.linked(e)?.status==='completed').length);
  availableDays=computed(()=>this.s.data().days.filter(d=>this.s.data().plans.some(p=>p.id===d.planId&&!p.archived)));
@@ -40,7 +40,7 @@ export class CalendarComponent {
  periodStats=computed(()=>this.periodDates().reduce((total,date)=>{const a=this.day(date);return{planned:total.planned+a.planned,completed:total.completed+a.completed,active:total.active+(a.planned+a.completed>0?1:0)};},{planned:0,completed:0,active:0}));
  target=computed(()=>this.view()==='week'?this.s.settings().goals?.workoutsPerWeek:undefined);
  scoreProgress=computed(()=>{const goal=this.target()||(this.periodStats().planned+this.periodStats().completed);return goal?Math.min(100,this.periodStats().completed/goal*100):0;});
- upcoming=computed(()=>this.view()==='day'?[]:this.s.data().scheduledWorkouts.filter(e=>this.periodDates().includes(e.date)&&e.date!==this.selected()&&this.linked(e)?.status!=='completed').sort((a,b)=>a.date.localeCompare(b.date)).slice(0,4));
+ upcoming=computed(()=>this.view()==='day'?[]:this.s.data().scheduledWorkouts.filter(e=>this.periodDates().includes(e.date)&&e.date!==this.selected()&&!this.ended(e)&&this.linked(e)?.status!=='completed').sort((a,b)=>a.date.localeCompare(b.date)).slice(0,4));
  constructor(){const date=inject(ActivatedRoute).snapshot.queryParamMap.get('date');if(date)this.choose(date);if(this.todayClock)effect(()=>{const today=this.today,previous=this.lastToday;this.lastToday=today;if(today!==previous&&this.followsToday&&!this.modal())this.selected.set(today);});}
  day(date:string){return this.activity().get(date)||this.emptyActivity;}
  label(date:string){return parseLocalDate(date).toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long'});}
@@ -55,8 +55,8 @@ export class CalendarComponent {
  choose(date:string){try{parseLocalDate(date);this.followsToday=date===this.today;this.selected.set(date);}catch{}}
  tomorrow(){this.choose(moveDate(this.today,1));}
  linked(e:ScheduledWorkout){return this.s.data().workouts.find(w=>w.id===e.workoutId);}
- ended(e:ScheduledWorkout){return !!this.s.data().plans.find(p=>p.id===e.planId)?.completedAt;}
- available(e:ScheduledWorkout){return this.availableDays().some(d=>d.id===e.dayId);}
+ ended(e:ScheduledWorkout){return !this.linked(e)&&!!this.s.data().plans.find(p=>p.id===e.planId)?.completedAt;}
+ available(e:ScheduledWorkout){return !!this.linked(e)||this.availableDays().some(d=>d.id===e.dayId);}
  planName(id:string){return this.s.data().plans.find(p=>p.id===id)?.name||'';}
  daySummary(id:string){const exercises=this.s.planExercises(id);return exercises.length?`${exercises.length} esercizi · ${exercises.reduce((n,e)=>n+e.sets,0)} serie`:'Programmazione salvata';}
  muscles(id:string){return [...new Set(this.s.planExercises(id).map(e=>this.s.muscle(this.s.exercise(e.exerciseId)?.muscleGroupId||'')).filter(Boolean))].join(' · ');}

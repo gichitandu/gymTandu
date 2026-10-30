@@ -1,7 +1,7 @@
 import { cloneForEdit } from './edit-snapshot';
 import { setupKey,setupSummary,hasSetup } from "./training-flow";
 import { weightProgression } from "./progression";
-import { MachineSetup,WorkoutUiState } from "../models/domain";
+import { MachineSetup,WorkoutUiState,WorkoutLogExercise } from "../models/domain";
 import { parseLocalDate, weeklyDates } from "./calendar";
 import { ThemeService } from "./theme";
 import { AuthService } from "./auth";
@@ -47,6 +47,7 @@ export class Store {
   saveMachineSetup(id:string,setup:MachineSetup,workoutExerciseId?:string){return this.change(d=>{if(!d.exercises.some(e=>e.id===id))throw Error('Esercizio non trovato.');const clean=Object.fromEntries(Object.entries(setup).map(([key,value])=>[key,value?.trim()||undefined]));const p=d.exercisePreferences.find(p=>p.id===id);if(p)p.machineSetup=clean;else d.exercisePreferences.push({id,favorite:false,machineSetup:clean});if(workoutExerciseId){const e=d.workoutExercises.find(e=>e.id===workoutExerciseId&&e.exerciseId===id);if(e&&!d.sets.some(s=>s.workoutExerciseId===e.id&&s.completed))e.machineSetup=structuredClone(clean);}},'Configurazione personale salvata. Le serie già registrate conservano la configurazione precedente.',false);}
   rememberWorkout(state:WorkoutUiState){return this.change(d=>{if(!d.workouts.some(w=>w.id===state.id&&w.status==='draft'))return;d.workoutUi=[structuredClone(state)];},'',false);}
 
+  lastLocalSave=signal<number|null>(null);localSaveFailed=signal(false);
   ready = signal(false);
   private feedback = feedbackForContext();
   error = feedbackSignal('error', this.feedback);
@@ -210,14 +211,14 @@ export class Store {
           }
         }
         const revision=this.archiveRevision();await this.repo.replace(next);this.resume.rebase(this.archiveKey(),revision,this.archiveRevision());
-        this.data.set(next);
+        this.data.set(next);this.lastLocalSave.set(Date.now());this.localSaveFailed.set(false);
         this.cloud?.changed(next);
         this.applyTheme();
         this.error.set("");
         if (message) this.message.set(message);
         return true;
       } catch (e) {
-        this.rejectStaleArchive(e);
+        this.localSaveFailed.set(true);this.rejectStaleArchive(e);
         this.error.set(
           e instanceof Error
             ? e.name === "QuotaExceededError"
@@ -536,7 +537,7 @@ export class Store {
         dayName: day.name,
         date: workoutDate,
         startedAt: now(),
-        duration: 0,
+        duration: 0,durationUnknown:workoutDate<localDate(),
         notes: day.notes||"",
         status: "draft",
         bodyWeight: d.profiles[0].bodyWeight,
@@ -582,8 +583,10 @@ export class Store {
       }
     });
   }
-  updateSet(id: string, patch: Partial<WorkoutLogSet>) {
-    return this.change((d) => {
+  updateSet(id: string, patch: Partial<WorkoutLogSet>,undo=false) {
+    const exerciseId=this.data().sets.find(set=>set.id===id)?.workoutExerciseId||'';
+    const save=(fn:(d:DataSet)=>void)=>undo?this.gymEdit(exerciseId,fn,patch.completed!==undefined?'conferma serie':'modifica serie',id):this.change(fn);
+    return save((d) => {
       const s = d.sets.find((x) => x.id === id);
       if (!s) throw Error("Serie non trovata");
       Object.assign(s, patch);
@@ -600,17 +603,36 @@ export class Store {
         );
     });
   }
+  private gymUndo=signal<{id:string;label:string;exerciseId:string;workoutId:string;targetId?:string;before:{exercise:WorkoutLogExercise;sets:WorkoutLogSet[]};after:string}|null>(null);
+  private gymSequence=0;
+  private gymSnapshot(d:DataSet,id:string){const exercise=d.workoutExercises.find(e=>e.id===id);return exercise?{exercise:structuredClone(exercise),sets:structuredClone(d.sets.filter(s=>s.workoutExerciseId===id).sort((a,b)=>a.id.localeCompare(b.id)))}:null;}
+  readonly undoLabel=computed(()=>{const receipt=this.gymUndo();if(!receipt)return '';const d=this.data();return d.workouts.some(w=>w.id===receipt.workoutId&&w.status==='draft')&&JSON.stringify(this.gymSnapshot(d,receipt.exerciseId))===receipt.after?receipt.label:'';});
+  private async gymEdit(id:string,fn:(d:DataSet)=>void,label:string,targetId?:string){
+    let receipt:NonNullable<ReturnType<typeof this.gymUndo>>|null=null,sequence=0;
+    const ok=await this.change(d=>{const before=this.gymSnapshot(d,id);if(!before||!d.workouts.some(w=>w.id===before.exercise.workoutId&&w.status==='draft'))throw Error('La seduta non è più aperta.');fn(d);const after=this.gymSnapshot(d,id);if(JSON.stringify(before)===JSON.stringify(after))return;const prior=this.gymUndo(),baseline=label==='conferma serie'&&prior?.label==='modifica serie'&&prior.targetId===targetId&&prior.after===JSON.stringify(before)?prior.before:before;receipt={id:uid(),label,exerciseId:id,workoutId:before.exercise.workoutId,targetId,before:baseline,after:JSON.stringify(after)};sequence=++this.gymSequence;},'',false);
+    if(ok&&receipt&&sequence===this.gymSequence)this.gymUndo.set(receipt);return ok;
+  }
+  async undoGymAction(){const receipt=this.gymUndo();if(!receipt)return false;const ok=await this.change(d=>{if(this.gymUndo()?.id!==receipt.id||JSON.stringify(this.gymSnapshot(d,receipt.exerciseId))!==receipt.after||!d.workouts.some(w=>w.id===receipt.workoutId&&w.status==='draft'))throw Error('La serie è cambiata: l’annullamento non sovrascrive le modifiche successive.');const i=d.workoutExercises.findIndex(e=>e.id===receipt.exerciseId);d.workoutExercises[i]=structuredClone(receipt.before.exercise);d.sets=d.sets.filter(s=>s.workoutExerciseId!==receipt.exerciseId).concat(structuredClone(receipt.before.sets));},'Ultima azione annullata.',false);if(ok&&this.gymUndo()?.id===receipt.id)this.gymUndo.set(null);return ok;}
+  saveWeightStep(exerciseId:string,step:number){return this.change(d=>{if(!d.exercises.some(e=>e.id===exerciseId)||!Number.isFinite(step)||step<=0||step>50)throw Error('Scegli un incremento da 0,1 a 50.');const p=d.exercisePreferences.find(p=>p.id===exerciseId);if(p)p.weightStep=step;else d.exercisePreferences.push({id:exerciseId,favorite:false,weightStep:step});},'Incremento salvato.',false);}
+  substituteWorkoutExercise(id:string,replacementId:string){return this.gymEdit(id,d=>{
+    const row=d.workoutExercises.find(e=>e.id===id)!,replacement=d.exercises.find(e=>e.id===replacementId&&e.active);
+    if(!replacement||replacement.id===row.exerciseId)throw Error('Scegli un altro esercizio attivo.');
+    if(d.sets.some(s=>s.workoutExerciseId===id&&s.completed))throw Error('Le serie già eseguite restano associate al loro esercizio. Sostituisci prima di completare una serie.');
+    row.substitutedFrom??={exerciseId:row.exerciseId,name:row.name};row.exerciseId=replacement.id;row.name=replacement.name;row.loadMode=replacement.loadMode;row.machineSetup=structuredClone(d.exercisePreferences.find(p=>p.id===replacementId)?.machineSetup);delete row.reference;delete row.loadUnit;
+    for(const set of d.sets.filter(s=>s.workoutExerciseId===id)){set.weight=0;delete set.rpe;set.notes='';}
+  },'sostituzione esercizio');}
   private pendingSetAdds = new Map<string, Promise<boolean>>();
   addSet(id:string,kind:'work'|'warmup'='work'){
     const key=id+':'+kind, pending=this.pendingSetAdds.get(key);
     if(pending)return pending;
-    const job=this.change(d=>{const list=d.sets.filter(s=>s.workoutExerciseId===id).sort((a,b)=>a.number-b.number),prev=list.at(-1);if(!d.workoutExercises.some(e=>e.id===id))throw Error('Esercizio non trovato.');if(list.length>=60)throw Error('Limite di serie per esercizio raggiunto.');const entry:WorkoutLogSet={id:uid(),workoutExerciseId:id,number:list.length+1,kind,weight:kind==='warmup'?0:prev?.weight||0,reps:prev?.reps||8,rpe:kind==='warmup'?undefined:prev?.rpe,rest:prev?.rest,notes:'',completed:false};d.sets.push(entry);if(kind==='warmup'){const ordered=[...list.filter(s=>s.kind==='warmup'),entry,...list.filter(s=>s.kind!=='warmup')];ordered.forEach((s,i)=>s.number=i+1);}});
+    const job=this.gymEdit(id,d=>{const list=d.sets.filter(s=>s.workoutExerciseId===id).sort((a,b)=>a.number-b.number),prev=list.at(-1);if(!d.workoutExercises.some(e=>e.id===id))throw Error('Esercizio non trovato.');if(list.length>=60)throw Error('Limite di serie per esercizio raggiunto.');const entry:WorkoutLogSet={id:uid(),workoutExerciseId:id,number:list.length+1,kind,weight:kind==='warmup'?0:prev?.weight||0,reps:prev?.reps||8,rpe:kind==='warmup'?undefined:prev?.rpe,rest:prev?.rest,notes:'',completed:false};d.sets.push(entry);if(kind==='warmup'){const ordered=[...list.filter(s=>s.kind==='warmup'),entry,...list.filter(s=>s.kind!=='warmup')];ordered.forEach((s,i)=>s.number=i+1);}},'aggiunta serie');
     this.pendingSetAdds.set(key,job);
     void job.finally(()=>{if(this.pendingSetAdds.get(key)===job)this.pendingSetAdds.delete(key);});
     return job;
   }
   async removeSet(id: string) {
-    return this.change((d) => {
+    const exerciseId=this.data().sets.find(set=>set.id===id)?.workoutExerciseId||'';
+    return this.gymEdit(exerciseId,(d) => {
       const s = d.sets.find((s) => s.id === id);
       if (!s) return;
       d.sets = d.sets.filter((s) => s.id !== id);
@@ -618,14 +640,15 @@ export class Store {
         .filter((x) => x.workoutExerciseId === s.workoutExerciseId)
         .sort((a, b) => a.number - b.number)
         .forEach((x, i) => (x.number = i + 1));
-    });
+    },'eliminazione serie');
   }
   async copyPrevious(id: string) {
     const ex = this.data().workoutExercises.find((e) => e.id === id);
     if (!ex) return;
     const prev = this.previous(ex.exerciseId, ex.workoutId,ex.machineSetup);
     if (!prev.length) return;
-    return this.change((d) => {
+    const save=(fn:(d:DataSet)=>void)=>this.data().workouts.some(w=>w.id===ex.workoutId&&w.status==='draft')?this.gymEdit(id,fn,'copia valori'):this.change(fn,'Valori precedenti copiati.');
+    return save((d) => {
       const historical=d.workouts.find(workout=>workout.id===ex.workoutId)?.status==='completed';
       const existing=d.sets.filter(set=>set.workoutExerciseId===id&&set.kind!=='warmup').sort((a,b)=>a.number-b.number);
       const warmups=d.sets.filter(set=>set.workoutExerciseId===id&&set.kind==='warmup').sort((a,b)=>a.number-b.number);
@@ -641,7 +664,7 @@ export class Store {
           completed: historical?(existing[i]?.completed??true):false,
         })),
       );
-    }, "Valori precedenti copiati.");
+    });
   }
   async finish(allowWithoutCompletedSets = false, workoutId = this.draft()?.id) {
     return this.change((d) => {
@@ -655,7 +678,7 @@ export class Store {
       w.status = "completed";
       d.workoutUi=d.workoutUi.filter(x=>x.id!==w.id);
       w.endedAt = now();
-      w.duration = w.duration>0?w.duration:Math.max(
+      w.duration = w.duration>0?w.duration:w.durationUnknown||w.date<localDate(new Date(w.startedAt))?0:Math.max(
         1,
         Math.round((Date.now() - new Date(w.startedAt).getTime()) / 60000),
       );
@@ -668,7 +691,7 @@ export class Store {
       if(!workout)throw Error('Allenamento non trovato.');
       if(workout.status==='draft')return;
       if(d.workouts.some(w=>w.status==='draft'))throw Error('Termina la sessione già aperta prima di riaprire questo allenamento.');
-      workout.status='draft';delete workout.endedAt;
+      if(workout.duration<=0)workout.durationUnknown=true;workout.status='draft';delete workout.endedAt;
       const plan=d.plans.find(plan=>plan.id===workout.planId);
       if(plan?.completionReason==='automatic'){delete plan.completedAt;delete plan.completionReason;plan.archived=false;}
     },'Allenamento riaperto. Serie e data sono conservate.',false);

@@ -27,6 +27,12 @@ for(const url of ['/ngsw-worker.js','/gymtrack-sw.js','/gymtrack-offline-engine-
  manifest.hashTable[url]=createHash('sha1').update(await readFile(root+url)).digest('hex');
  if(!appGroup.urls.includes(url))appGroup.urls.push(url);
 }
+// An offline check lists this version's prefetched resources, without account data.
+const offlinePath='/offline-check.json';
+const offlineDescriptor=JSON.stringify({files:appGroup.urls.filter(url=>url!=='/app-build.json'&&url!==offlinePath).sort()});
+await writeFile(root+offlinePath,offlineDescriptor);
+manifest.hashTable[offlinePath]=createHash('sha1').update(offlineDescriptor).digest('hex');
+if(!appGroup.urls.includes(offlinePath))appGroup.urls.push(offlinePath);
 // Derive a stable version from the shipped assets and server behavior. Ignore
 // our own generated descriptor so packaging the same build twice is stable.
 delete manifest.hashTable['/app-build.json'];

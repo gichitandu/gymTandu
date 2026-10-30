@@ -47,6 +47,10 @@ function archiveValidate(text) {
  for(const workout of data.workouts)if(!ids.profiles.has(workout.userId)||!nonempty(workout.planName)||!nonempty(workout.dayName)||!['draft','completed'].includes(workout.status))archiveFail('Allenamento della copia non valido.');
  for(const exercise of data.workoutExercises)if(!ids.workouts.has(exercise.workoutId)||!nonempty(exercise.name))archiveFail('Esercizio registrato della copia non valido.');
  for(const set of data.sets)if(!ids.workoutExercises.has(set.workoutExerciseId)||!Number.isInteger(set.number)||set.number<1||!numeric(set.weight)||!Number.isInteger(set.reps)||set.reps<1||set.reps>999||typeof set.completed!=='boolean')archiveFail('Serie della copia non valida.');
+ if(settings.gymMode!==undefined&&typeof settings.gymMode!=='boolean')archiveFail('Modalità palestra non valida.');
+ for(const p of data.exercisePreferences)if(p.weightStep!==undefined&&(!Number.isFinite(p.weightStep)||p.weightStep<=0||p.weightStep>50))archiveFail('Incremento carico non valido.');
+ for(const row of data.workoutExercises)if(row.substitutedFrom&&(!nonempty(row.substitutedFrom.exerciseId)||!nonempty(row.substitutedFrom.name)))archiveFail('Origine sostituzione non valida.');
+ for(const w of data.workouts)if(w.durationUnknown!==undefined&&typeof w.durationUnknown!=='boolean')archiveFail('Indicazione durata non valida.');
  const date=value=>typeof value==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(value)&&Number.isFinite(Date.parse(value+'T12:00:00Z'))&&new Date(value+'T12:00:00Z').toISOString().slice(0,10)===value;
  for(const plan of data.plans){
   if(plan.program){const p=plan.program;if(typeof p.importId!=='string'||!p.importId||typeof p.sourceName!=='string'||!p.sourceName||!['original','GT-1'].includes(p.sourceKind)||!date(p.startDate)||!date(p.endDate)||p.startDate>p.endDate||!Number.isInteger(p.weeks)||p.weeks<1||p.weeks>10000||!Number.isInteger(p.sessionCount)||p.sessionCount<1||p.sessionCount>10000||!/^[a-f0-9]{64}$/.test(p.fileHash||'')||!Number.isFinite(Date.parse(p.importedAt)))archiveFail('Prescrizioni del programma Excel non valide.');}

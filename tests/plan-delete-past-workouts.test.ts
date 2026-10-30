@@ -106,7 +106,7 @@ it.each([true,false,undefined])('keeps the in-app recovery working without reque
   const timer={requestAutomaticPermission:vi.fn(),stop:vi.fn(),sync:vi.fn()};Object.defineProperty(c,'externalTimer',{value:timer});
   const exercise=s.workoutExercises(workout.id)[0],set=s.sets(exercise.id)[0];c.open(exercise);c.record(set);c.weight=80;c.reps=8;
   await c.complete({timeStamp:1000} as MouseEvent);
-  expect(c.step()).toBe('rest');expect(c.remaining()).toBeGreaterThan(0);expect(timer.requestAutomaticPermission).not.toHaveBeenCalled();
+  expect(c.step()).toBe('record');expect(c.remaining()).toBeGreaterThan(0);expect(timer.requestAutomaticPermission).not.toHaveBeenCalled();
   c.pauseRest();const paused=c.remaining();expect(c.paused()).toBe(true);c.adjustRest(15);expect(c.remaining()).toBe(paused+15);c.pauseRest();expect(c.paused()).toBe(false);expect(c.remaining()).toBe(paused+15);
   expect(s.sets(exercise.id)[0]).toMatchObject({id:set.id,completed:true,weight:80,reps:8});expect(s.data().plans).toEqual(plans);
 });

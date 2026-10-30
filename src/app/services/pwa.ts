@@ -1,3 +1,4 @@
+import {inspectOfflineResources,probeOfflineStorage} from './offline-readiness';
 import { Injectable, inject, signal } from '@angular/core';
 import { SwUpdate } from '@angular/service-worker';
 import { Subscription } from 'rxjs';
@@ -12,6 +13,14 @@ export class PwaService {
  event=signal<InstallEvent|undefined>(undefined);
  installed=signal(matchMedia('(display-mode: standalone)').matches || !!(navigator as Navigator&{standalone?:boolean}).standalone);
  online=signal(navigator.onLine);offlineReady=signal(false);updateReady=signal(false);updating=signal(false);storage=signal('Non ancora misurato');persisted=signal<boolean|null>(null);
+ offlineChecking=signal(false);offlineMessage=signal('Risorse offline da verificare.');offlineWritable=signal(false);
+ async checkOffline(){
+  if(this.offlineChecking())return;this.offlineChecking.set(true);let timer:ReturnType<typeof setTimeout>|undefined;
+  try{const script=Array.from(document.scripts||[]).map(s=>new URL(s.src,location.href).pathname).find(path=>/^\/main-[^/]+\.js$/.test(path));
+   const [resources,writable]=await Promise.race([Promise.all([inspectOfflineResources(caches,location.origin,script),probeOfflineStorage(indexedDB)]),new Promise<never>((_,reject)=>{timer=setTimeout(()=>reject(Error('Timeout')),12000);})]);
+   this.offlineWritable.set(writable);this.offlineReady.set(resources.ready&&writable&&this.store.ready());this.offlineMessage.set(!writable?'Salvataggio locale non verificato. Riprova.':resources.message);
+  }catch{this.offlineReady.set(false);this.offlineMessage.set('Verifica non disponibile: apri online e riprova.');}finally{clearTimeout(timer);this.offlineChecking.set(false);}
+ }
  readonly updateNotice=signal('');
  updateError=feedbackSignal('error',feedbackForContext());
  private updates=inject(SwUpdate);
@@ -30,9 +39,9 @@ export class PwaService {
  constructor(){
   window.addEventListener('online',this.onOnline);window.addEventListener('offline',this.onOffline);
   window.addEventListener('beforeinstallprompt',this.onInstall);window.addEventListener('appinstalled',this.onInstalled);
-  this.subscriptions.push(this.updates.versionUpdates.subscribe(event=>{if(event.type==='VERSION_READY'){this.updateReady.set(true);queueMicrotask(()=>void this.tryAutoReload());}}));
-  this.subscriptions.push(this.releases.checked.subscribe(()=>{this.updateReady.set(this.releases.updateReady());this.attemptedBuild='';void this.tryAutoReload();}));
-  if('serviceWorker' in navigator)navigator.serviceWorker.ready.then(()=>{this.offlineReady.set(true);}).catch(()=>{});
+  this.subscriptions.push(this.updates.versionUpdates.subscribe(event=>{if(event.type==='VERSION_READY'){void this.checkOffline();this.updateReady.set(true);queueMicrotask(()=>void this.tryAutoReload());}}));
+  this.subscriptions.push(this.releases.checked.subscribe(()=>{void this.checkOffline();this.updateReady.set(this.releases.updateReady());this.attemptedBuild='';void this.tryAutoReload();}));
+  if('serviceWorker' in navigator)navigator.serviceWorker.ready.then(()=>{void this.checkOffline();}).catch(()=>{});
   document.addEventListener('visibilitychange',this.onVisibility);
   this.updateReady.set(this.releases.updateReady());
   queueMicrotask(()=>void this.tryAutoReload());
