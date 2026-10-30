@@ -350,6 +350,52 @@
   border-radius: 18px;
   margin-bottom: 20px !important;
 }
+.history-filters {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas: "plan" "day" "exercise" "from" "to";
+  gap: 16px;
+  align-items: start;
+  min-width: 0;
+}
+.history-filters > label,
+.history-filters > gt-exercise-filter {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+.history-filters > gt-exercise-filter { display: grid; grid-area: exercise; gap: 16px 8px; }
+.history-plan-filter { grid-area: plan; }
+.history-day-filter { grid-area: day; }
+.history-from-filter { grid-area: from; }
+.history-to-filter { grid-area: to; }
+.history-filters select {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  min-height: 48px;
+  margin-top: 8px;
+  font-size: 16px;
+  font-weight: 400;
+}
+@media (min-width: 600px) {
+  .history-filters {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-areas: "plan day" "exercise exercise" "from to";
+  }
+}
+@media (min-width: 1100px) {
+  .history-filters {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-areas: "plan day exercise" "from to exercise";
+  }
+}
 .workout-timeline {
   position: relative;
   padding-left: 20px;
@@ -734,9 +780,6 @@
   .catalog-orbit {
     width: 100px;
     height: 100px;
-  }
-  .history-filters {
-    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
   }
 }
 @media (max-width: 420px) {

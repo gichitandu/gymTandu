@@ -56,8 +56,8 @@ import { ExerciseFilterComponent } from "../shared/exercise-filter.component";
       <a class="button ghost" [routerLink]="['/riepilogo',w.id]">Riepilogo allenamento</a><p class="subtle">Per modificare o eliminare questa sessione, riaprila prima.</p>
       @for(exercise of s.workoutExercises(w.id);track exercise.id){<section class="card" style="margin-top:12px"><h3>{{exercise.name}}</h3>@if(exercise.substitutedFrom){<p class="subtle">Al posto di {{exercise.substitutedFrom.name}} · solo questa seduta</p>}@for(set of s.sets(exercise.id);track set.id){<p>Serie {{set.number}} · {{s.formatWeight(set.weight)}} {{s.settings().unit}} × {{set.reps}} · {{set.completed?'Confermata':'Non eseguita'}}</p>}</section>}
     } @else {
-      <div class="filters history-filters">
-        <label
+      <div class="history-filters" role="group" aria-label="Filtri dello storico allenamenti">
+        <label class="history-plan-filter"
           >Piano<select
             [ngModel]="plan()"
             (ngModelChange)="plan.set($event); day.set('')"
@@ -67,7 +67,7 @@ import { ExerciseFilterComponent } from "../shared/exercise-filter.component";
               <option [value]="p.id">{{ p.name }}</option>
             }
           </select></label
-        ><label
+        ><label class="history-day-filter"
           >Giorno<select [ngModel]="day()" (ngModelChange)="day.set($event)">
             <option value="">Tutti i giorni</option>
             @for (d of dayOptions(); track d.id) {
@@ -75,12 +75,12 @@ import { ExerciseFilterComponent } from "../shared/exercise-filter.component";
             }
           </select></label
         ><gt-exercise-filter [exercises]="s.data().exercises" [value]="exercise()"
-          [includeAll]="true" (choose)="exercise.set($event)" /><label
-          >Dal<gt-date-field
+          [includeAll]="true" (choose)="exercise.set($event)" /><label class="history-from-filter"
+          >Data iniziale<gt-date-field aria-label="Data iniziale dello storico"
             [ngModel]="from()"
             (ngModelChange)="from.set($event)" ></gt-date-field></label
-        ><label
-          >Al<gt-date-field
+        ><label class="history-to-filter"
+          >Data finale<gt-date-field aria-label="Data finale dello storico"
             [ngModel]="to()"
             (ngModelChange)="to.set($event)"
         ></gt-date-field></label>

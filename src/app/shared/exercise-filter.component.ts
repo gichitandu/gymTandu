@@ -30,8 +30,8 @@ import { ExerciseThumbComponent } from './exercise-thumb.component';
       <span class="filter-result" role="status">{{filtered().length}} risultati per nome{{pinned() ? ' · Selezione attuale conservata' : ''}}</span>
     }`,
   styles: [`
-    :host{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:7px 8px;flex:1;min-width:180px;align-content:start;max-width:100%}
-    label{min-width:0!important;margin:0}.search-label{grid-column:1/-1}
+    :host{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:7px 8px;flex:1;min-width:180px;align-content:start;max-width:100%;color:var(--muted);font-size:12px}
+    label{min-width:0!important;margin:0;color:inherit;font-size:inherit;font-weight:inherit;line-height:1.4}.search-label{grid-column:1/-1}
     .exercise-label{grid-column:1}input,select{width:100%;min-width:0}
     gt-exercise-thumb{grid-column:2;align-self:end;--thumb-width:58px;--thumb-height:43px}
     .filter-result{grid-column:1/-1;color:var(--muted);font-size:11px;line-height:1.4}
