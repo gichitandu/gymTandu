@@ -1,0 +1,33 @@
+/* Shared form language from the approved preview; colours remain account preferences. */
+body.theme-ready gt-shell :is(form:not(.cal-form),.form-grid,.filters,.excel-upload,.match-row,.setting-row) {min-width:0;}
+body.theme-ready gt-shell :is(form:not(.cal-form),.form-grid,.filters,.excel-upload,.match-row,.setting-row) label {font-size:14px;line-height:1.5;color:var(--text);min-width:0;}
+body.theme-ready gt-shell :is(form:not(.cal-form),.form-grid,.filters,.excel-upload,.match-row,.setting-row) :is(input:not([type=checkbox]):not([type=radio]):not([type=hidden]):not([type=color]):not(.date-native),select,textarea) {font-size:16px;min-height:52px;border:1px solid var(--line);border-radius:16px;background:var(--raised);color:var(--text);padding:13px 14px;max-width:100%;min-width:0;box-sizing:border-box;}
+body.theme-ready gt-shell :is(form:not(.cal-form),.form-grid,.filters,.excel-upload,.match-row,.setting-row) textarea {min-height:100px;line-height:1.6;}
+body.theme-ready gt-shell :is(form:not(.cal-form),.form-grid,.filters,.excel-upload,.match-row,.setting-row) :is(input,select,textarea):focus-visible {outline:2px solid var(--accent-text);outline-offset:2px;box-shadow:none;}
+body.theme-ready gt-shell :is(form:not(.cal-form),.form-grid,.filters,.excel-upload,.match-row,.setting-row) :is(input,select,textarea)[aria-invalid=true] {border-color:var(--danger);outline-color:var(--danger);}
+body.theme-ready gt-shell :is(form:not(.cal-form),.form-grid,.filters,.excel-upload,.match-row,.setting-row) :is(input[type=checkbox],input[type=radio]) {accent-color:var(--accent-text);}
+body.theme-ready gt-shell :is(form:not(.cal-form),.form-grid,.filters,.excel-upload,.match-row,.setting-row) button.primary {min-height:52px;border-radius:16px;padding:13px 18px;}
+body.theme-ready gt-shell :is(section.card,.modal):has(form:not(.cal-form)) {border-radius:22px;border-color:var(--line);background:var(--card);}
+body.theme-ready gt-shell form:not(.cal-form) :is(.actions,.form-grid) {gap:16px;}
+body.theme-ready gt-shell form:not(.cal-form) :is(label>input,label>select,label>textarea) {margin-top:8px;}
+body.theme-ready gt-shell form:not(.cal-form) details {border-radius:14px;}
+body.theme-ready gt-shell form:not(.cal-form) details>summary {min-height:48px;align-content:center;font-size:13px;cursor:pointer;}
+body.theme-ready gt-shell form:not(.cal-form) :is(.subtle,small) {color:var(--muted);line-height:1.6;}
+body.theme-ready gt-shell .setting-row {gap:16px;min-height:68px;}
+body.theme-ready gt-shell :is(.setting-row,.profile-menu) button {touch-action:manipulation;}
+@media(max-width:600px){
+ body.theme-ready gt-shell form:not(.cal-form) .form-grid {grid-template-columns:minmax(0,1fr);gap:18px;}
+ body.theme-ready gt-shell form:not(.cal-form) .form-grid>.wide {grid-column:1;}
+ body.theme-ready gt-shell form:not(.cal-form) :is(label,gt-date-field) {max-width:100%;min-width:0;}
+ body.theme-ready gt-shell :is(.modal,.card):has(form:not(.cal-form)) {padding:18px;}
+ body.theme-ready gt-shell form:not(.cal-form) .actions {display:flex;flex-wrap:wrap;}
+ body.theme-ready gt-shell form:not(.cal-form) .actions>button {min-height:48px;flex:1 1 140px;}
+}
+@media(prefers-reduced-motion:reduce){body.theme-ready gt-shell form:not(.cal-form) *{scroll-behavior:auto;}}
+
+body.theme-ready gt-shell :is(form:not(.cal-form),.form-grid,.filters,.excel-upload,.match-row,.setting-row){--form-field-radius:16px;--form-field-height:52px;--form-field-background:var(--raised)}
+body.theme-ready gt-shell :is(.excel-upload,.excel-preview){border-radius:22px}
+.auth-page form label{font-size:14px;line-height:1.5;color:var(--text);min-width:0}
+.auth-page form input:not([type=checkbox]):not([type=hidden]),.auth-page form select{font-size:16px;min-height:52px;padding:13px 14px;border-radius:16px;background:var(--raised);color:var(--text);border:1px solid var(--line);min-width:0;max-width:100%}
+.auth-page form button.primary{min-height:52px;border-radius:16px}
+.auth-page form input:focus-visible{outline:2px solid var(--accent-text,var(--blue));outline-offset:2px}

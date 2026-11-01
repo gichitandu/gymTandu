@@ -1,3 +1,4 @@
+import {exerciseComparison} from '../services/exercise-comparison';
 import { matchesExercise } from '../services/exercise-search';
 import { NgTemplateOutlet } from '@angular/common';
 import { confirmationForContext } from '../services/confirmation';
@@ -48,6 +49,8 @@ export class ActiveWorkoutComponent {
  repTarget(exercise:WorkoutLogExercise){return exercise.repsMin===undefined?'':exercise.repsMin+(exercise.repsMax!==undefined&&exercise.repsMax!==exercise.repsMin?'–'+exercise.repsMax:'');}
  warmupLines(exercise:WorkoutLogExercise){return(exercise.warmupNotes||'').split(/;|\n/).map(line=>line.trim()).filter(Boolean);}
  flowIndex=computed(()=>this.step()==='list'?(this.allSets().length>0&&this.completedSets()===this.allSets().length?4:0):this.step()==='detail'?1:this.step()==='record'?2:3);
+ comparisonCurrent=computed(()=>{const e=this.selected();const sets=e?this.s.sets(e.id).filter(set=>set.completed&&set.kind!=='warmup'):[];return {sets:sets.length,reps:sets.reduce((sum,set)=>sum+set.reps,0),volume:sets.reduce((sum,set)=>sum+set.weight*set.reps,0)};});
+ comparison=computed(()=>{const selected=this.selected();return selected?exerciseComparison(this.s.data(),selected):[];});
  previous=computed(()=>{const e=this.selected();return e?this.s.previous(e.exerciseId,e.workoutId,e.machineSetup):[];});
  remaining=computed(()=>this.paused()?this.pausedSeconds():remainingSeconds(this.restEnd(),this.clock()));restRatio=computed(()=>Math.min(100,this.remaining()/Math.max(1,this.restTotal())*100));
  nextExercise=computed(()=>{const current=this.selected();if(current){if(this.currentSet()?.kind==='warmup'&&this.s.sets(current.id).some(s=>!s.completed))return current;const next=supersetNext(this.exercises(),this.allSets(),current.id).next;if(next)return next;if(this.s.sets(current.id).some(s=>!s.completed))return current;}return this.exercises().find(e=>this.s.sets(e.id).some(s=>!s.completed));});

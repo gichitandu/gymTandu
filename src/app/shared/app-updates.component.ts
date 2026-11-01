@@ -8,6 +8,9 @@ import { AppReleaseService } from '../services/app-release';
  <h3>Aggiornamenti dell’app</h3>
  <p role="status">{{release.message()}}</p>
  @if(release.currentBuild()){<small>Versione in uso: {{release.currentBuild()!.slice(0,12)}}</small>}
+ @if(release.policy();as published){<small>Versione pubblicata: {{published.buildId.slice(0,12)}}</small>}
+ @if(release.lastChecked();as checked){<small>Ultimo controllo: {{date(checked)}}</small>}
+ @if(release.lastApplied();as applied){<small>Aggiornamento rilevato su questo dispositivo: {{date(applied)}}</small>}
  <div class="actions">
   <button type="button" (click)="release.check(true)" [disabled]="release.checking()||pwa.updating()">{{release.checking()?'Controllo…':'Controlla aggiornamenti'}}</button>
   @if(release.updateReady()||pwa.updateReady()){<button type="button" class="primary" (click)="pwa.reload()" [disabled]="pwa.updating()">{{pwa.updating()?'Salvataggio e aggiornamento…':'Aggiorna questo dispositivo'}}</button>}

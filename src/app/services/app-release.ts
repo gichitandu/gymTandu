@@ -24,6 +24,9 @@ export class AppReleaseService {
  private updates=inject(SwUpdate,{optional:true});
  private feedback=feedbackForContext();
  readonly enabled=!!this.updates&&this.updates.isEnabled!==false&&typeof this.updates.checkForUpdate==='function';
+ readonly lastChecked=signal<number|null>(null);
+ readonly lastApplied=signal<number|null>(null);
+ private recordRunning(id:string){this.currentBuild.set(id);try{const previous=JSON.parse(localStorage.getItem('gymtrack-version-receipt')||'null');const at=previous?.buildId===id?(typeof previous.appliedAt==='number'&&Number.isFinite(previous.appliedAt)?previous.appliedAt:null):previous&&buildId(previous.buildId)?Date.now():null;this.lastApplied.set(at);localStorage.setItem('gymtrack-version-receipt',JSON.stringify({buildId:id,appliedAt:at}));}catch{}}
  readonly currentBuild=signal<string|null>(null);
  readonly policy=signal<AppReleasePolicy|null>(null);
  readonly downloadedBuild=signal<string|null>(null);
@@ -54,8 +57,9 @@ export class AppReleaseService {
    const id=metadataBuild(version.appData);
    if(event.type==='VERSION_READY'){
     const running=metadataBuild(event.currentVersion.appData);
-    if(running)this.currentBuild.set(running);
+    if(running)this.recordRunning(running);
    }
+   if(event.type==='NO_NEW_VERSION_DETECTED'&&id&&id===this.currentBuild())this.recordRunning(id);
    if(id){this.downloadedBuild.set(id);this.updateReady.set(id!==this.currentBuild());}
    if(this.updateReady())this.message.set('Nuova versione pronta. Verrà applicata quando i salvataggi sono al sicuro.');
   }else if(event.type==='VERSION_INSTALLATION_FAILED'){
@@ -96,7 +100,7 @@ export class AppReleaseService {
     else this.message.set('Controllo completato. La nuova versione verrà scaricata appena disponibile.');
     return changed;
    }catch(error){const message=error instanceof Error?error.message:'Controllo aggiornamenti non riuscito.';this.message.set(message);if(manual)this.error.set(message);return false;}
-   finally{this.checking.set(false);if(this.checkJob===job)this.checkJob=undefined;this.checked.next();}
+   finally{this.lastChecked.set(Date.now());this.checking.set(false);if(this.checkJob===job)this.checkJob=undefined;this.checked.next();}
   })();
   this.checkJob=job;return job;
  }

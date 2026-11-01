@@ -69,3 +69,14 @@ it('still requires reload when the worker reports the client was already assigne
  const t=setup();await t.service.check();t.sw.activateUpdate.mockResolvedValue(false);
  expect(await t.service.activateReady(next)).toBe(true);expect(t.sw.activateUpdate).toHaveBeenCalledOnce();
 });
+
+it('does not invent an update date when checking the same version repeatedly',async()=>{
+ const storage=new Map<string,string>();vi.stubGlobal('localStorage',{getItem:(key:string)=>storage.get(key)||null,setItem:(key:string,value:string)=>storage.set(key,value)});
+ const t=setup({current:next,downloaded:next});await t.service.check();
+ expect(t.service.lastApplied()).toBeNull();await t.service.check();expect(t.service.lastApplied()).toBeNull();expect(t.service.lastChecked()).toBeGreaterThan(0);
+});
+it('records the running worker version after a previously observed different version',async()=>{
+ const storage=new Map([['gymtrack-version-receipt',JSON.stringify({buildId:current,appliedAt:null})]]);vi.stubGlobal('localStorage',{getItem:(key:string)=>storage.get(key)||null,setItem:(key:string,value:string)=>storage.set(key,value)});
+ const t=setup({current:next,downloaded:next});await t.service.check();expect(t.service.lastApplied()).toBeGreaterThan(0);
+ const applied=t.service.lastApplied();await t.service.check();expect(t.service.lastApplied()).toBe(applied);
+});
