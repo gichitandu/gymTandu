@@ -1793,7 +1793,7 @@ body.keyboard-open .modal-backdrop {align-items:flex-start;}
 .form-grid>label,.filters>label{min-width:0;align-self:start}
 .nutrition-date-heading>gt-date-field,.cal-date-jump>gt-date-field{position:absolute;inset:0;z-index:1;margin:0;height:100%;opacity:0}
 @media(max-width:480px){.form-grid{grid-template-columns:minmax(0,1fr)}.session-header .form-grid{gap:10px}.history-filters{grid-template-columns:minmax(0,1fr)}}
-body.form-input-focused gt-workout-clock{display:none}
+
 .session-clock{font-variant-numeric:tabular-nums;display:inline-block;min-width:8ch}
 
 .past-workout-entry .form-grid>button{align-self:end}

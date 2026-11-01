@@ -1,15 +1,48 @@
 import {Component,computed,inject,signal} from '@angular/core';
-import {Router,RouterLink} from '@angular/router';
+import {Router} from '@angular/router';
 import {Store} from '../services/store';
+import {WorkoutResumeService,validWorkoutUi} from '../services/workout-resume';
+import {DataSet,WorkoutUiState} from '../models/domain';
 import {formatSeconds,remainingSeconds} from '../services/rest-clock';
-@Component({selector:'gt-workout-clock',standalone:true,imports:[RouterLink],template:`
-@if(!router.url.startsWith('/sessione')){@if(state();as timer){<a routerLink="/sessione" class="workout-clock" aria-label="Apri il cronometro del recupero"><span>{{timer.paused?'Recupero in pausa':'Cronometro recupero'}}</span><strong>{{format(elapsed())}}</strong><small>{{format(remaining())}} rimanenti · Apri timer</small></a>}}`,styles:[`
-.workout-clock{position:fixed;right:max(12px,env(safe-area-inset-right));bottom:calc(88px + env(safe-area-inset-bottom));z-index:36;display:grid;gap:3px;padding:12px 16px;border:1px solid var(--blue);border-radius:18px;background:var(--card);color:var(--text);box-shadow:0 8px 30px #0006;text-decoration:none;max-width:calc(100vw - 24px)}span,small{font-size:11px;color:var(--muted)}strong{font-size:30px;line-height:1.1;font-variant-numeric:tabular-nums}@media(min-width:1000px){.workout-clock{bottom:24px}}` ]})
+import {recordingTimerState,toggleWorkoutTimer} from '../services/workout-timer';
+import {IconComponent} from './icon.component';
+@Component({selector:'gt-workout-clock',standalone:true,imports:[IconComponent],template:`
+@if(!(router.url||'').startsWith('/sessione')){@if(state();as timer){<section class="workout-clock" aria-label="Recupero dell’allenamento in corso">
+ @if(context()){<span class="timer-context">{{context()}}</span>}
+ <div class="timer-row"><gt-icon name="clock"/><div class="timer-value"><span>{{remaining()===0&&!timer.paused?'Recupero terminato':timer.paused?'Recupero in pausa':'Recupero'}}</span><strong role="timer" aria-live="off">{{format(remaining())}}</strong><small>{{format(elapsed())}} trascorsi</small></div>
+ <button type="button" class="timer-toggle" (click)="toggle()" [disabled]="busy()||(!remaining()&&!timer.paused)" [attr.aria-label]="timer.paused?'Riprendi recupero':'Metti recupero in pausa'" [title]="timer.paused?'Riprendi recupero':'Metti recupero in pausa'">@if(timer.paused){<gt-icon name="play"/>}@else{<span aria-hidden="true">Ⅱ</span>}</button>
+ <button type="button" class="timer-return" (click)="returnToRecording()" [disabled]="busy()">Torna alla serie<gt-icon name="arrow"/></button></div>
+ </section>}}`,styleUrl:'./workout-clock.component.css'})
 export class WorkoutClockComponent {
- router=inject(Router);s=inject(Store);clock=signal(Date.now());format=formatSeconds;
- state=computed(()=>{const draft=this.s.draft();return draft?this.s.data().workoutUi.find(ui=>ui.id===draft.id&&(ui.restEnd>0||ui.paused)):undefined;});
+ readonly router=inject(Router);readonly s=inject(Store);private resume=inject(WorkoutResumeService,{optional:true})||new WorkoutResumeService();
+ readonly clock=signal(Date.now());readonly busy=signal(false);readonly format=formatSeconds;
+ private destroyed=false;
+ state=computed(()=>{this.clock();const draft=this.s.draft();if(!draft)return undefined;const state=this.read(draft.id);return state&&(state.restEnd>0||state.paused)&&state.restTotal>0?state:undefined;});
  remaining=computed(()=>{const state=this.state();return state?state.paused?state.pausedSeconds:remainingSeconds(state.restEnd,this.clock()):0;});
  elapsed=computed(()=>{const state=this.state();return state?state.paused?Math.max(0,state.restTotal-state.pausedSeconds):Math.max(0,Math.floor((this.clock()-state.restEnd)/1000)+state.restTotal):0;});
- private timer=setInterval(()=>this.clock.set(Date.now()),1000);
- ngOnDestroy(){clearInterval(this.timer);}
+ context=computed(()=>{const state=this.state();if(!state)return '';const exercise=this.s.data().workoutExercises.find(e=>e.id===state.exerciseId&&e.workoutId===state.id);const set=this.s.data().sets.find(s=>s.id===state.setId&&s.workoutExerciseId===exercise?.id);return exercise?(set?'Serie '+set.number+' · ':'')+exercise.name:this.s.draft()?.dayName||'';});
+ private timer=setInterval(()=>this.refresh(),1000);
+ private refresh=()=>this.clock.set(Date.now());
+ constructor(){if(typeof window!=='undefined'){window.addEventListener?.('pageshow',this.refresh);window.addEventListener?.('storage',this.refresh);}if(typeof document!=='undefined')document.addEventListener?.('visibilitychange',this.refresh);}
+ private read(id:string,persisted=this.s.data().workoutUi.find(ui=>ui.id===id)){return this.resume.read(this.s.archiveKey(),id,persisted,this.s.archiveRevision());}
+ private outsideSession(){return !(this.router.url||'').startsWith('/sessione');}
+ private async update(transform:(state:WorkoutUiState,data:DataSet)=>WorkoutUiState){
+  if(this.busy()||!this.outsideSession())return false;
+  const archive=this.s.archiveKey(),id=this.s.draft()?.id;if(!id)return false;this.busy.set(true);
+  try{
+   if(await this.s.settled()===false||this.destroyed||archive!==this.s.archiveKey()||id!==this.s.draft()?.id||!this.outsideSession())return false;
+   let next:WorkoutUiState|undefined;
+   const saved=await this.s.change(data=>{
+    if(this.destroyed||archive!==this.s.archiveKey()||!this.outsideSession()||!data.workouts.some(w=>w.id===id&&w.status==='draft'))return;
+    const state=this.read(id,data.workoutUi.find(ui=>ui.id===id));if(!state||!state.restTotal||!state.paused&&!state.restEnd)return;
+    const result=transform(state,data);if(!validWorkoutUi(result))return;next=result;
+    const index=data.workoutUi.findIndex(ui=>ui.id===id);if(index<0)data.workoutUi.push(result);else data.workoutUi[index]=result;
+   },'',false);
+   if(!saved||!next||this.destroyed||archive!==this.s.archiveKey()||id!==this.s.draft()?.id)return false;
+   this.resume.write(archive,next,this.s.archiveRevision());this.refresh();return true;
+  }finally{this.busy.set(false);}
+ }
+ async toggle(){if(!this.remaining()&&!this.state()?.paused)return;await this.update(state=>toggleWorkoutTimer(state,Date.now()));}
+ async returnToRecording(){const archive=this.s.archiveKey(),id=this.s.draft()?.id;if(await this.update((state,data)=>recordingTimerState(state,data,Date.now()))&&!this.destroyed&&archive===this.s.archiveKey()&&id===this.s.draft()?.id)await this.router.navigateByUrl('/sessione');}
+ ngOnDestroy(){this.destroyed=true;clearInterval(this.timer);if(typeof window!=='undefined'){window.removeEventListener?.('pageshow',this.refresh);window.removeEventListener?.('storage',this.refresh);}if(typeof document!=='undefined')document.removeEventListener?.('visibilitychange',this.refresh);}
 }

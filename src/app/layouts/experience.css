@@ -2455,3 +2455,7 @@ gt-shell .bottom-nav.calendar-navigation a > span { font-size: 10px; white-space
 @media (max-width: 359px) {
   gt-shell .bottom-nav.calendar-navigation a > span { font-size: 9px; }
 }
+
+/* Reserve content space for the persistent recovery controls. */
+gt-shell:has(gt-workout-clock .workout-clock) .app-main>main{padding-bottom:calc(var(--phone-nav-height,76px) + var(--safe-bottom,0px) + 150px)}
+@media(min-width:1000px){gt-shell:has(gt-workout-clock .workout-clock) .app-main>main{padding-bottom:160px}}

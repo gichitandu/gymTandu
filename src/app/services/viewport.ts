@@ -125,6 +125,7 @@ export class ViewportService {
       const navigation = document.querySelector<HTMLElement>('.bottom-nav')?.getBoundingClientRect();
       if (navigation && navigation.height > 0 && navigation.top > top) bottom = Math.min(bottom, navigation.top);
     }
+    if(!modal){const timer=document.querySelector<HTMLElement>('.workout-clock')?.getBoundingClientRect();if(timer&&timer.height>0&&timer.top>top&&timer.top<bottom)bottom=timer.top;}
     const delta = focusScrollDelta(fieldRect.top, fieldRect.bottom, top, bottom, 20);
     if (delta) {
       if (modal) modal.scrollTop += delta;

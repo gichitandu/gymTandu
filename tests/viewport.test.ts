@@ -143,3 +143,11 @@ it('does not rewrite viewport CSS on repeated scroll events with unchanged geome
   for(let index=0;index<5;index++)b.viewport.dispatchEvent(new Event('scroll'));
   expect(write).not.toHaveBeenCalled();
 });
+
+it('reveals fields above the persistent recovery dock while the keyboard is open',async()=>{
+  const b=browser();b.viewport.height=340;
+  Object.assign(b.doc,{querySelector:(selector:string)=>selector==='.workout-clock'?{getBoundingClientRect:()=>({top:260,height:72})}:null});
+  b.doc.activeElement=input(250,300);b.doc.dispatchEvent(new Event('focusin'));
+  await vi.advanceTimersByTimeAsync(60);
+  expect(b.win.scrollBy).toHaveBeenCalledWith({top:60,behavior:'auto'});
+});
