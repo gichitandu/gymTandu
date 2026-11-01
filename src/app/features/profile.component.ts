@@ -158,6 +158,7 @@ interface ProfileFormDraft {
               (change)="setting('prefill', $event.checked)"
             />
           </div>
+          <div class="setting-row" id="completed-workout-deletion"><div><b>Eliminazione allenamenti terminati</b><p>Consenti “Elimina” nello Storico e nel Calendario, sempre con conferma. Puoi disattivarlo quando vuoi. Disattivarlo non recupera le sessioni già eliminate.</p></div><mat-slide-toggle aria-label="Consenti eliminazione allenamenti terminati" [checked]="s.settings().allowCompletedWorkoutDeletion===true" [disabled]="s.busy()" (change)="setting('allowCompletedWorkoutDeletion',$event.checked)"/></div>
           <div class="setting-row">
             <div>
               <b>Catalogo esercizi</b>
@@ -477,12 +478,13 @@ export class ProfileComponent {
     if(saved){if(this.photoDraft()===photo)this.photoDraft.set(undefined);for(const key of Object.keys(v) as (keyof typeof v)[]){const control=this.form.controls[key];if(control.value===v[key])control.markAsPristine();}this.profileSignature='';this.syncForms();await this.persistDraftState();}
     }finally{this.profileSaving.set(false);}
   }
-  setting(key: "theme" | "unit" | "prefill", value: string | boolean) {
+  setting(key: "theme" | "unit" | "prefill" | "allowCompletedWorkoutDeletion", value: string | boolean) {
     if(key === "theme") void this.theme.save(value === "light" ? "#edf3fa" : this.defaultBackground);
     void this.s.change((d) => {
       if (key === "theme") d.settings[0].theme = value as "dark" | "light";
       if (key === "unit") d.settings[0].unit = value as "kg" | "lb";
       if (key === "prefill") d.settings[0].prefill = !!value;
+      if (key === "allowCompletedWorkoutDeletion") d.settings[0].allowCompletedWorkoutDeletion = !!value;
     });
   }
   backupDate() {

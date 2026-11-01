@@ -51,6 +51,7 @@ function archiveValidate(text) {
  for(const exercise of data.workoutExercises)if(!ids.workouts.has(exercise.workoutId)||!nonempty(exercise.name))archiveFail('Esercizio registrato della copia non valido.');
  for(const set of data.sets)if(!ids.workoutExercises.has(set.workoutExerciseId)||!Number.isInteger(set.number)||set.number<1||!numeric(set.weight)||!Number.isInteger(set.reps)||set.reps<1||set.reps>999||typeof set.completed!=='boolean')archiveFail('Serie della copia non valida.');
  if(settings.themeConfig!==undefined&&!archiveValidThemeConfig(settings.themeConfig))archiveFail('Tema della copia non valido.');
+ if(settings.allowCompletedWorkoutDeletion!==undefined&&typeof settings.allowCompletedWorkoutDeletion!=='boolean')archiveFail('Preferenza eliminazione allenamenti non valida.');
  if(settings.gymMode!==undefined&&typeof settings.gymMode!=='boolean')archiveFail('Modalità palestra non valida.');
  for(const p of data.exercisePreferences)if(p.weightStep!==undefined&&(!Number.isFinite(p.weightStep)||p.weightStep<=0||p.weightStep>50))archiveFail('Incremento carico non valido.');
  for(const row of data.workoutExercises)if(row.substitutedFrom&&(!nonempty(row.substitutedFrom.exerciseId)||!nonempty(row.substitutedFrom.name)))archiveFail('Origine sostituzione non valida.');

@@ -114,7 +114,7 @@ export class CalendarComponent {
  itemActionLabel(item:CalendarAgendaItem){return item.status==='partial'?'Riprendi allenamento':item.date<this.today?'Registra allenamento passato':'Inizia allenamento';}
  canDuplicate(item=this.selectedItem()){if(!item)return false;if(item.kind!=='workout')return true;const dayId=item.workout?.dayId||item.event?.dayId,planId=item.workout?.planId||item.event?.planId;return this.availableDays().some(day=>day.id===dayId)&&!this.s.data().plans.find(plan=>plan.id===planId)?.program;}
  canMove(item=this.selectedItem()){return !!item?.event&&!item.event.workoutId&&!item.workout&&!item.event.done&&this.available(item.event);}
- canRemove(item=this.selectedItem()){return !!item?.event&&item.workout?.status!=='completed'&&!item.event.done;}
+ canRemove(item=this.selectedItem()){if(item?.workout?.status==='completed')return this.s.settings().allowCompletedWorkoutDeletion===true;return !!item?.event&&!item.event.done;}
  repeatPreview(){try{return weeklyDates(this.eventDate,Number(this.repeatCount)).map(date=>this.shortLabel(date)).join(' · ');}catch{return '';}}
  formTitle(){return this.formMode()==='move'?'Sposta attività':this.formMode()==='duplicate'?'Duplica attività':this.formMode()==='edit'?'Modifica attività':'Aggiungi al calendario';}
  formKindChanged(){if(this.kind==='rest')this.estimatedCalories=null;}
@@ -134,7 +134,7 @@ export class CalendarComponent {
   this.open();this.fillForm(source);this.formMode.set('duplicate');this.editing='';this.formId=uid();this.eventDate=moveDate(item.date,7);
  }
  quickMove(){const item=this.selectedItem();if(!item?.event||!this.canMove(item))return;this.open(item.event);this.formMode.set('move');}
- async quickRemove(){const item=this.selectedItem();if(item?.event&&this.canRemove(item))await this.remove(item.event);}
+ async quickRemove(){const item=this.selectedItem();if(!item||!this.canRemove(item)||this.actionBusy())return;if(item.workout?.status==='completed'){this.actionBusy.set(true);const archive=this.s.archiveKey();try{if(!await this.confirmation.ask({title:'Eliminare questo allenamento?',message:item.title+' · '+item.date.split('-').reverse().join('/')+'. La sessione e tutte le sue serie saranno eliminate definitivamente. Statistiche e record saranno ricalcolati. La programmazione resta nel calendario.',confirmLabel:'Elimina allenamento',tone:'danger'}))return;if(!this.destroyed&&archive===this.s.archiveKey())await this.s.deleteWorkout(item.workout.id,{confirmedCompleted:true});}finally{this.actionBusy.set(false);}}else if(item.event)await this.remove(item.event);}
  close(){this.formVersion++;this.modal.set(false);}
  backdrop(event:MouseEvent){if(event.target===event.currentTarget)this.close();}
  async save(){

@@ -167,6 +167,7 @@ export interface IphoneCheck {state:'todo'|'pass'|'fail';note?:string;checkedAt?
 export interface IphoneChecklist {device:string;ios:string;checks:Record<string,IphoneCheck>;}
 export interface CatalogBaseline { exercises: Record<string, string>; groups: Record<string, string> }
 export interface AppSettings extends Entity {
+  allowCompletedWorkoutDeletion?:boolean;
   gymMode?:boolean;
   archiveResetId?: string;
   catalogBaseline?: CatalogBaseline;

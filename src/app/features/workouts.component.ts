@@ -50,10 +50,12 @@ import { ExerciseFilterComponent } from "../shared/exercise-filter.component";
           <span class="pill">{{
             s.busy() ? "Salvataggio…" : "Allenamento terminato · sola lettura"
           }}</span
-          ><button class="primary" (click)="reopen(w.id)" [disabled]="s.busy()||reopening()">{{reopening()?'Riapertura…':'Riapri allenamento'}}</button>
+          ><button class="primary" (click)="reopen(w.id)" [disabled]="s.busy()||reopening()||deleting()">{{reopening()?'Riapertura…':'Riapri allenamento'}}</button>
+          <a class="button ghost" routerLink="/profilo" [queryParams]="{section:'settings'}"><gt-icon name="settings"/>Configura eliminazione</a>
+          @if(s.settings().allowCompletedWorkoutDeletion){<button type="button" class="ghost danger" (click)="remove(w.id)" [disabled]="s.busy()||reopening()||deleting()">{{deleting()?'Eliminazione…':'Elimina allenamento'}}</button>}
         </div>
       </div>
-      <a class="button ghost" [routerLink]="['/riepilogo',w.id]">Riepilogo allenamento</a><p class="subtle">Per modificare o eliminare questa sessione, riaprila prima.</p>
+      <a class="button ghost" [routerLink]="['/riepilogo',w.id]">Riepilogo allenamento</a><p class="subtle">Per modificare la sessione, riaprila. Puoi configurare l’eliminazione dei terminati in Profilo → Impostazioni.</p>
       @for(exercise of s.workoutExercises(w.id);track exercise.id){<section class="card" style="margin-top:12px"><h3>{{exercise.name}}</h3>@if(exercise.substitutedFrom){<p class="subtle">Al posto di {{exercise.substitutedFrom.name}} · solo questa seduta</p>}@for(set of s.sets(exercise.id);track set.id){<p>Serie {{set.number}} · {{s.formatWeight(set.weight)}} {{s.settings().unit}} × {{set.reps}} · {{set.completed?'Confermata':'Non eseguita'}}</p>}</section>}
     } @else {
       <div class="history-filters" role="group" aria-label="Filtri dello storico allenamenti">
@@ -135,7 +137,7 @@ export class WorkoutsComponent {
  private confirmation=confirmationForContext();
   constructor(){const query=inject(ActivatedRoute).snapshot.queryParamMap;const workout=query.get("workout");if(workout)this.selectedId.set(workout);const date=query.get("date");if(date){this.from.set(date);this.to.set(date);}}
   s = inject(Store);
-  router=inject(Router);reopening=signal(false);
+  router=inject(Router);reopening=signal(false);deleting=signal(false);
   plan = signal("");
   day = signal("");
   exercise = signal("");
@@ -202,12 +204,13 @@ export class WorkoutsComponent {
     try{if(await this.s.reopenWorkout(id)){this.selectedId.set('');await this.router.navigateByUrl('/sessione');}}finally{this.reopening.set(false);}
   }
   async remove(id: string) {
-    if (
-      await this.confirmation.ask(
-        "Eliminare definitivamente questo allenamento e tutte le sue serie? Statistiche e record saranno ricalcolati.",
-      )
-    ) {
-      if (await this.s.deleteWorkout(id)) this.selectedId.set("");
-    }
+    if(this.deleting()||this.reopening()||this.s.busy())return;
+    const workout=this.s.data().workouts.find(w=>w.id===id);if(!workout)return;
+    if(workout.status==='completed'&&!this.s.settings().allowCompletedWorkoutDeletion)return;
+    const archive=this.s.archiveKey();this.deleting.set(true);
+    try{if(!await this.confirmation.ask({title:'Eliminare questo allenamento?',message:workout.dayName+' · '+workout.date.split('-').reverse().join('/')+'. La sessione e tutte le sue serie saranno eliminate definitivamente. Statistiche e record saranno ricalcolati. La programmazione nel calendario resta disponibile.',confirmLabel:'Elimina allenamento',tone:'danger'}))return;
+      if(archive!==this.s.archiveKey())return;
+      if(await this.s.deleteWorkout(id,{confirmedCompleted:true}))this.selectedId.set('');
+    }finally{this.deleting.set(false);}
   }
 }

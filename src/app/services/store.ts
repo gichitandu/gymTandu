@@ -697,9 +697,13 @@ export class Store {
       if(plan?.completionReason==='automatic'){delete plan.completedAt;delete plan.completionReason;plan.archived=false;}
     },'Allenamento riaperto. Serie e data sono conservate.',false);
   }
-  async deleteWorkout(id: string) {
+  async deleteWorkout(id: string, options?:{confirmedCompleted?:boolean}) {
+    if(this.data().workouts.find(workout=>workout.id===id)?.status==='completed'&&(!this.settings().allowCompletedWorkoutDeletion||options?.confirmedCompleted!==true)){this.error.set('Per eliminare un allenamento terminato abilita l’opzione nelle impostazioni e conferma l’eliminazione.');return false;}
     return this.change((d) => {
-      if(d.workouts.find(w=>w.id===id)?.status==='completed')throw Error('Un allenamento terminato può essere solo riaperto. Riaprilo prima di eliminarlo.');
+      const workout=d.workouts.find(w=>w.id===id);
+      if(workout?.status==='completed'&&(!d.settings[0].allowCompletedWorkoutDeletion||options?.confirmedCompleted!==true))throw Error('Per eliminare un allenamento terminato abilita l’opzione nelle impostazioni e conferma l’eliminazione.');
+      const plan=d.plans.find(plan=>plan.id===workout?.planId);
+      if(workout?.status==='completed'&&plan?.completionReason==='automatic'){delete plan.completedAt;delete plan.completionReason;plan.archived=false;}
       const ids = new Set(
         d.workoutExercises.filter((e) => e.workoutId === id).map((e) => e.id),
       );

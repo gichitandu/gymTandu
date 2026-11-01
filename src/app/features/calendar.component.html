@@ -180,7 +180,7 @@
         class="cal-delete-action"
         (click)="quickRemove()"
         [disabled]="actionBusy() || !canRemove(selectedItem())"
-        title="Elimina la programmazione selezionata"
+        [title]="selectedItem()?.workout?.status==='completed'?'Elimina allenamento terminato':'Elimina la programmazione selezionata'"
       >
         <gt-icon name="trash" /><span>Elimina</span>
       </button>

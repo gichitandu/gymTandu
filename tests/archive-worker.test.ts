@@ -162,3 +162,11 @@ it('rejects invalid calendar activity metadata atomically while retaining the sa
  }
  const loaded=await get();expect(loaded.data.revision).toBe(1);expect(loaded.data.backup).toBe(backup);expect(objects.size).toBe(1);
 });
+
+it('persists the completed-workout deletion preference and rejects malformed values without replacing the archive',async()=>{
+ const data=seed();data.settings[0].allowCompletedWorkoutDeletion=true;const text=await exportBackup(data);
+ expect((await put(text)).response.status).toBe(200);
+ const loaded=(await get()).data;expect(JSON.parse(loaded.backup).data.settings[0].allowCompletedWorkoutDeletion).toBe(true);
+ const invalid=JSON.parse(text);invalid.data.settings[0].allowCompletedWorkoutDeletion='true';
+ expect((await put(JSON.stringify(invalid),1)).response.status).toBe(400);expect((await get()).data.backup).toBe(text);
+});

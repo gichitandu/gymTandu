@@ -111,7 +111,7 @@ it('moves workout schedules with the existing overlap guards and never moves or 
 
 it('roundtrips all new metadata and migrates version 8 backups without replacing legacy data',async()=>{
  const data=seed();data.scheduledWorkouts=[activity(),activity({id:'rest',kind:'rest',dayName:'Riposo',time:undefined,durationMinutes:undefined,estimatedCalories:undefined}),activity({id:'legacy',kind:undefined,planId:'retired-plan',dayId:'retired-day',planName:'Piano precedente',notes:'n'.repeat(10000),time:undefined,durationMinutes:undefined,estimatedCalories:undefined})];
- const json=await exportBackup(data),roundtrip=await importBackup(json);expect(BACKUP_VERSION).toBe(9);expect(roundtrip.scheduledWorkouts).toEqual(data.scheduledWorkouts);expect(roundtrip.profiles).toEqual(data.profiles);
+ const json=await exportBackup(data),roundtrip=await importBackup(json);expect(JSON.parse(json).schemaVersion).toBe(BACKUP_VERSION);expect(roundtrip.scheduledWorkouts).toEqual(data.scheduledWorkouts);expect(roundtrip.profiles).toEqual(data.profiles);
  const old=JSON.parse(json);old.schemaVersion=8;old.data.scheduledWorkouts=[{id:'old',date:'2026-10-29',planId:'old-plan',dayId:'old-day',planName:'Scheda precedente',dayName:'Parte alta',notes:'Conservata'}];
  const restored=await importBackup(JSON.stringify(old));expect(restored.scheduledWorkouts).toEqual(old.data.scheduledWorkouts);expect(restored.exercises).toEqual(data.exercises);
 });

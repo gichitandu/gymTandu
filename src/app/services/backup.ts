@@ -2,7 +2,7 @@ import { validateIntegrity } from "./integrity";
 export { validateIntegrity } from "./integrity";
 import { z } from "zod";
 import { DataSet } from "../models/domain";
-export const BACKUP_VERSION = 9;
+export const BACKUP_VERSION = 10;
 const id = z.string().min(1).max(150);
 const text = z.string().max(10000);
 const nonempty = z.string().trim().min(1).max(200);
@@ -150,7 +150,7 @@ const schemas = {
     completed: z.boolean(),
   }),
   settings: z.object({
-    gymMode:z.boolean().optional(),archiveResetId:id.optional(),
+    allowCompletedWorkoutDeletion:z.boolean().optional(),gymMode:z.boolean().optional(),archiveResetId:id.optional(),
     catalogBaseline: z.object({exercises:z.record(id,z.string().regex(/^[a-f0-9]{64}$/)),groups:z.record(id,z.string().max(10000))}).optional(),
     id,
     externalTimerEnabled: z.boolean().optional(),
@@ -217,7 +217,7 @@ export async function exportBackup(data: DataSet) {
   );
 }
 // Add explicit vN -> vN+1 pure functions here when the on-disk format evolves.
-export const migrations: Record<number, (value: unknown) => unknown> = {1: value => ({...(value as object),meals:[]}),2:value=>value,3:value=>({...value as object,scheduledWorkouts:[],measurements:[]}),4:value=>({...value as object,exercisePreferences:[],workoutUi:[]}),5:value=>value,6:value=>value,7:value=>value,8:value=>value};
+export const migrations: Record<number, (value: unknown) => unknown> = {1: value => ({...(value as object),meals:[]}),2:value=>value,3:value=>({...value as object,scheduledWorkouts:[],measurements:[]}),4:value=>({...value as object,exercisePreferences:[],workoutUi:[]}),5:value=>value,6:value=>value,7:value=>value,8:value=>value,9:value=>value};
 export async function importBackup(json: string): Promise<DataSet> {
   if (new Blob([json]).size > 50 * 1024 * 1024)
     throw Error("Backup troppo grande: limite 50 MB.");
