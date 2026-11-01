@@ -24,9 +24,9 @@ it('persists planned sessions, rejects duplicates and links only one event to a 
  const ex=s.workoutExercises(workout.id)[0],set=s.sets(ex.id)[0];await s.updateSet(set.id,{completed:true,weight:80,reps:8});expect(await s.finish()).toBe(true);expect(s.completed()[0].id).toBe(workout.id);expect(await s.startScheduled('event-1')).toBe(false);
  const read=await db.snapshot();expect(read.scheduledWorkouts).toHaveLength(2);expect(read.workouts[0].status).toBe('completed');
 });
-it('removes calendar entries independently from historical workouts and unlinks deleted workouts',async()=>{
- await plan();await s.scheduleWorkout('2026-10-22','day','','event');await s.startScheduled('event');const workoutId=s.draft()!.id;await s.deleteWorkout(workoutId);expect(s.data().scheduledWorkouts[0].workoutId).toBeUndefined();expect(s.data().scheduledWorkouts).toHaveLength(1);
- await s.startScheduled('event');const w=s.draft()!,ex=s.workoutExercises(w.id)[0];await s.updateSet(s.sets(ex.id)[0].id,{completed:true});await s.finish();await s.change(d=>{d.scheduledWorkouts=[];});expect(s.completed()).toHaveLength(1);
+it('removes linked appointments with deleted workouts while retaining independently saved history',async()=>{
+ await plan();await s.scheduleWorkout('2026-10-22','day','','event');await s.startScheduled('event');const workoutId=s.draft()!.id;await s.deleteWorkout(workoutId);expect(s.data().workouts).toEqual([]);expect(s.data().scheduledWorkouts).toEqual([]);
+ await s.scheduleWorkout('2026-10-22','day','','event');await s.startScheduled('event');const w=s.draft()!,ex=s.workoutExercises(w.id)[0];await s.updateSet(s.sets(ex.id)[0].id,{completed:true});await s.finish();await s.change(d=>{d.scheduledWorkouts=[];});expect(s.completed()).toHaveLength(1);
 });
 it('roundtrips calendar, measurements and goals and migrates v3 backups without replacing training data',async()=>{
  const d=seed();d.scheduledWorkouts.push({id:'event',date:'2026-10-22',dayId:'retired-day',planId:'retired-plan',planName:'Piano conservato',dayName:'Giorno conservato',notes:'Snapshot'});d.measurements.push({id:'measure',date:'2026-10-21',weight:75,waist:82,bodyFat:18});d.settings[0].goals={calories:2500,protein:150,workoutsPerWeek:3};

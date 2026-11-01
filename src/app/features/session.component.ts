@@ -89,7 +89,7 @@ export class SessionComponent {
   async discard(id: string) {
     if (
       await this.confirmation.ask(
-        "Scartare la sessione in corso? Le serie registrate saranno eliminate.",
+        "Scartare la sessione in corso? Le serie registrate e la relativa voce nel calendario saranno eliminate. Il piano e gli altri allenamenti restano conservati.",
       )
     ) {
       if (await this.s.deleteWorkout(id)) await this.router.navigateByUrl("/");

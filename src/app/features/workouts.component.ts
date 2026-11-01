@@ -208,7 +208,7 @@ export class WorkoutsComponent {
     const workout=this.s.data().workouts.find(w=>w.id===id);if(!workout)return;
     if(workout.status==='completed'&&!this.s.settings().allowCompletedWorkoutDeletion)return;
     const archive=this.s.archiveKey();this.deleting.set(true);
-    try{if(!await this.confirmation.ask({title:'Eliminare questo allenamento?',message:workout.dayName+' · '+workout.date.split('-').reverse().join('/')+'. La sessione e tutte le sue serie saranno eliminate definitivamente. Statistiche e record saranno ricalcolati. La programmazione nel calendario resta disponibile.',confirmLabel:'Elimina allenamento',tone:'danger'}))return;
+    try{if(!await this.confirmation.ask({title:'Eliminare questo allenamento?',message:workout.dayName+' · '+workout.date.split('-').reverse().join('/')+'. La sessione, tutte le sue serie e la relativa voce nel calendario saranno eliminate definitivamente. Statistiche e record saranno ricalcolati. Il piano e gli altri allenamenti restano conservati.',confirmLabel:'Elimina allenamento',tone:'danger'}))return;
       if(archive!==this.s.archiveKey())return;
       if(await this.s.deleteWorkout(id,{confirmedCompleted:true}))this.selectedId.set('');
     }finally{this.deleting.set(false);}

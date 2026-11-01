@@ -711,7 +711,9 @@ export class Store {
       d.workoutExercises = d.workoutExercises.filter((e) => e.workoutId !== id);
       d.workouts = d.workouts.filter((w) => w.id !== id);
       d.workoutUi=d.workoutUi.filter(x=>x.id!==id);
-      for(const event of d.scheduledWorkouts)if(event.workoutId===id)delete event.workoutId;
+      // Delete the linked appointment atomically with the log. Unlinking it
+      // would make the deleted workout reappear as a planned calendar entry.
+      d.scheduledWorkouts=d.scheduledWorkouts.filter(event=>event.workoutId!==id);
     }, "Allenamento eliminato.");
   }
   sharedCatalog() { return !!this.auth?.user() && !this.auth.offlineMode(); }

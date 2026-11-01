@@ -3,6 +3,7 @@ import 'fake-indexeddb/auto';
 import {createEnvironmentInjector,EnvironmentInjector,runInInjectionContext} from '@angular/core';
 import {FormBuilder} from '@angular/forms';
 import {ActivatedRoute,Router} from '@angular/router';
+import {Subject} from 'rxjs';
 import {afterEach,beforeEach,expect,it,vi} from 'vitest';
 import {GymDatabase} from '../src/app/core/database';
 import {GYM_REPOSITORY} from '../src/app/repositories/repository';
@@ -24,7 +25,7 @@ beforeEach(async()=>{
   db=new GymDatabase('tandu-regression-'+crypto.randomUUID());
   injector=createEnvironmentInjector([
     {provide:GYM_REPOSITORY,useValue:{storageKey:db.name,read:()=>db.snapshot(),replace:(data:any)=>db.replace(data)}},
-    {provide:Router,useValue:{navigateByUrl:vi.fn().mockResolvedValue(true)}},
+    {provide:Router,useValue:{events:new Subject<unknown>().asObservable(),navigateByUrl:vi.fn().mockResolvedValue(true)}},
     {provide:ActivatedRoute,useValue:{snapshot:{queryParamMap:{get:()=>null}}}},FormBuilder,Store,
   ],null as unknown as EnvironmentInjector);
   s=injector.get(Store);await vi.waitFor(()=>expect(s.ready()).toBe(true));
