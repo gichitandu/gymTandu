@@ -24,3 +24,29 @@ it('supports descriptive cable-machine labels without mutating saved exercises',
  const exercise={...base,name:'Lat machine',equipment:'Macchina a cavi',thumbnailUrl:'https://example.com/photo.png'},before=structuredClone(exercise);
  expect(exerciseMotionFrames(exercise)?.kind).toBe('lat');expect(exercise).toEqual(before);
 });
+
+it('recognizes equivalent imported names, equipment aliases and repeated spaces',()=>{
+ for(const [name,equipment,kind]of [
+  ['  Panca   piana bilanciere  ','  Bilanciere  ','bench'],
+  ['Flat barbell bench press','Barbell','bench'],
+  ['Barbell back squat','Barbell','squat'],
+  ['Curl  con manubri  in piedi','Manubri','curl'],
+  ['Standing dumbbell curls','Dumbbells','curl'],
+  ['Lat pulldown','Cable','lat'],
+  ['Lat machine','Cavo','lat'],
+  ['Cable fly','Cavo','fly'],
+  ['Lat machine presa larga','Macchina a cavi','lat'],
+  ['Seated dumbbell shoulder press','Dumbbells','shoulder'],
+  ['Croci ai cavi alti','Cavi (doppio)','fly'],
+  ['Cable crossover','Cable','fly'],
+  ['Alzate laterali con manubri','Manubri','lateral'],
+ ])expect(exerciseMotionFrames({...base,name,equipment})?.kind).toBe(kind);
+});
+it('keeps unsupported imported variations out of the frame player',()=>{
+ for(const [name,equipment]of [
+  ['Incline barbell bench press','Barbell'],['Hammer curl','Dumbbells'],
+  ['Seated dumbbell curls','Dumbbells'],['Lat machine presa stretta','Cavi'],
+  ['Alzate laterali al cavo','Cavi'],['Croci ai cavi bassi','Cavi'],
+  ['Arnold press','Manubri'],['Front squat','Barbell'],
+ ])expect(exerciseMotionFrames({...base,name,equipment})).toBeUndefined();
+});

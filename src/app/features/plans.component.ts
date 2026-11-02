@@ -1,3 +1,4 @@
+import {AnimationLibraryComponent} from '../shared/animation-library.component';
 import { DateFieldComponent } from '../shared/date-field.component';
 import { confirmationForContext } from '../services/confirmation';
 import { OpenWorkoutsComponent } from '../shared/open-workouts.component';
@@ -38,7 +39,7 @@ type PlanEditorDraft = {
 @Component({
   standalone: true,
   styleUrls: ["./feature-polish.css", "./plans-simple.css"],
-  imports: [DateFieldComponent,OpenWorkoutsComponent,
+  imports: [AnimationLibraryComponent,DateFieldComponent,OpenWorkoutsComponent,
     A11yModule,ExerciseScopeComponent,
     ExerciseFamiliesComponent,
     ExerciseThumbComponent,
@@ -53,6 +54,7 @@ type PlanEditorDraft = {
     <gt-status />
     <gt-open-workouts />
     @if(draftNotice()){<p class="notice" role="status">{{draftNotice()}}</p>}
+    <gt-animation-library/>
     <nav class="neon-segments plans-navigation" aria-label="Allenamenti"><button type="button" [class.active]="hub()==='today'" (click)="hub.set('today')">Oggi</button><button type="button" [class.active]="hub()==='plans'&&!archived()" (click)="hub.set('plans');archived.set(false)">Piani</button><a routerLink="/allenamenti">Storico</a></nav>
     @if(hub()==='today'){
       <section class="card training-today-card">

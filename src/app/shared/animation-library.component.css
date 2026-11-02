@@ -1,0 +1,18 @@
+:host{display:block;min-width:0;margin:0 0 17px}
+:host .animation-library-toggle{display:flex;align-items:center;gap:12px;width:100%;min-height:75px;padding:13px 15px;border:1px solid color-mix(in srgb,var(--accent) 58%,var(--line));border-radius:15px;background:linear-gradient(120deg,var(--accent-soft),var(--card));color:var(--text);text-align:left;box-shadow:inset 0 1px #ffffff08}
+:host .animation-library-play{display:grid;place-items:center;width:40px;height:40px;flex:none;border:1px solid color-mix(in srgb,var(--accent) 60%,var(--line));border-radius:12px;background:linear-gradient(145deg,var(--cta-start,var(--accent)),var(--cta-end,var(--accent)));color:var(--cta-ink,var(--accent-ink));box-shadow:0 0 15px color-mix(in srgb,var(--accent) 20%,transparent)}
+:host .animation-library-play>gt-icon{width:20px;height:20px}
+:host .animation-library-copy{display:block;flex:1;min-width:0}
+:host .animation-library-copy strong{display:block;font-size:14px;line-height:1.4;font-weight:750}
+:host .animation-library-copy small{display:block;font-size:11px;color:var(--muted);font-weight:400;margin-top:4px;line-height:1.4}
+:host .animation-library-chevron{width:17px;height:17px;color:var(--accent-text);flex:none;transform:rotate(-90deg);transition:transform .15s}
+:host .animation-library-chevron.expanded{transform:rotate(90deg)}
+:host .animation-library-panel{margin-top:9px;padding:14px;border:1px solid var(--line);border-radius:15px;background:var(--card);min-width:0}
+:host .animation-library-intro{font-size:12px;color:var(--muted);line-height:1.6;margin:0 0 13px}
+:host .animation-library-panel>label{display:grid;gap:7px;font-size:11px;color:var(--muted)}
+:host .animation-library-panel select{width:100%;max-width:100%;min-width:0;min-height:46px;padding:10px 11px;font-size:14px;color:var(--text);border:1px solid var(--line);border-radius:11px;background:var(--raised)}
+:host .animation-library-note{font-size:10px;line-height:1.6;color:var(--muted);margin:10px 1px 0}
+:host .animation-library-toggle:focus-visible{outline:2px solid var(--accent-text);outline-offset:3px}
+@media(max-width:767px){:host .animation-library-panel{padding:12px}:host .animation-library-panel select{font-size:16px}:host .animation-library-toggle{min-height:72px;padding:12px}}
+@media(max-width:359px){:host .animation-library-copy strong{font-size:13px}:host .animation-library-copy small{font-size:10px}:host .animation-library-play{width:36px;height:36px}:host .animation-library-toggle{gap:9px}}
+@media(prefers-reduced-motion:reduce){:host .animation-library-chevron{transition:none}}

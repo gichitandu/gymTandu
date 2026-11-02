@@ -1,3 +1,4 @@
+import {AnimationLibraryComponent} from '../shared/animation-library.component';
 import {exerciseMotionFrames} from '../services/exercise-motion-frames';
 import {ExerciseMotionComponent} from '../shared/exercise-motion.component';
 import {RouterLink} from '@angular/router';
@@ -29,7 +30,7 @@ type CatalogEditorDraft = {
 @Component({
   standalone: true,
   styleUrls: ["./account-polish.css", "./catalog-design.css"],
-  imports: [RouterLink,ExerciseMotionComponent, ExerciseThumbComponent,
+  imports: [AnimationLibraryComponent,RouterLink,ExerciseMotionComponent, ExerciseThumbComponent,
     A11yModule,ExerciseScopeComponent,MachineSetupComponent,
     ExerciseFamiliesComponent,
     ExerciseVideoComponent,
@@ -42,6 +43,7 @@ type CatalogEditorDraft = {
     <header class="catalog-heading"><a class="icon-btn ghost" routerLink="/piani" aria-label="Torna agli allenamenti"><gt-icon name="back"/></a><div><h1>Catalogo esercizi</h1><p>Tecnica, attrezzi e movimenti.</p></div>@if(s.canEditCatalog()){<button type="button" class="primary catalog-add" (click)="open()" [disabled]="!s.ready()" aria-label="Nuovo esercizio"><gt-icon name="plus"/></button>}</header>
     <gt-status />
     @if(draftNotice()){<p class="notice" role="status">{{draftNotice()}}</p>}
+    <gt-animation-library/>
     <label class="catalog-search"><gt-icon name="search"/><input type="search" aria-label="Cerca un esercizio" placeholder="Esercizio o attrezzo…" [ngModel]="query()" (ngModelChange)="query.set($event)"/>@if(query()){<button type="button" class="ghost" (click)="query.set('')" aria-label="Cancella ricerca"><gt-icon name="close"/></button>}</label>
     <nav class="catalog-muscle-tabs" aria-label="Zone muscolari"><button type="button" [class.selected]="!group()" [attr.aria-pressed]="!group()" (click)="group.set('')">Tutti</button>@for(g of s.data().muscleGroups;track g.id){<button type="button" [class.selected]="group()===g.id" [attr.aria-pressed]="group()===g.id" (click)="group.set(g.id)">{{g.name}}</button>}</nav>
     <gt-exercise-scope class="catalog-scope" [value]="scope()" (choose)="scope.set($event)"/>
