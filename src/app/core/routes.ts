@@ -2,6 +2,11 @@ import { Routes } from "@angular/router";
 import { preserveFormDrafts } from '../services/draft-navigation';
 import { nutritionEnabledGuard } from '../services/nutrition-guard';
 const pages: Routes = [
+ {path:'esercizio/:id',loadComponent:()=>import('../features/exercise-detail.component').then(m=>m.ExerciseDetailComponent)},
+ {path:'recupero',data:{mode:'recovery'},loadComponent:()=>import('../features/recovery.component').then(m=>m.RecoveryComponent)},
+ {path:'sonno',data:{mode:'sleep'},loadComponent:()=>import('../features/recovery.component').then(m=>m.RecoveryComponent)},
+ {path:'riposo',data:{mode:'rest'},loadComponent:()=>import('../features/recovery.component').then(m=>m.RecoveryComponent)},
+ {path:'focus-muscolare',loadComponent:()=>import('../features/muscle-focus.component').then(m=>m.MuscleFocusComponent)},
   {
     path: "",
     loadComponent: () =>

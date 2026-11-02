@@ -64,7 +64,7 @@ it('loads a different account without exposing the previous account palette',asy
  const t=await setup();await t.theme.saveConfig({palette:'prugna',mode:'dark'});
  const next='theme-config-'+crypto.randomUUID();t.ids.push(next);t.account.set({id:next});
  t.request.mockResolvedValue({backgroundColor:'#050E17',themeConfig:null});await t.theme.load();
- expect(t.theme.config()).toEqual({palette:'carbonio',mode:'dark'});expect((await t.preference()).id).toBe(next);
+ expect(t.theme.config()).toEqual({palette:'viola-neon',mode:'dark'});expect((await t.preference()).id).toBe(next);
 });
 
 it('loads the new account while an old account save is still waiting for the network',async()=>{

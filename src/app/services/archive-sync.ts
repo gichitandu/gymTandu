@@ -34,11 +34,11 @@ export function archiveSummary(data: DataSet) {
   const known = new Map(defaultExercises.map(exercise => [exercise.id, exerciseSignature(exercise)]));
   return { plans: data.plans.length, plannedExercises: data.planExercises.length,
     personalExercises: data.exercises.filter(exercise => known.get(exercise.id) !== exerciseSignature(exercise)).length,
-    workouts: data.workouts.length, meals: data.meals.length };
+    workouts: data.workouts.length, meals: data.meals.length, wellness: data.wellnessLogs.length };
 }
 export function archiveHasContent(data: DataSet): boolean {
   const counts = archiveSummary(data);
-  if (Object.values(counts).some(Boolean) || data.days.length || data.sets.length || data.scheduledWorkouts.length || data.measurements.length || data.exercisePreferences.length || data.workoutUi.length) return true;
+  if (Object.values(counts).some(Boolean) || data.wellnessLogs.length || data.days.length || data.sets.length || data.scheduledWorkouts.length || data.measurements.length || data.exercisePreferences.length || data.workoutUi.length) return true;
   if (data.profiles.some(profile => profile.name !== 'Atleta' || profile.photo || profile.bodyWeight || profile.height || profile.birthDate || profile.goal)) return true;
   const groups = new Map(defaultGroups.map(group => [group.id, group.name]));
   if (data.muscleGroups.some(group => groups.get(group.id) !== group.name)) return true;

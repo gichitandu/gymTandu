@@ -1,3 +1,5 @@
+import {ExerciseMotionComponent} from '../shared/exercise-motion.component';
+import {RouterLink} from '@angular/router';
 import { confirmationForContext } from '../services/confirmation';
 import { SectionHeadingComponent } from "../shared/section-heading.component";
 import { ExerciseThumbComponent } from "../shared/exercise-thumb.component";
@@ -27,7 +29,7 @@ type CatalogEditorDraft = {
 @Component({
   standalone: true,
   styleUrl: "./account-polish.css",
-  imports: [SectionHeadingComponent, ExerciseThumbComponent,
+  imports: [RouterLink,ExerciseMotionComponent,SectionHeadingComponent, ExerciseThumbComponent,
     A11yModule,ExerciseScopeComponent,MachineSetupComponent,
     ExerciseFamiliesComponent,
     ExerciseVideoComponent,
@@ -71,7 +73,7 @@ type CatalogEditorDraft = {
             <div class="exercise-info">
               <gt-exercise-thumb [exercise]="e" style="--thumb-width:116px;--thumb-height:88px"/>
               <div>
-                <h3>{{ e.name }}</h3>
+                <h3><a [routerLink]="['/esercizio',e.id]">{{ e.name }} <span class="exercise-title-arrow" aria-hidden="true">›</span></a></h3>
                 <span class="pill">{{ s.muscle(e.muscleGroupId) }}</span>
               </div>
             </div>
@@ -84,7 +86,7 @@ type CatalogEditorDraft = {
           @if (e.description) {
             <p class="subtle" style="margin-top:12px">{{ e.description }}</p>
           }
-          <gt-machine-setup [exerciseId]="e.id"/><div class="actions"><gt-exercise-video [exercise]="e" />
+          <gt-exercise-motion [exercise]="e"/><gt-machine-setup [exerciseId]="e.id"/><div class="actions"><gt-exercise-video [exercise]="e" />
             @if(s.canEditCatalog()) {<label class="active-check"><input type="checkbox" [checked]="e.active" [disabled]="saving()" (change)="toggle(e)" />Attivo</label>}
             @for (t of e.tags; track t) {
               <span class="pill">{{ t }}</span>

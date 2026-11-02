@@ -1,11 +1,11 @@
 import {validateImportedProgramOverlaps} from './program-imports.js';
 export const ARCHIVE_LIMIT_BYTES = 50 * 1024 * 1024;
 function archiveValidThemeConfig(value) {
- return !!value&&typeof value==='object'&&!Array.isArray(value)&&Object.keys(value).every(key=>['palette','mode','background','accent'].includes(key))&&['carbonio','artico','prugna','petrolio','sabbia','ghiaccio'].includes(value.palette)&&['dark','light','system'].includes(value.mode)&&['background','accent'].every(key=>value[key]===undefined||typeof value[key]==='string'&&/^#[0-9a-fA-F]{6}$/.test(value[key]));
+ return !!value&&typeof value==='object'&&!Array.isArray(value)&&Object.keys(value).every(key=>['palette','mode','background','accent'].includes(key))&&['viola-neon','blu-azzurro','carbonio','artico','prugna','petrolio','sabbia','ghiaccio'].includes(value.palette)&&['dark','light','system'].includes(value.mode)&&['background','accent'].every(key=>value[key]===undefined||typeof value[key]==='string'&&/^#[0-9a-fA-F]{6}$/.test(value[key]));
 }
 const ARCHIVE_RETAINED_VERSIONS = 10;
-const archiveTables = ['profiles','roles','plans','days','planExercises','exercises','muscleGroups','workouts','workoutExercises','sets','settings','meals','scheduledWorkouts','measurements','exercisePreferences','workoutUi'];
-const archiveRowLimits={profiles:1,roles:3,plans:10000,days:100000,planExercises:100000,exercises:10000,muscleGroups:1000,workouts:100000,workoutExercises:300000,sets:1000000,settings:1,meals:10000,scheduledWorkouts:10000,measurements:10000,exercisePreferences:10000,workoutUi:1};
+const archiveTables = ['profiles','roles','plans','days','planExercises','exercises','muscleGroups','workouts','workoutExercises','sets','settings','meals','scheduledWorkouts','measurements','exercisePreferences','workoutUi','wellnessLogs'];
+const archiveRowLimits={profiles:1,roles:3,plans:10000,days:100000,planExercises:100000,exercises:10000,muscleGroups:1000,workouts:100000,workoutExercises:300000,sets:1000000,settings:1,meals:10000,scheduledWorkouts:10000,measurements:10000,exercisePreferences:10000,workoutUi:1,wellnessLogs:10000};
 function archiveJson(data, status=200, headers={}) { return Response.json(data,{status,headers:{'Cache-Control':'private, no-store','X-Content-Type-Options':'nosniff',...headers}}); }
 function archiveFail(message,status=400) { throw Object.assign(new Error(message),{status}); }
 async function archiveDigest(value) { const bytes=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(value));return [...new Uint8Array(bytes)].map(value=>value.toString(16).padStart(2,'0')).join(''); }
@@ -33,6 +33,7 @@ function archiveValidate(text) {
  // This boundary rejects partial/garbage snapshots instead of replacing a head.
  for(const name of archiveTables){
   const rows=backup.data[name];
+  if(name==='wellnessLogs'&&rows===undefined&&backup.schemaVersion<11)continue;
   if(!Array.isArray(rows)||rows.length>archiveRowLimits[name])archiveFail('La copia dell’archivio è incompleta.');
   const ids=new Set();
   for(const row of rows){if(!row||typeof row.id!=='string'||!row.id||row.id.length>150||ids.has(row.id))archiveFail('La copia contiene record non validi.');ids.add(row.id);}
@@ -41,7 +42,7 @@ function archiveValidate(text) {
  const data=backup.data,nonempty=value=>typeof value==='string'&&value.trim().length>0,numeric=value=>Number.isFinite(value)&&value>=0;
  const profile=data.profiles[0],settings=data.settings[0];
  if(profile.id!=='local'||!nonempty(profile.name)||!['SuperAdmin','Admin','User'].includes(profile.role)||settings.id!=='local'||!['dark','light'].includes(settings.theme)||!['kg','lb'].includes(settings.unit)||typeof settings.prefill!=='boolean'||data.roles.length!==3||new Set(data.roles.map(role=>role.name)).size!==3||data.roles.some(role=>!['SuperAdmin','Admin','User'].includes(role.name)))archiveFail('Profilo o impostazioni della copia non validi.');
- const ids=Object.fromEntries(archiveTables.map(name=>[name,new Set(data[name].map(row=>row.id))]));
+ const ids=Object.fromEntries(archiveTables.map(name=>[name,new Set((data[name]||[]).map(row=>row.id))]));
  for(const plan of data.plans)if(!nonempty(plan.name)||!ids.profiles.has(plan.userId)||typeof plan.active!=='boolean'||typeof plan.archived!=='boolean')archiveFail('Piano della copia non valido.');
  for(const group of data.muscleGroups)if(!nonempty(group.name))archiveFail('Gruppo della copia non valido.');
  for(const exercise of data.exercises)if(!nonempty(exercise.name)||!nonempty(exercise.equipment)||!ids.muscleGroups.has(exercise.muscleGroupId)||!Array.isArray(exercise.secondaryMuscleIds)||exercise.secondaryMuscleIds.some(id=>!ids.muscleGroups.has(id))||!Array.isArray(exercise.tags)||typeof exercise.active!=='boolean'||!['external','bodyweight','weighted-bodyweight','assisted'].includes(exercise.loadMode))archiveFail('Esercizio della copia non valido.');
@@ -50,6 +51,7 @@ function archiveValidate(text) {
  for(const workout of data.workouts)if(!ids.profiles.has(workout.userId)||!nonempty(workout.planName)||!nonempty(workout.dayName)||!['draft','completed'].includes(workout.status))archiveFail('Allenamento della copia non valido.');
  for(const exercise of data.workoutExercises)if(!ids.workouts.has(exercise.workoutId)||!nonempty(exercise.name))archiveFail('Esercizio registrato della copia non valido.');
  for(const set of data.sets)if(!ids.workoutExercises.has(set.workoutExerciseId)||!Number.isInteger(set.number)||set.number<1||!numeric(set.weight)||!Number.isInteger(set.reps)||set.reps<1||set.reps>999||typeof set.completed!=='boolean')archiveFail('Serie della copia non valida.');
+ if(settings.neonGlow!==undefined&&(!Number.isInteger(settings.neonGlow)||settings.neonGlow<0||settings.neonGlow>100)||settings.dynamicBackground!==undefined&&typeof settings.dynamicBackground!=='boolean')archiveFail('Aspetto non valido.');
  if(settings.themeConfig!==undefined&&!archiveValidThemeConfig(settings.themeConfig))archiveFail('Tema della copia non valido.');
  if(settings.allowCompletedWorkoutDeletion!==undefined&&typeof settings.allowCompletedWorkoutDeletion!=='boolean')archiveFail('Preferenza eliminazione allenamenti non valida.');
  if(settings.gymMode!==undefined&&typeof settings.gymMode!=='boolean')archiveFail('Modalità palestra non valida.');
@@ -57,6 +59,11 @@ function archiveValidate(text) {
  for(const row of data.workoutExercises)if(row.substitutedFrom&&(!nonempty(row.substitutedFrom.exerciseId)||!nonempty(row.substitutedFrom.name)))archiveFail('Origine sostituzione non valida.');
  for(const w of data.workouts)if(w.durationUnknown!==undefined&&typeof w.durationUnknown!=='boolean')archiveFail('Indicazione durata non valida.');
  const date=value=>typeof value==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(value)&&Number.isFinite(Date.parse(value+'T12:00:00Z'))&&new Date(value+'T12:00:00Z').toISOString().slice(0,10)===value;
+ const wellnessDates=new Set();
+ for(const row of data.wellnessLogs||[]){
+  if(!date(row.date)||wellnessDates.has(row.date)||typeof row.notes!=='string'||row.notes.length>2000||!row.soreness||typeof row.soreness!=='object'||Array.isArray(row.soreness)||Object.keys(row.soreness).length>1000||Object.entries(row.soreness).some(([id,v])=>!id||id.length>150||!Number.isInteger(v)||v<0||v>4)||row.sleepMinutes!==undefined&&(!Number.isInteger(row.sleepMinutes)||row.sleepMinutes<0||row.sleepMinutes>1440)||[row.energy,row.stress,row.sleepQuality].some(v=>v!==undefined&&(!Number.isInteger(v)||v<1||v>5)))archiveFail('Diario recupero non valido.');
+  wellnessDates.add(row.date);
+ }
  for(const event of data.scheduledWorkouts){
   const kind=event.kind===undefined?'workout':event.kind;
   if(!['workout','cardio','mobility','rest','other'].includes(kind)||!nonempty(event.id)||!date(event.date)||!nonempty(event.dayName)||event.dayName.length>200||typeof event.notes!=='string'||event.notes.length>(kind==='workout'?10000:2000))archiveFail('Evento calendario non valido.');

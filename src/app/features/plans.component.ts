@@ -53,12 +53,17 @@ type PlanEditorDraft = {
     <gt-status />
     <gt-open-workouts />
     @if(draftNotice()){<p class="notice" role="status">{{draftNotice()}}</p>}
-    <nav class="plans-navigation" aria-label="Allenamenti"><div class="segmented"><button type="button" [class.active]="!archived()" (click)="archived.set(false)">Piani</button><a class="button ghost" routerLink="/allenamenti">Storico</a></div><button type="button" class="ghost archive-toggle" [class.selected]="archived()" (click)="archived.set(!archived())">{{archived()?'Torna ai piani':'Archivio'}}</button></nav>
+    <nav class="neon-segments plans-navigation" aria-label="Allenamenti"><button type="button" [class.active]="hub()==='today'" (click)="hub.set('today')">Oggi</button><button type="button" [class.active]="hub()==='plans'&&!archived()" (click)="hub.set('plans');archived.set(false)">Piani</button><a routerLink="/allenamenti">Storico</a><button type="button" [class.active]="hub()==='plans'&&archived()" (click)="hub.set('plans');archived.set(true)">Archivio</button></nav>
+    @if(hub()==='today'){
+      <section class="card training-today-card"><img class="training-today-art" src="/training/figures/bench-v2.png" alt=""/><div><p class="eyebrow">IL TUO PROSSIMO PASSO</p>@if(s.draft();as draft){<h2>{{draft.dayName}}</h2><p>{{draft.planName}}</p><a class="button primary" routerLink="/sessione"><gt-icon name="play"/>Riprendi allenamento</a>}@else if(todayDay();as day){<h2>{{day.name}}</h2><p>{{s.activePlan()?.name}} · {{s.planExercises(day.id).length}} esercizi</p><div class="actions"><a class="button ghost" routerLink="/anteprima-allenamento" [queryParams]="{day:day.id,return:'piani'}">Vedi scheda</a><button class="primary" (click)="start(day.id)" [disabled]="s.busy()||!s.planExercises(day.id).length"><gt-icon name="play"/>Inizia</button></div>}@else{<h2>Costruisci il tuo percorso</h2><p>Crea o attiva un piano per trovare qui il prossimo allenamento.</p><button class="primary" (click)="hub.set('plans');openPlan()">Crea piano</button>}</div></section>
+      <div class="training-hub-links"><a class="card" routerLink="/calendario"><gt-icon name="calendar"/><span><strong>Programmazione</strong><small>Allenamenti, attività e riposo</small></span><gt-icon name="arrow"/></a><a class="card" routerLink="/catalogo"><gt-icon name="weight"/><span><strong>Catalogo esercizi</strong><small>Varianti, tecnica e movimenti</small></span><gt-icon name="arrow"/></a><a class="card" routerLink="/recupero"><gt-icon name="moon"/><span><strong>Come ti senti oggi?</strong><small>Apri il check-in recovery</small></span><gt-icon name="arrow"/></a></div>
+    }
+    <div [hidden]="hub()==='today'">
     <a class="excel-archive-link" routerLink="/importa-excel" [queryParams]="{tab:'archive'}"><gt-icon name="download"/>Excel importati<gt-icon name="arrow"/></a>
     <div class="list simple-plan-list">
       @for(p of plans();track p.id){
         <section class="card simple-plan">
-          <div class="simple-plan-top">
+          <div class="simple-plan-top"><gt-exercise-thumb class="plan-cover-thumb" [exercise]="thumbnailExercise(p.id)"/>
             <button type="button" class="simple-plan-title" [attr.aria-expanded]="expanded()===p.id" (click)="expanded.set(expanded()===p.id?'':p.id)"><span><strong>{{p.name}}</strong><small>{{p.program?p.program.weeks+' settimane · ':''}}{{s.days(p.id).length}} allenamenti</small></span><span class="plan-chevron" aria-hidden="true">{{expanded()===p.id?'⌃':'›'}}</span></button>
             @if(p.completedAt){<span class="pill green">Concluso</span>}@else if(p.active){<span class="pill green">Attivo</span>}
             <details class="simple-menu" #planMenu><summary [attr.aria-label]="'Gestisci '+p.name">⋯</summary><div class="simple-menu-panel">
@@ -96,7 +101,7 @@ type PlanEditorDraft = {
       }@empty{<div class="card empty"><h2>{{archived()?'Nessun piano archiviato':'Nessun piano'}}</h2>@if(!archived()){<button type="button" class="primary" (click)="openPlan()">Crea piano</button>}</div>}
     </div>
     <a class="button ghost catalog-entry" routerLink="/catalogo"><gt-icon name="weight"/>Catalogo esercizi<gt-icon name="arrow"/></a>
-    </div>
+    </div></div>
     @if (modal()) {
       <div class="modal-backdrop">
         <section
@@ -269,6 +274,8 @@ export class PlansComponent {
   private route = inject(ActivatedRoute,{optional:true});
   selectedWeeks=signal<Record<string,number>>({});
   fb = inject(FormBuilder);
+  hub=signal<'today'|'plans'>('plans');
+  todayDay=computed(()=>{const day=this.s.nextDay();return day&&!this.s.data().plans.find(p=>p.id===day.planId)?.completedAt?day:undefined;});
   archived = signal(false);
   expanded = signal(this.s.activePlan?.()?.id||"");
   modal = signal("");
@@ -415,6 +422,7 @@ export class PlansComponent {
   ngOnDestroy(){clearTimeout(this.restoreTimer);void this.draftSession?.destroy();this.destroyed=true;this.draftSubscriptions.forEach(subscription=>subscription.unsubscribe());}
   openPlan(p?: TrainingPlan) {
     if(!this.beginEditor(()=>this.openPlan(p)))return;
+    this.hub.set('plans');
     this.editId = p?.id || "";
     this.formSaveId = p?.id || uid();
     this.planForm.reset({

@@ -1,3 +1,4 @@
+import {ExerciseMotionComponent} from './exercise-motion.component';
 import {exerciseComparison} from '../services/exercise-comparison';
 import { matchesExercise } from '../services/exercise-search';
 import { NgTemplateOutlet } from '@angular/common';
@@ -20,7 +21,7 @@ import type { AppUpdateEvent } from '../services/pwa';
 import { FormDraftService } from '../services/form-drafts';
 type ActiveSetDraft={weight:number;reps:number;rpe:number|undefined;setNotes:string;kind:'work'|'warmup'};
 interface ActiveDraftSnapshot {entries:[string,ActiveSetDraft][];exerciseId:string;setId:string;bases?:Record<string,string>}
-@Component({selector:'gt-active-workout',standalone:true,imports:[NgTemplateOutlet,FormsModule,LoadProgressionComponent,MachineSetupComponent,MuscleMapComponent,ExerciseThumbComponent,ExerciseVideoComponent,IconComponent],templateUrl:'./active-workout.component.html',styleUrls:['./recording.css','./recording-simple.css']})
+@Component({selector:'gt-active-workout',standalone:true,imports:[ExerciseMotionComponent,NgTemplateOutlet,FormsModule,LoadProgressionComponent,MachineSetupComponent,MuscleMapComponent,ExerciseThumbComponent,ExerciseVideoComponent,IconComponent],templateUrl:'./active-workout.component.html',styleUrls:['./recording.css','./recording-simple.css']})
 export class ActiveWorkoutComponent {
  private confirmation=confirmationForContext();
  externalTimer=inject(ExternalTimerService,{optional:true});

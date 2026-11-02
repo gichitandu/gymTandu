@@ -125,3 +125,20 @@
  .entry-eye{min-height:44px;min-width:44px;}
  .entry-tabs button{min-height:44px;}
 }
+
+/* Access, local mode and password recovery share the new neon identity. */
+.entry-page{--text:#f7f6ff;--muted:#b3b6d2;--line:#363051;background:radial-gradient(ellipse at 8% 0%,#a638ed20,transparent 48%),radial-gradient(ellipse at 95% 80%,#03ccff0c,transparent 48%),#060918;color:var(--text)}
+.entry-page .entry-panel{background:linear-gradient(145deg,#18142b,#080d1d 65%);border-color:#6c449b66;box-shadow:0 0 30px #a63bf00c,inset 0 1px #e8c8ff12}
+.entry-page .entry-panel::before{opacity:.4;border-color:#874bb755}
+.entry-page .entry-wordmark>span,.entry-page .hero-introduction h1>span,.entry-page .entry-text-button{color:#d18aff}
+.entry-page .entry-tabs{background:#101325;border-color:#563a79}
+.entry-page .entry-tabs button.active{background:linear-gradient(125deg,#9f30db,#d476ff);border-color:#cc8bf0;color:#1a082a;box-shadow:0 0 18px #b43fff35}
+.entry-page .entry-field{background:linear-gradient(115deg,#15192b,#101427);border-color:#5c486b}
+.entry-page .entry-field:focus-within{border-color:#ce7aff;box-shadow:0 0 0 3px #b23fee20}
+.entry-page .entry-primary{background:linear-gradient(115deg,#bb54ef,#d47cff);border-color:#db9aff;color:#1b092a;box-shadow:0 0 24px #b23fff35,inset 0 1px #ffeaff50}
+.entry-page .entry-secondary{background:#171a30;border-color:#614476;color:#ecd7ff}
+.entry-page .remember-option input{accent-color:#cc70ff}
+.entry-page .entry-features>div{background:linear-gradient(135deg,#1a1730,#0c1324);border-color:#5d3e7c}
+.entry-page .entry-features gt-icon{color:#cc7aff;filter:drop-shadow(0 0 8px #b344ed55)}
+.entry-page .emblem-orbit{background:radial-gradient(ellipse at 12% 10%,#8d28d638,transparent 56%),linear-gradient(135deg,#16112a,#080d1b 55%,#07263866);border-color:#ba71ec55;box-shadow:inset 0 0 35px #8b26ca18,0 0 30px #8e31d029}
+.entry-page .entry-brand>img,.entry-page .hero-emblem>img{filter:drop-shadow(0 0 14px #bb54ed50)}

@@ -29,6 +29,16 @@
           "/vendor/food-model/**"
         ]
       }
+    },
+    {
+      "name": "training-visuals",
+      "installMode": "lazy",
+      "updateMode": "lazy",
+      "resources": {
+        "files": [
+          "/training/**"
+        ]
+      }
     }
   ]
 }

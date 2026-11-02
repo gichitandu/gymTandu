@@ -167,6 +167,7 @@ export interface IphoneCheck {state:'todo'|'pass'|'fail';note?:string;checkedAt?
 export interface IphoneChecklist {device:string;ios:string;checks:Record<string,IphoneCheck>;}
 export interface CatalogBaseline { exercises: Record<string, string>; groups: Record<string, string> }
 export interface AppSettings extends Entity {
+  neonGlow?:number;dynamicBackground?:boolean;
   allowCompletedWorkoutDeletion?:boolean;
   gymMode?:boolean;
   archiveResetId?: string;
@@ -185,7 +186,13 @@ export interface AppSettings extends Entity {
   themeConfig?: {palette:string;mode:'dark'|'light'|'system';background?:string;accent?:string};
   goals?: PersonalGoals;
 }
+/** Daily self-reports; no physiological readiness is inferred from training. */
+export interface WellnessLog extends Entity {
+ date:string;sleepMinutes?:number;sleepQuality?:number;energy?:number;stress?:number;
+ soreness:Record<string,number>;notes:string;
+}
 export interface DataSet {
+  wellnessLogs: WellnessLog[];
   exercisePreferences: ExercisePreference[];
   workoutUi: WorkoutUiState[];
   profiles: UserProfile[];
@@ -220,6 +227,7 @@ export const TABLES: (keyof DataSet)[] = [
   "meals",
   "scheduledWorkouts",
   "measurements",
+  "wellnessLogs",
 ];
 export const uid = () => crypto.randomUUID();
 export const now = () => new Date().toISOString();

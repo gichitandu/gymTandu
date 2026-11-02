@@ -1,3 +1,4 @@
+import {validWellness} from './wellness';
 import {validThemeConfig} from "./theme-palettes";
 import {validateCalendarEvent} from './calendar-event-data';
 import {validWorkoutUi} from "./workout-resume";
@@ -8,10 +9,12 @@ export function validateIntegrity(d: DataSet) {
   const fail = (m: string): never => {
     throw Error("Backup non valido: " + m);
   };
+  if(!Array.isArray(d.wellnessLogs)||d.wellnessLogs.length>10000||d.wellnessLogs.some(row=>!validWellness(row))||new Set(d.wellnessLogs.map(row=>row.date)).size!==d.wellnessLogs.length)fail('diario recupero non valido o date duplicate');
   for (const name of TABLES) {
     if (new Set(d[name].map((e) => e.id)).size !== d[name].length)
       fail("ID duplicati in " + name);
   }
+  if(d.settings.some(s=>s.neonGlow!==undefined&&(!Number.isInteger(s.neonGlow)||s.neonGlow<0||s.neonGlow>100)||s.dynamicBackground!==undefined&&typeof s.dynamicBackground!=='boolean'))fail('aspetto non valido');
   if (d.profiles[0].id !== "local" || d.settings[0].id !== "local")
     fail("profilo locale non valido");
   if (

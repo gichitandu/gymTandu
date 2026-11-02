@@ -20,7 +20,8 @@
             "styles": [
               "node_modules/@angular/material/prebuilt-themes/azure-blue.css",
               "src/styles.css",
-              "src/form-polish.css"
+              "src/form-polish.css",
+              "src/neon.css"
             ],
             "outputPath": "dist/gymtrack"
           },
@@ -54,5 +55,8 @@
         }
       }
     }
+  },
+  "cli": {
+    "analytics": false
   }
 }

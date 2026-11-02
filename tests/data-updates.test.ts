@@ -35,10 +35,10 @@ it('upgrades v6 additively, retaining every saved and edited record and photo',a
  old.version(6).stores({profiles:'id,role',roles:'id,&name',plans:'id,userId,active,archived',days:'id,planId,order',planExercises:'id,dayId,exerciseId',exercises:'id,name,muscleGroupId,equipment,active',muscleGroups:'id,&name',workouts:'id,userId,planId,dayId,date,status',workoutExercises:'id,workoutId,exerciseId',sets:'id,workoutExerciseId',settings:'id',meals:'id,date,name',scheduledWorkouts:'id,date,dayId,workoutId',measurements:'id,&date',exercisePreferences:'id',workoutUi:'id'});
  const data=editedArchive();
  data.profiles[0].photo=new Blob([new Uint8Array([255,216,255,0,1])],{type:'image/jpeg'});
- for(const table of TABLES)await old.table(table).bulkPut(data[table]);old.close();
+ for(const table of TABLES)if(old.tables.some(t=>t.name===table))await old.table(table).bulkPut(data[table]);old.close();
  const db=new GymDatabase(name);
  try{
-  const upgraded=await db.snapshot();expect(db.verno).toBe(7);
+  const upgraded=await db.snapshot();expect(db.verno).toBe(8);
   for(const table of TABLES)expect([...upgraded[table]].sort((a,b)=>a.id.localeCompare(b.id))).toEqual([...data[table]].sort((a,b)=>a.id.localeCompare(b.id)));
   expect(await upgraded.profiles[0].photo!.arrayBuffer()).toEqual(await data.profiles[0].photo!.arrayBuffer());
   db.close();const reopened=new GymDatabase(name);try{expect((await reopened.snapshot()).sets).toEqual(data.sets);}finally{reopened.close();}

@@ -4,7 +4,7 @@ import {AuthService} from './auth';
 import {feedbackForContext,feedbackSignal} from './feedback';
 import {ThemeConfig,THEME_PALETTES,validThemeConfig,resolveTheme,contrastRatio} from './theme-palettes';
 export const DEFAULT_BACKGROUND='#050E17';
-export const DEFAULT_THEME:ThemeConfig={palette:'carbonio',mode:'dark'};
+export const DEFAULT_THEME:ThemeConfig={palette:'viola-neon',mode:'dark'};
 type ThemePreference={id:string;color:string;config?:ThemeConfig;dirty?:boolean};
 @Injectable({providedIn:'root'})
 export class ThemeService{

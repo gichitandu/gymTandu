@@ -34,6 +34,18 @@ it('retains a complete archive in server storage across a new Worker environment
  expect(sql.prepare('SELECT COUNT(*) AS n FROM archive_heads').get()!.n).toBe(1);
  expect(objects.size).toBe(1);
 });
+it('accepts older v10 snapshots, validates v11 wellness and retains the last good server copy after invalid input',async()=>{
+ const old=JSON.parse(backup);old.schemaVersion=10;delete old.data.wellnessLogs;
+ expect((await put(JSON.stringify(old))).response.status).toBe(200);
+ const current=JSON.parse(backup);current.data.wellnessLogs=[{id:'wellness-day',date:'2026-11-02',sleepMinutes:465,energy:4,soreness:{'muscle-0':1},notes:''}];current.data.settings[0].themeConfig={palette:'viola-neon',mode:'dark'};
+ const good=JSON.stringify(current);expect((await put(good,1)).response.status).toBe(200);
+ for(const patch of [{sleepMinutes:1441},{date:'2026-02-30'},{energy:6},{soreness:{x:5}}]){
+  const bad=structuredClone(current);Object.assign(bad.data.wellnessLogs[0],patch);expect((await put(JSON.stringify(bad),2)).response.status).toBe(400);
+ }
+ const missing=structuredClone(current);delete missing.data.wellnessLogs;expect((await put(JSON.stringify(missing),2)).response.status).toBe(400);
+ const duplicated=structuredClone(current);duplicated.data.wellnessLogs.push({...duplicated.data.wellnessLogs[0],id:'other-id'});expect((await put(JSON.stringify(duplicated),2)).response.status).toBe(400);
+ expect((await get()).data.backup).toBe(good);
+});
 
 it('isolates platform visitors, separates device/account archives, and requires a real account session',async()=>{
  await put();expect((await get('device',{visitor:'different-visitor'})).data.backup).toBeNull();

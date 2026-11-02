@@ -74,5 +74,5 @@ export class ShellComponent {
     {path:'/profilo',label:'Profilo',icon:'user'},
   ];
   get nav(){const items=this.navItems.filter(item=>item.path!=='/alimentazione'||this.features?.nutritionEnabled());if(this.router.url.split('?')[0]==='/calendario')items.splice(2,0,{path:'/calendario',label:'Calendario',icon:'calendar'});return items;}
-  get desktopNav(){return [...this.nav.filter(item=>item.path!=='/calendario'),{path:'/calendario',label:'Calendario',icon:'calendar'},{path:'/allenamenti',label:'Storico',icon:'clock'}];}
+  get desktopNav(){return [...this.nav.filter(item=>item.path!=='/calendario'),{path:'/calendario',label:'Calendario',icon:'calendar'},{path:'/allenamenti',label:'Storico',icon:'clock'},{path:'/recupero',label:'Recovery',icon:'moon'},{path:'/focus-muscolare',label:'Focus muscolare',icon:'activity'}];}
 }

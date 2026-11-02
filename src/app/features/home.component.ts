@@ -1,3 +1,4 @@
+import {sleepLabel} from '../services/wellness';
 import {AppFeaturesService} from '../services/app-features';
 import { AuthService } from '../services/auth';
 import { BackupReminderComponent } from "../shared/backup-reminder.component";
@@ -26,6 +27,10 @@ export class HomeComponent {
   router = inject(Router);
   private todayClock = inject(TodayService,{optional:true});
   get today() { return this.todayClock?.date() || localDate(); }
+  wellness=computed(()=>this.s.data().wellnessLogs.find(row=>row.date===this.today));
+  sleepLabel=sleepLabel;
+  weeklyProgress=computed(()=>{const goal=this.goals()?.workoutsPerWeek;return goal?Math.min(100,Math.round(this.weekCount()/goal*100)):0;});
+  trainingMinutes=computed(()=>Math.round(this.s.completed().reduce((sum,row)=>sum+row.duration,0)));
   goals = computed(() => this.s.settings().goals);
   private concluded(planId:string){return !!this.s.data().plans.find(plan=>plan.id===planId)?.completedAt;}
   nextDay=computed(()=>{const day=this.s.nextDay();return day&&!this.concluded(day.planId)?day:undefined;});

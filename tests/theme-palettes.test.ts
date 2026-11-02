@@ -9,8 +9,8 @@ function readable(tokens:ReturnType<typeof resolveTheme>){
  expect(contrastRatio(tokens.buttonText,tokens.accent)).toBeGreaterThanOrEqual(4.5);
 }
 describe('complete personal theme palettes',()=>{
- it('retains all six approved backgrounds, surfaces and accent colors in their natural mode',()=>{
-  expect(THEME_PALETTES.map(p=>p.id)).toEqual(['carbonio','artico','prugna','petrolio','sabbia','ghiaccio']);
+ it('adds the approved neon themes and retains all existing palettes in their natural mode',()=>{
+  expect(THEME_PALETTES.map(p=>p.id)).toEqual(['viola-neon','blu-azzurro','carbonio','artico','prugna','petrolio','sabbia','ghiaccio']);
   for(const palette of THEME_PALETTES){const tokens=resolveTheme({palette:palette.id,mode:palette.tone},false);expect(tokens.background).toBe(palette.background);expect(tokens.card).toBe(palette.card);expect(tokens.accent).toBe(palette.accent);expect(tokens.text).toBe(palette.text);readable(tokens);}
  });
  it('adapts every palette for dark, light and system modes while preserving its accent',()=>{

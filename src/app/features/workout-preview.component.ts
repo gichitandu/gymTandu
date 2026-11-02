@@ -1,3 +1,4 @@
+import {ExerciseMotionComponent} from '../shared/exercise-motion.component';
 import {Component,computed,inject,signal} from '@angular/core';
 import {takeUntilDestroyed} from '@angular/core/rxjs-interop';
 import {ActivatedRoute,RouterLink} from '@angular/router';
@@ -7,7 +8,7 @@ import {ExerciseThumbComponent} from '../shared/exercise-thumb.component';
 import {IconComponent} from '../shared/icon.component';
 import {TrainingPlanExercise} from '../models/domain';
 
-@Component({standalone:true,imports:[RouterLink,ExerciseThumbComponent,IconComponent],templateUrl:'./workout-preview.component.html',styleUrl:'./workout-preview.component.css'})
+@Component({standalone:true,imports:[ExerciseMotionComponent,RouterLink,ExerciseThumbComponent,IconComponent],templateUrl:'./workout-preview.component.html',styleUrl:'./workout-preview.component.css'})
 export class WorkoutPreviewComponent {
   readonly s=inject(Store);
   private route=inject(ActivatedRoute);

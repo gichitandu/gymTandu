@@ -30,6 +30,9 @@ import { ExcelProgramDraft } from '../models/excel-import';
 import { autoCompletePlan,effectiveProgramRange,excelProgramConflicts,normalizedExerciseName,prescriptionDetails,scheduleConflicts,validateExcelProgram } from './plan-program';
 @Injectable({ providedIn: "root" })
 export class Store {
+  saveWellness(row:import('../models/domain').WellnessLog){return this.change(d=>{const existing=d.wellnessLogs.find(v=>v.date===row.date);const next={...structuredClone(row),id:existing?.id||row.id};d.wellnessLogs=d.wellnessLogs.filter(v=>v.date!==row.date);d.wellnessLogs.push(next);},'Diario recupero salvato',false);}
+  removeWellness(id:string){return this.change(d=>{d.wellnessLogs=d.wellnessLogs.filter(v=>v.id!==id);},'Voce rimossa',false);}
+
   private theme = inject(ThemeService, { optional: true });
   private auth = inject(AuthService, { optional: true });
   private repo = inject(GYM_REPOSITORY);
@@ -181,6 +184,8 @@ export class Store {
   private applyTheme() {
     document.body.classList.toggle("light", this.settings().theme === "light");
     this.theme?.apply();
+    document.body.style?.setProperty('--neon-glow',String((this.settings().neonGlow??55)/100));
+    document.body.classList.toggle('dynamic-background',this.settings().dynamicBackground??true);
   }
   async change(
     fn: (d: DataSet) => void | Promise<void>,

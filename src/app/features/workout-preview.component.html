@@ -17,6 +17,7 @@
       @let item=row.prescription;
       <article class="card preview-exercise">
         <header><gt-exercise-thumb [exercise]="row.exercise"/><div class="exercise-title"><span class="exercise-number">{{number+1}} / {{workout.exercises.length}}</span><h2>{{row.name}}</h2><p>{{row.muscle}}{{row.muscle&&row.exercise?.equipment?' · ':''}}{{row.exercise?.equipment}}</p></div></header>
+        <gt-exercise-motion [exercise]="row.exercise"/>
         <dl class="prescription-grid"><div><dt>Serie</dt><dd>{{item.sets}}</dd></div><div><dt>Ripetizioni</dt><dd>{{range(item.repsMin,item.repsMax)}}</dd></div><div><dt>Recupero</dt><dd>{{rest(item.rest)}}</dd></div></dl>
         @if(item.rirMin!==undefined||item.rirMax!==undefined||item.rpe!==undefined||item.superset||item.warmupSets){<div class="prescription-tags">@if(item.rirMin!==undefined||item.rirMax!==undefined){<span title="Ripetizioni in riserva">RIR {{range(item.rirMin,item.rirMax)}}</span>}@if(item.rpe!==undefined){<span>RPE {{item.rpe}}</span>}@if(item.superset){<span>Superset {{item.superset}}</span>}@if(item.warmupSets){<span>{{item.warmupSets}} serie di riscaldamento</span>}</div>}
         @if(item.targetWeight!==undefined){<p class="preview-load"><span>Carico previsto</span><strong>{{s.formatWeight(item.targetWeight)}} {{s.settings().unit}}</strong></p>}
