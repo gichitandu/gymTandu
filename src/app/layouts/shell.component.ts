@@ -14,7 +14,7 @@ import { ArchiveSyncService } from "../services/archive-sync";
 import { canResumeAtHome, MobileNavigationService } from "../services/mobile-navigation";
 @Component({
   selector: "gt-shell",
-  host: {class: "design-v2 photo-controls"},
+  host: {class: "design-v2 photo-controls", "[class.reference-pages]":"referencePage()"},
   standalone: true,
   imports: [DataStatusComponent,WorkoutClockComponent,RouterLink, RouterLinkActive, RouterOutlet, IconComponent, AvatarComponent, ArchiveRecoveryComponent],
   styleUrls: ['./experience.css'],
@@ -41,7 +41,7 @@ import { canResumeAtHome, MobileNavigationService } from "../services/mobile-nav
           <a class="avatar" routerLink="/profilo" aria-label="Apri profilo"><gt-avatar [photo]="s.profile().photo" [name]="s.profile().name" /></a>
         </div>
       </header>}
-      <main [class.session-main]="router.url.startsWith('/sessione')">@if(s.ready()){@if(router.url.startsWith('/sessione')){<gt-data-status/>}@if(auth.offlineMode()){<p class="local-mode-label">Archivio personale locale · funzioni condivise disabilitate</p>}<router-outlet />@if(router.url.split('?')[0]==='/profilo'&&auth.canManageBackups()){<gt-archive-recovery/>}}@else{<section class="card archive-opening" role="status" aria-live="polite"><h1>Apertura del tuo archivio</h1><p>Sto caricando i dati salvati su questo dispositivo…</p>@if(s.error()){<p class="notice">{{s.error()}}</p>}</section>}</main>
+      <main [class.session-main]="router.url.startsWith('/sessione')">@if(s.ready()){@if(router.url.startsWith('/sessione')){<gt-data-status/>}@if(referencePage()&&(pwa.updateReady()||pwa.releases.updateReady())){<gt-data-status class="reference-update-status"/>}@if(auth.offlineMode()){<p class="local-mode-label">Archivio personale locale · funzioni condivise disabilitate</p>}<router-outlet />@if(referencePage()){<gt-data-status class="reference-page-status"/>}@if(router.url.split('?')[0]==='/profilo'&&auth.canManageBackups()){<gt-archive-recovery/>}}@else{<section class="card archive-opening" role="status" aria-live="polite"><h1>Apertura del tuo archivio</h1><p>Sto caricando i dati salvati su questo dispositivo…</p>@if(s.error()){<p class="notice">{{s.error()}}</p>}</section>}</main>
     </div>
     <nav class="bottom-nav" [class.calendar-navigation]="router.url.split('?')[0]==='/calendario'" aria-label="Navigazione principale" [style.grid-template-columns]="'repeat('+nav.length+',minmax(0,1fr))'">
       @for (item of nav; track item.path) {
@@ -61,6 +61,7 @@ export class ShellComponent {
   private navigation=inject(MobileNavigationService);
   constructor(){effect(()=>{if(!this.s.ready()||!this.firstOpen||!this.navigation.resolved())return;this.firstOpen=false;const w=this.s.draft();if(w&&canResumeAtHome(this.navigation.url(),this.navigation.resolved())&&this.resume.read(this.s.archiveKey(),w.id,this.s.data().workoutUi.find(x=>x.id===w.id),this.s.archiveRevision()))void this.router.navigateByUrl('/sessione');});effect(()=>{if(this.features?.ready()&&!this.features.nutritionEnabled()&&this.router.url.split('?')[0]==='/alimentazione')void this.router.navigateByUrl('/');});}
   router=inject(Router);
+  referencePage(){return ['/','/piani','/progressi'].includes(this.router.url.split('?')[0]);}
   auth = inject(AuthService);
   features=inject(AppFeaturesService,{optional:true});
   s = inject(Store);

@@ -1,53 +1,67 @@
-/* Training controls follow the photographed violet-neon reference. */
-:host .compact-plans{max-width:760px}
+/* The training hub mirrors the compact violet and blue reference. */
+:host{display:block;min-width:0}
+:host .compact-plans{max-width:760px;min-width:0}
 :host .plans-heading{align-items:center;gap:12px;margin:0 0 15px}
-:host .plans-heading h1{font-size:27px;line-height:1.15;letter-spacing:-.7px;margin:0}
+:host .plans-heading h1{font-size:28px;line-height:1.15;letter-spacing:-.8px;margin:0}
 :host .plans-heading p{font-size:12px;line-height:1.5;color:var(--muted);margin:6px 0 0}
 :host .plans-heading .new-plan{display:grid;place-items:center;width:44px;min-width:44px;height:44px;min-height:44px;padding:0;border-radius:12px}
 :host .new-plan>gt-icon{width:23px;height:23px}
-:host gt-animation-library{display:block;margin-bottom:14px}
 :host .plans-navigation{display:flex;align-items:stretch;gap:4px;border-radius:12px;padding:4px;margin:0 0 14px}
 :host .plans-navigation>button,:host .plans-navigation>a{display:flex;align-items:center;justify-content:center;gap:8px;flex:1;min-width:0;min-height:40px;border-radius:9px;padding:7px 6px;font-size:12px;line-height:1.3;font-weight:600}
 :host .plans-navigation gt-icon{width:18px;height:18px;flex:none}
-:host .training-today-card{display:block;position:relative;border-radius:16px;overflow:hidden;padding:14px!important;margin:0 0 12px;min-width:0}
-:host .training-cover-heading{display:flex;align-items:center;justify-content:space-between;gap:7px;min-width:0;margin:0 0 6px}
-:host .training-kicker{font-size:9px!important;letter-spacing:1.25px;line-height:1.5;font-weight:650;color:var(--muted)!important;margin:0!important;min-width:0}
-:host .training-schedule-badge{display:inline-flex;align-items:center;gap:5px;flex:none;max-width:58%;font-size:10px;line-height:1.4;padding:4px 8px;border-radius:9px;white-space:normal}
-:host .training-schedule-badge>i{width:4px;height:4px;border-radius:50%;background:currentColor;flex:none}
-:host .training-today-cover{display:block;width:100%;height:155px;--thumb-width:100%;--thumb-height:155px;margin:0 auto 7px;background:transparent!important;border:0;border-radius:12px;mask-image:linear-gradient(#000 88%,transparent)}
-:host .training-today-art{display:block;width:100%;height:155px;max-width:none;object-fit:contain;margin:0 0 7px;mask-image:linear-gradient(#000 88%,transparent)}
-:host .training-today-copy .training-plan-caption{font-size:11px;line-height:1.5;color:var(--muted);margin:0 0 5px;overflow-wrap:anywhere}
-:host .training-caption-dot{padding-inline:6px;color:var(--muted)}
-:host .training-today-copy h2{font-size:24px!important;line-height:1.2;letter-spacing:-.6px;margin:0;overflow-wrap:anywhere}
-:host .training-inline-metrics{display:flex;align-items:center;justify-content:space-between;gap:9px;flex-wrap:wrap;font-size:11px;line-height:1.5;margin:14px 0;color:var(--muted)}
-:host .training-inline-metrics>span{display:flex;align-items:center;gap:6px;min-width:0}
-:host .training-inline-metrics gt-icon{width:16px;height:16px;color:var(--accent-text);flex:none}
-:host .training-today-actions{display:grid;gap:8px;margin:14px 0 0;min-width:0}
-:host .training-today-actions>.button{display:flex;align-items:center;justify-content:center;gap:9px;width:100%;min-width:0;min-height:44px;font-size:14px;font-weight:650;line-height:1.35;border-radius:12px;padding:10px 11px;white-space:normal;text-align:center}
-:host .training-today-actions>.primary{justify-content:flex-start;min-height:48px}
+:host .training-session-hero{display:block;min-width:0;margin:0 0 15px}
+:host .training-session-hero>header{margin:0 0 18px}
+:host .training-program-label{font-size:12px;font-weight:500;line-height:1.45;letter-spacing:.1px;text-transform:uppercase;color:var(--muted);margin:0 0 6px;overflow-wrap:anywhere}
+:host .training-session-hero h1{font-size:29px;font-weight:750;line-height:1.16;letter-spacing:-.75px;margin:0;overflow-wrap:anywhere}
+:host .training-inline-metrics{display:flex;align-items:center;justify-content:space-between;gap:9px;flex-wrap:wrap;font-size:12px;line-height:1.5;margin:0 3px 15px;color:var(--text)}
+:host .training-inline-metrics>span{display:flex;align-items:center;gap:8px;min-width:0}
+:host .training-inline-metrics gt-icon{width:22px;height:22px;color:var(--accent-text);flex:none}
+:host .training-session-state{color:var(--muted)}
+:host .training-today-actions{display:grid;gap:8px;margin:0;min-width:0}
+:host .training-today-actions>.button{display:flex;align-items:center;justify-content:center;gap:11px;width:100%;min-width:0;min-height:46px;font-size:15px;font-weight:650;line-height:1.35;border-radius:13px;padding:11px 14px;white-space:normal;text-align:center}
+:host .training-today-actions>.primary{justify-content:flex-start;min-height:52px;font-size:17px}
 :host .training-today-actions>.primary>span{flex:1;text-align:left}
-:host .training-today-actions>.button>gt-icon{width:19px;height:19px;flex:none}
-:host .training-today-actions>.primary>gt-icon:last-child{width:16px;height:16px}
-:host .training-today-copy>.full-width{min-height:48px;margin-top:17px}
-:host .training-path{display:block;border-radius:15px;padding:14px!important;margin-bottom:12px}
-:host .training-path .card-head{align-items:center;margin-bottom:12px}
-:host .training-path .card-head h3{font-size:14px;font-weight:650;margin:0}
-:host .training-path .ref-badge{font-size:10px;line-height:1.4;padding:4px 8px;white-space:nowrap}
-:host .training-path>strong{font-size:14px;line-height:1.5}
-:host .training-path-stats{font-size:11px;line-height:1.5;gap:9px}
-:host .training-tool-grid{gap:9px;margin:12px 0}
-:host .training-tool-grid>a{border-radius:14px;padding:14px 12px;gap:7px}
-:host .training-tool-grid strong{font-size:12px;line-height:1.5}
-:host .training-tool-grid small{font-size:11px;line-height:1.5}
-:host .training-hub-links{display:grid;gap:9px}
-:host .training-hub-links>.card{display:flex;align-items:center;gap:11px;text-align:left;width:100%;padding:13px!important;border-radius:14px;min-height:66px}
-:host .training-hub-links>.card>gt-icon{width:21px;height:21px;flex:none;color:var(--accent-text)}
+:host .training-today-actions>.button>gt-icon{width:22px;height:22px;flex:none}
+:host .training-today-actions>.primary>gt-icon:last-child{width:18px;height:18px}
+:host .training-empty-description{font-size:13px;line-height:1.6;color:var(--muted);margin:14px 0}
+:host .training-session-hero>.full-width{min-height:50px;display:flex;gap:9px;align-items:center;justify-content:center}
+:host .training-path{display:block;position:relative;isolation:isolate;border-radius:15px;padding:14px 16px!important;margin:0 0 12px;min-width:0;overflow:hidden;text-decoration:none;background:var(--ref-violet-surface,var(--card));border:1px solid var(--ref-line,var(--line))}
+:host .training-path>*{position:relative;z-index:1}
+:host .training-path .card-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:0 0 12px}
+:host .training-path .card-head h2{font-size:16px;font-weight:650;line-height:1.4;margin:0;letter-spacing:-.3px}
+:host .training-path .ref-badge{font-size:11px;line-height:1.3;padding:4px 8px;white-space:nowrap;flex:none}
+:host .training-path .ref-badge>i{width:5px;height:5px;border-radius:50%;background:currentColor;box-shadow:0 0 6px currentColor}
+:host .training-path>strong{display:block;font-size:15px;font-weight:700;line-height:1.4;text-transform:uppercase;letter-spacing:-.15px;overflow-wrap:anywhere;margin:0 0 11px}
+:host .training-path-stats{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:11px;line-height:1.5;color:var(--muted);margin:0}
+:host .training-path-stats>span{display:flex;align-items:center;gap:6px;min-width:0}
+:host .training-path-stats>span+span{padding-left:10px;border-left:1px solid var(--line)}
+:host .training-path-stats gt-icon{width:18px;height:18px;color:var(--accent-text);flex:none}
+:host .training-path-stats>span:last-child{flex:1;justify-content:flex-end;text-align:left}
+:host .training-path-stats>span:last-child>gt-icon:last-child{width:14px;height:14px;margin-left:1px}
+:host .training-tool-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:0 0 12px}
+:host .training-tool-grid>a{display:grid;position:relative;isolation:isolate;grid-template-columns:minmax(0,1fr) 15px;grid-template-rows:23px auto auto;align-content:start;justify-items:start;gap:5px 6px;min-width:0;min-height:94px;overflow:hidden;padding:12px 14px;border-radius:14px;border:1px solid var(--ref-line,var(--line));background:var(--ref-surface,var(--card));text-decoration:none;box-shadow:inset 0 1px 2px #ffffff18}
+:host .training-tool-grid>a>*{position:relative;z-index:1}
+:host .training-tool-grid>a>gt-icon:first-child{grid-column:1;grid-row:1;width:24px;height:24px;color:var(--accent-text);margin:0}
+:host .training-tool-grid strong{grid-column:1;grid-row:2;font-size:14px;font-weight:650;letter-spacing:-.2px;line-height:1.3;overflow-wrap:anywhere}
+:host .training-tool-grid small{grid-column:1;grid-row:3;font-size:11px;line-height:1.35;color:var(--muted)}
+:host .training-tool-grid .training-tool-chevron{grid-column:2;grid-row:2;align-self:center;width:15px;height:15px;margin:0;color:var(--text)}
+:host .training-hub-links{display:grid;gap:8px;margin:0}
+:host .training-hub-links>.card{display:flex;align-items:center;gap:12px;text-align:left;width:100%;padding:10px 15px!important;border-radius:14px;min-height:56px;overflow:hidden;background:var(--ref-violet-surface,var(--card));border:1px solid var(--ref-line,var(--line));position:relative;isolation:isolate}
+:host .training-hub-links>.card>*{position:relative;z-index:1}
+:host .training-hub-links>.card>gt-icon{width:26px;height:26px;flex:none;color:var(--accent-text)}
 :host .training-hub-links>.card>span{flex:1;min-width:0}
-:host .training-hub-links>.card strong{font-size:13px;line-height:1.5;display:block}
-:host .training-hub-links>.card small{font-size:11px;line-height:1.5;display:block;color:var(--muted);margin-top:3px;font-weight:400}
-:host .training-hub-links>.card>gt-icon:last-child{width:15px;height:15px}
+:host .training-hub-links>.card strong{font-size:14px;font-weight:650;line-height:1.35;display:block;margin:0}
+:host .training-hub-links>.card small{font-size:11px;line-height:1.4;display:block;color:var(--muted);margin-top:3px;font-weight:400}
+:host .training-hub-links>.card>gt-icon:last-child{width:16px;height:16px;color:var(--text)}
+:host .training-animation-access{margin:14px 0 12px}
+:host .training-animation-access gt-animation-library{display:block;margin:0}
+:host .training-manager-controls{display:grid;grid-template-columns:repeat(2,minmax(0,1fr)) 44px;gap:8px;margin:0 0 12px}
+:host .training-manager-controls>:is(button,a){display:flex;align-items:center;justify-content:center;gap:7px;min-width:0;min-height:44px;font-size:12px;padding:9px 8px;text-align:center}
+:host .training-manager-controls gt-icon{width:18px;height:18px;flex:none}
+:host .training-manager-controls>button:last-child{padding:0}
+:host .training-manager-controls>button:last-child>span{position:absolute;width:1px;height:1px;clip-path:inset(50%);overflow:hidden;white-space:nowrap}
 :host .simple-plan-top>.pill{font-size:10px;line-height:1.4;border-radius:8px;padding:4px 7px}
 :host .simple-exercise-row small{font-size:11px}
 :host .plans-list-heading .archive-toggle{min-height:44px}
-@media(min-width:800px){:host .training-today-card{padding:19px!important}:host .training-today-cover{--thumb-height:185px;height:185px}:host .training-today-copy h2{font-size:28px!important}:host .training-inline-metrics{justify-content:flex-start;gap:25px}:host .training-today-actions{grid-template-columns:1fr 1fr}}
-@media(max-width:359px){:host .plans-heading h1{font-size:25px}:host .plans-heading p{font-size:11px}:host .plans-navigation>button,:host .plans-navigation>a{font-size:11px;gap:6px}:host .plans-navigation gt-icon{width:16px;height:16px}:host .training-today-card{padding:12px!important}:host .training-kicker{font-size:8px!important;letter-spacing:1px}:host .training-schedule-badge{font-size:9px;padding:4px 6px;max-width:56%}:host .training-today-copy h2{font-size:23px!important}:host .training-inline-metrics{font-size:10px;gap:7px}:host .training-inline-metrics>span{gap:4px}:host .training-today-actions>.button{font-size:13px}:host .training-path-stats{font-size:10px}:host .training-path .ref-badge{font-size:9px}}
+@media(min-width:800px){:host .training-session-hero{margin-bottom:20px}:host .training-session-hero h1{font-size:34px}:host .training-inline-metrics{justify-content:flex-start;gap:34px}:host .training-path{padding:19px!important}:host .training-path>strong{font-size:18px}:host .training-path-stats{font-size:12px}:host .training-tool-grid>a{min-height:112px;padding:16px 18px}:host .training-tool-grid strong{font-size:16px}:host .training-tool-grid small{font-size:12px}:host .training-hub-links>.card{min-height:68px;padding:13px 18px!important}}
+@media(max-width:359px){:host .training-program-label{font-size:10px}:host .training-session-hero h1{font-size:26px}:host .training-session-hero>header{margin-bottom:16px}:host .training-inline-metrics{font-size:10px;gap:6px;margin-inline:0}:host .training-inline-metrics>span{gap:5px}:host .training-inline-metrics gt-icon{width:19px;height:19px}:host .training-today-actions>.button{font-size:13px}:host .training-today-actions>.primary{font-size:15px;min-height:49px}:host .training-path{padding:13px!important}:host .training-path .card-head h2{font-size:14px}:host .training-path .ref-badge{font-size:9px}:host .training-path>strong{font-size:13px}:host .training-path-stats{font-size:9px;gap:5px}:host .training-path-stats>span+span{padding-left:7px}:host .training-path-stats gt-icon{width:15px;height:15px}:host .training-tool-grid>a{padding:11px 10px;min-height:89px;gap:5px}:host .training-tool-grid strong{font-size:12px}:host .training-tool-grid small{font-size:10px}:host .training-hub-links>.card{padding:10px 12px!important;gap:9px}:host .training-hub-links>.card strong{font-size:12px}:host .training-hub-links>.card small{font-size:10px}:host .training-hub-links>.card>gt-icon{width:23px;height:23px}}

@@ -11,7 +11,8 @@ import { Store } from "../services/store";
 import { ProgressChartComponent } from "../shared/progress-chart.component";
 import { IconComponent } from "../shared/icon.component";
 import { StatusComponent } from "../shared/status.component";
-import { ExerciseFilterComponent } from "../shared/exercise-filter.component";
+import { ExerciseThumbComponent } from '../shared/exercise-thumb.component';
+import { matchesExercise } from '../services/exercise-search';
 @Component({
   standalone: true,
   styleUrls: ["./feature-polish.css", "./progress-design.css", "./progress-reference.css"],
@@ -22,11 +23,41 @@ import { ExerciseFilterComponent } from "../shared/exercise-filter.component";
     ProgressChartComponent,
     IconComponent,
     StatusComponent,
-    ExerciseFilterComponent,
+    ExerciseThumbComponent,
   ],
   template: `<div class="reference-progress">
-    <header class="progress-page-heading ref-page-header"><div><p class="ref-eyebrow">IL TUO PERCORSO</p><h1>Progressi</h1><p class="ref-progress-subtitle">Ogni dettaglio racconta il tuo lavoro.</p></div><a class="button ref-icon-button" routerLink="/profilo" [queryParams]="{section:'measurements'}" aria-label="Registra una misurazione"><gt-icon name="plus"/></a></header>
+    <header class="progress-page-heading ref-page-header"><div><h1>Progressi</h1><p class="ref-progress-subtitle">Analizza i tuoi risultati</p></div><span class="progress-header-bars" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span></header>
     <gt-status />
+    <details class="card progress-exercise-details">
+     <summary><gt-icon name="chart"/><span><strong>Progressi per esercizio</strong><small>Peso, volume, ripetizioni e 1RM stimato</small></span><span class="progress-detail-chevron">›</span></summary>
+     <div class="progress-details-body"><gt-progress-chart /></div>
+    </details>
+    <section class="card personal-records-panel reference-records">
+      <div class="card-head"><h2>Record personali</h2><gt-icon name="trophy"/></div>
+      <label class="record-search"><span class="sr-only">Cerca esercizio per nome o parola chiave</span><gt-icon name="search"/><input type="search" placeholder="Cerca per nome o parola chiave…" autocomplete="off" [ngModel]="recordQuery()" (ngModelChange)="recordQuery.set($event)"/></label>
+      <div class="record-selection-row">
+        <label class="record-exercise-select"><span>Esercizio</span><select [ngModel]="exerciseId()||defaultId()" (ngModelChange)="exerciseId.set($event);machine.set('')" aria-label="Esercizio dei record"><option value="" disabled>Seleziona un esercizio</option>@if(recordPinned();as exercise){<option [value]="exercise.id">{{exercise.name}} (selezionato)</option>}@for(exercise of recordOptions();track exercise.id){<option [value]="exercise.id">{{exercise.name}}</option>}</select></label>
+        @if(selectedExercise();as exercise){<gt-exercise-thumb class="record-exercise-thumb" [exercise]="exercise"/>}
+        <button type="button" class="record-filter-button ref-icon-button" (click)="recordFilters.set(!recordFilters())" [attr.aria-expanded]="recordFilters()" aria-controls="record-filters" aria-label="Filtra gli esercizi e le configurazioni dei record"><gt-icon name="sliders"/></button>
+      </div>
+      @if(recordQuery().trim()||recordMode()!=='all'){<p class="record-result" role="status">{{recordOptions().length}} risultati@if(recordPinned()){ · Selezione attuale conservata}</p>}
+      @if(recordFilters()){
+        <div class="record-filters" id="record-filters">
+          <label>Modalità di carico<select [ngModel]="recordMode()" (ngModelChange)="recordMode.set($event)"><option value="all">Tutte le modalità</option><option value="external">Carico esterno</option><option value="bodyweight">Corpo libero</option><option value="weighted-bodyweight">Zavorra</option><option value="assisted">Assistito</option></select></label>
+          @if(s.configurations(exerciseId()||defaultId()).length){<label>Configurazione dei record<select [ngModel]="machine()" (ngModelChange)="machine.set($event)"><option value="">Tutte le configurazioni</option>@for(config of s.configurations(exerciseId()||defaultId());track config.key){<option [value]="config.key">{{config.label}}</option>}</select></label>}
+          <p>Le configurazioni di macchine diverse possono non essere confrontabili.</p>
+        </div>
+      }
+      <div class="stats-grid performance-record-grid reference-record-grid">
+        <div class="card stat"><span class="stat-label"><gt-icon name="weight"/><span>{{selectedExercise()?.loadMode==='assisted'?'Assistenza massima registrata':selectedExercise()?.loadMode==='weighted-bodyweight'?'Zavorra massima':'Peso massimo effettivo'}}</span></span><div class="record-value">{{hasRecordData()&&selectedExercise()?.loadMode!=='bodyweight'?s.formatWeight(records().maxWeight):'—'}} @if(hasRecordData()&&selectedExercise()?.loadMode!=='bodyweight'){<small>{{s.settings().unit}}</small>}</div><small class="record-data-state">{{!hasRecordData()?'Nessun dato':selectedExercise()?.loadMode==='bodyweight'?'Non applicabile':'Carico registrato'}}</small></div>
+        <div class="card stat"><span class="stat-label"><gt-icon name="bolt"/><span>1RM stimato · Epley</span></span><div class="record-value">{{selectedExercise()?.loadMode==='external'&&records().estimated1RM>0?s.formatWeight(records().estimated1RM):'—'}} @if(selectedExercise()?.loadMode==='external'&&records().estimated1RM>0){<small>{{s.settings().unit}}</small>}</div><small class="record-data-state">{{!hasRecordData()?'Nessun dato':selectedExercise()?.loadMode!=='external'?'Non applicabile':records().estimated1RM>0?'Stima dal carico registrato':'Nessuna stima'}}</small></div>
+        <div class="card stat"><span class="stat-label"><gt-icon name="repeat"/><span>Ripetizioni massime</span></span><div class="record-value">{{hasRecordData()?records().maxReps:'—'}} @if(hasRecordData()){<small>rip</small>}</div><small class="record-data-state">{{hasRecordData()?'Serie allenanti completate':'Nessun dato'}}</small></div>
+        <div class="card stat"><span class="stat-label"><gt-icon name="layers"/><span>Volume massimo / sessione</span></span><div class="record-value">{{hasRecordData()&&selectedExercise()?.loadMode==='external'?s.formatWeight(records().maxVolume):'—'}} @if(hasRecordData()&&selectedExercise()?.loadMode==='external'){<small>{{s.settings().unit}}</small>}</div><small class="record-data-state">{{!hasRecordData()?'Nessun dato':selectedExercise()?.loadMode!=='external'?'Non applicabile':'Carichi × ripetizioni'}}</small></div>
+      </div>
+      @if(weightRecords().length){<details class="record-weight-details"><summary>Record di ripetizioni per carico</summary><div class="actions">@for(r of weightRecords();track r.weight){<span class="pill">{{s.formatWeight(r.weight)}} {{s.settings().unit}} × {{r.reps}} rip</span>}</div></details>}
+    </section>
+    <aside class="card record-information"><gt-icon name="info"/><p>{{comparison()?'L’1RM è una stima, non un massimale testato. Per corpo libero, zavorra e assistenza non si calcolano volume e 1RM.':'Registra almeno due sessioni con questo esercizio per confrontare i tuoi progressi.'}}</p></aside>
+    <details class="card progress-overview-details"><summary><gt-icon name="chart"/><span>Riepilogo, peso e misure</span><gt-icon name="chevron-down"/></summary><div class="progress-overview-body">
     <div class="segmented progress-tabs ref-tabs" role="group" aria-label="Categoria dei progressi"><button type="button" [class.active]="category()==='strength'" [attr.aria-pressed]="category()==='strength'" (click)="category.set('strength')"><gt-icon name="strength"/>Forza</button><button type="button" [class.active]="category()==='weight'" [attr.aria-pressed]="category()==='weight'" (click)="category.set('weight')"><gt-icon name="scale"/>Peso</button><button type="button" [class.active]="category()==='body'" [attr.aria-pressed]="category()==='body'" (click)="category.set('body')"><gt-icon name="body"/>Corpo</button>@if(features?.nutritionEnabled()){<button type="button" [class.active]="category()==='nutrition'" [attr.aria-pressed]="category()==='nutrition'" (click)="category.set('nutrition')"><gt-icon name="nutrition"/>Pasti</button>}</div>
     @if(category()==='strength'){
      <div class="ref-progress-filters">
@@ -52,87 +83,6 @@ import { ExerciseFilterComponent } from "../shared/exercise-filter.component";
      <div class="ref-weekly-summary"><strong>{{overviewSessions().length?s.formatWeight(overviewVolume()):'—'}} <span>{{s.settings().unit}}</span></strong>@if(weeklyTrend();as trend){<span class="ref-badge" [class.green]="trend.increased" [class.neutral]="!trend.increased" title="Confronto tra le ultime due settimane complete">{{trend.label}} ultima settimana</span>}</div>
      <p class="ref-weekly-description">Somma dei carichi esterni registrati nel periodo.</p>
      <gt-progress-chart initialMetric="weekly" [showFilters]="false" [planFilter]="overviewPlan()" [monthsFilter]="period()>0?period():0" [daysFilter]="period()<0?-period():undefined" [compact]="true" />
-    </section>
-    <details class="card progress-exercise-details">
-     <summary><gt-icon name="chart"/><span><strong>Progressi per esercizio</strong><small>Peso, volume, ripetizioni e 1RM stimato</small></span><span class="progress-detail-chevron">›</span></summary>
-     <div class="progress-details-body"><gt-progress-chart /></div>
-    </details>
-    <section class="card personal-records-panel" style="margin-top:20px">
-      <div class="card-head">
-        <div>
-          <h2>Record personali</h2>
-        </div>
-        <gt-icon name="trophy" />
-      </div>
-      <gt-exercise-filter style="max-width:400px" [exercises]="s.data().exercises"
-        [value]="exerciseId() || defaultId()" (choose)="exerciseId.set($event);machine.set('')" />
-      @if(s.configurations(exerciseId()||defaultId()).length){<label style="margin-top:12px">Configurazione dei record<select [ngModel]="machine()" (ngModelChange)="machine.set($event)"><option value="">Tutte le configurazioni</option>@for(config of s.configurations(exerciseId()||defaultId());track config.key){<option [value]="config.key">{{config.label}}</option>}</select></label>}
-      <div class="stats-grid performance-record-grid">
-        <div class="card stat">
-          <span class="stat-label">{{
-            selectedExercise()?.loadMode === "assisted"
-              ? "Assistenza massima registrata"
-              : selectedExercise()?.loadMode === "weighted-bodyweight"
-                ? "Zavorra massima"
-                : "Peso massimo effettivo"
-          }}</span>
-          <div class="record-value">
-            {{
-              selectedExercise()?.loadMode === "bodyweight"
-                ? "—"
-                : s.formatWeight(records().maxWeight)
-            }}
-            <small>{{ s.settings().unit }}</small>
-          </div>
-        </div>
-        <div class="card stat">
-          <span class="stat-label">1RM stimato · Epley</span>
-          <div class="record-value">
-            {{
-              selectedExercise()?.loadMode === "external"
-                ? s.formatWeight(records().estimated1RM)
-                : "—"
-            }}
-            <small>{{ s.settings().unit }}</small>
-          </div>
-        </div>
-        <div class="card stat">
-          <span class="stat-label">Ripetizioni massime</span>
-          <div class="record-value">
-            {{ records().maxReps }} <small>rip</small>
-          </div>
-        </div>
-        <div class="card stat">
-          <span class="stat-label">Volume massimo / sessione</span>
-          <div class="record-value">
-            {{
-              selectedExercise()?.loadMode === "external"
-                ? s.formatWeight(records().maxVolume)
-                : "—"
-            }}
-            <small>{{ s.settings().unit }}</small>
-          </div>
-        </div>
-      </div>
-      <p class="subtle">
-        Statistiche riferite alla modalità di carico attuale dell’esercizio.
-        L’1RM è una stima, non un massimale testato. Per corpo libero, zavorra e
-        assistenza non si calcolano volume e 1RM. Nell’assistito, meno
-        assistenza a parità di ripetizioni indica un miglioramento.
-      </p>
-      @if (weightRecords().length) {
-        <details style="margin-top:18px">
-          <summary class="subtle">Record di ripetizioni per carico</summary>
-          <div class="actions">
-            @for (r of weightRecords(); track r.weight) {
-              <span class="pill"
-                >{{ s.formatWeight(r.weight) }} {{ s.settings().unit }} ×
-                {{ r.reps }} rip</span
-              >
-            }
-          </div>
-        </details>
-      }
     </section>
     <div class="progress-comparison" style="margin-top:20px">
       <section class="card">
@@ -186,6 +136,7 @@ import { ExerciseFilterComponent } from "../shared/exercise-filter.component";
         }
       </section>
     </div>}
+    </div></details>
     <section class="card progress-plan-card"><div class="card-head"><h2>Statistiche del piano</h2><gt-icon name="plans"/></div><label>Scegli un programma<select [ngModel]="''" (ngModelChange)="openPlan($event)"><option value="">Scegli un piano</option>@for(plan of s.data().plans;track plan.id){<option [value]="plan.id">{{plan.name}}{{plan.program?' · '+plan.program.startDate:''}}{{plan.completedAt?' · Concluso':''}}</option>}</select></label></section>
     <nav class="progress-destinations" aria-label="Esplora il tuo percorso"><a routerLink="/focus-muscolare"><gt-icon name="weight"/><span><strong>Focus muscolare</strong><small>Volume e recupero per gruppo</small></span>›</a><a routerLink="/recupero"><gt-icon name="moon"/><span><strong>Recovery</strong><small>Sonno, energia e riposo</small></span>›</a><a routerLink="/sonno"><gt-icon name="moon"/><span><strong>Diario del sonno</strong><small>Durata e qualità del riposo</small></span>›</a></nav>
     <p class="progress-archive-note"><gt-icon name="shield"/> Il tuo percorso è custodito nel tuo archivio personale.</p></div>`,
@@ -230,6 +181,10 @@ export class ProgressComponent {
     const change=(last-first)/first*100;
     return {label:(change>0?'+':'')+change.toLocaleString('it-IT',{maximumFractionDigits:1})+'%',increased:change>0};
   });
+  recordQuery=signal('');recordMode=signal('all');recordFilters=signal(false);
+  recordOptions=computed(()=>this.s.data().exercises.filter(exercise=>(this.recordMode()==='all'||exercise.loadMode===this.recordMode())&&matchesExercise(exercise,this.recordQuery())));
+  recordPinned=computed(()=>{const exercise=this.selectedExercise();return exercise&&!this.recordOptions().some(row=>row.id===exercise.id)?exercise:undefined;});
+  hasRecordData=computed(()=>this.records().maxReps>0);
   exerciseId = signal("");machine=signal("");
   defaultId = computed(() => this.s.data().exercises[0]?.id || "");
   selectedExercise = computed(() =>

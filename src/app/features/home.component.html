@@ -1,42 +1,41 @@
 <header class="today-heading ref-home-heading">
-  <div class="home-heading-controls"><p class="ref-eyebrow">IL TUO PERCORSO</p><a class="home-date-control" routerLink="/calendario" [queryParams]="{date:today}" [attr.aria-label]="'Apri il calendario di oggi, '+todayLabel"><gt-icon name="calendar"/><span>Oggi<small>{{todayShortLabel}}</small></span><gt-icon class="date-chevron" name="chevron-down"/></a></div>
-  <h1>Ciao {{ firstName() }} <span class="greeting-wave" aria-hidden="true">👋</span></h1>
-  <p class="today-motto">Ogni giorno, un passo avanti.</p>
+  <div><h1>Home</h1><p class="today-motto">Il tuo centro di controllo</p></div>
+  <a class="home-notifications ref-icon-button" routerLink="/profilo" [queryParams]="{section:'settings'}" aria-label="Apri notifiche e promemoria nelle impostazioni"><gt-icon name="bell"/></a>
 </header>
 <gt-status />
-<section class="home-overview ref-home-overview" aria-label="Il tuo obiettivo settimanale">
-  <img class="home-dumbbell" src="/training/dumbbell.png" alt="" fetchpriority="high"/>
-  <a class="neon-ring home-goal-ring ref-home-ring" routerLink="/profilo" [queryParams]="{section:'goals'}" [style.--progress]="weeklyProgress()+'%'" aria-label="Modifica il tuo obiettivo settimanale"><div><span>Obiettivo settimanale</span><strong>{{goals()?.workoutsPerWeek?weeklyProgress()+'%':'—'}}</strong><span>{{goals()?.workoutsPerWeek?weekCount()+' di '+goals()!.workoutsPerWeek+' allenamenti':'Imposta il tuo obiettivo'}}</span><span class="home-goal-edit"><gt-icon name="edit"/>Modifica</span></div></a>
-</section>
-<div class="home-quick-health ref-home-wellness" aria-label="Il tuo benessere">
-  <a routerLink="/recupero"><gt-icon name="heart"/><span><strong>{{wellness()?.energy?wellness()!.energy+' / 5':'Check-in'}}</strong><small>Recovery</small></span></a>
-  <a routerLink="/focus-muscolare"><gt-icon name="muscle"/><span><strong>{{focusLabel()}}</strong><small>Focus di oggi</small></span></a>
-  <a routerLink="/sonno"><gt-icon name="moon"/><span><strong>{{sleepLabel(wellness()?.sleepMinutes)}}</strong><small>Sonno</small></span></a>
-</div>
-<section class="card ref-card violet home-next-card" aria-label="Il tuo allenamento">
+<section class="home-main-actions" aria-label="La tua scheda e la programmazione">
   @if(upcoming();as session){
-    <div class="home-session-badges"><span class="ref-badge violet home-when-badge"><gt-icon name="calendar"/>{{sessionWhen(session)}}</span><span class="ref-badge" [class.green]="session.kind!=='draft'&&session.activePlan" [class.neutral]="session.kind!=='draft'&&!session.activePlan" [class.home-resume-badge]="session.kind==='draft'"><i aria-hidden="true"></i>{{session.kind==='draft'?'Da riprendere':session.activePlan?'Piano attivo':'Programmato'}}</span></div>
-    <a class="home-session-heading" [routerLink]="session.kind==='draft'?'/sessione':'/anteprima-allenamento'" [queryParams]="session.kind==='draft'?{}:sessionPreview(session)"><span class="home-session-icon"><gt-icon name="weight"/></span><div class="home-session-copy"><span class="home-session-eyebrow">{{session.kind==='draft'?'LA TUA SEDUTA APERTA':'LA TUA PROSSIMA SEDUTA'}}</span><h2>{{session.title}}</h2><span class="home-session-plan">{{session.planName}}@if(session.periodLabel){ · {{session.periodLabel}}}</span></div></a>
-    <div class="home-session-metrics"><span><gt-icon name="weight"/>{{session.exerciseCount}} esercizi</span><span><gt-icon name="layers"/>{{session.setCount}} serie</span>@if(session.durationMinutes){<span><gt-icon name="clock"/>{{session.durationMinutes}} min</span>}</div>
     @if(session.kind==='draft'){
-      <a class="button primary ref-action home-primary-action" routerLink="/sessione"><gt-icon name="play"/><span>Riprendi allenamento</span><gt-icon name="arrow"/></a>
+      <a class="button primary ref-action home-primary-action" routerLink="/sessione"><gt-icon name="play"/><span>Riprendi allenamento</span><gt-icon name="chevron-right"/></a>
       <a class="button secondary ref-action home-secondary-action" routerLink="/sessione"><gt-icon name="eye"/>Vedi sessione</a>
     }@else{
-      <button class="primary ref-action home-primary-action" (click)="session.kind==='scheduled'?startEvent(session.eventId!):start(session.dayId)" [disabled]="!s.ready()||s.busy()||(session.kind==='plan'&&!session.exerciseCount)"><gt-icon [name]="session.kind==='scheduled'&&session.date!==today?'calendar':'play'"/><span>{{session.kind==='scheduled'&&session.date!==today?'Apri programmazione':'Inizia allenamento'}}</span><gt-icon name="arrow"/></button>
+      <a class="button primary ref-action home-primary-action" routerLink="/calendario" [queryParams]="{date:session.date||today}"><gt-icon name="calendar"/><span>Apri programmazione</span><gt-icon name="chevron-right"/></a>
       <a class="button secondary ref-action home-secondary-action" routerLink="/anteprima-allenamento" [queryParams]="sessionPreview(session)"><gt-icon name="eye"/>Vedi scheda</a>
     }
   }@else{
-    <div class="home-session-badges"><span class="ref-badge violet"><gt-icon name="weight"/>Il tuo percorso</span></div>
-    <div class="home-session-heading"><span class="home-session-icon"><gt-icon name="weight"/></span><div class="home-session-copy"><span class="home-session-eyebrow">IL TUO PERCORSO COMINCIA QUI</span><h2>Il tuo primo allenamento</h2><span class="home-session-plan">Crea un piano per iniziare.</span></div></div>
-    <a class="button primary ref-action home-primary-action" routerLink="/piani"><gt-icon name="plus"/><span>Crea il tuo piano</span><gt-icon name="arrow"/></a>
-    <a class="button secondary ref-action home-secondary-action" routerLink="/catalogo"><gt-icon name="eye"/>Esplora gli esercizi</a>
+    <a class="button primary ref-action home-primary-action" routerLink="/calendario" [queryParams]="{date:today}"><gt-icon name="calendar"/><span>Apri programmazione</span><gt-icon name="chevron-right"/></a>
+    <a class="button secondary ref-action home-secondary-action" routerLink="/piani"><gt-icon name="eye"/>Crea la tua scheda</a>
   }
 </section>
-<nav class="home-shortcuts" aria-label="Accessi rapidi"><a routerLink="/calendario"><gt-icon name="calendar"/><span>Calendario</span></a><a routerLink="/riposo"><gt-icon name="moon"/><span>Giorno di riposo</span></a>@if(features?.nutritionEnabled()){<a routerLink="/alimentazione"><gt-icon name="nutrition"/><span>Pasti</span></a>}@else{<a routerLink="/catalogo"><gt-icon name="weight"/><span>Esercizi</span></a>}</nav>
-<section class="today-section" aria-label="Allenamenti della settimana"><div class="card-head"><h2>La tua settimana</h2><a class="home-text-link" routerLink="/calendario">Calendario <gt-icon name="arrow"/></a></div><div class="home-week-days">@for(day of week;track day.date){<a routerLink="/calendario" [queryParams]="{date:day.date}" [class.done]="done(day.date)" [class.planned]="planned(day.date)" [class.today]="day.date===today" [attr.aria-label]="dayAria(day.date)"><span>{{day.label.slice(0,1)}}</span><strong>{{done(day.date)?'✓':day.date.slice(8)}}</strong><i aria-hidden="true"></i></a>}</div></section>
-<section class="today-section"><h2>Il tuo percorso</h2><div class="home-mini-stats"><a routerLink="/allenamenti"><gt-icon name="weight"/><strong>{{s.completed().length}}</strong><span>Allenamenti</span></a><a routerLink="/allenamenti"><gt-icon name="clock"/><strong>{{trainingMinutes()}} <small>min</small></strong><span>Tempo totale</span></a><a routerLink="/progressi"><gt-icon name="chart"/><strong>{{s.formatWeight(s.totalVolume())}}</strong><span>Volume {{s.settings().unit}}</span></a></div></section>
-@if(features?.nutritionEnabled()){<section class="today-section" aria-label="Alimentazione di oggi"><div class="card-head"><h2>Alimentazione di oggi</h2><a class="home-text-link" routerLink="/alimentazione">Diario <gt-icon name="arrow"/></a></div><div class="today-nutrition"><a routerLink="/alimentazione"><strong>{{ totals().calories.toLocaleString('it-IT',{maximumFractionDigits:0}) }}</strong><span>kcal</span></a><a routerLink="/alimentazione"><strong>{{ totals().protein.toLocaleString('it-IT',{maximumFractionDigits:0}) }} <small>g</small></strong><span>proteine</span></a></div></section>}
+<nav class="home-shortcuts" aria-label="Accessi rapidi"><a routerLink="/calendario"><gt-icon name="calendar"/><span>Calendario</span></a><a routerLink="/riposo"><gt-icon name="moon"/><span>Giorno di riposo</span></a><a routerLink="/catalogo"><gt-icon name="weight"/><span>Esercizi</span></a></nav>
+<section class="today-section home-week-section" aria-label="Allenamenti della settimana"><div class="card-head"><h2>La tua settimana</h2><a class="home-text-link" routerLink="/calendario">Calendario <gt-icon name="arrow"/></a></div><div class="home-week-days">@for(day of week;track day.date){<a routerLink="/calendario" [queryParams]="{date:day.date}" [class.done]="done(day.date)" [class.planned]="planned(day.date)" [class.today]="day.date===today" [attr.aria-current]="day.date===today?'date':null" [attr.aria-label]="dayAria(day.date)"><span>{{day.label.slice(0,1)}}</span><strong>{{day.date.slice(8)}}</strong><i aria-hidden="true"></i></a>}</div></section>
+<section class="today-section home-journey-section"><h2>Il tuo percorso</h2><div class="home-mini-stats"><a routerLink="/allenamenti"><gt-icon name="weight"/><strong>{{s.completed().length}}</strong><span>Allenamenti</span></a><a routerLink="/allenamenti"><gt-icon name="clock"/><strong>{{trainingMinutes()}} <small>min</small></strong><span>Tempo totale</span></a><a routerLink="/progressi"><gt-icon name="chart"/><strong>{{s.formatWeight(s.totalVolume())}} <small>{{s.settings().unit}}</small></strong><span>Volume</span></a></div></section>
 @if(auth?.user()?.role==='SuperAdmin'&&!auth!.offlineMode()){
-  <label class="client-view-toggle"><gt-icon name="eye"/><span><strong>Visualizza come cliente</strong><small>{{auth!.viewAsClient()?'Vista cliente attiva · usi i tuoi dati':'Anteprima del ruolo con i tuoi dati'}}</small></span><input type="checkbox" [checked]="auth!.viewAsClient()" (change)="auth!.setClientView($any($event.target).checked)"/></label>
+  <label class="client-view-toggle"><gt-icon name="eye"/><span><strong>Visualizza come cliente</strong><small>{{auth!.viewAsClient()?'Vista cliente attiva · usi i tuoi dati':'Anteprima del ruolo con i tuoi dati'}}</small></span><input type="checkbox" role="switch" aria-label="Visualizza come cliente" [checked]="auth!.viewAsClient()" (change)="auth!.setClientView($any($event.target).checked)"/></label>
 }
 @if(auth?.canManageBackups()){<gt-backup-reminder />}
+<details class="home-health-disclosure">
+  <summary><gt-icon name="heart"/><span><strong>Obiettivo e benessere</strong><small>Recovery, sonno e focus muscolare</small></span><gt-icon name="chevron-down"/></summary>
+  <div class="home-health-body">
+    <section class="home-overview ref-home-overview" aria-label="Il tuo obiettivo settimanale">
+      <img class="home-dumbbell" src="/training/dumbbell.png" alt="" loading="lazy"/>
+      <a class="neon-ring home-goal-ring ref-home-ring" routerLink="/profilo" [queryParams]="{section:'goals'}" [style.--progress]="weeklyProgress()+'%'" aria-label="Modifica il tuo obiettivo settimanale"><div><span>Obiettivo settimanale</span><strong>{{goals()?.workoutsPerWeek?weeklyProgress()+'%':'—'}}</strong><span>{{goals()?.workoutsPerWeek?weekCount()+' di '+goals()!.workoutsPerWeek+' allenamenti':'Imposta il tuo obiettivo'}}</span><span class="home-goal-edit"><gt-icon name="edit"/>Modifica</span></div></a>
+    </section>
+    <div class="home-quick-health ref-home-wellness" aria-label="Il tuo benessere">
+      <a routerLink="/recupero"><gt-icon name="heart"/><span><strong>{{wellness()?.energy?wellness()!.energy+' / 5':'Check-in'}}</strong><small>Recovery</small></span></a>
+      <a routerLink="/focus-muscolare"><gt-icon name="muscle"/><span><strong>{{focusLabel()}}</strong><small>Focus di oggi</small></span></a>
+      <a routerLink="/sonno"><gt-icon name="moon"/><span><strong>{{sleepLabel(wellness()?.sleepMinutes)}}</strong><small>Sonno</small></span></a>
+    </div>
+  </div>
+</details>
+@if(features?.nutritionEnabled()){<section class="today-section" aria-label="Alimentazione di oggi"><div class="card-head"><h2>Alimentazione di oggi</h2><a class="home-text-link" routerLink="/alimentazione">Diario <gt-icon name="arrow"/></a></div><div class="today-nutrition"><a routerLink="/alimentazione"><strong>{{ totals().calories.toLocaleString('it-IT',{maximumFractionDigits:0}) }}</strong><span>kcal</span></a><a routerLink="/alimentazione"><strong>{{ totals().protein.toLocaleString('it-IT',{maximumFractionDigits:0}) }} <small>g</small></strong><span>proteine</span></a></div></section>}

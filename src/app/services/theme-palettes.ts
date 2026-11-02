@@ -8,7 +8,7 @@ export interface ThemeTokens {
  background:string;card:string;raised:string;line:string;accent:string;accentText:string;text:string;muted:string;buttonText:string;light:boolean;accentSoft:string;
 }
 export const THEME_PALETTES:readonly ThemePalette[] = [
- {id:'viola-neon',name:'Viola Neon',background:'#0B0B1D',card:'#16172D',accent:'#CC70FF',text:'#F7F5FF',muted:'#B8BCD4',buttonText:'#160726',tone:'dark'},
+ {id:'viola-neon',name:'Viola Neon',background:'#151225',card:'#28223D',accent:'#CC70FF',text:'#F7F5FF',muted:'#B8BCD4',buttonText:'#160726',tone:'dark'},
  {id:'blu-azzurro',name:'Blu Azzurro',background:'#040C19',card:'#0C2036',accent:'#0DD9FF',text:'#F1FBFF',muted:'#A8C3D8',buttonText:'#031927',tone:'dark'},
  {id:'carbonio',name:'Carbonio',background:'#101416',card:'#1B2329',accent:'#7DE2C7',text:'#F4F7FA',muted:'#A9B7C3',buttonText:'#0E1A16',tone:'dark'},
  {id:'artico',name:'Artico',background:'#0D1725',card:'#18283D',accent:'#8CC8FF',text:'#F3F7FC',muted:'#A9BDD1',buttonText:'#0A1B2C',tone:'dark'},
