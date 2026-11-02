@@ -29,12 +29,31 @@ function artworkKind(exercise:Exercise|undefined):MovementKind|undefined {
  if(dumbbells&&/^(alzate laterali(?: con manubri)?|(?:standing )?dumbbell lateral raises?)$/.test(name))return 'lateral';
  return;
 }
-export function exerciseArtwork(exercise:Exercise|undefined){const type=movementKind(exercise)||artworkKind(exercise);return type?'/training/figures/'+type+'-v2.png':undefined;}
+/** One illustration per movement family, shared across every training screen. */
+export interface ExerciseVisual {source:string;illustration:true;family:string;cell?:number}
+export const EXERCISE_ARTWORK_ATLASES:Readonly<Record<string,readonly string[]>>={
+ chest:['bench-incline','bench-decline','bench-fly','chest-press','push-up','dip'],
+ back:['pull-up','bent-row','seated-row','pullover','cable-pullover','back-extension'],
+ shoulders:['front-raise','reverse-fly','face-pull','upright-row','shrug','external-rotation'],
+ arms:['preacher-curl','overhead-triceps','french-press','triceps-kickback','triceps-pushdown','wrist-curl'],
+ legs:['deadlift','lunge','step-up','leg-press','leg-extension','leg-curl'],
+ lower:['leg-curl-seated','hip-thrust','glute-kickback','abductor','adductor','calf-raise'],
+ core:['plank','side-plank','crunch','leg-raise','cable-crunch','russian-twist'],
+ extras:['calf-seated','calf-press','bench-dip','ab-wheel','bird-dog','dead-bug'],
+};
+const individual:Readonly<Record<string,MovementKind>>={'bench-press':'bench','squat':'squat','biceps-curl':'curl','lat-pulldown':'lat','shoulder-press':'shoulder','cable-fly':'fly','lateral-raise':'lateral'};
 
-/** Explicit photos and URLs win; only our exact standard SVG is replaceable. */
-export function exerciseThumbnail(exercise:Exercise|undefined):{source:string|Blob;illustration:boolean} {
- if(exercise?.image)return {source:exercise.image,illustration:false};
- const fallback=exerciseIllustration(exercise),thumbnail=exercise?.thumbnailUrl;
- if(thumbnail&&thumbnail!==fallback)return {source:thumbnail,illustration:false};
- return {source:exerciseArtwork(exercise)||thumbnail||fallback,illustration:true};
+/** Uploaded photos and catalog URLs remain in the archive; the app now shows mannequins everywhere. */
+export function exerciseThumbnail(exercise:Exercise|undefined):ExerciseVisual {
+ const exact=movementKind(exercise)||artworkKind(exercise);
+ const family=exerciseIllustration(exercise).split('/').pop()!.replace(/\.svg$/,'');
+ const single=exact||individual[family];
+ if(single)return {source:'/training/figures/'+single+'-v2.png',illustration:true,family};
+ for(const [atlas,families]of Object.entries(EXERCISE_ARTWORK_ATLASES)){
+  const cell=families.indexOf(family);
+  if(cell!==-1)return {source:'/training/figures/atlas-'+atlas+'-v3.png',illustration:true,family,cell};
+ }
+ // Unknown personal exercises get neutral anatomy, never an unrelated exercise pose.
+ return {source:'/training/figures/muscle-front-v2.png',illustration:true,family:'movement'};
 }
+export function exerciseArtwork(exercise:Exercise|undefined){return exerciseThumbnail(exercise).source;}

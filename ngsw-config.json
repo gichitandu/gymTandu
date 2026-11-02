@@ -15,7 +15,8 @@
           "/templates/**",
           "/*.webp",
           "/brand/**",
-          "/exercises/**"
+          "/exercises/**",
+          "/training/figures/**"
         ]
       }
     },

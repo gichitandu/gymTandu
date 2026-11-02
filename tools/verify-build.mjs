@@ -49,6 +49,12 @@ assert(sw.assetGroups.find(g=>g.name==='app').urls.includes('/app-build.json'),'
 assert(fs.readFileSync('dist/server/index.js','utf8').includes('const APP_BUILD_ID = '+JSON.stringify(appBuild.buildId)), 'Versione server diversa dagli asset pubblicati');
 for (const file of fs.readdirSync('public/exercises'))
   assert(assets.includes('/exercises/' + file), `${file} non disponibile offline`);
+// Every mannequin family stays available offline after the app cache is ready.
+for (const file of fs.readdirSync('public/training/figures').filter(file => file.endsWith('.png'))) {
+  const url = '/training/figures/' + file;
+  assert(assets.includes(url), `${file} senza hash offline`);
+  assert(sw.assetGroups.find(group => group.name === 'app').urls.includes(url), `${file} escluso dal precache delle illustrazioni`);
+}
 const scripts = fs
   .readdirSync(root)
   .filter(

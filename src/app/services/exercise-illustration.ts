@@ -34,7 +34,7 @@ export function exerciseIllustration(exercise?: IllustratedExercise): string {
     [/crunch/, 'crunch'],
     [/piegament/, 'push-up'],
     [/dip su panca/, 'bench-dip'],
-    [/dip/, 'dip'],
+    [/\bdip\b/, 'dip'],
     [/trazioni/, 'pull-up'],
     [/lat machine/, 'lat-pulldown'],
     [/pullover.*cavo|pulldown braccia/, 'cable-pullover'],

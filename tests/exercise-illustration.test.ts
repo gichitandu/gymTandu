@@ -41,3 +41,14 @@ it('uses a neutral custom-exercise illustration for an unknown movement', () => 
   expect(exerciseIllustration()).toBe('/exercises/movement.svg');
   expect(exerciseIllustration(exercise('Esercizio personale'))).toBe('/exercises/movement.svg');
 });
+
+it('matches dip as a movement name without capturing independent machine arms', () => {
+  for (const [name, movement] of [
+    ['Lat machine con due maniglie indipendenti', 'lat-pulldown'],
+    ['Chest press con bracci indipendenti alternata', 'chest-press'],
+    ['Dip alla macchina', 'dip'],
+    ['Dip alla macchina assistita', 'dip'],
+    ['Dip alle parallele con zavorra', 'dip'],
+    ['Dip su panca', 'bench-dip'],
+  ]) expect(exerciseIllustration(exercise(name))).toBe(`/exercises/${movement}.svg`);
+});

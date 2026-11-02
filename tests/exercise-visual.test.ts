@@ -1,43 +1,52 @@
 import {expect,it} from 'vitest';
+import {readFileSync,existsSync} from 'node:fs';
 import {seed} from '../src/app/core/seed';
-import {exerciseArtwork,exerciseThumbnail,movementKind} from '../src/app/services/exercise-visual';
+import {EXERCISE_ARTWORK_ATLASES,exerciseArtwork,exerciseThumbnail,movementKind} from '../src/app/services/exercise-visual';
 
 const base=seed().exercises[0];
-it('keeps a poster for every previously supported animation with descriptive equipment labels',()=>{
- for(const [name,equipment,kind]of [['Croci ai cavi','Cavi (doppio)','fly'],['Lat machine','Macchina a cavi','lat']]){
-  const exercise={...base,name,equipment};
-  expect(movementKind(exercise)).toBe(kind);
-  expect(exerciseArtwork(exercise)).toBe(`/training/figures/${kind}-v2.png`);
- }
-});
-it('uses static posters for exact imported aliases without enabling an animation',()=>{
- const aliases=[
-  ['  FLAT BARBELL BENCH PRESS  ','Barbell','bench'],
-  ['Barbell back squat','Barbell','squat'],
-  ['Standing dumbbell curls','Dumbbells','curl'],
-  ['Lat pulldown','Cable','lat'],
-  ['Seated dumbbell shoulder press','Dumbbells','shoulder'],
-  ['Croci ai cavi alti','Cavi','fly'],
+it('keeps all seven exact animation posters and their imported aliases',()=>{
+ for(const [name,equipment,kind]of [
+  ['Croci ai cavi','Cavi (doppio)','fly'],['Lat machine','Macchina a cavi','lat'],
+  ['  FLAT BARBELL BENCH PRESS  ','Barbell','bench'],['Barbell back squat','Barbell','squat'],
+  ['Standing dumbbell curls','Dumbbells','curl'],['Lat pulldown','Cable','lat'],
+  ['Seated dumbbell shoulder press','Dumbbells','shoulder'],['Croci ai cavi alti','Cavi','fly'],
   ['Alzate laterali con manubri','Manubri','lateral'],
- ];
- for(const [name,equipment,kind]of aliases){
-  const exercise={...base,name,equipment};
-  expect(exerciseArtwork(exercise)).toBe(`/training/figures/${kind}-v2.png`);
-  expect(movementKind(exercise)).toBeUndefined();
+ ])expect(exerciseArtwork({...base,name,equipment})).toBe(`/training/figures/${kind}-v2.png`);
+});
+it('covers all 253 bundled exercises and all 55 families with local mannequin artwork',()=>{
+ const exercises=seed().exercises,visuals=exercises.map(exerciseThumbnail);
+ expect(exercises).toHaveLength(253);
+ expect(new Set(visuals.map(v=>v.family)).size).toBe(55);
+ for(const visual of visuals){
+  expect(visual.family).not.toBe('movement');
+  expect(visual.source).toMatch(/^\/training\/figures\/.*\.png$/);
+  expect(existsSync('public'+visual.source)).toBe(true);
+  if(visual.cell!==undefined)expect(visual.cell>=0&&visual.cell<6).toBe(true);
  }
 });
-it('keeps distinct equipment, grips, incline and load modes on their existing fallback',()=>{
- for(const name of ['Panca inclinata','Panca declinata','Panca piana presa stretta','Panca piana con manubri (0°)','Front squat','Squat bulgaro'])expect(exerciseArtwork({...base,name})).toBeUndefined();
- for(const equipment of ['Macchina','Smith machine','Manubri'])expect(exerciseArtwork({...base,equipment})).toBeUndefined();
- expect(exerciseArtwork({...base,loadMode:'bodyweight'})).toBeUndefined();
- expect(exerciseArtwork({...base,name:'Lat machine presa stretta',equipment:'Cavi'})).toBeUndefined();
- expect(exerciseArtwork({...base,name:'Alzate laterali al cavo',equipment:'Cavi'})).toBeUndefined();
+it('keeps 48 unique atlas poses in their exact six-cell regions',()=>{
+ const families=Object.values(EXERCISE_ARTWORK_ATLASES).flat();
+ expect(families).toHaveLength(48);expect(new Set(families).size).toBe(48);
+ for(const [atlas,poses]of Object.entries(EXERCISE_ARTWORK_ATLASES)){
+  expect(poses).toHaveLength(6);
+  const png=readFileSync(`public/training/figures/atlas-${atlas}-v3.png`);
+  expect(png.readUInt32BE(16)).toBe(1536);expect(png.readUInt32BE(20)).toBe(1024);
+ }
+ const legPress=exerciseThumbnail({...base,name:'Leg press'}),incline=exerciseThumbnail({...base,name:'Panca inclinata'});
+ expect(legPress).toMatchObject({source:'/training/figures/atlas-legs-v3.png',cell:3,family:'leg-press'});
+ expect(incline).toMatchObject({source:'/training/figures/atlas-chest-v3.png',cell:0,family:'bench-incline'});
 });
-it('preserves uploaded photos and explicit catalog URLs while upgrading only the matching bundled SVG',()=>{
- const image=new Blob(['photo'],{type:'image/png'});
- expect(exerciseThumbnail({...base,image,thumbnailUrl:'https://example.com/catalog.png'})).toEqual({source:image,illustration:false});
- for(const thumbnailUrl of ['https://example.com/catalog.png','https://example.com/exercises/bench-press.svg','/custom/exercise.png','data:image/png;base64,AA==','/exercises/bench-incline.svg'])expect(exerciseThumbnail({...base,thumbnailUrl})).toEqual({source:thumbnailUrl,illustration:false});
- expect(exerciseThumbnail({...base,thumbnailUrl:'/exercises/bench-press.svg'})).toEqual({source:'/training/figures/bench-v2.png',illustration:true});
- const unsupported={...base,name:'Panca inclinata',thumbnailUrl:'/exercises/bench-incline.svg'};
- expect(exerciseThumbnail(unsupported)).toEqual({source:unsupported.thumbnailUrl,illustration:true});
+it('shows the new artwork instead of every old source without mutating saved photos or URLs',()=>{
+ const image=new Blob(['saved personal photo'],{type:'image/png'});
+ for(const thumbnailUrl of ['https://example.com/catalog.png','/custom/exercise.png','data:image/png;base64,AA==','/exercises/bench-press.svg']){
+  const exercise={...base,image,thumbnailUrl},visual=exerciseThumbnail(exercise);
+  expect(visual.source).toBe('/training/figures/bench-v2.png');expect(visual.illustration).toBe(true);
+  expect(exercise.image).toBe(image);expect(exercise.thumbnailUrl).toBe(thumbnailUrl);
+ }
+});
+it('uses neutral mannequin anatomy for unknown exercises without enabling a false animation',()=>{
+ const unknown={...base,name:'Esercizio personale XYZ',equipment:'Attrezzo personale'};
+ expect(exerciseThumbnail(unknown)).toMatchObject({source:'/training/figures/muscle-front-v2.png',family:'movement'});
+ expect(movementKind(unknown)).toBeUndefined();
+ for(const name of ['Panca inclinata','Panca declinata','Panca piana presa stretta','Front squat','Squat bulgaro'])expect(movementKind({...base,name})).toBeUndefined();
 });
