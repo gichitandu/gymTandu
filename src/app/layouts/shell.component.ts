@@ -14,7 +14,7 @@ import { ArchiveSyncService } from "../services/archive-sync";
 import { canResumeAtHome, MobileNavigationService } from "../services/mobile-navigation";
 @Component({
   selector: "gt-shell",
-  host: {class: "design-v2"},
+  host: {class: "design-v2 photo-controls"},
   standalone: true,
   imports: [DataStatusComponent,WorkoutClockComponent,RouterLink, RouterLinkActive, RouterOutlet, IconComponent, AvatarComponent, ArchiveRecoveryComponent],
   styleUrls: ['./experience.css'],

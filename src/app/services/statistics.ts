@@ -1,5 +1,5 @@
 import {setupKey} from "./training-flow";
-import { DataSet, LoadMode, WorkoutLog, WorkoutLogSet } from "../models/domain";
+import { DataSet, LoadMode, WorkoutLog, WorkoutLogSet, localDate } from "../models/domain";
 export function epley(weight: number, reps: number): number {
   return weight > 0 && reps > 0 ? weight * (1 + reps / 30) : 0;
 }
@@ -69,6 +69,11 @@ export function exerciseRecords(data: DataSet, id: string,machine?:string) {
   };
 }
 export type Metric = "weight" | "volume" | "rm" | "reps" | "weekly";
+export interface ChartPeriod {
+  today?: string;
+  /** Calendar days including today; overrides the month filter when positive. */
+  days?: number;
+}
 export function chartSeries(
   data: DataSet,
   id: string,
@@ -76,16 +81,22 @@ export function chartSeries(
   months: number,
   metric: Metric,
   machine?:string,
+  options: ChartPeriod = {},
 ) {
-  const cutoff = new Date();
-  if (months) cutoff.setMonth(cutoff.getMonth() - months);
-  else cutoff.setFullYear(1970);
+  const today = options.today ?? localDate();
+  const cutoffDate = new Date(today + "T12:00:00");
+  const days = options.days;
+  const hasDays = days !== undefined && Number.isFinite(days) && days > 0;
+  if (hasDays) cutoffDate.setDate(cutoffDate.getDate() - days + 1);
+  else if (months) cutoffDate.setMonth(cutoffDate.getMonth() - months);
+  const cutoff = hasDays || months ? localDate(cutoffDate) : "";
   const logs = data.workouts
     .filter(
       (w) =>
         w.status === "completed" &&
         (!planId || w.planId === planId) &&
-        new Date(w.date + "T23:59:59") >= cutoff,
+        (!cutoff || w.date >= cutoff) &&
+        w.date <= today,
     )
     .sort(
       (a, b) =>

@@ -31,6 +31,16 @@ import { Component, input } from "@angular/core";
 export class IconComponent {
   name = input("activity");
   paths: Record<string, string> = {
+    heart:'M12 21 3 12a5.5 5.5 0 0 1 9-7 5.5 5.5 0 0 1 9 7z',
+    layers:'m3 7 9-5 9 5-9 5zm0 5 9 5 9-5M3 17l9 5 9-5',
+    muscle:'M7 9 4 12l1 7h14l1-7-3-3M7 9V5l3-2 3 2-2 3H8m5 2 3 3M8 15h8',
+    strength:'M7 9 5 7l1-4 4 1-1 4 3 3M7 9l-3 4 1 6c4 3 11 3 15-1v-6l-2-4-4 1 1 4-3 2M7 15h4',
+    scale:'M12 3v17M8 21h8M5 7h14M5 7l-3 8h6L5 7m14 0-3 8h6l-3-8',
+    body:'M14 4a2 2 0 1 1-4 0 2 2 0 0 1 4 0M3 8l9 3 9-3M12 11v6M8 22l4-5 4 5',
+    ruler:'m5 3 16 16-4 4L1 7zm4 4-2 2m6 2-2 2m6 2-2 2',
+    'chevron-down':'m5 9 7 7 7-7',
+    'chevron-right':'m9 5 7 7-7 7',
+
     moon:"M20 15a9 9 0 0 1-11-11A9 9 0 1 0 20 15z",
     fire:"M12 3c1 4 6 5 6 11a6 6 0 0 1-12 0c0-3 2-5 4-7 0 3 1 4 2 4 2-2 2-5 0-8z",
     move:"M12 3v18M3 12h18M8 7l4-4 4 4M8 17l4 4 4-4M7 8l-4 4 4 4m10-8 4 4-4 4",

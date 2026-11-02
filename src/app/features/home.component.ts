@@ -9,6 +9,12 @@ import { localDate } from "../models/domain";
 import { IconComponent } from "../shared/icon.component";
 import { StatusComponent } from "../shared/status.component";
 import { TodayService } from '../services/today';
+interface HomeUpcomingSession {
+  kind:'draft'|'scheduled'|'plan';title:string;planName:string;planId:string;dayId:string;
+  eventId?:string;date?:string;time?:string;durationMinutes?:number;periodLabel:string;
+  exerciseCount:number;setCount:number;activePlan:boolean;
+}
+
 @Component({
   standalone: true,
   imports: [
@@ -18,7 +24,7 @@ import { TodayService } from '../services/today';
     StatusComponent,
   ],
   templateUrl: "./home.component.html",
-  styleUrl: "./home-simple.css",
+  styleUrls: ["./home-simple.css", "./home-reference.css"],
 })
 export class HomeComponent {
   s = inject(Store);
@@ -75,6 +81,33 @@ export class HomeComponent {
         )
         .sort((a, b) => a.date.localeCompare(b.date))[0],
   );
+  upcoming=computed<HomeUpcomingSession|undefined>(()=>{
+    const draft=this.s.draft(),event=this.nextScheduled(),day=this.nextDay();
+    const selectedDayId=draft?.dayId||event?.dayId||day?.id;
+    if(!selectedDayId)return;
+    const selectedDay=this.s.data().days.find(item=>item.id===selectedDayId);
+    const planId=draft?.planId||event?.planId||day!.planId;
+    const plan=this.s.data().plans.find(item=>item.id===planId);
+    const schedule=draft?this.s.data().scheduledWorkouts.find(item=>item.workoutId===draft.id):event;
+    const rows=draft?this.s.workoutExercises(draft.id):this.s.planExercises(selectedDayId);
+    const ids=new Set(rows.map(item=>item.id));
+    const setCount=draft?this.s.data().sets.filter(item=>ids.has(item.workoutExerciseId)&&item.kind!=='warmup').length:this.s.planExercises(selectedDayId).reduce((total,item)=>total+item.sets,0);
+    const week=draft?.programWeek||selectedDay?.week;
+    return {
+      kind:draft?'draft':event?'scheduled':'plan',title:draft?.dayName||event?.dayName||day!.name,
+      planName:draft?.planName||event?.planName||plan?.name||'',planId,dayId:selectedDayId,
+      eventId:!draft?event?.id:undefined,date:draft?.date||event?.date,time:schedule?.time,
+      durationMinutes:schedule?.durationMinutes,
+      periodLabel:week?'Settimana '+week:selectedDay?'Giorno '+(selectedDay.order+1):'',
+      exerciseCount:rows.length,setCount,activePlan:!!plan?.active&&!plan.archived&&!plan.completedAt,
+    };
+  });
+  get todayShortLabel(){return new Date(this.today+'T12:00:00').toLocaleDateString('it-IT',{day:'numeric',month:'short'});}
+  sessionWhen(session:HomeUpcomingSession){
+    if(!session.date)return 'Prossima seduta';
+    return (session.date===this.today?'Oggi':this.dateLabel(session.date))+(session.time?' · '+session.time:'');
+  }
+  sessionPreview(session:HomeUpcomingSession){return session.kind==='scheduled'?{scheduled:session.eventId,return:'home'}:{day:session.dayId,return:'home'};}
   private weekDays = computed(() => Array.from({ length: 7 }, (_, i) => {
     const d = new Date(this.today+'T12:00:00');
     d.setHours(12, 0, 0, 0);

@@ -38,7 +38,7 @@ type PlanEditorDraft = {
 };
 @Component({
   standalone: true,
-  styleUrls: ["./feature-polish.css", "./plans-simple.css"],
+  styleUrls: ["./feature-polish.css", "./plans-simple.css", "./plans-reference.css"],
   imports: [AnimationLibraryComponent,DateFieldComponent,OpenWorkoutsComponent,
     A11yModule,ExerciseScopeComponent,
     ExerciseFamiliesComponent,
@@ -50,21 +50,33 @@ type PlanEditorDraft = {
     StatusComponent,
   ],
   template: `<div class="compact-plans">
-    <header class="plans-heading"><div><h1>Allenati</h1><p>Il tuo programma, senza cercare.</p></div><div class="plan-heading-actions"><button type="button" class="primary new-plan" (click)="openPlan()" [disabled]="!s.ready()" aria-label="Nuovo piano"><gt-icon name="plus"/></button></div></header>
+    <header class="plans-heading"><div><h1>Allenati</h1><p>Il tuo programma, a portata di mano.</p></div><div class="plan-heading-actions"><button type="button" class="primary new-plan ref-icon-button" (click)="openPlan()" [disabled]="!s.ready()" aria-label="Nuovo piano"><gt-icon name="plus"/></button></div></header>
     <gt-status />
     <gt-open-workouts />
     @if(draftNotice()){<p class="notice" role="status">{{draftNotice()}}</p>}
     <gt-animation-library/>
-    <nav class="neon-segments plans-navigation" aria-label="Allenamenti"><button type="button" [class.active]="hub()==='today'" (click)="hub.set('today')">Oggi</button><button type="button" [class.active]="hub()==='plans'&&!archived()" (click)="hub.set('plans');archived.set(false)">Piani</button><a routerLink="/allenamenti">Storico</a></nav>
+    <nav class="neon-segments plans-navigation ref-tabs" aria-label="Allenamenti"><button type="button" [class.active]="hub()==='today'" [attr.aria-pressed]="hub()==='today'" (click)="hub.set('today')"><gt-icon name="calendar"/>Oggi</button><button type="button" [class.active]="hub()==='plans'&&!archived()" [attr.aria-pressed]="hub()==='plans'&&!archived()" (click)="hub.set('plans');archived.set(false)"><gt-icon name="layers"/>Piani</button><a routerLink="/allenamenti"><gt-icon name="clock"/>Storico</a></nav>
     @if(hub()==='today'){
-      <section class="card training-today-card">
-        <p class="training-kicker">{{s.draft()?'SEDUTA APERTA':'IL TUO PROSSIMO ALLENAMENTO'}}</p>
+      <section class="card training-today-card ref-card violet">
+        <div class="training-cover-heading"><p class="training-kicker ref-eyebrow">{{s.draft()?'SEDUTA APERTA':'LA TUA PROSSIMA SEDUTA'}}</p>@if(todayBadge();as badge){<span class="ref-badge training-schedule-badge" [class.green]="!s.draft()&&todaySessionDate()===today" [class.violet]="!s.draft()&&todaySessionDate()!==today" [class.warning]="!!s.draft()"><i aria-hidden="true"></i>{{badge}}</span>}</div>
         @if(todayCover();as exercise){<gt-exercise-thumb class="training-today-cover" [exercise]="exercise"/>}@else{<img class="training-today-art" src="/training/dumbbell.png" alt=""/>}
-        <div class="training-today-copy">@if(s.draft();as draft){<h2>{{draft.dayName}}</h2><p>{{draft.planName}}</p><a class="button primary full-width" routerLink="/sessione"><gt-icon name="play"/>Riprendi allenamento</a>}@else if(todayDay();as day){<h2>{{day.name}}</h2><p>{{s.activePlan()?.name}}@if(day.week){ · Settimana {{day.week}}}</p><div class="training-inline-metrics"><span><gt-icon name="weight"/>{{s.planExercises(day.id).length}} esercizi</span><span><gt-icon name="plans"/>{{todaySetCount()}} serie</span>@if(day.weekday!==undefined){<span><gt-icon name="calendar"/>{{weekdays[day.weekday]}}</span>}</div><div class="training-today-actions"><a class="button primary" routerLink="/anteprima-allenamento" [queryParams]="{day:day.id,return:'piani'}">Vedi la seduta<gt-icon name="arrow"/></a><button class="ghost" (click)="start(day.id)" [disabled]="s.busy()||!s.planExercises(day.id).length"><gt-icon name="play"/>Inizia allenamento</button></div>}@else{<h2>Costruisci il tuo percorso</h2><p>Crea o attiva un piano per trovare qui il prossimo allenamento.</p><button class="primary full-width" (click)="hub.set('plans');openPlan()">Crea piano<gt-icon name="plus"/></button>}</div>
+        <div class="training-today-copy">
+          @if(s.draft();as draft){
+            <p class="training-plan-caption">{{draft.planName}}</p><h2>{{draft.dayName}}</h2>
+            <div class="training-inline-metrics"><span><gt-icon name="weight"/>{{todayExerciseCount()}} esercizi</span><span><gt-icon name="layers"/>{{todaySetCount()}} serie</span>@if(todayDuration();as minutes){<span [attr.aria-label]="'Durata programmata: '+minutes+' minuti'"><gt-icon name="clock"/>{{minutes}} min</span>}</div>
+            <div class="training-today-actions"><a class="button primary ref-action" routerLink="/sessione"><gt-icon name="play"/><span>Riprendi allenamento</span><gt-icon name="chevron-right"/></a><a class="button secondary ref-action" routerLink="/anteprima-allenamento" [queryParams]="{day:draft.dayId,return:'piani'}"><gt-icon name="eye"/>Vedi scheda</a></div>
+          }@else if(todayDay();as day){
+            <p class="training-plan-caption">{{todayPlan()?.name}}@if(day.week){<span class="training-caption-dot">·</span>Settimana {{day.week}}@if(todayPlan()?.program?.weeks){ di {{todayPlan()!.program!.weeks}}}}</p><h2>{{day.name}}</h2>
+            <div class="training-inline-metrics"><span><gt-icon name="weight"/>{{todayExerciseCount()}} esercizi</span><span><gt-icon name="layers"/>{{todaySetCount()}} serie</span>@if(todayDuration();as minutes){<span [attr.aria-label]="'Durata programmata: '+minutes+' minuti'"><gt-icon name="clock"/>{{minutes}} min</span>}@else if(day.weekday!==undefined){<span><gt-icon name="calendar"/>{{weekdays[day.weekday]}}</span>}</div>
+            <div class="training-today-actions"><a class="button primary ref-action" routerLink="/anteprima-allenamento" [queryParams]="{day:day.id,return:'piani'}"><gt-icon name="play"/><span>Apri la seduta</span><gt-icon name="chevron-right"/></a><a class="button secondary ref-action" routerLink="/calendario" [queryParams]="{date:todaySessionDate()||today}"><gt-icon name="calendar"/>Cambia programmazione</a></div>
+          }@else{
+            <h2>Costruisci il tuo percorso</h2><p>Crea o attiva un piano per trovare qui il prossimo allenamento.</p><button class="primary full-width ref-action" (click)="hub.set('plans');openPlan()">Crea piano<gt-icon name="plus"/></button>
+          }
+        </div>
       </section>
-      @if(s.activePlan();as plan){<a class="card training-path" [routerLink]="['/piano',plan.id]"><div class="card-head"><h3>Il tuo percorso</h3><span class="pill green">Attivo</span></div><strong>{{plan.name}}</strong><div class="training-path-stats"><span>{{completedForPlan(plan.id)}} sedute registrate</span><span>{{s.days(plan.id).length}} allenamenti nel piano<gt-icon name="arrow"/></span></div></a>}
+      @if(s.activePlan();as plan){<a class="card training-path ref-card" [routerLink]="['/piano',plan.id]"><div class="card-head"><h3>Il tuo percorso</h3><span class="ref-badge neutral">Piano attivo</span></div><strong>{{plan.name}}</strong><div class="training-path-stats"><span>{{completedForPlan(plan.id)}} sedute registrate</span><span>{{s.days(plan.id).length}} allenamenti nel piano<gt-icon name="chevron-right"/></span></div></a>}
       <div class="training-tool-grid"><a routerLink="/catalogo"><gt-icon name="weight"/><strong>Catalogo esercizi</strong><small>Tecnica e movimenti</small></a><a routerLink="/importa-excel"><gt-icon name="download"/><strong>Importa un piano</strong><small>Dal tuo file Excel</small></a></div>
-      <div class="training-hub-links"><a class="card" routerLink="/calendario"><gt-icon name="calendar"/><span><strong>Programmazione</strong><small>Allenamenti, attività e riposo</small></span><gt-icon name="arrow"/></a><a class="card" routerLink="/recupero"><gt-icon name="moon"/><span><strong>Come ti senti oggi?</strong><small>Apri il check-in recovery</small></span><gt-icon name="arrow"/></a></div>
+      <div class="training-hub-links">@if(todayDay();as day){@if(!s.draft()){<button type="button" class="card training-direct-start" (click)="start(day.id)" [disabled]="s.busy()||!s.planExercises(day.id).length"><gt-icon name="play"/><span><strong>Inizia allenamento</strong><small>Apri direttamente la registrazione delle serie</small></span><gt-icon name="chevron-right"/></button>}}<a class="card" routerLink="/calendario"><gt-icon name="calendar"/><span><strong>Programmazione</strong><small>Allenamenti, attività e riposo</small></span><gt-icon name="arrow"/></a><a class="card" routerLink="/recupero"><gt-icon name="moon"/><span><strong>Come ti senti oggi?</strong><small>Apri il check-in recovery</small></span><gt-icon name="arrow"/></a></div>
     }
     <div [hidden]="hub()==='today'">
     <div class="plans-list-heading"><h2>{{archived()?'Piani archiviati':'I miei piani'}}</h2><button type="button" class="ghost archive-toggle" [class.selected]="archived()" (click)="archived.set(!archived())">{{archived()?'Piani attivi':'Archivio'}}<gt-icon name="clock"/></button></div>
@@ -284,10 +296,16 @@ export class PlansComponent {
   selectedWeeks=signal<Record<string,number>>({});
   fb = inject(FormBuilder);
   hub=signal<'today'|'plans'>('today');
-  todayCover=computed(()=>{const dayId=this.s.draft()?.dayId||this.todayDay()?.id;const entry=dayId?this.s.planExercises(dayId)[0]:undefined;return entry?this.s.exercise(entry.exerciseId):undefined;});
-  todaySetCount=computed(()=>{const day=this.todayDay();return day?this.s.planExercises(day.id).reduce((total,row)=>total+row.sets,0):0;});
+  todayCover=computed(()=>{const draft=this.s.draft();if(draft){const entry=this.s.workoutExercises(draft.id)[0];return entry?this.s.exercise(entry.exerciseId):undefined;}const day=this.todayDay(),entry=day?this.s.planExercises(day.id)[0]:undefined;return entry?this.s.exercise(entry.exerciseId):undefined;});
+  todayExerciseCount=computed(()=>{const draft=this.s.draft(),day=this.todayDay();return draft?this.s.workoutExercises(draft.id).length:day?this.s.planExercises(day.id).length:0;});
+  todaySetCount=computed(()=>{const draft=this.s.draft();if(draft)return this.s.workoutExercises(draft.id).reduce((total,row)=>total+this.s.sets(row.id).filter(set=>set.kind!=='warmup').length,0);const day=this.todayDay();return day?this.s.planExercises(day.id).reduce((total,row)=>total+row.sets,0):0;});
   completedForPlan(id:string){return this.s.completed().filter(workout=>workout.planId===id).length;}
   todayDay=computed(()=>{const day=this.s.nextDay();return day&&!this.s.data().plans.find(p=>p.id===day.planId)?.completedAt?day:undefined;});
+  todayPlan=computed(()=>{const id=this.s.draft()?.planId||this.todayDay()?.planId;return this.s.data().plans.find(plan=>plan.id===id);});
+  todaySchedule=computed(()=>{const draft=this.s.draft(),dayId=draft?.dayId||this.todayDay()?.id;if(!dayId)return undefined;return this.s.data().scheduledWorkouts.filter(event=>(event.kind??'workout')==='workout'&&event.dayId===dayId&&(draft?event.workoutId===draft.id:event.date>=this.today&&!this.s.completed().some(workout=>workout.id===event.workoutId))).sort((a,b)=>a.date.localeCompare(b.date)||(a.time||'').localeCompare(b.time||''))[0];});
+  todaySessionDate=computed(()=>this.s.draft()?.date||this.todaySchedule()?.date||this.todayDay()?.sessionDate||'');
+  todayDuration=computed(()=>{const minutes=this.todaySchedule()?.durationMinutes;return minutes!==undefined&&Number.isFinite(minutes)&&minutes>0?minutes:undefined;});
+  todayBadge=computed(()=>{if(this.s.draft())return 'Da riprendere';const date=this.todaySessionDate();if(!date)return '';const label=date===this.today?'Oggi':this.dateLabel(date);return label+(this.todaySchedule()?.time?' · '+this.todaySchedule()!.time:'');});
   archived = signal(false);
   expanded = signal(this.s.activePlan?.()?.id||"");
   modal = signal("");

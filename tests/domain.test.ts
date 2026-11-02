@@ -130,6 +130,37 @@ describe("Statistiche", () => {
     expect(exerciseRecords(d, "exercise-0").maxWeight).toBe(85);
     expect(sessionVolume(d, d.workouts[1])).toBe(680);
   });
+  it("allinea il grafico al giorno fornito, include il cutoff ed esclude sedute future", () => {
+    const d = fixture();
+    const dates = ["2026-10-01", "2026-10-02", "2026-11-02", "2026-11-03"];
+    const workout = d.workouts[0], exercise = d.workoutExercises[0], set = d.sets[0];
+    d.workouts = dates.map((date, i) => ({...workout, id:`w${i}`, date}));
+    d.workoutExercises = dates.map((_, i) => ({...exercise, id:`we${i}`, workoutId:`w${i}`}));
+    d.sets = dates.map((_, i) => ({...set, id:`s${i}`, workoutExerciseId:`we${i}`}));
+
+    expect(chartSeries(d, "exercise-0", "p", 1, "weight", undefined, {today:"2026-11-02"}).map(p=>p.date))
+      .toEqual(["2026-10-02", "2026-11-02"]);
+    expect(chartSeries(d, "", "p", 1, "weekly", undefined, {today:"2026-11-02"}).reduce((total,p)=>total+p.value,0))
+      .toBe(1280);
+    expect(chartSeries(d, "exercise-0", "p", 1, "weight", undefined, {today:"2026-11-03"}).map(p=>p.date))
+      .toEqual(["2026-11-02", "2026-11-03"]);
+    expect(chartSeries(d, "exercise-0", "p", 0, "weight", undefined, {today:"2026-11-02"}).map(p=>p.date))
+      .toEqual(["2026-10-01", "2026-10-02", "2026-11-02"]);
+  });
+  it("calcola quattro settimane come 28 giorni e conserva il cutoff mensile a fine mese", () => {
+    const d = fixture();
+    d.workouts[0].date = "2026-03-02";
+    d.workouts[1].date = "2026-03-03";
+    expect(chartSeries(d, "exercise-0", "p", 1, "weight", undefined, {today:"2026-03-31"}).map(p=>p.date))
+      .toEqual(["2026-03-03"]);
+
+    d.workouts[0].date = "2026-10-05";
+    d.workouts[1].date = "2026-10-06";
+    expect(chartSeries(d, "exercise-0", "p", 0, "weight", undefined, {today:"2026-11-02",days:28}).map(p=>p.date))
+      .toEqual(["2026-10-06"]);
+    expect(chartSeries(d, "exercise-0", "p", 1, "weight", undefined, {today:"2026-11-02",days:28}).map(p=>p.date))
+      .toEqual(["2026-10-06"]);
+  });
   it("somma lo stesso esercizio ripetuto nella sessione per il record di volume", () => {
     const d = fixture();
     d.workoutExercises.push({ ...d.workoutExercises[1], id: "repeat" });

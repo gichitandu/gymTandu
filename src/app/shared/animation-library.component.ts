@@ -24,7 +24,8 @@ const demonstrations=[
  styleUrl:'./animation-library.component.css',
  template:`<button type="button" class="animation-library-toggle" (click)="open.set(!open())" [attr.aria-expanded]="open()" [attr.aria-controls]="panelId">
   <span class="animation-library-play"><gt-icon name="play"/></span>
-  <span class="animation-library-copy"><strong>Animazioni guidate</strong><small>7 movimenti disponibili</small></span>
+  <span class="animation-library-copy"><strong>Animazioni guidate</strong><small>Tecnica, una fase alla volta</small></span>
+  <span class="animation-library-count" aria-label="7 movimenti disponibili">{{demonstrations.length}}</span>
   <gt-icon class="animation-library-chevron" name="back" [class.expanded]="open()"/>
  </button>
  @if(open()){

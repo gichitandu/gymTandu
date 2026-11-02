@@ -1,0 +1,47 @@
+:host{display:block;max-width:960px;margin:0 auto;min-width:0}
+.reference-progress{min-width:0}
+.reference-progress .progress-page-heading{align-items:center;gap:12px;margin:0 0 17px}
+.reference-progress .progress-page-heading>div{min-width:0;flex:1}
+.reference-progress .ref-eyebrow{margin:0 0 5px;font-size:9px;font-weight:600;letter-spacing:1.35px;line-height:1.5;color:var(--muted)}
+.reference-progress .progress-page-heading h1{font-size:27px;line-height:1.2;letter-spacing:-.8px;margin:0 0 4px}
+.ref-progress-subtitle{font-size:12px;line-height:1.5;color:var(--muted);margin:0}
+.reference-progress .progress-page-heading>.ref-icon-button{width:44px;min-width:44px;height:44px;min-height:44px;padding:0;border-radius:11px}
+.reference-progress .ref-icon-button>gt-icon{width:21px;height:21px}
+.reference-progress .progress-tabs{padding:4px;gap:3px;border-radius:13px;margin:0 0 14px}
+.reference-progress .progress-tabs>button{min-height:36px;display:flex;align-items:center;justify-content:center;gap:8px;padding:8px 7px;border-radius:9px;font-size:12px;line-height:1.2;white-space:nowrap;min-width:0}
+.reference-progress .progress-tabs>button>gt-icon{width:18px;height:18px}
+.ref-progress-filters{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px;margin:0 0 15px}
+.reference-progress .ref-field{display:grid;gap:7px;min-width:0;font-size:11px;line-height:1.4;color:var(--muted)}
+.reference-progress .ref-field>span:first-child{font-size:11px;font-weight:650;color:var(--text)}
+.reference-progress .ref-field-control{position:relative;display:block;min-width:0}
+.reference-progress .ref-field-control>gt-icon{position:absolute;z-index:1;left:12px;top:50%;transform:translateY(-50%);width:18px;height:18px;color:var(--muted);pointer-events:none}
+.reference-progress .ref-field select{display:block;margin:0;width:100%;min-width:0;min-height:44px;font-size:12px;line-height:1.4;border-radius:11px;padding:11px 31px 11px 12px;text-overflow:ellipsis}
+.reference-progress .ref-has-icon select{padding-left:38px}
+.reference-progress .progress-period-filter{margin:0 0 15px;grid-template-columns:minmax(0,1fr) auto;gap:10px}
+.reference-progress .progress-period-filter>.button{min-height:44px;font-size:12px;padding:10px 12px}
+.reference-progress .ref-progress-summary{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:0 0 15px}
+.reference-progress .ref-progress-metric{display:flex;flex-direction:column;align-items:stretch;justify-content:flex-start;gap:0;padding:12px 13px;min-height:100px;position:relative;border-radius:14px;overflow:hidden}
+.ref-progress-metric-top{display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:5px;min-height:21px}
+.ref-progress-metric-top>gt-icon{width:21px;height:21px;color:var(--accent-text)}
+.reference-progress .ref-progress-metric .ref-badge{padding:3px 7px;font-size:10px;white-space:nowrap;line-height:1.3;min-height:22px;max-width:calc(100% - 27px)}
+.reference-progress .ref-progress-metric>.ref-metric-value{display:block;font-size:26px;font-weight:700;letter-spacing:-.8px;line-height:1.15;overflow-wrap:anywhere;margin:0 0 6px;min-height:31px}
+.reference-progress .ref-metric-value>span{font-size:12px;font-weight:500;letter-spacing:0;color:var(--muted)}
+.reference-progress .ref-progress-metric>small{font-size:11px;line-height:1.45;color:var(--muted);margin:0;font-weight:400;overflow-wrap:anywhere}
+.ref-duration-minutes{font-size:19px;font-weight:650;margin-left:3px;white-space:nowrap}
+.ref-duration-minutes>span{font-size:11px;letter-spacing:0;color:var(--muted);font-weight:500}
+.reference-progress .ref-weekly-card{border-radius:15px;padding:15px;margin:0 0 13px;overflow:hidden}
+.reference-progress .ref-weekly-card>.card-head{margin-bottom:14px;align-items:center}
+.reference-progress .ref-weekly-card .ref-eyebrow{font-size:9px;letter-spacing:1.4px;margin:0 0 5px}
+.reference-progress .ref-weekly-card h2{font-size:17px;letter-spacing:-.4px;line-height:1.3;margin:0}
+.reference-progress .ref-weekly-card>.card-head>.ref-badge{padding:4px 7px;font-size:10px;min-height:23px}
+.ref-weekly-summary{display:flex;align-items:center;justify-content:space-between;gap:9px;flex-wrap:wrap;margin-bottom:7px}
+.ref-weekly-summary>strong{font-size:29px;font-weight:700;line-height:1.15;letter-spacing:-.9px;overflow-wrap:anywhere;min-width:0}
+.ref-weekly-summary>strong>span{font-size:12px;font-weight:500;letter-spacing:0;color:var(--muted)}
+.reference-progress .ref-weekly-summary>.ref-badge{font-size:10px;line-height:1.35;padding:4px 7px;min-height:23px;white-space:normal;text-align:center}
+.ref-weekly-description{font-size:11px;line-height:1.5;color:var(--muted);margin:0 0 14px}
+.reference-progress .ref-weekly-card ::ng-deep gt-progress-chart .chart-wrap{height:200px}
+.reference-progress .progress-exercise-details{margin-top:12px}
+.reference-progress .progress-exercise-details>summary{min-height:66px}
+.reference-progress .personal-records-panel h2{font-size:18px}
+@media(min-width:1000px){.reference-progress .ref-progress-summary{grid-template-columns:repeat(4,minmax(0,1fr))}.reference-progress .ref-progress-filters{max-width:550px}.reference-progress .ref-weekly-card{padding:22px}.reference-progress .ref-weekly-card ::ng-deep gt-progress-chart .chart-wrap{height:250px}}
+@media(max-width:359px){.reference-progress .progress-tabs>button{font-size:11px;gap:5px;padding-inline:4px}.reference-progress .progress-tabs>button>gt-icon{width:16px;height:16px}.ref-progress-filters{gap:8px}.reference-progress .ref-progress-metric{padding:11px 10px}.reference-progress .ref-progress-metric>.ref-metric-value{font-size:24px}.reference-progress .ref-progress-metric .ref-badge{font-size:9px;padding-inline:5px}.reference-progress .ref-field select{font-size:12px;padding-left:10px}.reference-progress .ref-has-icon select{padding-left:32px}.reference-progress .ref-field-control>gt-icon{left:9px;width:16px;height:16px}.ref-progress-subtitle{font-size:11px}.ref-weekly-summary>strong{font-size:27px}.reference-progress .progress-period-filter>.button{font-size:11px;padding-inline:8px}}
