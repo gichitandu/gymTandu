@@ -1,3 +1,4 @@
+import {exerciseMotionFrames} from '../services/exercise-motion-frames';
 import {ExerciseMotionComponent} from '../shared/exercise-motion.component';
 import {RouterLink} from '@angular/router';
 import { confirmationForContext } from '../services/confirmation';
@@ -50,7 +51,8 @@ type CatalogEditorDraft = {
     <div class="catalog-grid catalog-design-list">
       @for(e of filtered();track e.id){
         <article class="card catalog-exercise-card catalog-design-row" [class.catalog-inactive]="!e.active">
-          <div class="catalog-row-head"><a class="catalog-exercise-link" [routerLink]="['/esercizio',e.id]"><gt-exercise-thumb [exercise]="e"/><span class="catalog-row-copy"><h3>{{e.name}}</h3><small>{{e.equipment}}</small><span class="catalog-row-tags"><span class="pill">{{s.muscle(e.muscleGroupId)}}</span>@if(!e.active){<span class="catalog-state">Disattivato</span>}</span></span><gt-icon class="catalog-play" name="play"/></a><button type="button" class="ghost favorite-button" [class.favorite-on]="s.isFavorite(e.id)" [attr.aria-pressed]="s.isFavorite(e.id)" [attr.aria-label]="(s.isFavorite(e.id)?'Rimuovi dai preferiti: ':'Aggiungi ai preferiti: ')+e.name" (click)="s.toggleFavorite(e.id)" [disabled]="s.busy()">{{s.isFavorite(e.id)?'★':'☆'}}</button></div>
+          <div class="catalog-row-head"><a class="catalog-exercise-link" [routerLink]="['/esercizio',e.id]"><gt-exercise-thumb [exercise]="e"/><span class="catalog-row-copy"><h3>{{e.name}}</h3><small>{{e.equipment}}</small><span class="catalog-row-tags"><span class="pill">{{s.muscle(e.muscleGroupId)}}</span>@if(!e.active){<span class="catalog-state">Disattivato</span>}</span></span><gt-icon class="catalog-play" [name]="motionFrames(e)?'play':'arrow'"/></a><button type="button" class="ghost favorite-button" [class.favorite-on]="s.isFavorite(e.id)" [attr.aria-pressed]="s.isFavorite(e.id)" [attr.aria-label]="(s.isFavorite(e.id)?'Rimuovi dai preferiti: ':'Aggiungi ai preferiti: ')+e.name" (click)="s.toggleFavorite(e.id)" [disabled]="s.busy()">{{s.isFavorite(e.id)?'★':'☆'}}</button></div>
+          @if(motionFrames(e)){<a class="catalog-motion-link" [routerLink]="['/esercizio',e.id]" [queryParams]="{motion:1}"><gt-icon name="play"/>Animazione guidata</a>}
           <details class="catalog-row-options"><summary><span>Dettagli e opzioni</span><gt-icon name="back"/></summary><div class="catalog-row-details"><div class="catalog-detail-heading"><span>{{modeLabel(e.loadMode)}}</span>@if(s.canEditCatalog()){<button type="button" class="ghost" (click)="open(e)"><gt-icon name="edit"/>Modifica</button>}</div>@if(e.description){<p class="catalog-description">{{e.description}}</p>}<gt-exercise-motion [exercise]="e"/><gt-machine-setup [exerciseId]="e.id"/><div class="actions"><gt-exercise-video [exercise]="e"/>@if(s.canEditCatalog()){<label class="active-check"><input type="checkbox" [checked]="e.active" [disabled]="saving()" (change)="toggle(e)"/>Attivo</label>}</div>@if(e.tags.length){<div class="catalog-detail-tags">@for(t of e.tags;track t){<span class="pill">{{t}}</span>}</div>}<a class="button ghost catalog-open-detail" [routerLink]="['/esercizio',e.id]">Apri esercizio<gt-icon name="arrow"/></a></div></details>
         </article>
       }@empty{<div class="card empty catalog-empty"><gt-icon name="search"/><h3>Nessun esercizio trovato</h3><p>{{scope()==='favorites'?'Tocca la stella accanto agli esercizi per ritrovarli qui.':scope()==='recent'?'Qui compariranno gli esercizi delle tue sessioni.':'Prova un altro nome, attrezzo o gruppo muscolare.'}}</p>@if(query()||group()){<button type="button" class="ghost" (click)="query.set('');group.set('')">Rimuovi ricerca e filtri</button>}</div>}
@@ -178,6 +180,7 @@ type CatalogEditorDraft = {
     }`,
 })
 export class CatalogComponent {
+  motionFrames=exerciseMotionFrames;
  private confirmation=confirmationForContext();
   s = inject(Store);
   fb = inject(FormBuilder);
