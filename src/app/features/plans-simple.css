@@ -6,3 +6,61 @@
 .program-week-picker select{font-size:16px}
 
 .simple-day-tools{align-items:center;gap:10px;justify-content:space-between}.plan-preview-link{display:flex;align-items:center;justify-content:center;gap:8px;min-height:46px;min-width:0;flex:1;font-size:13px;white-space:normal;text-align:center}.plan-preview-link gt-icon{width:16px;height:16px;flex:none}
+
+/* Match the compact illustrated training hub used in the design preview. */
+:host .compact-plans{max-width:760px}
+:host .plans-heading{margin-bottom:16px;gap:12px}
+:host .plans-heading h1{font-size:28px;letter-spacing:-.8px}
+:host .plans-heading p{font-size:13px;line-height:1.5;color:var(--muted);margin:6px 0 0}
+:host .plans-heading .new-plan{width:42px;min-width:42px;height:42px;min-height:42px;border-radius:13px;padding:10px}
+:host .plans-navigation{margin:0 0 17px;gap:3px;border-radius:13px}
+:host .plans-navigation>*{flex:1;min-height:42px;font-size:13px;border-radius:10px}
+:host .training-today-card{display:block;position:relative;padding:18px!important;margin-bottom:12px;border-color:color-mix(in srgb,var(--accent) 45%,var(--line));background:radial-gradient(ellipse at 55% 25%,var(--accent-soft),transparent 60%),var(--card);overflow:hidden}
+.training-kicker{font-size:10px!important;font-weight:650;line-height:1.5;letter-spacing:1.4px;color:var(--accent-text)!important;margin:0!important}
+:host .training-today-cover{display:block;width:100%;height:165px;--thumb-width:100%;--thumb-height:165px;margin:0 auto 5px;background:transparent!important;border:0;border-radius:0;mask-image:linear-gradient(#000 80%,transparent)}
+:host .training-today-art{display:block;width:100%;max-width:none;height:165px;object-fit:contain;background:transparent;border-radius:0;margin:0 0 5px;mask-image:linear-gradient(#000 80%,transparent)}
+:host .training-today-copy h2{font-size:26px!important;line-height:1.18;letter-spacing:-.7px;margin:0 0 7px;overflow-wrap:anywhere}
+:host .training-today-copy>p{font-size:12px;line-height:1.6;margin:0;color:var(--muted)}
+.training-inline-metrics{display:flex;flex-wrap:wrap;gap:12px;margin:15px 0;color:var(--muted);font-size:11px;line-height:1.5}
+.training-inline-metrics span{display:flex;align-items:center;gap:6px}
+.training-inline-metrics gt-icon{width:16px;height:16px;color:var(--accent-text)}
+.training-today-actions{display:grid;gap:6px;margin-top:16px}
+:host .training-today-actions>a{width:100%;justify-content:space-between;min-height:48px;font-size:14px}
+:host .training-today-actions>button{border:0;min-height:40px;font-size:12px;color:var(--muted)}
+:host .training-today-copy>.full-width{margin-top:18px;min-height:48px}
+:host .training-path{display:block;padding:16px!important;margin-bottom:12px;text-decoration:none}
+.training-path .card-head{margin-bottom:12px;gap:8px}
+.training-path h3{font-size:15px;margin:0}
+.training-path>strong{display:block;font-size:14px;line-height:1.5;overflow-wrap:anywhere}
+.training-path-stats{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:10px;font-size:11px;line-height:1.5;color:var(--muted)}
+.training-path-stats>span:last-child{display:flex;align-items:center;gap:5px;text-align:right}
+.training-path-stats gt-icon{width:14px;height:14px;color:var(--accent-text);flex:none}
+.training-tool-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0}
+.training-tool-grid>a{display:grid;justify-items:start;gap:7px;min-width:0;border:1px solid var(--experience-border,var(--line));border-radius:14px;background:var(--card);padding:16px 13px}
+.training-tool-grid gt-icon{color:var(--accent-text);width:23px;height:23px;margin-bottom:3px}
+.training-tool-grid strong{font-size:13px;line-height:1.5;overflow-wrap:anywhere}
+.training-tool-grid small{font-size:11px;line-height:1.5;color:var(--muted)}
+:host .training-hub-links{gap:9px}
+:host .training-hub-links>a{padding:14px!important;gap:12px}
+.training-hub-links strong{font-size:13px}
+:host .training-hub-links small{font-size:11px;line-height:1.5}
+.training-hub-links>a>gt-icon:last-child{width:16px;height:16px}
+.plans-list-heading{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:8px 0 10px}
+.plans-list-heading h2{margin:0;font-size:17px}
+.plans-list-heading .archive-toggle{font-size:11px;min-height:40px;padding:7px 10px}
+.plans-list-heading gt-icon{width:15px;height:15px}
+:host .simple-plan-top{position:relative;gap:10px;align-items:center}
+:host .plan-cover-thumb{--thumb-width:75px;--thumb-height:78px;max-width:23%;border-radius:12px}
+:host .simple-plan-title strong{font-size:17px;line-height:1.4}
+:host .simple-plan-title small{font-size:11px;line-height:1.5}
+:host .simple-plan-top>.pill{position:absolute;left:4px;top:4px;font-size:8px;padding:3px 5px;max-width:70px}
+:host .simple-plan-top>.simple-menu{align-self:center}
+:host .simple-day{padding:11px;background:linear-gradient(120deg,var(--accent-soft),transparent 80%),var(--card)}
+:host .simple-day-summary strong{font-size:14px}
+:host .simple-day-summary small{font-size:11px;line-height:1.5}
+:host .simple-exercise-row{align-items:center;padding:10px 0}
+:host .simple-exercise-row gt-exercise-thumb{--thumb-width:76px;--thumb-height:63px;background:var(--bg);border:1px solid var(--line)}
+:host .simple-exercise-row strong{font-size:12px}
+:host .simple-exercise-row small{font-size:10px;line-height:1.55}
+@media(min-width:650px){:host .training-today-card{padding:22px!important}.training-today-cover{--thumb-height:200px!important;height:200px!important}:host .training-today-copy h2{font-size:30px!important}.training-tool-grid>a{padding:20px}.training-path-stats{font-size:12px}}
+@media(max-width:359px){.training-tool-grid>a{padding:13px 10px}.training-tool-grid strong{font-size:12px}.training-inline-metrics{gap:8px;font-size:10px}:host .simple-plan-top{gap:7px}:host .plan-cover-thumb{--thumb-width:58px;--thumb-height:68px}:host .simple-plan-title strong{font-size:15px}:host .simple-plan-top>.pill{max-width:54px}}

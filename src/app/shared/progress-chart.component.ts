@@ -105,6 +105,8 @@ export class ProgressChartComponent implements AfterViewInit {
   metric = signal<Metric>("weight");
   canvas = viewChild<ElementRef<HTMLCanvasElement>>("canvas");
   private chart?: Chart;
+  private themeObserver?: MutationObserver;
+  private themeSignature = "";
   private mounted = signal(false);
   defaultId = computed(() => this.s.data().exercises[0]?.id || "");
   points = computed(() =>
@@ -125,6 +127,14 @@ export class ProgressChartComponent implements AfterViewInit {
   }
   ngAfterViewInit() {
     this.mounted.set(true);
+    // Canvas colors are resolved once by Chart.js, so repaint when theme tokens change.
+    if (typeof MutationObserver !== "undefined") {
+      this.themeObserver = new MutationObserver(() => {
+        const canvas = this.canvas()?.nativeElement;
+        if (canvas && JSON.stringify(this.colors(canvas)) !== this.themeSignature) this.draw();
+      });
+      this.themeObserver.observe(document.body, { attributes: true, attributeFilter: ["class", "style"] });
+    }
   }
   metricLabel() {
     return {
@@ -140,6 +150,8 @@ export class ProgressChartComponent implements AfterViewInit {
     const unit = this.metric() === "reps" ? "rip" : this.s.settings().unit;
     const ctx = this.canvas()?.nativeElement;
     if (!ctx) return;
+    const colors = this.colors(ctx);
+    this.themeSignature = JSON.stringify(colors);
     this.chart?.destroy();
     this.chart = new Chart(ctx, {
       type: "line",
@@ -156,13 +168,14 @@ export class ProgressChartComponent implements AfterViewInit {
             data: points.map((p) =>
               this.metric() === "reps" ? p.value : this.s.weight(p.value),
             ),
-            borderColor: "#4c8dff",
-            backgroundColor: "#367dff15",
+            borderColor: colors.accentText,
+            backgroundColor: /^#[\da-f]{6}$/i.test(colors.accent) ? colors.accent + "20" : colors.accent,
             fill: true,
             tension: 0.3,
             pointRadius: points.length < 20 ? 4 : 2,
             pointHoverRadius: 7,
-            pointBackgroundColor: "#0f1724",
+            pointBackgroundColor: colors.surface,
+            pointBorderColor: colors.accentText,
             pointBorderWidth: 2,
             borderWidth: 2,
           },
@@ -176,7 +189,11 @@ export class ProgressChartComponent implements AfterViewInit {
           legend: { display: false },
           tooltip: {
             displayColors: false,
-            backgroundColor: "#1a2b45",
+            backgroundColor: colors.surface,
+            titleColor: colors.text,
+            bodyColor: colors.text,
+            borderColor: colors.line,
+            borderWidth: 1,
             padding: 12,
             callbacks: {
               label: (item) =>
@@ -187,15 +204,15 @@ export class ProgressChartComponent implements AfterViewInit {
         scales: {
           x: {
             grid: { display: false },
-            ticks: { color: "#7e8da4", font: { size: 10 }, maxTicksLimit: 6 },
+            ticks: { color: colors.muted, font: { size: 10 }, maxTicksLimit: 6 },
             border: { display: false },
           },
           y: {
             beginAtZero: true,
-            grid: { color: "#26314466" },
+            grid: { color: colors.line },
             border: { display: false },
             ticks: {
-              color: "#7e8da4",
+              color: colors.muted,
               font: { size: 10 },
               maxTicksLimit: 5,
               callback: (value) => `${value} ${unit}`,
@@ -205,7 +222,21 @@ export class ProgressChartComponent implements AfterViewInit {
       },
     });
   }
+  private colors(canvas: HTMLCanvasElement) {
+    const style = getComputedStyle(canvas);
+    const token = (name: string, fallback: string) => style.getPropertyValue(name).trim() || fallback;
+    const accent = token("--accent", "#be47ff");
+    return {
+      accent,
+      accentText: token("--accent-text", accent),
+      surface: token("--card", "#10152c"),
+      text: token("--text", "#f7f6ff"),
+      muted: token("--muted", "#a5b3d4"),
+      line: token("--line", "#34436c"),
+    };
+  }
   ngOnDestroy() {
+    this.themeObserver?.disconnect();
     this.chart?.destroy();
   }
 }

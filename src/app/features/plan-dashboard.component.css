@@ -3,3 +3,34 @@
 .plan-identity select,.exercise-metric select{font-size:16px}
 
 .session-row .button{max-width:48%;white-space:normal;text-align:center;line-height:1.4}
+
+/* The same compact metric cards and violet program identity as the preview. */
+:host .plan-dashboard{max-width:760px}
+:host .dashboard-heading{margin-bottom:16px;gap:10px}
+:host .dashboard-heading h1{font-size:25px;letter-spacing:-.65px}
+:host .dashboard-heading p{font-size:9px;letter-spacing:1.2px}
+:host .plan-identity{background:radial-gradient(ellipse at 5% 0,var(--accent-soft),transparent 75%),var(--card);border-color:color-mix(in srgb,var(--accent) 45%,var(--line));padding:18px!important}
+:host .plan-summary h2{font-size:23px;margin-bottom:7px}
+:host .plan-summary p{font-size:11px;line-height:1.7}
+:host .plan-identity label{font-size:10px;letter-spacing:.04em}
+.plan-completion{margin:16px 0}
+.plan-completion>div:first-child{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:11px;line-height:1.5;color:var(--muted)}
+.plan-completion strong{font-size:13px;color:var(--accent-text)}
+.plan-completion-track{height:6px;overflow:hidden;background:var(--bg);border-radius:6px;margin-top:10px}
+.plan-completion-track i{height:100%;display:block;border-radius:6px;background:linear-gradient(90deg,var(--accent),var(--cyan,#0dd9ff))}
+:host .plan-metrics{gap:9px;margin-top:13px}
+:host .plan-metrics .metric{padding:15px 12px!important}
+:host .metric>span{display:flex;align-items:center;gap:6px;font-size:10px;line-height:1.5;min-height:30px}
+.metric>span gt-icon{width:16px;height:16px;color:var(--accent-text);flex:none}
+:host .metric>strong{font-size:26px;line-height:1.3;margin-top:6px}
+:host .metric strong small{font-size:12px}
+:host .metric p{font-size:10px;line-height:1.6;margin-top:6px}
+:host .metric .duration-value{font-size:23px}
+:host .recorded-summary{padding:16px 8px!important;gap:7px}
+.recorded-summary>div+div{border-left:1px solid var(--line)}
+:host .recorded-summary strong{font-size:22px}
+:host .recorded-summary span{font-size:10px}
+:host .plan-dashboard>.card{margin-top:13px}
+:host .plan-dashboard h2{font-size:17px}
+:host .plan-summary h2{font-size:23px}
+@media(max-width:359px){:host .dashboard-heading h1{font-size:22px}:host .metric>strong{font-size:23px}:host .metric .duration-value{font-size:20px}:host .metric>span{font-size:9px}}

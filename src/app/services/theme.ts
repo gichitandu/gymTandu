@@ -46,6 +46,7 @@ export class ThemeService{
   const tokens=resolveTheme(this.config(),this.systemLight()),style=document.body.style;this.color.set(tokens.background);
   const values:Record<string,string>={'--bg':tokens.background,'--card':tokens.card,'--raised':tokens.raised,'--line':tokens.line,'--text':tokens.text,'--muted':tokens.muted,'--accent':tokens.accent,'--accent-ink':tokens.buttonText,'--accent-text':tokens.accentText,'--blue':tokens.accentText,'--accent-soft':tokens.accentSoft,'--nav-bg':tokens.card,'--green':tokens.light?'#156B4D':'#70D4AD','--danger':tokens.light?'#AA223C':'#FFADB9','--danger-soft':tokens.light?'#FDEDF1':'#3A2029','color-scheme':tokens.light?'light':'dark'};
   for(const [key,value] of Object.entries(values))style.setProperty(key,value);
+  document.body.classList.toggle('palette-violet',this.config().palette==='viola-neon'&&!this.config().accent);
   document.body.classList.toggle('theme-ready',true);document.body.classList.toggle('custom-light',tokens.light);document.body.classList.toggle('light',tokens.light);
   document.querySelector('meta[name="theme-color"]')?.setAttribute('content',tokens.background);
  }

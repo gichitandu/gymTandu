@@ -2334,9 +2334,9 @@ body.theme-ready gt-shell :is(.card, .modal, .empty, .header-calendar, .training
 body.theme-ready gt-shell :is(.sidebar, .topbar, .app-main) { background: var(--bg); }
 body.theme-ready gt-shell .bottom-nav { background: var(--nav-bg); border-color: var(--line); }
 body.theme-ready gt-shell :is(button.primary, .button.primary) {
-  background: var(--accent) !important;
-  border-color: var(--accent) !important;
-  color: var(--accent-ink) !important;
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-ink);
   box-shadow: 0 5px 18px color-mix(in srgb, var(--accent) 16%, transparent);
 }
 body.theme-ready gt-shell :is(input, select, textarea) {

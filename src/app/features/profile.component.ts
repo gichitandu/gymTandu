@@ -5,7 +5,6 @@ import {PushReminderComponent} from '../shared/push-reminder.component';
 import {CalendarSubscriptionComponent} from '../shared/calendar-subscription.component';
 import { DateFieldComponent } from '../shared/date-field.component';
 import { confirmationForContext } from '../services/confirmation';
-import { SectionHeadingComponent } from "../shared/section-heading.component";
 import {takeUntilDestroyed} from "@angular/core/rxjs-interop";
 import {BackupReminderComponent} from "../shared/backup-reminder.component";
 import {WorkoutResumeService} from "../services/workout-resume";
@@ -47,7 +46,7 @@ interface ProfileFormDraft {
 @Component({
   standalone: true,
   styleUrl: "./account-polish.css",
-  imports: [ThemePickerComponent,AppFeaturesComponent,PushReminderComponent,CalendarSubscriptionComponent,DateFieldComponent,SectionHeadingComponent,BackupReminderComponent,ArchiveSyncComponent,AppUpdatesComponent,
+  imports: [ThemePickerComponent,AppFeaturesComponent,PushReminderComponent,CalendarSubscriptionComponent,DateFieldComponent,BackupReminderComponent,ArchiveSyncComponent,AppUpdatesComponent,
     A11yModule,
     AvatarComponent,
     IosStatusComponent,
@@ -58,28 +57,31 @@ interface ProfileFormDraft {
     StatusComponent,
     IconComponent,
   ],
-  template: `<gt-section-heading index="06" eyebrow="IL TUO SPAZIO PERSONALE" [title]="panelLabel()" description="Un percorso che ti assomiglia, in ogni dettaglio.">@if(panel()!=='overview'){<button class="icon-btn ghost" aria-label="Torna al profilo" (click)="panel.set('overview')">‹</button>}@if(panel()==='overview'){<button type="button" class="ghost" (click)="panel.set('settings')">Modifica profilo</button><button type="button" class="ghost" [disabled]="loggingOut()" (click)="logout()">{{loggingOut()?'Uscita…':'Esci'}}</button>}</gt-section-heading><gt-status/>
+  template: `<header class="profile-page-heading">
+ @if(panel()!=='overview'){<button class="icon-btn ghost" aria-label="Torna al profilo" (click)="panel.set('overview')"><gt-icon name="back"/></button>}
+ <h1>{{panelLabel()}}</h1>
+ @if(panel()==='overview'){<button type="button" class="icon-btn profile-settings-button" aria-label="Apri impostazioni" (click)="panel.set('settings')"><gt-icon name="settings"/></button>}
+</header><gt-status/>
 @if(draftRestored()){<div class="notice" role="status">Bozza recuperata: controlla i valori e salva per confermarli.<button type="button" class="ghost" (click)="discardDraft()">Elimina bozza</button></div>}
 @if(panel()==='overview'){
-<section class="card profile-dashboard identity-card">
- <div class="identity-topline"><span>GYMTRACK / IDENTITÀ PERSONALE</span><span class="identity-status"><i></i> Archivio locale</span></div>
- <div class="profile-head"><div class="avatar-orbit"><div class="profile-avatar"><gt-avatar [photo]="s.profile().photo" [name]="s.profile().name"/></div><span class="avatar-orbit-node" aria-hidden="true"></span></div><div class="identity-name"><p class="eyebrow">IL TUO PROSSIMO LIVELLO</p><h2>{{s.profile().name}}</h2><div class="identity-meta"><span class="pill">{{auth.uiRole()==='SuperAdmin'?'Super Admin':auth.uiRole()==='Admin'?'Admin':'Personale'}}</span>@if(auth.user()?.username){<span class="subtle">@{{auth.user()?.username}}</span>}</div></div></div>
- <div class="profile-key-stats"><div><strong>{{s.profile().bodyWeight!==undefined?s.formatWeight(s.profile().bodyWeight!):'—'}} <small>{{s.settings().unit}}</small></strong><span>Peso corporeo</span></div><div><strong>{{s.profile().height??'—'}} <small>cm</small></strong><span>Altezza</span></div><div><strong>{{age()??'—'}}</strong><span>Età</span></div></div>
- <div class="identity-signature"><gt-icon name="activity"/><span><strong>{{s.completed().length}}</strong> allenamenti completati</span><span class="signature-line" aria-hidden="true"></span></div>
- @if(s.profile().goal){<div class="identity-goal"><span>LA TUA DIREZIONE</span><p>{{s.profile().goal}}</p></div>}
+<section class="profile-dashboard identity-card" aria-label="Il tuo profilo">
+ <div class="profile-head"><div class="avatar-orbit"><div class="profile-avatar"><gt-avatar [photo]="s.profile().photo" [name]="s.profile().name"/></div></div><div class="identity-name"><h2>{{s.profile().name}}</h2><div class="identity-meta"><span class="pill">{{auth.uiRole()==='SuperAdmin'?'Super Admin':auth.uiRole()==='Admin'?'Admin':'Personale'}}</span>@if(auth.user()?.username){<span class="subtle">@{{auth.user()?.username}}</span>}</div></div></div>
+ <div class="profile-key-stats"><div><strong>{{s.profile().bodyWeight!==undefined?s.formatWeight(s.profile().bodyWeight!):'—'}} <small>{{s.settings().unit}}</small></strong><span>Peso</span></div><div><strong>{{s.profile().height??'—'}} <small>cm</small></strong><span>Altezza</span></div><div><strong>{{age()??'—'}}</strong><span>Età</span></div></div>
+ @if(s.profile().goal){<p class="profile-goal-note">{{s.profile().goal}}</p>}
 </section>
-<div class="profile-menu-group"><div class="account-section-label"><span>01 / IL PERCORSO</span><span>Allenati. Misura. Migliora.</span></div><nav class="profile-menu" aria-label="Percorso personale"><button (click)="panel.set('goals')"><gt-icon name="trophy"/><span><strong>Obiettivi</strong><small>La direzione dei tuoi progressi</small></span>›</button><button (click)="panel.set('measurements')"><gt-icon name="activity"/><span><strong>Misurazioni corporee</strong><small>Rilevazioni e storico personale</small></span>›</button><a routerLink="/catalogo"><gt-icon name="weight"/><span><strong>{{s.canEditCatalog()?'Gestione esercizi':'Catalogo esercizi'}}</strong><small>Varianti, preferiti e configurazioni</small></span>›</a><a routerLink="/calendario"><gt-icon name="calendar"/><span><strong>Calendario allenamenti</strong><small>Il tuo ritmo, giorno per giorno</small></span>›</a></nav></div>
-<div class="profile-menu-group"><div class="account-section-label"><span>RECUPERO E BENESSERE</span></div><nav class="profile-menu" aria-label="Recupero e benessere"><a routerLink="/recupero"><gt-icon name="activity"/><span><strong>Recovery e riposo</strong><small>Energia, stress e check-in personale</small></span>›</a><a routerLink="/sonno"><gt-icon name="moon"/><span><strong>Diario del sonno</strong><small>Durata, qualità e andamento</small></span>›</a><a routerLink="/focus-muscolare"><gt-icon name="weight"/><span><strong>Focus muscolare</strong><small>Serie, volume e sensazioni</small></span>›</a></nav></div>
-<div class="profile-menu-group"><div class="account-section-label"><span>02 / SU MISURA</span><span>La tua app, il tuo stile.</span></div><nav class="profile-menu" aria-label="Preferenze e dati"><button (click)="panel.set('calendar')"><gt-icon name="calendar"/><span><strong>Calendario iPhone</strong><small>Collegamento e aggiornamento</small></span>›</button><button (click)="panel.set('theme')"><gt-icon name="palette"/><span><strong>Tema e personalizzazione</strong><small>Colori e aspetto del tuo spazio</small></span>›</button><button (click)="panel.set('settings')"><gt-icon name="settings"/><span><strong>Impostazioni</strong><small>Profilo, foto e unità di misura</small></span>›</button>@if(auth.canManageBackups()){ <button (click)="panel.set('backup')"><gt-icon name="download"/><span><strong>Backup e ripristino</strong><small>Porta al sicuro il tuo percorso</small></span>›</button> }<button (click)="panel.set('security')"><gt-icon name="shield"/><span><strong>Account e sicurezza</strong><small>Credenziali e accesso personale</small></span>›</button>@if(auth.uiRole()==='SuperAdmin'){<a routerLink="/utenti"><gt-icon name="user"/><span><strong>Gestione utenti</strong><small>Account, ruoli e autorizzazioni</small></span>›</a>}<button (click)="panel.set('info')"><gt-icon name="info"/><span><strong>Informazioni app e iPhone</strong><small>Installazione e verifiche dispositivo</small></span>›</button></nav></div>
+<div class="profile-menu-group"><div class="account-section-label"><span>IL TUO PERCORSO</span></div><nav class="profile-menu" aria-label="Percorso personale"><button (click)="panel.set('goals')"><gt-icon name="trophy"/><span><strong>Obiettivi</strong><small>Allenamenti e riferimenti personali</small></span>›</button><button (click)="panel.set('measurements')"><gt-icon name="activity"/><span><strong>Misurazioni corporee</strong><small>Peso, girovita e storico</small></span>›</button><a class="profile-recovery-link" routerLink="/recupero"><gt-icon name="moon"/><span><strong>Recovery e riposo</strong><small>Sonno, energia e focus muscolare</small></span>›</a></nav></div>
+<div class="profile-menu-group"><div class="account-section-label"><span>IL TUO SPAZIO</span></div><nav class="profile-menu" aria-label="Preferenze e dati"><button (click)="panel.set('settings')"><gt-icon name="settings"/><span><strong>Impostazioni</strong><small>Aspetto, allenamento e dispositivo</small></span>›</button>@if(auth.canManageBackups()){<button (click)="panel.set('backup')"><gt-icon name="download"/><span><strong>Dati e backup</strong><small>Sincronizzazione, esportazione e ripristino</small></span>›</button>}<button (click)="panel.set('security')"><gt-icon name="shield"/><span><strong>Account e accessi</strong><small>Credenziali e gestione utenti</small></span>›</button></nav></div>
 }
 @if(panel()==='goals'){<section class="card"><h2>I tuoi obiettivi</h2><p class="subtle" style="margin:12px 0 20px">Inserisci i tuoi riferimenti personali. Non vengono calcolati da una fotografia e non sono prescrizioni automatiche.</p><form [formGroup]="goalsForm" (ngSubmit)="saveGoals()" class="form-grid">@if(appFeatures?.nutritionEnabled()){<label>Calorie giornaliere (kcal)<input type="number" inputmode="numeric" formControlName="calories" min="1" max="20000"/></label><label>Proteine giornaliere (g)<input type="number" inputmode="decimal" formControlName="protein" min="1" max="2000"/></label><label>Carboidrati giornalieri (g)<input type="number" inputmode="decimal" formControlName="carbs" min="1" max="3000"/></label><label>Grassi giornalieri (g)<input type="number" inputmode="decimal" formControlName="fat" min="1" max="2000"/></label>}<label class="wide">Allenamenti per settimana<input type="number" inputmode="numeric" formControlName="workoutsPerWeek" min="1" max="14"/></label><button class="primary wide" [disabled]="goalsForm.invalid||goalsSaving()||s.busy()||!s.ready()">Salva obiettivi</button></form><p class="subtle" style="margin-top:14px">Lascia vuoto un campo per rimuovere quel riferimento.</p></section>}
 @if(panel()==='measurements'){<section class="card"><h2>Registra misurazione</h2><form #measurementForm="ngForm" (ngSubmit)="saveMeasurement()" class="form-grid" style="margin-top:18px"><label>Data<gt-date-field name="date" [ngModel]="measurementDate" (ngModelChange)="chooseMeasurementDate($event)" required [max]="today"></gt-date-field></label><label>Peso ({{s.settings().unit}})<input name="weight" type="number" inputmode="decimal" [(ngModel)]="measurementWeight" min="1" max="1500" step="0.1" required/></label><label>Girovita (cm, facoltativo)<input name="waist" type="number" inputmode="decimal" [(ngModel)]="measurementWaist" min="1" max="300" step="0.1"/></label><label>Massa grassa (%, facoltativa)<input name="bodyfat" type="number" inputmode="decimal" [(ngModel)]="measurementBodyFat" min="1" max="80" step="0.1"/></label><button class="primary wide" [disabled]="measurementForm.invalid||s.busy()">Salva misurazione</button></form></section><section class="card" style="margin-top:18px"><h2>Storico misurazioni</h2><div class="list" style="margin-top:18px">@for(m of measurementHistory();track m.id){<div class="measurement-row"><div><strong>{{s.formatWeight(m.weight)}} {{s.settings().unit}}</strong><p class="subtle">{{m.date}}{{m.waist?' · Vita '+m.waist+' cm':''}}{{m.bodyFat?' · Massa grassa '+m.bodyFat+'%':''}}</p></div><button class="ghost danger" (click)="removeMeasurement(m.id)" aria-label="Rimuovi misurazione">×</button></div>}@empty{<p class="subtle">Nessuna misurazione registrata.</p>}</div></section>}
 @if(panel()==='theme'){<section class="card appearance-card"><h2>Atmosfera</h2><label>Intensità glow · {{s.settings().neonGlow??55}}%<input type="range" min="0" max="100" step="1" [value]="s.settings().neonGlow??55" (change)="saveAppearance('neonGlow',+$any($event.target).value)" [disabled]="s.busy()"/></label><label class="active-check"><input type="checkbox" [checked]="s.settings().dynamicBackground??true" (change)="saveAppearance('dynamicBackground',$any($event.target).checked)" [disabled]="s.busy()"/>Sfondo dinamico</label></section>}
 @if(panel()==='calendar'){<gt-calendar-subscription [expanded]="true"/>}
-@if(panel()==='settings'){<gt-app-features/><div class="profile-menu-group"><nav class="profile-menu" aria-label="Collegamenti dispositivo"><button (click)="panel.set('calendar')"><gt-icon name="calendar"/><span><strong>Calendario iPhone</strong><small>Collegamento e aggiornamento</small></span>›</button></nav></div>}
+@if(panel()==='settings'){
+ <div class="profile-menu-group settings-shortcuts"><div class="account-section-label"><span>PROFILO E ASPETTO</span></div><nav class="profile-menu" aria-label="Aspetto"><button (click)="panel.set('theme')"><gt-icon name="palette"/><span><strong>Tema e personalizzazione</strong><small>Palette, colori e intensità glow</small></span>›</button></nav></div>
+}
 @if(panel()==='settings'||panel()==='theme'||panel()==='info'){
     <div class="profile-settings-panels">
-      <section class="card" [hidden]="panel()!=='settings'">
+      <details class="card settings-disclosure" [hidden]="panel()!=='settings'"><summary><gt-icon name="user"/><span><strong>Dati personali</strong><small>Nome, foto, peso e altezza</small></span><span class="disclosure-chevron">›</span></summary><div class="settings-disclosure-body">
         <div class="profile-head">
           <div class="profile-avatar">
             <gt-avatar [photo]="photoDraft()===undefined?s.profile().photo:(photoDraft()||undefined)" [name]="s.profile().name" />
@@ -130,10 +132,10 @@ interface ProfileFormDraft {
             </button>
           </div>
         </form>
-      </section>
+      </div></details>
       <div class="stack">
-        <section class="card" [class.theme-settings-card]="panel()==='theme'" [hidden]="panel()==='info'">
-          @if(panel()==='theme'){<gt-theme-picker/>}@else{<h2>Aspetto e preferenze</h2><button type="button" class="ghost" (click)="panel.set('theme')"><gt-icon name="palette"/>Tema e colori</button>}
+        <details class="card settings-disclosure" [class.theme-settings-card]="panel()==='theme'" [open]="panel()==='theme'" [hidden]="panel()==='info'"><summary><gt-icon name="weight"/><span><strong>{{panel()==='theme'?'Tema e personalizzazione':'Unità e allenamento'}}</strong><small>{{panel()==='theme'?'Il tuo stile, in ogni dettaglio':'kg / lb e preferenze di registrazione'}}</small></span><span class="disclosure-chevron">›</span></summary><div class="settings-disclosure-body">
+          @if(panel()==='theme'){<gt-theme-picker/>}
           @if(panel()!=='theme'){
           <div class="setting-row">
             <div>
@@ -171,7 +173,7 @@ interface ProfileFormDraft {
             /></a>
           </div>
           }
-        </section>
+        </div></details>
         <section class="card" [hidden]="panel()!=='info'">
           <h2>Porta GymTrack con te</h2>
           <p class="subtle" style="margin:13px 0">
@@ -200,7 +202,13 @@ interface ProfileFormDraft {
       </div>
     </div>
     }
-    @if(panel()==='settings'){<gt-push-reminder/><gt-app-updates/><section class="card" style="margin-top:20px"><h2>Accesso all’app</h2><p class="subtle" style="margin:12px 0">Puoi uscire senza fare un backup. Piani, esercizi e allenamenti salvati restano nel tuo archivio.</p><button type="button" class="full-width" [disabled]="loggingOut()" (click)="logout()">{{loggingOut()?'Uscita…':'Esci dall’app'}}</button></section>}
+    @if(panel()==='settings'){
+ <div class="profile-menu-group settings-shortcuts"><div class="account-section-label"><span>DISPOSITIVO</span></div><nav class="profile-menu" aria-label="Dispositivo"><button (click)="panel.set('calendar')"><gt-icon name="calendar"/><span><strong>Calendario iPhone</strong><small>Collega le sedute programmate</small></span>›</button><button (click)="panel.set('info')"><gt-icon name="info"/><span><strong>App e iPhone</strong><small>Installazione, offline e verifiche</small></span>›</button></nav></div>
+ <details class="settings-disclosure settings-component"><summary><gt-icon name="clock"/><span><strong>Notifiche e promemoria</strong><small>Avvisi e suoni del recupero</small></span><span class="disclosure-chevron">›</span></summary><div class="settings-disclosure-body"><gt-push-reminder/></div></details>
+ <details class="settings-disclosure settings-component"><summary><gt-icon name="download"/><span><strong>Aggiornamenti dell’app</strong><small>Versione installata e disponibilità</small></span><span class="disclosure-chevron">›</span></summary><div class="settings-disclosure-body"><gt-app-updates/></div></details>
+ <div class="profile-menu-group settings-shortcuts"><div class="account-section-label"><span>GESTIONE</span></div><nav class="profile-menu" aria-label="Gestione">@if(auth.canManageBackups()){<button (click)="panel.set('backup')"><gt-icon name="download"/><span><strong>Dati e backup</strong><small>Copia, esporta o ripristina</small></span>›</button>}<button (click)="panel.set('security')"><gt-icon name="shield"/><span><strong>Account e sicurezza</strong><small>Accesso e credenziali</small></span>›</button><a routerLink="/catalogo"><gt-icon name="weight"/><span><strong>{{s.canEditCatalog()?'Gestione esercizi':'Catalogo esercizi'}}</strong><small>Varianti, preferiti e configurazioni</small></span>›</a><a routerLink="/calendario"><gt-icon name="calendar"/><span><strong>Calendario allenamenti</strong><small>Il tuo ritmo, giorno per giorno</small></span>›</a></nav></div>
+ @if(auth.uiRole()==='SuperAdmin'){<details class="settings-disclosure settings-component"><summary><gt-icon name="shield"/><span><strong>Amministrazione</strong><small>Utenti e sezioni dell’app</small></span><span class="disclosure-chevron">›</span></summary><div class="settings-disclosure-body"><gt-app-features/><a class="button full-width" routerLink="/utenti">Gestione utenti <gt-icon name="arrow"/></a></div></details>}
+ <section class="card profile-logout-card" style="margin-top:20px"><h2>Accesso all’app</h2><p class="subtle" style="margin:12px 0">Puoi uscire senza fare un backup. Piani, esercizi e allenamenti salvati restano nel tuo archivio.</p><button type="button" class="full-width" [disabled]="loggingOut()" (click)="logout()">{{loggingOut()?'Uscita…':'Esci dall’app'}}</button></section>}
     @if(panel()==='backup'&&auth.canManageBackups()){<gt-archive-sync (recover)="recoverCloud($event)"/><gt-backup-reminder mode="settings"/><section class="card" style="margin-top:20px">
       <div class="card-head">
         <div>

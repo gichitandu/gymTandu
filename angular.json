@@ -21,7 +21,8 @@
               "node_modules/@angular/material/prebuilt-themes/azure-blue.css",
               "src/styles.css",
               "src/form-polish.css",
-              "src/neon.css"
+              "src/neon.css",
+              "src/preview-match.css"
             ],
             "outputPath": "dist/gymtrack"
           },

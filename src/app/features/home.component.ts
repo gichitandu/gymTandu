@@ -29,6 +29,12 @@ export class HomeComponent {
   get today() { return this.todayClock?.date() || localDate(); }
   wellness=computed(()=>this.s.data().wellnessLogs.find(row=>row.date===this.today));
   sleepLabel=sleepLabel;
+  focusLabel=computed(()=>{
+    const dayId=this.s.draft()?.dayId||this.nextScheduled()?.dayId||this.nextDay()?.id;
+    const exerciseId=dayId?this.s.planExercises(dayId)[0]?.exerciseId:undefined;
+    const groupId=this.s.data().exercises.find(exercise=>exercise.id===exerciseId)?.muscleGroupId;
+    return this.s.data().muscleGroups.find(group=>group.id===groupId)?.name||'Esplora';
+  });
   weeklyProgress=computed(()=>{const goal=this.goals()?.workoutsPerWeek;return goal?Math.min(100,Math.round(this.weekCount()/goal*100)):0;});
   trainingMinutes=computed(()=>Math.round(this.s.completed().reduce((sum,row)=>sum+row.duration,0)));
   goals = computed(() => this.s.settings().goals);

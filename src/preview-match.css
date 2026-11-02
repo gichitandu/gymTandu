@@ -1,0 +1,52 @@
+/* Shared visual rhythm from the approved GymTrack previews. Personal palettes stay active. */
+body.theme-ready{--cta-start:var(--accent);--cta-end:var(--accent);--cta-ink:var(--accent-ink);--neon-glow:.55}
+body.theme-ready.palette-violet:not(.custom-light){--cta-start:#aa25e8;--cta-end:#8704dd;--cta-ink:#fff}
+body.theme-ready gt-shell.design-v2{--experience-border:color-mix(in srgb,var(--line) 87%,var(--accent));--experience-surface:var(--card)}
+body.theme-ready gt-shell.design-v2::before{background:radial-gradient(ellipse at 100% 0%,color-mix(in srgb,var(--accent) 8%,transparent),transparent 45%)}
+body.theme-ready gt-shell.design-v2 .card{border-radius:15px;background:linear-gradient(145deg,color-mix(in srgb,var(--raised) 75%,var(--card)),var(--card));box-shadow:inset 0 1px #ffffff06;border-color:var(--experience-border)}
+body.theme-ready gt-shell.design-v2 :is(button.primary,.button.primary){background:linear-gradient(165deg,var(--cta-start),var(--cta-end) 78%);color:var(--cta-ink);border:1px solid color-mix(in srgb,var(--accent) 65%,white);box-shadow:0 0 calc(17px * var(--neon-glow)) color-mix(in srgb,var(--accent) 30%,transparent),inset 0 1px 3px #ffffff35;font-weight:700}
+body.theme-ready gt-shell.design-v2 :is(button.primary,.button.primary):disabled{box-shadow:none}
+body.theme-ready gt-shell.design-v2 :is(.segmented button.active,.neon-segments>a.active,.neon-segments>button.active){background:linear-gradient(155deg,var(--cta-start),var(--cta-end));color:var(--cta-ink);box-shadow:inset 0 1px #ffffff20}
+body.theme-ready gt-shell.design-v2 .today-training{background:none;box-shadow:none;border:0;padding:0;border-radius:0}
+body.theme-ready gt-shell.design-v2 .today-heading h1{font-size:28px;letter-spacing:-.9px}
+body.theme-ready gt-shell.design-v2 .profile-menu :is(a,button){border-radius:13px}
+body.theme-ready gt-shell.design-v2 :is(.section-title,.page-heading){margin-bottom:18px}
+body.theme-ready gt-shell.design-v2 .neon-page-heading{margin-bottom:18px}
+body.theme-ready gt-shell.design-v2 .sidebar nav a.selected::after{background:var(--accent);box-shadow:0 0 12px var(--accent-soft)}
+body.theme-ready gt-shell.design-v2 .topbar .avatar{border-color:color-mix(in srgb,var(--accent) 50%,var(--line))}
+body.theme-ready gt-shell.design-v2 .app-main main>gt-data-status{margin-bottom:6px}
+@media(max-width:800px),(max-width:1100px) and (pointer:coarse){
+ body.theme-ready gt-shell.design-v2{--phone-nav-height:76px}
+ body.theme-ready gt-shell.design-v2 .topbar{height:calc(58px + var(--safe-top));padding-inline:max(18px,var(--safe-left));max-width:680px;margin-inline:auto}
+ body.theme-ready gt-shell.design-v2 .mobile-brand{font-size:22px;letter-spacing:-.8px}
+ body.theme-ready gt-shell.design-v2 .topbar .avatar{width:34px;height:34px;padding:2px}
+ body.theme-ready gt-shell.design-v2 .mobile-brand .app-brand-mark{width:31px;height:31px}
+ body.theme-ready gt-shell.design-v2 main{padding:12px max(18px,var(--safe-right)) 22px max(18px,var(--safe-left));margin-inline:auto;max-width:680px}
+ body.theme-ready gt-shell.design-v2 h1{font-size:25px;letter-spacing:-.7px;line-height:1.2}
+ body.theme-ready gt-shell.design-v2 .card{padding:15px}
+ body.theme-ready gt-shell.design-v2 .bottom-nav{left:0;right:0;bottom:0;min-height:calc(68px + var(--safe-bottom));max-width:none;padding:5px max(12px,var(--safe-right)) calc(5px + var(--safe-bottom)) max(12px,var(--safe-left));border:0;border-top:1px solid var(--experience-border);border-radius:0;background:color-mix(in srgb,var(--bg) 94%,transparent);backdrop-filter:blur(20px);box-shadow:0 -4px 24px #0002}
+ body.theme-ready gt-shell.design-v2 .bottom-nav a{min-height:55px;gap:3px;padding:0 4px;font-size:10px;border-radius:0}
+ body.theme-ready gt-shell.design-v2 .bottom-nav a.selected,body.theme-ready gt-shell.design-v2 .bottom-nav a.training-selected{background:none;color:var(--text)}
+ body.theme-ready gt-shell.design-v2 .bottom-nav a.selected::before{display:none}
+ body.theme-ready gt-shell.design-v2 .bottom-nav a gt-icon{width:20px;height:20px;padding:6px;box-sizing:content-box}
+ body.theme-ready gt-shell.design-v2 .bottom-nav a.selected gt-icon,body.theme-ready gt-shell.design-v2 .bottom-nav a.training-selected gt-icon{background:linear-gradient(145deg,var(--cta-start),var(--cta-end));color:var(--cta-ink);border:1px solid color-mix(in srgb,var(--accent) 60%,white);border-radius:10px;padding:5px;box-shadow:0 0 calc(18px * var(--neon-glow)) color-mix(in srgb,var(--accent) 40%,transparent)}
+ body.theme-ready gt-shell.design-v2 .app-main{padding-bottom:calc(80px + var(--safe-bottom))}
+ body.theme-ready gt-shell.design-v2 .neon-segments{padding:3px;border-radius:12px;margin:12px 0 16px}
+ body.theme-ready gt-shell.design-v2 .neon-segments :is(a,button){font-size:12px;min-height:41px;border-radius:9px}
+ body.theme-ready gt-shell.design-v2 .section-title{margin-top:22px}
+ body.theme-ready gt-shell.design-v2 :is(.today-heading,.neon-page-heading,.page-heading) h1{font-size:25px}
+ body.theme-ready gt-shell.design-v2 .today-heading .today-date{font-size:9px;letter-spacing:1.3px}
+ body.theme-ready gt-shell.design-v2 .today-heading .today-motto{font-size:12px}
+}
+@media(max-width:359px){body.theme-ready gt-shell.design-v2 main{padding-inline:13px}}
+@media(prefers-reduced-motion:reduce){body.theme-ready gt-shell.design-v2 *{transition:none;animation:none}}
+/* The archive indicator keeps its complete, accessible details in the app bar. */
+gt-shell .header-data-status{display:block;position:relative;margin:0;z-index:55}
+gt-shell .header-data-status .data-status>summary{width:36px;min-height:40px;justify-content:center;border:1px solid var(--experience-border);border-radius:12px;background:var(--card);padding:0}
+gt-shell .header-data-status .data-status>summary span{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap}
+gt-shell .header-data-status .data-status>summary i{width:7px;height:7px;box-shadow:0 0 8px color-mix(in srgb,var(--green) 30%,transparent)}
+gt-shell .header-data-status .status-details{position:absolute;top:45px;right:-46px;width:min(350px,calc(100vw - 36px));max-height:calc(100dvh - 170px);overflow:auto;box-shadow:0 16px 40px #0008;text-align:left}
+gt-shell .header-data-status .version-ready{position:fixed;top:calc(62px + var(--safe-top));left:max(18px,var(--safe-left));right:max(18px,var(--safe-right));z-index:90;box-shadow:0 10px 35px #0008}
+body.theme-ready gt-shell.design-v2 .local-mode-label{border:0;background:none;padding:0;margin:0 0 12px;font-size:10px;line-height:1.5;color:var(--muted)}
+body.theme-ready gt-shell.design-v2 .topbar-right{gap:9px}
+@media(min-width:801px) and (pointer:fine){gt-shell .header-data-status .status-details{right:0}}
