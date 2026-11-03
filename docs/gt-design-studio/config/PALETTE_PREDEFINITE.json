@@ -1,0 +1,487 @@
+{
+  "schemaVersion": 1,
+  "defaultPresetId": "azzurro_gt",
+  "note": "I colori sono specifiche esatte. Le immagini sono concept, non fonte di valori esatti. Usare i nomi/id esistenti qualora il progetto abbia gia palette analoghe.",
+  "presets": [
+    {
+      "name": "Azzurro GT",
+      "background": "#040C19",
+      "surface": "#0C1E32",
+      "card": "#132B43",
+      "primary": "#00D9FF",
+      "secondary": "#0077FF",
+      "text": "#F4FAFF",
+      "textMuted": "#9BB6CA",
+      "border": "#184A69",
+      "glow": "#00D9FF",
+      "onPrimary": "#04101D",
+      "id": "azzurro_gt",
+      "schemaVersion": 1,
+      "gradient": {
+        "type": "linear",
+        "angle": 135,
+        "stops": [
+          {
+            "offset": 0,
+            "color": "#00D9FF"
+          },
+          {
+            "offset": 1,
+            "color": "#0077FF"
+          }
+        ]
+      },
+      "effects": {
+        "glowIntensity": 0.35,
+        "glowBlur": 16,
+        "shadowOpacity": 0.22,
+        "backgroundBlur": 0,
+        "motionEnabled": false
+      },
+      "typography": {
+        "family": "system",
+        "scale": 1.0
+      }
+    },
+    {
+      "name": "Blu Cobalto",
+      "background": "#03081D",
+      "surface": "#0D1639",
+      "card": "#172453",
+      "primary": "#3579FF",
+      "secondary": "#00BFFF",
+      "text": "#F6F8FF",
+      "textMuted": "#B0BDE1",
+      "border": "#324D96",
+      "glow": "#3579FF",
+      "onPrimary": "#FFFFFF",
+      "id": "blu_cobalto",
+      "schemaVersion": 1,
+      "gradient": {
+        "type": "linear",
+        "angle": 135,
+        "stops": [
+          {
+            "offset": 0,
+            "color": "#3579FF"
+          },
+          {
+            "offset": 1,
+            "color": "#00BFFF"
+          }
+        ]
+      },
+      "effects": {
+        "glowIntensity": 0.35,
+        "glowBlur": 16,
+        "shadowOpacity": 0.22,
+        "backgroundBlur": 0,
+        "motionEnabled": false
+      },
+      "typography": {
+        "family": "system",
+        "scale": 1.0
+      }
+    },
+    {
+      "name": "Viola Neon",
+      "background": "#0C061B",
+      "surface": "#1B1033",
+      "card": "#2A1844",
+      "primary": "#C764FF",
+      "secondary": "#8055FA",
+      "text": "#FAF4FF",
+      "textMuted": "#C6ABD9",
+      "border": "#64428A",
+      "glow": "#C764FF",
+      "onPrimary": "#170B25",
+      "id": "viola_neon",
+      "schemaVersion": 1,
+      "gradient": {
+        "type": "linear",
+        "angle": 135,
+        "stops": [
+          {
+            "offset": 0,
+            "color": "#C764FF"
+          },
+          {
+            "offset": 1,
+            "color": "#8055FA"
+          }
+        ]
+      },
+      "effects": {
+        "glowIntensity": 0.35,
+        "glowBlur": 16,
+        "shadowOpacity": 0.22,
+        "backgroundBlur": 0,
+        "motionEnabled": false
+      },
+      "typography": {
+        "family": "system",
+        "scale": 1.0
+      }
+    },
+    {
+      "name": "Carbonio",
+      "background": "#090D12",
+      "surface": "#151B20",
+      "card": "#202930",
+      "primary": "#A2B9C7",
+      "secondary": "#5A798A",
+      "text": "#F4F7FA",
+      "textMuted": "#A6B3BE",
+      "border": "#465766",
+      "glow": "#B9D9EB",
+      "onPrimary": "#10151A",
+      "id": "carbonio",
+      "schemaVersion": 1,
+      "gradient": {
+        "type": "linear",
+        "angle": 135,
+        "stops": [
+          {
+            "offset": 0,
+            "color": "#A2B9C7"
+          },
+          {
+            "offset": 1,
+            "color": "#5A798A"
+          }
+        ]
+      },
+      "effects": {
+        "glowIntensity": 0.1,
+        "glowBlur": 16,
+        "shadowOpacity": 0.22,
+        "backgroundBlur": 0,
+        "motionEnabled": false
+      },
+      "typography": {
+        "family": "system",
+        "scale": 1.0
+      }
+    },
+    {
+      "name": "Artico",
+      "background": "#081522",
+      "surface": "#10273B",
+      "card": "#17364D",
+      "primary": "#8AC8FF",
+      "secondary": "#2A80DE",
+      "text": "#F3F9FF",
+      "textMuted": "#B1CBDF",
+      "border": "#3E7898",
+      "glow": "#7BCBFF",
+      "onPrimary": "#091723",
+      "id": "artico",
+      "schemaVersion": 1,
+      "gradient": {
+        "type": "linear",
+        "angle": 135,
+        "stops": [
+          {
+            "offset": 0,
+            "color": "#8AC8FF"
+          },
+          {
+            "offset": 1,
+            "color": "#2A80DE"
+          }
+        ]
+      },
+      "effects": {
+        "glowIntensity": 0.35,
+        "glowBlur": 16,
+        "shadowOpacity": 0.22,
+        "backgroundBlur": 0,
+        "motionEnabled": false
+      },
+      "typography": {
+        "family": "system",
+        "scale": 1.0
+      }
+    },
+    {
+      "name": "Petrolio",
+      "background": "#05191A",
+      "surface": "#0D282A",
+      "card": "#153839",
+      "primary": "#67D9C4",
+      "secondary": "#1D958F",
+      "text": "#E9FFFA",
+      "textMuted": "#A1CDC8",
+      "border": "#2C6667",
+      "glow": "#67D9C4",
+      "onPrimary": "#072322",
+      "id": "petrolio",
+      "schemaVersion": 1,
+      "gradient": {
+        "type": "linear",
+        "angle": 135,
+        "stops": [
+          {
+            "offset": 0,
+            "color": "#67D9C4"
+          },
+          {
+            "offset": 1,
+            "color": "#1D958F"
+          }
+        ]
+      },
+      "effects": {
+        "glowIntensity": 0.35,
+        "glowBlur": 16,
+        "shadowOpacity": 0.22,
+        "backgroundBlur": 0,
+        "motionEnabled": false
+      },
+      "typography": {
+        "family": "system",
+        "scale": 1.0
+      }
+    },
+    {
+      "name": "Prugna",
+      "background": "#170D1B",
+      "surface": "#2A172F",
+      "card": "#3A2142",
+      "primary": "#F4A1B7",
+      "secondary": "#B86ADE",
+      "text": "#FFF3FA",
+      "textMuted": "#DAB4D1",
+      "border": "#88516E",
+      "glow": "#F4A1B7",
+      "onPrimary": "#241028",
+      "id": "prugna",
+      "schemaVersion": 1,
+      "gradient": {
+        "type": "linear",
+        "angle": 135,
+        "stops": [
+          {
+            "offset": 0,
+            "color": "#F4A1B7"
+          },
+          {
+            "offset": 1,
+            "color": "#B86ADE"
+          }
+        ]
+      },
+      "effects": {
+        "glowIntensity": 0.35,
+        "glowBlur": 16,
+        "shadowOpacity": 0.22,
+        "backgroundBlur": 0,
+        "motionEnabled": false
+      },
+      "typography": {
+        "family": "system",
+        "scale": 1.0
+      }
+    },
+    {
+      "name": "Sabbia",
+      "background": "#F5F0E6",
+      "surface": "#FFFFFF",
+      "card": "#F0E5D2",
+      "primary": "#996500",
+      "secondary": "#C69843",
+      "text": "#281F12",
+      "textMuted": "#645A48",
+      "border": "#D4B988",
+      "glow": "#B07B1D",
+      "onPrimary": "#FFFFFF",
+      "id": "sabbia",
+      "schemaVersion": 1,
+      "gradient": {
+        "type": "linear",
+        "angle": 135,
+        "stops": [
+          {
+            "offset": 0,
+            "color": "#996500"
+          },
+          {
+            "offset": 1,
+            "color": "#C69843"
+          }
+        ]
+      },
+      "effects": {
+        "glowIntensity": 0.1,
+        "glowBlur": 16,
+        "shadowOpacity": 0.22,
+        "backgroundBlur": 0,
+        "motionEnabled": false
+      },
+      "typography": {
+        "family": "system",
+        "scale": 1.0
+      }
+    },
+    {
+      "name": "Ghiaccio",
+      "background": "#F0F6FF",
+      "surface": "#FFFFFF",
+      "card": "#E6F0FC",
+      "primary": "#2854C5",
+      "secondary": "#7AA9FF",
+      "text": "#15253D",
+      "textMuted": "#60748D",
+      "border": "#C4D7F4",
+      "glow": "#5B93F4",
+      "onPrimary": "#FFFFFF",
+      "id": "ghiaccio",
+      "schemaVersion": 1,
+      "gradient": {
+        "type": "linear",
+        "angle": 135,
+        "stops": [
+          {
+            "offset": 0,
+            "color": "#2854C5"
+          },
+          {
+            "offset": 1,
+            "color": "#7AA9FF"
+          }
+        ]
+      },
+      "effects": {
+        "glowIntensity": 0.1,
+        "glowBlur": 16,
+        "shadowOpacity": 0.22,
+        "backgroundBlur": 0,
+        "motionEnabled": false
+      },
+      "typography": {
+        "family": "system",
+        "scale": 1.0
+      }
+    },
+    {
+      "name": "Verde Energia",
+      "background": "#061810",
+      "surface": "#102B20",
+      "card": "#183E29",
+      "primary": "#64F88A",
+      "secondary": "#15B464",
+      "text": "#F0FFF5",
+      "textMuted": "#A6CFB8",
+      "border": "#306C47",
+      "glow": "#64F88A",
+      "onPrimary": "#05200F",
+      "id": "verde_energia",
+      "schemaVersion": 1,
+      "gradient": {
+        "type": "linear",
+        "angle": 135,
+        "stops": [
+          {
+            "offset": 0,
+            "color": "#64F88A"
+          },
+          {
+            "offset": 1,
+            "color": "#15B464"
+          }
+        ]
+      },
+      "effects": {
+        "glowIntensity": 0.35,
+        "glowBlur": 16,
+        "shadowOpacity": 0.22,
+        "backgroundBlur": 0,
+        "motionEnabled": false
+      },
+      "typography": {
+        "family": "system",
+        "scale": 1.0
+      }
+    },
+    {
+      "name": "Rosso Impulso",
+      "background": "#190709",
+      "surface": "#2B1117",
+      "card": "#3D1821",
+      "primary": "#FF5C6A",
+      "secondary": "#DC2447",
+      "text": "#FFF3F5",
+      "textMuted": "#D8A6AF",
+      "border": "#813847",
+      "glow": "#FF5C6A",
+      "onPrimary": "#24070A",
+      "id": "rosso_impulso",
+      "schemaVersion": 1,
+      "gradient": {
+        "type": "linear",
+        "angle": 135,
+        "stops": [
+          {
+            "offset": 0,
+            "color": "#FF5C6A"
+          },
+          {
+            "offset": 1,
+            "color": "#DC2447"
+          }
+        ]
+      },
+      "effects": {
+        "glowIntensity": 0.35,
+        "glowBlur": 16,
+        "shadowOpacity": 0.22,
+        "backgroundBlur": 0,
+        "motionEnabled": false
+      },
+      "typography": {
+        "family": "system",
+        "scale": 1.0
+      }
+    },
+    {
+      "name": "Oro Titanio",
+      "background": "#13100B",
+      "surface": "#2A251C",
+      "card": "#373025",
+      "primary": "#F4C86F",
+      "secondary": "#A87E32",
+      "text": "#FFF9ED",
+      "textMuted": "#D2C2A2",
+      "border": "#79613A",
+      "glow": "#F4C86F",
+      "onPrimary": "#241A06",
+      "id": "oro_titanio",
+      "schemaVersion": 1,
+      "gradient": {
+        "type": "linear",
+        "angle": 135,
+        "stops": [
+          {
+            "offset": 0,
+            "color": "#F4C86F"
+          },
+          {
+            "offset": 1,
+            "color": "#A87E32"
+          }
+        ]
+      },
+      "effects": {
+        "glowIntensity": 0.35,
+        "glowBlur": 16,
+        "shadowOpacity": 0.22,
+        "backgroundBlur": 0,
+        "motionEnabled": false
+      },
+      "typography": {
+        "family": "system",
+        "scale": 1.0
+      }
+    }
+  ]
+}

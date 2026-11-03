@@ -1,0 +1,57 @@
+
+> gymtrack@1.0.0 build
+> ng build
+
+❯ Building...
+✔ Building...
+Initial chunk files | Names                   |  Raw size | Estimated transfer size
+main-7MWWIL33.js    | main                    | 890.51 kB |               160.86 kB
+chunk-Be5vRp-N.js   | -                       | 197.59 kB |                55.62 kB
+chunk-BuNca9s-.js   | -                       | 196.62 kB |                57.42 kB
+styles-HHZQGTZ6.css | styles                  | 125.41 kB |                20.19 kB
+chunk-C86zhvaO.js   | -                       |   1.91 kB |               743 bytes
+
+                    | Initial total           |   1.41 MB |               294.83 kB
+
+Lazy chunk files    | Names                   |  Raw size | Estimated transfer size
+chunk-DaEZeN7a.js   | exceljs-min             | 943.79 kB |               218.11 kB
+chunk-Czl8Ytx-.js   | progress-component      | 307.93 kB |                77.91 kB
+chunk-CIMAfVxG.js   | profile-component       | 182.18 kB |                36.37 kB
+chunk-BkpGOFQo.js   | plans-component         | 113.04 kB |                19.59 kB
+chunk-a2ePIDz5.js   | jszip-min               |  97.33 kB |                26.50 kB
+chunk-Q1GS-UVj.js   | calendar-component      |  87.27 kB |                16.75 kB
+chunk-BlFJEEtc.js   | session-component       |  77.68 kB |                16.96 kB
+chunk-C4dVo69j.js   | nutrition-component     |  74.61 kB |                15.18 kB
+chunk-J2I3zlYh.js   | catalog-component       |  73.88 kB |                12.71 kB
+chunk-BiMhJIn3.js   | design-studio-component |  60.26 kB |                13.85 kB
+chunk-BJFAEEt2.js   | excel-import-component  |  53.24 kB |                16.22 kB
+chunk-CpKxVSyJ.js   | home-component          |  44.91 kB |                 8.18 kB
+chunk-CzPBAsAW.js   | workouts-component      |  44.08 kB |                 7.62 kB
+chunk-CirPbm_1.js   | users-component         |  41.35 kB |                 6.82 kB
+chunk-KiiGV9ed.js   | recovery-component      |  38.29 kB |                 7.98 kB
+...and 22 more lazy chunks files. Use "--verbose" to show all the files.
+
+Application bundle generation complete. [10.305 seconds] - 2026-11-03T02:08:47.064Z
+
+▲ [WARNING] bundle initial exceeded maximum budget. Budget 1.00 MB was not met by 412.05 kB with a total of 1.41 MB.
+
+
+▲ [WARNING] Module 'exceljs' used by 'src/app/services/excel-parser.ts' is not ESM
+
+  CommonJS or AMD dependencies can cause optimization bailouts.
+  For more information see: https://angular.dev/tools/cli/build#configuring-commonjs-dependencies
+
+
+▲ [WARNING] Module 'jszip' used by 'src/app/services/excel-parser.ts' is not ESM
+
+  CommonJS or AMD dependencies can cause optimization bailouts.
+  For more information see: https://angular.dev/tools/cli/build#configuring-commonjs-dependencies
+
+
+Output location: /workspace/gymtrack/dist/gymtrack
+
+
+> gymtrack@1.0.0 postbuild
+> node tools/package-worker.mjs
+
+Worker packaged with 158 assets, D1 migrations and build ab74b34324a4

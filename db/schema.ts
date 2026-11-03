@@ -1,4 +1,5 @@
-import { sqliteTable, text, integer, uniqueIndex, primaryKey } from 'drizzle-orm/sqlite-core';
+import { sqliteTable, text, integer, uniqueIndex, primaryKey, index, check } from 'drizzle-orm/sqlite-core';
+import {sql} from 'drizzle-orm';
 export const users = sqliteTable('users', {
  id:text('id').primaryKey(), email:text('email').notNull().unique(), name:text('name').notNull(), username:text('username').unique(), role:text('role').notNull(), active:integer('active').notNull().default(1), salt:text('salt').notNull(), passwordHash:text('password_hash').notNull(), createdAt:integer('created_at').notNull()
 });
@@ -28,4 +29,20 @@ export const appFeatures=sqliteTable('app_features',{
 });
 export const accountArchiveResets=sqliteTable('account_archive_resets',{
  id:text('id').primaryKey(),userId:text('user_id').notNull().unique().references(()=>users.id),scope:text('scope').notNull().unique(),resetId:text('reset_id').notNull(),completedAt:integer('completed_at'),recoveryKey:text('recovery_key'),retainUntil:integer('retain_until')
+});
+
+export const designState=sqliteTable('design_state',{
+ id:text('id').primaryKey(),revision:integer('revision').notNull().default(0),config:text('config').notNull(),updatedAt:integer('updated_at'),updatedBy:text('updated_by').references(()=>users.id)
+},table=>[check('design_state_current',sql`${table.id} = 'current'`)]);
+export const designDrafts=sqliteTable('design_drafts',{
+ userId:text('user_id').primaryKey().references(()=>users.id),config:text('config').notNull(),baseRevision:integer('base_revision').notNull(),version:integer('version').notNull(),updatedAt:integer('updated_at').notNull()
+});
+export const designPresets=sqliteTable('design_presets',{
+ id:text('id').primaryKey(),userId:text('user_id').notNull().references(()=>users.id),name:text('name').notNull(),config:text('config').notNull(),version:integer('version').notNull(),updatedAt:integer('updated_at').notNull()
+},table=>[index('design_presets_user').on(table.userId)]);
+export const designRevisions=sqliteTable('design_revisions',{
+ revision:integer('revision').primaryKey(),operationId:text('operation_id').notNull().unique(),config:text('config').notNull(),checksum:text('checksum').notNull(),actorId:text('actor_id').notNull().references(()=>users.id),createdAt:integer('created_at').notNull(),kind:text('kind').notNull(),sourceRevision:integer('source_revision')
+});
+export const designAudit=sqliteTable('design_audit',{
+ id:text('id').primaryKey(),revision:integer('revision').notNull().references(()=>designRevisions.revision),actorId:text('actor_id').notNull().references(()=>users.id),createdAt:integer('created_at').notNull(),kind:text('kind').notNull(),delta:text('delta').notNull()
 });

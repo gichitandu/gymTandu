@@ -1,0 +1,35 @@
+PASS SuperAdmin deep link and real Home preview
+PASS One-instance live style; sibling and published app unchanged
+PASS Private draft persists after reload
+PASS Custom preset saved on server
+PASS Unsafe import rejected without mutation
+PASS Explicit publication updates real Home and survives restart
+PASS Customized original workout link keeps original destination
+PASS Home, training, history, progress and profile navigation
+PASS Audited rollback restores default styling exactly
+PASS Twelve factory palettes and real previews across requested pages
+PASS Reduced motion overrides configured transitions
+PASS 390px mobile layout without horizontal overflow
+PASS Cancel removes private changes and preserves publication
+PASS Admin and User: hidden entry, guarded deep link, server 403
+PASS No browser application exceptions
+{
+  "passed": 15,
+  "results": [
+    "SuperAdmin deep link and real Home preview",
+    "One-instance live style; sibling and published app unchanged",
+    "Private draft persists after reload",
+    "Custom preset saved on server",
+    "Unsafe import rejected without mutation",
+    "Explicit publication updates real Home and survives restart",
+    "Customized original workout link keeps original destination",
+    "Home, training, history, progress and profile navigation",
+    "Audited rollback restores default styling exactly",
+    "Twelve factory palettes and real previews across requested pages",
+    "Reduced motion overrides configured transitions",
+    "390px mobile layout without horizontal overflow",
+    "Cancel removes private changes and preserves publication",
+    "Admin and User: hidden entry, guarded deep link, server 403",
+    "No browser application exceptions"
+  ]
+}

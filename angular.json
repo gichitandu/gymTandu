@@ -24,7 +24,8 @@
               "src/neon.css",
               "src/preview-match.css",
               "src/photo-controls.css",
-              "src/theme-finishes.css"
+              "src/theme-finishes.css",
+              "src/design-runtime.css"
             ],
             "outputPath": "dist/gymtrack"
           },

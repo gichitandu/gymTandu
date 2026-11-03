@@ -1,0 +1,72 @@
+/* Only registered presentation adapters may override a real control. */
+.gt-designed > gt-icon,
+.gt-designed > span > gt-icon {
+  width: var(--design-icon-size, 22px) !important;
+  height: var(--design-icon-size, 22px) !important;
+}
+.gt-designed:is(a, button, input, select) {
+  min-height: 44px;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+.gt-designed [gtDesignLabel] {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  max-width: 100%;
+}
+.gt-designed[data-design-foreground] > gt-icon,
+.gt-designed[data-design-foreground] [gtDesignLabel] {
+  color: inherit !important;
+}
+.gt-designed[style*="--design-opacity"]:not(:disabled):not(
+    [aria-disabled="true"]
+  ) {
+  opacity: var(--design-opacity);
+}
+.gt-designed[style*="--design-transition"],
+.gt-design-active[style*="--design-transition"] {
+  transition: var(--design-transition);
+}
+.gt-design-active {
+  color: var(--text);
+  background-color: var(--bg);
+}
+.gt-design-active :is(h1, h2, h3, p, label) {
+  color: inherit;
+}
+.studio-profile-entry {
+  display: flex !important;
+  align-items: center;
+  gap: 14px;
+  margin: 18px 0;
+  padding: 16px !important;
+  border: 1px solid #00d9ff80 !important;
+  border-radius: 16px !important;
+  background: linear-gradient(120deg, #0c253b, #12364c) !important;
+  color: #e9fbff !important;
+}
+.studio-profile-entry > span {
+  flex: 1;
+  text-align: left;
+}
+.studio-profile-entry strong,
+.studio-profile-entry small {
+  display: block;
+}
+.studio-profile-entry small {
+  font-size: 11px;
+  font-weight: 400;
+  margin-top: 4px;
+  color: #a6d1e4;
+}
+.studio-profile-entry > gt-icon {
+  color: #00d9ff;
+}
+@media (prefers-reduced-motion: reduce) {
+  .gt-designed,
+  .gt-design-active {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}

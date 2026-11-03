@@ -1,3 +1,4 @@
+import { DESIGN_DIRECTIVES } from '../design/design-directives';
 import {AnimationLibraryComponent} from '../shared/animation-library.component';
 import { DateFieldComponent } from '../shared/date-field.component';
 import { confirmationForContext } from '../services/confirmation';
@@ -39,7 +40,7 @@ type PlanEditorDraft = {
 @Component({
   standalone: true,
   styleUrls: ["./feature-polish.css", "./plans-simple.css", "./plans-reference.css"],
-  imports: [AnimationLibraryComponent,DateFieldComponent,OpenWorkoutsComponent,
+  imports: [...DESIGN_DIRECTIVES,AnimationLibraryComponent,DateFieldComponent,OpenWorkoutsComponent,
     A11yModule,ExerciseScopeComponent,
     ExerciseFamiliesComponent,
     ExerciseThumbComponent,
@@ -51,24 +52,24 @@ type PlanEditorDraft = {
   ],
   template: `<div class="compact-plans">
     @if(hub()==='plans'){
-      <header class="plans-heading"><div><h1>Allenati</h1><p>I tuoi piani, in un solo posto.</p></div><div class="plan-heading-actions"><button type="button" class="primary new-plan ref-icon-button" (click)="openPlan()" [disabled]="!s.ready()" aria-label="Nuovo piano"><gt-icon name="plus"/></button></div></header>
-      <nav class="neon-segments plans-navigation ref-tabs" aria-label="Allenamenti"><button type="button" [class.active]="hub()==='today'" [attr.aria-pressed]="hub()==='today'" (click)="hub.set('today')"><gt-icon name="calendar"/>Oggi</button><button type="button" [class.active]="hub()==='plans'&&!archived()" [attr.aria-pressed]="hub()==='plans'&&!archived()" (click)="hub.set('plans');archived.set(false)"><gt-icon name="layers"/>Piani</button><a routerLink="/allenamenti"><gt-icon name="clock"/>Storico</a></nav>
+      <header class="plans-heading"><div><h1 gtDesign="training.title">Allenati</h1><p>I tuoi piani, in un solo posto.</p></div><div class="plan-heading-actions"><button type="button" class="primary new-plan ref-icon-button" gtDesign="training.newPlan" (click)="openPlan()" [disabled]="!s.ready()" aria-label="Nuovo piano"><gt-icon name="plus"/></button></div></header>
+      <nav class="neon-segments plans-navigation ref-tabs" aria-label="Allenamenti"><button type="button" gtDesign="training.tabs.today" [class.active]="hub()==='today'" [attr.aria-pressed]="hub()==='today'" (click)="hub.set('today')"><gt-icon name="calendar" gtDesignIcon="training.tabs.today"/><span gtDesignLabel="training.tabs.today">Oggi</span></button><button type="button" gtDesign="training.tabs.plans" [class.active]="hub()==='plans'&&!archived()" [attr.aria-pressed]="hub()==='plans'&&!archived()" (click)="hub.set('plans');archived.set(false)"><gt-icon name="layers" gtDesignIcon="training.tabs.plans"/><span gtDesignLabel="training.tabs.plans">Piani</span></button><a routerLink="/allenamenti" gtDesign="training.tabs.history"><gt-icon name="clock" gtDesignIcon="training.tabs.history"/><span gtDesignLabel="training.tabs.history">Storico</span></a></nav>
     }
     <gt-status />
     <gt-open-workouts />
     @if(draftNotice()){<p class="notice" role="status">{{draftNotice()}}</p>}
     @if(hub()==='today'){
-      <section class="training-session-hero" aria-labelledby="training-session-title">
+      <section gtDesign="training.today" class="training-session-hero" aria-labelledby="training-session-title">
         @if(s.draft();as draft){
-          <header><p class="training-program-label">{{todayProgramLabel()}}</p><h1 id="training-session-title">{{todayTitle()}}</h1></header>
+          <header><p class="training-program-label">{{todayProgramLabel()}}</p><h1 id="training-session-title" gtDesign="training.title">{{todayTitle()}}</h1></header>
           <div class="training-inline-metrics"><span><gt-icon name="weight"/>{{todayExerciseCount()}} esercizi</span><span><gt-icon name="layers"/>{{todaySetCount()}} serie</span><span class="training-session-state"><gt-icon name="clock"/>Da riprendere</span></div>
-          <div class="training-today-actions"><a class="button primary ref-action" routerLink="/sessione"><gt-icon name="play"/><span>Riprendi allenamento</span><gt-icon name="chevron-right"/></a><a class="button secondary ref-action" routerLink="/sessione"><gt-icon name="eye"/>Vedi sessione</a></div>
+          <div class="training-today-actions"><a class="button primary ref-action" routerLink="/sessione" gtDesign="training.actions.resume"><gt-icon name="play"/><span>Riprendi allenamento</span><gt-icon name="chevron-right"/></a><a class="button secondary ref-action" routerLink="/sessione"><gt-icon name="eye"/>Vedi sessione</a></div>
         }@else if(todayDay();as day){
-          <header><p class="training-program-label">{{todayProgramLabel()}}</p><h1 id="training-session-title">{{todayTitle()}}</h1></header>
+          <header><p class="training-program-label">{{todayProgramLabel()}}</p><h1 id="training-session-title" gtDesign="training.title">{{todayTitle()}}</h1></header>
           <div class="training-inline-metrics"><span><gt-icon name="weight"/>{{todayExerciseCount()}} esercizi</span><span><gt-icon name="layers"/>{{todaySetCount()}} serie</span>@if(todayWeekday();as weekday){<span><gt-icon name="calendar"/>{{weekday}}</span>}@else if(todayDuration();as minutes){<span [attr.aria-label]="'Durata programmata: '+minutes+' minuti'"><gt-icon name="clock"/>{{minutes}} min</span>}</div>
-          <div class="training-today-actions"><a class="button primary ref-action" routerLink="/anteprima-allenamento" [queryParams]="{day:day.id,return:'piani'}"><gt-icon name="play"/><span>Apri la seduta</span><gt-icon name="chevron-right"/></a><a class="button secondary ref-action" routerLink="/calendario" [queryParams]="{date:todaySessionDate()||today}"><gt-icon name="calendar"/>Cambia programmazione</a></div>
+          <div class="training-today-actions"><a class="button primary ref-action" gtDesign="training.actions.open" routerLink="/anteprima-allenamento" [queryParams]="{day:day.id,return:'piani'}"><gt-icon name="play"/><span>Apri la seduta</span><gt-icon name="chevron-right"/></a><a class="button secondary ref-action" gtDesign="training.actions.calendar" routerLink="/calendario" [queryParams]="{date:todaySessionDate()||today}"><gt-icon name="calendar"/>Cambia programmazione</a></div>
         }@else{
-          <header><p class="training-program-label">IL TUO ALLENAMENTO</p><h1 id="training-session-title">Allenati</h1></header><p class="training-empty-description">Crea o attiva un piano per trovare qui la prossima seduta.</p><button type="button" class="primary full-width ref-action" (click)="hub.set('plans');openPlan()"><gt-icon name="plus"/>Crea piano</button>
+          <header><p class="training-program-label">IL TUO ALLENAMENTO</p><h1 id="training-session-title" gtDesign="training.title">Allenati</h1></header><p class="training-empty-description">Crea o attiva un piano per trovare qui la prossima seduta.</p><button type="button" class="primary full-width ref-action" (click)="hub.set('plans');openPlan()"><gt-icon name="plus"/>Crea piano</button>
         }
       </section>
       @if(s.activePlan();as plan){<a class="card training-path ref-card reference-wave-card" [routerLink]="['/piano',plan.id]"><div class="card-head"><h2>Il tuo percorso</h2><span class="ref-badge green"><i aria-hidden="true"></i>Piano attivo</span></div><strong>{{programLabel(plan)}}</strong><div class="training-path-stats"><span><gt-icon name="calendar"/>{{completedForPlan(plan.id)}} sedute registrate</span><span><gt-icon name="layers"/>{{s.days(plan.id).length}} allenamenti nel piano<gt-icon name="chevron-right"/></span></div></a>}
@@ -80,7 +81,7 @@ type PlanEditorDraft = {
     <div [hidden]="hub()==='today'">
     <div class="plans-list-heading"><h2>{{archived()?'Piani archiviati':'I miei piani'}}</h2><button type="button" class="ghost archive-toggle" [class.selected]="archived()" (click)="archived.set(!archived())">{{archived()?'Piani attivi':'Archivio'}}<gt-icon name="clock"/></button></div>
     <a class="excel-archive-link" routerLink="/importa-excel" [queryParams]="{tab:'archive'}"><gt-icon name="download"/>Excel importati<gt-icon name="arrow"/></a>
-    <div class="list simple-plan-list">
+    <div class="list simple-plan-list" gtDesign="training.plans">
       @for(p of plans();track p.id){
         <section class="card simple-plan">
           <div class="simple-plan-top"><gt-exercise-thumb class="plan-cover-thumb" [exercise]="thumbnailExercise(p.id)"/>

@@ -1,3 +1,4 @@
+import { DESIGN_DIRECTIVES } from '../design/design-directives';
 import {sleepLabel} from '../services/wellness';
 import {AppFeaturesService} from '../services/app-features';
 import { AuthService } from '../services/auth';
@@ -17,7 +18,7 @@ interface HomeUpcomingSession {
 
 @Component({
   standalone: true,
-  imports: [
+  imports: [...DESIGN_DIRECTIVES,
     BackupReminderComponent,
     RouterLink,
     IconComponent,

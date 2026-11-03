@@ -1,0 +1,57 @@
+{
+  "$comment": "ESEMPIO DI CONTRATTO, NON codice pronto: adattare a framework, backend e schemi esistenti.",
+  "schemaVersion": 1,
+  "publishedRevision": "rev-example-001",
+  "activePresetId": "azzurro_gt",
+  "draft": {
+    "basePresetId": "azzurro_gt",
+    "globalTokens": {
+      "colors": {
+        "primary": "#00D9FF"
+      },
+      "effects": {
+        "glowIntensity": 0.35
+      }
+    },
+    "pageOverrides": {
+      "home": {
+        "tokens": {
+          "effects": {
+            "glowIntensity": 0.2
+          }
+        },
+        "instanceOverrides": {
+          "home.quickActions.workouts": {
+            "componentType": "button",
+            "style": {
+              "width": "auto",
+              "heightDp": 56,
+              "radiusDp": 18,
+              "background": "#0077FF",
+              "textColor": "#FFFFFF",
+              "borderWidthDp": 1,
+              "glowIntensity": 0.6,
+              "paddingHorizontalDp": 14
+            },
+            "content": {
+              "label": "Allenamenti"
+            }
+          }
+        }
+      }
+    },
+    "instanceOverrides": {}
+  },
+  "rules": {
+    "cascading": [
+      "basePreset",
+      "globalTokens",
+      "pageOverrides",
+      "instanceOverrides"
+    ],
+    "functionalPropertiesLocked": true,
+    "newComponentCreationEnabled": false,
+    "requiresServerSideSuperAdminAuthorization": true,
+    "publicationRequiresExplicitConfirmation": true
+  }
+}
