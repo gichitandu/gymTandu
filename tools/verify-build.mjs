@@ -17,6 +17,9 @@ for (const file of [
   "icons/gt-modern-180.png",
   "icons/gt-modern-192.png",
   "icons/gt-modern-512.png",
+  "apple-touch-icon.png",
+  "apple-touch-icon-precomposed.png",
+  "favicon.ico",
   "food-ai-worker.js",
   "vendor/tf.min.js",
 ])
@@ -44,13 +47,14 @@ for (const group of aiModel.weightsManifest) for (const file of group.paths)
   assert(fs.existsSync(root + '/vendor/food-model/' + file), `Pesi AI mancanti: ${file}`);
 assert(sw.assetGroups.find(g=>g.name==='app').urls.includes('/food-ai-worker.js'));
 const assets = Object.keys(sw.hashTable);
-for (const file of ['brand/gt-modern-mark.png', 'icons/gt-modern-180.png', 'icons/gt-modern-192.png', 'icons/gt-modern-512.png']) {
+for (const file of ['brand/gt-modern-mark.png', 'icons/gt-modern-180.png', 'icons/gt-modern-192.png', 'icons/gt-modern-512.png', 'apple-touch-icon.png', 'apple-touch-icon-precomposed.png', 'favicon.ico']) {
   assert(sw.assetGroups.find(group => group.name === 'app').urls.includes('/' + file), file + ' escluso dal precache');
   assert.equal(sw.hashTable['/' + file], createHash('sha1').update(fs.readFileSync(root + '/' + file)).digest('hex'), file + ' senza hash coerente');
 }
 assert.equal(manifest.id, './', 'Identità PWA esistente modificata');
 assert.deepEqual(manifest.icons.map(icon => icon.src), ['icons/gt-modern-192.png', 'icons/gt-modern-512.png']);
-assert(html.includes('rel="apple-touch-icon" href="icons/gt-modern-180.png"'));
+assert(html.includes('rel="apple-touch-icon" sizes="180x180" href="/icons/gt-modern-180.png"'));
+assert(html.includes('rel="apple-touch-icon-precomposed" sizes="180x180" href="/icons/gt-modern-180.png"'));
 const buildText = fs.readFileSync(root + '/app-build.json','utf8');
 const appBuild = JSON.parse(buildText);
 assert(/^[a-f0-9]{64}$/.test(appBuild.buildId), 'Identità della versione mancante');

@@ -12,6 +12,8 @@
           "/*.js",
           "/*.webmanifest",
           "/icons/**",
+          "/apple-touch-icon*.png",
+          "/favicon.ico",
           "/templates/**",
           "/*.webp",
           "/brand/**",
