@@ -135,6 +135,7 @@ export class DesignPreviewComponent {
   config = input.required<DesignConfig>();
   page = input("home");
   selected = input("");
+  copyMode = input(false);
   component = signal<Type<unknown> | null>(null);
   missing = signal("");
   private context = inject(DESIGN_CONTEXT) as {
@@ -166,6 +167,7 @@ export class DesignPreviewComponent {
       if (instance?.hub) {
         const hub =
           selected.startsWith("training.tabs.") ||
+          (this.copyMode() && ["training.title", "training.subtitle"].includes(selected)) ||
           selected === "training.plans" ||
           selected === "training.newPlan"
             ? "plans"
@@ -184,7 +186,7 @@ export class DesignPreviewComponent {
       for (const [selector, open] of [
         [
           ".home-health-disclosure",
-          ["home.goals", "home.dumbbell"].includes(selected),
+          selected.startsWith("home.health."),
         ],
         [".progress-exercise-details", selected === "progress.exerciseChart"],
         [

@@ -98,7 +98,7 @@ export class DesignStudioComponent {
   loading = signal(true);
   error = signal("");
   notice = signal("");
-  tab = signal<"controls" | "themes" | "history">("controls");
+  tab = signal<"controls" | "labels" | "themes" | "history">("controls");
   scope = signal<Scope>("instance");
   page = signal<DesignPage>("home");
   selected = signal("home.stats.workouts");
@@ -157,6 +157,7 @@ export class DesignStudioComponent {
     DESIGN_CONTROLS.filter(
       (c) =>
         c.page === this.page() &&
+        (this.tab() !== "labels" || !!c.label) &&
         (!this.search().trim() ||
           (c.name + " " + c.id)
             .toLowerCase()
@@ -283,7 +284,9 @@ export class DesignStudioComponent {
   choosePage(value: string) {
     this.page.set(value as DesignPage);
     this.selected.set(
-      value === "home"
+      this.tab() === "labels"
+        ? DESIGN_CONTROLS.find((c) => c.page === value && c.label)?.id || ""
+        : value === "home"
         ? "home.stats.workouts"
         : DESIGN_CONTROLS.find((c) => c.page === value)?.id || "",
     );
@@ -292,6 +295,13 @@ export class DesignStudioComponent {
   chooseControl(id: string) {
     this.selected.set(id);
     this.scope.set("instance");
+    if (this.tab() === "labels") this.group.set("type");
+  }
+  openLabels() {
+    this.tab.set("labels");
+    this.scope.set("instance");
+    this.group.set("type");
+    this.choosePage(this.page());
   }
   toggleMobilePreview() {
     this.previewOnMobile.update((v) => !v);

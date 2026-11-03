@@ -1,6 +1,6 @@
-import {BottomNavigationComponent} from '../shared/bottom-navigation.component';
+import {BottomNavigationComponent, navigationDesignId} from '../shared/bottom-navigation.component';
 import {DataStatusComponent} from '../shared/data-status.component';
-import {DesignPageDirective} from '../design/design-directives';
+import {DesignPageDirective, DESIGN_DIRECTIVES} from '../design/design-directives';
 import {AppFeaturesService} from '../services/app-features';
 import { WorkoutClockComponent } from '../shared/workout-clock.component';
 import {WorkoutResumeService} from "../services/workout-resume";
@@ -19,27 +19,28 @@ import { canResumeAtHome, MobileNavigationService } from "../services/mobile-nav
   host: {class: "design-v2 photo-controls", "[class.reference-pages]":"referencePage()"},
   standalone: true,
   hostDirectives: [DesignPageDirective],
-  imports: [BottomNavigationComponent,DataStatusComponent,WorkoutClockComponent,RouterLink, RouterLinkActive, RouterOutlet, IconComponent, AvatarComponent, ArchiveRecoveryComponent],
+  imports: [...DESIGN_DIRECTIVES,BottomNavigationComponent,DataStatusComponent,WorkoutClockComponent,RouterLink, RouterLinkActive, RouterOutlet, IconComponent, AvatarComponent, ArchiveRecoveryComponent],
   styleUrls: ['./experience.css'],
   encapsulation: ViewEncapsulation.None,
   template: ` <gt-workout-clock/><aside class="sidebar">
       <a class="brand" routerLink="/"
-        ><img class="app-brand-mark" src="/brand/gt-mark.png" alt=""/>Gym<span>Track</span></a
+        ><img class="app-brand-mark" src="/brand/gt-modern-mark.png" alt=""/>Gym<span>Track</span></a
       >
       <nav>
         @for (item of desktopNav; track item.path) {
           <a
+            [gtDesign]="navigationDesignId(item.path)"
             [routerLink]="item.path"
             routerLinkActive="selected"
             [routerLinkActiveOptions]="{ exact: true }"
-            ><gt-icon [name]="item.icon" /><span>{{ item.label }}</span></a
+            ><gt-icon [name]="item.icon" [gtDesignIcon]="navigationDesignId(item.path)" /><span [gtDesignLabel]="navigationDesignId(item.path)" [gtDesignLabelDefault]="item.label">{{ item.label }}</span></a
           >
         }
       </nav>
     </aside>
     <div class="app-main">
       @if(!router.url.startsWith('/sessione')){<header class="topbar">
-        <a class="mobile-brand brand" routerLink="/"><img class="app-brand-mark" src="/brand/gt-mark.png" alt=""/>Gym<span>Track</span></a
+        <a class="mobile-brand brand" routerLink="/"><img class="app-brand-mark" src="/brand/gt-modern-mark.png" alt=""/>Gym<span>Track</span></a
         >        <div class="topbar-right"><gt-data-status class="header-data-status"/>
           <a class="avatar" routerLink="/profilo" aria-label="Apri profilo"><gt-avatar [photo]="s.profile().photo" [name]="s.profile().name" /></a>
         </div>
@@ -49,6 +50,7 @@ import { canResumeAtHome, MobileNavigationService } from "../services/mobile-nav
     <gt-bottom-navigation [items]="nav"/>`,
 })
 export class ShellComponent {
+  navigationDesignId = navigationDesignId;
   private resume=inject(WorkoutResumeService);private firstOpen=true;
   private navigation=inject(MobileNavigationService);
   constructor(){effect(()=>{if(!this.s.ready()||!this.firstOpen||!this.navigation.resolved())return;this.firstOpen=false;const w=this.s.draft();if(w&&canResumeAtHome(this.navigation.url(),this.navigation.resolved())&&this.resume.read(this.s.archiveKey(),w.id,this.s.data().workoutUi.find(x=>x.id===w.id),this.s.archiveRevision()))void this.router.navigateByUrl('/sessione');});effect(()=>{if(this.features?.ready()&&!this.features.nutritionEnabled()&&this.router.url.split('?')[0]==='/alimentazione')void this.router.navigateByUrl('/');});}

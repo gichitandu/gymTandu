@@ -94,6 +94,10 @@ try {
   const config = studio.published.config;
   config.presetId = "petrolio-lumina";
   config.instances["home.stats.workouts"] = { radius: 24, fill: "#0077FF" };
+  config.instances["home.title"] = { label: "Il mio spazio" };
+  config.instances["home.subtitle"] = { label: "Una seduta alla volta" };
+  config.instances["navigation.home"] = { label: "Inizio" };
+  config.instances["profile.title"] = { label: "Il mio profilo" };
   assert.equal(
     (
       await call(
@@ -113,6 +117,10 @@ try {
   assert.equal((await published.json()).revision, 1);
   const read = await (await call("design/published", undefined, cookie)).json();
   assert.equal(read.config.instances["home.stats.workouts"].radius, 24);
+  assert.equal(read.config.instances["home.title"].label, "Il mio spazio");
+  assert.equal(read.config.instances["home.subtitle"].label, "Una seduta alla volta");
+  assert.equal(read.config.instances["navigation.home"].label, "Inizio");
+  assert.equal(read.config.instances["profile.title"].label, "Il mio profilo");
   assert.equal(read.studioEnabled, true);
   assert.equal(
     (

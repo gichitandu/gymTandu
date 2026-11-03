@@ -2,6 +2,9 @@ import { Component, inject, input } from "@angular/core";
 import { Router, RouterLink, RouterLinkActive } from "@angular/router";
 import { IconComponent } from "./icon.component";
 import { DesignControlDirective } from "../design/design-directives";
+import { DesignIconDirective } from "../design/design-directives";
+import { DESIGN_CONTEXT, DesignRuntime } from "../design/design-runtime";
+import { resolveDesignLabel } from "../../../shared/design-system.js";
 export interface BottomNavItem {
   path: string;
   label: string;
@@ -19,6 +22,10 @@ export const BOTTOM_NAV_ITEMS: BottomNavItem[] = [
   { path: "/progressi", label: "Progressi", icon: "chart" },
   { path: "/profilo", label: "Profilo", icon: "user" },
 ];
+export const navigationDesignId = (path: string) => ({
+  "/": "navigation.home", "/piani": "navigation.training",
+  "/progressi": "navigation.progress", "/profilo": "navigation.profile",
+} as Record<string, string>)[path] || "";
 @Component({
   selector: "gt-bottom-navigation",
   standalone: true,
@@ -27,6 +34,7 @@ export const BOTTOM_NAV_ITEMS: BottomNavItem[] = [
     RouterLinkActive,
     IconComponent,
     DesignControlDirective,
+    DesignIconDirective,
   ],
   styles: [":host{display:contents}"],
   template: ` <nav
@@ -53,31 +61,24 @@ export const BOTTOM_NAV_ITEMS: BottomNavItem[] = [
             ? previewPath() === item.path
             : activeUrl().split('?')[0] === item.path
         "
-        [attr.aria-label]="item.label"
-        ><gt-icon [name]="item.icon" /><span>{{
-          item.mobileLabel || item.label
-        }}</span></a
+        [attr.aria-label]="label(item)"
+        ><gt-icon [name]="item.icon" [gtDesignIcon]="navigationDesignId(item.path)" /><span>{{ label(item) }}</span></a
       >
     }
   </nav>`,
 })
 export class BottomNavigationComponent {
   private router = inject(Router);
+  private runtime = inject(DesignRuntime);
+  private context = inject(DESIGN_CONTEXT, { optional: true });
   items = input<BottomNavItem[]>(BOTTOM_NAV_ITEMS);
   previewPath = input("");
   activeUrl() {
     return this.previewPath() || this.router.url;
   }
-  navigationDesignId(path: string) {
-    return (
-      (
-        {
-          "/": "navigation.home",
-          "/piani": "navigation.training",
-          "/progressi": "navigation.progress",
-          "/profilo": "navigation.profile",
-        } as Record<string, string>
-      )[path] || ""
-    );
+  navigationDesignId = navigationDesignId;
+  label(item: BottomNavItem) {
+    return resolveDesignLabel(this.context?.config() || this.runtime.config(),
+      navigationDesignId(item.path), item.mobileLabel || item.label);
   }
 }

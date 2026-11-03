@@ -1,0 +1,5 @@
+
+> gymtrack@1.0.0 verify:build
+> node tools/verify-build.mjs
+
+Build PWA verificata: 48 bundle JavaScript in precache, manifest, icone e service worker presenti. Non sostituisce una prova offline in browser.

@@ -86,3 +86,19 @@ a:focus-visible,summary:focus-visible,.client-view-toggle>input:focus-visible{ou
 @media(min-width:800px){.ref-home-heading h1{font-size:34px}.home-shortcuts>a{min-height:78px;font-size:13px}.home-mini-stats>a{min-height:81px}.home-mini-stats>a>strong{font-size:20px}.home-mini-stats>a>span{font-size:12px}.home-week-days{padding:14px}.home-week-days>a>span{font-size:12px}.home-week-days>a>strong{width:35px;height:35px;font-size:17px}}
 @media(max-width:359px){.ref-home-heading h1{font-size:27px}.ref-home-heading .today-motto{font-size:12px}.home-main-actions>.home-primary-action,.home-main-actions>.home-secondary-action{font-size:14px;padding-inline:12px}.home-shortcuts{gap:8px}.home-shortcuts>a{font-size:10px;padding-inline:3px}.home-mini-stats{gap:8px}.home-mini-stats>a>strong{font-size:14px;max-width:calc(100% - 25px)}.home-mini-stats>a>gt-icon{width:18px;height:18px}.home-mini-stats strong>small{font-size:10px}.home-mini-stats>a>span{font-size:10px}.today-section h2{font-size:17px}.home-text-link{font-size:11px}.home-week-days{padding-inline:7px;gap:2px}.home-week-days>a>strong{width:28px;height:28px;font-size:14px}.client-view-toggle{gap:8px;padding-inline:10px}.client-view-toggle>gt-icon{width:23px;height:23px}.client-view-toggle strong{font-size:12px}.client-view-toggle small{font-size:9px}:host ::ng-deep gt-backup-reminder .backup-reminder{padding:12px}:host ::ng-deep gt-backup-reminder h3{font-size:13px}:host ::ng-deep gt-backup-reminder p{font-size:11px}:host ::ng-deep gt-backup-reminder .actions{gap:8px}}
 @media(prefers-reduced-motion:reduce){.client-view-toggle>input[type=checkbox],.client-view-toggle>input[type=checkbox]::before,.home-health-disclosure>summary>gt-icon:last-child{transition:none}}
+
+/* Keep the existing weekly goal visible immediately below the page heading. */
+.home-overview.home-weekly-overview{display:block;position:relative;isolation:isolate;height:auto;min-height:0;padding:0;margin:0 0 16px;border:1px solid var(--ref-line,var(--line));border-radius:18px;background:linear-gradient(130deg,var(--home-violet),var(--card));overflow:hidden}
+.home-weekly-overview .home-dumbbell{position:absolute;z-index:-1;width:48%;height:100%;inset:0 0 0 auto;opacity:.13;object-fit:cover;mask-image:linear-gradient(90deg,transparent,#000)}
+.home-weekly-progress{display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:132px;padding:15px 18px;color:var(--text);text-decoration:none;min-width:0;border-radius:inherit}
+.home-goal-copy{min-width:0;flex:1}
+.home-goal-label{display:block;font-size:15px;font-weight:700;line-height:1.35;overflow-wrap:anywhere}
+.home-goal-copy p{font-size:12px;line-height:1.5;color:var(--muted);margin:7px 0 9px;overflow-wrap:anywhere}
+.home-goal-copy .home-goal-edit{font-size:11px;margin:0;line-height:1.4}
+.home-weekly-overview .neon-ring.home-goal-ring{flex:none;width:100px;height:100px;padding:5px;margin:0;box-shadow:0 0 calc(22px * var(--neon-glow,.55)) color-mix(in srgb,var(--accent) 36%,transparent)}
+.home-weekly-overview .home-goal-ring>div{gap:3px;padding:8px;background:var(--design-progress-surface,radial-gradient(ellipse at 40% 0,var(--accent-soft),var(--bg) 74%))}
+.home-weekly-overview .home-goal-ring :is(strong,span){color:var(--design-progress-ink,var(--text))}
+.home-weekly-overview .home-goal-ring strong{font-size:28px;line-height:1.1;letter-spacing:-1px}
+.home-weekly-overview .home-goal-ring span{font-size:8px;line-height:1.3;text-align:center}
+.ref-home-heading h1{overflow-wrap:anywhere}
+@media(max-width:359px){.home-weekly-progress{gap:9px;padding:13px 12px;min-height:122px}.home-goal-label{font-size:14px}.home-goal-copy p{font-size:11px}.home-weekly-overview .neon-ring.home-goal-ring{width:90px;height:90px}.home-weekly-overview .home-goal-ring strong{font-size:25px}}

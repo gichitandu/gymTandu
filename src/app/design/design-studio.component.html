@@ -77,6 +77,8 @@
           (click)="tab.set('controls')"
         >
           <gt-icon name="layers" /> Pagine e controlli</button
+        ><button type="button" [attr.aria-pressed]="tab() === 'labels'" (click)="openLabels()">
+          <gt-icon name="note" /> Testi e scritte</button
         ><button
           type="button"
           [attr.aria-pressed]="tab() === 'themes'"
@@ -105,13 +107,13 @@
       </div>
       <div class="studio-workspace" [class.history-view]="tab() === 'history'">
         <div class="studio-edit-area">
-          @if (tab() === "controls") {
+          @if (tab() === "controls" || tab() === "labels") {
             <aside class="studio-panel studio-tree">
               <div class="studio-panel-title">
                 <gt-icon name="layers" />
                 <div>
-                  <h2>Pagine dell’app</h2>
-                  <p>Seleziona un controllo esistente</p>
+                  <h2>{{tab() === 'labels' ? 'Testi delle pagine' : 'Pagine dell’app'}}</h2>
+                  <p>{{tab() === 'labels' ? 'Scegli la scritta da rinominare' : 'Seleziona un controllo esistente'}}</p>
                 </div>
               </div>
               <label
@@ -142,6 +144,7 @@
                   <button
                     type="button"
                     class="studio-control"
+                    [attr.data-control-id]="control.id"
                     [class.selected]="selected() === control.id"
                     [attr.aria-pressed]="selected() === control.id"
                     (click)="chooseControl(control.id)"
@@ -199,7 +202,7 @@
                   </p>
                 </div>
               </div>
-              <div
+              @if (tab() !== "labels") {<div
                 class="studio-scope"
                 role="group"
                 aria-label="Ambito della modifica"
@@ -226,7 +229,10 @@
                 >
                   Solo questo
                 </button>
-              </div>
+              </div>}
+              @if (tab() === "labels") {
+                <p class="studio-hint">Scrivi il nome che preferisci. Il titolo della pagina e la voce di navigazione si modificano separatamente. Salva una bozza oppure pubblica per applicare le scritte nell’app.</p>
+              }
               @if (scope() === "instance") {
                 <code class="studio-identity">{{ selected() }}</code>
               }
@@ -236,7 +242,7 @@
                   vedere le modifiche.
                 </p>
               }
-              <div
+              @if (tab() !== "labels") {<div
                 class="studio-property-tabs"
                 role="group"
                 aria-label="Proprietà"
@@ -260,7 +266,7 @@
                 >
                   Effetti
                 </button>
-              </div>
+              </div>}
               <fieldset [disabled]="busy() || loading()" class="studio-fields">
                 @if (group() === "layout") {
                   @if (supportsBackground()) {
@@ -828,6 +834,7 @@
             [config]="draft()"
             [page]="page()"
             [selected]="scope() === 'instance' ? selected() : ''"
+            [copyMode]="tab() === 'labels'"
           />
         </aside>
       </div>

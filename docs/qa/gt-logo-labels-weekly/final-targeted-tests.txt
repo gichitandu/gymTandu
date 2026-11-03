@@ -1,0 +1,11 @@
+
+ RUN  v5.0.4 /workspace/gymtrack
+
+
+ Test Files  4 passed (4)
+      Tests  58 passed (58)
+   Start at  13:46:43
+   Duration  1.80s (import 73%, tests 14%, transform 11%, worker 1%)
+
+    Isolate  4 workers spawned · ~91ms startup each (spawn + environment, per file)
+             at least ~274ms faster with isolate: false — reuses workers across files instead of one per file

@@ -4,6 +4,7 @@ import {
   designStyles,
   resolveDesign,
   resolvePageDesign,
+  resolveDesignLabel,
 } from "../../../shared/design-system.js";
 import { IconComponent } from "../shared/icon.component";
 import { DESIGN_CONTEXT, DesignRuntime } from "./design-runtime";
@@ -104,6 +105,7 @@ export class DesignPageDirective {
 @Directive({ selector: "[gtDesignLabel]", standalone: true })
 export class DesignLabelDirective {
   gtDesignLabel = input.required<string>();
+  gtDesignLabelDefault = input<string | undefined>(undefined);
   private element = inject<ElementRef<HTMLElement>>(ElementRef).nativeElement;
   private runtime = inject(DesignRuntime);
   private context = inject(DESIGN_CONTEXT, { optional: true });
@@ -113,9 +115,7 @@ export class DesignLabelDirective {
         entry = DESIGN_CONTROLS.find((c) => c.id === id),
         config = this.context?.config() || this.runtime.config();
       if (entry?.label)
-        this.element.textContent = config.enabled
-          ? config.instances[id]?.label || entry.label
-          : entry.label;
+        this.element.textContent = resolveDesignLabel(config, id, this.gtDesignLabelDefault());
     });
   }
 }
