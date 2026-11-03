@@ -2,15 +2,15 @@ import {Injectable,inject,signal} from '@angular/core';
 import Dexie,{Table} from 'dexie';
 import {AuthService} from './auth';
 import {feedbackForContext,feedbackSignal} from './feedback';
-import {ThemeConfig,THEME_PALETTES,validThemeConfig,resolveTheme,contrastRatio} from './theme-palettes';
+import {ThemeConfig,THEME_PRESETS,validThemeConfig,resolveTheme,contrastRatio} from './theme-palettes';
 export const DEFAULT_BACKGROUND='#050E17';
-export const DEFAULT_THEME:ThemeConfig={palette:'viola-neon',mode:'dark'};
+export const DEFAULT_THEME:ThemeConfig={palette:'multicolore',mode:'dark'};
 type ThemePreference={id:string;color:string;config?:ThemeConfig;dirty?:boolean};
 @Injectable({providedIn:'root'})
 export class ThemeService{
  private feedback=feedbackForContext();
  auth=inject(AuthService);config=signal<ThemeConfig>({...DEFAULT_THEME});color=signal('#101416');busy=signal(false);error=feedbackSignal('error',this.feedback);status=feedbackSignal('success',this.feedback);
- palettes=THEME_PALETTES;presets=THEME_PALETTES.map(p=>p.background);
+ palettes=THEME_PRESETS;presets=THEME_PRESETS.map(p=>p.background);
  private media=typeof matchMedia==='function'?matchMedia('(prefers-color-scheme: light)'):undefined;
  systemLight=signal(this.media?.matches??false);
  private onSystemChange=(event:MediaQueryListEvent)=>{this.systemLight.set(event.matches);if(this.config().mode==='system')this.apply();};
@@ -46,6 +46,11 @@ export class ThemeService{
   const tokens=resolveTheme(this.config(),this.systemLight()),style=document.body.style;this.color.set(tokens.background);
   const values:Record<string,string>={'--bg':tokens.background,'--card':tokens.card,'--raised':tokens.raised,'--line':tokens.line,'--text':tokens.text,'--muted':tokens.muted,'--accent':tokens.accent,'--accent-ink':tokens.buttonText,'--accent-text':tokens.accentText,'--blue':tokens.accentText,'--accent-soft':tokens.accentSoft,'--nav-bg':tokens.card,'--green':tokens.light?'#156B4D':'#70D4AD','--danger':tokens.light?'#AA223C':'#FFADB9','--danger-soft':tokens.light?'#FDEDF1':'#3A2029','color-scheme':tokens.light?'light':'dark'};
   for(const [key,value] of Object.entries(values))style.setProperty(key,value);
+  style.setProperty('--theme-secondary',tokens.secondary);style.setProperty('--theme-tertiary',tokens.tertiary);
+  document.body.dataset['themePalette']=this.config().palette;
+  document.body.classList.toggle('theme-preset',THEME_PRESETS.some(p=>p.id===this.config().palette));
+  document.body.classList.toggle('theme-multicolor',tokens.multicolor);
+  document.body.classList.toggle('theme-metallic',['oro','argento'].includes(this.config().palette)&&!this.config().accent);
   document.body.classList.toggle('palette-violet',this.config().palette==='viola-neon'&&!this.config().accent);
   document.body.classList.toggle('theme-ready',true);document.body.classList.toggle('custom-light',tokens.light);document.body.classList.toggle('light',tokens.light);
   document.querySelector('meta[name="theme-color"]')?.setAttribute('content',tokens.background);

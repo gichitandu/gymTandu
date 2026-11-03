@@ -1,5 +1,7 @@
 <section
   class="theme-studio"
+  [class.preview-multicolor]="draft().palette === 'multicolore' && !draft().accent"
+  [class.preview-metallic]="(draft().palette === 'oro' || draft().palette === 'argento') && !draft().accent"
   [style.color-scheme]="colors().light ? 'light' : 'dark'"
   [style.--preview-bg]="colors().background"
   [style.--preview-card]="colors().card"
@@ -11,6 +13,8 @@
   [style.--preview-muted]="colors().muted"
   [style.--preview-ink]="colors().buttonText"
   [style.--preview-soft]="colors().accentSoft"
+  [style.--preview-secondary]="previewSecondary()"
+  [style.--preview-tertiary]="previewTertiary()"
   aria-labelledby="theme-studio-title"
 >
   <header class="studio-header">
@@ -30,13 +34,19 @@
     }
   </div>
   <fieldset class="palette-picker">
-    <legend>Palette</legend>
+    <legend>Temi predefiniti</legend>
+    <p class="palette-intro">Scegli una base e personalizza i colori come preferisci.</p>
+    @if (isLegacyPalette()) {
+      <p class="legacy-theme" role="status">Il tuo tema {{ selectedPalette()?.name || 'personalizzato' }} resta conservato finché non salvi una nuova scelta.</p>
+    }
     <div class="palette-grid">
       @for (palette of palettes; track palette.id) {
         <button
           class="palette-tile"
           type="button"
           [class.chosen]="draft().palette === palette.id"
+          [class.metallic]="palette.id === 'oro' || palette.id === 'argento'"
+          [class.multicolor]="palette.id === 'multicolore'"
           [attr.aria-pressed]="draft().palette === palette.id"
           [attr.aria-label]="'Tema ' + palette.name"
           [style.--tile-bg]="palette.background"
@@ -45,6 +55,8 @@
           [style.--tile-muted]="palette.muted"
           [style.--tile-accent]="palette.accent"
           [style.--tile-ink]="palette.buttonText"
+          [style.--tile-secondary]="palette.secondary || palette.accent"
+          [style.--tile-tertiary]="palette.tertiary || palette.accent"
           (click)="choosePalette(palette.id)"
         >
           <span class="tile-label">{{ palette.name }}</span>

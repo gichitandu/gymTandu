@@ -27,3 +27,11 @@ it('rejects invalid theme colors, modes, palettes, and unknown config properties
   expect(()=>validateIntegrity(data)).toThrow('tema non valido');
  }
 });
+
+it.each(['oro','argento','multicolore','bianco-elegante','scuro','rosso','verde'])('round-trips the %s preset with personal colors intact',async(palette)=>{
+ const data=seed(),themeConfig={palette,mode:'system' as const,background:'#182735',accent:'#D6B76D'};
+ data.settings[0].themeConfig=themeConfig;
+ const text=await exportBackup(data),restored=await importBackup(text);
+ expect(restored.settings[0].themeConfig).toEqual(themeConfig);
+ expect(JSON.parse(await exportBackup(restored)).data).toEqual(JSON.parse(text).data);
+});

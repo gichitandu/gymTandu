@@ -1,0 +1,42 @@
+/* Finishes use the saved theme tokens, including any personal colour overrides. */
+body.theme-ready.theme-preset gt-shell.photo-controls{--ref-blue:var(--theme-secondary,var(--accent))}
+body.theme-ready.theme-metallic gt-shell.photo-controls{
+ --ref-surface:linear-gradient(135deg,color-mix(in srgb,var(--theme-secondary) 12%,var(--card)),var(--card) 48%,color-mix(in srgb,var(--theme-tertiary) 9%,var(--card)));
+ --ref-surface-soft:linear-gradient(155deg,color-mix(in srgb,var(--theme-secondary) 9%,var(--raised)),var(--card) 72%);
+ --ref-violet-surface:linear-gradient(135deg,color-mix(in srgb,var(--accent) 16%,var(--card)),var(--card) 70%,color-mix(in srgb,var(--theme-tertiary) 11%,var(--card)));
+ --ref-primary-ink:var(--accent-ink);
+}
+body.theme-ready.theme-metallic gt-shell.photo-controls :is(button.primary,.button.primary){
+ background:linear-gradient(155deg,var(--theme-secondary),var(--accent) 34%,var(--theme-tertiary) 67%,var(--theme-secondary));
+ color:var(--accent-ink);border-color:var(--accent);box-shadow:inset 0 1px 3px #fff8,inset 0 -1px 3px #0002,0 0 calc(14px * var(--neon-glow,.55)) color-mix(in srgb,var(--accent) 24%,transparent);
+}
+body.theme-ready.theme-preset.theme-metallic gt-shell.photo-controls .bottom-nav a.selected gt-icon{background:linear-gradient(150deg,var(--theme-secondary),var(--accent) 45%,var(--theme-tertiary));color:var(--accent-ink)}
+body.theme-ready.theme-multicolor gt-shell.photo-controls{
+ --ref-surface:linear-gradient(140deg,color-mix(in srgb,var(--accent) 9%,var(--raised)),var(--card) 60%,color-mix(in srgb,var(--theme-secondary) 9%,var(--card)));
+ --ref-surface-soft:linear-gradient(150deg,color-mix(in srgb,var(--theme-secondary) 10%,var(--raised)),var(--card));
+ --ref-violet-surface:linear-gradient(135deg,color-mix(in srgb,var(--accent) 17%,var(--card)),color-mix(in srgb,var(--theme-secondary) 12%,var(--card)) 66%,color-mix(in srgb,var(--theme-tertiary) 12%,var(--card)));
+ --ref-primary-ink:var(--accent-ink);
+}
+body.theme-ready.theme-multicolor gt-shell.photo-controls :is(button.primary,.button.primary){background:linear-gradient(115deg,var(--accent),var(--theme-secondary) 57%,var(--theme-tertiary));color:var(--accent-ink);border-color:var(--theme-secondary);box-shadow:inset 0 1px 3px #fff8,0 0 calc(20px * var(--neon-glow,.55)) color-mix(in srgb,var(--theme-secondary) 24%,transparent)}
+body.theme-ready.theme-multicolor gt-shell.photo-controls .home-shortcuts>a:nth-child(3){background:linear-gradient(140deg,color-mix(in srgb,var(--theme-tertiary) 20%,var(--card)),var(--card))}
+body.theme-ready.theme-multicolor gt-shell.photo-controls .home-shortcuts>a:nth-child(2)>gt-icon{color:var(--theme-secondary)}
+body.theme-ready.theme-multicolor gt-shell.photo-controls .home-shortcuts>a:nth-child(3)>gt-icon{color:var(--theme-tertiary)}
+body.theme-ready.theme-multicolor gt-shell.photo-controls .home-mini-stats>a:nth-child(2){background:linear-gradient(145deg,color-mix(in srgb,var(--theme-secondary) 22%,var(--card)),var(--card))}
+body.theme-ready.theme-multicolor gt-shell.photo-controls .home-mini-stats>a:nth-child(3){background:linear-gradient(145deg,color-mix(in srgb,var(--theme-tertiary) 20%,var(--card)),var(--card))}
+body.theme-ready.theme-multicolor gt-shell.photo-controls .training-tool-grid>a:nth-child(2){background:linear-gradient(135deg,color-mix(in srgb,var(--theme-secondary) 24%,var(--card)),color-mix(in srgb,var(--theme-tertiary) 21%,var(--card)))}
+body.theme-ready.theme-multicolor gt-shell.photo-controls .reference-progress .reference-record-grid>.stat:nth-child(2){background:linear-gradient(140deg,color-mix(in srgb,var(--theme-secondary) 22%,var(--card)),var(--card))}
+body.theme-ready.theme-multicolor gt-shell.photo-controls .reference-progress .reference-record-grid>.stat:nth-child(3){background:linear-gradient(140deg,color-mix(in srgb,var(--theme-tertiary) 20%,var(--card)),var(--card))}
+body.theme-ready.theme-multicolor gt-shell.photo-controls .reference-progress .reference-record-grid>.stat:nth-child(4){background:linear-gradient(140deg,color-mix(in srgb,var(--theme-secondary) 17%,var(--card)),color-mix(in srgb,var(--accent) 17%,var(--card)))}
+body.theme-ready.theme-preset.theme-multicolor gt-shell.photo-controls .bottom-nav a.selected gt-icon{background:linear-gradient(135deg,var(--accent),var(--theme-secondary) 65%,var(--theme-tertiary));color:var(--accent-ink);border-color:var(--theme-secondary)}
+body.theme-ready.theme-preset gt-shell.photo-controls :is(.ref-tabs,.segmented,.neon-segments)>:is(button,a).active{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+body.theme-ready.theme-preset gt-shell.photo-controls .bottom-nav a.selected gt-icon{background:var(--accent);color:var(--accent-ink)}
+body.theme-ready.custom-light gt-shell.photo-controls :is(.home-shortcuts,.home-mini-stats,.training-tool-grid,.reference-record-grid) gt-icon{color:var(--accent-text)}
+/* The image and animation controls follow each theme as well. */
+body.theme-ready gt-shell.photo-controls .motion-view-tabs{background:var(--card);border-color:var(--line)}
+body.theme-ready gt-shell.photo-controls .motion-view-tabs button{color:var(--muted)!important}
+body.theme-ready gt-shell.photo-controls .motion-view-tabs button.selected{background:var(--accent-soft)!important;border-color:var(--accent-text)!important;color:var(--accent-text)!important}
+body.theme-ready gt-shell.photo-controls .motion-controls button{background:var(--accent-soft)!important;border-color:var(--line)!important;color:var(--text)!important}
+body.theme-ready gt-shell.photo-controls .motion-controls button:last-child{background:var(--raised)!important}
+body.theme-ready gt-shell.photo-controls .motion-phases button{color:var(--accent-text)!important}
+body.theme-ready gt-shell.photo-controls :is(.motion-controls,.motion-phases,.motion-scrub){background:var(--card)}
+body.theme-ready gt-shell.photo-controls :is(.motion-controls>span,.motion-phases small){color:var(--muted)}

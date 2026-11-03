@@ -1,5 +1,5 @@
 import {describe,it,expect} from 'vitest';
-import {THEME_PALETTES,contrastRatio,resolveTheme,validThemeConfig} from '../src/app/services/theme-palettes';
+import {THEME_PALETTES,THEME_PRESETS,contrastRatio,resolveTheme,validThemeConfig} from '../src/app/services/theme-palettes';
 function readable(tokens:ReturnType<typeof resolveTheme>){
  for(const surface of [tokens.background,tokens.card,tokens.raised]){
   expect(contrastRatio(tokens.text,surface)).toBeGreaterThanOrEqual(4.5);
@@ -9,8 +9,9 @@ function readable(tokens:ReturnType<typeof resolveTheme>){
  expect(contrastRatio(tokens.buttonText,tokens.accent)).toBeGreaterThanOrEqual(4.5);
 }
 describe('complete personal theme palettes',()=>{
- it('adds the approved neon themes and retains all existing palettes in their natural mode',()=>{
-  expect(THEME_PALETTES.map(p=>p.id)).toEqual(['viola-neon','blu-azzurro','carbonio','artico','prugna','petrolio','sabbia','ghiaccio']);
+ it('offers the seven requested presets while retaining saved legacy palettes in their natural mode',()=>{
+  expect(THEME_PRESETS.map(p=>p.id)).toEqual(['oro','argento','multicolore','bianco-elegante','scuro','rosso','verde']);
+  for(const id of ['viola-neon','blu-azzurro','carbonio','artico','prugna','petrolio','sabbia','ghiaccio'])expect(THEME_PALETTES.some(p=>p.id===id)).toBe(true);
   for(const palette of THEME_PALETTES){const tokens=resolveTheme({palette:palette.id,mode:palette.tone},false);expect(tokens.background).toBe(palette.background);expect(tokens.card).toBe(palette.card);expect(tokens.accent).toBe(palette.accent);expect(tokens.text).toBe(palette.text);readable(tokens);}
  });
  it('adapts every palette for dark, light and system modes while preserving its accent',()=>{
@@ -31,6 +32,21 @@ describe('complete personal theme palettes',()=>{
  });
  it('uses linearized sRGB for black, white and gray contrast',()=>{
   expect(contrastRatio('#000000','#FFFFFF')).toBe(21);expect(contrastRatio('#777777','#FFFFFF')).toBeCloseTo(4.48,2);expect(contrastRatio('red','#FFFFFF')).toBe(0);
+ });
+ it('keeps metallic and multicolour button text readable at every gradient stop',()=>{
+  for(const id of ['oro','argento','multicolore'])for(const mode of ['dark','light'] as const){
+   const tokens=resolveTheme({palette:id,mode},false);
+   for(const color of [tokens.accent,tokens.secondary,tokens.tertiary])expect(contrastRatio(tokens.buttonText,color)).toBeGreaterThanOrEqual(4.5);
+  }
+ });
+ it('preserves personal colours for every new preset and honours a chosen main colour over multicolour accents',()=>{
+  for(const palette of THEME_PRESETS){
+   const config={palette:palette.id,mode:'system' as const,background:'#FAF0E1',accent:'#4A268A'};
+   expect(validThemeConfig(config)).toBe(true);const tokens=resolveTheme(config,false);
+   expect(tokens.background).toBe(config.background);expect(tokens.accent).toBe(config.accent);readable(tokens);
+  }
+  const original=resolveTheme({palette:'multicolore',mode:'dark'},false);expect(original.multicolor).toBe(true);expect(new Set([original.accent,original.secondary,original.tertiary]).size).toBe(3);
+  const custom=resolveTheme({palette:'multicolore',mode:'dark',accent:'#663399'},false);expect(custom.multicolor).toBe(false);expect(custom.secondary).toBe('#663399');expect(custom.tertiary).toBe('#663399');
  });
 });
 

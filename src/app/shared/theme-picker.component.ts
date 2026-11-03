@@ -12,6 +12,7 @@ import {
   ThemeConfig,
   ThemeMode,
   THEME_PALETTES,
+  THEME_PRESETS,
   resolveTheme,
   validThemeConfig,
 } from "../services/theme-palettes";
@@ -27,7 +28,7 @@ import { IconComponent } from "./icon.component";
 export class ThemePickerComponent {
   readonly theme = inject(ThemeService);
   private auth = inject(AuthService);
-  readonly palettes = THEME_PALETTES;
+  readonly palettes = THEME_PRESETS;
   readonly modes: { value: ThemeMode; label: string }[] = [
     { value: "dark", label: "Scuro" },
     { value: "light", label: "Chiaro" },
@@ -40,6 +41,18 @@ export class ThemePickerComponent {
   );
   readonly colors = computed(() =>
     resolveTheme(this.draft(), this.theme.systemLight()),
+  );
+  readonly selectedPalette = computed(() =>
+    THEME_PALETTES.find((palette) => palette.id === this.draft().palette),
+  );
+  readonly isLegacyPalette = computed(
+    () => !this.palettes.some((palette) => palette.id === this.draft().palette),
+  );
+  readonly previewSecondary = computed(() =>
+    this.draft().accent ? this.colors().accent : this.selectedPalette()?.secondary || this.colors().accent,
+  );
+  readonly previewTertiary = computed(() =>
+    this.draft().accent ? this.colors().accent : this.selectedPalette()?.tertiary || this.colors().accent,
   );
   readonly saving = signal(false);
   readonly issue = signal("");
@@ -64,7 +77,7 @@ export class ThemePickerComponent {
     this.issue.set("");
   }
   choosePalette(id: string) {
-    const palette = this.palettes.find((p) => p.id === id);
+    const palette = THEME_PALETTES.find((p) => p.id === id);
     if (!palette) return;
     this.issue.set("");
     this.draft.set({

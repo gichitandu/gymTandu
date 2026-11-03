@@ -182,3 +182,18 @@ it('persists the completed-workout deletion preference and rejects malformed val
  const invalid=JSON.parse(text);invalid.data.settings[0].allowCompletedWorkoutDeletion='true';
  expect((await put(JSON.stringify(invalid),1)).response.status).toBe(400);expect((await get()).data.backup).toBe(text);
 });
+
+it('retains every new theme preset and custom colors in account snapshots',async()=>{
+ const cookie=await activate();let revision=0;
+ for(const palette of ['oro','argento','multicolore','bianco-elegante','scuro','rosso','verde']){
+  const content=JSON.parse(backup),themeConfig={palette,mode:'system',background:'#182735',accent:'#D6B76D'};
+  content.data.settings[0].themeConfig=themeConfig;
+  const text=JSON.stringify(content),saved=await put(text,revision,'account',{cookie});
+  expect(saved.response.status).toBe(200);
+  revision++;
+  const loaded=await get('account',{cookie});
+  expect(loaded.data.revision).toBe(revision);
+  expect(loaded.data.backup).toBe(text);
+  expect(JSON.parse(loaded.data.backup).data.settings[0].themeConfig).toEqual(themeConfig);
+ }
+});

@@ -219,3 +219,14 @@ it('rejects invalid theme configurations atomically and accepts legacy backgroun
  expect(await (await call('preferences',undefined,{cookie})).json()).toEqual({backgroundColor:'#ABCDEF',themeConfig:null});
  expect(sql.prepare('SELECT theme_config FROM user_preferences').get()!.theme_config).toBeNull();
 });
+
+it('saves every new preset and its custom colors without changing account permissions',async()=>{
+ const cookie=await activate(),before=sql.prepare('SELECT * FROM users ORDER BY id').all();
+ for(const palette of ['oro','argento','multicolore','bianco-elegante','scuro','rosso','verde']){
+  const themeConfig={palette,mode:'system',background:'#182735',accent:'#D6B76D'};
+  const response=await call('preferences',{backgroundColor:'#182735',themeConfig},{cookie});
+  expect(response.status).toBe(200);
+  expect(await (await call('preferences',undefined,{cookie})).json()).toEqual({backgroundColor:'#182735',themeConfig});
+ }
+ expect(sql.prepare('SELECT * FROM users ORDER BY id').all()).toEqual(before);
+});

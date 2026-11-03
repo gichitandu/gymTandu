@@ -2,12 +2,22 @@
 export type ThemeMode = 'dark' | 'light' | 'system';
 export interface ThemeConfig {palette:string;mode:ThemeMode;background?:string;accent?:string}
 export interface ThemePalette {
- id:string;name:string;background:string;card:string;accent:string;text:string;muted:string;buttonText:string;tone:'dark'|'light';
+ id:string;name:string;background:string;card:string;accent:string;text:string;muted:string;buttonText:string;tone:'dark'|'light';secondary?:string;tertiary?:string;
 }
 export interface ThemeTokens {
- background:string;card:string;raised:string;line:string;accent:string;accentText:string;text:string;muted:string;buttonText:string;light:boolean;accentSoft:string;
+ background:string;card:string;raised:string;line:string;accent:string;accentText:string;text:string;muted:string;buttonText:string;light:boolean;accentSoft:string;secondary:string;tertiary:string;multicolor:boolean;
 }
-export const THEME_PALETTES:readonly ThemePalette[] = [
+export const THEME_PRESETS:readonly ThemePalette[] = [
+ {id:'oro',name:'Oro',background:'#16130D',card:'#292319',accent:'#DEC47E',secondary:'#F0DCA3',tertiary:'#BA9851',text:'#FAF5E8',muted:'#C5BAA2',buttonText:'#241B09',tone:'dark'},
+ {id:'argento',name:'Argento',background:'#11161D',card:'#222B35',accent:'#CFD9E6',secondary:'#ECF2FA',tertiary:'#A6B5C8',text:'#F3F6FA',muted:'#B2BFCE',buttonText:'#15202E',tone:'dark'},
+ {id:'multicolore',name:'Multicolore',background:'#131221',card:'#25243A',accent:'#F39AC7',secondary:'#8ABDFB',tertiary:'#7BDFC1',text:'#F8F6FF',muted:'#BDBBD3',buttonText:'#211326',tone:'dark'},
+ {id:'bianco-elegante',name:'Bianco elegante',background:'#F8F7F3',card:'#FFFFFF',accent:'#715B3B',text:'#25262C',muted:'#65666D',buttonText:'#FFFFFF',tone:'light'},
+ {id:'scuro',name:'Scuro',background:'#0E1014',card:'#1C2027',accent:'#A4B4CA',text:'#F3F5F8',muted:'#B0B8C5',buttonText:'#151D28',tone:'dark'},
+ {id:'rosso',name:'Rosso',background:'#190E12',card:'#2D1A21',accent:'#F47780',text:'#FFF3F5',muted:'#D3B2BC',buttonText:'#2C1016',tone:'dark'},
+ {id:'verde',name:'Verde',background:'#0D1711',card:'#1C2C22',accent:'#79D89E',text:'#F1F9F4',muted:'#B1C8BA',buttonText:'#10291B',tone:'dark'},
+];
+/** Saved themes and imported backups keep their original colours and IDs. */
+export const THEME_PALETTES:readonly ThemePalette[] = [...THEME_PRESETS,
  {id:'viola-neon',name:'Viola Neon',background:'#151225',card:'#28223D',accent:'#CC70FF',text:'#F7F5FF',muted:'#B8BCD4',buttonText:'#160726',tone:'dark'},
  {id:'blu-azzurro',name:'Blu Azzurro',background:'#040C19',card:'#0C2036',accent:'#0DD9FF',text:'#F1FBFF',muted:'#A8C3D8',buttonText:'#031927',tone:'dark'},
  {id:'carbonio',name:'Carbonio',background:'#101416',card:'#1B2329',accent:'#7DE2C7',text:'#F4F7FA',muted:'#A9B7C3',buttonText:'#0E1A16',tone:'dark'},
@@ -62,5 +72,7 @@ export function resolveTheme(config:ThemeConfig,systemLight:boolean):ThemeTokens
  const buttonInk=contrastRatio(accent,'#000000')>=contrastRatio(accent,'#FFFFFF')?'#000000':'#FFFFFF';
  const buttonText=contrastRatio(palette.buttonText,accent)>=4.5?palette.buttonText:buttonInk;
  const accentText=readable(accent,surfaces,ink);
- return {background,card,raised,line:mix(card,text,light?.26:.2),accent,accentText,text,muted,buttonText,light,accentSoft:`color-mix(in srgb, ${accent} ${light?'12%':'15%'}, ${card})`};
+ const secondary=safe.accent?accent:palette.secondary||accent;
+ const tertiary=safe.accent?accent:palette.tertiary||secondary;
+ return {background,card,raised,line:mix(card,text,light?.26:.2),accent,accentText,text,muted,buttonText,light,accentSoft:`color-mix(in srgb, ${accent} ${light?'12%':'15%'}, ${card})`,secondary,tertiary,multicolor:palette.id==='multicolore'&&!safe.accent};
 }

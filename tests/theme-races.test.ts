@@ -13,7 +13,7 @@ async function setup(cached?: { color: string; dirty?: boolean }) {
   const id = 'theme-race-' + crypto.randomUUID(), styles = new Map<string, string>();
   const account = { id };
   vi.stubGlobal('navigator', { onLine: true });
-  vi.stubGlobal('document', { body: { style: { setProperty: (key: string, value: string) => styles.set(key, value) }, classList: { toggle: () => {} } }, querySelector: () => null });
+  vi.stubGlobal('document', { body: { dataset: {}, style: { setProperty: (key: string, value: string) => styles.set(key, value) }, classList: { toggle: () => {} } }, querySelector: () => null });
   const db = new Dexie('gymtrack-preferences-v1'); db.version(1).stores({ preferences: 'id' });
   if (cached) await db.table('preferences').put({ id, ...cached });
   const request = vi.fn();

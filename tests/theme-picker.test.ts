@@ -55,24 +55,54 @@ function setup() {
 
 it("previews preset, mode and color choices locally until explicit save", () => {
   const { component, theme } = setup();
-  component.choosePalette("ghiaccio");
-  expect(component.draft()).toEqual({ palette: "ghiaccio", mode: "light" });
+  component.choosePalette("bianco-elegante");
+  expect(component.draft()).toEqual({ palette: "bianco-elegante", mode: "light" });
   expect(component.colors().light).toBe(true);
   component.chooseMode("system");
   component.setColor("accent", "00aacc");
   component.setColor("background", "#FFFFFF");
   expect(component.draft()).toEqual({
-    palette: "ghiaccio",
+    palette: "bianco-elegante",
     mode: "system",
     accent: "#00AACC",
     background: "#FFFFFF",
   });
   expect(theme.config()).toEqual(saved);
   expect(theme.saveConfig).not.toHaveBeenCalled();
-  component.choosePalette("artico");
-  expect(component.draft()).toEqual({ palette: "artico", mode: "system" });
+  component.choosePalette("verde");
+  expect(component.draft()).toEqual({ palette: "verde", mode: "system" });
   theme.systemLight.set(true);
   expect(component.colors().light).toBe(true);
+  expect(theme.saveConfig).not.toHaveBeenCalled();
+});
+
+it("offers the seven new presets without discarding a saved legacy theme", () => {
+  const { component } = setup();
+  expect(component.palettes.map((palette) => palette.id)).toEqual([
+    "oro", "argento", "multicolore", "bianco-elegante", "scuro", "rosso", "verde",
+  ]);
+  expect(component.draft()).toEqual(saved);
+  expect(component.isLegacyPalette()).toBe(true);
+  expect(component.selectedPalette()?.name).toBe("Carbonio");
+  component.choosePalette("oro");
+  expect(component.isLegacyPalette()).toBe(false);
+  component.cancel();
+  expect(component.draft()).toEqual(saved);
+});
+
+it("keeps multicolor accents until customized and can restore the preset colors", () => {
+  const { component, theme } = setup();
+  component.choosePalette("multicolore");
+  expect(component.previewSecondary()).not.toBe(component.colors().accent);
+  expect(component.previewTertiary()).not.toBe(component.colors().accent);
+  component.setColor("accent", "#AACCEE");
+  component.setColor("background", "#18222F");
+  expect(component.previewSecondary()).toBe("#AACCEE");
+  expect(component.previewTertiary()).toBe("#AACCEE");
+  expect(component.colors().background).toBe("#18222F");
+  component.resetColors();
+  expect(component.draft()).toEqual({ palette: "multicolore", mode: "dark" });
+  expect(component.previewSecondary()).not.toBe(component.colors().accent);
   expect(theme.saveConfig).not.toHaveBeenCalled();
 });
 

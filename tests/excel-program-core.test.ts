@@ -10,6 +10,7 @@ import {ExcelProgramDraft} from '../src/app/models/excel-import';
 import {exportBackup,importBackup} from '../src/app/services/backup';
 import {effectiveProgramRange} from '../src/app/services/plan-program';
 import {moveDate} from '../src/app/services/calendar';
+import {localDate} from '../src/app/models/domain';
 
 let db:GymDatabase,injector:EnvironmentInjector,s:Store;
 const account={id:'tandu',role:'SuperAdmin',owner:true};let auth:{user:ReturnType<typeof signal<typeof account>>,offlineMode:()=>boolean};
@@ -65,7 +66,8 @@ it('concludes only after all scheduled workouts finish and reopens automatic com
  const first=s.completed()[0];await s.reopenWorkout(first.id);expect(s.data().plans.find(plan=>plan.id===pid)?.completedAt).toBeUndefined();expect(s.data().sets.filter(set=>set.completed)).toHaveLength(2);await s.finish();expect(s.data().plans.find(plan=>plan.id===pid)?.completionReason).toBe('automatic');expect(s.data().workouts).toHaveLength(2);
 });
 it('ends a future plan once, frees cancelled dates and never deletes recorded data',async()=>{
- const future=draft('2026-11-02'),pid=await s.importExcelProgram(future,'future');expect(await s.finishPlan(pid!,true)).toBe(true);expect(s.data().scheduledWorkouts).toHaveLength(0);expect(effectiveProgramRange(s.data(),s.data().plans[0])).toBeNull();
+ const nextMonday=moveDate(localDate(),7+(8-new Date().getDay())%7);
+ const future=draft(nextMonday),pid=await s.importExcelProgram(future,'future');expect(pid).not.toBeNull();expect(await s.finishPlan(pid!,true)).toBe(true);expect(s.data().scheduledWorkouts).toHaveLength(0);expect(effectiveProgramRange(s.data(),s.data().plans[0])).toBeNull();
  expect(s.data().plans[0]).toMatchObject({completionReason:'manual',archived:true});expect(await s.importExcelProgram({...future,fileHash:'b'.repeat(64)},'next')).not.toBeNull();expect(s.data().plans).toHaveLength(2);
 });
 it('refuses plan closure while its workout is open and blocks manual scheduling inside another plan period',async()=>{

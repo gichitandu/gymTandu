@@ -23,7 +23,8 @@
               "src/form-polish.css",
               "src/neon.css",
               "src/preview-match.css",
-              "src/photo-controls.css"
+              "src/photo-controls.css",
+              "src/theme-finishes.css"
             ],
             "outputPath": "dist/gymtrack"
           },

@@ -15,7 +15,7 @@ async function setup(){
  const media={matches:false,addEventListener:vi.fn((_type:string,listener:(event:{matches:boolean})=>void)=>mediaListener=listener),removeEventListener:vi.fn()};
  vi.stubGlobal('matchMedia',()=>media);vi.stubGlobal('navigator',{onLine:true});
  vi.stubGlobal('window',{addEventListener:(_type:string,listener:()=>void)=>onlineListener=listener,removeEventListener:vi.fn()});
- vi.stubGlobal('document',{body:{style:{setProperty:(key:string,value:string)=>styles.set(key,value)},classList:{toggle:(key:string,value:boolean)=>classes.set(key,value)}},querySelector:()=>null});
+ vi.stubGlobal('document',{body:{dataset:{},style:{setProperty:(key:string,value:string)=>styles.set(key,value)},classList:{toggle:(key:string,value:boolean)=>classes.set(key,value)}},querySelector:()=>null});
  const request=vi.fn().mockResolvedValue({ok:true});
  const injector=createEnvironmentInjector([{provide:AuthService,useValue:{user:account,offlineMode:offline,request}},ThemeService],null as unknown as EnvironmentInjector);
  const theme=injector.get(ThemeService),db=new Dexie('gymtrack-preferences-v1');db.version(1).stores({preferences:'id'});
@@ -64,7 +64,7 @@ it('loads a different account without exposing the previous account palette',asy
  const t=await setup();await t.theme.saveConfig({palette:'prugna',mode:'dark'});
  const next='theme-config-'+crypto.randomUUID();t.ids.push(next);t.account.set({id:next});
  t.request.mockResolvedValue({backgroundColor:'#050E17',themeConfig:null});await t.theme.load();
- expect(t.theme.config()).toEqual({palette:'viola-neon',mode:'dark'});expect((await t.preference()).id).toBe(next);
+ expect(t.theme.config()).toEqual({palette:'multicolore',mode:'dark'});expect((await t.preference()).id).toBe(next);
 });
 
 it('loads the new account while an old account save is still waiting for the network',async()=>{

@@ -74,6 +74,17 @@
   padding: 0;
   margin: 0 0 8px;
 }
+.palette-intro,
+.legacy-theme {
+  color: var(--preview-muted);
+  font-size: 11px;
+  line-height: 1.55;
+  margin: 0 0 12px;
+}
+.legacy-theme {
+  border-left: 2px solid var(--preview-accent-text);
+  padding-left: 9px;
+}
 .palette-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -210,6 +221,36 @@
 .mini-card > span > b:first-child {
   background: var(--tile-accent);
   border-color: var(--tile-accent);
+}
+.palette-tile.metallic {
+  background: linear-gradient(135deg, color-mix(in srgb, var(--tile-accent) 13%, var(--tile-bg)), var(--tile-bg) 58%);
+  box-shadow: inset 0 1px color-mix(in srgb, var(--tile-accent) 40%, transparent);
+}
+.palette-tile.metallic .mini-card {
+  background: linear-gradient(135deg, color-mix(in srgb, var(--tile-accent) 15%, var(--tile-card)), var(--tile-card) 62%);
+}
+.palette-tile.metallic .mini-left > b {
+  background: linear-gradient(110deg, var(--tile-secondary), var(--tile-accent) 48%, var(--tile-tertiary));
+  box-shadow: none;
+}
+.palette-tile.multicolor {
+  background: radial-gradient(ellipse at 100% 0, color-mix(in srgb, var(--tile-secondary) 16%, transparent), transparent 68%), var(--tile-bg);
+}
+.palette-tile.multicolor .mini-left > b {
+  background: linear-gradient(100deg, var(--tile-accent), var(--tile-secondary) 54%, var(--tile-tertiary));
+  box-shadow: none;
+}
+.palette-tile.multicolor .mini-card {
+  border-color: color-mix(in srgb, var(--tile-secondary) 35%, var(--tile-card));
+  background: linear-gradient(135deg, color-mix(in srgb, var(--tile-secondary) 15%, var(--tile-card)), color-mix(in srgb, var(--tile-tertiary) 10%, var(--tile-card)));
+}
+.palette-tile.multicolor .mini-card > span > b:nth-child(2) {
+  background: var(--tile-secondary);
+  border-color: var(--tile-secondary);
+}
+.palette-tile.multicolor .mini-card > span > b:nth-child(3) {
+  background: var(--tile-tertiary);
+  border-color: var(--tile-tertiary);
 }
 .color-controls {
   display: grid;
@@ -413,6 +454,18 @@
   color: var(--preview-ink);
   font-size: 10px;
   font-weight: 700;
+}
+.preview-multicolor .sample-button {
+  background: linear-gradient(110deg, var(--preview-accent), var(--preview-secondary) 56%, var(--preview-tertiary));
+}
+.preview-metallic .sample-button {
+  background: linear-gradient(110deg, var(--preview-secondary), var(--preview-accent) 48%, var(--preview-tertiary));
+}
+.preview-multicolor .example-mark {
+  color: var(--preview-accent-text);
+}
+.preview-multicolor .example-card {
+  background: linear-gradient(135deg, color-mix(in srgb, var(--preview-secondary) 8%, var(--preview-card)), color-mix(in srgb, var(--preview-tertiary) 7%, var(--preview-card)));
 }
 .theme-actions {
   display: grid;
