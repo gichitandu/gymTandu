@@ -20,6 +20,7 @@ for (const file of [
   "apple-touch-icon.png",
   "apple-touch-icon-precomposed.png",
   "favicon.ico",
+  "training/dumbbell.png",
   "food-ai-worker.js",
   "vendor/tf.min.js",
 ])
@@ -47,6 +48,7 @@ for (const group of aiModel.weightsManifest) for (const file of group.paths)
   assert(fs.existsSync(root + '/vendor/food-model/' + file), `Pesi AI mancanti: ${file}`);
 assert(sw.assetGroups.find(g=>g.name==='app').urls.includes('/food-ai-worker.js'));
 const assets = Object.keys(sw.hashTable);
+assert(sw.assetGroups.find(group => group.name === 'app').urls.includes('/training/dumbbell.png'), 'Immagine iniziale Home esclusa dal precache offline');
 for (const file of ['brand/gt-modern-mark.png', 'icons/gt-modern-180.png', 'icons/gt-modern-192.png', 'icons/gt-modern-512.png', 'apple-touch-icon.png', 'apple-touch-icon-precomposed.png', 'favicon.ico']) {
   assert(sw.assetGroups.find(group => group.name === 'app').urls.includes('/' + file), file + ' escluso dal precache');
   assert.equal(sw.hashTable['/' + file], createHash('sha1').update(fs.readFileSync(root + '/' + file)).digest('hex'), file + ' senza hash coerente');

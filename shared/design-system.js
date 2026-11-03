@@ -23,7 +23,7 @@ export const DESIGN_PAGES = Object.freeze([
 // Static presentation copy only. Dynamic workout names, values and critical
 // commands keep their existing bindings and are never replaced by this catalog.
 const DESIGN_STATIC_LABELS = Object.freeze({
-  "home.title": "Home",
+  "home.title": "Ciao atleta",
   "home.actions.resume": "Riprendi allenamento",
   "home.actions.schedule": "Apri programmazione",
   "home.actions.viewSession": "Vedi sessione",
@@ -256,7 +256,7 @@ export const DESIGN_CONTROLS = Object.freeze([
     "Intensità glow (in Tema)",
   ),
   ...[
-    ["home.subtitle", "home", "Sottotitolo Home", "Il tuo centro di controllo"],
+    ["home.subtitle", "home", "Sottotitolo Home", "Ogni giorno, un passo avanti."],
     ["home.week.title", "home", "Titolo settimana", "La tua settimana"],
     ["home.week.calendarLink", "home", "Link calendario settimanale", "Calendario"],
     ["home.journey.title", "home", "Titolo riepilogo", "Il tuo percorso"],

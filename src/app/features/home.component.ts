@@ -51,6 +51,7 @@ export class HomeComponent {
   firstName = computed(
     () => this.s.profile().name.trim().split(/\s+/)[0] || "atleta",
   );
+  greeting = computed(() => 'Ciao ' + this.firstName());
   get todayLabel() { return new Date(this.today+'T12:00:00').toLocaleDateString("it-IT", {
     weekday: "long",
     day: "numeric",

@@ -21,6 +21,7 @@ import {
   resolveDesign,
 } from "../../../shared/design-system.js";
 import { AuthService } from "../services/auth";
+import { Store } from "../services/store";
 import { ConfirmationService } from "../services/confirmation";
 import { IconComponent } from "../shared/icon.component";
 import {
@@ -85,6 +86,7 @@ const COLOR_NAMES: Record<string, string> = {
 })
 export class DesignStudioComponent {
   auth = inject(AuthService);
+  private store = inject(Store);
   runtime = inject(DesignRuntime);
   private confirmation = inject(ConfirmationService);
   state = signal<DesignStudioState | null>(null);
@@ -165,6 +167,9 @@ export class DesignStudioComponent {
     ),
   );
   entry = computed(() => DESIGN_CONTROLS.find((c) => c.id === this.selected()));
+  originalLabel = computed(() => this.selected() === 'home.title'
+    ? 'Ciao ' + (this.store.profile().name.trim().split(/\s+/)[0] || 'atleta')
+    : this.entry()?.label || '');
   dirty = computed(() => JSON.stringify(this.draft()) !== this.saved());
   patch = computed<DesignStyle>(() =>
     this.scope() === "global"

@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { mkdir } from 'node:fs/promises';
 import { DESIGN_CONTROLS } from '../../shared/design-system.js';
 const { chromium } = await import(process.env.GYMTRACK_PLAYWRIGHT_MODULE || 'playwright');
-const output = 'docs/qa/gt-logo-labels-weekly';
+const output = process.env.GYMTRACK_QA_OUTPUT || 'docs/qa/gt-logo-labels-weekly';
 await mkdir(output, { recursive: true });
 const origin = 'http://localhost:4173', password = 'fixture-only-test-password';
 const browser = await chromium.launch({executablePath: process.env.GYMTRACK_CHROMIUM || '/usr/bin/chromium', headless: true, args: ['--no-sandbox', '--disable-dev-shm-usage']});
@@ -76,7 +76,7 @@ try {
   });
   await page.reload(); await waitHome();
   assert.equal(await page.getByRole('progressbar').getAttribute('aria-valuenow'), '67');
-  assert.match(await page.locator('.home-goal-copy').innerText(), /2 di 3 allenamenti completati/);
+  assert.match(await page.locator('.home-goal-copy').innerText(), /2 di 3 allenamenti/);
   assert.match(await page.locator('[data-design-id="home.stats.workouts"]').innerText(), /3/);
   const before = await archive();
   mark('Saved goal and real completed-session archive restore 67 percent, excluding previous weeks');
@@ -87,7 +87,7 @@ try {
   await page.getByRole('button', {name: 'Testi e scritte', exact: true}).click();
   await changeText('home', 'home.title', 'Il mio spazio');
   await preview('home.title').filter({hasText: 'Il mio spazio'}).waitFor({state: 'attached'});
-  assert.equal(await actual.locator('main h1').innerText(), 'Home');
+  assert.match(await actual.locator('main h1').innerText(), /^Ciao Atleta/);
   assert.equal((await call('design/studio')).published.config.instances['home.title'], undefined);
   mark('Dedicated text editor previews Home renaming without changing the published app');
   await changeText('home', 'home.subtitle', 'Una seduta alla volta');
@@ -144,7 +144,7 @@ try {
   await page.getByRole('button', {name: 'Testi e scritte', exact: true}).click();
   await selectText('home', 'home.title');
   await page.getByRole('button', {name: 'Ripristina testo originale', exact: true}).click();
-  await preview('home.title').filter({hasText: 'Home'}).waitFor({state: 'attached'});
+  await preview('home.title').filter({hasText: 'Ciao Atleta'}).waitFor({state: 'attached'});
   assert.equal((await call('design/studio')).published.config.instances['home.title'].label, 'Il mio spazio');
   await page.getByRole('button', {name: 'Annulla', exact: true}).click(); await confirm('Scarta bozza');
   await page.getByRole('status').filter({hasText: 'Bozza rimossa'}).waitFor();

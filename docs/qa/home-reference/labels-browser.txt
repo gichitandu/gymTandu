@@ -1,0 +1,27 @@
+PASS Weekly goal is visible at the top of Home, outside the closed wellness panel
+PASS Saved goal and real completed-session archive restore 67 percent, excluding previous weeks
+PASS Dedicated text editor previews Home renaming without changing the published app
+PASS Editable titles, subtitles, actions and independent navigation names survive draft reload
+PASS Published copy survives reload and original navigation, goal and profile subpanels continue to work
+PASS Text publication leaves every personal archive table, workout and saved goal unchanged
+PASS Desktop and mobile share renamed navigation and retain their original fallback labels
+PASS Mobile layouts fit 320–430 px; restoring and cancelling copy keep the published labels intact
+PASS Sixty-character titles and navigation names wrap safely without changing published labels
+PASS New GT logo is served in login, favicon, Apple and maskable PWA sizes while PWA identity stays stable
+PASS No application JavaScript exceptions
+{
+  "passed": 11,
+  "results": [
+    "Weekly goal is visible at the top of Home, outside the closed wellness panel",
+    "Saved goal and real completed-session archive restore 67 percent, excluding previous weeks",
+    "Dedicated text editor previews Home renaming without changing the published app",
+    "Editable titles, subtitles, actions and independent navigation names survive draft reload",
+    "Published copy survives reload and original navigation, goal and profile subpanels continue to work",
+    "Text publication leaves every personal archive table, workout and saved goal unchanged",
+    "Desktop and mobile share renamed navigation and retain their original fallback labels",
+    "Mobile layouts fit 320–430 px; restoring and cancelling copy keep the published labels intact",
+    "Sixty-character titles and navigation names wrap safely without changing published labels",
+    "New GT logo is served in login, favicon, Apple and maskable PWA sizes while PWA identity stays stable",
+    "No application JavaScript exceptions"
+  ]
+}

@@ -18,7 +18,8 @@
           "/*.webp",
           "/brand/**",
           "/exercises/**",
-          "/training/figures/**"
+          "/training/figures/**",
+          "/training/dumbbell.png"
         ]
       }
     },

@@ -1,18 +1,22 @@
-<header class="today-heading ref-home-heading">
-  <div><h1 gtDesign="home.title" gtDesignLabel="home.title">Home</h1><p class="today-motto" gtDesign="home.subtitle" gtDesignLabel="home.subtitle">Il tuo centro di controllo</p></div>
+<header class="today-heading ref-home-heading home-welcome-heading">
+  <div>
+    <p class="today-date"><time [attr.datetime]="today">{{todayLabel}}</time></p>
+    <h1 gtDesign="home.title"><span gtDesignLabel="home.title" [gtDesignLabelDefault]="greeting()">{{greeting()}}</span><span class="greeting-wave" aria-hidden="true">👋</span></h1>
+    <p class="today-motto" gtDesign="home.subtitle" gtDesignLabel="home.subtitle">Ogni giorno, un passo avanti.</p>
+  </div>
   <a class="home-notifications ref-icon-button" routerLink="/profilo" [queryParams]="{section:'settings'}" aria-label="Apri notifiche e promemoria nelle impostazioni"><gt-icon name="bell"/></a>
 </header>
 <section class="home-overview ref-home-overview home-weekly-overview" aria-label="Il tuo obiettivo settimanale">
-  <img gtDesign="home.dumbbell" class="home-dumbbell" src="/training/dumbbell.png" alt="" loading="lazy"/>
+  <img gtDesign="home.dumbbell" class="home-dumbbell" src="/training/dumbbell.png" alt="" width="1672" height="941" loading="eager" decoding="async" fetchpriority="high"/>
   <a class="home-weekly-progress" gtDesign="home.goals" routerLink="/profilo" [queryParams]="{section:'goals'}">
-    <div class="home-goal-copy">
-      <span class="home-goal-label" gtDesignLabel="home.goals">Obiettivo settimanale</span>
-      <p>{{goals()?.workoutsPerWeek?weekCount()+' di '+goals()!.workoutsPerWeek+' allenamenti completati':weekCount()+' allenamenti completati questa settimana'}}</p>
-      <span class="home-goal-edit"><gt-icon name="edit"/><span gtDesign="home.goals.edit" gtDesignLabel="home.goals.edit">Modifica obiettivo</span></span>
-    </div>
     <div class="neon-ring home-goal-ring ref-home-ring" [style.--progress]="weeklyProgress()+'%'" [attr.role]="goals()?.workoutsPerWeek?'progressbar':'img'" [attr.aria-valuenow]="goals()?.workoutsPerWeek?weeklyProgress():null" [attr.aria-valuemin]="goals()?.workoutsPerWeek?0:null" [attr.aria-valuemax]="goals()?.workoutsPerWeek?100:null" [attr.aria-label]="goals()?.workoutsPerWeek?'Percentuale di allenamenti completati nella settimana':'Imposta un obiettivo per visualizzare la percentuale settimanale'">
-      <div><strong>{{goals()?.workoutsPerWeek?weeklyProgress()+'%':'—'}}</strong><span>{{goals()?.workoutsPerWeek?'questa settimana':'Imposta obiettivo'}}</span></div>
+      <div class="home-goal-copy">
+        <span class="home-goal-label" gtDesignLabel="home.goals">Obiettivo settimanale</span>
+        <strong>{{goals()?.workoutsPerWeek?weeklyProgress()+'%':'—'}}</strong>
+        <span class="home-goal-count">{{goals()?.workoutsPerWeek?weekCount()+' di '+goals()!.workoutsPerWeek+' allenamenti':weekCount()+' allenamenti questa settimana'}}</span>
+      </div>
     </div>
+    <span class="home-goal-edit"><gt-icon name="edit"/><span gtDesign="home.goals.edit" gtDesignLabel="home.goals.edit">Modifica obiettivo</span></span>
   </a>
 </section>
 <gt-status />

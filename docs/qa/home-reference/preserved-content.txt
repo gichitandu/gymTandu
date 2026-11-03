@@ -1,0 +1,1 @@
+PASS: all Home content from <gt-status /> onwards is identical to version 71.

@@ -337,7 +337,7 @@
                       >Testo visualizzato<input
                         type="text"
                         maxlength="60"
-                        [ngModel]="value('label') || entry()?.label"
+                        [ngModel]="value('label') || originalLabel()"
                         (ngModelChange)="
                           set('label', $event || undefined)
                         " /></label

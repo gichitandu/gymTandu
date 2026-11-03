@@ -1,0 +1,21 @@
+PASS Reference greeting uses the actual profile name, live Italian date and editable motto
+PASS Large centered ring shows 75 percent from three actual fixture workouts and a four-session goal
+PASS Existing actions, calendar, statistics, client view, wellness and settings links remain below the hero
+PASS The ring still opens the original weekly goal editor without altering saved workouts
+PASS Reference opening fits 320, 390, 430 px and desktop while lower sections remain scrollable
+PASS Displayed date refreshes from Monday to Tuesday without a hard-coded reference date
+PASS Existing blue, violet and light-mode preferences keep working with the illustrated hero
+PASS No application JavaScript exceptions
+{
+  "passed": 8,
+  "results": [
+    "Reference greeting uses the actual profile name, live Italian date and editable motto",
+    "Large centered ring shows 75 percent from three actual fixture workouts and a four-session goal",
+    "Existing actions, calendar, statistics, client view, wellness and settings links remain below the hero",
+    "The ring still opens the original weekly goal editor without altering saved workouts",
+    "Reference opening fits 320, 390, 430 px and desktop while lower sections remain scrollable",
+    "Displayed date refreshes from Monday to Tuesday without a hard-coded reference date",
+    "Existing blue, violet and light-mode preferences keep working with the illustrated hero",
+    "No application JavaScript exceptions"
+  ]
+}

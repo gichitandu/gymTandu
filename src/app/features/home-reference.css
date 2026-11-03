@@ -87,18 +87,25 @@ a:focus-visible,summary:focus-visible,.client-view-toggle>input:focus-visible{ou
 @media(max-width:359px){.ref-home-heading h1{font-size:27px}.ref-home-heading .today-motto{font-size:12px}.home-main-actions>.home-primary-action,.home-main-actions>.home-secondary-action{font-size:14px;padding-inline:12px}.home-shortcuts{gap:8px}.home-shortcuts>a{font-size:10px;padding-inline:3px}.home-mini-stats{gap:8px}.home-mini-stats>a>strong{font-size:14px;max-width:calc(100% - 25px)}.home-mini-stats>a>gt-icon{width:18px;height:18px}.home-mini-stats strong>small{font-size:10px}.home-mini-stats>a>span{font-size:10px}.today-section h2{font-size:17px}.home-text-link{font-size:11px}.home-week-days{padding-inline:7px;gap:2px}.home-week-days>a>strong{width:28px;height:28px;font-size:14px}.client-view-toggle{gap:8px;padding-inline:10px}.client-view-toggle>gt-icon{width:23px;height:23px}.client-view-toggle strong{font-size:12px}.client-view-toggle small{font-size:9px}:host ::ng-deep gt-backup-reminder .backup-reminder{padding:12px}:host ::ng-deep gt-backup-reminder h3{font-size:13px}:host ::ng-deep gt-backup-reminder p{font-size:11px}:host ::ng-deep gt-backup-reminder .actions{gap:8px}}
 @media(prefers-reduced-motion:reduce){.client-view-toggle>input[type=checkbox],.client-view-toggle>input[type=checkbox]::before,.home-health-disclosure>summary>gt-icon:last-child{transition:none}}
 
-/* Keep the existing weekly goal visible immediately below the page heading. */
-.home-overview.home-weekly-overview{display:block;position:relative;isolation:isolate;height:auto;min-height:0;padding:0;margin:0 0 16px;border:1px solid var(--ref-line,var(--line));border-radius:18px;background:linear-gradient(130deg,var(--home-violet),var(--card));overflow:hidden}
-.home-weekly-overview .home-dumbbell{position:absolute;z-index:-1;width:48%;height:100%;inset:0 0 0 auto;opacity:.13;object-fit:cover;mask-image:linear-gradient(90deg,transparent,#000)}
-.home-weekly-progress{display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:132px;padding:15px 18px;color:var(--text);text-decoration:none;min-width:0;border-radius:inherit}
-.home-goal-copy{min-width:0;flex:1}
-.home-goal-label{display:block;font-size:15px;font-weight:700;line-height:1.35;overflow-wrap:anywhere}
-.home-goal-copy p{font-size:12px;line-height:1.5;color:var(--muted);margin:7px 0 9px;overflow-wrap:anywhere}
-.home-goal-copy .home-goal-edit{font-size:11px;margin:0;line-height:1.4}
-.home-weekly-overview .neon-ring.home-goal-ring{flex:none;width:100px;height:100px;padding:5px;margin:0;box-shadow:0 0 calc(22px * var(--neon-glow,.55)) color-mix(in srgb,var(--accent) 36%,transparent)}
-.home-weekly-overview .home-goal-ring>div{gap:3px;padding:8px;background:var(--design-progress-surface,radial-gradient(ellipse at 40% 0,var(--accent-soft),var(--bg) 74%))}
+/* Reference opening: live local date, personal greeting and illustrated goal. */
+.home-welcome-heading{display:grid;grid-template-columns:minmax(0,1fr) 32px;grid-template-areas:'date notifications' 'greeting greeting' 'motto motto';column-gap:12px;row-gap:0;margin:0 0 4px;align-items:center}
+.home-welcome-heading>div{display:contents}
+.home-welcome-heading .today-date{grid-area:date;margin:0 0 10px;font-size:11px;font-weight:500;line-height:1.5;letter-spacing:2px;text-transform:uppercase;color:var(--muted)}
+.home-welcome-heading h1{grid-area:greeting;display:block;min-width:0;margin:0;font-size:clamp(28px,7.8vw,38px);font-weight:750;line-height:1.2;letter-spacing:-1px;overflow-wrap:anywhere}
+.home-welcome-heading .greeting-wave{display:inline-block;font-size:.92em;margin-left:7px;white-space:nowrap;vertical-align:baseline}
+.home-welcome-heading .today-motto{grid-area:motto;margin:8px 0 0;font-size:14px;line-height:1.5;color:var(--muted)}
+.home-welcome-heading .home-notifications{grid-area:notifications;align-self:start;width:30px;height:30px;min-height:30px;border-radius:10px;background:transparent;border-color:transparent;box-shadow:none}
+.home-welcome-heading .home-notifications>gt-icon{width:20px;height:20px}
+.home-overview.home-weekly-overview{--home-hero-ring:clamp(196px,60vw,300px);display:grid;grid-template-columns:minmax(0,1fr);place-items:center;position:relative;isolation:isolate;height:clamp(270px,78vw,365px);min-height:0;padding:0 0 25px;margin:0 0 14px;border:0;border-radius:0;background:transparent;overflow:hidden}
+.home-weekly-overview .home-dumbbell{position:absolute;z-index:0;width:130%;max-width:none;height:100%;inset:0 auto auto -15%;opacity:1;object-fit:contain;object-position:center 42%;mask-image:radial-gradient(ellipse at 50% 48%,#000 44%,transparent 76%);pointer-events:none}
+.home-weekly-progress{position:relative;z-index:1;display:block;width:var(--home-hero-ring);height:var(--home-hero-ring);min-height:0;min-width:0;padding:0;color:var(--text);text-decoration:none;border-radius:50%}
+.home-weekly-overview .neon-ring.home-goal-ring{width:100%;height:100%;padding:8px;margin:0;box-shadow:0 0 calc(37px * var(--neon-glow,.55)) color-mix(in srgb,var(--accent) 54%,transparent),inset 0 1px 3px #ffffff65}
+.home-weekly-overview .home-goal-ring>.home-goal-copy{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;height:100%;min-width:0;padding:20px 13px;background:var(--design-progress-surface,radial-gradient(ellipse at 42% 0,var(--accent-soft),var(--bg) 74%));text-align:center}
 .home-weekly-overview .home-goal-ring :is(strong,span){color:var(--design-progress-ink,var(--text))}
-.home-weekly-overview .home-goal-ring strong{font-size:28px;line-height:1.1;letter-spacing:-1px}
-.home-weekly-overview .home-goal-ring span{font-size:8px;line-height:1.3;text-align:center}
-.ref-home-heading h1{overflow-wrap:anywhere}
-@media(max-width:359px){.home-weekly-progress{gap:9px;padding:13px 12px;min-height:122px}.home-goal-label{font-size:14px}.home-goal-copy p{font-size:11px}.home-weekly-overview .neon-ring.home-goal-ring{width:90px;height:90px}.home-weekly-overview .home-goal-ring strong{font-size:25px}}
+.home-weekly-overview .home-goal-ring .home-goal-label{display:block;max-width:100%;font-size:clamp(12px,3.25vw,17px);font-weight:500;line-height:1.4;overflow-wrap:anywhere}
+.home-weekly-overview .home-goal-ring strong{font-size:clamp(52px,15.2vw,76px);font-weight:750;line-height:1.05;letter-spacing:-2.5px;font-variant-numeric:tabular-nums}
+.home-weekly-overview .home-goal-ring .home-goal-count{font-size:clamp(11px,3.15vw,16px);line-height:1.4;color:var(--design-progress-ink,var(--text));max-width:100%;overflow-wrap:anywhere}
+.home-weekly-overview .home-goal-edit{position:absolute;top:calc(100% + 10px);left:50%;transform:translateX(-50%);display:flex;align-items:center;justify-content:center;gap:5px;min-height:18px;width:max-content;max-width:100%;font-size:10px;line-height:1.4;color:var(--accent-text);text-align:center}
+.home-weekly-overview .home-goal-edit gt-icon{flex:none;width:12px;height:12px}
+@media(max-width:359px){.home-welcome-heading .today-date{font-size:10px;letter-spacing:1.6px}.home-welcome-heading h1{font-size:27px}.home-welcome-heading .today-motto{font-size:13px}.home-weekly-overview .home-goal-ring>.home-goal-copy{gap:11px;padding:16px 10px}.home-weekly-overview .neon-ring.home-goal-ring{padding:7px}}
+@media(min-width:800px){.home-welcome-heading h1{font-size:40px}.home-welcome-heading .today-date{font-size:12px}.home-welcome-heading .today-motto{font-size:16px}.home-overview.home-weekly-overview{height:380px}.home-weekly-overview .home-dumbbell{width:110%;left:-5%}}
