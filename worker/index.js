@@ -2,6 +2,7 @@ import { defaultExercises, defaultGroups } from './default-catalog.js';
 import { pushReminderApi } from './push.js';
 import {excelImportsApi,appFeaturesApi} from './program-imports.js';
 import { archiveApi } from './archive.js';
+import { designStudioApi } from './design-studio.js';
 import { calendarApi, calendarPublish, calendarConfigure } from './calendar.js';
 // The platform's ChatGPT access boundary remains in place. App sessions are
 // additionally bound to that authenticated visitor, and never stored in JS.
@@ -89,6 +90,7 @@ export async function api(request,env,ctx) {
     if(request.method!=='GET' && request.headers.get('origin')!==url.origin) fail('Richiesta non autorizzata.',403);
     if(request.method!=='GET' && !request.headers.get('content-type')?.startsWith('application/json')) fail('Formato non supportato.',415);
     const me=await session(request,db);
+    if(path.startsWith('/api/design/'))return await designStudioApi(request,env,me);
     if(path.startsWith('/api/excel-imports'))return await excelImportsApi(request,env,me);
     if(path==='/api/app-features')return await appFeaturesApi(request,env,me);
     if(path==='/api/auth/device-recovery'&&request.method==='POST'){

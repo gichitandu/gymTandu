@@ -71,6 +71,13 @@
       "when": 1793356136157,
       "tag": "0009_ambiguous_machine_man",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "6",
+      "when": 1793670786179,
+      "tag": "0010_gt_design_studio",
+      "breakpoints": true
     }
   ]
 }

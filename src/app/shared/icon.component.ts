@@ -1,4 +1,4 @@
-import { Component, input } from "@angular/core";
+import { Component, input, signal } from "@angular/core";
 @Component({
   selector: "gt-icon",
   standalone: true,
@@ -11,7 +11,7 @@ import { Component, input } from "@angular/core";
     stroke-linejoin="round"
     aria-hidden="true"
   >
-    <path [attr.d]="paths[name()] || paths['activity']" />
+    <path [attr.d]="paths[designName() || name()] || paths['activity']" />
   </svg>`,
   styles: [
     `
@@ -29,6 +29,7 @@ import { Component, input } from "@angular/core";
   ],
 })
 export class IconComponent {
+  designName = signal('');
   name = input("activity");
   paths: Record<string, string> = {
     bell:'M18 8a6 6 0 0 0-12 0v5l-2 4h16l-2-4V8M10 21h4M12 2V1',

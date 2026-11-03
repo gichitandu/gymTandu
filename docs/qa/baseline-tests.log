@@ -1,0 +1,15 @@
+
+> gymtrack@1.0.0 test
+> vitest run
+
+
+ RUN  v5.0.4 /workspace/gymtrack
+
+
+ Test Files  84 passed (84)
+      Tests  687 passed (687)
+   Start at  01:35:16
+   Duration  63.06s (tests 64%, import 31%, transform 4%, worker 1%)
+
+    Isolate  84 workers spawned · ~83ms startup each (spawn + environment, per file)
+             at least ~6.93s faster with isolate: false — reuses workers across files instead of one per file

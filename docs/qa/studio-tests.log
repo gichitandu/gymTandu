@@ -1,0 +1,12 @@
+
+> gymtrack@1.0.0 test
+> vitest run tests/design-system.test.ts tests/design-studio-worker.test.ts tests/design-studio-client.test.ts
+
+
+ RUN  v5.0.4 /workspace/gymtrack
+
+
+ Test Files  3 passed (3)
+      Tests  39 passed (39)
+   Start at  02:08:35
+   Duration  1.01s (tests 48%, import 42%, transform 8%, worker 1%)

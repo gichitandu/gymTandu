@@ -1,7 +1,9 @@
 import { Routes } from "@angular/router";
 import { preserveFormDrafts } from '../services/draft-navigation';
 import { nutritionEnabledGuard } from '../services/nutrition-guard';
+import { designStudioGuard } from '../design/design-guard';
 const pages: Routes = [
+ {path:'design-studio',canActivate:[designStudioGuard],loadComponent:()=>import('../design/design-studio.component').then(m=>m.DesignStudioComponent)},
  {path:'esercizio/:id',loadComponent:()=>import('../features/exercise-detail.component').then(m=>m.ExerciseDetailComponent)},
  {path:'recupero',data:{mode:'recovery'},loadComponent:()=>import('../features/recovery.component').then(m=>m.RecoveryComponent)},
  {path:'sonno',data:{mode:'sleep'},loadComponent:()=>import('../features/recovery.component').then(m=>m.RecoveryComponent)},

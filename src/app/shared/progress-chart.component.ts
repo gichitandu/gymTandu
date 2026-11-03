@@ -147,7 +147,10 @@ export class ProgressChartComponent implements AfterViewInit {
         const canvas = this.canvas()?.nativeElement;
         if (canvas && JSON.stringify(this.colors(canvas)) !== this.themeSignature) this.draw();
       });
-      this.themeObserver.observe(document.body, { attributes: true, attributeFilter: ["class", "style"] });
+      // Include scoped page/instance tokens and the isolated Studio preview.
+      // Observe ancestors only, so chart renders do not observe their own subtree.
+      for(let ancestor:HTMLElement|null=this.canvas()?.nativeElement||document.body;ancestor;ancestor=ancestor.parentElement)
+        this.themeObserver.observe(ancestor, { attributes: true, attributeFilter: ["class", "style"] });
     }
   }
   metricLabel() {

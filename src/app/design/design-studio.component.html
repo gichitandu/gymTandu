@@ -1,0 +1,799 @@
+<section class="studio" aria-labelledby="studio-title">
+  <header class="studio-heading">
+    <div class="studio-brand">
+      <a routerLink="/profilo" class="studio-back" aria-label="Torna al Profilo"
+        ><gt-icon name="back"
+      /></a>
+      <div>
+        <p class="studio-eyebrow">GT FITNESS · PERSONALIZZAZIONE AVANZATA</p>
+        <h1 id="studio-title">GT Design Studio</h1>
+        <p>Il tuo stile, sui controlli della tua app.</p>
+      </div>
+    </div>
+    <span class="studio-role"><gt-icon name="shield" /> SUPER ADMIN</span>
+  </header>
+  @if (!runtime.canManage()) {
+    <p class="studio-message" role="alert">
+      Il Design Studio richiede un account Super Admin online.
+    </p>
+    <a routerLink="/profilo" class="button">Torna al Profilo</a>
+  } @else {
+    <div class="studio-commandbar">
+      <div class="studio-revision">
+        <span class="studio-dot"></span
+        ><strong>Revisione {{ state()?.published?.revision ?? 0 }}</strong
+        ><span>{{
+          dirty()
+            ? "Modifiche non salvate"
+            : state()?.draft
+              ? "Bozza privata salvata"
+              : "Tema pubblicato"
+        }}</span>
+      </div>
+      <div class="studio-actions">
+        <button
+          type="button"
+          (click)="cancel()"
+          [disabled]="busy() || loading()"
+        >
+          Annulla</button
+        ><button
+          type="button"
+          (click)="saveDraft()"
+          [disabled]="busy() || loading() || !state()"
+        >
+          <gt-icon name="download" /> Salva bozza</button
+        ><button
+          type="button"
+          class="studio-primary"
+          (click)="publish()"
+          [disabled]="busy() || loading() || !state()"
+        >
+          <gt-icon name="check" /> {{ busy() ? "Attendi…" : "Pubblica" }}
+        </button>
+      </div>
+    </div>
+    @if (error()) {
+      <div class="studio-message studio-error" role="alert">
+        {{ error() }}
+        <button type="button" (click)="reload()" [disabled]="busy()">
+          Ricarica Studio
+        </button>
+      </div>
+    }
+    @if (notice()) {
+      <p class="studio-message" role="status">{{ notice() }}</p>
+    }
+    @if (loading()) {
+      <p class="studio-message" role="status">
+        Caricamento di tema, bozze e preset…
+      </p>
+    }
+    @if (state(); as studio) {
+      <nav class="studio-tabs" aria-label="Sezioni Design Studio">
+        <button
+          type="button"
+          [attr.aria-pressed]="tab() === 'controls'"
+          (click)="tab.set('controls')"
+        >
+          <gt-icon name="layers" /> Pagine e controlli</button
+        ><button
+          type="button"
+          [attr.aria-pressed]="tab() === 'themes'"
+          (click)="tab.set('themes')"
+        >
+          <gt-icon name="palette" /> Temi e preset</button
+        ><button
+          type="button"
+          [attr.aria-pressed]="tab() === 'history'"
+          (click)="tab.set('history')"
+        >
+          <gt-icon name="clock" /> Cronologia
+        </button>
+      </nav>
+      <div class="studio-mobile-tools">
+        <button
+          type="button"
+          (click)="toggleMobilePreview()"
+          [attr.aria-expanded]="previewOnMobile()"
+        >
+          <gt-icon name="eye" />
+          {{
+            previewOnMobile() ? "Nascondi anteprima" : "Mostra anteprima live"
+          }}
+        </button>
+      </div>
+      <div class="studio-workspace" [class.history-view]="tab() === 'history'">
+        <div class="studio-edit-area">
+          @if (tab() === "controls") {
+            <aside class="studio-panel studio-tree">
+              <div class="studio-panel-title">
+                <gt-icon name="layers" />
+                <div>
+                  <h2>Pagine dell’app</h2>
+                  <p>Seleziona un controllo esistente</p>
+                </div>
+              </div>
+              <label
+                >Pagina<select
+                  [ngModel]="page()"
+                  (ngModelChange)="choosePage($event)"
+                  [disabled]="busy()"
+                >
+                  @for (p of pages; track p.id) {
+                    <option [value]="p.id">{{ p.name }}</option>
+                  }
+                </select></label
+              >
+              <label class="studio-search"
+                ><span class="sr-only">Cerca controllo</span
+                ><input
+                  type="search"
+                  placeholder="Cerca un controllo…"
+                  [ngModel]="search()"
+                  (ngModelChange)="search.set($event)"
+              /></label>
+              <div
+                class="studio-control-tree"
+                role="group"
+                [attr.aria-label]="'Controlli di ' + pageName()"
+              >
+                @for (control of controls(); track control.id) {
+                  <button
+                    type="button"
+                    class="studio-control"
+                    [class.selected]="selected() === control.id"
+                    [attr.aria-pressed]="selected() === control.id"
+                    (click)="chooseControl(control.id)"
+                    [disabled]="busy()"
+                  >
+                    <gt-icon
+                      [name]="
+                        control.icon ||
+                        (['card', 'container', 'list'].includes(control.kind)
+                          ? 'layers'
+                          : control.kind === 'text'
+                            ? 'note'
+                            : control.kind === 'chart'
+                              ? 'chart'
+                              : 'sliders')
+                      "
+                    /><span
+                      ><strong>{{ control.name }}</strong
+                      ><small>{{ control.kind }}</small></span
+                    >
+                    @if (draft().instances[control.id]) {
+                      <i aria-label="Override presente"></i>
+                    }
+                  </button>
+                } @empty {
+                  <p class="studio-hint">Nessun controllo corrispondente.</p>
+                }
+              </div>
+              <p class="studio-hint">
+                Le istanze hanno identità stabili. Valori, azioni e dati
+                rimangono collegati alle funzioni esistenti.
+              </p>
+            </aside>
+            <section class="studio-panel studio-properties">
+              <div class="studio-panel-title">
+                <gt-icon name="sliders" />
+                <div>
+                  <h2>
+                    {{
+                      scope() === "instance"
+                        ? entry()?.name
+                        : scope() === "page"
+                          ? pageName()
+                          : "Stile globale"
+                    }}
+                  </h2>
+                  <p>
+                    {{
+                      scope() === "instance"
+                        ? "Modifica solo questa istanza"
+                        : scope() === "page"
+                          ? "Override della pagina selezionata"
+                          : "Token ereditati dalle pagine"
+                    }}
+                  </p>
+                </div>
+              </div>
+              <div
+                class="studio-scope"
+                role="group"
+                aria-label="Ambito della modifica"
+              >
+                <button
+                  type="button"
+                  [attr.aria-pressed]="scope() === 'global'"
+                  (click)="scope.set('global')"
+                  [disabled]="busy()"
+                >
+                  Globale</button
+                ><button
+                  type="button"
+                  [attr.aria-pressed]="scope() === 'page'"
+                  (click)="scope.set('page')"
+                  [disabled]="busy()"
+                >
+                  Pagina</button
+                ><button
+                  type="button"
+                  [attr.aria-pressed]="scope() === 'instance'"
+                  (click)="scope.set('instance')"
+                  [disabled]="busy()"
+                >
+                  Solo questo
+                </button>
+              </div>
+              @if (scope() === "instance") {
+                <code class="studio-identity">{{ selected() }}</code>
+              }
+              @if (!draft().enabled) {
+                <p class="studio-message">
+                  Il tema Studio è disattivato: riattivalo da Temi e preset per
+                  vedere le modifiche.
+                </p>
+              }
+              <div
+                class="studio-property-tabs"
+                role="group"
+                aria-label="Proprietà"
+              >
+                <button
+                  type="button"
+                  [attr.aria-pressed]="group() === 'layout'"
+                  (click)="group.set('layout')"
+                >
+                  Aspetto</button
+                ><button
+                  type="button"
+                  [attr.aria-pressed]="group() === 'type'"
+                  (click)="group.set('type')"
+                >
+                  Testo e icone</button
+                ><button
+                  type="button"
+                  [attr.aria-pressed]="group() === 'effects'"
+                  (click)="group.set('effects')"
+                >
+                  Effetti
+                </button>
+              </div>
+              <fieldset [disabled]="busy() || loading()" class="studio-fields">
+                @if (group() === "layout") {
+                  @if (supportsBackground()) {
+                    <label
+                      >Stile del controllo<select
+                        [ngModel]="value('variant') || 'solid'"
+                        (ngModelChange)="set('variant', $event)"
+                      >
+                        <option value="solid">Pieno</option>
+                        <option value="outline">Outline</option>
+                        <option value="glass">Glass</option>
+                        <option value="neon">Neon</option>
+                        <option value="gradient">Gradiente</option>
+                      </select></label
+                    ><button
+                      type="button"
+                      class="studio-inherit"
+                      (click)="set('variant', undefined)"
+                      [disabled]="!has('variant')"
+                    >
+                      Eredita stile
+                    </button>
+                  }
+                  @for (field of colors(); track field.key) {
+                    <div class="studio-color-field">
+                      <label [for]="'studio-' + field.key"
+                        >{{ field.name }}
+                        <small>{{
+                          has(field.key) ? "Personalizzato" : "Ereditato"
+                        }}</small></label
+                      >
+                      <div>
+                        <input
+                          type="color"
+                          [attr.aria-label]="field.name"
+                          [value]="color(field.key)"
+                          (input)="set(field.key, $any($event.target).value)"
+                        /><input
+                          [id]="'studio-' + field.key"
+                          type="text"
+                          maxlength="7"
+                          spellcheck="false"
+                          [attr.aria-label]="field.name + ' HEX'"
+                          [value]="value(field.key) || ''"
+                          placeholder="#RRGGBB"
+                          (change)="
+                            set(
+                              field.key,
+                              $any($event.target).value || undefined
+                            )
+                          "
+                        /><button
+                          type="button"
+                          class="studio-reset-property"
+                          [attr.aria-label]="'Eredita ' + field.name"
+                          [disabled]="!has(field.key)"
+                          (click)="set(field.key, undefined)"
+                        >
+                          ↶
+                        </button>
+                      </div>
+                    </div>
+                  }
+                }
+                @if (group() === "type") {
+                  @if (scope() === "instance" && entry()?.label) {
+                    <label
+                      >Testo visualizzato<input
+                        type="text"
+                        maxlength="60"
+                        [ngModel]="value('label') || entry()?.label"
+                        (ngModelChange)="
+                          set('label', $event || undefined)
+                        " /></label
+                    ><button
+                      type="button"
+                      class="studio-inherit"
+                      [disabled]="!has('label')"
+                      (click)="set('label', undefined)"
+                    >
+                      Ripristina testo originale
+                    </button>
+                  }
+                  <label
+                    >Carattere<select
+                      [ngModel]="value('fontFamily') || 'system'"
+                      (ngModelChange)="set('fontFamily', $event)"
+                    >
+                      <option value="system">Sistema</option>
+                      <option value="sans">Sans serif</option>
+                      <option value="serif">Serif</option>
+                      <option value="mono">Monospace</option>
+                    </select></label
+                  ><button
+                    type="button"
+                    class="studio-inherit"
+                    [disabled]="!has('fontFamily')"
+                    (click)="set('fontFamily', undefined)"
+                  >
+                    Eredita carattere
+                  </button>
+                  @if (scope() === "instance" && entry()?.icon) {
+                    <label
+                      >Icona decorativa<select
+                        [ngModel]="value('icon') || entry()?.icon"
+                        (ngModelChange)="set('icon', $event)"
+                      >
+                        @for (icon of icons; track icon) {
+                          <option [value]="icon">{{ icon }}</option>
+                        }
+                      </select></label
+                    ><button
+                      type="button"
+                      class="studio-inherit"
+                      [disabled]="!has('icon')"
+                      (click)="set('icon', undefined)"
+                    >
+                      Ripristina icona originale
+                    </button>
+                  }
+                  <p class="studio-hint">
+                    I testi dinamici e i comandi critici conservano il loro
+                    significato.
+                  </p>
+                }
+                @if (group() === "effects") {
+                  @if (supportsBackground()) {
+                    <label
+                      >Gradiente<select
+                        [ngModel]="
+                          value('variant') === 'solid'
+                            ? 'none'
+                            : gradient().type
+                        "
+                        (ngModelChange)="gradientMode($event)"
+                      >
+                        <option value="none">Colore pieno</option>
+                        <option value="linear">Lineare</option>
+                        <option value="radial">Radiale</option>
+                      </select></label
+                    >
+                    <label
+                      >Angolo · {{ gradient().angle }}°<input
+                        type="range"
+                        min="0"
+                        max="360"
+                        [value]="gradient().angle"
+                        (input)="gradientAngle($any($event.target).value)"
+                    /></label>
+                    <div class="studio-gradient-stops">
+                      @for (
+                        stop of gradient().stops;
+                        track $index;
+                        let i = $index
+                      ) {
+                        <div>
+                          <input
+                            type="color"
+                            [attr.aria-label]="'Colore stop ' + (i + 1)"
+                            [value]="stop.color"
+                            (input)="
+                              gradientStop(
+                                i,
+                                'color',
+                                $any($event.target).value
+                              )
+                            "
+                          /><input
+                            type="number"
+                            min="0"
+                            max="1"
+                            step="0.01"
+                            [attr.aria-label]="'Posizione stop ' + (i + 1)"
+                            [value]="stop.offset"
+                            (change)="
+                              gradientStop(
+                                i,
+                                'offset',
+                                $any($event.target).value
+                              )
+                            "
+                            [disabled]="
+                              i === 0 || i === gradient().stops.length - 1
+                            "
+                          /><button
+                            type="button"
+                            [attr.aria-label]="'Rimuovi stop ' + (i + 1)"
+                            [disabled]="
+                              i === 0 || i === gradient().stops.length - 1
+                            "
+                            (click)="removeStop(i)"
+                          >
+                            ×
+                          </button>
+                        </div>
+                      }
+                    </div>
+                    <div class="studio-inline-actions">
+                      <button
+                        type="button"
+                        (click)="addStop()"
+                        [disabled]="gradient().stops.length >= 5"
+                      >
+                        + Stop colore</button
+                      ><button
+                        type="button"
+                        (click)="set('gradient', undefined)"
+                        [disabled]="!has('gradient')"
+                      >
+                        Eredita gradiente
+                      </button>
+                    </div>
+                  } @else {
+                    <p class="studio-hint">
+                      Il gradiente dello sfondo non è disponibile per questo
+                      tipo. Le altre proprietà visive restano modificabili.
+                    </p>
+                  }
+                  <label class="studio-toggle"
+                    ><input
+                      type="checkbox"
+                      [checked]="value('motion') ?? false"
+                      (change)="set('motion', $any($event.target).checked)"
+                    />
+                    Transizioni visive</label
+                  ><button
+                    type="button"
+                    class="studio-inherit"
+                    (click)="set('motion', undefined)"
+                    [disabled]="!has('motion')"
+                  >
+                    Eredita animazioni
+                  </button>
+                  <p class="studio-hint">
+                    La preferenza “riduci movimento” del dispositivo ha sempre
+                    precedenza. Il blur riguarda lo sfondo e preserva il testo.
+                  </p>
+                }
+                @for (field of visibleNumbers(); track field.key) {
+                  <div class="studio-number-field">
+                    <label [for]="'studio-' + field.key"
+                      >{{ field.name }}
+                      <small>{{
+                        has(field.key) ? "Personalizzato" : "Ereditato"
+                      }}</small></label
+                    >
+                    <div>
+                      <input
+                        type="range"
+                        [attr.aria-label]="field.name"
+                        [min]="field.min"
+                        [max]="field.max"
+                        [step]="field.step"
+                        [value]="value(field.key) ?? field.min"
+                        (input)="
+                          setNumber(field.key, $any($event.target).value)
+                        "
+                      /><input
+                        type="number"
+                        [id]="'studio-' + field.key"
+                        [attr.aria-label]="field.name + ' valore'"
+                        [min]="field.min"
+                        [max]="field.max"
+                        [step]="field.step"
+                        [value]="value(field.key) ?? ''"
+                        placeholder="Auto"
+                        (change)="
+                          setNumber(field.key, $any($event.target).value)
+                        "
+                      /><span>{{ field.unit }}</span
+                      ><button
+                        type="button"
+                        class="studio-reset-property"
+                        [attr.aria-label]="'Eredita ' + field.name"
+                        [disabled]="!has(field.key)"
+                        (click)="set(field.key, undefined)"
+                      >
+                        ↶
+                      </button>
+                    </div>
+                  </div>
+                }
+              </fieldset>
+              @for (warning of warnings(); track warning) {
+                <p class="studio-contrast" role="status">{{ warning }}</p>
+              }
+              <div class="studio-locked">
+                <gt-icon name="lock" /><span
+                  >Azione esistente bloccata<br /><small
+                    >Navigazione, valori e handler non modificabili.</small
+                  ></span
+                >
+              </div>
+              <button
+                type="button"
+                class="studio-full"
+                (click)="resetScope()"
+                [disabled]="busy()"
+              >
+                Ripristina ereditarietà di questo ambito
+              </button>
+            </section>
+          }
+          @if (tab() === "themes") {
+            <section class="studio-panel studio-themes">
+              <div class="studio-panel-title">
+                <gt-icon name="palette" />
+                <div>
+                  <h2>Palette GT</h2>
+                  <p>12 originali · valori HEX del pacchetto approvato</p>
+                </div>
+              </div>
+              <label class="studio-toggle"
+                ><input
+                  type="checkbox"
+                  [checked]="draft().enabled"
+                  (change)="toggleEnabled($any($event.target).checked)"
+                  [disabled]="busy()"
+                />
+                Applica il sistema di stile Studio</label
+              >
+              <div class="studio-palette-grid">
+                @for (preset of factories; track preset.id) {
+                  <button
+                    type="button"
+                    class="studio-palette"
+                    [class.selected]="draft().presetId === preset.id"
+                    [attr.aria-pressed]="draft().presetId === preset.id"
+                    (click)="applyFactory(preset.id)"
+                    [disabled]="busy()"
+                  >
+                    <span
+                      class="studio-palette-art"
+                      [style.background]="preset.background"
+                      ><i [style.background]="preset.primary"></i
+                      ><i [style.background]="preset.secondary"></i
+                      ><i [style.background]="preset.card"></i
+                      ><i [style.background]="preset.text"></i></span
+                    ><strong>{{ preset.name }}</strong>
+                    @if (draft().presetId === preset.id) {
+                      <gt-icon name="check" />
+                    }
+                  </button>
+                }
+              </div>
+              <p class="studio-hint">
+                Selezionare una palette prepara il preset originale in anteprima
+                e rimuove gli override della bozza. I tuoi temi personali
+                precedenti restano disponibili nelle impostazioni dell’app.
+              </p>
+              <div class="studio-inline-actions">
+                <button
+                  type="button"
+                  (click)="resetFactory()"
+                  [disabled]="busy()"
+                >
+                  Ripristina factory selezionato</button
+                ><button
+                  type="button"
+                  (click)="resetDefault()"
+                  [disabled]="busy()"
+                >
+                  Ripristina default dell’app
+                </button>
+              </div>
+              <hr />
+              <h2>I miei preset</h2>
+              <p class="studio-hint">
+                Copia completa di palette e override. I preset factory sono
+                immutabili.
+              </p>
+              <div class="studio-save-preset">
+                <label
+                  >Nome della copia<input
+                    type="text"
+                    maxlength="60"
+                    [(ngModel)]="presetName"
+                    placeholder="Es. GT Blu Pro"
+                    [disabled]="busy()" /></label
+                ><button
+                  type="button"
+                  class="studio-primary"
+                  [disabled]="busy() || !presetName.trim()"
+                  (click)="savePreset()"
+                >
+                  Salva copia
+                </button>
+              </div>
+              @for (preset of studio.presets; track preset.id) {
+                <article class="studio-saved-preset">
+                  <div>
+                    <h3>{{ preset.name }}</h3>
+                    <small>{{ date(preset.updatedAt) }}</small>
+                  </div>
+                  <button
+                    type="button"
+                    (click)="applySaved(preset)"
+                    [disabled]="busy()"
+                  >
+                    Anteprima</button
+                  ><button
+                    type="button"
+                    (click)="renamePreset(preset)"
+                    [disabled]="busy() || !renameName.trim()"
+                  >
+                    Rinomina
+                  </button>
+                </article>
+              } @empty {
+                <p class="studio-hint">
+                  Non hai ancora salvato preset personali.
+                </p>
+              }
+              @if (studio.presets.length) {
+                <label
+                  >Nuovo nome per Rinomina<input
+                    type="text"
+                    [(ngModel)]="renameName"
+                    maxlength="60"
+                    placeholder="Scrivi il nome, poi scegli Rinomina"
+                    [disabled]="busy()"
+                /></label>
+              }
+              <div class="studio-inline-actions">
+                <button
+                  type="button"
+                  (click)="exportConfig()"
+                  [disabled]="busy()"
+                >
+                  Esporta JSON</button
+                ><label class="studio-import"
+                  >Importa JSON<input
+                    type="file"
+                    accept="application/json,.json"
+                    (change)="importConfig($event)"
+                    [disabled]="busy()"
+                /></label>
+              </div>
+            </section>
+          }
+          @if (tab() === "history") {
+            <section class="studio-panel studio-history">
+              <div class="studio-panel-title">
+                <gt-icon name="clock" />
+                <div>
+                  <h2>Pubblicazioni e ripristini</h2>
+                  <p>Revisioni registrate sul server</p>
+                </div>
+              </div>
+              <article class="studio-history-row">
+                <div>
+                  <strong>Revisione 0 · default dell’app</strong>
+                  <p>Aspetto precedente al Design Studio</p>
+                </div>
+                <button
+                  type="button"
+                  (click)="rollback(0)"
+                  [disabled]="busy() || studio.published.revision === 0"
+                >
+                  Ripristina e pubblica
+                </button>
+              </article>
+              @for (item of studio.history; track item.revision) {
+                <article class="studio-history-row">
+                  <div>
+                    <h3>
+                      Revisione {{ item.revision }}
+                      @if (item.revision === studio.published.revision) {
+                        <span class="studio-pill">Pubblicata</span>
+                      }
+                    </h3>
+                    <p>{{ item.actorName }} · {{ date(item.createdAt) }}</p>
+                    <small
+                      >{{
+                        item.kind === "rollback"
+                          ? "Ripristino della revisione " + item.sourceRevision
+                          : "Pubblicazione"
+                      }}
+                      · {{ item.changes.length }} modifiche</small
+                    >
+                    <details>
+                      <summary>Dettagli della revisione</summary>
+                      <code>SHA-256 {{ item.checksum }}</code>
+                      @for (change of item.changes; track change.path) {
+                        <p>
+                          <code>{{ change.path }}</code>
+                        </p>
+                      }
+                    </details>
+                  </div>
+                  <button
+                    type="button"
+                    (click)="rollback(item.revision)"
+                    [disabled]="
+                      busy() || item.revision === studio.published.revision
+                    "
+                  >
+                    Ripristina e pubblica
+                  </button>
+                </article>
+              } @empty {
+                <p class="studio-hint">
+                  Nessun tema Studio è stato pubblicato. L’app conserva il suo
+                  aspetto attuale.
+                </p>
+              }
+            </section>
+          }
+        </div>
+        <aside
+          class="studio-preview-panel"
+          [class.mobile-hidden]="!previewOnMobile()"
+        >
+          <div class="studio-preview-title">
+            <span><gt-icon name="eye" /> Anteprima live</span
+            ><small>Privata</small>
+          </div>
+          <label class="studio-preview-page"
+            >Pagina in anteprima<select
+              [ngModel]="page()"
+              (ngModelChange)="choosePage($event)"
+            >
+              @for (p of pages; track p.id) {
+                <option [value]="p.id">{{ p.name }}</option>
+              }
+            </select></label
+          ><gt-design-preview
+            [config]="draft()"
+            [page]="page()"
+            [selected]="scope() === 'instance' ? selected() : ''"
+          />
+        </aside>
+      </div>
+    }
+  }
+</section>

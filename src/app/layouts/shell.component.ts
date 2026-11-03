@@ -1,4 +1,6 @@
+import {BottomNavigationComponent} from '../shared/bottom-navigation.component';
 import {DataStatusComponent} from '../shared/data-status.component';
+import {DesignPageDirective} from '../design/design-directives';
 import {AppFeaturesService} from '../services/app-features';
 import { WorkoutClockComponent } from '../shared/workout-clock.component';
 import {WorkoutResumeService} from "../services/workout-resume";
@@ -16,7 +18,8 @@ import { canResumeAtHome, MobileNavigationService } from "../services/mobile-nav
   selector: "gt-shell",
   host: {class: "design-v2 photo-controls", "[class.reference-pages]":"referencePage()"},
   standalone: true,
-  imports: [DataStatusComponent,WorkoutClockComponent,RouterLink, RouterLinkActive, RouterOutlet, IconComponent, AvatarComponent, ArchiveRecoveryComponent],
+  hostDirectives: [DesignPageDirective],
+  imports: [BottomNavigationComponent,DataStatusComponent,WorkoutClockComponent,RouterLink, RouterLinkActive, RouterOutlet, IconComponent, AvatarComponent, ArchiveRecoveryComponent],
   styleUrls: ['./experience.css'],
   encapsulation: ViewEncapsulation.None,
   template: ` <gt-workout-clock/><aside class="sidebar">
@@ -43,18 +46,7 @@ import { canResumeAtHome, MobileNavigationService } from "../services/mobile-nav
       </header>}
       <main [class.session-main]="router.url.startsWith('/sessione')">@if(s.ready()){@if(router.url.startsWith('/sessione')){<gt-data-status/>}@if(referencePage()&&(pwa.updateReady()||pwa.releases.updateReady())){<gt-data-status class="reference-update-status"/>}@if(auth.offlineMode()){<p class="local-mode-label">Archivio personale locale · funzioni condivise disabilitate</p>}<router-outlet />@if(referencePage()){<gt-data-status class="reference-page-status"/>}@if(router.url.split('?')[0]==='/profilo'&&auth.canManageBackups()){<gt-archive-recovery/>}}@else{<section class="card archive-opening" role="status" aria-live="polite"><h1>Apertura del tuo archivio</h1><p>Sto caricando i dati salvati su questo dispositivo…</p>@if(s.error()){<p class="notice">{{s.error()}}</p>}</section>}</main>
     </div>
-    <nav class="bottom-nav" [class.calendar-navigation]="router.url.split('?')[0]==='/calendario'" aria-label="Navigazione principale" [style.grid-template-columns]="'repeat('+nav.length+',minmax(0,1fr))'">
-      @for (item of nav; track item.path) {
-        <a
-          [routerLink]="item.path"
-          routerLinkActive="selected"
-          [class.training-selected]="item.path==='/piani'&&(router.url.startsWith('/sessione')||router.url.startsWith('/allenamenti'))"
-          [routerLinkActiveOptions]="{ exact: true }"
-          [attr.aria-label]="item.label"
-          ><gt-icon [name]="item.icon" /><span>{{ item.mobileLabel || item.label }}</span></a
-        >
-      }
-    </nav>`,
+    <gt-bottom-navigation [items]="nav"/>`,
 })
 export class ShellComponent {
   private resume=inject(WorkoutResumeService);private firstOpen=true;

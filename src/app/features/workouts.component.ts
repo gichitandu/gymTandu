@@ -1,3 +1,4 @@
+import { DESIGN_DIRECTIVES } from '../design/design-directives';
 import { DateFieldComponent } from '../shared/date-field.component';
 import { confirmationForContext } from '../services/confirmation';
 import { OpenWorkoutsComponent } from '../shared/open-workouts.component';
@@ -13,7 +14,7 @@ import { ExerciseFilterComponent } from "../shared/exercise-filter.component";
 @Component({
   standalone: true,
   styleUrl: "./account-polish.css",
-  imports: [DateFieldComponent,OpenWorkoutsComponent,SectionHeadingComponent,
+  imports: [...DESIGN_DIRECTIVES,DateFieldComponent,OpenWorkoutsComponent,SectionHeadingComponent,
     FormsModule,
     DatePipe,
     RouterLink,
@@ -21,7 +22,7 @@ import { ExerciseFilterComponent } from "../shared/exercise-filter.component";
     StatusComponent,
     ExerciseFilterComponent,
   ],
-  template: `<gt-section-heading index="07" title="Storico"><a class="button primary" routerLink="/piani"><gt-icon name="plus"/> Allenati</a></gt-section-heading>
+  template: `<gt-section-heading index="07" title="Storico"><a class="button primary" routerLink="/piani" gtDesign="history.train"><gt-icon name="plus" gtDesignIcon="history.train"/><span gtDesignLabel="history.train">Allenati</span></a></gt-section-heading>
     <gt-status />
     <gt-open-workouts />
     @if (selected(); as w) {
@@ -58,9 +59,9 @@ import { ExerciseFilterComponent } from "../shared/exercise-filter.component";
       <a class="button ghost" [routerLink]="['/riepilogo',w.id]">Riepilogo allenamento</a><p class="subtle">Per modificare la sessione, riaprila. Puoi configurare l’eliminazione dei terminati in Profilo → Impostazioni.</p>
       @for(exercise of s.workoutExercises(w.id);track exercise.id){<section class="card" style="margin-top:12px"><h3>{{exercise.name}}</h3>@if(exercise.substitutedFrom){<p class="subtle">Al posto di {{exercise.substitutedFrom.name}} · solo questa seduta</p>}@for(set of s.sets(exercise.id);track set.id){<p>Serie {{set.number}} · {{s.formatWeight(set.weight)}} {{s.settings().unit}} × {{set.reps}} · {{set.completed?'Confermata':'Non eseguita'}}</p>}</section>}
     } @else {
-      <div class="history-filters" role="group" aria-label="Filtri dello storico allenamenti">
+      <div gtDesign="history.filters" class="history-filters" role="group" aria-label="Filtri dello storico allenamenti">
         <label class="history-plan-filter"
-          >Piano<select
+          >Piano<select gtDesign="history.plan"
             [ngModel]="plan()"
             (ngModelChange)="plan.set($event); day.set('')"
           >

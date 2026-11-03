@@ -1,3 +1,4 @@
+import { DESIGN_DIRECTIVES } from '../design/design-directives';
 import {sessionVolume,exerciseRecords} from '../services/statistics';
 import {TodayService} from '../services/today';
 import {AppFeaturesService} from '../services/app-features';
@@ -16,7 +17,7 @@ import { matchesExercise } from '../services/exercise-search';
 @Component({
   standalone: true,
   styleUrls: ["./feature-polish.css", "./progress-design.css", "./progress-reference.css"],
-  imports: [
+  imports: [...DESIGN_DIRECTIVES,
     FormsModule,
     DataChartComponent,
     RouterLink,
@@ -26,19 +27,19 @@ import { matchesExercise } from '../services/exercise-search';
     ExerciseThumbComponent,
   ],
   template: `<div class="reference-progress">
-    <header class="progress-page-heading ref-page-header"><div><h1>Progressi</h1><p class="ref-progress-subtitle">Analizza i tuoi risultati</p></div><span class="progress-header-bars" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span></header>
+    <header class="progress-page-heading ref-page-header"><div><h1 gtDesign="progress.title">Progressi</h1><p class="ref-progress-subtitle">Analizza i tuoi risultati</p></div><span class="progress-header-bars" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span></header>
     <gt-status />
-    <details class="card progress-exercise-details">
+    <details class="card progress-exercise-details" gtDesign="progress.exerciseChart">
      <summary><gt-icon name="chart"/><span><strong>Progressi per esercizio</strong><small>Peso, volume, ripetizioni e 1RM stimato</small></span><span class="progress-detail-chevron">›</span></summary>
      <div class="progress-details-body"><gt-progress-chart /></div>
     </details>
-    <section class="card personal-records-panel reference-records">
+    <section class="card personal-records-panel reference-records" gtDesign="progress.records">
       <div class="card-head"><h2>Record personali</h2><gt-icon name="trophy"/></div>
-      <label class="record-search"><span class="sr-only">Cerca esercizio per nome o parola chiave</span><gt-icon name="search"/><input type="search" placeholder="Cerca per nome o parola chiave…" autocomplete="off" [ngModel]="recordQuery()" (ngModelChange)="recordQuery.set($event)"/></label>
+      <label class="record-search"><span class="sr-only">Cerca esercizio per nome o parola chiave</span><gt-icon name="search"/><input type="search" gtDesign="progress.search" placeholder="Cerca per nome o parola chiave…" autocomplete="off" [ngModel]="recordQuery()" (ngModelChange)="recordQuery.set($event)"/></label>
       <div class="record-selection-row">
-        <label class="record-exercise-select"><span>Esercizio</span><select [ngModel]="exerciseId()||defaultId()" (ngModelChange)="exerciseId.set($event);machine.set('')" aria-label="Esercizio dei record"><option value="" disabled>Seleziona un esercizio</option>@if(recordPinned();as exercise){<option [value]="exercise.id">{{exercise.name}} (selezionato)</option>}@for(exercise of recordOptions();track exercise.id){<option [value]="exercise.id">{{exercise.name}}</option>}</select></label>
+        <label class="record-exercise-select"><span>Esercizio</span><select [ngModel]="exerciseId()||defaultId()" gtDesign="progress.exercise" (ngModelChange)="exerciseId.set($event);machine.set('')" aria-label="Esercizio dei record"><option value="" disabled>Seleziona un esercizio</option>@if(recordPinned();as exercise){<option [value]="exercise.id">{{exercise.name}} (selezionato)</option>}@for(exercise of recordOptions();track exercise.id){<option [value]="exercise.id">{{exercise.name}}</option>}</select></label>
         @if(selectedExercise();as exercise){<gt-exercise-thumb class="record-exercise-thumb" [exercise]="exercise"/>}
-        <button type="button" class="record-filter-button ref-icon-button" (click)="recordFilters.set(!recordFilters())" [attr.aria-expanded]="recordFilters()" aria-controls="record-filters" aria-label="Filtra gli esercizi e le configurazioni dei record"><gt-icon name="sliders"/></button>
+        <button type="button" class="record-filter-button ref-icon-button" gtDesign="progress.filters" (click)="recordFilters.set(!recordFilters())" [attr.aria-expanded]="recordFilters()" aria-controls="record-filters" aria-label="Filtra gli esercizi e le configurazioni dei record"><gt-icon name="sliders"/></button>
       </div>
       @if(recordQuery().trim()||recordMode()!=='all'){<p class="record-result" role="status">{{recordOptions().length}} risultati@if(recordPinned()){ · Selezione attuale conservata}</p>}
       @if(recordFilters()){
@@ -56,7 +57,7 @@ import { matchesExercise } from '../services/exercise-search';
       </div>
       @if(weightRecords().length){<details class="record-weight-details"><summary>Record di ripetizioni per carico</summary><div class="actions">@for(r of weightRecords();track r.weight){<span class="pill">{{s.formatWeight(r.weight)}} {{s.settings().unit}} × {{r.reps}} rip</span>}</div></details>}
     </section>
-    <aside class="card record-information"><gt-icon name="info"/><p>{{comparison()?'L’1RM è una stima, non un massimale testato. Per corpo libero, zavorra e assistenza non si calcolano volume e 1RM.':'Registra almeno due sessioni con questo esercizio per confrontare i tuoi progressi.'}}</p></aside>
+    <aside class="card record-information" gtDesign="progress.info"><gt-icon name="info"/><p>{{comparison()?'L’1RM è una stima, non un massimale testato. Per corpo libero, zavorra e assistenza non si calcolano volume e 1RM.':'Registra almeno due sessioni con questo esercizio per confrontare i tuoi progressi.'}}</p></aside>
     <details class="card progress-overview-details"><summary><gt-icon name="chart"/><span>Riepilogo, peso e misure</span><gt-icon name="chevron-down"/></summary><div class="progress-overview-body">
     <div class="segmented progress-tabs ref-tabs" role="group" aria-label="Categoria dei progressi"><button type="button" [class.active]="category()==='strength'" [attr.aria-pressed]="category()==='strength'" (click)="category.set('strength')"><gt-icon name="strength"/>Forza</button><button type="button" [class.active]="category()==='weight'" [attr.aria-pressed]="category()==='weight'" (click)="category.set('weight')"><gt-icon name="scale"/>Peso</button><button type="button" [class.active]="category()==='body'" [attr.aria-pressed]="category()==='body'" (click)="category.set('body')"><gt-icon name="body"/>Corpo</button>@if(features?.nutritionEnabled()){<button type="button" [class.active]="category()==='nutrition'" [attr.aria-pressed]="category()==='nutrition'" (click)="category.set('nutrition')"><gt-icon name="nutrition"/>Pasti</button>}</div>
     @if(category()==='strength'){
@@ -68,7 +69,7 @@ import { matchesExercise } from '../services/exercise-search';
      <div class="filters progress-period-filter"><label class="ref-field"><span>Periodo</span><span class="ref-field-control ref-has-icon"><gt-icon name="calendar"/><select [ngModel]="period()" (ngModelChange)="period.set(+$event)"><option [ngValue]="-28">4 settimane</option><option [ngValue]="1">1 mese</option><option [ngValue]="3">3 mesi</option><option [ngValue]="6">6 mesi</option><option [ngValue]="12">1 anno</option><option [ngValue]="0">Tutto</option></select></span></label><a class="button secondary" routerLink="/profilo" [queryParams]="{section:category()==='nutrition'?'goals':'measurements'}">{{category()==='nutrition'?'Obiettivi':'Registra misurazione'}}</a></div>
     }
     <section class="progress-summary-grid ref-progress-summary" aria-label="Statistiche degli allenamenti nel periodo selezionato">
-     <div class="progress-summary-tile ref-progress-metric"><div class="ref-progress-metric-top"><gt-icon name="weight"/><span class="ref-badge neutral">Nel periodo</span></div><strong class="ref-metric-value">{{overviewSessions().length}}</strong><small>Sedute completate</small></div>
+     <div class="progress-summary-tile ref-progress-metric"><div class="ref-progress-metric-top"><gt-icon name="weight"/><span class="ref-badge neutral" gtDesign="progress.sessionsBadge">Nel periodo</span></div><strong class="ref-metric-value">{{overviewSessions().length}}</strong><small>Sedute completate</small></div>
      <div class="progress-summary-tile ref-progress-metric"><div class="ref-progress-metric-top"><gt-icon name="chart"/>@if(weeklyTrend();as trend){<span class="ref-badge" [class.green]="trend.increased" [class.neutral]="!trend.increased" title="Confronto tra le ultime due settimane complete">{{trend.label}}</span>}@else{<span class="ref-badge neutral">Nel periodo</span>}</div><strong class="ref-metric-value">{{overviewSessions().length?s.formatWeight(overviewVolume()):'—'}} <span>{{s.settings().unit}}</span></strong><small>Volume registrato</small></div>
      <div class="progress-summary-tile ref-progress-metric"><div class="ref-progress-metric-top"><gt-icon name="trophy"/><span class="ref-badge violet">{{overviewRecord()?.reference?'Riferimento':'Record'}}</span></div><strong class="ref-metric-value">{{overviewRecord()?overviewRecord()!.value:'—'}} @if(overviewRecord();as record){<span>{{record.unit}}</span>}</strong><small>{{overviewRecord()?.label||selectedExercise()?.name||'Nessun record registrato'}}</small></div>
      <div class="progress-summary-tile ref-progress-metric"><div class="ref-progress-metric-top"><gt-icon name="clock"/><span class="ref-badge neutral">Totale</span></div><strong class="ref-metric-value">@if(overviewDuration();as duration){ {{duration.value}} <span>{{duration.unit}}</span>@if(duration.minutes){<b class="ref-duration-minutes">{{duration.minutes}} <span>m</span></b>}}@else{—}</strong><small>Tempo di allenamento</small></div>
@@ -78,7 +79,7 @@ import { matchesExercise } from '../services/exercise-search';
     @if(category()==='body'){<section class="card performance-chart-card"><h2>Girovita</h2><gt-data-chart [points]="waistPoints()" unit="cm" title="Misurazioni del girovita"/></section><section class="card" style="margin-top:16px"><h2>Massa grassa registrata</h2><gt-data-chart [points]="fatPoints()" unit="%" title="Percentuale di massa grassa inserita manualmente"/><p class="subtle">Valori inseriti da te, non dedotti da fotografie.</p></section>}
     @if(features?.nutritionEnabled()&&category()==='nutrition'){<section class="card performance-chart-card"><h2>Calorie registrate</h2><gt-data-chart [points]="nutritionPoints()" unit="kcal" title="Calorie dei giorni registrati"/><p class="subtle">Solo i giorni con pasti registrati. Un giorno senza dati non è considerato un giorno a zero calorie.</p></section><a class="button primary full-width" style="margin-top:18px" routerLink="/alimentazione">Apri diario alimentare</a>}
     @if(category()==='strength'){
-    <section class="card performance-chart-card weekly-volume-card ref-weekly-card">
+    <section class="card performance-chart-card weekly-volume-card ref-weekly-card" gtDesign="progress.weeklyChart">
      <div class="card-head"><div><p class="ref-eyebrow">LA TUA COSTANZA</p><h2>Volume settimanale</h2></div><span class="ref-badge neutral">{{s.settings().unit}}</span></div>
      <div class="ref-weekly-summary"><strong>{{overviewSessions().length?s.formatWeight(overviewVolume()):'—'}} <span>{{s.settings().unit}}</span></strong>@if(weeklyTrend();as trend){<span class="ref-badge" [class.green]="trend.increased" [class.neutral]="!trend.increased" title="Confronto tra le ultime due settimane complete">{{trend.label}} ultima settimana</span>}</div>
      <p class="ref-weekly-description">Somma dei carichi esterni registrati nel periodo.</p>
