@@ -1,5 +1,14 @@
 import { FACTORY_PRESETS } from "./design-presets.js";
+import {
+  APPROVED_DESIGN_PRESETS,
+  APPROVED_THEME_IDS,
+} from "./approved-palettes.js";
 export { FACTORY_PRESETS };
+export { APPROVED_DESIGN_PRESETS };
+export const ALL_DESIGN_PRESETS = Object.freeze([
+  ...APPROVED_DESIGN_PRESETS,
+  ...FACTORY_PRESETS,
+]);
 
 export const DESIGN_SCHEMA_VERSION = 1;
 export const MAX_DESIGN_BYTES = 65536;
@@ -376,7 +385,7 @@ export function validDesign(value) {
       value.schemaVersion === 1 &&
       typeof value.enabled === "boolean" &&
       (value.presetId === "app_default" ||
-        FACTORY_PRESETS.some((p) => p.id === value.presetId)) &&
+        ALL_DESIGN_PRESETS.some((p) => p.id === value.presetId)) &&
       validStyle(value.global) &&
       designRecord(value.pages) &&
       Object.entries(value.pages).every(
@@ -401,7 +410,7 @@ export function parseDesign(value) {
   return JSON.parse(JSON.stringify(value));
 }
 export function presetStyle(id) {
-  const p = FACTORY_PRESETS.find((p) => p.id === id);
+  const p = ALL_DESIGN_PRESETS.find((p) => p.id === id);
   if (!p) return {};
   return {
     background: p.background,
@@ -424,11 +433,51 @@ export function presetStyle(id) {
 }
 export function resolveDesign(config, page, id) {
   if (!config.enabled) return {};
-  return {
-    ...presetStyle(config.presetId),
+  const base = presetStyle(config.presetId);
+  if (APPROVED_THEME_IDS.includes(config.presetId)) {
+    const entry = DESIGN_CONTROLS.find((control) => control.id === id);
+    const primary = [
+      "home.actions.schedule",
+      "home.actions.resume",
+      "training.actions.open",
+      "training.actions.resume",
+      "history.train",
+    ].includes(id);
+    if (!entry || entry.kind === "text") {
+      base.glowIntensity = 0;
+      base.shadowOpacity = 0;
+    } else if (!primary) {
+      base.glowIntensity = 0;
+      base.shadowOpacity = 0.12;
+      base.variant = "glass";
+      base.fill = base.card;
+    }
+    if (primary) {
+      base.variant = "gradient";
+      base.fill = base.primary;
+    }
+    // The weekly section groups its title and calendar; the calendar owns the surface.
+    if (id === "home.week") {
+      delete base.card;
+      delete base.fill;
+      delete base.variant;
+      base.glowIntensity = 0;
+      base.shadowOpacity = 0;
+    }
+  }
+  const overrides = {
     ...config.global,
     ...config.pages[page],
     ...(id ? config.instances[id] : {}),
+  };
+  return {
+    ...base,
+    ...overrides,
+    ...(overrides.fill !== undefined &&
+    overrides.variant === undefined &&
+    overrides.gradient === undefined
+      ? { variant: "solid" }
+      : {}),
   };
 }
 export function resolvePageDesign(config, page) {
@@ -511,8 +560,11 @@ export function designStyles(style, kind = "page") {
   };
   for (const [key, variable] of Object.entries(tokens))
     set(variable, style[key]);
+  if (style.secondary) set("--theme-tertiary", style.secondary);
   if (style.card) set("--nav-bg", style.card);
   if (style.primary) {
+    set("--theme-button-start", style.primary);
+    set("--theme-button-end", style.secondary || style.primary);
     set("--blue", style.primary);
     set("--accent-text", style.primary);
     set(
@@ -670,7 +722,46 @@ export function designStyles(style, kind = "page") {
     );
   }
   if (style.variant === "glass") {
-    set("background", style.card || "var(--card)");
+    const glassFill = style.fill || style.card;
+    if (glassFill) {
+      const tint = style.primary || "#FFFFFF";
+      const top =
+        "#" +
+        [1, 3, 5]
+          .map((i) =>
+            Math.round(
+              parseInt(glassFill.slice(i, i + 2), 16) * 0.88 +
+                parseInt(tint.slice(i, i + 2), 16) * 0.12,
+            )
+              .toString(16)
+              .padStart(2, "0"),
+          )
+          .join("");
+      const glassInk = readableDesignInk(style.text, [glassFill, top]);
+      const useGlassGradient =
+        Math.min(
+          designContrast(glassInk, glassFill),
+          designContrast(glassInk, top),
+        ) >= 4.5;
+      set(
+        "background",
+        useGlassGradient
+          ? `linear-gradient(150deg, ${top}, ${glassFill})`
+          : glassFill,
+      );
+      const safeInk = useGlassGradient
+        ? glassInk
+        : readableDesignInk(style.text, [glassFill]);
+      set("color", safeInk);
+      set("--text", safeInk);
+      set(
+        "--muted",
+        readableDesignInk(
+          style.muted || safeInk,
+          useGlassGradient ? [glassFill, top] : [glassFill],
+        ),
+      );
+    } else set("background", "var(--card)");
     set("backdrop-filter", `blur(${style.blur ?? 8}px)`);
   }
   if (style.motion !== undefined || style.duration !== undefined)

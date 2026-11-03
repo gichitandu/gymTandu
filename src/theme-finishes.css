@@ -40,3 +40,21 @@ body.theme-ready gt-shell.photo-controls .motion-controls button:last-child{back
 body.theme-ready gt-shell.photo-controls .motion-phases button{color:var(--accent-text)!important}
 body.theme-ready gt-shell.photo-controls :is(.motion-controls,.motion-phases,.motion-scrub){background:var(--card)}
 body.theme-ready gt-shell.photo-controls :is(.motion-controls>span,.motion-phases small){color:var(--muted)}
+/* Approved satin palettes: coordinated dark surfaces, with the strongest colour on the primary action. */
+body.theme-ready.theme-satin gt-shell.photo-controls{
+ --ref-primary-top:var(--theme-button-start);--ref-primary-bottom:var(--theme-button-end);--ref-primary-ink:var(--accent-ink);
+ --cta-start:var(--theme-button-start);--cta-end:var(--theme-button-end);--cta-ink:var(--accent-ink);
+ --ref-surface:linear-gradient(145deg,color-mix(in srgb,var(--accent) 9%,var(--card)),var(--card) 76%);
+ --ref-surface-soft:linear-gradient(155deg,color-mix(in srgb,var(--accent) 6%,var(--raised)),var(--card));
+ --ref-violet-surface:var(--ref-surface);--ref-line:color-mix(in srgb,var(--accent) 28%,var(--card));
+}
+body.theme-ready.theme-satin gt-shell.photo-controls :is(button.primary,.button.primary,.ref-action.primary){
+ background:linear-gradient(165deg,var(--theme-button-start),var(--theme-button-end));color:var(--accent-ink);border-color:color-mix(in srgb,var(--accent) 65%,white);
+ box-shadow:inset 0 1px 2px #ffffff38,inset 0 -1px 3px #00000014,0 0 calc(16px * var(--neon-glow,.55)) color-mix(in srgb,var(--accent) 20%,transparent);
+}
+body.theme-ready.theme-satin gt-shell.photo-controls :is(button.primary,.button.primary):disabled{box-shadow:none}
+body.theme-ready.theme-satin gt-shell.photo-controls :is(.home-shortcuts,.home-mini-stats)>a{background:var(--ref-surface);border-color:var(--ref-line);box-shadow:inset 0 1px #ffffff12,0 3px 10px #00000013}
+body.theme-ready.theme-satin gt-shell.photo-controls :is(.ref-tabs,.segmented,.neon-segments)>:is(button,a).active,
+body.theme-ready.theme-satin gt-shell.photo-controls .bottom-nav a.selected gt-icon{
+ background:linear-gradient(155deg,var(--theme-button-start),var(--theme-button-end));color:var(--accent-ink);border-color:var(--accent);box-shadow:inset 0 1px #ffffff30,0 0 calc(12px * var(--neon-glow,.55)) color-mix(in srgb,var(--accent) 18%,transparent);
+}

@@ -1,0 +1,15 @@
+
+> gymtrack@1.0.0 test
+> vitest run tests/approved-palettes.test.ts tests/theme-palettes.test.ts tests/theme-picker.test.ts tests/theme-persistence.test.ts tests/theme-races.test.ts tests/theme-backup.test.ts tests/auth.test.ts tests/archive-worker.test.ts tests/design-system.test.ts tests/design-studio-worker.test.ts tests/design-studio-client.test.ts
+
+
+ RUN  v5.0.4 /workspace/gymtrack
+
+
+ Test Files  11 passed (11)
+      Tests  130 passed (130)
+   Start at  11:41:52
+   Duration  9.48s (tests 60%, import 36%, transform 3%, worker 1%)
+
+    Isolate  11 workers spawned · ~165ms startup each (spawn + environment, per file)
+             at least ~1.65s faster with isolate: false — reuses workers across files instead of one per file

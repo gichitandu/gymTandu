@@ -1,0 +1,120 @@
+{
+  "status": "approvata dall’utente e implementata",
+  "restoration": "I preset blu-azzurro e viola-neon esistono ancora e vanno rimessi nell'elenco selezionabile senza alterarne gli ID o i valori storici.",
+  "palettes": [
+    {
+      "number": 1,
+      "name": "Blu Azzurro originale",
+      "existingId": "blu-azzurro",
+      "background": "#040C19",
+      "card": "#0C2036",
+      "accent": "#0DD9FF",
+      "text": "#F1FBFF",
+      "muted": "#A8C3D8",
+      "buttonText": "#031927"
+    },
+    {
+      "number": 2,
+      "name": "Viola Neon originale",
+      "existingId": "viola-neon",
+      "background": "#151225",
+      "card": "#28223D",
+      "accent": "#CC70FF",
+      "text": "#F7F5FF",
+      "muted": "#B8BCD4",
+      "buttonText": "#160726",
+      "existingButtonGradient": [
+        "#C53EE7",
+        "#8502B7"
+      ]
+    },
+    {
+      "number": 3,
+      "name": "Petrolio Lumina",
+      "background": "#061A1D",
+      "card": "#11363B",
+      "accent": "#2FE3CB",
+      "secondary": "#0A9EA5",
+      "buttonGradient": [
+        "#55E8D6",
+        "#159AAA"
+      ],
+      "buttonText": "#032321"
+    },
+    {
+      "number": 4,
+      "name": "Smeraldo Sport",
+      "background": "#081911",
+      "card": "#16362A",
+      "accent": "#55D99C",
+      "secondary": "#139768",
+      "buttonGradient": [
+        "#69E6B0",
+        "#1BA878"
+      ],
+      "buttonText": "#062219"
+    },
+    {
+      "number": 5,
+      "name": "Rubino Carbonio",
+      "background": "#1B0D15",
+      "card": "#351D2B",
+      "accent": "#F47A9F",
+      "secondary": "#B82E61",
+      "buttonGradient": [
+        "#FF9BB9",
+        "#D84F80"
+      ],
+      "buttonText": "#2B0C1B"
+    },
+    {
+      "number": 6,
+      "name": "Oro Satinato",
+      "background": "#14110B",
+      "card": "#2E281B",
+      "accent": "#E1BF71",
+      "secondary": "#9A743B",
+      "buttonGradient": [
+        "#F6DEA0",
+        "#BC9350"
+      ],
+      "buttonText": "#241909"
+    },
+    {
+      "number": 7,
+      "name": "Argento Artico",
+      "background": "#0B1420",
+      "card": "#1A2B3D",
+      "accent": "#C1D6ED",
+      "secondary": "#709FCB",
+      "buttonGradient": [
+        "#D8E9F7",
+        "#8DAFCE"
+      ],
+      "buttonText": "#11263A"
+    },
+    {
+      "number": 8,
+      "name": "Prugna Rosé",
+      "background": "#1B1120",
+      "card": "#36243C",
+      "accent": "#E9A9D1",
+      "secondary": "#AD6EA5",
+      "buttonGradient": [
+        "#F7C4DF",
+        "#BB7AAC"
+      ],
+      "buttonText": "#2A1025"
+    }
+  ],
+  "paletteIds": [
+    "blu-azzurro",
+    "viola-neon",
+    "petrolio-lumina",
+    "smeraldo-sport",
+    "rubino-carbonio",
+    "oro-satinato",
+    "argento-artico",
+    "prugna-rose"
+  ]
+}

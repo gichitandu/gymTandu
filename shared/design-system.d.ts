@@ -84,6 +84,8 @@ export interface DesignFactory {
   typography: { family: string; scale: number };
 }
 export const FACTORY_PRESETS: readonly DesignFactory[];
+export const APPROVED_DESIGN_PRESETS: readonly DesignFactory[];
+export const ALL_DESIGN_PRESETS: readonly DesignFactory[];
 export const DESIGN_SCHEMA_VERSION: 1;
 export const MAX_DESIGN_BYTES: number;
 export const DESIGN_PAGES: readonly {

@@ -9,6 +9,9 @@ import {
   DESIGN_NUMBERS,
   DESIGN_PAGES,
   FACTORY_PRESETS,
+  DesignFactory,
+  gradientCss,
+  APPROVED_DESIGN_PRESETS,
   DesignConfig,
   DesignGradient,
   DesignPage,
@@ -107,6 +110,7 @@ export class DesignStudioComponent {
   renameName = "";
   pages = DESIGN_PAGES;
   factories = FACTORY_PRESETS;
+  approvedFactories = APPROVED_DESIGN_PRESETS;
   icons = DESIGN_ICONS;
   numbers: NumberField[] = Object.entries(DESIGN_NUMBERS).map(
     ([key, [min, max, step]]) => ({
@@ -406,6 +410,9 @@ export class DesignStudioComponent {
     if (index === 0 || index === gradient.stops.length - 1) return;
     gradient.stops.splice(index, 1);
     this.set("gradient", gradient);
+  }
+  paletteGradient(preset: DesignFactory) {
+    return gradientCss(preset.gradient);
   }
   applyFactory(id: string) {
     if (!this.authorized() || this.busy()) return;

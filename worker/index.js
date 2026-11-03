@@ -3,6 +3,7 @@ import { pushReminderApi } from './push.js';
 import {excelImportsApi,appFeaturesApi} from './program-imports.js';
 import { archiveApi } from './archive.js';
 import { designStudioApi } from './design-studio.js';
+import { APPROVED_THEME_IDS } from '../shared/approved-palettes.js';
 import { calendarApi, calendarPublish, calendarConfigure } from './calendar.js';
 // The platform's ChatGPT access boundary remains in place. App sessions are
 // additionally bound to that authenticated visitor, and never stored in JS.
@@ -27,7 +28,7 @@ function equal(a, b) { if(a.length !== b.length) return false; let d=0; for(let 
 function json(data, status=200, headers={}) { return Response.json(data,{status,headers:{'Cache-Control':'no-store','X-Content-Type-Options':'nosniff',...headers}}); }
 function fail(message,status=400) { throw Object.assign(new Error(message),{status}); }
 function validThemeConfig(value) {
-  return !!value&&typeof value==='object'&&!Array.isArray(value)&&Object.keys(value).every(key=>['palette','mode','background','accent'].includes(key))&&['oro','argento','multicolore','bianco-elegante','scuro','rosso','verde','viola-neon','blu-azzurro','carbonio','artico','prugna','petrolio','sabbia','ghiaccio'].includes(value.palette)&&['dark','light','system'].includes(value.mode)&&['background','accent'].every(key=>value[key]===undefined||typeof value[key]==='string'&&/^#[0-9a-fA-F]{6}$/.test(value[key]));
+  return !!value&&typeof value==='object'&&!Array.isArray(value)&&Object.keys(value).every(key=>['palette','mode','background','accent'].includes(key))&&[...APPROVED_THEME_IDS,'oro','argento','multicolore','bianco-elegante','scuro','rosso','verde','viola-neon','blu-azzurro','carbonio','artico','prugna','petrolio','sabbia','ghiaccio'].includes(value.palette)&&['dark','light','system'].includes(value.mode)&&['background','accent'].every(key=>value[key]===undefined||typeof value[key]==='string'&&/^#[0-9a-fA-F]{6}$/.test(value[key]));
 }
 const publicUser = u => ({id:u.id,email:u.email,name:u.name,username:u.username||null,role:u.role,active:!!u.active,owner:u.email===OWNER});
 function validPassword(p) { if(typeof p!=='string'||p.length<8||p.length>128) fail('Usa una password da 8 a 128 caratteri.'); }

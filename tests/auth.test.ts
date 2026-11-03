@@ -2,6 +2,7 @@ import { beforeEach, afterEach, it, expect, vi } from 'vitest';
 import { DatabaseSync } from 'node:sqlite';
 import { readFileSync, readdirSync } from 'node:fs';
 import { api, IOS_LOGOUT_RECOVERY_BEFORE, IOS_REFRESH_RECOVERY_ID } from '../worker/index.js';
+import {APPROVED_THEME_PALETTES} from '../shared/approved-palettes.js';
 let sql: DatabaseSync;
 let env: any;
 const origin='https://gymtrack.test';
@@ -229,4 +230,21 @@ it('saves every new preset and its custom colors without changing account permis
   expect(await (await call('preferences',undefined,{cookie})).json()).toEqual({backgroundColor:'#182735',themeConfig});
  }
  expect(sql.prepare('SELECT * FROM users ORDER BY id').all()).toEqual(before);
+});
+
+it('persists all eight approved personal palettes for every role without changing users or permissions',async()=>{
+ const ownerCookie=await activate(),sessions=[{cookie:ownerCookie}];
+ for(const role of ['Admin','User']){
+  const username='approved-'+role.toLowerCase();
+  expect((await call('users',{name:role,email:username+'@example.com',username,role,password:'abcdefgh'},{cookie:ownerCookie})).status).toBe(201);
+  const response=await call('auth/login',{email:username,password:'abcdefgh'},{visitor:username});
+  sessions.push({cookie:response.headers.get('set-cookie')!.split(';')[0],visitor:username} as any);
+ }
+ const users=sql.prepare('SELECT * FROM users ORDER BY id').all();
+ for(const session of sessions)for(const palette of APPROVED_THEME_PALETTES){
+  const themeConfig={palette:palette.id,mode:'dark'};
+  expect((await call('preferences',{backgroundColor:palette.background,themeConfig},session)).status).toBe(200);
+  expect(await (await call('preferences',undefined,session)).json()).toEqual({backgroundColor:palette.background,themeConfig});
+ }
+ expect(sql.prepare('SELECT * FROM users ORDER BY id').all()).toEqual(users);
 });

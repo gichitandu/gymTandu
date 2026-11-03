@@ -13,6 +13,8 @@ import {
   ThemeMode,
   THEME_PALETTES,
   THEME_PRESETS,
+  STANDARD_THEME_PRESETS,
+  APPROVED_THEME_PALETTES,
   resolveTheme,
   validThemeConfig,
 } from "../services/theme-palettes";
@@ -29,6 +31,18 @@ export class ThemePickerComponent {
   readonly theme = inject(ThemeService);
   private auth = inject(AuthService);
   readonly palettes = THEME_PRESETS;
+  readonly paletteGroups = [
+    {
+      id: "approved",
+      name: "Le palette approvate",
+      palettes: APPROVED_THEME_PALETTES,
+    },
+    {
+      id: "standard",
+      name: "Altri temi disponibili",
+      palettes: STANDARD_THEME_PRESETS,
+    },
+  ];
   readonly modes: { value: ThemeMode; label: string }[] = [
     { value: "dark", label: "Scuro" },
     { value: "light", label: "Chiaro" },
@@ -49,10 +63,14 @@ export class ThemePickerComponent {
     () => !this.palettes.some((palette) => palette.id === this.draft().palette),
   );
   readonly previewSecondary = computed(() =>
-    this.draft().accent ? this.colors().accent : this.selectedPalette()?.secondary || this.colors().accent,
+    this.draft().accent
+      ? this.colors().accent
+      : this.selectedPalette()?.secondary || this.colors().accent,
   );
   readonly previewTertiary = computed(() =>
-    this.draft().accent ? this.colors().accent : this.selectedPalette()?.tertiary || this.colors().accent,
+    this.draft().accent
+      ? this.colors().accent
+      : this.selectedPalette()?.tertiary || this.colors().accent,
   );
   readonly saving = signal(false);
   readonly issue = signal("");

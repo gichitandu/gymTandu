@@ -1,5 +1,8 @@
 // Run against the loopback fixture; never connects to the published Site.
 import assert from "node:assert/strict";
+import {mkdir} from "node:fs/promises";
+const outputDirectory=process.env.GYMTRACK_QA_OUTPUT||"docs/qa";
+await mkdir(outputDirectory,{recursive:true});
 const { chromium } = await import(
   process.env.GYMTRACK_PLAYWRIGHT_MODULE || "playwright"
 );
@@ -217,7 +220,8 @@ try {
   await page
     .getByRole("button", { name: "Temi e preset", exact: true })
     .click();
-  const paletteButtons = page.locator(".studio-palette");
+  await page.locator(".studio-other-palettes > summary").click();
+  const paletteButtons = page.locator(".studio-palette-legacy");
   await paletteButtons.first().waitFor();
   assert.equal(await paletteButtons.count(), 12);
   for (let i = 0; i < 12; i++) {
@@ -238,7 +242,7 @@ try {
       }[id],
     ).waitFor();
     await page.screenshot({
-      path: "docs/qa/gt-studio-" + id + "-desktop.png",
+      path: outputDirectory+"/gt-studio-" + id + "-desktop.png",
       fullPage: true,
     });
   }
@@ -269,7 +273,7 @@ try {
     .click();
   await page.locator(".studio-preview-panel").waitFor({ state: "visible" });
   await page.screenshot({
-    path: "docs/qa/gt-studio-mobile.png",
+    path: outputDirectory+"/gt-studio-mobile.png",
     fullPage: true,
   });
   mark("390px mobile layout without horizontal overflow");

@@ -570,7 +570,7 @@
                 <gt-icon name="palette" />
                 <div>
                   <h2>Palette GT</h2>
-                  <p>12 originali · valori HEX del pacchetto approvato</p>
+                  <p>Blu e viola originali · sei nuove palette approvate</p>
                 </div>
               </div>
               <label class="studio-toggle"
@@ -583,18 +583,28 @@
                 Applica il sistema di stile Studio</label
               >
               <div class="studio-palette-grid">
-                @for (preset of factories; track preset.id) {
+                @for (preset of approvedFactories; track preset.id) {
                   <button
                     type="button"
-                    class="studio-palette"
+                    class="studio-palette studio-palette-approved"
+                    [attr.data-palette-id]="preset.id"
                     [class.selected]="draft().presetId === preset.id"
                     [attr.aria-pressed]="draft().presetId === preset.id"
                     (click)="applyFactory(preset.id)"
                     [disabled]="busy()"
                   >
                     <span
-                      class="studio-palette-art"
+                      class="studio-palette-art studio-approved-art"
                       [style.background]="preset.background"
+                      ><span class="studio-palette-mini"
+                        ><span
+                          class="studio-palette-mini-cta"
+                          [style.background]="paletteGradient(preset)"
+                        ></span
+                        ><span class="studio-palette-mini-row"
+                          ><i [style.background]="preset.card"></i
+                          ><i [style.background]="preset.card"></i
+                          ><i [style.background]="preset.card"></i></span></span
                       ><i [style.background]="preset.primary"></i
                       ><i [style.background]="preset.secondary"></i
                       ><i [style.background]="preset.card"></i
@@ -606,6 +616,33 @@
                   </button>
                 }
               </div>
+              <details class="studio-other-palettes">
+                <summary>Altre 12 palette GT</summary>
+                <div class="studio-palette-grid">
+                  @for (preset of factories; track preset.id) {
+                    <button
+                      type="button"
+                      class="studio-palette studio-palette-legacy"
+                      [class.selected]="draft().presetId === preset.id"
+                      [attr.aria-pressed]="draft().presetId === preset.id"
+                      (click)="applyFactory(preset.id)"
+                      [disabled]="busy()"
+                    >
+                      <span
+                        class="studio-palette-art"
+                        [style.background]="preset.background"
+                        ><i [style.background]="preset.primary"></i
+                        ><i [style.background]="preset.secondary"></i
+                        ><i [style.background]="preset.card"></i
+                        ><i [style.background]="preset.text"></i></span
+                      ><strong>{{ preset.name }}</strong>
+                      @if (draft().presetId === preset.id) {
+                        <gt-icon name="check" />
+                      }
+                    </button>
+                  }
+                </div>
+              </details>
               <p class="studio-hint">
                 Selezionare una palette prepara il preset originale in anteprima
                 e rimuove gli override della bozza. I tuoi temi personali

@@ -1,0 +1,1 @@
+PASS packaged Worker: session gate, migration, draft, publish, published read and rollback in isolated SQLite.

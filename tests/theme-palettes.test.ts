@@ -9,8 +9,8 @@ function readable(tokens:ReturnType<typeof resolveTheme>){
  expect(contrastRatio(tokens.buttonText,tokens.accent)).toBeGreaterThanOrEqual(4.5);
 }
 describe('complete personal theme palettes',()=>{
- it('offers the seven requested presets while retaining saved legacy palettes in their natural mode',()=>{
-  expect(THEME_PRESETS.map(p=>p.id)).toEqual(['oro','argento','multicolore','bianco-elegante','scuro','rosso','verde']);
+ it('offers the eight approved presets followed by the seven existing themes, preserving legacy colours',()=>{
+  expect(THEME_PRESETS.map(p=>p.id)).toEqual(['blu-azzurro','viola-neon','petrolio-lumina','smeraldo-sport','rubino-carbonio','oro-satinato','argento-artico','prugna-rose','oro','argento','multicolore','bianco-elegante','scuro','rosso','verde']);
   for(const id of ['viola-neon','blu-azzurro','carbonio','artico','prugna','petrolio','sabbia','ghiaccio'])expect(THEME_PALETTES.some(p=>p.id===id)).toBe(true);
   for(const palette of THEME_PALETTES){const tokens=resolveTheme({palette:palette.id,mode:palette.tone},false);expect(tokens.background).toBe(palette.background);expect(tokens.card).toBe(palette.card);expect(tokens.accent).toBe(palette.accent);expect(tokens.text).toBe(palette.text);readable(tokens);}
  });

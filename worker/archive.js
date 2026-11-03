@@ -1,7 +1,8 @@
 import {validateImportedProgramOverlaps} from './program-imports.js';
+import { APPROVED_THEME_IDS } from '../shared/approved-palettes.js';
 export const ARCHIVE_LIMIT_BYTES = 50 * 1024 * 1024;
 function archiveValidThemeConfig(value) {
- return !!value&&typeof value==='object'&&!Array.isArray(value)&&Object.keys(value).every(key=>['palette','mode','background','accent'].includes(key))&&['oro','argento','multicolore','bianco-elegante','scuro','rosso','verde','viola-neon','blu-azzurro','carbonio','artico','prugna','petrolio','sabbia','ghiaccio'].includes(value.palette)&&['dark','light','system'].includes(value.mode)&&['background','accent'].every(key=>value[key]===undefined||typeof value[key]==='string'&&/^#[0-9a-fA-F]{6}$/.test(value[key]));
+ return !!value&&typeof value==='object'&&!Array.isArray(value)&&Object.keys(value).every(key=>['palette','mode','background','accent'].includes(key))&&[...APPROVED_THEME_IDS,'oro','argento','multicolore','bianco-elegante','scuro','rosso','verde','viola-neon','blu-azzurro','carbonio','artico','prugna','petrolio','sabbia','ghiaccio'].includes(value.palette)&&['dark','light','system'].includes(value.mode)&&['background','accent'].every(key=>value[key]===undefined||typeof value[key]==='string'&&/^#[0-9a-fA-F]{6}$/.test(value[key]));
 }
 const ARCHIVE_RETAINED_VERSIONS = 10;
 const archiveTables = ['profiles','roles','plans','days','planExercises','exercises','muscleGroups','workouts','workoutExercises','sets','settings','meals','scheduledWorkouts','measurements','exercisePreferences','workoutUi','wellnessLogs'];

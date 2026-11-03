@@ -2,6 +2,45 @@
   display: block;
   min-width: 0;
 }
+.palette-group-title {
+  font-size: 12px;
+  font-weight: 650;
+  margin: 20px 0 10px;
+  color: var(--preview-text);
+}
+.palette-tile.satin {
+  background: linear-gradient(
+    145deg,
+    color-mix(in srgb, var(--tile-accent) 9%, var(--tile-bg)),
+    var(--tile-bg) 65%
+  );
+  box-shadow: inset 0 1px #ffffff12;
+}
+.palette-tile.satin .mini-left > b {
+  background: linear-gradient(
+    135deg,
+    var(--tile-button-start),
+    var(--tile-button-end)
+  );
+  box-shadow: 0 0 10px color-mix(in srgb, var(--tile-accent) 15%, transparent);
+}
+.palette-tile.satin .mini-card {
+  background: linear-gradient(
+    145deg,
+    color-mix(in srgb, var(--tile-card) 90%, var(--tile-accent)),
+    var(--tile-card)
+  );
+  box-shadow: inset 0 1px #ffffff09;
+}
+.theme-studio.preview-satin .sample-button,
+.theme-studio.preview-satin .save-theme {
+  background: linear-gradient(
+    160deg,
+    var(--preview-button-start),
+    var(--preview-button-end)
+  );
+  color: var(--preview-ink);
+}
 .theme-studio {
   --studio-radius: 15px;
   background: var(--preview-bg);
@@ -223,26 +262,55 @@
   border-color: var(--tile-accent);
 }
 .palette-tile.metallic {
-  background: linear-gradient(135deg, color-mix(in srgb, var(--tile-accent) 13%, var(--tile-bg)), var(--tile-bg) 58%);
-  box-shadow: inset 0 1px color-mix(in srgb, var(--tile-accent) 40%, transparent);
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--tile-accent) 13%, var(--tile-bg)),
+    var(--tile-bg) 58%
+  );
+  box-shadow: inset 0 1px
+    color-mix(in srgb, var(--tile-accent) 40%, transparent);
 }
 .palette-tile.metallic .mini-card {
-  background: linear-gradient(135deg, color-mix(in srgb, var(--tile-accent) 15%, var(--tile-card)), var(--tile-card) 62%);
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--tile-accent) 15%, var(--tile-card)),
+    var(--tile-card) 62%
+  );
 }
 .palette-tile.metallic .mini-left > b {
-  background: linear-gradient(110deg, var(--tile-secondary), var(--tile-accent) 48%, var(--tile-tertiary));
+  background: linear-gradient(
+    110deg,
+    var(--tile-secondary),
+    var(--tile-accent) 48%,
+    var(--tile-tertiary)
+  );
   box-shadow: none;
 }
 .palette-tile.multicolor {
-  background: radial-gradient(ellipse at 100% 0, color-mix(in srgb, var(--tile-secondary) 16%, transparent), transparent 68%), var(--tile-bg);
+  background:
+    radial-gradient(
+      ellipse at 100% 0,
+      color-mix(in srgb, var(--tile-secondary) 16%, transparent),
+      transparent 68%
+    ),
+    var(--tile-bg);
 }
 .palette-tile.multicolor .mini-left > b {
-  background: linear-gradient(100deg, var(--tile-accent), var(--tile-secondary) 54%, var(--tile-tertiary));
+  background: linear-gradient(
+    100deg,
+    var(--tile-accent),
+    var(--tile-secondary) 54%,
+    var(--tile-tertiary)
+  );
   box-shadow: none;
 }
 .palette-tile.multicolor .mini-card {
   border-color: color-mix(in srgb, var(--tile-secondary) 35%, var(--tile-card));
-  background: linear-gradient(135deg, color-mix(in srgb, var(--tile-secondary) 15%, var(--tile-card)), color-mix(in srgb, var(--tile-tertiary) 10%, var(--tile-card)));
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--tile-secondary) 15%, var(--tile-card)),
+    color-mix(in srgb, var(--tile-tertiary) 10%, var(--tile-card))
+  );
 }
 .palette-tile.multicolor .mini-card > span > b:nth-child(2) {
   background: var(--tile-secondary);
@@ -456,16 +524,30 @@
   font-weight: 700;
 }
 .preview-multicolor .sample-button {
-  background: linear-gradient(110deg, var(--preview-accent), var(--preview-secondary) 56%, var(--preview-tertiary));
+  background: linear-gradient(
+    110deg,
+    var(--preview-accent),
+    var(--preview-secondary) 56%,
+    var(--preview-tertiary)
+  );
 }
 .preview-metallic .sample-button {
-  background: linear-gradient(110deg, var(--preview-secondary), var(--preview-accent) 48%, var(--preview-tertiary));
+  background: linear-gradient(
+    110deg,
+    var(--preview-secondary),
+    var(--preview-accent) 48%,
+    var(--preview-tertiary)
+  );
 }
 .preview-multicolor .example-mark {
   color: var(--preview-accent-text);
 }
 .preview-multicolor .example-card {
-  background: linear-gradient(135deg, color-mix(in srgb, var(--preview-secondary) 8%, var(--preview-card)), color-mix(in srgb, var(--preview-tertiary) 7%, var(--preview-card)));
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--preview-secondary) 8%, var(--preview-card)),
+    color-mix(in srgb, var(--preview-tertiary) 7%, var(--preview-card))
+  );
 }
 .theme-actions {
   display: grid;

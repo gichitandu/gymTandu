@@ -76,9 +76,10 @@ it("previews preset, mode and color choices locally until explicit save", () => 
   expect(theme.saveConfig).not.toHaveBeenCalled();
 });
 
-it("offers the seven new presets without discarding a saved legacy theme", () => {
+it("offers the eight approved palettes and keeps the seven previous presets without discarding the saved theme", () => {
   const { component } = setup();
   expect(component.palettes.map((palette) => palette.id)).toEqual([
+    'blu-azzurro','viola-neon','petrolio-lumina','smeraldo-sport','rubino-carbonio','oro-satinato','argento-artico','prugna-rose',
     "oro", "argento", "multicolore", "bianco-elegante", "scuro", "rosso", "verde",
   ]);
   expect(component.draft()).toEqual(saved);
@@ -221,4 +222,16 @@ it("rejects malformed HEX input without corrupting the draft or writing a prefer
   expect(component.issue()).toBe("");
   component.resetColors();
   expect(component.draft()).toEqual(saved);
+});
+
+it('previews every approved palette without saving, then restores its original colours after customisation',()=>{
+ const {component,theme}=setup();
+ expect(component.paletteGroups[0].palettes).toHaveLength(8);expect(component.paletteGroups[1].palettes).toHaveLength(7);
+ for(const palette of component.paletteGroups[0].palettes){
+  component.choosePalette(palette.id);expect(component.draft()).toEqual({palette:palette.id,mode:'dark'});
+  component.setColor('accent','#ABCDEF');component.setColor('background','#112233');component.resetColors();
+  expect(component.colors().background).toBe(palette.background);expect(component.colors().accent).toBe(palette.accent);
+  component.cancel();expect(component.draft()).toEqual(saved);
+ }
+ expect(theme.saveConfig).not.toHaveBeenCalled();
 });

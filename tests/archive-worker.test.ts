@@ -197,3 +197,14 @@ it('retains every new theme preset and custom colors in account snapshots',async
   expect(JSON.parse(loaded.data.backup).data.settings[0].themeConfig).toEqual(themeConfig);
  }
 });
+
+it('round-trips all approved palette IDs through server backups without changing the workout archive',async()=>{
+ const original=JSON.parse(backup);let revision=0;
+ for(const palette of ['blu-azzurro','viola-neon','petrolio-lumina','smeraldo-sport','rubino-carbonio','oro-satinato','argento-artico','prugna-rose']){
+  const data=structuredClone(original);data.data.settings[0].themeConfig={palette,mode:'dark'};
+  expect((await put(JSON.stringify(data),revision++)).response.status).toBe(200);
+  const saved=JSON.parse((await get()).data.backup);
+  expect(saved.data.settings[0].themeConfig).toEqual({palette,mode:'dark'});
+  expect(saved.data.plans).toEqual(original.data.plans);expect(saved.data.sets).toEqual(original.data.sets);expect(saved.data.profiles).toEqual(original.data.profiles);
+ }
+});

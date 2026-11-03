@@ -1,0 +1,29 @@
+PASS Eight approved palettes visible first, with all seven existing themes retained
+PASS Blu Azzurro: preview, reset, save, real Home gradient and reload
+PASS Viola Neon: preview, reset, save, real Home gradient and reload
+PASS Petrolio Lumina: preview, reset, save, real Home gradient and reload
+PASS Smeraldo Sport: preview, reset, save, real Home gradient and reload
+PASS Rubino Carbonio: preview, reset, save, real Home gradient and reload
+PASS Oro Satinato: preview, reset, save, real Home gradient and reload
+PASS Argento Artico: preview, reset, save, real Home gradient and reload
+PASS Prugna Rosé: preview, reset, save, real Home gradient and reload
+PASS Personal theme selector has no horizontal overflow at 390px
+PASS Studio previews all eight approved presets without publishing; twelve original factories preserved
+PASS Cancel preserves publication; no browser application exceptions
+{
+  "passed": 12,
+  "results": [
+    "Eight approved palettes visible first, with all seven existing themes retained",
+    "Blu Azzurro: preview, reset, save, real Home gradient and reload",
+    "Viola Neon: preview, reset, save, real Home gradient and reload",
+    "Petrolio Lumina: preview, reset, save, real Home gradient and reload",
+    "Smeraldo Sport: preview, reset, save, real Home gradient and reload",
+    "Rubino Carbonio: preview, reset, save, real Home gradient and reload",
+    "Oro Satinato: preview, reset, save, real Home gradient and reload",
+    "Argento Artico: preview, reset, save, real Home gradient and reload",
+    "Prugna Rosé: preview, reset, save, real Home gradient and reload",
+    "Personal theme selector has no horizontal overflow at 390px",
+    "Studio previews all eight approved presets without publishing; twelve original factories preserved",
+    "Cancel preserves publication; no browser application exceptions"
+  ]
+}
