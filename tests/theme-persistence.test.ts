@@ -120,3 +120,20 @@ it('ignores invalid saved login palettes and does not replace a signed-in accoun
  t.theme.restoreEntryTheme();
  expect(t.theme.config()).toEqual(DEFAULT_THEME);
 });
+
+it('keeps the signed-out palette across a network reconnect and skips private preference reads',async()=>{
+ const entries=new Map<string,string>();
+ vi.stubGlobal('localStorage',{getItem:(key:string)=>entries.get(key)??null,setItem:(key:string,value:string)=>entries.set(key,value)});
+ const t=await setup();
+ const chosen:ThemeConfig={palette:'viola-neon',mode:'dark',accent:'#D994FF'};
+ expect(await t.theme.saveConfig(chosen)).toBe(true);
+ const calls=t.request.mock.calls.length;
+ t.account.set(null as unknown as {id:string});
+ t.theme.config.set({...DEFAULT_THEME});
+ t.emitOnline();
+ expect(t.theme.config()).toEqual(chosen);
+ await t.theme.load();
+ expect(t.theme.config()).toEqual(chosen);
+ expect(t.request).toHaveBeenCalledTimes(calls);
+ expect(t.styles.get('--accent')).toBe('#D994FF');
+});
