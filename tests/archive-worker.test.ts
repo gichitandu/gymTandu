@@ -82,14 +82,46 @@ it('keeps the previous archive after object write or database failures and prese
  const recovered=await get();expect(recovered.data.revision).toBe(2);expect(recovered.data.backup).toBe(backup);
 });
 
-it('keeps ten immutable recovery versions and can read a previous version without changing the current head',async()=>{
+it('keeps ten rolling versions plus protected recovery copies without changing the current head on reads',async()=>{
  for(let revision=0;revision<13;revision++)expect((await put(backup,revision)).response.status).toBe(200);
  const history=await get('device',{query:'&history=1'});
- expect(history.data.revision).toBe(13);expect(history.data.versions.map((version:any)=>version.revision)).toEqual([13,12,11,10,9,8,7,6,5,4]);
- expect(objects.size).toBe(10);
+ expect(history.data.revision).toBe(13);expect(history.data.versions.map((version:any)=>version.revision)).toEqual([13,12,11,10,9,8,7,6,5,4,1]);
+ expect(objects.size).toBe(11);
  const previous=await get('device',{query:'&version=4'});expect(previous.data.revision).toBe(4);expect(previous.data.headRevision).toBe(13);expect(previous.data.backup).toBe(backup);
  expect((await get('device',{query:'&version=3'})).response.status).toBe(404);
  expect((await get()).data.revision).toBe(13);
+});
+
+function recordedArchive() {
+ const data=seed(),at='2026-11-03T17:00:00Z';
+ data.workouts.push({id:'recorded',userId:'local',planId:'p',dayId:'d',planName:'Piano personale',dayName:'Seduta A',date:'2026-11-03',startedAt:at,endedAt:'2026-11-03T18:00:00Z',duration:60,status:'completed',notes:''});
+ data.workoutExercises.push({id:'recorded-exercise',workoutId:'recorded',exerciseId:'exercise-0',name:'Panca',loadMode:'external',order:0,rest:90,notes:''});
+ data.sets.push({id:'recorded-set',workoutExerciseId:'recorded-exercise',number:1,weight:72.5,reps:9,completed:true});return data;
+}
+it('rejects stale copies that remove a finished workout or completed flags even with the current revision',async()=>{
+ const data=recordedArchive(),text=await exportBackup(data);expect((await put(text)).response.status).toBe(200);
+ for(const change of [(row:any)=>{row.data.workouts=[];row.data.workoutExercises=[];row.data.sets=[];},(row:any)=>{row.data.sets[0].completed=false;},(row:any)=>{row.data.workouts[0].status='draft';}]) {
+  const stale=JSON.parse(text);change(stale);const rejected=await put(JSON.stringify(stale),1);
+  expect(rejected.response.status).toBe(409);expect(rejected.data.code).toBe('workout_history_conflict');expect((await get()).data.backup).toBe(text);
+ }
+});
+it('accepts an explicit single-series deletion and preserves the earlier completed graph beyond rolling retention',async()=>{
+ const data=recordedArchive(),text=await exportBackup(data);expect((await put(text)).response.status).toBe(200);
+ const deleted=JSON.parse(text);deleted.data.sets=[];deleted.historyIntent={workouts:[],sets:['recorded-set']};
+ expect((await put(JSON.stringify(deleted),1)).response.status).toBe(200);
+ delete deleted.historyIntent;
+ for(let revision=2;revision<16;revision++)expect((await put(JSON.stringify(deleted),revision)).response.status).toBe(200);
+ const history=(await get('device',{query:'&history=1&date=2026-11-03'})).data;
+ expect(history.versions.some((row:any)=>row.revision===1)).toBe(true);
+ const recovery=await get('device',{query:'&version=1'});expect(recovery.response.status).toBe(200);expect(recovery.data.backup).toBe(text);
+ expect((await get()).data.revision).toBe(16);expect(JSON.parse((await get()).data.backup).data.sets).toEqual([]);
+});
+it('protects a pre-update snapshot and keeps it readable after more than ten subsequent saves',async()=>{
+ expect((await put(backup,0,'device',{query:'&checkpoint=before-update'})).response.status).toBe(200);
+ for(let revision=1;revision<15;revision++)expect((await put(backup,revision)).response.status).toBe(200);
+ expect((await get('device',{query:'&version=1'})).data.backup).toBe(backup);
+ expect((await get('device',{query:'&history=1'})).data.versions.find((row:any)=>row.revision===1)?.reason).toBe('before-update');
+ expect((await get('device',{visitor:'another-visitor',query:'&version=1'})).response.status).toBe(404);
 });
 
 it('rejects malformed, partial, oversized and unconditioned snapshots while preserving the current archive',async()=>{

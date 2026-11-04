@@ -1,4 +1,5 @@
 import { cloneForEdit } from './edit-snapshot';
+import {historyReductions} from './workout-safety';
 import { previousWeekWorkout, reusableExerciseSets } from './weekly-reuse';
 import { WorkoutStartOptionsService } from './workout-start-options';
 import { PlanReplacementRequest, PlanReplacementResult, replacePlanExercise, replaceWorkoutExercise } from './exercise-replacement';
@@ -115,6 +116,11 @@ export class Store {
   // Old component callbacks must never write themselves into the clean archive.
   private resetInProgress=false;
   settled(){return this.queue;}
+  async createRecoveryCheckpoint(kind = 'before-update') {
+    await this.settled();
+    if (this.repo.checkpoint) await this.repo.checkpoint(kind);
+  }
+  recoverySnapshots() {return this.repo.recoverySnapshots?.() || Promise.resolve([]);}
   constructor() {
     void this.init();
   }
@@ -164,7 +170,7 @@ export class Store {
               }
               if(this.auth?.user())recovered.profiles[0].role=this.auth.user()!.role;
               let committed=false;
-              try{await this.repo.replace(recovered);committed=true;this.resume.clear(this.archiveKey());this.data.set(recovered);return true;}
+              try{await this.repo.checkpoint?.('before-server-restore');await this.repo.replace(recovered);committed=true;this.resume.clear(this.archiveKey());this.data.set(recovered);return true;}
               catch(error){if(accountReset&&!committed)this.resetInProgress=false;this.rejectStaleArchive(error);this.error.set(error instanceof Error?error.message:'Copia server non ripristinata. I dati locali sono conservati.');return false;}
             });
             this.queue=job;
@@ -203,7 +209,7 @@ export class Store {
         if(this.resetInProgress)throw Error('Il nuovo archivio è in apertura. Riapri l’app per continuare.');
         if (!this.ready()) throw Error("Archivio non ancora pronto");
         if(this.conflicted())throw new ArchiveConflictError();
-        const next = cloneForEdit(this.data());
+        const previous = this.data(), next = cloneForEdit(previous);
         await fn(next);
         if(this.resetInProgress)throw Error('Il nuovo archivio è in apertura. Riapri l’app per continuare.');
         // Local recovery and backup import preserve their complete catalog.
@@ -222,7 +228,7 @@ export class Store {
         }
         const revision=this.archiveRevision();await this.repo.replace(next);this.resume.rebase(this.archiveKey(),revision,this.archiveRevision());
         this.data.set(next);this.lastLocalSave.set(Date.now());this.localSaveFailed.set(false);
-        this.cloud?.changed(next);
+        this.cloud?.changed(next, historyReductions(previous, next));
         this.applyTheme();
         this.error.set("");
         if (message) this.message.set(message);

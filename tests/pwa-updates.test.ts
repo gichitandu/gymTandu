@@ -17,9 +17,9 @@ function setup(released=false){
  vi.stubGlobal('navigator',{onLine:true,storage:{persisted:async()=>true,estimate:async()=>({usage:1,quota:100})}});
  const reload=vi.fn();vi.stubGlobal('location',{reload});
  let pending:Promise<unknown>=Promise.resolve();
- const store={ready:()=>true,error:signal(''),settled:()=>pending,draft:signal<any>(null),busy:()=>false,conflicted:signal(false)};
+ const store={ready:()=>true,error:signal(''),settled:()=>pending,draft:signal<any>(null),busy:()=>false,conflicted:signal(false),createRecoveryCheckpoint:vi.fn().mockResolvedValue('checkpoint')};
  const release={checked:new Subject<void>(),updateReady:()=>released,autoUpdateReady:()=>released,downloadedBuild:()=>released?'b'.repeat(64):null,policy:()=>released?{requestedBuildId:'b'.repeat(64)}:null,check:vi.fn().mockResolvedValue(false),activateReady:vi.fn().mockResolvedValue(released)};
- const cloud={flush:vi.fn().mockResolvedValue(true)},drafts={flushAll:vi.fn().mockResolvedValue(true)};
+ const cloud={flush:vi.fn().mockResolvedValue(true),currentScope:vi.fn(),checkpointForUpdate:vi.fn().mockResolvedValue(true)},drafts={flushAll:vi.fn().mockResolvedValue(true)};
  const injector=createEnvironmentInjector([{provide:Store,useValue:store},{provide:AppReleaseService,useValue:release},{provide:ArchiveSyncService,useValue:cloud},{provide:FormDraftService,useValue:drafts},{provide:SwUpdate,useValue:{versionUpdates:new Subject()}},PwaService],null as unknown as EnvironmentInjector);
  return{target,reload,store,release,cloud,drafts,injector,pwa:injector.get(PwaService),queue:(p:Promise<unknown>)=>pending=p};
 }
@@ -44,7 +44,20 @@ it('updates manually from saved local data without requiring a server copy or a 
 });
 it('applies automatic updates with saved device data even when cloud backup and sync are unavailable',async()=>{
  const t=setup(true);t.cloud.flush.mockResolvedValue(false);
- try{await vi.waitFor(()=>expect(t.reload).toHaveBeenCalledOnce());expect(t.cloud.flush).not.toHaveBeenCalled();expect(t.release.activateReady).toHaveBeenCalledOnce();expect(t.pwa.updateError()).toBe('');expect(t.pwa.updateNotice()).toContain('Non serve un backup o un ripristino');}finally{t.injector.destroy();}
+ try{await vi.waitFor(()=>expect(t.reload).toHaveBeenCalledOnce());expect(t.cloud.flush).not.toHaveBeenCalled();expect(t.release.activateReady).toHaveBeenCalledOnce();expect(t.pwa.updateError()).toBe('');expect(t.pwa.updateNotice()).toContain('Copia di sicurezza verificata');}finally{t.injector.destroy();}
+});
+it('blocks an online account update until the protected server copy is acknowledged',async()=>{
+ const t=setup();t.cloud.currentScope.mockReturnValue('account');t.cloud.checkpointForUpdate.mockResolvedValue(false);
+ try{await t.pwa.reload();expect(t.store.createRecoveryCheckpoint).toHaveBeenCalledWith('before-update');expect(t.cloud.checkpointForUpdate).toHaveBeenCalledOnce();expect(t.release.activateReady).not.toHaveBeenCalled();expect(t.reload).not.toHaveBeenCalled();expect(t.pwa.updateError()).toContain('copia protetta sul server');}finally{t.injector.destroy();}
+});
+it('does not activate an update when its local recovery checkpoint cannot be written',async()=>{
+ const t=setup();t.store.createRecoveryCheckpoint.mockRejectedValue(Error('Spazio esaurito per la copia locale'));
+ try{await t.pwa.reload();expect(t.reload).not.toHaveBeenCalled();expect(t.release.activateReady).not.toHaveBeenCalled();expect(t.pwa.updateError()).toContain('Spazio esaurito');}finally{t.injector.destroy();}
+});
+it('creates the local and server recovery checkpoints before activating an online account update',async()=>{
+ const t=setup(),order:string[]=[];t.cloud.currentScope.mockReturnValue('account');
+ t.store.createRecoveryCheckpoint.mockImplementation(async()=>{order.push('local');return 'checkpoint';});t.cloud.checkpointForUpdate.mockImplementation(async()=>{order.push('server');return true;});t.release.activateReady.mockImplementation(async()=>{order.push('activate');return false;});
+ try{await t.pwa.reload();expect(order).toEqual(['local','server','activate']);expect(t.reload).toHaveBeenCalledOnce();}finally{t.injector.destroy();}
 });
 it('does not bypass local conflicts or failed queued writes during a manual update',async()=>{
  const t=setup();t.store.conflicted.set(true);

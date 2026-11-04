@@ -4,10 +4,11 @@ import { exportBackup, importBackup } from './backup';
 import { DataSet } from '../models/domain';
 import { defaultExercises, defaultGroups } from '../core/default-catalog';
 import { FormDraftService } from './form-drafts';
+import {HistoryIntent, losesRecordedWork} from './workout-safety';
 
 export type ArchiveSyncState = 'local' | 'syncing' | 'saved' | 'offline' | 'conflict';
-interface SyncMeta { revision: number; fingerprint: string; pending: boolean; blocked?: boolean }
-interface PendingArchive { data: DataSet; generation: number }
+interface SyncMeta { revision: number; fingerprint: string; pending: boolean; blocked?: boolean; historyIntent?: Record<string, number> }
+interface PendingArchive { data: DataSet; generation: number; intents?: Map<string, number> }
 interface ArchiveHead { revision: number; backup: string | null; updatedAt?: number | null }
 type AcceptStartupRestore = (remote: DataSet) => Promise<boolean>;
 
@@ -65,6 +66,11 @@ export class ArchiveSyncService {
   private timer?: ReturnType<typeof setTimeout>;
   private running?: Promise<boolean>;
   private uploading = false;
+  private pinOnNextSave = false;
+  private intents = new Map<string, number>();
+  private intentSequence = 0;
+  private pendingJob(data: DataSet, generation = this.generation): PendingArchive {return {data: structuredClone(data), generation, intents: new Map(this.intents)};}
+  private acknowledgeIntents(sent: Map<string, number>) {for (const [id, sequence] of sent) if (this.intents.get(id) === sequence) this.intents.delete(id);}
   private opening?: Promise<DataSet>;
   private generation = 0;
   private localChanges = 0;
@@ -91,17 +97,17 @@ export class ArchiveSyncService {
       if (Number.isSafeInteger(meta?.revision) && meta.revision >= 0 && typeof meta.fingerprint === 'string' && typeof meta.pending === 'boolean') return meta;
     } catch {} return undefined;
   }
-  private saveMeta() { if (this.meta) try { localStorage.setItem(this.storageKey(), JSON.stringify(this.meta)); } catch {} }
+  private saveMeta() { if (this.meta) try {if(this.intents.size)this.meta.historyIntent=Object.fromEntries(this.intents);else delete this.meta.historyIntent; localStorage.setItem(this.storageKey(), JSON.stringify(this.meta)); } catch {} }
   private identify(archive: string) {
     const user = this.auth?.user();
     if (!user || archive !== (user.owner ? 'gymtrack-v1' : 'gymtrack-user-' + user.id)) return undefined;
     return user.id === 'device-local' ? 'device' as const : 'account' as const;
   }
-  private async request(method = 'GET', body?: string, scope = this.scope): Promise<Pick<Response,'ok'|'status'|'json'>> {
+  private async request(method = 'GET', body?: string, scope = this.scope, query = ''): Promise<Pick<Response,'ok'|'status'|'json'>> {
     const controller = new AbortController();this.controller = controller;
     const timer = setTimeout(() => controller.abort(), method==='POST'?60000:15000);
     try {
-      const response=await fetch('/api/archive?scope=' + scope, { method, credentials: 'same-origin', cache: 'no-store', signal: controller.signal,
+      const response=await fetch('/api/archive?scope=' + scope + query, { method, credentials: 'same-origin', cache: 'no-store', signal: controller.signal,
         headers: body === undefined ? {} : { 'Content-Type': 'application/json', 'If-Match': String(this.revision()) }, body });
       // Keep the timeout active until the backup body is received as well.
       const value=await response.json().catch(()=>undefined);
@@ -143,10 +149,12 @@ export class ArchiveSyncService {
     this.localChanges=0;
     this.archive = archive;this.scope = this.identify(archive);this.latest = structuredClone(local);
     this.meta = this.readMeta();this.pending = undefined;this.knownHead = false;
+    this.intents = new Map(Object.entries(this.meta?.historyIntent || {}).filter(([id, value]) => /^(w|s):./.test(id) && Number.isSafeInteger(value) && value > 0));
+    this.intentSequence = 0; for (const value of this.intents.values()) this.intentSequence = Math.max(this.intentSequence, value);
     this.revision.set(this.meta?.revision || 0);this.remoteSummary.set(null);
     if (!this.scope) { this.status.set('local');this.message.set('Archivio conservato su questo dispositivo.');return local; }
     if (typeof navigator !== 'undefined' && !navigator.onLine) {
-      if (archiveHasContent(local) || this.meta?.pending) this.pending = { data: structuredClone(local), generation };
+      if (archiveHasContent(local) || this.meta?.pending) this.pending = this.pendingJob(local, generation);
       this.offline();return local;
     }
     const opening = this.openRemote(local, generation, allowRestore,acceptRestore);
@@ -186,10 +194,14 @@ export class ArchiveSyncService {
         if(!accepted){this.conflict();return local;}
         await this.drafts?.discardScope(this.archive);
         if(generation!==this.generation)return local;
-        this.localChanges=0;this.latest=structuredClone(remote);this.pending=undefined;
+        this.localChanges=0;this.latest=structuredClone(remote);this.pending=undefined;this.intents.clear();
         this.meta={revision:head.revision,fingerprint:remoteFingerprint,pending:false};this.saveMeta();this.saved(head.updatedAt);
         if(typeof location!=='undefined')location.reload();
         return remote;
+      }
+      if (previous && head.revision < previous.revision) {
+        this.meta = {...previous, pending: true, blocked: true}; this.pending = this.pendingJob(local, generation);
+        this.conflict(); this.message.set('La copia server è precedente a un salvataggio già confermato. Gli allenamenti sul dispositivo sono conservati.'); return local;
       }
       if (!remote) {
         this.meta = { revision: head.revision, fingerprint: '', pending: archiveHasContent(local) || !!previous?.pending };
@@ -208,6 +220,10 @@ export class ArchiveSyncService {
       }
       const cleanBaseline = previous && !previous.pending && (fingerprint === previous.fingerprint || !personalChanged && initialFingerprint === previous.fingerprint);
       if ((!archiveHasContent(local) && !previous?.pending && !personalChanged) || cleanBaseline) {
+        if (losesRecordedWork(local, remote)) {
+          this.meta = {revision: head.revision, fingerprint: remoteFingerprint, pending: true, blocked: true}; this.pending = this.pendingJob(local, generation);
+          this.conflict(); this.message.set('La copia server contiene meno progressi registrati. Le serie sul dispositivo sono conservate: verifica le copie prima di ripristinare.'); return local;
+        }
         if (!allowRestore) {
           this.meta = previous ? { ...previous, blocked: true } : { revision: head.revision, fingerprint: remoteFingerprint, pending: false, blocked: true };
           this.conflict(false);return local;
@@ -217,7 +233,7 @@ export class ArchiveSyncService {
         if(generation!==this.generation)return local;
         if(!accepted){
           this.meta={revision:head.revision,fingerprint:remoteFingerprint,pending:true,blocked:true};
-          this.pending={data:structuredClone(this.latest||local),generation};this.conflict();return local;
+          this.pending=this.pendingJob(this.latest||local, generation);this.conflict();return local;
         }
         if(generation!==this.generation)return local;
         this.meta = { revision: head.revision, fingerprint: remoteFingerprint, pending: this.localChanges!==restoreChanges };this.saveMeta();
@@ -229,11 +245,11 @@ export class ArchiveSyncService {
         this.meta = { ...previous, pending: true };this.changed(local);return local;
       }
       this.meta = { revision: head.revision, fingerprint: remoteFingerprint, pending: true, blocked: true };
-      this.pending = { data: structuredClone(local), generation };this.conflict();return local;
+      this.pending = this.pendingJob(local, generation);this.conflict();return local;
     } catch (error) {
       if (generation === this.generation) {
         const latest=this.latest||local;
-        if (archiveHasContent(latest) || this.meta?.pending) this.pending = { data: structuredClone(latest), generation };
+        if (archiveHasContent(latest) || this.meta?.pending) this.pending = this.pendingJob(latest, generation);
         this.offline(error);
       }
       return local;
@@ -244,16 +260,18 @@ export class ArchiveSyncService {
     this.status.set('saved');this.lastSaved.set(updatedAt ?? Date.now());
     this.message.set('Copia server aggiornata.');
   }
-  changed(data: DataSet) {
+  changed(data: DataSet, intent?: HistoryIntent) {
     if(this.latest?.settings[0]?.archiveResetId&&data.settings[0]?.archiveResetId!==this.latest.settings[0].archiveResetId){this.conflict();this.message.set('Questa copia precede la reimpostazione richiesta. Riapri l’app per usare l’archivio aggiornato.');return;}
     if (this.destroyed || !this.archive || !this.scope) return;
+    for (const id of intent?.workouts || []) this.intents.set('w:' + id, ++this.intentSequence);
+    for (const id of intent?.sets || []) this.intents.set('s:' + id, ++this.intentSequence);
     this.localChanges++;
     if (!archiveHasContent(data) && !this.uploading && !this.meta?.fingerprint && !this.meta?.blocked) {
       clearTimeout(this.timer);this.latest=structuredClone(data);this.pending=undefined;
       if(this.meta){this.meta.pending=false;this.saveMeta();}
       this.status.set('local');this.message.set('La copia server si attiva al primo salvataggio.');return;
     }
-    this.latest = structuredClone(data);this.pending = { data: structuredClone(data), generation: this.generation };
+    this.latest = structuredClone(data);this.pending = this.pendingJob(data);
     if (this.meta) { this.meta.pending = true;this.saveMeta(); }
     if (this.status() === 'conflict' || this.meta?.blocked) { this.conflict();return; }
     if (typeof navigator !== 'undefined' && !navigator.onLine) { this.offline();return; }
@@ -282,14 +300,18 @@ export class ArchiveSyncService {
     this.lastErrorCode.set('');this.lastErrorMessage.set('');
     while (this.pending) {
       const job = this.pending;this.pending = undefined;
+      const sentIntents = job.intents || new Map(this.intents);
       this.uploading=true;
       try {
         const backup = await exportBackup(job.data), fingerprint = await archiveFingerprint(backup);
         if (job.generation !== this.generation) return false;
-        if (this.meta?.fingerprint === fingerprint) {
+        if (this.meta?.fingerprint === fingerprint && !this.pinOnNextSave) {
+          this.acknowledgeIntents(sentIntents);
           this.meta.pending = !!this.pending;this.saveMeta();if (!this.pending) this.saved(this.lastSaved());continue;
         }
-        const response = await this.request('POST', backup);
+        const pin = this.pinOnNextSave;
+        const envelope = sentIntents.size ? JSON.stringify({...JSON.parse(backup), historyIntent: {workouts: [...sentIntents.keys()].filter(id => id.startsWith('w:')).map(id => id.slice(2)), sets: [...sentIntents.keys()].filter(id => id.startsWith('s:')).map(id => id.slice(2))}}) : backup;
+        const response = await this.request('POST', envelope, this.scope, pin ? '&checkpoint=before-update' : '');
         if (job.generation !== this.generation) return false;
         if(!response.ok){const failure=await response.json() as {code?:string;error?:string};this.lastErrorCode.set(failure?.code||'');this.lastErrorMessage.set(failure?.error||'Copia server non salvata.');}
         if (response.status === 409) {
@@ -301,6 +323,7 @@ export class ArchiveSyncService {
             const head = await check.json() as ArchiveHead;
             if(head.backup){const reset=JSON.parse(head.backup).data?.settings?.[0]?.archiveResetId;if(reset&&reset!==job.data.settings[0]?.archiveResetId){this.message.set('Reimpostazione dell’account disponibile. Riapri l’app per usare il nuovo archivio.');if(typeof location!=='undefined')location.reload();return false;}}
             if (head.backup && await archiveFingerprint(head.backup) === fingerprint) {
+              this.acknowledgeIntents(sentIntents);
               if(this.pending===job)this.pending=undefined;
               this.revision.set(head.revision);this.meta={revision:head.revision,fingerprint,pending:!!this.pending};this.saveMeta();
               this.remoteSummary.set(archiveSummary(job.data));this.lastSaved.set(head.updatedAt??Date.now());
@@ -314,6 +337,8 @@ export class ArchiveSyncService {
         const result = await response.json() as ArchiveHead;
         if (!Number.isSafeInteger(result.revision) || result.revision <= this.revision()) throw Error('Conferma server non valida');
         this.revision.set(result.revision);
+        this.acknowledgeIntents(sentIntents);
+        if (pin) this.pinOnNextSave = false;
         this.meta = { revision: result.revision, fingerprint, pending: !!this.pending };this.saveMeta();
         this.remoteSummary.set(archiveSummary(job.data));this.lastSaved.set(result.updatedAt ?? Date.now());
         if (!this.pending) this.saved(result.updatedAt);
@@ -323,6 +348,44 @@ export class ArchiveSyncService {
     return true;
   }
   currentScope(){return this.scope;}
+  async checkpointForUpdate(): Promise<boolean> {
+    if (!this.scope) return true;
+    if (!this.latest || typeof navigator !== 'undefined' && !navigator.onLine) return false;
+    this.pinOnNextSave = true;
+    this.pending ||= this.pendingJob(this.latest);
+    const saved = await this.flush();
+    return saved && !this.pinOnNextSave;
+  }
+  async history(date?: string): Promise<{revision: number; updatedAt: number; reason?: string; workoutId?: string; workoutDate?: string; dayName?: string}[]> {
+    if (!this.scope) return [];
+    const response = await this.request('GET', undefined, this.scope, '&history=1' + (date ? '&date=' + encodeURIComponent(date) : ''));
+    if (!response.ok) throw Error('Le copie server non sono disponibili. I dati locali restano conservati.');
+    return ((await response.json()) as {versions?: any[]}).versions || [];
+  }
+  async readVersion(revision: number): Promise<DataSet> {
+    if (!this.scope || !Number.isSafeInteger(revision) || revision < 1) throw Error('Copia non valida.');
+    const response = await this.request('GET', undefined, this.scope, '&version=' + revision);
+    if (!response.ok) throw Error('La copia selezionata non è disponibile.');
+    const head = await response.json() as ArchiveHead;
+    if (!head.backup) throw Error('Copia vuota.');
+    return importBackup(head.backup);
+  }
+  async syncRecoveredArchive(): Promise<boolean> {
+    if (!this.scope) return true;
+    if (this.running) await this.running;
+    const generation = this.generation, response = await this.request();
+    if (!response.ok || generation !== this.generation || !this.latest) return false;
+    const head = await response.json() as ArchiveHead;
+    if (!Number.isSafeInteger(head.revision) || head.revision < 0 || !(head.backup === null || typeof head.backup === 'string')) throw Error('Copia server non valida. Il recupero locale è conservato.');
+    const remote = head.backup ? await importBackup(head.backup) : undefined;
+    if (remote && (losesRecordedWork(remote, this.latest) || remote.settings[0].archiveResetId !== this.latest.settings[0].archiveResetId)) {
+      this.conflict(); this.message.set('Il server contiene altri progressi da confrontare. Il recupero locale è conservato e nessuna copia è stata sovrascritta.'); return false;
+    }
+    this.revision.set(head.revision); this.knownHead = true;
+    this.meta = {revision: head.revision, fingerprint: head.backup ? await archiveFingerprint(head.backup) : '', pending: true};
+    this.pending = this.pendingJob(this.latest); this.saveMeta(); this.status.set('syncing');
+    return this.flush();
+  }
   canRecoverDevice(){return this.scope==='account'&&!!this.auth?.user()?.owner;}
   async readRemote(sourceScope = this.scope): Promise<DataSet | undefined> {
     if (!this.scope || (typeof navigator !== 'undefined' && !navigator.onLine)) { this.offline();return; }

@@ -33,7 +33,7 @@ export async function performTanduReset(request,env,catalog,archiveApi,calendarP
  const shared=await catalog(env.DB);
  const roles=previous?.data?.roles||[{id:'superadmin',name:'SuperAdmin',permissions:['*']},{id:'admin',name:'Admin',permissions:['catalog:write']},{id:'user',name:'User',permissions:['plans:own','workouts:own','stats:own']}];
  const data={profiles:[{id:'local',name:user.name||'Tandu',role:user.role}],roles,plans:[],days:[],planExercises:[],exercises:shared.exercises,muscleGroups:shared.muscleGroups,workouts:[],workoutExercises:[],sets:[],settings:[{id:'local',theme:'dark',unit:'kg',prefill:false,archiveResetId:row.reset_id}],meals:[],scheduledWorkouts:[],measurements:[],exercisePreferences:[],workoutUi:[]};
- const backup=JSON.stringify({app:'GymTrack',schemaVersion:6,exportedAt:new Date().toISOString(),data});
+ const backup=JSON.stringify({app:'GymTrack',schemaVersion:6,exportedAt:new Date().toISOString(),data,historyIntent:{workouts:(previous?.data?.workouts||[]).filter(row=>row.status==='completed').map(row=>row.id),sets:(previous?.data?.sets||[]).filter(row=>row.completed).map(row=>row.id)}});
  const update=new Request(new URL('/api/archive?scope=account',request.url),{method:'POST',headers:{'oai-authenticated-user-id':'authorized-maintenance','content-type':'application/json','if-match':String(head?.revision||0)},body:backup});
  const result=await archiveApi(update,env,user,(text,revision,at)=>calendarPublish(env,user,text,revision,at));
  if(!result.ok)return result;

@@ -1,0 +1,8 @@
+PASS A stale full archive cannot erase today’s completed workout even with the correct server revision
+PASS The original finished session remains recoverable after more than ten subsequent archive saves
+PASS Recovery search finds the protected server version and previews original loads, reps and warmup
+PASS Targeted recovery restores and syncs the missing session while preserving the other workout, profile and plan
+PASS A verified local copy exists both before recovery and after completion, outside the live archive tables
+PASS Reload preserves recovered progress and restores the real weekly Home statistic
+PASS A validated backup file restores only the selected session and preserves the current plan
+PASS Recovery fits 320–430 px and produces no application exceptions

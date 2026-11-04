@@ -100,8 +100,27 @@ async function archiveCleanup(db,bucket,scope) {
   const old=await db.prepare('SELECT id,object_key FROM archive_versions WHERE scope=? ORDER BY revision DESC LIMIT 100 OFFSET ?').bind(scope,ARCHIVE_RETAINED_VERSIONS).all();
   if(!old.results?.length)return;
   await db.batch(old.results.map(row=>db.prepare('DELETE FROM archive_versions WHERE id=? AND scope=?').bind(row.id,scope)));
-  await bucket.delete(old.results.map(row=>row.object_key));
+  const pinned=await db.prepare('SELECT DISTINCT object_key FROM archive_checkpoints WHERE scope=?').bind(scope).all();
+  const protectedKeys=new Set((pinned.results||[]).map(row=>row.object_key));
+  const removable=old.results.map(row=>row.object_key).filter(key=>!protectedKeys.has(key));
+  if(removable.length)await bucket.delete(removable);
  }catch{/* A later successful upload can retry best-effort retention cleanup. */}
+}
+
+function archiveCheckpointStatement(db, scope, row, id, reason, workout) {
+ return db.prepare('INSERT OR IGNORE INTO archive_checkpoints(id,scope,revision,object_key,updated_at,size_bytes,content_hash,reason,workout_id,workout_date,day_name) VALUES(?,?,?,?,?,?,?,?,?,?,?)').bind(id,scope,row.revision,row.object_key,row.updated_at,row.size_bytes,row.content_hash,reason,workout?.id||null,workout?.date||null,workout?.dayName||null);
+}
+async function completedCheckpointStatements(db, scope, row, text, known) {
+ const data=JSON.parse(text).data, statements=[];
+ for(const workout of data.workouts.filter(row=>row.status==='completed')) {
+  const exercises=data.workoutExercises.filter(row=>row.workoutId===workout.id).sort((a,b)=>a.id.localeCompare(b.id)),ids=new Set(exercises.map(row=>row.id));
+  const sets=data.sets.filter(row=>ids.has(row.workoutExerciseId)).sort((a,b)=>a.id.localeCompare(b.id));
+  const fingerprint=await archiveDigest(JSON.stringify({workout,exercises,sets}));
+  const id=await archiveDigest(scope+':completed:'+workout.id+':'+fingerprint);
+  if(known.has(id))continue;known.add(id);
+  statements.push(archiveCheckpointStatement(db,scope,row,id,'completed-workout',workout));
+ }
+ return statements;
 }
 
 export async function archiveApi(request,env,me,onSaved) {
@@ -114,13 +133,14 @@ export async function archiveApi(request,env,me,onSaved) {
  const head=await db.prepare('SELECT * FROM archive_heads WHERE scope=?').bind(scope).first();
  if(request.method==='GET') {
   if(url.searchParams.get('history')==='1'){
-   const versions=await db.prepare('SELECT revision,updated_at AS updatedAt,size_bytes AS sizeBytes,content_hash AS contentHash FROM archive_versions WHERE scope=? ORDER BY revision DESC LIMIT ?').bind(scope,ARCHIVE_RETAINED_VERSIONS).all();
+   const date=url.searchParams.get('date');if(date!==null&&!/^\d{4}-\d{2}-\d{2}$/.test(date))archiveFail('Data di ricerca non valida.');
+   const versions=await db.prepare('SELECT revision,MAX(updatedAt) AS updatedAt,MAX(sizeBytes) AS sizeBytes,MAX(contentHash) AS contentHash,MAX(reason) AS reason FROM (SELECT revision,updated_at AS updatedAt,size_bytes AS sizeBytes,content_hash AS contentHash,NULL AS reason FROM archive_versions WHERE scope=? UNION ALL SELECT revision,updated_at AS updatedAt,size_bytes AS sizeBytes,content_hash AS contentHash,reason FROM archive_checkpoints WHERE scope=? AND (? IS NULL OR workout_date IS NULL OR workout_date=?)) GROUP BY revision ORDER BY revision DESC LIMIT 100').bind(scope,scope,date,date).all();
    return archiveJson({revision:head?.revision||0,versions:versions.results||[]});
   }
   let selected=head;
   if(url.searchParams.has('version')){
    const version=archiveRevision(url.searchParams.get('version'));
-   selected=await db.prepare('SELECT * FROM archive_versions WHERE scope=? AND revision=?').bind(scope,version).first();
+   selected=await db.prepare('SELECT revision,object_key,content_hash,updated_at FROM archive_versions WHERE scope=? AND revision=? UNION ALL SELECT revision,object_key,content_hash,updated_at FROM archive_checkpoints WHERE scope=? AND revision=? LIMIT 1').bind(scope,version,scope,version).first();
    if(!selected)archiveFail('Copia precedente non trovata.',404);
   }
   if(!selected)return archiveJson({revision:0,backup:null,updatedAt:null});
@@ -134,17 +154,41 @@ export async function archiveApi(request,env,me,onSaved) {
  const base=archiveRevision(request.headers.get('if-match'));
  if(base!==(head?.revision||0))return archiveJson({error:'La copia persistente è cambiata in un’altra finestra. Le modifiche locali sono conservate.',revision:head?.revision||0},409);
  const body=await archiveBody(request);archiveValidate(body.text);
+ const incoming=JSON.parse(body.text),intent=incoming.historyIntent;
+ if(intent!==undefined&&(!intent||typeof intent!=='object'||Array.isArray(intent)||Object.keys(intent).some(key=>!['workouts','sets'].includes(key))||['workouts','sets'].some(key=>!Array.isArray(intent[key])||intent[key].length>100000||intent[key].some(id=>typeof id!=='string'||!id||id.length>150))))archiveFail('Conferma delle modifiche allo storico non valida.');
+ const checkpoint=url.searchParams.get('checkpoint');
+ if(checkpoint!==null&&checkpoint!=='before-update')archiveFail('Tipo di copia protetta non valido.');
  if(kind==='account'){
   const reset=await db.prepare('SELECT reset_id FROM account_archive_resets WHERE user_id=?').bind(me.id).first();
   if(reset&&JSON.parse(body.text).data.settings[0]?.archiveResetId!==reset.reset_id)return archiveJson({error:'L’archivio è stato reimpostato su richiesta. Riapri l’app per caricare i nuovi dati.',code:'account_reset',revision:head?.revision||0},409);
  }
  const revision=base+1,at=Date.now(),hash=await archiveDigest(body.text),id=crypto.randomUUID(),key=`archives/${scope}/${revision}/${id}.json`;
+ const protection=[];
+ const existingPins=await db.prepare('SELECT id FROM archive_checkpoints WHERE scope=?').bind(scope).all(),knownPins=new Set((existingPins.results||[]).map(row=>row.id)),initialized=knownPins.size>0;
+ if(head){
+  const oldObject=await env.BUCKET.get(head.object_key);
+  if(!oldObject)archiveFail('La copia precedente non è leggibile: salvataggio server sospeso per conservarla.',503);
+  const oldText=await oldObject.text();if(await archiveDigest(oldText)!==head.content_hash)archiveFail('La copia precedente non ha superato la verifica. Nessun dato server sostituito.',503);
+  const oldData=JSON.parse(oldText).data,nextData=incoming.data;
+  const reducedWorkouts=oldData.workouts.filter(row=>row.status==='completed'&&!nextData.workouts.some(next=>next.id===row.id&&next.status==='completed'));
+  const oldExercises=new Map(oldData.workoutExercises.map(row=>[row.id,row.workoutId]));
+  const allowedWorkouts=new Set(intent?.workouts||[]),allowedSets=new Set(intent?.sets||[]);
+  const reducedSets=oldData.sets.filter(row=>row.completed&&!nextData.sets.some(next=>next.id===row.id&&next.completed));
+  if(reducedWorkouts.some(row=>!allowedWorkouts.has(row.id))||reducedSets.some(row=>!allowedSets.has(row.id)&&!allowedWorkouts.has(oldExercises.get(row.workoutExerciseId))))return archiveJson({error:'La copia inviata contiene meno progressi già salvati. Lo storico server è conservato: verifica e recupera la seduta prima di sincronizzare.',code:'workout_history_conflict',revision:head.revision},409);
+  protection.push(...await completedCheckpointStatements(db,scope,head,oldText,knownPins));
+  // Preserve the pre-fix recovery window before any ordinary rolling cleanup.
+  if(!initialized){const legacy=await db.prepare('SELECT * FROM archive_versions WHERE scope=? ORDER BY revision DESC LIMIT ?').bind(scope,ARCHIVE_RETAINED_VERSIONS).all();for(const row of legacy.results||[])protection.push(archiveCheckpointStatement(db,scope,row,await archiveDigest(scope+':legacy:'+row.revision),'existing-copy'));}
+ }
+ const nextRow={revision,object_key:key,updated_at:at,size_bytes:body.bytes,content_hash:hash};
+ const incomingCheckpoints=await completedCheckpointStatements(db,scope,nextRow,body.text,knownPins);
+ if(checkpoint)incomingCheckpoints.push(archiveCheckpointStatement(db,scope,nextRow,await archiveDigest(scope+':before-update:'+revision),'before-update'));
  await env.BUCKET.put(key,body.text,{httpMetadata:{contentType:'application/json; charset=utf-8'},customMetadata:{revision:String(revision),sha256:hash}});
  let result;
  try {
   result=await db.batch([
    db.prepare('INSERT INTO archive_heads(scope,revision,object_key,updated_at,size_bytes,content_hash) SELECT ?,?,?,?,?,? WHERE ?=0 OR EXISTS(SELECT 1 FROM archive_heads WHERE scope=?) ON CONFLICT(scope) DO UPDATE SET revision=excluded.revision,object_key=excluded.object_key,updated_at=excluded.updated_at,size_bytes=excluded.size_bytes,content_hash=excluded.content_hash WHERE archive_heads.revision=?').bind(scope,revision,key,at,body.bytes,hash,base,scope,base),
-   db.prepare('INSERT INTO archive_versions(id,scope,revision,object_key,updated_at,size_bytes,content_hash) SELECT ?,?,?,?,?,?,? WHERE EXISTS(SELECT 1 FROM archive_heads WHERE scope=? AND revision=? AND object_key=?)').bind(id,scope,revision,key,at,body.bytes,hash,scope,revision,key)
+   db.prepare('INSERT INTO archive_versions(id,scope,revision,object_key,updated_at,size_bytes,content_hash) SELECT ?,?,?,?,?,?,? WHERE EXISTS(SELECT 1 FROM archive_heads WHERE scope=? AND revision=? AND object_key=?)').bind(id,scope,revision,key,at,body.bytes,hash,scope,revision,key),
+   ...protection
   ]);
  }catch(error){
   // A network error can arrive after D1 committed the head. Keep the immutable
@@ -156,6 +200,9 @@ export async function archiveApi(request,env,me,onSaved) {
   const current=await db.prepare('SELECT revision FROM archive_heads WHERE scope=?').bind(scope).first();
   return archiveJson({error:'La copia persistente è cambiata durante il salvataggio. Le modifiche locali sono conservate.',revision:current?.revision||0},409);
  }
+ // Only pin the incoming object after the head CAS was accepted. A pin failure
+ // keeps the committed version and its object; never prune an unprotected copy.
+ if(incomingCheckpoints.length)await db.batch(incomingCheckpoints);
  await archiveCleanup(db,env.BUCKET,scope);
  // Optional external calendar must never make a committed archive look unsaved.
  if(kind==='account'&&onSaved){try{await onSaved(body.text,revision,at);}catch{/* Retry on next save or reconnect. Archive remains durable. */}}

@@ -81,6 +81,38 @@ it('syncs an explicitly disabled weekly reuse preference even before the first p
   expect((await importBackup(t.head.backup!)).settings[0].reusePreviousWeek).toBe(false);
 });
 
+function recordedWorkout() {
+ const data=seed(),at='2026-11-03T17:00:00Z';
+ data.workouts.push({id:'completed',userId:'local',planId:'p',dayId:'d',planName:'Piano',dayName:'Seduta',date:'2026-11-03',startedAt:at,endedAt:'2026-11-03T18:00:00Z',duration:60,status:'completed',notes:''});
+ data.workoutExercises.push({id:'we',workoutId:'completed',exerciseId:'exercise-0',name:'Panca',loadMode:'external',order:0,rest:90,notes:''});
+ data.sets.push({id:'set',workoutExerciseId:'we',number:1,weight:72.5,reps:9,completed:true});return data;
+}
+it('does not auto-restore a newer server revision that contains less progress than the acknowledged device archive',async()=>{
+ const data=recordedWorkout(),t=await setup(data);await t.service.open(t.key,data);
+ const stale=structuredClone(data);stale.workouts[0].status='draft';stale.sets[0].completed=false;stale.sets[0].weight=0;
+ t.head.revision++;t.head.backup=await exportBackup(stale);const accept=vi.fn().mockResolvedValue(true);
+ expect(await t.service.open(t.key,data,true,accept)).toBe(data);expect(accept).not.toHaveBeenCalled();expect(t.service.status()).toBe('conflict');expect(t.service.message()).toContain('meno progressi');expect(data.sets[0].weight).toBe(72.5);
+});
+it('rejects a server revision older than one already acknowledged instead of replacing local data',async()=>{
+ const data=recordedWorkout(),t=await setup(data);await t.service.open(t.key,data);
+ t.head.revision=0;const accept=vi.fn().mockResolvedValue(true);
+ expect(await t.service.open(t.key,data,true,accept)).toBe(data);expect(accept).not.toHaveBeenCalled();expect(t.service.status()).toBe('conflict');expect(t.service.message()).toContain('precedente a un salvataggio');
+});
+it('persists exact intentional history edits offline and clears their receipt only after a server acknowledgement',async()=>{
+ const data=recordedWorkout(),t=await setup(data);await t.service.open(t.key,data);
+ const edited=structuredClone(data);edited.sets[0].completed=false;t.nav.onLine=false;
+ t.service.changed(edited,{workouts:[],sets:['set']});
+ const meta=JSON.parse([...t.storage.values()][0]);expect(meta.historyIntent['s:set']).toBeGreaterThan(0);
+ await t.service.open(t.key,edited);t.nav.onLine=true;expect(await t.service.flush()).toBe(true);
+ const sent=JSON.parse(t.posts[0].backup);expect(sent.historyIntent).toEqual({workouts:[],sets:['set']});
+ expect(JSON.parse([...t.storage.values()][0]).historyIntent).toBeUndefined();expect((await importBackup(t.head.backup!)).sets[0].completed).toBe(false);
+});
+it('writes a protected update checkpoint even when the regular snapshot already matches the server',async()=>{
+ const data=recordedWorkout(),t=await setup(data);await t.service.open(t.key,data);
+ expect(await t.service.checkpointForUpdate()).toBe(true);expect(t.posts).toHaveLength(1);expect(t.fetch.mock.calls.some(([url])=>url.includes('checkpoint=before-update'))).toBe(true);
+ expect((await importBackup(t.head.backup!)).sets[0]).toMatchObject({weight:72.5,reps:9,completed:true});
+});
+
 it('lets an existing populated Safari archive fill a server head containing only a fresh PWA seed',async()=>{
   const t=await setup(seed()),local=plans('Piano Safari esistente');
   expect(await t.service.open(t.key,local)).toBe(local);expect(await t.service.flush()).toBe(true);

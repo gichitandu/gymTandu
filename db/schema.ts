@@ -14,6 +14,9 @@ export const archiveHeads = sqliteTable('archive_heads', {
 export const archiveVersions = sqliteTable('archive_versions', {
  id:text('id').primaryKey(),scope:text('scope').notNull(),revision:integer('revision').notNull(),objectKey:text('object_key').notNull(),updatedAt:integer('updated_at').notNull(),sizeBytes:integer('size_bytes').notNull(),contentHash:text('content_hash').notNull()
 },table=>[uniqueIndex('archive_versions_scope_revision').on(table.scope,table.revision)]);
+export const archiveCheckpoints = sqliteTable('archive_checkpoints', {
+ id:text('id').primaryKey(),scope:text('scope').notNull(),revision:integer('revision').notNull(),objectKey:text('object_key').notNull(),updatedAt:integer('updated_at').notNull(),sizeBytes:integer('size_bytes').notNull(),contentHash:text('content_hash').notNull(),reason:text('reason').notNull(),workoutId:text('workout_id'),workoutDate:text('workout_date'),dayName:text('day_name')
+},table=>[index('archive_checkpoints_scope_revision').on(table.scope,table.revision),index('archive_checkpoints_object').on(table.objectKey)]);
 export const appReleases = sqliteTable('app_releases', {
  id:text('id').primaryKey(),buildId:text('build_id').notNull(),generation:integer('generation').notNull().default(1),requestedAt:integer('requested_at').notNull(),requestedBy:text('requested_by').references(()=>users.id)
 });

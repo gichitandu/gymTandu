@@ -3,6 +3,7 @@ import { Injectable, inject, signal } from '@angular/core';
 import { SwUpdate } from '@angular/service-worker';
 import { Subscription } from 'rxjs';
 import { Store } from './store';
+import { ArchiveSyncService } from './archive-sync';
 import { AppActivationUncertainError, AppReleaseService } from './app-release';
 import { FormDraftService } from './form-drafts';
 import { feedbackForContext, feedbackSignal } from './feedback';
@@ -25,6 +26,7 @@ export class PwaService {
  updateError=feedbackSignal('error',feedbackForContext());
  private updates=inject(SwUpdate);
  private store=inject(Store);
+ private cloud=inject(ArchiveSyncService,{optional:true});
  private drafts=inject(FormDraftService,{optional:true});
  readonly releases=inject(AppReleaseService);
  private subscriptions:Subscription[]=[];
@@ -76,14 +78,16 @@ export class PwaService {
    if(this.drafts)saves.push(this.drafts.flushAll());
    if((await Promise.all(saves)).some(result=>result===false))throw Error('Salva o correggi i dati del modulo prima di continuare.');
    await this.waitForLocalWrites();
-   // Both manual and automatic updates reopen the durable device archive.
-   // Missing cloud backups, sync failures and pending restores never gate them.
-   // Pending sync metadata remains intact and resumes after the new app opens.
    // A save accepted while waiting may have cleared or revised its form draft.
    // Persist that final state as well before revoking the cookie or reloading.
    if(this.drafts&&!await this.drafts.flushAll())throw Error('Bozza non salvata. Resta nell’app e riprova.');
    await this.waitForLocalWrites();
-   this.updateNotice.set('Dati e bozze salvati sul dispositivo. Non serve un backup o un ripristino per aggiornare.');
+   await this.store.createRecoveryCheckpoint?.('before-update');
+   if (this.cloud?.currentScope?.() && navigator.onLine !== false) {
+    if (!await this.cloud.checkpointForUpdate()) throw Error('La copia protetta sul server non è ancora confermata. Gli allenamenti restano salvati su questa icona: riprova quando la sincronizzazione è completata.');
+    await this.waitForLocalWrites();
+   }
+   this.updateNotice.set('Copia di sicurezza verificata. Allenamenti, progressi e bozze sono conservati.');
    return true;
   }catch(error){
    this.updateError.set('Aggiornamento sospeso: '+(error instanceof Error?error.message:'Salvataggio non riuscito. I dati presenti sono conservati.'));

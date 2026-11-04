@@ -1,12 +1,14 @@
 import { AuthService } from "../services/auth";
 import { inject, InjectionToken } from "@angular/core";
 import { DataSet } from "../models/domain";
-import { GymDatabase } from "../core/database";
+import { GymDatabase, LocalArchiveCheckpoint } from "../core/database";
 export interface GymRepository {
   storageKey?: string;
   revision?(): number | undefined;
   read(): Promise<DataSet>;
   replace(data: DataSet): Promise<void>;
+  checkpoint?(kind: string): Promise<string>;
+  recoverySnapshots?(): Promise<LocalArchiveCheckpoint[]>;
 }
 export class IndexedDbRepository implements GymRepository {
   readonly db: GymDatabase;
@@ -19,6 +21,8 @@ export class IndexedDbRepository implements GymRepository {
   replace(data: DataSet) {
     return this.db.replace(data);
   }
+  checkpoint(kind: string) {return this.db.checkpoint(kind);}
+  recoverySnapshots() {return this.db.recoverySnapshots();}
 }
 export const GYM_REPOSITORY = new InjectionToken<GymRepository>(
   "GYM_REPOSITORY",

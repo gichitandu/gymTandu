@@ -78,6 +78,13 @@
       "when": 1793670786179,
       "tag": "0010_gt_design_studio",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "6",
+      "when": 1793753910985,
+      "tag": "0011_glossy_shadow_king",
+      "breakpoints": true
     }
   ]
 }

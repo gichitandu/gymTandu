@@ -28,6 +28,16 @@ try {
   backup.data.settings[0].reusePreviousWeek = 'false'; assert.equal((await call('/api/archive?scope=account', backup, 1)).status, 400);
   loaded = await (await call('/api/archive?scope=account')).json(); assert.equal(loaded.backup, text); assert.equal(loaded.revision, 1);
   console.log('PASS packaged Worker: new weekly preference survives account backup and malformed writes leave it intact');
+  backup.data.settings[0].reusePreviousWeek = false;
+  backup.data.workouts.push({id:'protected',userId:'local',planId:'p',dayId:'d',planName:'Piano',dayName:'Seduta conclusa',date:'2026-11-03',startedAt:'2026-11-03T12:00:00Z',endedAt:'2026-11-03T13:00:00Z',duration:60,notes:'',status:'completed'});
+  backup.data.workoutExercises.push({id:'protected-ex',workoutId:'protected',exerciseId:'exercise-0',name:'Panca',loadMode:'external',order:0,rest:90,notes:''});
+  backup.data.sets.push({id:'protected-set',workoutExerciseId:'protected-ex',number:1,weight:72.5,reps:9,completed:true});
+  assert.equal((await call('/api/archive?scope=account', backup, 1)).status, 200);
+  const stale=structuredClone(backup);stale.data.sets[0].completed=false;
+  const rejected=await call('/api/archive?scope=account',stale,2);assert.equal(rejected.status,409);assert.equal((await rejected.json()).code,'workout_history_conflict');
+  assert.equal((await call('/api/archive?scope=account&checkpoint=before-update',backup,2)).status,200);
+  const protectedHistory=await (await call('/api/archive?scope=account&history=1')).json();assert(protectedHistory.versions.some(row=>row.reason==='completed-workout'));assert(protectedHistory.versions.some(row=>row.reason==='before-update'));
+  console.log('PASS packaged Worker: completed progress rejects stale copies and protected update/history checkpoints remain available');
   const html = await (await call('/')).text(), manifest = await (await call('/manifest.webmanifest')).json();
   assert(html.includes('rel="apple-touch-icon" sizes="180x180" href="data:image/png;base64,'));
   for (const [index, size] of [192, 512].entries()) assert(Buffer.from(manifest.icons[index].src.split(',')[1], 'base64').equals(readFileSync('public/icons/gt-modern-' + size + '.png')));

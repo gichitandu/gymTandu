@@ -3,6 +3,8 @@ import { clearLegacyYoutube } from "./catalog-upgrade";
 import { validateIntegrity } from "../services/integrity";
 import Dexie, { Table } from "dexie";
 import { DataSet, Entity, TABLES } from "../models/domain";
+import {workoutGraph} from '../services/workout-safety';
+export interface LocalArchiveCheckpoint {id: string; kind: string; createdAt: number; data: DataSet}
 export class ArchiveConflictError extends Error {
   constructor(){super('L’archivio è stato aggiornato in un’altra finestra. Riapri l’app per caricare i dati più recenti prima di salvare. Nessun dato è stato sovrascritto.');this.name='ArchiveConflictError';}
 }
@@ -77,6 +79,22 @@ export class GymDatabase extends Dexie {
         const revision = (await this.table('archiveMeta').get('revision'))?.value ?? 0;
         if (revision !== expectedRevision)
           throw new ArchiveConflictError();
+        const previousWorkouts = await this.table('workouts').toArray();
+        const completed = previousWorkouts.filter(row => row.status === 'completed');
+        const newCompleted = data.workouts.filter(row => row.status === 'completed');
+        if (completed.length || newCompleted.length) {
+          const previous = Object.fromEntries(await Promise.all(TABLES.map(async name => [name, await this.table(name).toArray()]))) as unknown as DataSet;
+          let preserved = false; const changed: string[] = [];
+          for (const workout of [...completed, ...newCompleted.filter(row => !completed.some(old => old.id === row.id))]) {
+            const before = workoutGraph(previous, workout.id), after = workoutGraph(data, workout.id);
+            if (JSON.stringify(before) === JSON.stringify(after)) continue;
+            if (!preserved && previous.profiles.length && before.workout?.status === 'completed') {
+              await this.putCheckpoint(previous, 'before-history-change'); preserved = true;
+            }
+            if (after.workout?.status === 'completed') changed.push(workout.id);
+          }
+          if (changed.length) await this.putCheckpoint(data, 'completed-workout', 'recovery:completed:' + (changed.length === 1 ? changed[0] : crypto.randomUUID()));
+        }
         for (const name of TABLES) {
           await this.table<Entity, string>(name).clear();
           await this.table(name).bulkPut(data[name]);
@@ -86,5 +104,28 @@ export class GymDatabase extends Dexie {
       },
     );
     this.revision = nextRevision;
+  }
+  private async putCheckpoint(data: DataSet, kind: string, id = 'recovery:' + kind + ':' + crypto.randomUUID()) {
+    const record: LocalArchiveCheckpoint = {id, kind, createdAt: Date.now(), data: structuredClone(data)};
+    await this.table('archiveMeta').put(record);
+    const saved = await this.table('archiveMeta').get(id);
+    if (!saved || JSON.stringify(saved.data) !== JSON.stringify(data)) throw Error('Copia di sicurezza locale non verificata. I dati precedenti sono conservati.');
+    if (kind !== 'completed-workout') {
+      const old = (await this.table('archiveMeta').where(':id').startsWith('recovery:' + kind + ':').toArray()).sort((a, b) => b.createdAt - a.createdAt).slice(12);
+      if (old.length) await this.table('archiveMeta').bulkDelete(old.map(row => row.id));
+    }
+    return id;
+  }
+  async checkpoint(kind: string) {
+    return this.transaction('rw', [...TABLES.map(name => this.table(name)), this.table('archiveMeta')], async () => {
+      const revision = (await this.table('archiveMeta').get('revision'))?.value ?? 0;
+      if (revision !== (this.revision ?? 0)) throw new ArchiveConflictError();
+      const data = Object.fromEntries(await Promise.all(TABLES.map(async name => [name, await this.table(name).toArray()]))) as unknown as DataSet;
+      validateIntegrity(data);
+      return this.putCheckpoint(data, kind);
+    });
+  }
+  async recoverySnapshots(): Promise<LocalArchiveCheckpoint[]> {
+    return (await this.table('archiveMeta').where(':id').startsWith('recovery:').toArray()).sort((a, b) => b.createdAt - a.createdAt);
   }
 }

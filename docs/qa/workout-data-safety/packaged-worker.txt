@@ -1,0 +1,4 @@
+PASS packaged Worker: login and Super Admin Design Studio session gates
+PASS packaged Worker: new weekly preference survives account backup and malformed writes leave it intact
+PASS packaged Worker: completed progress rejects stale copies and protected update/history checkpoints remain available
+PASS packaged Worker: embedded GT icons, manifest, and exact deployed build identity
