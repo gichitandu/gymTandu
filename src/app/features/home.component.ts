@@ -1,5 +1,6 @@
 import { DESIGN_DIRECTIVES } from '../design/design-directives';
 import {sleepLabel} from '../services/wellness';
+import {upcomingCalendarReminders} from '../services/training-insights';
 import {AppFeaturesService} from '../services/app-features';
 import { AuthService } from '../services/auth';
 import { BackupReminderComponent } from "../shared/backup-reminder.component";
@@ -35,6 +36,7 @@ export class HomeComponent {
   private todayClock = inject(TodayService,{optional:true});
   get today() { return this.todayClock?.date() || localDate(); }
   wellness=computed(()=>this.s.data().wellnessLogs.find(row=>row.date===this.today));
+  calendarReminders=computed(()=>upcomingCalendarReminders(this.s.data(),this.today));
   sleepLabel=sleepLabel;
   focusLabel=computed(()=>{
     const dayId=this.s.draft()?.dayId||this.nextScheduled()?.dayId||this.nextDay()?.id;
