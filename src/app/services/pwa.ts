@@ -65,8 +65,8 @@ export class PwaService {
    let timer:ReturnType<typeof setTimeout>|undefined;
    const save=Promise.resolve().then(async()=>{
     if(this.drafts&&await this.drafts.flushAll()===false)return false;
-    await this.store.settled();
-    return !this.store.localSaveFailed()&&!this.store.conflicted();
+    const settled=await this.store.settled();
+    return settled!==false&&!this.store.localSaveFailed()&&!this.store.conflicted();
    }).catch(()=>false);
    let safe=false;
    try{safe=await Promise.race([save,new Promise<false>(resolve=>{timer=setTimeout(()=>resolve(false),1000);})]);}
