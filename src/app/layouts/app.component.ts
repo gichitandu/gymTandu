@@ -1,4 +1,5 @@
 import {AppFeaturesService} from '../services/app-features';
+import {WorkoutStartOptionsComponent} from '../shared/workout-start-options.component';
 import { ConfirmationDialogComponent } from '../shared/confirmation-dialog.component';
 import { Component, effect, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -9,9 +10,9 @@ import { IconComponent } from '../shared/icon.component';
 import { FeedbackPopupsComponent } from '../shared/feedback-popups.component';
 import { feedbackForContext, feedbackSignal } from '../services/feedback';
 import { AppActivationUncertainError, AppReleaseService } from '../services/app-release';
-@Component({selector:'app-root',standalone:true,imports:[ConfirmationDialogComponent,FormsModule,ShellComponent,IconComponent,FeedbackPopupsComponent],styleUrl:'./entry.css',template:`
+@Component({selector:'app-root',standalone:true,imports:[WorkoutStartOptionsComponent,ConfirmationDialogComponent,FormsModule,ShellComponent,IconComponent,FeedbackPopupsComponent],styleUrl:'./entry.css',template:`
 <gt-feedback-popups/><gt-confirmation-dialog/>
-@if(auth.user()) { <gt-shell /> } @else {
+@if(auth.user()) { <gt-shell /><gt-workout-start-options/> } @else {
 @if(auth.loggingOut()){<p class="entry-status" role="status">Uscita e aggiornamento…</p>}
 <main class="entry-page" [class.welcome-state]="welcome() && !auth.setup()" [attr.inert]="entryUpdating()||auth.loggingOut()?'':null">
 <div class="entry-layout">

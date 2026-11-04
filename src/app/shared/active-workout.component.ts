@@ -1,4 +1,5 @@
 import {ExerciseMotionComponent} from './exercise-motion.component';
+import {ExerciseReplacementComponent, ExerciseReplacementClosed} from './exercise-replacement.component';
 import {exerciseComparison} from '../services/exercise-comparison';
 import { matchesExercise } from '../services/exercise-search';
 import { NgTemplateOutlet } from '@angular/common';
@@ -21,11 +22,14 @@ import type { AppUpdateEvent } from '../services/pwa';
 import { FormDraftService } from '../services/form-drafts';
 type ActiveSetDraft={weight:number;reps:number;rpe:number|undefined;setNotes:string;kind:'work'|'warmup'};
 interface ActiveDraftSnapshot {entries:[string,ActiveSetDraft][];exerciseId:string;setId:string;bases?:Record<string,string>}
-@Component({selector:'gt-active-workout',standalone:true,imports:[ExerciseMotionComponent,NgTemplateOutlet,FormsModule,LoadProgressionComponent,MachineSetupComponent,MuscleMapComponent,ExerciseThumbComponent,ExerciseVideoComponent,IconComponent],templateUrl:'./active-workout.component.html',styleUrls:['./recording.css','./recording-simple.css']})
+@Component({selector:'gt-active-workout',standalone:true,imports:[ExerciseReplacementComponent,ExerciseMotionComponent,NgTemplateOutlet,FormsModule,LoadProgressionComponent,MachineSetupComponent,MuscleMapComponent,ExerciseThumbComponent,ExerciseVideoComponent,IconComponent],templateUrl:'./active-workout.component.html',styleUrls:['./recording.css','./recording-simple.css']})
 export class ActiveWorkoutComponent {
  private confirmation=confirmationForContext();
  externalTimer=inject(ExternalTimerService,{optional:true});
  committing=signal(false);s=inject(Store);resume=inject(WorkoutResumeService,{optional:true})||new WorkoutResumeService();workoutId=input.required<string>();finish=output<void>();
+ replacementOpen=signal(false);
+ async openReplacement(){if(this.committing())return;this.committing.set(true);try{if(await this.flushForFinish())this.replacementOpen.set(true);}finally{this.committing.set(false);}}
+ replacementClosed(result:ExerciseReplacementClosed){this.replacementOpen.set(false);if(result.applied&&result.activeChanged){this.inputDrafts.clear();this.draftsChanged();this.externalTimer?.stop();this.restEnd.set(0);this.paused.set(false);this.setId.set('');this.nextRecord();this.remember(true);}}
  step=signal<WorkoutUiState['step']>('list');tab=signal<WorkoutUiState['tab']>('sets');exerciseId=signal('');setId=signal('');clock=signal(Date.now());restEnd=signal(0);paused=signal(false);pausedSeconds=signal(0);restTotal=signal(90);
  weight=0;reps=8;rpe:number|undefined;setNotes='';kind:'work'|'warmup'='work';rpes=[1,2,3,4,5,6,6.5,7,7.5,8,8.5,9,9.5,10];
  gymMode=signal(this.s.settings().gymMode!==false);
@@ -106,7 +110,7 @@ export class ActiveWorkoutComponent {
  async flushPending(reportInvalid=true){const ids=new Set([...this.inputDrafts.keys(),...this.writes.keys()]);const saved=await Promise.all([...ids].map(id=>this.flushSet(id,reportInvalid)));await this.draftSession?.flush();return saved.every(Boolean);}
  async flushForFinish(){clearTimeout(this.inputTimer);this.clock.set(Date.now());this.remember(true);if(this.step()==='record')this.captureInputs();const ok=await this.flushPending(true);await this.s.settled();if(!ok||this.inputDrafts.size){const pending=this.allSets().find(set=>this.inputDrafts.has(set.id));if(pending){this.exerciseId.set(pending.workoutExerciseId);this.setId.set(pending.id);this.applyInputs(this.inputDrafts.get(pending.id)!);this.step.set('record');}this.s.error.set(this.s.error()||'Alcune modifiche alle serie non sono state salvate. Controlla i valori e riprova.');return false;}return true;}
  recordingPast=computed(()=>{const workout=this.s.data().workouts.find(w=>w.id===this.workoutId());return !!workout&&workout.date<localDate(new Date(workout.startedAt));});
- async complete(event?:MouseEvent){if(this.committing()||this.step()!=='record'||!event&&Date.now()<this.completionBlockedUntil)return;if(event){if(event.timeStamp-this.lastCompletionClick<600)return;this.lastCompletionClick=event.timeStamp;}this.committing.set(true);const completedSetId=this.setId();clearTimeout(this.inputTimer);try{if(!await this.saveDraft(true))return;if(this.step()!=='record'||this.setId()!==completedSetId)return;if(this.recordingPast()){this.advance();return;}const current=this.selected(),handoff=current?supersetNext(this.exercises(),this.allSets(),current.id):undefined;if(this.kind!=='warmup'&&handoff?.immediate&&handoff.next){this.restEnd.set(0);this.paused.set(false);this.exerciseId.set(handoff.next.id);this.nextRecord();this.s.message.set('Superset '+current?.superset+': passa a '+handoff.next.name+'.');return;}const rest=this.currentSet()?.rest??this.selected()?.rest??90;this.clock.set(Date.now());this.restTotal.set(rest);this.paused.set(false);this.restEnd.set(Date.now()+rest*1000);if(this.gymMode()){this.completionBlockedUntil=Date.now()+600;const next=this.nextExercise();if(next){this.exerciseId.set(next.id);this.setId.set('');this.nextRecord();}else{this.restEnd.set(0);this.navigate('list');}}else this.step.set('rest');this.remember(true);}finally{this.committing.set(false);}}
+ async complete(event?:MouseEvent){if(this.committing()||this.step()!=='record'||!event&&Date.now()<this.completionBlockedUntil)return;if(event){if(event.timeStamp-this.lastCompletionClick<600)return;this.lastCompletionClick=event.timeStamp;}this.committing.set(true);const completedSetId=this.setId(),alreadyCompleted=this.currentSet()?.completed===true;clearTimeout(this.inputTimer);try{if(!await this.saveDraft(true))return;if(this.step()!=='record'||this.setId()!==completedSetId)return;if(alreadyCompleted){this.s.message.set('Serie aggiornata.');this.remember(true);return;}if(this.recordingPast()){this.advance();return;}const current=this.selected(),handoff=current?supersetNext(this.exercises(),this.allSets(),current.id):undefined;if(this.kind!=='warmup'&&handoff?.immediate&&handoff.next){this.restEnd.set(0);this.paused.set(false);this.exerciseId.set(handoff.next.id);this.nextRecord();this.s.message.set('Superset '+current?.superset+': passa a '+handoff.next.name+'.');return;}const rest=this.currentSet()?.rest??this.selected()?.rest??90;this.clock.set(Date.now());this.restTotal.set(rest);this.paused.set(false);this.restEnd.set(Date.now()+rest*1000);if(this.gymMode()){this.completionBlockedUntil=Date.now()+600;const next=this.nextExercise();if(next){this.exerciseId.set(next.id);this.setId.set('');this.nextRecord();}else{this.restEnd.set(0);this.navigate('list');}}else this.step.set('rest');this.remember(true);}finally{this.committing.set(false);}}
  pauseRest(){this.clock.set(Date.now());if(this.paused()){this.restEnd.set(Date.now()+this.pausedSeconds()*1000);this.paused.set(false);}else{this.pausedSeconds.set(this.remaining());this.paused.set(true);}this.remember(true);}
  adjustRest(delta:number){const seconds=Math.min(7200,Math.max(0,this.remaining()+delta));this.restTotal.set(Math.max(this.restTotal(),seconds));if(this.paused())this.pausedSeconds.set(seconds);else{this.clock.set(Date.now());this.restEnd.set(Date.now()+seconds*1000);}this.remember(true);}
  syncExternalTimer(){if(this.s.draft()?.id!==this.workoutId()){this.externalTimer?.stop();return;}this.externalTimer?.sync({end:this.restEnd(),paused:this.paused(),pausedSeconds:this.pausedSeconds(),title:this.selected()?.name||'Recupero'});}
@@ -116,6 +120,25 @@ export class ActiveWorkoutComponent {
  advance(){this.externalTimer?.stop();this.restEnd.set(0);this.paused.set(false);const next=this.nextExercise();if(next){this.exerciseId.set(next.id);this.nextRecord();}else this.navigate('list');this.remember();}
  async usePrevious(id:string){if(this.count(id)&&!await this.confirmation.ask('Sostituire le serie allenanti di questo esercizio con gli ultimi valori? Le serie di riscaldamento restano conservate.'))return;const ids=this.s.sets(id).map(s=>s.id);if(await this.s.copyPrevious(id)){for(const key of ids)this.inputDrafts.delete(key);}this.setId.set('');this.remember();}
  saveNotes(id:string,notes:string){void this.s.change(d=>{const e=d.workoutExercises.find(e=>e.id===id);if(e)e.notes=notes;},'',false);}
- async removeSet(set:WorkoutLogSet){if(!set.completed||await this.confirmation.ask('Eliminare questa serie completata?'))if(await this.s.removeSet(set.id)){this.inputDrafts.delete(set.id);this.setId.set('');this.navigate('detail');}}
+ async removeSet(set:WorkoutLogSet){
+  if(this.committing())return;
+  if(set.completed&&!await this.confirmation.ask('Eliminare questa serie completata? Le altre serie restano conservate.'))return;
+  this.committing.set(true);
+  const current=this.setId()===set.id;
+  if(current)clearTimeout(this.inputTimer);
+  try{
+   const pending=this.writes.get(set.id);if(pending)try{await pending;}catch{}
+   const others=[...this.inputDrafts.keys()].filter(id=>id!==set.id);
+   if(!(await Promise.all(others.map(id=>this.flushSet(id,true)))).every(Boolean))return;
+   if(!await this.s.removeSet(set.id))return;
+   this.inputDrafts.delete(set.id);this.draftsChanged();
+   if(current){
+    this.setId.set('');
+    const remaining=this.s.sets(set.workoutExerciseId),next=remaining.find(row=>row.number>=set.number)||remaining.at(-1);
+    if(this.step()==='record'&&next)this.record(next);else this.navigate('detail');
+   }
+   this.remember(true);
+  }finally{this.committing.set(false);}
+ }
  ngOnDestroy(){clearInterval(this.timer);clearTimeout(this.inputTimer);clearTimeout(this.persistTimer);this.flush();void this.draftSession?.destroy();this.destroyed=true;}
 }

@@ -1,4 +1,7 @@
 import { cloneForEdit } from './edit-snapshot';
+import { previousWeekWorkout, reusableExerciseSets } from './weekly-reuse';
+import { WorkoutStartOptionsService } from './workout-start-options';
+import { PlanReplacementRequest, PlanReplacementResult, replacePlanExercise, replaceWorkoutExercise } from './exercise-replacement';
 import { setupKey,setupSummary,hasSetup } from "./training-flow";
 import { weightProgression } from "./progression";
 import { MachineSetup,WorkoutUiState,WorkoutLogExercise,CalendarActivityInput,CalendarEventOptions,ScheduledWorkout } from "../models/domain";
@@ -38,6 +41,7 @@ export class Store {
   private repo = inject(GYM_REPOSITORY);
   private cloud = inject(ArchiveSyncService,{optional:true});
   private today = inject(TodayService,{optional:true});
+  private startOptions = inject(WorkoutStartOptionsService,{optional:true});
   private resume = inject(WorkoutResumeService,{optional:true})||new WorkoutResumeService();
   data = signal<DataSet>(seed());
   archiveKey(){return this.repo.storageKey||this.auth?.user()?.id||'local';}
@@ -505,13 +509,22 @@ export class Store {
     const date=parseLocalDate(workout.date).toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit',year:'numeric'});
     return `Hai una sessione aperta: ${workout.planName} · ${workout.dayName} · ${date}. Apri “Sessione” e premi “Termina allenamento” prima di registrare un altro giorno.`;
   }
-  async start(dayId: string, date?:string) {
+  async start(dayId: string, date?:string, options: {reusePreviousWeek?: boolean} = {}) {
     const workoutDate=date??localDate();
     try{parseLocalDate(workoutDate);if(workoutDate>localDate())throw Error('Per registrare un allenamento scegli oggi o una data passata.');}
     catch(error){this.error.set(error instanceof Error?error.message:'Data non valida.');return false;}
     if (this.draft()) {
       if(date!==undefined&&(this.draft()!.dayId!==dayId||this.draft()!.date!==workoutDate)){this.error.set(this.openSessionMessage(this.draft()!));return false;}
       return true;
+    }
+    const previousWeek = previousWeekWorkout(this.data(), dayId, workoutDate);
+    let reuse = options.reusePreviousWeek ?? (this.settings().reusePreviousWeek !== false);
+    if (previousWeek && options.reusePreviousWeek === undefined && this.startOptions) {
+      const day = this.data().days.find(row => row.id === dayId)!, plan = this.data().plans.find(row => row.id === day.planId);
+      const archive = this.archiveKey(), actor = this.auth?.user()?.id;
+      const answer = await this.startOptions.choose({dayName: day.name, planName: plan?.name || '', previousDate: previousWeek.date, defaultReuse: reuse});
+      if (answer === null || archive !== this.archiveKey() || actor !== this.auth?.user()?.id) return false;
+      reuse = answer;
     }
     return this.change((d) => {
       const day = d.days.find((x) => x.id === dayId);
@@ -533,6 +546,8 @@ export class Store {
       if(conflicts.length)throw Error('Data occupata da un altro piano. '+conflicts[0]);
       const programEvent=plan.program?d.scheduledWorkouts.find(event=>event.dayId===dayId&&event.planId===plan.id):undefined;
       if(programEvent?.workoutId)throw Error('Questa seduta del programma è già stata registrata. Riaprila dallo storico per modificarla.');
+      const reference = reuse && previousWeek ? previousWeekWorkout(d, dayId, workoutDate) : undefined;
+      if (reuse && previousWeek && reference?.id !== previousWeek.id) throw Error('I riferimenti della settimana precedente sono cambiati. Riapri la seduta e controlla la scelta.');
       const wid = uid();
       d.workouts.push({
         id: wid,
@@ -568,9 +583,15 @@ export class Store {
           repsMin:item.repsMin,repsMax:item.repsMax,
           ...prescriptionDetails(item),
         });
-        const prev = this.settings().prefill ? this.previous(ex.id,undefined,d.exercisePreferences.find(p=>p.id===ex.id)?.machineSetup,workoutDate) : [];
-        const warmups=item.warmupSets||0;
-        for(let i=0;i<warmups;i++)d.sets.push({id:uid(),workoutExerciseId:weid,number:i+1,kind:'warmup',weight:0,reps:item.repsMin,rest:item.rest,notes:'',completed:false});
+        const prior = reference ? reusableExerciseSets(d, reference, item, d.exercisePreferences.find(p => p.id === ex.id)?.machineSetup) : {work: [], warmup: []};
+        // An explicit opt-out from the weekly reference must also beat legacy prefill.
+        const prev = !previousWeek && d.settings[0].prefill ? this.previous(ex.id,undefined,d.exercisePreferences.find(p=>p.id===ex.id)?.machineSetup,workoutDate) : [];
+        const copiedWarmups = prior.warmup.slice(0, Math.max(0, 60 - item.sets));
+        const warmups = copiedWarmups.length || item.warmupSets || 0;
+        for(let i=0;i<warmups;i++) {
+          const source = copiedWarmups[i];
+          d.sets.push({id:uid(),workoutExerciseId:weid,number:i+1,kind:'warmup',weight:source?.weight ?? 0,reps:source?.reps ?? item.repsMin,rest:source?.rest ?? item.rest,notes:source?.notes || '',completed:false});
+        }
         for (let i = 0; i < item.sets; i++) {
           const p = prev[i];
           d.sets.push({
@@ -578,7 +599,7 @@ export class Store {
             workoutExerciseId: weid,
             number: i + 1 + warmups,
             kind:"work",
-            weight: p?.weight ?? item.targetWeight ?? 0,
+            weight: prior.work[i]?.weight ?? prior.work.at(-1)?.weight ?? p?.weight ?? item.targetWeight ?? 0,
             reps: p?.reps ?? item.repsMin,
             rpe: item.rpe,
             rest: item.rest,
@@ -620,13 +641,18 @@ export class Store {
   }
   async undoGymAction(){const receipt=this.gymUndo();if(!receipt)return false;const ok=await this.change(d=>{if(this.gymUndo()?.id!==receipt.id||JSON.stringify(this.gymSnapshot(d,receipt.exerciseId))!==receipt.after||!d.workouts.some(w=>w.id===receipt.workoutId&&w.status==='draft'))throw Error('La serie è cambiata: l’annullamento non sovrascrive le modifiche successive.');const i=d.workoutExercises.findIndex(e=>e.id===receipt.exerciseId);d.workoutExercises[i]=structuredClone(receipt.before.exercise);d.sets=d.sets.filter(s=>s.workoutExerciseId!==receipt.exerciseId).concat(structuredClone(receipt.before.sets));},'Ultima azione annullata.',false);if(ok&&this.gymUndo()?.id===receipt.id)this.gymUndo.set(null);return ok;}
   saveWeightStep(exerciseId:string,step:number){return this.change(d=>{if(!d.exercises.some(e=>e.id===exerciseId)||!Number.isFinite(step)||step<=0||step>50)throw Error('Scegli un incremento da 0,1 a 50.');const p=d.exercisePreferences.find(p=>p.id===exerciseId);if(p)p.weightStep=step;else d.exercisePreferences.push({id:exerciseId,favorite:false,weightStep:step});},'Incremento salvato.',false);}
-  substituteWorkoutExercise(id:string,replacementId:string){return this.gymEdit(id,d=>{
-    const row=d.workoutExercises.find(e=>e.id===id)!,replacement=d.exercises.find(e=>e.id===replacementId&&e.active);
-    if(!replacement||replacement.id===row.exerciseId)throw Error('Scegli un altro esercizio attivo.');
-    if(d.sets.some(s=>s.workoutExerciseId===id&&s.completed))throw Error('Le serie già eseguite restano associate al loro esercizio. Sostituisci prima di completare una serie.');
-    row.substitutedFrom??={exerciseId:row.exerciseId,name:row.name};row.exerciseId=replacement.id;row.name=replacement.name;row.loadMode=replacement.loadMode;row.machineSetup=structuredClone(d.exercisePreferences.find(p=>p.id===replacementId)?.machineSetup);delete row.reference;delete row.loadUnit;
-    for(const set of d.sets.filter(s=>s.workoutExerciseId===id)){set.weight=0;delete set.rpe;set.notes='';}
+  substituteWorkoutExercise(id:string,replacementId:string,expectedExerciseId?:string){return this.gymEdit(id,d=>{
+    if(expectedExerciseId&&d.workoutExercises.find(row=>row.id===id)?.exerciseId!==expectedExerciseId)throw Error('L’esercizio è cambiato. Riapri la sostituzione.');
+    replaceWorkoutExercise(d,id,replacementId);
   },'sostituzione esercizio');}
+  async replacePlanExercise(request: PlanReplacementRequest): Promise<PlanReplacementResult | null> {
+    let result: PlanReplacementResult | null = null;
+    const saved = await this.change(data => {result = replacePlanExercise(data, request);}, '', false);
+    if (!saved || !result) return null;
+    const applied = result as PlanReplacementResult;
+    this.message.set(`${applied.changed} occorrenze sostituite in ${applied.days} allenamenti. Le sedute già registrate restano conservate.${applied.activePreserved ? ' Le serie di questa seduta mantengono l’esercizio già eseguito.' : ''}`);
+    return applied;
+  }
   private pendingSetAdds = new Map<string, Promise<boolean>>();
   addSet(id:string,kind:'work'|'warmup'='work'){
     const key=id+':'+kind, pending=this.pendingSetAdds.get(key);
@@ -638,7 +664,9 @@ export class Store {
   }
   async removeSet(id: string) {
     const exerciseId=this.data().sets.find(set=>set.id===id)?.workoutExerciseId||'';
-    return this.gymEdit(exerciseId,(d) => {
+    const exercise=this.data().workoutExercises.find(row=>row.id===exerciseId);
+    const historical=this.data().workouts.some(row=>row.id===exercise?.workoutId&&row.status==='completed');
+    const remove=(d:DataSet) => {
       const s = d.sets.find((s) => s.id === id);
       if (!s) return;
       d.sets = d.sets.filter((s) => s.id !== id);
@@ -646,7 +674,8 @@ export class Store {
         .filter((x) => x.workoutExerciseId === s.workoutExerciseId)
         .sort((a, b) => a.number - b.number)
         .forEach((x, i) => (x.number = i + 1));
-    },'eliminazione serie');
+    };
+    return historical?this.change(remove,'Serie eliminata. Le altre serie restano conservate.',false):this.gymEdit(exerciseId,remove,'eliminazione serie');
   }
   async copyPrevious(id: string) {
     const ex = this.data().workoutExercises.find((e) => e.id === id);
@@ -830,13 +859,13 @@ export class Store {
       event.done=!event.done;validateCalendarEvent(event);
     },'Stato dell’attività aggiornato.',false);
   }
-  async startScheduled(id:string,date?:string) {
+  async startScheduled(id:string,date?:string,options: {reusePreviousWeek?: boolean} = {}) {
     const event=this.data().scheduledWorkouts.find(e=>e.id===id);if(!event)return false;
     if((event.kind??'workout')!=='workout'){this.error.set('Questa è un’attività personale del calendario. Usa il comando per segnarla come completata.');return false;}
     const linked=this.data().workouts.find(w=>w.id===event.workoutId);if(linked?.status==='completed'){this.error.set('Questa sessione è già stata completata.');return false;}
     if(this.draft()&&this.data().scheduledWorkouts.some(e=>e.id!==id&&e.workoutId===this.draft()!.id)){this.error.set('La sessione in corso è già associata a un’altra programmazione.');return false;}
     if(this.draft()&&this.draft()!.id!==event.workoutId&&this.draft()!.dayId!==event.dayId){this.error.set('Concludi o riprendi prima la sessione già in corso.');return false;}
-    if(!await this.start(event.dayId,date))return false;
+    if(!await this.start(event.dayId,date,options))return false;
     return this.change(d=>{const e=d.scheduledWorkouts.find(e=>e.id===id)!;const w=d.workouts.find(w=>w.status==='draft');if(w&&w.dayId===e.dayId)e.workoutId=w.id;},'',false);
   }
   async savePlanExercise(e: TrainingPlanExercise) {

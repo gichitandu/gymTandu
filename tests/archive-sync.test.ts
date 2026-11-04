@@ -73,6 +73,14 @@ it('does not upload startup seed or catalog receipt noise before the first real 
   t.service.changed(plans('Primo vero piano'));expect(await t.service.flush()).toBe(true);expect(t.posts).toHaveLength(1);
 });
 
+it('syncs an explicitly disabled weekly reuse preference even before the first plan exists', async () => {
+  const t = await setup(), data = seed(); await t.service.open(t.key, data);
+  data.settings[0].reusePreviousWeek = false;
+  t.service.changed(data); expect(await t.service.flush()).toBe(true);
+  expect(t.posts).toHaveLength(1);
+  expect((await importBackup(t.head.backup!)).settings[0].reusePreviousWeek).toBe(false);
+});
+
 it('lets an existing populated Safari archive fill a server head containing only a fresh PWA seed',async()=>{
   const t=await setup(seed()),local=plans('Piano Safari esistente');
   expect(await t.service.open(t.key,local)).toBe(local);expect(await t.service.flush()).toBe(true);

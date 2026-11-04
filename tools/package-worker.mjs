@@ -1,7 +1,9 @@
 import { readFile,writeFile,mkdir,cp,readdir,rm } from 'node:fs/promises';
 import path from 'node:path';
 import { createHash } from 'node:crypto';
+import { embedInstallIcons } from './embed-install-icons.mjs';
 const root='dist/gymtrack/browser';
+await embedInstallIcons(root);
 // Calendar relay is a separate public Worker; use the public HTTP front door.
 const runtimeFlags=['nodejs_compat','global_fetch_strictly_public'];
 const workerSource=await readFile('worker/index.js','utf8');
@@ -15,6 +17,7 @@ const archiveSource=(await readFile('worker/archive.js','utf8')).replace("import
 const programSource=await readFile('worker/program-imports.js','utf8');
 const serverCatalogSource=await readFile('worker/default-catalog.js','utf8');
 const manifest=JSON.parse(await readFile(root+'/ngsw.json','utf8'));
+for(const url of ['/index.html','/manifest.webmanifest'])manifest.hashTable[url]=createHash('sha1').update(await readFile(root+url)).digest('hex');
 // The legacy URLs become a storage-preserving migration worker. A fresh app
 // uses a new registration URL and a separately retained Angular offline engine.
 const workerPath=root+'/ngsw-worker.js',enginePath=root+'/gymtrack-offline-engine-v3.js';

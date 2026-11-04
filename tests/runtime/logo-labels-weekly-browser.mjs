@@ -164,7 +164,7 @@ try {
     assert.equal(bytes.readUInt32BE(16), size); assert.equal(bytes.readUInt32BE(20), size);
   }
   const manifest = await (await context.request.get(origin + '/manifest.webmanifest')).json();
-  assert.equal(manifest.id, './'); assert.equal(manifest.icons[0].src, 'icons/gt-modern-192.png');
+  assert.equal(manifest.id, './'); assert(manifest.icons[0].src.startsWith('data:image/png;base64,'));
   const guest = await browser.newContext({viewport: {width: 430, height: 932}, serviceWorkers: 'block'}), entry = await guest.newPage();
   await entry.goto(origin + '/#/');
   const logo = entry.locator('.entry-brand img[src="/brand/gt-modern-mark.png"]'); await logo.waitFor();

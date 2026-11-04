@@ -181,6 +181,7 @@ export interface AppSettings extends Entity {
   theme: "dark" | "light";
   unit: "kg" | "lb";
   prefill: boolean;
+  reusePreviousWeek?: boolean;
   lastBackup?: string;
   backgroundColor?: string;
   themeConfig?: {palette:string;mode:'dark'|'light'|'system';background?:string;accent?:string};

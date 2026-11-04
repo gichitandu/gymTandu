@@ -42,7 +42,7 @@ export function archiveHasContent(data: DataSet): boolean {
   if (data.profiles.some(profile => profile.name !== 'Atleta' || profile.photo || profile.bodyWeight || profile.height || profile.birthDate || profile.goal)) return true;
   const groups = new Map(defaultGroups.map(group => [group.id, group.name]));
   if (data.muscleGroups.some(group => groups.get(group.id) !== group.name)) return true;
-  return data.settings.some(settings => settings.theme !== 'dark' || settings.unit !== 'kg' || settings.prefill || settings.goals || settings.externalTimerEnabled === false);
+  return data.settings.some(settings => settings.theme !== 'dark' || settings.unit !== 'kg' || settings.prefill || settings.reusePreviousWeek === false || settings.goals || settings.externalTimerEnabled === false);
 }
 
 @Injectable({ providedIn: 'root' })

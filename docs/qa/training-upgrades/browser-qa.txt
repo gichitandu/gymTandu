@@ -1,0 +1,10 @@
+PASS Weekly default is ON; cancelling preparation creates no workout or sets
+PASS Settings persist the OFF default and provide the direct app installation link
+PASS Weekly opt-out overrides legacy prefill and preserves the new-week prescription
+PASS Per-session opt-in copies both warmups and weights without completing sets or replacing current-week reps
+PASS Exercise replacement selects specific days across eight weeks and resets loads for the new machine
+PASS Completed and pending series keep readable labels at 320/390 px; completed edits retain focus and do not open recovery
+PASS Individual completed warmup and pending work rows can be removed without losing other pending values
+PASS Plan-menu replacement updates all remaining occurrences while recorded history stays byte-for-byte unchanged
+PASS Embedded GT Home Screen icons decode correctly even when private icon URL requests return sign-in HTML
+PASS No browser exceptions across settings, plans, session recording and all dialogs

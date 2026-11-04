@@ -183,6 +183,20 @@ it('persists the completed-workout deletion preference and rejects malformed val
  expect((await put(JSON.stringify(invalid),1)).response.status).toBe(400);expect((await get()).data.backup).toBe(text);
 });
 
+it('round-trips weekly reuse defaults and rejects malformed preferences without replacing the saved archive', async () => {
+ let revision = 0, saved = '';
+ for (const enabled of [true, false]) {
+  const data = seed(); data.settings[0].reusePreviousWeek = enabled; saved = await exportBackup(data);
+  expect((await put(saved, revision++)).response.status).toBe(200);
+  expect(JSON.parse((await get()).data.backup).data.settings[0].reusePreviousWeek).toBe(enabled);
+ }
+ for (const value of ['false', 0, 1, null, {}, []]) {
+  const invalid = JSON.parse(saved); invalid.data.settings[0].reusePreviousWeek = value;
+  expect((await put(JSON.stringify(invalid), revision)).response.status).toBe(400);
+ }
+ expect((await get()).data.backup).toBe(saved); expect((await get()).data.revision).toBe(revision);
+});
+
 it('retains every new theme preset and custom colors in account snapshots',async()=>{
  const cookie=await activate();let revision=0;
  for(const palette of ['oro','argento','multicolore','bianco-elegante','scuro','rosso','verde']){

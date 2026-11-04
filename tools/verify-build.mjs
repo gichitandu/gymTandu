@@ -54,9 +54,15 @@ for (const file of ['brand/gt-modern-mark.png', 'icons/gt-modern-180.png', 'icon
   assert.equal(sw.hashTable['/' + file], createHash('sha1').update(fs.readFileSync(root + '/' + file)).digest('hex'), file + ' senza hash coerente');
 }
 assert.equal(manifest.id, './', 'Identità PWA esistente modificata');
-assert.deepEqual(manifest.icons.map(icon => icon.src), ['icons/gt-modern-192.png', 'icons/gt-modern-512.png']);
-assert(html.includes('rel="apple-touch-icon" sizes="180x180" href="/icons/gt-modern-180.png"'));
-assert(html.includes('rel="apple-touch-icon-precomposed" sizes="180x180" href="/icons/gt-modern-180.png"'));
+const installIconBytes = value => {assert(value.startsWith('data:image/png;base64,'), 'Icona installazione dipendente dalla rete autenticata'); return Buffer.from(value.slice('data:image/png;base64,'.length), 'base64');};
+for (const [index, size] of [192, 512].entries()) assert(installIconBytes(manifest.icons[index].src).equals(fs.readFileSync(root + '/icons/gt-modern-' + size + '.png')), 'Logo manifest diverso da GT');
+for (const rel of ['apple-touch-icon', 'apple-touch-icon-precomposed']) {
+  const tag = html.match(new RegExp('<link\\b(?=[^>]*\\brel="' + rel + '")[^>]*>'))?.[0];
+  assert(tag?.includes('sizes="180x180"'), 'Dimensione icona Apple assente');
+  const href = tag.match(/href="([^"]+)"/)?.[1] || '';
+  assert(installIconBytes(href).equals(fs.readFileSync(root + '/icons/gt-modern-180.png')), 'Logo Apple diverso da GT');
+}
+assert(html.includes('crossorigin="use-credentials"'), 'Manifest privato senza credenziali browser');
 const buildText = fs.readFileSync(root + '/app-build.json','utf8');
 const appBuild = JSON.parse(buildText);
 assert(/^[a-f0-9]{64}$/.test(appBuild.buildId), 'Identità della versione mancante');

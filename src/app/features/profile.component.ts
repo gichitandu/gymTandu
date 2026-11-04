@@ -1,6 +1,7 @@
 import { DESIGN_DIRECTIVES } from '../design/design-directives';
 import {DesignRuntime} from '../design/design-runtime';
 import {ThemePickerComponent} from '../shared/theme-picker.component';
+import {InstallHelpComponent} from '../shared/install-help.component';
 import {AppFeaturesService} from '../services/app-features';
 import {AppFeaturesComponent} from '../shared/app-features.component';
 import {PushReminderComponent} from '../shared/push-reminder.component';
@@ -48,7 +49,7 @@ interface ProfileFormDraft {
 @Component({
   standalone: true,
   styleUrl: "./account-polish.css",
-  imports: [...DESIGN_DIRECTIVES,ThemePickerComponent,AppFeaturesComponent,PushReminderComponent,CalendarSubscriptionComponent,DateFieldComponent,BackupReminderComponent,ArchiveSyncComponent,AppUpdatesComponent,
+  imports: [InstallHelpComponent,...DESIGN_DIRECTIVES,ThemePickerComponent,AppFeaturesComponent,PushReminderComponent,CalendarSubscriptionComponent,DateFieldComponent,BackupReminderComponent,ArchiveSyncComponent,AppUpdatesComponent,
     A11yModule,
     AvatarComponent,
     IosStatusComponent,
@@ -158,8 +159,15 @@ interface ProfileFormDraft {
           </div>
           <div class="setting-row">
             <div>
-              <b>Precompila dall’ultima sessione</b>
-              <p>Serie da confermare, mai completate in automatico.</p>
+              <b>Carichi e riscaldamento della settimana precedente</b>
+              <p>Scelta attiva quando inizi una seduta con un riferimento della settimana prima. Puoi cambiarla ogni volta, prima di iniziare.</p>
+            </div>
+            <mat-slide-toggle aria-label="Riusa settimana precedente per impostazione predefinita" [checked]="s.settings().reusePreviousWeek!==false" [disabled]="s.busy()" (change)="setting('reusePreviousWeek',$event.checked)"/>
+          </div>
+          <div class="setting-row">
+            <div>
+              <b>Precompila altre sedute dall’ultima sessione</b>
+              <p>Per le sedute senza un riferimento settimanale. Serie da confermare, mai completate in automatico.</p>
             </div>
             <mat-slide-toggle
               aria-label="Precompila valori precedenti"
@@ -211,6 +219,7 @@ interface ProfileFormDraft {
  <div class="profile-menu-group settings-shortcuts"><div class="account-section-label"><span>DISPOSITIVO</span></div><nav class="profile-menu" aria-label="Dispositivo"><button (click)="panel.set('calendar')"><gt-icon name="calendar"/><span><strong>Calendario iPhone</strong><small>Collega le sedute programmate</small></span>›</button><button (click)="panel.set('info')"><gt-icon name="info"/><span><strong>App e iPhone</strong><small>Installazione, offline e verifiche</small></span>›</button></nav></div>
  <details class="settings-disclosure settings-component"><summary><gt-icon name="clock"/><span><strong>Notifiche e promemoria</strong><small>Avvisi e suoni del recupero</small></span><span class="disclosure-chevron">›</span></summary><div class="settings-disclosure-body"><gt-push-reminder/></div></details>
  <details class="settings-disclosure settings-component"><summary><gt-icon name="download"/><span><strong>Aggiornamenti dell’app</strong><small>Versione installata e disponibilità</small></span><span class="disclosure-chevron">›</span></summary><div class="settings-disclosure-body"><gt-app-updates/></div></details>
+ <details class="settings-disclosure settings-component"><summary><gt-icon name="home"/><span><strong>Icona e collegamento Home</strong><small>Logo GT e link diretto dell’app</small></span><span class="disclosure-chevron">›</span></summary><div class="settings-disclosure-body"><gt-install-help/></div></details>
  <div class="profile-menu-group settings-shortcuts"><div class="account-section-label"><span>GESTIONE</span></div><nav class="profile-menu" aria-label="Gestione">@if(auth.canManageBackups()){<button (click)="panel.set('backup')"><gt-icon name="download"/><span><strong>Dati e backup</strong><small>Copia, esporta o ripristina</small></span>›</button>}<button (click)="panel.set('security')"><gt-icon name="shield"/><span><strong>Account e sicurezza</strong><small>Accesso e credenziali</small></span>›</button><a routerLink="/catalogo"><gt-icon name="weight"/><span><strong>{{s.canEditCatalog()?'Gestione esercizi':'Catalogo esercizi'}}</strong><small>Varianti, preferiti e configurazioni</small></span>›</a><a routerLink="/calendario"><gt-icon name="calendar"/><span><strong>Calendario allenamenti</strong><small>Il tuo ritmo, giorno per giorno</small></span>›</a></nav></div>
  @if(auth.uiRole()==='SuperAdmin'){<details class="settings-disclosure settings-component"><summary><gt-icon name="shield"/><span><strong>Amministrazione</strong><small>Utenti e sezioni dell’app</small></span><span class="disclosure-chevron">›</span></summary><div class="settings-disclosure-body"><gt-app-features/><a class="button full-width" routerLink="/utenti">Gestione utenti <gt-icon name="arrow"/></a></div></details>}
  <section class="card profile-logout-card" style="margin-top:20px"><h2>Accesso all’app</h2><p class="subtle" style="margin:12px 0">Puoi uscire senza fare un backup. Piani, esercizi e allenamenti salvati restano nel tuo archivio.</p><button type="button" class="full-width" gtDesign="profile.logout" [disabled]="loggingOut()" (click)="logout()">{{loggingOut()?'Uscita…':'Esci dall’app'}}</button></section>}
@@ -496,12 +505,13 @@ export class ProfileComponent {
     if(saved){if(this.photoDraft()===photo)this.photoDraft.set(undefined);for(const key of Object.keys(v) as (keyof typeof v)[]){const control=this.form.controls[key];if(control.value===v[key])control.markAsPristine();}this.profileSignature='';this.syncForms();await this.persistDraftState();}
     }finally{this.profileSaving.set(false);}
   }
-  setting(key: "theme" | "unit" | "prefill" | "allowCompletedWorkoutDeletion", value: string | boolean) {
+  setting(key: "theme" | "unit" | "prefill" | "reusePreviousWeek" | "allowCompletedWorkoutDeletion", value: string | boolean) {
     if(key === "theme") void this.theme.save(value === "light" ? "#edf3fa" : this.defaultBackground);
     void this.s.change((d) => {
       if (key === "theme") d.settings[0].theme = value as "dark" | "light";
       if (key === "unit") d.settings[0].unit = value as "kg" | "lb";
       if (key === "prefill") d.settings[0].prefill = !!value;
+      if (key === "reusePreviousWeek") d.settings[0].reusePreviousWeek = !!value;
       if (key === "allowCompletedWorkoutDeletion") d.settings[0].allowCompletedWorkoutDeletion = !!value;
     });
   }

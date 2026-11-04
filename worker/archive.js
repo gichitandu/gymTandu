@@ -42,6 +42,7 @@ function archiveValidate(text) {
  if(backup.data.profiles.length!==1||backup.data.settings.length!==1||!backup.data.roles.length)archiveFail('La copia dell’archivio è incompleta.');
  const data=backup.data,nonempty=value=>typeof value==='string'&&value.trim().length>0,numeric=value=>Number.isFinite(value)&&value>=0;
  const profile=data.profiles[0],settings=data.settings[0];
+ if(settings.reusePreviousWeek!==undefined&&typeof settings.reusePreviousWeek!=='boolean')archiveFail('Preferenza settimana precedente non valida.');
  if(profile.id!=='local'||!nonempty(profile.name)||!['SuperAdmin','Admin','User'].includes(profile.role)||settings.id!=='local'||!['dark','light'].includes(settings.theme)||!['kg','lb'].includes(settings.unit)||typeof settings.prefill!=='boolean'||data.roles.length!==3||new Set(data.roles.map(role=>role.name)).size!==3||data.roles.some(role=>!['SuperAdmin','Admin','User'].includes(role.name)))archiveFail('Profilo o impostazioni della copia non validi.');
  const ids=Object.fromEntries(archiveTables.map(name=>[name,new Set((data[name]||[]).map(row=>row.id))]));
  for(const plan of data.plans)if(!nonempty(plan.name)||!ids.profiles.has(plan.userId)||typeof plan.active!=='boolean'||typeof plan.archived!=='boolean')archiveFail('Piano della copia non valido.');

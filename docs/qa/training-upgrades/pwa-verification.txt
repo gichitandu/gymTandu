@@ -1,0 +1,7 @@
+Worker packaged with 166 assets, D1 migrations and build f1e0346d5b9c
+PASS packaging is idempotent: f1e0346d5b9c6324b501ca262ccdde7bef8736383f28b99c9c79411d5598e2eb
+
+> gymtrack@1.0.0 verify:build
+> node tools/verify-build.mjs
+
+Build PWA verificata: 49 bundle JavaScript in precache, manifest, icone e service worker presenti. Non sostituisce una prova offline in browser.

@@ -1,4 +1,5 @@
 import { DESIGN_DIRECTIVES } from '../design/design-directives';
+import {ExerciseReplacementComponent} from '../shared/exercise-replacement.component';
 import {AnimationLibraryComponent} from '../shared/animation-library.component';
 import { DateFieldComponent } from '../shared/date-field.component';
 import { confirmationForContext } from '../services/confirmation';
@@ -40,7 +41,7 @@ type PlanEditorDraft = {
 @Component({
   standalone: true,
   styleUrls: ["./feature-polish.css", "./plans-simple.css", "./plans-reference.css"],
-  imports: [...DESIGN_DIRECTIVES,AnimationLibraryComponent,DateFieldComponent,OpenWorkoutsComponent,
+  imports: [ExerciseReplacementComponent,...DESIGN_DIRECTIVES,AnimationLibraryComponent,DateFieldComponent,OpenWorkoutsComponent,
     A11yModule,ExerciseScopeComponent,
     ExerciseFamiliesComponent,
     ExerciseThumbComponent,
@@ -105,7 +106,7 @@ type PlanEditorDraft = {
                   </div>
                   <div class="simple-exercises"><div>
                     @for(pe of s.planExercises(day.id);track pe.id){<div class="simple-exercise-row"><gt-exercise-thumb [exercise]="s.exercise(pe.exerciseId)"/><div><strong>{{s.exercise(pe.exerciseId)?.name}}</strong><small>{{pe.sets}} × {{pe.repsMin}}–{{pe.repsMax}} rip · {{pe.rest}} s</small>@if(pe.targetWeight!==undefined){<small>{{s.formatWeight(pe.targetWeight)}} {{s.settings().unit}}</small>}@if(pe.superset){<small>Superset {{pe.superset}}</small>}@if(pe.warmupSets){<small>{{pe.warmupSets}} serie di riscaldamento</small>}@if(pe.rirMin!==undefined){<small>RIR {{pe.rirMin}}{{pe.rirMax!==undefined&&pe.rirMax!==pe.rirMin?'–'+pe.rirMax:''}}</small>}@if(pe.rpe){<small>RPE {{pe.rpe}}</small>}@if(pe.warmupNotes||pe.reference||pe.notes){<details class="exercise-guidance"><summary>Riscaldamento e note</summary>@if(pe.warmupNotes){<small><b>Riscaldamento:</b> {{pe.warmupNotes}}</small>}@if(pe.reference){<small><b>Riferimento:</b> {{pe.reference}}{{pe.loadUnit?' · '+pe.loadUnit:''}}</small>}@if(pe.notes){<small>{{pe.notes}}</small>}</details>}</div>
-                      @if(!p.archived&&!p.completedAt){<details class="simple-menu" #exerciseMenu><summary [attr.aria-label]="'Gestisci '+s.exercise(pe.exerciseId)?.name">⋯</summary><div class="simple-menu-panel"><button type="button" (click)="exerciseMenu.open=false;openExercise(day.id,pe)">Modifica esercizio</button><button type="button" (click)="exerciseMenu.open=false;moveExercise(pe,-1)" [disabled]="pe.order===0">Sposta prima</button><button type="button" (click)="exerciseMenu.open=false;moveExercise(pe,1)" [disabled]="pe.order===s.planExercises(day.id).length-1">Sposta dopo</button><button type="button" class="danger" (click)="exerciseMenu.open=false;removeExercise(pe)">Rimuovi esercizio</button></div></details>}
+                      @if(!p.archived&&!p.completedAt){<details class="simple-menu" #exerciseMenu><summary [attr.aria-label]="'Gestisci '+s.exercise(pe.exerciseId)?.name">⋯</summary><div class="simple-menu-panel"><button type="button" (click)="exerciseMenu.open=false;openExercise(day.id,pe)">Modifica esercizio</button><button type="button" (click)="exerciseMenu.open=false;replacementTarget.set(pe.id)">Sostituisci esercizio</button><button type="button" (click)="exerciseMenu.open=false;moveExercise(pe,-1)" [disabled]="pe.order===0">Sposta prima</button><button type="button" (click)="exerciseMenu.open=false;moveExercise(pe,1)" [disabled]="pe.order===s.planExercises(day.id).length-1">Sposta dopo</button><button type="button" class="danger" (click)="exerciseMenu.open=false;removeExercise(pe)">Rimuovi esercizio</button></div></details>}
                     </div>}@empty{<p class="subtle">Nessun esercizio.</p>}
                     @if(!p.archived&&!p.completedAt){<button type="button" class="ghost full-width" (click)="openExercise(day.id)">+ Esercizio</button>}
                   </div></div>
@@ -123,6 +124,7 @@ type PlanEditorDraft = {
     </div>
     <a class="button ghost catalog-entry" routerLink="/catalogo"><gt-icon name="weight"/>Catalogo esercizi<gt-icon name="arrow"/></a>
     </div></div>
+    @if(replacementTarget()){<gt-exercise-replacement [planExerciseId]="replacementTarget()" (closed)="replacementTarget.set('')"/>}
     @if (modal()) {
       <div class="modal-backdrop">
         <section
@@ -311,6 +313,7 @@ export class PlansComponent {
   archived = signal(false);
   expanded = signal(this.s.activePlan?.()?.id||"");
   modal = signal("");
+  replacementTarget = signal('');
   saving = signal(false);
   deletingPlan=signal('');startingPast=signal(false);pastDates:Record<string,string>={};
   private todayClock=inject(TodayService,{optional:true});

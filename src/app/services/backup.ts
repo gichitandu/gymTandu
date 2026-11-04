@@ -159,6 +159,7 @@ const schemas = {
     theme: z.enum(["dark", "light"]),
     unit: z.enum(["kg", "lb"]),
     prefill: z.boolean(),
+    reusePreviousWeek: z.boolean().optional(),
     lastBackup: time.optional(),backupConfirmedAt:time.optional(),backupSnoozedUntil:time.optional(),backupReminderDays:z.union([z.literal(0),z.literal(7),z.literal(14),z.literal(30)]).optional(),
     iphoneChecklist:z.object({device:z.string().max(120),ios:z.string().max(80),checks:z.record(z.string().max(80),z.object({state:z.enum(['todo','pass','fail']),note:z.string().max(500).optional(),checkedAt:time.optional()}))}).optional(),
     backgroundColor: z.string().regex(/^#[0-9a-fA-F]{6}$/).optional(),

@@ -9,6 +9,7 @@ export function validateIntegrity(d: DataSet) {
   const fail = (m: string): never => {
     throw Error("Backup non valido: " + m);
   };
+  if (d.settings.some(settings => settings.reusePreviousWeek !== undefined && typeof settings.reusePreviousWeek !== 'boolean')) fail('preferenza settimana precedente non valida');
   if(!Array.isArray(d.wellnessLogs)||d.wellnessLogs.length>10000||d.wellnessLogs.some(row=>!validWellness(row))||new Set(d.wellnessLogs.map(row=>row.date)).size!==d.wellnessLogs.length)fail('diario recupero non valido o date duplicate');
   for (const name of TABLES) {
     if (new Set(d[name].map((e) => e.id)).size !== d[name].length)

@@ -39,6 +39,21 @@ afterEach(async () => {
 function exercise() { return store.workoutExercises(editor.workoutId())[0]; }
 function set() { return store.sets(exercise().id)[0]; }
 
+it('removes only the confirmed historical series even when full-workout deletion is disabled', async () => {
+  const workoutId = editor.workoutId(), exerciseId = exercise().id;
+  await store.addSet(exerciseId); await store.addSet(exerciseId);
+  const rows = store.sets(exerciseId);
+  for (const row of rows) await store.updateSet(row.id, {completed: true, weight: 50 + row.number});
+  await store.finish();
+  const before = structuredClone(store.data().workouts.find(row => row.id === workoutId));
+  vi.stubGlobal('confirm', vi.fn(() => true));
+  expect(store.settings().allowCompletedWorkoutDeletion).not.toBe(true);
+  await editor.remove(store.sets(exerciseId)[1]);
+  expect(confirm).toHaveBeenCalledOnce();
+  expect(store.data().workouts.find(row => row.id === workoutId)).toEqual(before);
+  expect(store.sets(exerciseId)).toMatchObject([{id: rows[0].id, number: 1, weight: 51, completed: true}, {id: rows[2].id, number: 2, weight: 53, completed: true}]);
+});
+
 it('keeps newly typed values displayed while an older write updates the stored set', async () => {
   let release!: () => void;
   const held = new Promise<void>(resolve => { release = resolve; });

@@ -130,6 +130,47 @@ it('conserva la navigazione scelta durante un salvataggio senza aprire il recupe
   expect(c.step()).toBe('list'); expect(c.restEnd()).toBe(0);
   expect(c.completedSets()).toBe(1);
 });
+it('updates a completed series without changing the selected row or restarting recovery', async () => {
+  const c = await setup(), exercise = c.exercises()[0], row = s.sets(exercise.id)[0];
+  await s.updateSet(row.id, {completed: true, weight: 60});
+  c.open(exercise); c.record(s.sets(exercise.id)[0]);
+  const end = Date.now() + 45000; c.restEnd.set(end);
+  c.weight = 62.5; c.reps = 9;
+  await c.complete();
+  expect(c.step()).toBe('record'); expect(c.setId()).toBe(row.id); expect(c.restEnd()).toBe(end);
+  expect(s.sets(exercise.id)[0]).toMatchObject({weight: 62.5, reps: 9, completed: true});
+});
+it('does not move or overwrite a pending series selected during completion of another row', async () => {
+  const c = await setup(), exercise = c.exercises()[0], rows = s.sets(exercise.id);
+  c.quickRecord(exercise); c.weight = 60;
+  let release!: () => void;
+  const held = new Promise<void>(resolve => {release = resolve;});
+  const update = s.updateSet.bind(s);
+  vi.spyOn(s, 'updateSet').mockImplementationOnce(async (id, patch) => {await held; return update(id, patch);});
+  const completion = c.complete(); c.record(rows[1]); c.weight = 67.5; c.reps = 11; c.inputChanged();
+  release(); await completion; await c.flushPending(); await s.settled();
+  expect(c.step()).toBe('record'); expect(c.setId()).toBe(rows[1].id); expect(c.restEnd()).toBe(0);
+  expect(c.weight).toBe(67.5); expect(c.reps).toBe(11);
+  expect(s.sets(exercise.id)[0]).toMatchObject({weight: 60, completed: true});
+  expect(s.sets(exercise.id)[1]).toMatchObject({weight: 67.5, reps: 11, completed: false});
+});
+it('removes a different completed series while preserving the selected series and its pending values', async () => {
+  const c = await setup(), exercise = c.exercises()[0], rows = s.sets(exercise.id);
+  await s.updateSet(rows[0].id, {completed: true});
+  c.open(exercise); c.record(rows[1]); c.weight = 72.5; c.reps = 9; c.inputChanged();
+  vi.stubGlobal('confirm', vi.fn(() => true));
+  await c.removeSet(s.sets(exercise.id)[0]); await s.settled();
+  expect(confirm).toHaveBeenCalledOnce(); expect(c.setId()).toBe(rows[1].id); expect(c.step()).toBe('record');
+  expect(s.sets(exercise.id).map(row => row.number)).toEqual([1, 2]);
+  expect(s.sets(exercise.id)[0]).toMatchObject({id: rows[1].id, weight: 72.5, reps: 9, completed: false});
+});
+it('can delete the selected series with an incomplete numeric field without resurrecting its draft', async () => {
+  const c = await setup(), exercise = c.exercises()[0], row = s.sets(exercise.id)[0];
+  c.quickRecord(exercise); c.reps = null as unknown as number; c.inputChanged();
+  await c.removeSet(row); await c.flushPending(); await s.settled();
+  expect(s.sets(exercise.id)).toHaveLength(2); expect(s.sets(exercise.id).some(set => set.id === row.id)).toBe(false);
+  expect(c.currentSet()?.number).toBe(1); expect(c.reps).toBe(8); expect(s.error()).toBe('');
+});
 it('conserva i valori più recenti anche tornando subito alla serie precedente durante una scrittura lenta', async () => {
   const c = await setup(), exercise = c.exercises()[0], sets = s.sets(exercise.id);
   c.quickRecord(exercise);
