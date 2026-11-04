@@ -386,10 +386,10 @@ export class ProfileComponent {
       // Automatic local saves continue independently: they can never veto or
       // indefinitely postpone sign-out, including an unresolved restore prompt.
       if(root)root.inert=true;
-      let saving:Promise<unknown>;try{saving=Promise.resolve(this.pwa.prepareExit('logout')).catch(()=>{});}catch{saving=Promise.resolve();}
+      // Try local draft and save persistence before revoking the account session.
+      // The prepareExit('logout') path is capped at one second, so logout remains bounded.
+      await this.pwa.prepareExit('logout');
       await this.auth.logout({reload:false});exited=true;
-      let timer:ReturnType<typeof setTimeout>|undefined;
-      try{await Promise.race([saving,new Promise<void>(resolve=>{timer=setTimeout(resolve,1000);})]);}finally{clearTimeout(timer);}
       await this.pwa.finishLogoutUpdate();
     }catch(e){this.accountError.set((e as Error).message);}
     finally{if(!exited){if(root)root.inert=priorInert||false;this.pwa.updating.set(false);}this.loggingOut.set(false);}
