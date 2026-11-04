@@ -17,7 +17,7 @@ function setup(released=false){
  vi.stubGlobal('navigator',{onLine:true,storage:{persisted:async()=>true,estimate:async()=>({usage:1,quota:100})}});
  const reload=vi.fn();vi.stubGlobal('location',{reload});
  let pending:Promise<unknown>=Promise.resolve();
- const store={ready:()=>true,error:signal(''),settled:()=>pending,draft:signal<any>(null),busy:()=>false,conflicted:signal(false),createRecoveryCheckpoint:vi.fn().mockResolvedValue('checkpoint')};
+ const store={ready:()=>true,error:signal(''),settled:()=>pending,draft:signal<any>(null),busy:()=>false,conflicted:signal(false),localSaveFailed:signal(false),createRecoveryCheckpoint:vi.fn().mockResolvedValue('checkpoint')};
  const release={checked:new Subject<void>(),updateReady:()=>released,autoUpdateReady:()=>released,downloadedBuild:()=>released?'b'.repeat(64):null,policy:()=>released?{requestedBuildId:'b'.repeat(64)}:null,check:vi.fn().mockResolvedValue(false),activateReady:vi.fn().mockResolvedValue(released)};
  const cloud={flush:vi.fn().mockResolvedValue(true),currentScope:vi.fn(),checkpointForUpdate:vi.fn().mockResolvedValue(true)},drafts={flushAll:vi.fn().mockResolvedValue(true)};
  const injector=createEnvironmentInjector([{provide:Store,useValue:store},{provide:AppReleaseService,useValue:release},{provide:ArchiveSyncService,useValue:cloud},{provide:FormDraftService,useValue:drafts},{provide:SwUpdate,useValue:{versionUpdates:new Subject()}},PwaService],null as unknown as EnvironmentInjector);
