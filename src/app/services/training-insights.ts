@@ -1,4 +1,4 @@
-import {DataSet,localDate,WorkoutLog} from '../models/domain';
+import {DataSet,localDate} from '../models/domain';
 import {sessionVolume} from './statistics';
 
 export interface TrainingPeriod {
@@ -43,7 +43,7 @@ export function summarizeTraining(data:DataSet,days=28,today=localDate()):{curre
 function csvCell(value:string|number){
  const raw=String(value);
  // Spreadsheet tools can execute formulas in imported CSV cells, even if quoted.
- const safe=/^[\\s]*[=+@-]/.test(raw)&&typeof value==='string'?"'"+raw:raw;
+ const safe=/^\s*[=+@-]/.test(raw)&&typeof value==='string'?"'"+raw:raw;
  return '"'+safe.replaceAll('"','""')+'"';
 }
 export function trainingReportCsv(data:DataSet,from:string,to:string,unit:'kg'|'lb'='kg'):string {
