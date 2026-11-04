@@ -1,6 +1,6 @@
 import {describe,it,expect} from 'vitest';
 import {seed} from '../src/app/core/seed';
-import {summarizeTraining,trainingReportCsv,workoutReminderIcs} from '../src/app/services/training-insights';
+import {summarizeTraining,trainingTimeline,trainingReportCsv,workoutReminderIcs} from '../src/app/services/training-insights';
 
 describe('insights and report exports',()=>{
  it('counts only completed sessions, excludes warmups, and does not mutate user history',()=>{
@@ -18,6 +18,9 @@ describe('insights and report exports',()=>{
   expect(summary.current.completedSets).toBe(1);
   expect(summary.current.minutes).toBe(35);
   expect(summary.current.externalVolume).toBe(500);
+  const timeline=trainingTimeline(data,7,'2026-11-04');
+  expect(timeline).toHaveLength(1);
+  expect(timeline[0]).toMatchObject({sessions:1,volume:500});
   const csv=trainingReportCsv(data,'2026-11-01','2026-11-04');
   expect(csv).toContain('A;');
   expect(csv).toContain('""A""');
