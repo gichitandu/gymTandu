@@ -17,7 +17,7 @@ function setup(released=false){
  vi.stubGlobal('navigator',{onLine:true,storage:{persisted:async()=>true,estimate:async()=>({usage:1,quota:100})}});
  const reload=vi.fn();vi.stubGlobal('location',{reload});
  let pending:Promise<unknown>=Promise.resolve();
- const store={ready:()=>true,error:signal(''),settled:()=>pending,draft:signal<any>(null),busy:()=>false,conflicted:signal(false),createRecoveryCheckpoint:vi.fn().mockResolvedValue('checkpoint')};
+ const store={ready:()=>true,error:signal(''),settled:()=>pending,draft:signal<any>(null),busy:()=>false,conflicted:signal(false),localSaveFailed:signal(false),createRecoveryCheckpoint:vi.fn().mockResolvedValue('checkpoint')};
  const release={checked:new Subject<void>(),updateReady:()=>released,autoUpdateReady:()=>released,downloadedBuild:()=>released?'b'.repeat(64):null,policy:()=>released?{requestedBuildId:'b'.repeat(64)}:null,check:vi.fn().mockResolvedValue(false),activateReady:vi.fn().mockResolvedValue(released)};
  const cloud={flush:vi.fn().mockResolvedValue(true),currentScope:vi.fn(),checkpointForUpdate:vi.fn().mockResolvedValue(true)},drafts={flushAll:vi.fn().mockResolvedValue(true)};
  const injector=createEnvironmentInjector([{provide:Store,useValue:store},{provide:AppReleaseService,useValue:release},{provide:ArchiveSyncService,useValue:cloud},{provide:FormDraftService,useValue:drafts},{provide:SwUpdate,useValue:{versionUpdates:new Subject()}},PwaService],null as unknown as EnvironmentInjector);
@@ -63,15 +63,15 @@ it('does not bypass local conflicts or failed queued writes during a manual upda
  const t=setup();t.store.conflicted.set(true);
  try{await t.pwa.reload();expect(t.reload).not.toHaveBeenCalled();t.store.conflicted.set(false);t.queue(Promise.resolve(false));await t.pwa.reload();expect(t.reload).not.toHaveBeenCalled();expect(t.pwa.updateError()).toContain('salvataggio sul dispositivo');}finally{t.injector.destroy();}
 });
-it.each([true,false])('finishes logout without backup, sync or draft validation (online=%s)',async online=>{
+it.each([true,false])('avoids logout when the local save fails without contacting cloud (online=%s)',async online=>{
  const t=setup();vi.stubGlobal('navigator',{onLine:online});t.cloud.flush.mockResolvedValue(false);
  t.store.error.set('Errore precedente');t.store.conflicted.set(true);t.queue(Promise.resolve(false));t.drafts.flushAll.mockResolvedValue(false);
  const validate=vi.fn((event:Event)=>(event as AppUpdateEvent).waitUntil(Promise.resolve(false)));t.target.addEventListener('gymtrack:before-update',validate);
- try{expect(await t.pwa.prepareExit('logout')).toBe(true);expect(t.drafts.flushAll).toHaveBeenCalledOnce();expect(validate).not.toHaveBeenCalled();expect(t.cloud.flush).not.toHaveBeenCalled();expect(t.pwa.updateError()).toBe('');expect(t.store.error()).toBe('Errore precedente');}finally{t.injector.destroy();}
+ try{expect(await t.pwa.prepareExit('logout')).toBe(false);expect(t.drafts.flushAll).toHaveBeenCalledOnce();expect(validate).not.toHaveBeenCalled();expect(t.cloud.flush).not.toHaveBeenCalled();expect(t.pwa.updateError()).toBe('');expect(t.store.error()).toBe('Errore precedente');}finally{t.injector.destroy();}
 });
-it('leaves after one second even when the automatic local draft save never acknowledges',async()=>{
+it('requires an explicit forced exit if a local draft save has not finished after one second',async()=>{
  vi.useFakeTimers();const t=setup();t.drafts.flushAll.mockImplementation(()=>new Promise(()=>{}));
- try{const exit=t.pwa.prepareExit('logout');await vi.advanceTimersByTimeAsync(1000);expect(await exit).toBe(true);expect(t.cloud.flush).not.toHaveBeenCalled();expect(t.pwa.updateError()).toBe('');}finally{t.injector.destroy();vi.useRealTimers();}
+ try{const exit=t.pwa.prepareExit('logout');await vi.advanceTimersByTimeAsync(1000);expect(await exit).toBe(false);expect(t.cloud.flush).not.toHaveBeenCalled();expect(t.pwa.updateError()).toBe('');}finally{t.injector.destroy();vi.useRealTimers();}
 });
 it('defers a requested automatic update while a workout is open and applies it after the workout ends',async()=>{
  vi.useFakeTimers();const t=setup();t.store.draft.set({id:'active'});t.release.autoUpdateReady=()=>true;t.release.downloadedBuild=()=> 'b'.repeat(64);t.release.policy=()=>({requestedBuildId:'b'.repeat(64)} as any);t.release.activateReady.mockResolvedValue(true);
@@ -102,4 +102,10 @@ it('retains the page if the final draft state cannot be written during manual up
 it('ignores a historical form or server error after local writes and drafts are durable',async()=>{
  const t=setup();t.store.error.set('Ripristino server non disponibile');t.cloud.flush.mockImplementation(()=>new Promise(()=>{}));
  try{await t.pwa.reload();expect(t.reload).toHaveBeenCalledOnce();expect(t.cloud.flush).not.toHaveBeenCalled();expect(t.store.error()).toBe('Ripristino server non disponibile');}finally{t.injector.destroy();}
+});
+
+it('allows normal logout after local drafts and queued writes settle, without a server backup',async()=>{
+ const t=setup();
+ try{expect(await t.pwa.prepareExit('logout')).toBe(true);expect(t.drafts.flushAll).toHaveBeenCalledOnce();expect(t.cloud.flush).not.toHaveBeenCalled();}
+ finally{t.injector.destroy();}
 });

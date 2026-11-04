@@ -60,15 +60,19 @@ export class PwaService {
  async prepareExit(reason:'update'|'logout'='update'):Promise<boolean>{
   this.updateError.set('');this.updateNotice.set('');
   if(reason==='logout'){
-   // Logout never depends on backup, sync, validation, or a save acknowledgement.
-   // Give automatic local saves a short opportunity to finish, then exit anyway.
+   // Never require server backup for logout, but don't silently discard unflushed local writes.
+   // The caller may offer an explicit forced exit after a failed/slow local flush.
    let timer:ReturnType<typeof setTimeout>|undefined;
    const save=Promise.resolve().then(async()=>{
-    if(this.drafts)await this.drafts.flushAll();
-    await this.store.settled();
-   }).catch(()=>{});
-   try{await Promise.race([save,new Promise<void>(resolve=>{timer=setTimeout(resolve,1000);})]);}finally{clearTimeout(timer);}
-   return true;
+    if(this.drafts&&await this.drafts.flushAll()===false)return false;
+    const settled=await this.store.settled();
+    return settled!==false&&!this.store.localSaveFailed()&&!this.store.conflicted();
+   }).catch(()=>false);
+   let safe=false;
+   try{safe=await Promise.race([save,new Promise<false>(resolve=>{timer=setTimeout(()=>resolve(false),1000);})]);}
+   finally{clearTimeout(timer);}
+   if(!safe)this.updateNotice.set('Salvataggio locale non ancora confermato: completa la scrittura oppure scegli esplicitamente di uscire comunque.');
+   return safe;
   }
   try{
    if(!this.store.ready())throw Error('Attendi l’apertura dell’archivio prima di continuare.');

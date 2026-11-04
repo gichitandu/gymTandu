@@ -85,7 +85,8 @@ export class GymDatabase extends Dexie {
         if (completed.length || newCompleted.length) {
           const previous = Object.fromEntries(await Promise.all(TABLES.map(async name => [name, await this.table(name).toArray()]))) as unknown as DataSet;
           let preserved = false; const changed: string[] = [];
-          for (const workout of [...completed, ...newCompleted.filter(row => !completed.some(old => old.id === row.id))]) {
+          const previousIds = new Set(completed.map(row => row.id));
+          for (const workout of [...completed, ...newCompleted.filter(row => !previousIds.has(row.id))]) {
             const before = workoutGraph(previous, workout.id), after = workoutGraph(data, workout.id);
             if (JSON.stringify(before) === JSON.stringify(after)) continue;
             if (!preserved && previous.profiles.length && before.workout?.status === 'completed') {

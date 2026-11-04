@@ -41,6 +41,20 @@
   <label class="client-view-toggle" gtDesign="home.clientView"><gt-icon name="eye"/><span><strong gtDesign="home.clientView.label" gtDesignLabel="home.clientView.label">Visualizza come cliente</strong><small>{{auth!.viewAsClient()?'Vista cliente attiva · usi i tuoi dati':'Anteprima del ruolo con i tuoi dati'}}</small></span><input type="checkbox" role="switch" aria-label="Visualizza come cliente" [checked]="auth!.viewAsClient()" (change)="auth!.setClientView($any($event.target).checked)"/></label>
 }
 @if(auth?.canManageBackups()){<gt-backup-reminder />}
+@if(calendarReminders().length){
+<section class="today-section home-reminders-section" aria-label="Promemoria delle prossime attività">
+  <div class="card-head"><div><p class="eyebrow">LA TUA AGENDA</p><h2>Promemoria dei prossimi 7 giorni</h2></div><a class="home-text-link" routerLink="/calendario">Calendario <gt-icon name="arrow"/></a></div>
+  <div class="home-reminders-list">
+   @for(reminder of calendarReminders().slice(0,3);track reminder.id){
+    <a routerLink="/calendario" [queryParams]="{date:reminder.date}" class="home-reminder-row">
+      <gt-icon [name]="reminder.kind==='rest'?'moon':reminder.kind==='workout'?'weight':'calendar'"/>
+      <span><strong>{{reminder.title}}</strong><small>{{reminder.date===today?'Oggi':dateLabel(reminder.date)}}{{reminder.time?' · '+reminder.time:''}}</small></span><gt-icon name="chevron-right"/>
+    </a>
+   }
+  </div>
+  <p class="subtle">Promemoria disponibili nell’app anche offline. Gli avvisi push dipendono dalle impostazioni notifiche e dal dispositivo.</p>
+</section>
+}
 <details class="home-health-disclosure" gtDesign="home.health">
   <summary><gt-icon name="heart"/><span><strong gtDesign="home.health.title" gtDesignLabel="home.health.title">Obiettivo e benessere</strong><small gtDesign="home.health.subtitle" gtDesignLabel="home.health.subtitle">Recovery, sonno e focus muscolare</small></span><gt-icon name="chevron-down"/></summary>
   <div class="home-health-body">

@@ -248,3 +248,29 @@ it('persists all eight approved personal palettes for every role without changin
  }
  expect(sql.prepare('SELECT * FROM users ORDER BY id').all()).toEqual(users);
 });
+
+
+it('rejects oversized chunked JSON early and counts UTF-8 bytes, while keeping normal login working',async()=>{
+ let produced=0;
+ const stream=new ReadableStream<Uint8Array>({
+  pull(controller){
+   produced++;
+   if(produced>80)controller.close();
+   else controller.enqueue(new Uint8Array(4096).fill(120));
+  },
+ });
+ const large=await api(new Request(origin+'/api/auth/login',{method:'POST',headers:{
+  'oai-authenticated-user-id':'owner-visitor','oai-authenticated-user-email':owner,
+  Origin:origin,'Content-Type':'application/json'
+ },body:stream,duplex:'half'} as RequestInit),env);
+ expect(large.status).toBe(413);
+ expect(produced).toBeLessThan(80);
+ // UTF-8 byte count is enforced, not JavaScript string length.
+ const payload='é'.repeat(5000);
+ const multibyte=await api(new Request(origin+'/api/auth/login',{method:'POST',headers:{
+  'oai-authenticated-user-id':'owner-visitor','oai-authenticated-user-email':owner,
+  Origin:origin,'Content-Type':'application/json'
+ },body:JSON.stringify({identifier:payload,password:'abcdefgh'})}),env);
+ expect(multibyte.status).toBe(413);
+ expect((await call('auth/setup',{password:'abcdefgh'})).status).toBe(200);
+});

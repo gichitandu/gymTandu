@@ -109,3 +109,16 @@ a:focus-visible,summary:focus-visible,.client-view-toggle>input:focus-visible{ou
 .home-weekly-overview .home-goal-edit gt-icon{flex:none;width:12px;height:12px}
 @media(max-width:359px){.home-welcome-heading .today-date{font-size:10px;letter-spacing:1.6px}.home-welcome-heading h1{font-size:27px}.home-welcome-heading .today-motto{font-size:13px}.home-weekly-overview .home-goal-ring>.home-goal-copy{gap:11px;padding:16px 10px}.home-weekly-overview .neon-ring.home-goal-ring{padding:7px}}
 @media(min-width:800px){.home-welcome-heading h1{font-size:40px}.home-welcome-heading .today-date{font-size:12px}.home-welcome-heading .today-motto{font-size:16px}.home-overview.home-weekly-overview{height:380px}.home-weekly-overview .home-dumbbell{width:110%;left:-5%}}
+
+
+.home-reminders-section{display:grid;gap:11px;}
+.home-reminders-section .card-head{margin:0;}
+.home-reminders-section .card-head .eyebrow{margin:0 0 6px;}
+.home-reminders-list{display:grid;gap:8px;}
+.home-reminder-row{display:flex;align-items:center;gap:12px;min-height:60px;padding:10px 13px;border:1px solid var(--line);border-radius:14px;background:var(--card);}
+.home-reminder-row>gt-icon:first-child{color:var(--accent-text);width:23px;height:23px;}
+.home-reminder-row>gt-icon:last-child{margin-left:auto;color:var(--muted);width:18px;height:18px;}
+.home-reminder-row span{display:grid;gap:5px;min-width:0;}
+.home-reminder-row strong{font-size:12px;color:var(--text);}
+.home-reminder-row small{color:var(--muted);font-size:11px;}
+.home-reminders-section>.subtle{font-size:11px;margin:0;}

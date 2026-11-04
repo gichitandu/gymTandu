@@ -254,3 +254,21 @@ it('round-trips all approved palette IDs through server backups without changing
   expect(saved.data.plans).toEqual(original.data.plans);expect(saved.data.sets).toEqual(original.data.sets);expect(saved.data.profiles).toEqual(original.data.profiles);
  }
 });
+
+
+it('refuses future archive versions and invalid workout, meal, and measurement dates without moving the head',async()=>{
+ const accepted=await put();
+ expect(accepted.response.status).toBe(200);
+ const invalidCases=[
+  (row:any)=>{row.schemaVersion=999;},
+  (row:any)=>{row.data.workouts.push({...recordedArchive().workouts[0],date:'not-a-date'});},
+  (row:any)=>{row.data.meals.push({id:'meal-x',date:'2026-02-30',name:'Pranzo',grams:100,calories:100,protein:5,carbs:5,fat:5,notes:'',source:'manual',createdAt:'2026-11-03T17:00:00Z'});},
+  (row:any)=>{row.data.measurements.push({id:'weight-x',date:'2026-02-30',weight:70});},
+ ];
+ for(const change of invalidCases){
+  const row=JSON.parse(backup);change(row);
+  expect((await put(JSON.stringify(row),1)).response.status).toBe(400);
+ }
+ expect((await get()).data).toMatchObject({revision:1,backup});
+ expect(objects.size).toBe(1);
+});

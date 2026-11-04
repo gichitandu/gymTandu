@@ -29,7 +29,7 @@ async function archiveBody(request) {
 }
 function archiveValidate(text) {
  let backup;try{backup=JSON.parse(text);}catch{archiveFail('La copia non è un JSON valido.');}
- if(backup?.app!=='GymTrack'||!Number.isInteger(backup.schemaVersion)||backup.schemaVersion<1||typeof backup.exportedAt!=='string'||!Number.isFinite(Date.parse(backup.exportedAt))||!backup.data||typeof backup.data!=='object'||Array.isArray(backup.data))archiveFail('La copia non è un archivio GymTrack valido.');
+ if(backup?.app!=='GymTrack'||!Number.isInteger(backup.schemaVersion)||backup.schemaVersion<1||backup.schemaVersion>11||typeof backup.exportedAt!=='string'||!Number.isFinite(Date.parse(backup.exportedAt))||!backup.data||typeof backup.data!=='object'||Array.isArray(backup.data))archiveFail('La copia non è un archivio GymTrack valido.');
  // Full domain validation also runs on the client before upload and restore.
  // This boundary rejects partial/garbage snapshots instead of replacing a head.
  for(const name of archiveTables){
@@ -61,6 +61,11 @@ function archiveValidate(text) {
  for(const row of data.workoutExercises)if(row.substitutedFrom&&(!nonempty(row.substitutedFrom.exerciseId)||!nonempty(row.substitutedFrom.name)))archiveFail('Origine sostituzione non valida.');
  for(const w of data.workouts)if(w.durationUnknown!==undefined&&typeof w.durationUnknown!=='boolean')archiveFail('Indicazione durata non valida.');
  const date=value=>typeof value==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(value)&&Number.isFinite(Date.parse(value+'T12:00:00Z'))&&new Date(value+'T12:00:00Z').toISOString().slice(0,10)===value;
+ // Keep the server's accepted snapshots within the dates that the client can restore.
+ for(const w of data.workouts)if(!date(w.date))archiveFail('Data dell’allenamento non valida.');
+ for(const meal of data.meals)if(!date(meal.date))archiveFail('Data del pasto non valida.');
+ for(const row of data.measurements)if(!date(row.date))archiveFail('Data della misurazione non valida.');
+ for(const plan of data.plans)if(!Number.isFinite(Date.parse(plan.createdAt))||!Number.isFinite(Date.parse(plan.updatedAt)))archiveFail('Date del piano non valide.');
  const wellnessDates=new Set();
  for(const row of data.wellnessLogs||[]){
   if(!date(row.date)||wellnessDates.has(row.date)||typeof row.notes!=='string'||row.notes.length>2000||!row.soreness||typeof row.soreness!=='object'||Array.isArray(row.soreness)||Object.keys(row.soreness).length>1000||Object.entries(row.soreness).some(([id,v])=>!id||id.length>150||!Number.isInteger(v)||v<0||v>4)||row.sleepMinutes!==undefined&&(!Number.isInteger(row.sleepMinutes)||row.sleepMinutes<0||row.sleepMinutes>1440)||[row.energy,row.stress,row.sleepQuality].some(v=>v!==undefined&&(!Number.isInteger(v)||v<1||v>5)))archiveFail('Diario recupero non valido.');
@@ -112,9 +117,21 @@ function archiveCheckpointStatement(db, scope, row, id, reason, workout) {
 }
 async function completedCheckpointStatements(db, scope, row, text, known) {
  const data=JSON.parse(text).data, statements=[];
- for(const workout of data.workouts.filter(row=>row.status==='completed')) {
-  const exercises=data.workoutExercises.filter(row=>row.workoutId===workout.id).sort((a,b)=>a.id.localeCompare(b.id)),ids=new Set(exercises.map(row=>row.id));
-  const sets=data.sets.filter(row=>ids.has(row.workoutExerciseId)).sort((a,b)=>a.id.localeCompare(b.id));
+ const completed=data.workouts.filter(item=>item.status==='completed');
+ const completedIds=new Set(completed.map(item=>item.id));
+ const exercisesByWorkout=new Map(),setsByExercise=new Map();
+ for(const exercise of data.workoutExercises){
+  if(!completedIds.has(exercise.workoutId))continue;
+  const list=exercisesByWorkout.get(exercise.workoutId)||[];
+  list.push(exercise);exercisesByWorkout.set(exercise.workoutId,list);
+ }
+ for(const set of data.sets){
+  const list=setsByExercise.get(set.workoutExerciseId)||[];
+  list.push(set);setsByExercise.set(set.workoutExerciseId,list);
+ }
+ for(const workout of completed) {
+  const exercises=(exercisesByWorkout.get(workout.id)||[]).sort((a,b)=>a.id.localeCompare(b.id));
+  const sets=exercises.flatMap(exercise=>setsByExercise.get(exercise.id)||[]).sort((a,b)=>a.id.localeCompare(b.id));
   const fingerprint=await archiveDigest(JSON.stringify({workout,exercises,sets}));
   const id=await archiveDigest(scope+':completed:'+workout.id+':'+fingerprint);
   if(known.has(id))continue;known.add(id);

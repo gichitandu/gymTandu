@@ -1,5 +1,7 @@
 import { DESIGN_DIRECTIVES } from '../design/design-directives';
 import {sessionVolume,exerciseRecords} from '../services/statistics';
+import {buildTrainingInsights} from '../services/training-insights';
+import {trainingReportCsv} from '../services/training-report';
 import {TodayService} from '../services/today';
 import {AppFeaturesService} from '../services/app-features';
 import {setupKey} from "../services/training-flow";
@@ -29,6 +31,23 @@ import { matchesExercise } from '../services/exercise-search';
   template: `<div class="reference-progress">
     <header class="progress-page-heading ref-page-header"><div><h1 gtDesign="progress.title" gtDesignLabel="progress.title">Progressi</h1><p class="ref-progress-subtitle" gtDesign="progress.subtitle" gtDesignLabel="progress.subtitle">Analizza i tuoi risultati</p></div><span class="progress-header-bars" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span></header>
     <gt-status />
+    <section class="card training-insights-panel" aria-label="Analisi delle ultime quattro settimane">
+      <div class="training-insights-head"><div><span class="eyebrow">ANALISI ALLENAMENTO</span><h2>I tuoi ultimi 28 giorni</h2></div><button type="button" class="button secondary" [disabled]="!overviewSessions().length" (click)="downloadReport()"><gt-icon name="download"/> Esporta CSV</button></div>
+      <div class="training-insights-metrics">
+        <div><strong>{{trainingInsights().recent.workouts}}</strong><small>Sedute completate</small></div>
+        <div><strong>{{trainingInsights().recent.completedWorkSets}}</strong><small>Serie allenanti</small></div>
+        <div><strong>{{s.formatWeight(trainingInsights().recent.externalVolumeKg)}} <small>{{s.settings().unit}}</small></strong><small>Volume carichi esterni</small></div>
+      </div>
+      @if(trainingInsights().sessionsDifference!==null){<p class="training-insights-compare">{{trainingInsights().sessionsDifference!>0?'+':''}}{{trainingInsights().sessionsDifference}} sedute rispetto ai 28 giorni precedenti.</p>}
+      @if(trainingInsights().suggestions.length){
+        <div class="training-insights-suggestions"><h3>Prossimi passi suggeriti</h3>
+          @for(tip of trainingInsights().suggestions;track tip.key){
+            <div class="training-insight-tip"><gt-icon name="bolt"/><div><b>{{tip.exercise}}</b><p>{{tip.title}}: da {{s.formatWeight(tip.oldWeightKg)}} a {{s.formatWeight(tip.suggestedWeightKg!)}} {{s.settings().unit}}. {{tip.detail}}</p></div></div>
+          }
+        </div>
+      }@else{<p class="training-insights-compare">Registra almeno due sedute comparabili con RPE e ripetizioni complete per ricevere proposte prudenti sui carichi.</p>}
+      <p class="subtle">Solo dati effettivamente registrati; le proposte non modificano automaticamente la scheda.</p>
+    </section>
     <details class="card progress-exercise-details" gtDesign="progress.exerciseChart">
      <summary><gt-icon name="chart"/><span><strong gtDesign="progress.exerciseChart.title" gtDesignLabel="progress.exerciseChart.title">Progressi per esercizio</strong><small>Peso, volume, ripetizioni e 1RM stimato</small></span><span class="progress-detail-chevron">›</span></summary>
      <div class="progress-details-body"><gt-progress-chart /></div>
@@ -143,6 +162,17 @@ import { matchesExercise } from '../services/exercise-search';
     <p class="progress-archive-note"><gt-icon name="shield"/> Il tuo percorso è custodito nel tuo archivio personale.</p></div>`,
 })
 export class ProgressComponent {
+  trainingInsights=computed(()=>buildTrainingInsights(this.s.data(),this.today));
+  downloadReport(){
+    const rows=this.overviewSessions();if(!rows.length)return;
+    try {
+      const csv=trainingReportCsv(this.s.data(),rows);
+      const url=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));
+      const a=document.createElement('a');a.href=url;a.download='gymtrack-progressi-'+this.today+'.csv';
+      document.body.appendChild(a);a.click();a.remove();
+      setTimeout(()=>URL.revokeObjectURL(url),5000);
+    }catch{this.s.error.set('Esportazione non disponibile. Riprova dal browser.');}
+  }
   private router=inject(Router);
   openPlan(id:string){if(id)void this.router.navigate(['/piano',id]);}
   features=inject(AppFeaturesService,{optional:true});
