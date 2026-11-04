@@ -17,7 +17,7 @@ export class ThemeService{
  private media=typeof matchMedia==='function'?matchMedia('(prefers-color-scheme: light)'):undefined;
  systemLight=signal(this.media?.matches??false);
  private onSystemChange=(event:MediaQueryListEvent)=>{this.systemLight.set(event.matches);if(this.config().mode==='system')this.apply();};
- private onOnline=()=>{void this.load();};
+ private onOnline=()=>{if(this.auth.user())void this.load();else this.restoreEntryTheme();};
  private db=new Dexie('gymtrack-preferences-v1');private preferences:Table<ThemePreference,string>;
  private generation=0;private loadRequest=0;private loadedAccount='';private savingAccount='';
  private cacheWrites:Promise<unknown>=Promise.resolve();private remoteWrites:Promise<unknown>=Promise.resolve();
@@ -41,6 +41,8 @@ export class ThemeService{
   const job=this.remoteWrites.then(async()=>{if(!current()||this.auth.offlineMode()||!navigator.onLine)return false;await this.auth.request('preferences',{backgroundColor:value.color,...(value.config?{themeConfig:value.config}:{})});return current();});this.remoteWrites=job.catch(()=>{});return job;
  }
  async load(){
+  // Signed-out users must keep the visual-only entry palette, even after reconnecting.
+  if(!this.auth.user()){this.restoreEntryTheme();return;}
   const id=this.accountId();if(this.busy()&&this.savingAccount===id)return;
   const generation=this.generation,request=++this.loadRequest;
   const current=()=>this.generation===generation&&this.loadRequest===request&&this.accountId()===id;
