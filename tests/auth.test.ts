@@ -17,6 +17,17 @@ beforeEach(()=>{
  env={DB:{prepare:(q:string)=>{let args:any[]=[];const statement={bind:(...a:any[])=>{args=a;return statement;},first:async()=>sql.prepare(q).get(...args),all:async()=>({results:sql.prepare(q).all(...args)}),run:async()=>({meta:{changes:Number(sql.prepare(q).run(...args).changes)}})};return statement;},batch:async(a:any[])=>{sql.exec('BEGIN');try{const r=[];for(const s of a)r.push(await s.run());sql.exec('COMMIT');return r;}catch(e){sql.exec('ROLLBACK');throw e;}}}};
 });
 afterEach(()=>sql.close());
+it('rejects oversized streamed JSON before consuming the complete request body',async()=>{
+ let reads=0,cancelled=false;
+ const body=new ReadableStream<Uint8Array>({
+  pull(controller){reads++;controller.enqueue(new Uint8Array(4096).fill(65));if(reads>30)controller.close();},
+  cancel(){cancelled=true;}
+ });
+ const response=await api(new Request(origin+'/api/auth/login',{method:'POST',duplex:'half' as RequestDuplex,headers:{Origin:origin,'Content-Type':'application/json','oai-authenticated-user-id':'owner-visitor','oai-authenticated-user-email':owner},body}),env);
+ expect(response.status).toBe(413);
+ expect(reads).toBeLessThan(30);
+ expect(cancelled).toBe(true);
+});
 it('bootstrap is restricted to the verified owner and can run only once',async()=>{
  expect((await call('auth/setup',{password:'password-123456'},{email:'attacker@example.com'})).status).toBe(403);
  const cookie=await activate();expect((await call('auth/setup',{password:'another-password-123'})).status).toBe(409);
