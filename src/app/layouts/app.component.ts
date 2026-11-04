@@ -1,7 +1,7 @@
 import {AppFeaturesService} from '../services/app-features';
 import {WorkoutStartOptionsComponent} from '../shared/workout-start-options.component';
 import { ConfirmationDialogComponent } from '../shared/confirmation-dialog.component';
-import { Component, effect, inject, signal } from '@angular/core';
+import { Component, effect, inject, signal, untracked } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../services/auth';
 import { ThemeService } from '../services/theme';
@@ -68,7 +68,7 @@ export class AppComponent {
  private feedback=feedbackForContext();
  auth=inject(AuthService);private theme=inject(ThemeService);welcome=signal(false);tab=signal<'account'|'local'>('account');help=signal(false);remember=true;username='';email='';password='';confirm='';busy=signal(false);error=feedbackSignal('error',this.feedback);show=signal(false);
  private releases=inject(AppReleaseService);entryUpdating=signal(false);private attemptedEntryBuild='';
- constructor(){effect(()=>{if(!this.auth.user())this.theme.restoreEntryTheme();});effect(()=>{if(!this.auth.loading()&&!this.auth.loggingOut()&&!this.auth.user()&&!this.busy()&&this.releases.autoUpdateReady())queueMicrotask(()=>void this.updateSignedOut());});}
+ constructor(){effect(()=>{if(!this.auth.user())untracked(()=>this.theme.restoreEntryTheme());});effect(()=>{if(!this.auth.loading()&&!this.auth.loggingOut()&&!this.auth.user()&&!this.busy()&&this.releases.autoUpdateReady())queueMicrotask(()=>void this.updateSignedOut());});}
  private async updateSignedOut(){
   const target=this.releases.downloadedBuild();
   if(!target||this.attemptedEntryBuild===target||this.auth.user()||this.auth.loading()||this.auth.loggingOut()||this.busy()||this.email||this.username||this.password||this.confirm||!this.releases.autoUpdateReady())return;
