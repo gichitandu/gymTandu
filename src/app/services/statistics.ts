@@ -9,17 +9,12 @@ export function volume(sets: WorkoutLogSet[], mode: LoadMode): number {
     : 0;
 }
 export function sessionVolume(data: DataSet, w: WorkoutLog): number {
-  return data.workoutExercises
-    .filter((e) => e.workoutId === w.id)
-    .reduce(
-      (v, e) =>
-        v +
-        volume(
-          data.sets.filter((s) => s.workoutExerciseId === e.id),
-          e.loadMode,
-        ),
-      0,
-    );
+  // One pass over the sets rather than a full scan for every exercise.
+  // Preserves the historical definition: completed working sets, external load only.
+  const ids=new Set(data.workoutExercises.filter(e=>e.workoutId===w.id&&e.loadMode==='external').map(e=>e.id));
+  let total=0;
+  for(const set of data.sets)if(ids.has(set.workoutExerciseId)&&set.completed&&set.kind!=='warmup')total+=set.weight*set.reps;
+  return total;
 }
 export function exerciseRecords(data: DataSet, id: string,machine?:string) {
   const mode = data.exercises.find((e) => e.id === id)?.loadMode;
