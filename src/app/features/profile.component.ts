@@ -222,7 +222,7 @@ interface ProfileFormDraft {
  <details class="settings-disclosure settings-component"><summary><gt-icon name="home"/><span><strong>Icona e collegamento Home</strong><small>Logo GT e link diretto dell’app</small></span><span class="disclosure-chevron">›</span></summary><div class="settings-disclosure-body"><gt-install-help/></div></details>
  <div class="profile-menu-group settings-shortcuts"><div class="account-section-label"><span>GESTIONE</span></div><nav class="profile-menu" aria-label="Gestione">@if(auth.canManageBackups()){<button (click)="panel.set('backup')"><gt-icon name="download"/><span><strong>Dati e backup</strong><small>Copia, esporta o ripristina</small></span>›</button>}<button (click)="panel.set('security')"><gt-icon name="shield"/><span><strong>Account e sicurezza</strong><small>Accesso e credenziali</small></span>›</button><a routerLink="/catalogo"><gt-icon name="weight"/><span><strong>{{s.canEditCatalog()?'Gestione esercizi':'Catalogo esercizi'}}</strong><small>Varianti, preferiti e configurazioni</small></span>›</a><a routerLink="/calendario"><gt-icon name="calendar"/><span><strong>Calendario allenamenti</strong><small>Il tuo ritmo, giorno per giorno</small></span>›</a></nav></div>
  @if(auth.uiRole()==='SuperAdmin'){<details class="settings-disclosure settings-component"><summary><gt-icon name="shield"/><span><strong>Amministrazione</strong><small>Utenti e sezioni dell’app</small></span><span class="disclosure-chevron">›</span></summary><div class="settings-disclosure-body"><gt-app-features/><a class="button full-width" routerLink="/utenti">Gestione utenti <gt-icon name="arrow"/></a></div></details>}
- <section class="card profile-logout-card" style="margin-top:20px"><h2>Accesso all’app</h2><p class="subtle" style="margin:12px 0">Puoi uscire senza fare un backup. Piani, esercizi e allenamenti salvati restano nel tuo archivio.</p><button type="button" class="full-width" gtDesign="profile.logout" [disabled]="loggingOut()" (click)="logout()">{{loggingOut()?'Uscita…':'Esci dall’app'}}</button></section>}
+ <section class="card profile-logout-card" style="margin-top:20px"><h2>Accesso all’app</h2><p class="subtle" style="margin:12px 0">Puoi uscire senza fare un backup. Piani, esercizi e allenamenti salvati restano nel tuo archivio.</p>@if(forceExitPending()){<p class="notice" role="alert">Il salvataggio locale non è ancora confermato. Riprovare è più sicuro; puoi comunque forzare l’uscita se necessario.</p>}<button type="button" class="full-width" gtDesign="profile.logout" [disabled]="loggingOut()" (click)="logout()">{{loggingOut()?'Uscita…':forceExitPending()?'Esci comunque · rischio bozze non salvate':'Esci dall’app'}}</button>@if(forceExitPending()){<button type="button" class="ghost full-width" (click)="forceExitPending.set(false)" [disabled]="loggingOut()">Riprova il salvataggio prima di uscire</button>}</section>}
     @if(panel()==='backup'&&auth.canManageBackups()){<a class="button primary full-width" routerLink="/recupera-allenamenti">Recupera una singola seduta · progressi e serie</a><gt-archive-sync (recover)="recoverCloud($event)"/><gt-backup-reminder mode="settings"/><section class="card" style="margin-top:20px">
       <div class="card-head">
         <div>
@@ -345,6 +345,7 @@ export class ProfileComponent {
   private draftSubscriptions:{unsubscribe():void}[]=[];
   draftRestored=signal(false);
   loggingOut=signal(false);
+  forceExitPending=signal(false);
   photoBusy = signal(false);
   profileSaving = signal(false);
   goalsSaving = signal(false);
@@ -383,13 +384,18 @@ export class ProfileComponent {
     const root=typeof document==='undefined'?null:document.querySelector?.('app-root') as HTMLElement|null,priorInert=root?.inert;
     let exited=false;
     try {
-      // Automatic local saves continue independently: they can never veto or
-      // indefinitely postpone sign-out, including an unresolved restore prompt.
+      // Prefer a confirmed local save, but retain an explicitly labelled forced exit
+      // so a blocked IndexedDB write cannot trap an account on a shared device.
       if(root)root.inert=true;
-      let saving:Promise<unknown>;try{saving=Promise.resolve(this.pwa.prepareExit('logout')).catch(()=>{});}catch{saving=Promise.resolve();}
+      if(!this.forceExitPending()){
+        if(!await this.pwa.prepareExit('logout')){
+          this.forceExitPending.set(true);
+          this.accountError.set('Salvataggio locale in attesa. Riprova oppure scegli esplicitamente di uscire comunque.');
+          return;
+        }
+      }
       await this.auth.logout({reload:false});exited=true;
-      let timer:ReturnType<typeof setTimeout>|undefined;
-      try{await Promise.race([saving,new Promise<void>(resolve=>{timer=setTimeout(resolve,1000);})]);}finally{clearTimeout(timer);}
+      this.forceExitPending.set(false);
       await this.pwa.finishLogoutUpdate();
     }catch(e){this.accountError.set((e as Error).message);}
     finally{if(!exited){if(root)root.inert=priorInert||false;this.pwa.updating.set(false);}this.loggingOut.set(false);}
