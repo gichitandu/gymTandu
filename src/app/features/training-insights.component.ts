@@ -29,7 +29,10 @@ import {summarizeTraining,trainingReportCsv,workoutReminderIcs} from '../service
    @for(item of summary().insights;track item.kind+item.title){<article class="card"><gt-icon [name]="item.kind==='recovery'?'heart':item.kind==='schedule'?'calendar':'chart'"/><div><h3>{{item.title}}</h3><p>{{item.message}}</p></div></article>}
    @if(!summary().insights.length){<p class="card">Registra le prime sedute per ricevere indicazioni contestuali.</p>}
   </div>
-  @if(s.draft();as workout){<section class="card"><h3>Progressione dei carichi</h3><p>Durante la sessione puoi consultare i suggerimenti per ogni esercizio, con verifiche su carichi, ripetizioni e RPE.</p><a class="button primary" routerLink="/sessione">Vai alla sessione <gt-icon name="arrow"/></a></section>}
+  @if(s.draft();as workout){<section class="card"><h3>Prossimi carichi · sessione in corso</h3>
+   <p class="insights-note">Analisi della seduta precedente confrontabile. Gli aumenti non vengono applicati automaticamente.</p>
+   @for(row of progression();track row.id){<div class="insights-progression"><strong>{{row.name}}</strong><p>{{row.title}} · {{row.reason}}</p>@if(row.eligible&&row.nextWeight!==undefined){<small>Proposta da confermare in sessione: {{s.formatWeight(row.nextWeight)}} {{s.settings().unit}}</small>}</div>}
+   <a class="button primary" routerLink="/sessione">Valuta le proposte nella sessione <gt-icon name="arrow"/></a></section>}
  </section>
  <section class="insights-section" aria-labelledby="reminder-heading">
   <h2 id="reminder-heading">Prossimo allenamento e promemoria</h2>
@@ -61,7 +64,7 @@ import {summarizeTraining,trainingReportCsv,workoutReminderIcs} from '../service
  .insights-advice .card{display:flex;align-items:flex-start;gap:12px;padding:18px}
  .insights-advice gt-icon{color:var(--accent-text)}.insights-advice h3{font-size:14px;margin:0 0 8px}.insights-advice p{font-size:12px;color:var(--muted);line-height:1.6;margin:0}
  .insights-reminder{display:flex;align-items:center;justify-content:space-between;gap:12px}.insights-reminder p{color:var(--muted);margin:7px 0 0}
- .insights-link{display:inline-flex;align-items:center;gap:8px;color:var(--accent-text);font-size:12px;margin-top:12px}
+ .insights-progression{padding:12px 0;border-bottom:1px solid var(--line)}.insights-progression p,.insights-progression small{color:var(--muted);font-size:12px;line-height:1.5}.insights-link{display:inline-flex;align-items:center;gap:8px;color:var(--accent-text);font-size:12px;margin-top:12px}
  .insights-export-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:15px}
  button.primary{background:linear-gradient(115deg,var(--theme-button-start,var(--accent)),var(--theme-button-end,var(--accent)));color:var(--accent-ink);border-color:var(--accent)}
  @media(max-width:720px){.insights-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.insights-advice{grid-template-columns:1fr}.insights-reminder{align-items:stretch;flex-direction:column}.insights-reminder button{width:100%}}
@@ -73,6 +76,7 @@ export class TrainingInsightsComponent {
  readonly period=signal(28);
  readonly summary=computed(()=>summarizeTraining(this.s.data(),this.period(),this.clock.date()));
  readonly volumeDisplay=computed(()=>this.s.formatWeight(this.summary().current.externalVolume));
+ readonly progression=computed(()=>this.s.draft()?this.s.workoutExercises(this.s.draft()!.id).map(row=>({id:row.id,name:row.name,...this.s.progression(row.id,2.5)})):[]);
  readonly nextWorkout=computed(()=>this.s.data().scheduledWorkouts
   .filter(e=>(e.kind??'workout')==='workout'&&e.date>=this.clock.date()&&!e.done&&!this.s.completed().some(w=>w.id===e.workoutId))
   .sort((a,b)=>a.date.localeCompare(b.date)||(a.time||'').localeCompare(b.time||''))[0]);
