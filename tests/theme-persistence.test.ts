@@ -4,7 +4,7 @@ import {createEnvironmentInjector,EnvironmentInjector,signal} from '@angular/cor
 import Dexie from 'dexie';
 import {afterEach,expect,it,vi} from 'vitest';
 import {AuthService} from '../src/app/services/auth';
-import {ThemeService} from '../src/app/services/theme';
+import {ENTRY_THEME_KEY,ThemeService,DEFAULT_THEME} from '../src/app/services/theme';
 import {ThemeConfig} from '../src/app/services/theme-palettes';
 
 const cleanups:(()=>Promise<void>)[]=[];
@@ -90,4 +90,33 @@ it('keeps device-local preferences separate from any cookie still present before
  await t.theme.saveConfig({palette:'sabbia',mode:'light'});await t.theme.load();t.emitOnline();
  await vi.waitFor(async()=>expect((await t.preference()).config).toEqual({palette:'sabbia',mode:'light'}));
  expect(t.request).not.toHaveBeenCalled();expect((await t.preference()).dirty).toBe(false);
+});
+
+it('keeps the last chosen custom palette on the signed-out login without reading account data',async()=>{
+ const entries=new Map<string,string>();
+ vi.stubGlobal('localStorage',{getItem:(key:string)=>entries.get(key)??null,setItem:(key:string,value:string)=>entries.set(key,value)});
+ const t=await setup(),config:ThemeConfig={palette:'smeraldo-sport',mode:'dark',background:'#121A24',accent:'#FAAD33'};
+ expect(await t.theme.saveConfig(config)).toBe(true);
+ expect(JSON.parse(entries.get(ENTRY_THEME_KEY)!)).toEqual(config);
+ const requests=t.request.mock.calls.length;
+ t.account.set(null as unknown as {id:string});
+ t.theme.config.set({...DEFAULT_THEME});
+ t.theme.restoreEntryTheme();
+ expect(t.theme.config()).toEqual(config);
+ expect(t.styles.get('--bg')).toBe('#121A24');
+ expect(t.styles.get('--theme-button-start')).toBe('#FAAD33');
+ expect(t.request).toHaveBeenCalledTimes(requests);
+ expect(entries.get(ENTRY_THEME_KEY)).not.toContain(t.id);
+});
+
+it('ignores invalid saved login palettes and does not replace a signed-in account theme',async()=>{
+ const entries=new Map<string,string>([[ENTRY_THEME_KEY,JSON.stringify({palette:'not-real',mode:'dark'})]]);
+ vi.stubGlobal('localStorage',{getItem:(key:string)=>entries.get(key)??null,setItem:(key:string,value:string)=>entries.set(key,value)});
+ const t=await setup();
+ t.theme.config.set({palette:'rosso',mode:'dark'});
+ t.theme.restoreEntryTheme();
+ expect(t.theme.config()).toEqual({palette:'rosso',mode:'dark'});
+ t.account.set(null as unknown as {id:string});
+ t.theme.restoreEntryTheme();
+ expect(t.theme.config()).toEqual(DEFAULT_THEME);
 });
