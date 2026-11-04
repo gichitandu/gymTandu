@@ -68,7 +68,7 @@ export class AppComponent {
  private feedback=feedbackForContext();
  auth=inject(AuthService);private theme=inject(ThemeService);welcome=signal(false);tab=signal<'account'|'local'>('account');help=signal(false);remember=true;username='';email='';password='';confirm='';busy=signal(false);error=feedbackSignal('error',this.feedback);show=signal(false);
  private releases=inject(AppReleaseService);entryUpdating=signal(false);private attemptedEntryBuild='';
- constructor(){effect(()=>{if(!this.auth.user())untracked(()=>this.theme.restoreEntryTheme());});effect(()=>{if(!this.auth.loading()&&!this.auth.loggingOut()&&!this.auth.user()&&!this.busy()&&this.releases.autoUpdateReady())queueMicrotask(()=>void this.updateSignedOut());});}
+ constructor(){this.theme.restoreEntryTheme();effect(()=>{if(!this.auth.user())untracked(()=>this.theme.restoreEntryTheme());});effect(()=>{if(!this.auth.loading()&&!this.auth.loggingOut()&&!this.auth.user()&&!this.busy()&&this.releases.autoUpdateReady())queueMicrotask(()=>void this.updateSignedOut());});}
  private async updateSignedOut(){
   const target=this.releases.downloadedBuild();
   if(!target||this.attemptedEntryBuild===target||this.auth.user()||this.auth.loading()||this.auth.loggingOut()||this.busy()||this.email||this.username||this.password||this.confirm||!this.releases.autoUpdateReady())return;
