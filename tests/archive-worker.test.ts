@@ -47,6 +47,16 @@ it('accepts older v10 snapshots, validates v11 wellness and retains the last goo
  expect((await get()).data.backup).toBe(good);
 });
 
+it('rejects future backup versions and malformed workout dates without replacing the last good archive',async()=>{
+ expect((await put()).response.status).toBe(200);
+ const future=JSON.parse(backup);future.schemaVersion=999;
+ expect((await put(JSON.stringify(future),1)).response.status).toBe(400);
+ const bad=JSON.parse(backup);
+ bad.data.workouts.push({id:'bad-date',userId:'local',planId:'historical',dayId:'day',planName:'Piano',dayName:'Seduta',date:'not-a-date',startedAt:'2026-11-03T08:00:00Z',duration:30,notes:'',status:'completed'});
+ expect((await put(JSON.stringify(bad),1)).response.status).toBe(400);
+ const current=await get();expect(current.data.revision).toBe(1);expect(current.data.backup).toBe(backup);
+});
+
 it('isolates platform visitors, separates device/account archives, and requires a real account session',async()=>{
  await put();expect((await get('device',{visitor:'different-visitor'})).data.backup).toBeNull();
  expect((await put(backup,0,'account')).response.status).toBe(401);
