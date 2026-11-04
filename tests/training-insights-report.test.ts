@@ -37,6 +37,9 @@ it('avoids recommendations without RPE, with a changed machine setup or insuffic
  expect(buildTrainingInsights(d,'2026-11-04').suggestions).toHaveLength(0);
  d.workoutExercises.pop();
  expect(buildTrainingInsights(d,'2026-11-04').suggestions).toHaveLength(0);
+ const other=fixture();
+ other.sets.push({id:'unfinished',workoutExerciseId:'e-new',number:4,weight:50,reps:0,completed:false});
+ expect(buildTrainingInsights(other,'2026-11-04').suggestions).toHaveLength(0);
 });
 it('shows upcoming schedule reminders without duplicates for completed sessions',()=>{
  const d=fixture();
