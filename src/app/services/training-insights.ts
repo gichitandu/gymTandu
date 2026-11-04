@@ -40,7 +40,12 @@ export function summarizeTraining(data:DataSet,days=28,today=localDate()):{curre
   insights.push({kind:'recovery',title:'Ascolta le sensazioni',message:'Oggi hai registrato poca energia o stress elevato. Valuta personalmente l’intensità e, se necessario, confrontati con un professionista.'});
  return {current,previous,insights};
 }
-function csvCell(value:string|number){return '"'+String(value).replaceAll('"','""')+'"';}
+function csvCell(value:string|number){
+ const raw=String(value);
+ // Spreadsheet tools can execute formulas in imported CSV cells, even if quoted.
+ const safe=/^[\\s]*[=+@-]/.test(raw)&&typeof value==='string'?"'"+raw:raw;
+ return '"'+safe.replaceAll('"','""')+'"';
+}
 export function trainingReportCsv(data:DataSet,from:string,to:string,unit:'kg'|'lb'='kg'):string {
  const workouts=finished(data,from,to).sort((a,b)=>a.date.localeCompare(b.date)||a.startedAt.localeCompare(b.startedAt));
  const lines=[['Data','Piano','Sessione','Durata (min)','Serie di lavoro','Ripetizioni','Volume esterno ('+unit+')'].map(csvCell).join(';')];
