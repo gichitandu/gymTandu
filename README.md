@@ -2,6 +2,10 @@
 
 Diario personale di palestra in italiano con Angular e TypeScript. L’archivio personale viene conservato in IndexedDB e copiato sul server quando rete e accesso sono disponibili. Il Worker usa D1 per account, revisioni e catalogo condiviso, e R2 per copie immutabili complete dell’archivio. Nessun allenamento dimostrativo viene inserito.
 
+Per lavorare con Codex: [AGENTS.md](AGENTS.md) e [guida operativa](docs/CODEX_OPERATIVO.md).
+Esiti delle verifiche in [CODEX_VERIFICHE.md](docs/CODEX_VERIFICHE.md);
+analisi di sicurezza e prestazioni in [CODEX_AUDIT.md](docs/CODEX_AUDIT.md).
+
 ## Aggiornamenti e registrazione rapida
 
 La scelta dello spazio locale o dell’account viene conservata tra riaperture. In Home, Piani e Profilo, **Ritrova piani ed esercizi** controlla gli altri archivi autorizzati di questa installazione e aggiunge i dati mancanti senza cancellare le copie originali. Safari e l’app installata possono usare contenitori separati: il controllo deve essere eseguito anche nell’ambiente dove erano stati inseriti i dati.
@@ -34,7 +38,7 @@ In **Alimentazione**, scattare o scegliere una foto avvia il riconoscimento auto
 
 ## Avvio rapido
 
-Requisiti: Node.js 24 LTS e npm. È necessaria una connessione per installare le dipendenze. Il diario personale funziona offline dopo il primo caricamento; account e catalogo condiviso richiedono la connessione.
+Requisiti: Node.js 24 LTS (almeno 24.15.0, richiesto dalle dipendenze Angular) e npm. `.nvmrc` seleziona la serie 24; `.npmrc` usa la cache scrivibile `.cache/npm`, esclusa da Git. È necessaria una connessione per installare le dipendenze. Il diario personale funziona offline dopo il primo caricamento; account e catalogo condiviso richiedono la connessione.
 
 ```bash
 npm ci
@@ -45,12 +49,14 @@ Apri `http://localhost:4200`. Il service worker è disabilitato nella modalità 
 
 ```bash
 npm test          # Vitest, logica e IndexedDB simulato
+npm run typecheck # Angular e template strict senza generare la build
 npm run check    # compilazione Angular strict in sviluppo
 npm run build    # build ottimizzata + service worker
+npm run quality  # typecheck, test, build, verifica PWA e Worker confezionato
 npm run preview  # serve dist/gymtrack/browser su http://localhost:4173
 ```
 
-È inclusa anche una build pronta in `dist/gymtrack/browser`. Non aprire `index.html` con `file://`: usa un server statico o un hosting HTTPS. `tools/sandbox-compat.cjs` è un adattamento opzionale per ambienti limitati che non espongono le statistiche di memoria di Node; `npm run build:sandbox` lo abilita. Non viene incluso nell'app e normalmente non serve.
+La build viene generata in `dist/gymtrack/browser` ed è esclusa da Git. Non aprire `index.html` con `file://`: usa un server statico o un hosting HTTPS. L'anteprima statica non espone le API Worker; per provarle con dati sintetici usare la fixture descritta nella guida operativa. `tools/sandbox-compat.cjs` è un adattamento opzionale per ambienti limitati che non espongono le statistiche di memoria di Node; `npm run build:sandbox` lo abilita, ma richiede poi `npm run postbuild` per confezionare il Worker. Non viene incluso nell'app e normalmente non serve.
 
 ## Primo utilizzo
 
@@ -94,7 +100,7 @@ src/app/
   models/        entità e tipi TypeScript
   repositories/  GymRepository, token DI, implementazione IndexedDB
   services/      Store con Signals, statistiche, integrità, backup, PWA
-  guards/        interfaccia permessi locale per evoluzioni future
+  guards/        permessi UI; autorizzazioni API verificate nel Worker
   layouts/       shell responsive e navigazione
   shared/        icone SVG locali, messaggi, grafici, editor serie
   features/      Home, piani, sessione, storico, progressi, profilo, catalogo
@@ -102,7 +108,7 @@ src/app/
 
 Componenti standalone, Reactive Forms per gli editor, Signals per lo stato e Angular Material per i controlli delle preferenze. La shell non contiene la logica dei domini. `GymRepository` astrae lettura e scrittura dello stato; un'implementazione REST potrà sostituirlo tramite DI, ampliando l'interfaccia per paginazione e sincronizzazione quando necessarie.
 
-Dodici tabelle: profili, ruoli, piani, giorni, esercizi del piano, esercizi, gruppi, sessioni, esercizi delle sessioni, serie e impostazioni. Chiavi e indici sono dichiarati in Dexie. Le scritture della versione personale sono serializzate e atomiche sull'intero dataset, una scelta semplice per archivi personali. Per dataset molto grandi o più schede/browser concorrenti occorre passare a transazioni mirate e coordinamento: utilizzare una sola scheda per modificare i dati in questa versione.
+Il dataset personale contiene 17 raccolte, elencate in `src/app/models/domain.ts`; Dexie conserva anche metadati di revisione e checkpoint separati. Chiavi, indici e migrazioni sono in `src/app/core/database.ts`. Le scritture sono serializzate e atomiche sull'intero dataset; il controllo della revisione blocca una finestra rimasta indietro invece di sovrascrivere una modifica successiva. Il costo su archivi grandi va misurato prima di introdurre transazioni mirate.
 
 I log conservano snapshot di nome piano, nome giorno, nome esercizio e modalità di carico. Cancellare un giorno non invalida lo storico. La validazione referenziale impone i riferimenti correnti dei piani, ma consente riferimenti storici a giorni non più presenti.
 
@@ -114,21 +120,25 @@ Manifest, icone 192/512, service worker Angular e precache delle risorse statich
 
 Installazione: usa il pulsante in Profilo se il browser lo espone; altrimenti il menu del browser. Su iPhone: Safari → Condividi → Aggiungi alla schermata Home. Splash screen e prompt dipendono da browser/sistema. Nessuna risorsa essenziale richiede CDN o font remoti.
 
-La verifica su un telefono reale e il test offline con browser non sono stati eseguiti in questo ambiente. Segui `QA_CHECKLIST.md` prima di affidare all'app dati importanti.
+Le verifiche automatiche e browser effettivamente eseguite sono registrate nei documenti QA, con i rispettivi limiti. La prova su iPhone reale resta separata: seguire `QA_CHECKLIST.md` e `IPHONE_QA.md`, senza considerare una simulazione Chromium equivalente a Safari installato.
 
-## Pubblicazione statica
+## Distribuzione completa e anteprima statica
+
+L'app completa richiede il Worker con binding D1 `DB` e R2 `BUCKET`, oltre agli asset Angular. `npm run build` prepara il Worker in `dist/server/`; `npm run package:deploy` crea l'archivio con `.openai/hosting.json`, `drizzle/` alla root e `dist/`. Questi comandi non pubblicano né applicano migrazioni a database remoti. Preservare progetto, dominio, storage e policy di accesso dell'hosting esistente. Il codice server si affida all'identità verificata da Sites: non esporlo direttamente su un altro hosting senza progettare un confine di autenticazione equivalente.
+
+Il workflow `.github/workflows/quality.yml` verifica push e pull request e prepara un artefatto completo; non esegue deploy. Il pulsante interno “Distribuisci ultima versione” attiva sui dispositivi una versione già pubblicata, non compila il repository.
 
 L'app usa routing hash (`/#/piani`) e base relativa, così può essere servita in una sottocartella senza rewrite backend.
 
 ### GitHub Pages
 
-Crea un repository e carica i sorgenti. È incluso `.github/workflows/pages.yml`: nelle impostazioni del repository seleziona **Pages → GitHub Actions**, poi esegui il workflow o fai push su `main`. Il workflow installa, esegue test, compila e pubblica soltanto `dist/gymtrack/browser`.
+Il workflow `.github/workflows/pages.yml` è un'anteprima statica facoltativa, avviabile solo manualmente confermando `confirm_static_only`. Richiede Pages già configurato nel repository e pubblica soltanto `dist/gymtrack/browser`: account, API e backup server non vengono distribuiti.
 
-In alternativa pubblica manualmente il contenuto di quella cartella con il tuo metodo abituale per Pages. Non includere `node_modules`. Non sono richieste API o database. Il codice non attiva abbonamenti o risorse a pagamento.
+In alternativa pubblica manualmente quella cartella su un hosting statico HTTPS. Le funzioni personali locali restano disponibili; questa operazione non migra gli account o gli archivi server dell'app esistente. Non includere `node_modules` o dati personali.
 
 ### Cloudflare Pages
 
-Puoi caricare la cartella `dist/gymtrack/browser` con un progetto statico oppure collegare il repository usando `npm run build` e directory di output `dist/gymtrack/browser`, con Node 24. Non servono Workers, binding di storage o backend. Nessuna pubblicazione esterna è stata eseguita durante questo lavoro.
+Con la sola directory `dist/gymtrack/browser` si ottiene la medesima anteprima statica. Per tutte le funzionalità servono anche backend, binding e identità verificata descritti sopra; il solo caricamento su Pages non li configura.
 
 ## Limiti dell'archiviazione locale
 

@@ -2,9 +2,9 @@
 import assert from 'node:assert/strict';
 import {mkdir,writeFile} from 'node:fs/promises';
 const {chromium}=await import(process.env.GYMTRACK_PLAYWRIGHT_MODULE||'playwright');
-const origin='http://localhost:4173',output='docs/qa/workout-data-safety',password='fixture-only-test-password';
+const origin='http://localhost:4173',output=process.env.GYMTRACK_QA_OUTPUT||'docs/qa/workout-data-safety',password='fixture-only-test-password';
 await mkdir(output,{recursive:true});
-const browser=await chromium.launch({executablePath:'/usr/bin/chromium',headless:true,args:['--no-sandbox','--disable-dev-shm-usage']});
+const browser=await chromium.launch({executablePath:process.env.GYMTRACK_CHROMIUM||'/usr/bin/chromium',headless:true,args:['--no-sandbox','--disable-dev-shm-usage']});
 const context=await browser.newContext({viewport:{width:390,height:844},deviceScaleFactor:2,serviceWorkers:'block'}),page=await context.newPage(),errors=[],results=[];
 page.on('pageerror',error=>errors.push(error.message));page.setDefaultTimeout(15000);
 const mark=name=>{results.push(name);console.log('PASS',name);};

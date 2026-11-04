@@ -1,0 +1,37 @@
+name: Verifica GymTrack
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: quality-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - name: Formattazione dei file del setup
+        run: npm run format:setup
+      - name: Typecheck, test, build, PWA e Worker confezionato
+        run: npm run quality
+      - name: Prepara il pacchetto completo senza distribuirlo
+        run: npm run package:deploy -- "$RUNNER_TEMP/gymtrack-deploy.tar.gz"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: gymtrack-deploy-${{ github.sha }}
+          path: ${{ runner.temp }}/gymtrack-deploy.tar.gz
+          if-no-files-found: error
+          retention-days: 7

@@ -6,7 +6,7 @@ const {chromium} = await import(process.env.GYMTRACK_PLAYWRIGHT_MODULE || 'playw
 const output = process.env.GYMTRACK_QA_OUTPUT || 'docs/qa/training-upgrades';
 await mkdir(output, {recursive: true});
 const origin = 'http://localhost:4173', password = 'fixture-only-test-password';
-const browser = await chromium.launch({executablePath: '/usr/bin/chromium', headless: true, args: ['--no-sandbox', '--disable-dev-shm-usage']});
+const browser = await chromium.launch({executablePath: process.env.GYMTRACK_CHROMIUM || '/usr/bin/chromium', headless: true, args: ['--no-sandbox', '--disable-dev-shm-usage']});
 const context = await browser.newContext({viewport: {width: 390, height: 844}, deviceScaleFactor: 2, serviceWorkers: 'block'});
 const page = await context.newPage(), errors = [], results = [];
 page.on('pageerror', error => errors.push(error.message));

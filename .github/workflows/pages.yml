@@ -1,8 +1,12 @@
-name: Pubblica GymTrack su Pages
+name: Anteprima statica su Pages (senza API)
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
+    inputs:
+      confirm_static_only:
+        description: Pubblica solo il frontend, senza API, account e backup server
+        required: true
+        type: boolean
+        default: false
 permissions:
   contents: read
   pages: write
@@ -12,6 +16,7 @@ concurrency:
   cancel-in-progress: true
 jobs:
   deploy:
+    if: ${{ inputs.confirm_static_only }}
     runs-on: ubuntu-latest
     environment:
       name: github-pages
@@ -20,7 +25,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 24
+          node-version-file: .nvmrc
           cache: npm
       - run: npm ci
       - run: npm test
