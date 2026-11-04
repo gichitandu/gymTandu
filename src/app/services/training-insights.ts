@@ -1,4 +1,4 @@
-import {DataSet, ScheduledWorkout, WorkoutLog} from '../models/domain';
+import {DataSet, ScheduledWorkout} from '../models/domain';
 import {setupKey} from './training-flow';
 
 /** Read-only training analysis: no estimated medical recovery scores and no automatic plan changes. */
