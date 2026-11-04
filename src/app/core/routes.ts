@@ -10,6 +10,7 @@ const pages: Routes = [
  {path:'sonno',data:{mode:'sleep'},loadComponent:()=>import('../features/recovery.component').then(m=>m.RecoveryComponent)},
  {path:'riposo',data:{mode:'rest'},loadComponent:()=>import('../features/recovery.component').then(m=>m.RecoveryComponent)},
  {path:'focus-muscolare',loadComponent:()=>import('../features/muscle-focus.component').then(m=>m.MuscleFocusComponent)},
+ {path:'analisi',loadComponent:()=>import('../features/training-insights.component').then(m=>m.TrainingInsightsComponent)},
   {
     path: "",
     loadComponent: () =>
