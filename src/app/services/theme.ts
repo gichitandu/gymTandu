@@ -5,6 +5,8 @@ import {feedbackForContext,feedbackSignal} from './feedback';
 import {ThemeConfig,THEME_PRESETS,validThemeConfig,resolveTheme,contrastRatio} from './theme-palettes';
 import {ORIGINAL_THEME_IDS} from '../../../shared/approved-palettes.js';
 export const DEFAULT_BACKGROUND='#050E17';
+/** Visual-only, device-scoped preference for the signed-out screen. Never stores an account ID. */
+export const ENTRY_THEME_KEY='gymtrack-entry-theme-v1';
 export const DEFAULT_THEME:ThemeConfig={palette:'multicolore',mode:'dark'};
 type ThemePreference={id:string;color:string;config?:ThemeConfig;dirty?:boolean};
 @Injectable({providedIn:'root'})
@@ -24,6 +26,16 @@ export class ThemeService{
  private legacy(color:string):ThemeConfig{return color.toUpperCase()===DEFAULT_BACKGROUND?{...DEFAULT_THEME}:{palette:'carbonio',mode:contrastRatio(color,'#000000')>=contrastRatio(color,'#FFFFFF')?'light':'dark',background:color};}
  private cacheConfig(value:ThemePreference){return validThemeConfig(value.config)?value.config:this.legacy(value.color);}
  isLight(){return resolveTheme(this.config(),this.systemLight()).light;}
+ /** Reuse the last confirmed palette before authentication, without loading account archives. */
+ restoreEntryTheme(){
+  if(this.auth.user())return;
+  let config:ThemeConfig={...DEFAULT_THEME};
+  try{const saved:unknown=JSON.parse(localStorage.getItem(ENTRY_THEME_KEY)||'null');if(validThemeConfig(saved))config=saved;}catch{}
+  this.config.set(structuredClone(config));this.apply();
+ }
+ private rememberEntryTheme(config:ThemeConfig){
+  try{localStorage.setItem(ENTRY_THEME_KEY,JSON.stringify(config));}catch{}
+ }
  private writeCache(value:ThemePreference,current:()=>boolean){const job=this.cacheWrites.then(async()=>{if(!current())return false;await this.preferences.put(value);return current();});this.cacheWrites=job.catch(()=>{});return job;}
  private syncPreference(value:ThemePreference,current:()=>boolean){
   const job=this.remoteWrites.then(async()=>{if(!current()||this.auth.offlineMode()||!navigator.onLine)return false;await this.auth.request('preferences',{backgroundColor:value.color,...(value.config?{themeConfig:value.config}:{})});return current();});this.remoteWrites=job.catch(()=>{});return job;
@@ -34,13 +46,13 @@ export class ThemeService{
   const current=()=>this.generation===generation&&this.loadRequest===request&&this.accountId()===id;
   if(this.loadedAccount!==id){this.loadedAccount=id;this.config.set({...DEFAULT_THEME});this.apply();}
   let cached:ThemePreference|undefined;
-  try{await this.cacheWrites;cached=await this.preferences.get(id);if(!current())return;if(cached&&/^#[0-9a-fA-F]{6}$/.test(cached.color)){this.config.set(this.cacheConfig(cached));this.apply();}}catch{}
+  try{await this.cacheWrites;cached=await this.preferences.get(id);if(!current())return;if(cached&&/^#[0-9a-fA-F]{6}$/.test(cached.color)){this.config.set(this.cacheConfig(cached));this.apply();this.rememberEntryTheme(this.config());}}catch{}
   if(!current()||id==='device-local'||this.auth.offlineMode()||!navigator.onLine)return;
   if(cached?.dirty){try{if(await this.syncPreference(cached,current))await this.writeCache({...cached,dirty:false},current);}catch{}return;}
   try{
    const remote=await this.auth.request('preferences');if(!current()||!/^#[0-9a-fA-F]{6}$/.test(remote.backgroundColor))return;
    const value:ThemePreference={id,color:remote.backgroundColor,...(validThemeConfig(remote.themeConfig)?{config:remote.themeConfig}:{})};
-   if(await this.writeCache(value,current)){this.config.set(this.cacheConfig(value));this.apply();}
+   if(await this.writeCache(value,current)){this.config.set(this.cacheConfig(value));this.apply();this.rememberEntryTheme(this.config());}
   }catch{}
  }
  apply(){
@@ -68,7 +80,7 @@ export class ThemeService{
   const value:ThemePreference={id,color,...(!legacy?{config}:{}),dirty:id!=='device-local'};
   try{
    if(!await this.writeCache(value,current))return false;
-   this.loadedAccount=id;this.config.set(config);this.apply();this.status.set('Tema salvato sul dispositivo.');
+   this.loadedAccount=id;this.config.set(config);this.apply();this.rememberEntryTheme(config);this.status.set('Tema salvato sul dispositivo.');
    if(id!=='device-local'&&!this.auth.offlineMode()&&navigator.onLine){try{if(await this.syncPreference(value,current)&&await this.writeCache({...value,dirty:false},current))this.status.set('Tema salvato anche sull’account.');else if(current())this.status.set('Salvato sul dispositivo. La sincronizzazione riprenderà con la rete.');}catch{if(current())this.status.set('Salvato sul dispositivo. La sincronizzazione riprenderà con la rete.');}}
    return current();
   }catch(error){if(current())this.error.set(error instanceof Error?error.message:'Tema non salvato. Riprova.');return false;}
