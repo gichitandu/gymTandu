@@ -25,6 +25,13 @@ describe('insights and report exports',()=>{
   expect(csv.split('\r\n').length).toBe(3);
   expect(JSON.stringify(seed())).toBe(baseline);
  });
+ it('guards CSV text against spreadsheet formula injection',()=>{
+  const data=seed();
+  data.workouts.push({id:'formula',userId:'local',planId:'p',dayId:'d',planName:'=HYPERLINK("https://example.org")',dayName:' +SUM(1,2)',date:'2026-11-03',startedAt:'2026-11-03T10:00:00.000Z',duration:20,notes:'',status:'completed'});
+  const csv=trainingReportCsv(data,'2026-11-01','2026-11-04');
+  expect(csv).toContain("'=HYPERLINK");
+  expect(csv).toContain("' +SUM");
+ });
  it('includes calendar alarms for timed sessions, validates dates and never auto-schedules',()=>{
   const timed=workoutReminderIcs({id:'one',date:'2026-11-06',time:'18:30',dayName:'Gambe,\nA'});
   expect(timed).toContain('DTSTART:20261106T183000');
