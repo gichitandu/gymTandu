@@ -6,7 +6,7 @@ import {IconComponent} from '../shared/icon.component';
 import {summarizeTraining,trainingReportCsv,workoutReminderIcs} from '../services/training-insights';
 
 @Component({
- standalone:true,imports:[RouterLink,IconComponent],
+ standalone:true,host:{class:'gt-insights-print'},imports:[RouterLink,IconComponent],
  template:`
  <header class="insights-heading"><a routerLink="/progressi" class="button ghost"><gt-icon name="back"/> Progressi</a><span class="eyebrow">GYMTRACK / ANALISI</span><h1>La tua evoluzione</h1><p>Numeri chiari, suggerimenti spiegati e strumenti per organizzarti.</p></header>
  <section class="insights-section" aria-labelledby="period-heading">
