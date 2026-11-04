@@ -27,6 +27,29 @@ export async function passwordHash(password, salt) {
 function equal(a, b) { if(a.length !== b.length) return false; let d=0; for(let i=0;i<a.length;i++) d |= a.charCodeAt(i)^b.charCodeAt(i); return d===0; }
 function json(data, status=200, headers={}) { return Response.json(data,{status,headers:{'Cache-Control':'no-store','X-Content-Type-Options':'nosniff',...headers}}); }
 function fail(message,status=400) { throw Object.assign(new Error(message),{status}); }
+/** Enforce body size in bytes while streaming, including chunked requests without Content-Length. */
+async function readLimitedJsonText(request,limit) {
+ const declared=request.headers.get('content-length');
+ if(declared!==null && (!/^\d+$/.test(declared)||Number(declared)>limit))fail('Richiesta troppo grande.',413);
+ const reader=request.body?.getReader();
+ if(!reader)return '';
+ const decoder=new TextDecoder('utf-8',{fatal:true});
+ let bytes=0,text='';
+ try {
+  for(;;){
+   const chunk=await reader.read();
+   if(chunk.done)break;
+   bytes+=chunk.value.byteLength;
+   if(bytes>limit){try{await reader.cancel();}catch{}fail('Richiesta troppo grande.',413);}
+   text+=decoder.decode(chunk.value,{stream:true});
+  }
+  return text+decoder.decode();
+ }catch(error){
+  if(error?.status)throw error;
+  fail('Richiesta JSON non leggibile.');
+ }
+}
+
 function validThemeConfig(value) {
   return !!value&&typeof value==='object'&&!Array.isArray(value)&&Object.keys(value).every(key=>['palette','mode','background','accent'].includes(key))&&[...APPROVED_THEME_IDS,'oro','argento','multicolore','bianco-elegante','scuro','rosso','verde','viola-neon','blu-azzurro','carbonio','artico','prugna','petrolio','sabbia','ghiaccio'].includes(value.palette)&&['dark','light','system'].includes(value.mode)&&['background','accent'].every(key=>value[key]===undefined||typeof value[key]==='string'&&/^#[0-9a-fA-F]{6}$/.test(value[key]));
 }
@@ -141,8 +164,7 @@ export async function api(request,env,ctx) {
     }
     if(request.method==='GET') fail('Pagina non trovata.',404);
     const bodyLimit=path==='/api/catalog/exercise'?3000000:8192;
-    if(Number(request.headers.get('content-length')||0)>bodyLimit) fail('Richiesta troppo grande.',413);
-    const raw=await request.text(); if(raw.length>bodyLimit) fail('Richiesta troppo grande.',413);
+    const raw=await readLimitedJsonText(request,bodyLimit);
     let b; try { b=JSON.parse(raw); } catch { fail('Richiesta non valida.'); }
     if(path==='/api/auth/setup'&&request.method==='POST') {
       if(request.headers.get('oai-authenticated-user-email')?.toLowerCase()!==OWNER) fail('Solo il proprietario può attivare il Super Admin.',403);
