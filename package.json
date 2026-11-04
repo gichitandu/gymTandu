@@ -18,7 +18,8 @@
     "quality": "npm run typecheck && npm test && npm run build && npm run verify:build && npm run test:package",
     "postbuild": "node tools/package-worker.mjs",
     "package:deploy": "node tools/package-deploy.mjs",
-    "db:generate": "drizzle-kit generate"
+    "db:generate": "drizzle-kit generate",
+    "test:affected": "node tools/test-affected.mjs"
   },
   "engines": {
     "node": ">=24.15.0 <25"
