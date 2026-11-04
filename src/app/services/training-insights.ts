@@ -40,6 +40,16 @@ export function summarizeTraining(data:DataSet,days=28,today=localDate()):{curre
   insights.push({kind:'recovery',title:'Ascolta le sensazioni',message:'Oggi hai registrato poca energia o stress elevato. Valuta personalmente l’intensità e, se necessario, confrontati con un professionista.'});
  return {current,previous,insights};
 }
+/** Weekly comparison points for the existing SVG chart, with no persistence or server calls. */
+export function trainingTimeline(data:DataSet,days=28,today=localDate()){
+ const from=fromDays(today,days),start=Date.parse(from+'T12:00:00Z'),count=Math.ceil(days/7);
+ const points=Array.from({length:count},(_,i)=>{const date=new Date(start+i*7*86400000).toISOString().slice(0,10);return {label:date.slice(8)+'/'+date.slice(5,7),sessions:0,volume:0};});
+ for(const workout of finished(data,from,today)){
+  const position=Math.floor((Date.parse(workout.date+'T12:00:00Z')-start)/(7*86400000)),bucket=points[position];
+  if(bucket){bucket.sessions++;bucket.volume+=sessionVolume(data,workout);}
+ }
+ return points;
+}
 function csvCell(value:string|number){
  const raw=String(value);
  // Spreadsheet tools can execute formulas in imported CSV cells, even if quoted.
