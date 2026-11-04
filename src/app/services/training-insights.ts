@@ -35,8 +35,10 @@ export function buildTrainingInsights(data:DataSet,today:string):TrainingInsight
  const sessions=new Map(workouts.map(w=>[w.id,w]));
  const exerciseRows=data.workoutExercises.filter(e=>sessions.has(e.workoutId));
  const rows=new Map(exerciseRows.map(e=>[e.id,e]));
- const setsByExercise=new Map<string,DataSet['sets']>();
- for(const set of data.sets)if(rows.has(set.workoutExerciseId)&&set.completed&&set.kind!=='warmup'){
+ const setsByExercise=new Map<string,DataSet['sets']>(),allWorkSetCount=new Map<string,number>();
+ for(const set of data.sets)if(rows.has(set.workoutExerciseId)&&set.kind!=='warmup'){
+  allWorkSetCount.set(set.workoutExerciseId,(allWorkSetCount.get(set.workoutExerciseId)||0)+1);
+  if(!set.completed)continue;
   const grouped=setsByExercise.get(set.workoutExerciseId)||[];
   grouped.push(set);setsByExercise.set(set.workoutExerciseId,grouped);
  }
@@ -79,7 +81,7 @@ export function buildTrainingInsights(data:DataSet,today:string):TrainingInsight
   if(options.length!==1)continue;
   const prescription=options[0];
   const completed=setsByExercise.get(current.id)||[],past=setsByExercise.get(last.id)||[];
-  if(completed.length!==prescription.sets||past.length!==prescription.sets||!completed.length)continue;
+  if(completed.length!==prescription.sets||past.length!==prescription.sets||!completed.length||allWorkSetCount.get(current.id)!==prescription.sets||allWorkSetCount.get(last.id)!==prescription.sets)continue;
   if(!completed.every(s=>s.reps>=prescription.repsMax&&s.rpe!==undefined&&s.rpe<=8&&s.rpe>=1))continue;
   if(!past.every(s=>s.weight===past[0].weight)||!completed.every(s=>s.weight===completed[0].weight))continue;
   if(completed[0].weight<past[0].weight||completed.some(s=>s.weight<=0))continue;
