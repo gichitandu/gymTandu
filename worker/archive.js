@@ -117,9 +117,21 @@ function archiveCheckpointStatement(db, scope, row, id, reason, workout) {
 }
 async function completedCheckpointStatements(db, scope, row, text, known) {
  const data=JSON.parse(text).data, statements=[];
- for(const workout of data.workouts.filter(row=>row.status==='completed')) {
-  const exercises=data.workoutExercises.filter(row=>row.workoutId===workout.id).sort((a,b)=>a.id.localeCompare(b.id)),ids=new Set(exercises.map(row=>row.id));
-  const sets=data.sets.filter(row=>ids.has(row.workoutExerciseId)).sort((a,b)=>a.id.localeCompare(b.id));
+ const completed=data.workouts.filter(item=>item.status==='completed');
+ const completedIds=new Set(completed.map(item=>item.id));
+ const exercisesByWorkout=new Map(),setsByExercise=new Map();
+ for(const exercise of data.workoutExercises){
+  if(!completedIds.has(exercise.workoutId))continue;
+  const list=exercisesByWorkout.get(exercise.workoutId)||[];
+  list.push(exercise);exercisesByWorkout.set(exercise.workoutId,list);
+ }
+ for(const set of data.sets){
+  const list=setsByExercise.get(set.workoutExerciseId)||[];
+  list.push(set);setsByExercise.set(set.workoutExerciseId,list);
+ }
+ for(const workout of completed) {
+  const exercises=(exercisesByWorkout.get(workout.id)||[]).sort((a,b)=>a.id.localeCompare(b.id));
+  const sets=exercises.flatMap(exercise=>setsByExercise.get(exercise.id)||[]).sort((a,b)=>a.id.localeCompare(b.id));
   const fingerprint=await archiveDigest(JSON.stringify({workout,exercises,sets}));
   const id=await archiveDigest(scope+':completed:'+workout.id+':'+fingerprint);
   if(known.has(id))continue;known.add(id);
