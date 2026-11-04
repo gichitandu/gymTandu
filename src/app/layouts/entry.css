@@ -38,6 +38,21 @@
   pointer-events: none;
 }
 
+/* Decorative colour wave: pointer-transparent and below all form content. */
+.entry-page::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  left: -18%;
+  right: -18%;
+  bottom: -205px;
+  height: 350px;
+  border-radius: 55% 65% 0 0;
+  transform: rotate(-7deg);
+  background: radial-gradient(ellipse at 55% 10%, color-mix(in srgb, var(--accent) 14%, transparent), transparent 70%);
+  pointer-events: none;
+}
+
 .entry-layout {
   width: 100%;
   max-width: 1120px;
