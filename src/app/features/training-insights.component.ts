@@ -81,7 +81,7 @@ export class TrainingInsightsComponent {
  readonly sessionTimeline=computed(()=>this.timeline().map(row=>({label:row.label,value:row.sessions})));
  readonly volumeTimeline=computed(()=>this.timeline().map(row=>({label:row.label,value:this.s.weight(row.volume)})));
  readonly volumeDisplay=computed(()=>this.s.formatWeight(this.summary().current.externalVolume));
- readonly progression=computed(()=>this.s.draft()?this.s.workoutExercises(this.s.draft()!.id).map(row=>({id:row.id,name:row.name,...this.s.progression(row.id,2.5)})):[]);
+ readonly progression=computed(()=>this.s.draft()?this.s.workoutExercises(this.s.draft()!.id).map(row=>({id:row.id,name:row.name,...this.s.progression(row.id,this.s.data().exercisePreferences.find(pref=>pref.id===row.exerciseId)?.weightStep??2.5)})):[]);
  readonly nextWorkout=computed(()=>this.s.data().scheduledWorkouts
   .filter(e=>(e.kind??'workout')==='workout'&&e.date>=this.clock.date()&&!e.done&&!this.s.completed().some(w=>w.id===e.workoutId))
   .sort((a,b)=>a.date.localeCompare(b.date)||(a.time||'').localeCompare(b.time||''))[0]);
