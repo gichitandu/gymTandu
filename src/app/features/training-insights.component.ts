@@ -3,10 +3,11 @@ import {RouterLink} from '@angular/router';
 import {Store} from '../services/store';
 import {TodayService} from '../services/today';
 import {IconComponent} from '../shared/icon.component';
-import {summarizeTraining,trainingReportCsv,workoutReminderIcs} from '../services/training-insights';
+import {DataChartComponent} from '../shared/data-chart.component';
+import {summarizeTraining,trainingTimeline,trainingReportCsv,workoutReminderIcs} from '../services/training-insights';
 
 @Component({
- standalone:true,host:{class:'gt-insights-print'},imports:[RouterLink,IconComponent],
+ standalone:true,host:{class:'gt-insights-print'},imports:[RouterLink,IconComponent,DataChartComponent],
  template:`
  <header class="insights-heading"><a routerLink="/progressi" class="button ghost"><gt-icon name="back"/> Progressi</a><span class="eyebrow">GYMTRACK / ANALISI</span><h1>La tua evoluzione</h1><p>Numeri chiari, suggerimenti spiegati e strumenti per organizzarti.</p></header>
  <section class="insights-section" aria-labelledby="period-heading">
@@ -21,6 +22,7 @@ import {summarizeTraining,trainingReportCsv,workoutReminderIcs} from '../service
    <div class="card"><span>Volume carico esterno</span><strong>{{volumeDisplay()}}</strong><small>{{s.settings().unit}} · non include corpo libero</small></div>
   </div>
   <p class="insights-note">Le durate mancanti non vengono interpretate come zero. {{summary().current.unknownDurations}} sedute senza durata verificabile.</p>
+  <div class="insights-charts"><div class="card"><h3>Sedute per settimana</h3><gt-data-chart [points]="sessionTimeline()" title="Sedute settimanali" unit="sedute"/></div><div class="card"><h3>Volume esterno per settimana</h3><gt-data-chart [points]="volumeTimeline()" title="Volume settimanale" [unit]="s.settings().unit"/></div></div>
  </section>
  <section class="insights-section" aria-labelledby="suggestions-heading">
   <h2 id="suggestions-heading">Indicazioni per il tuo percorso</h2>
@@ -60,14 +62,14 @@ import {summarizeTraining,trainingReportCsv,workoutReminderIcs} from '../service
  .insights-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
  .insights-stats .card{padding:18px;display:flex;flex-direction:column;gap:10px;min-width:0}
  .insights-stats span{font-size:12px;color:var(--muted)}.insights-stats strong{font-size:clamp(21px,3vw,30px);font-weight:800;overflow-wrap:anywhere}.insights-stats small{font-size:11px;color:var(--muted)}
- .insights-advice{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:14px 0}
+ .insights-charts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:18px}.insights-charts .card{min-width:0}.insights-charts h3{font-size:14px;margin:0 0 12px}.insights-advice{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:14px 0}
  .insights-advice .card{display:flex;align-items:flex-start;gap:12px;padding:18px}
  .insights-advice gt-icon{color:var(--accent-text)}.insights-advice h3{font-size:14px;margin:0 0 8px}.insights-advice p{font-size:12px;color:var(--muted);line-height:1.6;margin:0}
  .insights-reminder{display:flex;align-items:center;justify-content:space-between;gap:12px}.insights-reminder p{color:var(--muted);margin:7px 0 0}
  .insights-progression{padding:12px 0;border-bottom:1px solid var(--line)}.insights-progression p,.insights-progression small{color:var(--muted);font-size:12px;line-height:1.5}.insights-link{display:inline-flex;align-items:center;gap:8px;color:var(--accent-text);font-size:12px;margin-top:12px}
  .insights-export-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:15px}
  button.primary{background:linear-gradient(115deg,var(--theme-button-start,var(--accent)),var(--theme-button-end,var(--accent)));color:var(--accent-ink);border-color:var(--accent)}
- @media(max-width:720px){.insights-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.insights-advice{grid-template-columns:1fr}.insights-reminder{align-items:stretch;flex-direction:column}.insights-reminder button{width:100%}}
+ @media(max-width:720px){.insights-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.insights-advice,.insights-charts{grid-template-columns:1fr}.insights-reminder{align-items:stretch;flex-direction:column}.insights-reminder button{width:100%}}
  @media print{.insights-heading>a,.insights-periods,.insights-export-actions,.insights-link,.insights-reminder button{display:none!important}:host{color:#111}.card{break-inside:avoid;box-shadow:none;border:1px solid #bbb}.insights-advice{grid-template-columns:1fr}}
  `]
 })
@@ -75,6 +77,9 @@ export class TrainingInsightsComponent {
  readonly s=inject(Store);private clock=inject(TodayService);
  readonly period=signal(28);
  readonly summary=computed(()=>summarizeTraining(this.s.data(),this.period(),this.clock.date()));
+ readonly timeline=computed(()=>trainingTimeline(this.s.data(),this.period(),this.clock.date()));
+ readonly sessionTimeline=computed(()=>this.timeline().map(row=>({label:row.label,value:row.sessions})));
+ readonly volumeTimeline=computed(()=>this.timeline().map(row=>({label:row.label,value:this.s.weight(row.volume)})));
  readonly volumeDisplay=computed(()=>this.s.formatWeight(this.summary().current.externalVolume));
  readonly progression=computed(()=>this.s.draft()?this.s.workoutExercises(this.s.draft()!.id).map(row=>({id:row.id,name:row.name,...this.s.progression(row.id,2.5)})):[]);
  readonly nextWorkout=computed(()=>this.s.data().scheduledWorkouts
