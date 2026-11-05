@@ -1,5 +1,9 @@
 # Istruzioni per Codex — GymTrack
 
+## Regola UI vincolante del proprietario (QA)
+
+Per nuove proposte o modifiche UI, partire esclusivamente da screenshot **veri** della build GymTrack corrente nel branch QA, catturati tramite browser e account sintetico SuperAdmin; verificare sorgenti e funzioni attuali. Proporre **solo cambiamenti incrementali sulla schermata esistente**, senza creare layout da zero, collage o mockup ipotetici, **a meno che il proprietario lo chieda esplicitamente**. Distinguere screenshot di test, immagini editate e app pubblicata. Seguire la procedura completa in `QA_ENVIRONMENT.md`. Non allineare QA e produzione senza ordine esplicito del proprietario; preservare ogni implementazione.
+
 ## Scopo e architettura
 
 GymTrack è il diario di allenamento esistente: piani, serie, progressi, calendario,
