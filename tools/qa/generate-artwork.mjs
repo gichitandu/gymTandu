@@ -23,6 +23,7 @@ const limit=arg('--limit')?Number(arg('--limit')):5;
 if(!Number.isSafeInteger(limit)||limit<1||limit>243)throw Error('Invalid --limit (1..243)');
 const model=process.env.GYMTRACK_IMAGE_MODEL||'gpt-image-2.5-sunburst';
 if(!/^gpt-image-2\.(5|6)-(sunburst|flare)$/.test(model))throw Error('Unsupported image model: '+model);
+// Pending illustrations are never automatically considered ready for production.
 const selected=manifest.pending.filter(e=>!only||e.id===only).slice(0,only?1:limit);
 if(only&&selected.length===0)throw Error('Unknown exercise id: '+only);
 
@@ -40,7 +41,7 @@ function specificity(e){
  const name=e.name.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
  const specs=[];
  for(const [pattern,description] of [
-  [/\b15°\b|a 15°/,'Set the real bench inclination to 15 degrees, not 30 or 45.'],
+  [/(?:^|\s)15°|a 15°/,'Set the real bench inclination to 15 degrees, not 30 or 45.'],
   [/30°/,'Set the real bench inclination to exactly 30 degrees.'],
   [/45°/,'Set the real bench inclination to exactly 45 degrees.'],
   [/60°/,'Set the real bench inclination to exactly 60 degrees.'],
