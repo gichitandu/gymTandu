@@ -1,0 +1,1477 @@
+{
+  "notice": "Questo manifest è una specifica verificabile, NON un set di 124 immagini generate o installate.",
+  "environment": "QA_ISOLATO",
+  "source": "src/app/core/default-catalog.ts",
+  "preserveOriginals": true,
+  "noProductionSync": true,
+  "renderStyle": "Mannequin anatomico 3D metallizzato argento, evidenze muscolari viola anatomiche, attrezzatura fedele, luce ciano su sfondo blu notte; usare gli asset originali QA come riferimento.",
+  "counts": {
+    "petto": 62,
+    "schiena": 44,
+    "spalle": 18,
+    "total": 124
+  },
+  "entries": [
+    {
+      "id": "exercise-0",
+      "name": "Panca piana",
+      "group": "petto",
+      "equipment": "Bilanciere",
+      "plannedAsset": "public/training/figures/specific/exercise-0.webp",
+      "status": "DA_GENERARE_E_APPROVARE",
+      "requirements": [
+        "Attrezzo e piano del movimento coerenti con la variante orizzontale"
+      ]
+    },
+    {
+      "id": "exercise-1",
+      "name": "Panca inclinata con manubri (angolo libero)",
+      "group": "petto",
+      "equipment": "Manubri",
+      "plannedAsset": "public/training/figures/specific/exercise-1.webp",
+      "status": "DA_GENERARE_E_APPROVARE",
+      "requirements": [
+        "Panca o macchina inclinata con angolo effettivo"
+      ]
+    },
+    {
+      "id": "exercise-2",
+      "name": "Croci ai cavi",
+      "group": "petto",
+      "equipment": "Cavi",
+      "plannedAsset": "public/training/figures/specific/exercise-2.webp",
+      "status": "DA_GENERARE_E_APPROVARE",
+      "requirements": [
+        "Gomiti lievemente flessi e movimento di adduzione, non distensione"
+      ]
+    },
+    {
+      "id": "exercise-3",
+      "name": "Chest press",
+      "group": "petto",
+      "equipment": "Macchina",
+      "plannedAsset": "public/training/figures/specific/exercise-3.webp",
+      "status": "DA_GENERARE_E_APPROVARE",
+      "requirements": [
+        "Riprodurre rigorosamente la variante indicata nel catalogo, senza usare pose generiche di altro esercizio"
+      ]
+    },
+    {
+      "id": "exercise-4",
+      "name": "Lat machine",
+      "group": "schiena",
+      "equipment": "Cavi",
+      "plannedAsset": "public/training/figures/specific/exercise-4.webp",
+      "status": "DA_GENERARE_E_APPROVARE",
+      "requirements": [
+        "Barra/maniglie davanti al busto, NON dietro al collo"
+      ]
+    },
+    {
+      "id": "exercise-5",
+      "name": "Rematore bilanciere",
+      "group": "schiena",
+      "equipment": "Bilanciere",
+      "plannedAsset": "public/training/figures/specific/exercise-5.webp",
+      "status": "DA_GENERARE_E_APPROVARE",
+      "requirements": [
+        "Trazione con gomiti dietro il busto, supporto/attrezzo appropriato"
+      ]
+    },
+    {
+      "id": "exercise-6",
+      "name": "Pulley",
+      "group": "schiena",
+      "equipment": "Cavi",
+      "plannedAsset": "public/training/figures/specific/exercise-6.webp",
+      "status": "DA_GENERARE_E_APPROVARE",
+      "requirements": [
+        "Riprodurre rigorosamente la variante indicata nel catalogo, senza usare pose generiche di altro esercizio"
+      ]
+    },
+    {
+      "id": "exercise-7",
+      "name": "Trazioni alla sbarra",
+      "group": "schiena",
+      "equipment": "Sbarra",
+      "plannedAsset": "public/training/figures/specific/exercise-7.webp",
+      "status": "DA_GENERARE_E_APPROVARE",
+      "requirements": [
+        "Corpo sospeso alla sbarra con presa corretta"
+      ]
+    },
+    {
+      "id": "exercise-8",
+      "name": "Shoulder press",
+      "group": "spalle",
+      "equipment": "Manubri",
+      "plannedAsset": "public/training/figures/specific/exercise-8.webp",
+      "status": "DA_GENERARE_E_APPROVARE",
+      "requirements": [
+        "Riprodurre rigorosamente la variante indicata nel catalogo, senza usare pose generiche di altro esercizio"
+      ]
+    },
+    {
+      "id": "exercise-9",
+      "name": "Alzate laterali",
+      "group": "spalle",
+      "equipment": "Manubri",
+      "plannedAsset": "public/training/figures/specific/exercise-9.webp",
+      "status": "DA_GENERARE_E_APPROVARE",
+      "requirements": [
+        "Abduzione delle braccia sul piano frontale/scapolare"
+      ]
+    },
+    {
+      "id": "exercise-10",
+      "name": "Alzate posteriori",
+      "group": "spalle",
+      "equipment": "Manubri",
+      "plannedAsset": "public/training/figures/specific/exercise-10.webp",
+      "status": "DA_GENERARE_E_APPROVARE",
+      "requirements": [
+        "Abduzione orizzontale con deltoidi posteriori evidenziati"
+      ]
+    },
+    {
+      "id": "library-barbell_incline_bench_press",
+      "name": "Panca inclinata bilanciere",
+      "group": "petto",
+      "equipment": "Bilanciere",
+      "plannedAsset": "public/training/figures/specific/library-barbell_incline_bench_press.webp",
+      "status": "DA_GENERARE_E_APPROVARE",
+      "requirements": [
+        "Panca o macchina inclinata con angolo effettivo"
+      ]
+    },
+    {
+      "id": "library-barbell_decline_barbell_bench_press",
+      "name": "Panca declinata",
+      "group": "petto",
+      "equipment": "Bilanciere",
+      "plannedAsset": "public/training/figures/specific/library-barbell_decline_barbell_bench_press.webp",
+      "status": "DA_GENERARE_E_APPROVARE",
+      "requirements": [
+        "Panca o macchina declinata con angolo effettivo"
+      ]
+    },
+    {
+      "id": "library-dumbbells_dumbbell_bench_press",
+      "name": "Panca piana con manubri (0°)",
+      "group": "petto",
+      "equipment": "Manubri",
+      "plannedAsset": "public/training/figures/specific/library-dumbbells_dumbbell_bench_press.webp",
+      "status": "DA_GENERARE_E_APPROVARE",
+      "requirements": [
+        "Attrezzo e piano del movimento coerenti con la variante orizzontale"
+      ]
+    },
+    {
+      "id": "library-dumbbells_dumbbell_flyes",
+      "name": "Croci manubri",
+      "group": "petto",
+      "equipment": "Manubri",
+      "plannedAsset": "public/training/figures/specific/library-dumbbells_dumbbell_flyes.webp",
+      "status": "DA_GENERARE_E_APPROVARE",
+      "requirements": [
+        "Gomiti lievemente flessi e movimento di adduzione, non distensione"
+      ]
+    },
+    {
+      "id": "library-dumbbells_incline_dumbbell_flyes",
+      "name": "Croci su panca inclinata",
+      "group": "petto",
+      "equipment": "Manubri",
+      "plannedAsset": "public/training/figures/specific/library-dumbbells_incline_dumbbell_flyes.webp",
+      "status": "DA_GENERARE_E_APPROVARE",
+      "requirements": [
+        "Panca o macchina inclinata con angolo effettivo",
+        "Gomiti lievemente flessi e movimento di adduzione, non distensione"
+      ]
+    },
+    {
+      "id": "library-machine_butterfly",
+      "name": "Pectoral machine",
+      "group": "petto",
+      "equipment": "Macchina",
+      "plannedAsset": "public/training/figures/specific/library-machine_butterfly.webp",
+      "status": "DA_GENERARE_E_APPROVARE",
+      "requirements": [
+        "Macchina pectoral/pec deck corretta"
+      ]
+    },
+    {
+      "id": "library-bodyweight_push_ups",
+      "name": "Piegamenti a terra",
+      "group": "petto",
+      "equipment": "Corpo libero",
+      "plannedAsset": "public/training/figures/specific/library-bodyweight_push_ups.webp",
+      "status": "DA_GENERARE_E_APPROVARE",
+      "requirements": [
+        "Riprodurre rigorosamente la variante indicata nel catalogo, senza usare pose generiche di altro esercizio"
+      ]
+    },
+    {
+      "id": "library-bodyweight_diamond_push_ups",
+      "name": "Piegamenti a presa stretta",
+      "group": "petto",
+      "equipment": "Corpo libero",
+      "plannedAsset": "public/training/figures/specific/library-bodyweight_diamond_push_ups.webp",
+      "status": "DA_GENERARE_E_APPROVARE",
+      "requirements": [
+        "Distanza mani stretta corretta"
+      ]
+    },
+    {
+      "id": "library-dumbbells_straight_arm_dumbbell_pullover",
+      "name": "Pullover manubrio",
+      "group": "petto",
+      "equipment": "Manubri",
+      "plannedAsset": "public/training/figures/specific/library-dumbbells_straight_arm_dumbbell_pullover.webp",
+      "status": "DA_GENERARE_E_APPROVARE",
+      "requirements": [
+        "Riprodurre rigorosamente la variante indicata nel catalogo, senza usare pose generiche di altro esercizio"
+      ]
+    },
+    {
+      "id": "library-machine_dip_machine",
+      "name": "Dip alla macchina",
+      "group": "petto",
+      "equipment": "Macchina",
+      "plannedAsset": "public/training/figures/specific/library-machine_dip_machine.webp",
+      "status": "DA_GENERARE_E_APPROVARE",
+      "requirements": [
+        "Sostegno alle parallele o macchina assistita, in base alla variante"
+      ]
+    },
+    {
+      "id": "library-barbell_deadlift",
+      "name": "Stacco da terra",
+      "group": "schiena",
+      "equipment": "Bilanciere",
+      "plannedAsset": "public/training/figures/specific/library-barbell_deadlift.webp",
+      "status": "DA_GENERARE_E_APPROVARE",
+      "requirements": [
+        "Bilanciere vicino alle tibie/alle gambe, anca e schiena neutrali"
+      ]
+    },
+    {
+      "id": "library-dumbbells_one_arm_dumbbell_row",
+      "name": "Rematore manubrio",
+      "group": "schiena",
+      "equipment": "Manubri",
+      "plannedAsset": "public/training/figures/specific/library-dumbbells_one_arm_dumbbell_row.webp",
+      "status": "DA_GENERARE_E_APPROVARE",
+      "requirements": [
+        "Trazione con gomiti dietro il busto, supporto/attrezzo appropriato"
+      ]
+    },
+    {
+      "id": "library-cable_close_grip_front_lat_pulldown",
+      "name": "Lat machine presa stretta",
+      "group": "schiena",
+      "equipment": "Cavi",
+      "plannedAsset": "public/training/figures/specific/library-cable_close_grip_front_lat_pulldown.webp",
+      "status": "DA_GENERARE_E_APPROVARE",
+      "requirements": [
+        "Distanza mani stretta corretta",
+        "Barra/maniglie davanti al busto, NON dietro al collo"
+      ]
+    },
+    {
+      "id": "library-cable_straight_arm_pulldown",
+      "name": "Pulldown braccia tese",
+      "group": "schiena",
+      "equipment": "Cavi",
+      "plannedAsset": "public/training/figures/specific/library-cable_straight_arm_pulldown.webp",
+      "status": "DA_GENERARE_E_APPROVARE",
+      "requirements": [
+        "Riprodurre rigorosamente la variante indicata nel catalogo, senza usare pose generiche di altro esercizio"
+      ]
+    },
+    {
+      "id": "library-machine_leverage_iso_row",
+      "name": "Rematore alla macchina",
+      "group": "schiena",
+      "equipment": "Macchina",
+      "plannedAsset": "public/training/figures/specific/library-machine_leverage_iso_row.webp",
+      "status": "DA_GENERARE_E_APPROVARE",
+      "requirements": [
+        "Trazione con gomiti dietro il busto, supporto/attrezzo appropriato"
+      ]
+    },
+    {
+      "id": "library-barbell_landmine_t_bar_row",
+      "name": "T-bar row",
+      "group": "schiena",
+      "equipment": "Bilanciere",
+      "plannedAsset": "public/training/figures/specific/library-barbell_landmine_t_bar_row.webp",
+      "status": "DA_GENERARE_E_APPROVARE",
+      "requirements": [
+        "Riprodurre rigorosamente la variante indicata nel catalogo, senza usare pose generiche di altro esercizio"
+      ]
+    },
+    {
+      "id": "library-bodyweight_inverted_row",
+      "name": "Rematore a corpo libero",
+      "group": "schiena",
+      "equipment": "Corpo libero",
+      "plannedAsset": "public/training/figures/specific/library-bodyweight_inverted_row.webp",
+      "status": "DA_GENERARE_E_APPROVARE",
+      "requirements": [
+        "Trazione con gomiti dietro il busto, supporto/attrezzo appropriato"
+      ]
+    },
+    {
+      "id": "library-bodyweight_back_extension",
+      "name": "Estensioni lombari",
+      "group": "schiena",
+      "equipment": "Corpo libero",
+      "plannedAsset": "public/training/figures/specific/library-bodyweight_back_extension.webp",
+      "status": "DA_GENERARE_E_APPROVARE",
+      "requirements": [
+        "Riprodurre rigorosamente la variante indicata nel catalogo, senza usare pose generiche di altro esercizio"
+      ]
+    },
+    {
+      "id": "library-cable_one_arm_lat_pulldown",
+      "name": "Lat machine unilaterale",
+      "group": "schiena",
+      "equipment": "Cavi",
+      "plannedAsset": "public/training/figures/specific/library-cable_one_arm_lat_pulldown.webp",
+      "status": "DA_GENERARE_E_APPROVARE",
+      "requirements": [
+        "Un solo arto attivo; non usare la versione bilaterale",
+        "Barra/maniglie davanti al busto, NON dietro al collo"
+      ]
+    },
+    {
+      "id": "library-barbell_shrug",
+      "name": "Scrollate bilanciere",
+      "group": "schiena",
+      "equipment": "Bilanciere",
+      "plannedAsset": "public/training/figures/specific/library-barbell_shrug.webp",
+      "status": "DA_GENERARE_E_APPROVARE",
+      "requirements": [
+        "Riprodurre rigorosamente la variante indicata nel catalogo, senza usare pose generiche di altro esercizio"
+      ]
+    },
+    {
+      "id": "library-barbell_overhead_press",
+      "name": "Military press",
+      "group": "spalle",
+      "equipment": "Bilanciere",
+      "plannedAsset": "public/training/figures/specific/library-barbell_overhead_press.webp",
+      "status": "DA_GENERARE_E_APPROVARE",
+      "requirements": [
+        "Riprodurre rigorosamente la variante indicata nel catalogo, senza usare pose generiche di altro esercizio"
+      ]
+    },
+    {
+      "id": "library-dumbbells_arnold_press",
+      "name": "Arnold press",
+      "group": "spalle",
+      "equipment": "Manubri",
+      "plannedAsset": "public/training/figures/specific/library-dumbbells_arnold_press.webp",
+      "status": "DA_GENERARE_E_APPROVARE",
+      "requirements": [
+        "Rotazione dell'omero/manubri durante la spinta coerente con Arnold press"
+      ]
+    },
+    {
+      "id": "library-dumbbells_front_dumbbell_raise",
+      "name": "Alzate frontali",
+      "group": "spalle",
+      "equipment": "Manubri",
+      "plannedAsset": "public/training/figures/specific/library-dumbbells_front_dumbbell_raise.webp",
+      "status": "DA_GENERARE_E_APPROVARE",
+      "requirements": [
+        "Flessione delle spalle davanti al busto"
+      ]
+    },
+    {
+      "id": "library-cable_face_pull",
+      "name": "Face pull",
+      "group": "spalle",
+      "equipment": "Cavi",
+      "plannedAsset": "public/training/figures/specific/library-cable_face_pull.webp",
+      "status": "DA_GENERARE_E_APPROVARE",
+      "requirements": [
+        "Tirata del cavo all'altezza del volto con gomiti alti"
+      ]
+    },
+    {
+      "id": "library-machine_reverse_machine_flyes",
+      "name": "Reverse fly alla macchina",
+      "group": "spalle",
+      "equipment": "Macchina",
+      "plannedAsset": "public/training/figures/specific/library-machine_reverse_machine_flyes.webp",
+      "status": "DA_GENERARE_E_APPROVARE",
+      "requirements": [
+        "Abduzione orizzontale con deltoidi posteriori evidenziati"
+      ]
+    },
+    {
+      "id": "library-cable_standing_low_pulley_deltoid_raise",
+      "name": "Alzate laterali al cavo",
+      "group": "spalle",
+      "equipment": "Cavi",
+      "plannedAsset": "public/training/figures/specific/library-cable_standing_low_pulley_deltoid_raise.webp",
+      "status": "DA_GENERARE_E_APPROVARE",
+      "requirements": [
+        "Abduzione delle braccia sul piano frontale/scapolare"
+      ]
+    },
+    {
+      "id": "library-machine_shoulder_military_press",
+      "name": "Shoulder press macchina",
+      "group": "spalle",
+      "equipment": "Macchina",
+      "plannedAsset": "public/training/figures/specific/library-machine_shoulder_military_press.webp",
+      "status": "DA_GENERARE_E_APPROVARE",
+      "requirements": [
+        "Riprodurre rigorosamente la variante indicata nel catalogo, senza usare pose generiche di altro esercizio"
+      ]
+    },
+    {
+      "id": "library-barbell_upright_row",
+      "name": "Tirate al mento",
+      "group": "spalle",
+      "equipment": "Bilanciere",
+      "plannedAsset": "public/training/figures/specific/library-barbell_upright_row.webp",
+      "status": "DA_GENERARE_E_APPROVARE",
+      "requirements": [
+        "Riprodurre rigorosamente la variante indicata nel catalogo, senza usare pose generiche di altro esercizio"
+      ]
+    },
+    {
+      "id": "library-dumbbells_external_rotation",
+      "name": "Extrarotazioni con manubrio",
+      "group": "spalle",
+      "equipment": "Manubri",
+      "plannedAsset": "public/training/figures/specific/library-dumbbells_external_rotation.webp",
+      "status": "DA_GENERARE_E_APPROVARE",
+      "requirements": [
+        "Riprodurre rigorosamente la variante indicata nel catalogo, senza usare pose generiche di altro esercizio"
+      ]
+    },
+    {
+      "id": "variant-db-bench-15",
+      "name": "Panca inclinata con manubri a 15°",
+      "group": "petto",
+      "equipment": "Manubri",
+      "plannedAsset": "public/training/figures/specific/variant-db-bench-15.webp",
+      "status": "DA_GENERARE_E_APPROVARE",
+      "requirements": [
+        "Inclinazione 15° riprodotta sull'attrezzo, non solo nell'etichetta",
+        "Panca o macchina inclinata con angolo effettivo"
+      ]
+    },
+    {
+      "id": "variant-db-bench-30",
+      "name": "Panca inclinata con manubri a 30°",
+      "group": "petto",
+      "equipment": "Manubri",
+      "plannedAsset": "public/training/figures/specific/variant-db-bench-30.webp",
+      "status": "DA_GENERARE_E_APPROVARE",
+      "requirements": [
+        "Inclinazione 30° riprodotta sull'attrezzo, non solo nell'etichetta",
+        "Panca o macchina inclinata con angolo effettivo"
+      ]
+    },
+    {
+      "id": "variant-db-bench-45",
+      "name": "Panca inclinata con manubri a 45°",
+      "group": "petto",
+      "equipment": "Manubri",
+      "plannedAsset": "public/training/figures/specific/variant-db-bench-45.webp",
+      "status": "DA_GENERARE_E_APPROVARE",
+      "requirements": [
+        "Inclinazione 45° riprodotta sull'attrezzo, non solo nell'etichetta",
+        "Panca o macchina inclinata con angolo effettivo"
+      ]
+    },
+    {
+      "id": "variant-db-bench-60",
+      "name": "Panca inclinata con manubri a 60°",
+      "group": "petto",
+      "equipment": "Manubri",
+      "plannedAsset": "public/training/figures/specific/variant-db-bench-60.webp",
+      "status": "DA_GENERARE_E_APPROVARE",
+      "requirements": [
+        "Inclinazione 60° riprodotta sull'attrezzo, non solo nell'etichetta",
+        "Panca o macchina inclinata con angolo effettivo"
+      ]
+    },
+    {
+      "id": "variant-db-bench-decline-15",
+      "name": "Panca declinata con manubri a −15°",
+      "group": "petto",
+      "equipment": "Manubri",
+      "plannedAsset": "public/training/figures/specific/variant-db-bench-decline-15.webp",
+      "status": "DA_GENERARE_E_APPROVARE",
+      "requirements": [
+        "Inclinazione −15° riprodotta sull'attrezzo, non solo nell'etichetta",
+        "Panca o macchina declinata con angolo effettivo"
+      ]
+    },
+    {
+      "id": "variant-db-bench-decline-30",
+      "name": "Panca declinata con manubri a −30°",
+      "group": "petto",
+      "equipment": "Manubri",
+      "plannedAsset": "public/training/figures/specific/variant-db-bench-decline-30.webp",
+      "status": "DA_GENERARE_E_APPROVARE",
+      "requirements": [
+        "Inclinazione −30° riprodotta sull'attrezzo, non solo nell'etichetta",
+        "Panca o macchina declinata con angolo effettivo"
+      ]
+    },
+    {
+      "id": "variant-db-bench-neutral-0",
+      "name": "Panca piana con manubri, presa neutra",
+      "group": "petto",
+      "equipment": "Manubri",
+      "plannedAsset": "public/training/figures/specific/variant-db-bench-neutral-0.webp",
+      "status": "DA_GENERARE_E_APPROVARE",
+      "requirements": [
+        "Presa neutra: palmi rivolti uno verso l'altro, maniglie compatibili",
+        "Attrezzo e piano del movimento coerenti con la variante orizzontale"
+      ]
+    },
+    {
+      "id": "variant-db-bench-neutral-30",
+      "name": "Panca inclinata a 30° con manubri, presa neutra",
+      "group": "petto",
+      "equipment": "Manubri",
+      "plannedAsset": "public/training/figures/specific/variant-db-bench-neutral-30.webp",
+      "status": "DA_GENERARE_E_APPROVARE",
+      "requirements": [
+        "Inclinazione 30° riprodotta sull'attrezzo, non solo nell'etichetta",
+        "Presa neutra: palmi rivolti uno verso l'altro, maniglie compatibili",
+        "Panca o macchina inclinata con angolo effettivo"
+      ]
+    },
+    {
+      "id": "variant-db-bench-neutral-45",
+      "name": "Panca inclinata a 45° con manubri, presa neutra",
+      "group": "petto",
+      "equipment": "Manubri",
+      "plannedAsset": "public/training/figures/specific/variant-db-bench-neutral-45.webp",
+      "status": "DA_GENERARE_E_APPROVARE",
+      "requirements": [
+        "Inclinazione 45° riprodotta sull'attrezzo, non solo nell'etichetta",
+        "Presa neutra: palmi rivolti uno verso l'altro, maniglie compatibili",
+        "Panca o macchina inclinata con angolo effettivo"
+      ]
+    },
+    {
+      "id": "variant-db-bench-alternate",
+      "name": "Panca piana con manubri alternata",
+      "group": "petto",
+      "equipment": "Manubri",
+      "plannedAsset": "public/training/figures/specific/variant-db-bench-alternate.webp",
+      "status": "DA_GENERARE_E_APPROVARE",
+      "requirements": [
+        "Alternanza delle braccia leggibile; mostra un braccio nella fase attiva",
+        "Attrezzo e piano del movimento coerenti con la variante orizzontale"
+      ]
+    },
+    {
+      "id": "variant-db-bench-single",
+      "name": "Panca piana con un manubrio",
+      "group": "petto",
+      "equipment": "Manubri",
+      "plannedAsset": "public/training/figures/specific/variant-db-bench-single.webp",
+      "status": "DA_GENERARE_E_APPROVARE",
+      "requirements": [
+        "Un solo arto attivo; non usare la versione bilaterale",
+        "Attrezzo e piano del movimento coerenti con la variante orizzontale"
+      ]
+    },
+    {
+      "id": "variant-db-floor-press",
+      "name": "Distensioni con manubri a terra",
+      "group": "petto",
+      "equipment": "Manubri",
+      "plannedAsset": "public/training/figures/specific/variant-db-floor-press.webp",
+      "status": "DA_GENERARE_E_APPROVARE",
+      "requirements": [
+        "Riprodurre rigorosamente la variante indicata nel catalogo, senza usare pose generiche di altro esercizio"
+      ]
+    },
+    {
+      "id": "variant-db-squeeze-press",
+      "name": "Squeeze press con manubri su panca piana",
+      "group": "petto",
+      "equipment": "Manubri",
+      "plannedAsset": "public/training/figures/specific/variant-db-squeeze-press.webp",
+      "status": "DA_GENERARE_E_APPROVARE",
+      "requirements": [
+        "Attrezzo e piano del movimento coerenti con la variante orizzontale"
+      ]
+    },
+    {
+      "id": "variant-db-fly-0",
+      "name": "Croci con manubri su panca piana (0°)",
+      "group": "petto",
+      "equipment": "Manubri",
+      "plannedAsset": "public/training/figures/specific/variant-db-fly-0.webp",
+      "status": "DA_GENERARE_E_APPROVARE",
+      "requirements": [
+        "Attrezzo e piano del movimento coerenti con la variante orizzontale",
+        "Gomiti lievemente flessi e movimento di adduzione, non distensione"
+      ]
+    },
+    {
+      "id": "variant-db-fly-30",
+      "name": "Croci con manubri su panca a 30°",
+      "group": "petto",
+      "equipment": "Manubri",
+      "plannedAsset": "public/training/figures/specific/variant-db-fly-30.webp",
+      "status": "DA_GENERARE_E_APPROVARE",
+      "requirements": [
+        "Inclinazione 30° riprodotta sull'attrezzo, non solo nell'etichetta",
+        "Gomiti lievemente flessi e movimento di adduzione, non distensione"
+      ]
+    },
+    {
+      "id": "variant-db-fly-45",
+      "name": "Croci con manubri su panca a 45°",
+      "group": "petto",
+      "equipment": "Manubri",
+      "plannedAsset": "public/training/figures/specific/variant-db-fly-45.webp",
+      "status": "DA_GENERARE_E_APPROVARE",
+      "requirements": [
+        "Inclinazione 45° riprodotta sull'attrezzo, non solo nell'etichetta",
+        "Gomiti lievemente flessi e movimento di adduzione, non distensione"
+      ]
+    },
+    {
+      "id": "variant-barbell-bench-15",
+      "name": "Panca inclinata con bilanciere a 15°",
+      "group": "petto",
+      "equipment": "Bilanciere",
+      "plannedAsset": "public/training/figures/specific/variant-barbell-bench-15.webp",
+      "status": "DA_GENERARE_E_APPROVARE",
+      "requirements": [
+        "Inclinazione 15° riprodotta sull'attrezzo, non solo nell'etichetta",
+        "Panca o macchina inclinata con angolo effettivo"
+      ]
+    },
+    {
+      "id": "variant-barbell-bench-30",
+      "name": "Panca inclinata con bilanciere a 30°",
+      "group": "petto",
+      "equipment": "Bilanciere",
+      "plannedAsset": "public/training/figures/specific/variant-barbell-bench-30.webp",
+      "status": "DA_GENERARE_E_APPROVARE",
+      "requirements": [
+        "Inclinazione 30° riprodotta sull'attrezzo, non solo nell'etichetta",
+        "Panca o macchina inclinata con angolo effettivo"
+      ]
+    },
+    {
+      "id": "variant-barbell-bench-45",
+      "name": "Panca inclinata con bilanciere a 45°",
+      "group": "petto",
+      "equipment": "Bilanciere",
+      "plannedAsset": "public/training/figures/specific/variant-barbell-bench-45.webp",
+      "status": "DA_GENERARE_E_APPROVARE",
+      "requirements": [
+        "Inclinazione 45° riprodotta sull'attrezzo, non solo nell'etichetta",
+        "Panca o macchina inclinata con angolo effettivo"
+      ]
+    },
+    {
+      "id": "variant-smith-bench-0",
+      "name": "Panca al multipower piana (0°)",
+      "group": "petto",
+      "equipment": "Multipower",
+      "plannedAsset": "public/training/figures/specific/variant-smith-bench-0.webp",
+      "status": "DA_GENERARE_E_APPROVARE",
+      "requirements": [
+        "Bilanciere vincolato a guide verticali del multipower",
+        "Attrezzo e piano del movimento coerenti con la variante orizzontale"
+      ]
+    },
+    {
+      "id": "variant-smith-bench-30",
+      "name": "Panca al multipower a 30°",
+      "group": "petto",
+      "equipment": "Multipower",
+      "plannedAsset": "public/training/figures/specific/variant-smith-bench-30.webp",
+      "status": "DA_GENERARE_E_APPROVARE",
+      "requirements": [
+        "Inclinazione 30° riprodotta sull'attrezzo, non solo nell'etichetta",
+        "Bilanciere vincolato a guide verticali del multipower"
+      ]
+    },
+    {
+      "id": "variant-smith-bench-45",
+      "name": "Panca al multipower a 45°",
+      "group": "petto",
+      "equipment": "Multipower",
+      "plannedAsset": "public/training/figures/specific/variant-smith-bench-45.webp",
+      "status": "DA_GENERARE_E_APPROVARE",
+      "requirements": [
+        "Inclinazione 45° riprodotta sull'attrezzo, non solo nell'etichetta",
+        "Bilanciere vincolato a guide verticali del multipower"
+      ]
+    },
+    {
+      "id": "variant-cable-fly-low",
+      "name": "Croci ai cavi dal basso verso l’alto",
+      "group": "petto",
+      "equipment": "Cavi",
+      "plannedAsset": "public/training/figures/specific/variant-cable-fly-low.webp",
+      "status": "DA_GENERARE_E_APPROVARE",
+      "requirements": [
+        "Direzione trazione dal basso verificabile",
+        "Gomiti lievemente flessi e movimento di adduzione, non distensione"
+      ]
+    },
+    {
+      "id": "variant-cable-fly-high",
+      "name": "Croci ai cavi dall’alto verso il basso",
+      "group": "petto",
+      "equipment": "Cavi",
+      "plannedAsset": "public/training/figures/specific/variant-cable-fly-high.webp",
+      "status": "DA_GENERARE_E_APPROVARE",
+      "requirements": [
+        "Gomiti lievemente flessi e movimento di adduzione, non distensione"
+      ]
+    },
+    {
+      "id": "variant-incline-chest-machine",
+      "name": "Chest press inclinata alla macchina",
+      "group": "petto",
+      "equipment": "Macchina",
+      "plannedAsset": "public/training/figures/specific/variant-incline-chest-machine.webp",
+      "status": "DA_GENERARE_E_APPROVARE",
+      "requirements": [
+        "Panca o macchina inclinata con angolo effettivo"
+      ]
+    },
+    {
+      "id": "variant-lat-pronated-wide",
+      "name": "Lat machine presa prona larga",
+      "group": "schiena",
+      "equipment": "Cavi",
+      "plannedAsset": "public/training/figures/specific/variant-lat-pronated-wide.webp",
+      "status": "DA_GENERARE_E_APPROVARE",
+      "requirements": [
+        "Presa prona: orientamento dei palmi chiaramente leggibile",
+        "Distanza mani larga corretta",
+        "Barra/maniglie davanti al busto, NON dietro al collo"
+      ]
+    },
+    {
+      "id": "variant-lat-supinated",
+      "name": "Lat machine presa supina",
+      "group": "schiena",
+      "equipment": "Cavi",
+      "plannedAsset": "public/training/figures/specific/variant-lat-supinated.webp",
+      "status": "DA_GENERARE_E_APPROVARE",
+      "requirements": [
+        "Presa supina: orientamento dei palmi chiaramente leggibile",
+        "Barra/maniglie davanti al busto, NON dietro al collo"
+      ]
+    },
+    {
+      "id": "variant-lat-neutral",
+      "name": "Lat machine presa neutra",
+      "group": "schiena",
+      "equipment": "Cavi",
+      "plannedAsset": "public/training/figures/specific/variant-lat-neutral.webp",
+      "status": "DA_GENERARE_E_APPROVARE",
+      "requirements": [
+        "Presa neutra: palmi rivolti uno verso l'altro, maniglie compatibili",
+        "Barra/maniglie davanti al busto, NON dietro al collo"
+      ]
+    },
+    {
+      "id": "variant-row-neutral",
+      "name": "Pulley presa neutra stretta",
+      "group": "schiena",
+      "equipment": "Cavi",
+      "plannedAsset": "public/training/figures/specific/variant-row-neutral.webp",
+      "status": "DA_GENERARE_E_APPROVARE",
+      "requirements": [
+        "Presa neutra: palmi rivolti uno verso l'altro, maniglie compatibili",
+        "Distanza mani stretta corretta"
+      ]
+    },
+    {
+      "id": "variant-row-wide",
+      "name": "Pulley presa prona larga",
+      "group": "schiena",
+      "equipment": "Cavi",
+      "plannedAsset": "public/training/figures/specific/variant-row-wide.webp",
+      "status": "DA_GENERARE_E_APPROVARE",
+      "requirements": [
+        "Presa prona: orientamento dei palmi chiaramente leggibile",
+        "Distanza mani larga corretta"
+      ]
+    },
+    {
+      "id": "variant-pullup-neutral",
+      "name": "Trazioni presa neutra",
+      "group": "schiena",
+      "equipment": "Sbarra",
+      "plannedAsset": "public/training/figures/specific/variant-pullup-neutral.webp",
+      "status": "DA_GENERARE_E_APPROVARE",
+      "requirements": [
+        "Presa neutra: palmi rivolti uno verso l'altro, maniglie compatibili",
+        "Corpo sospeso alla sbarra con presa corretta"
+      ]
+    },
+    {
+      "id": "variant-pullup-supinated",
+      "name": "Trazioni presa supina",
+      "group": "schiena",
+      "equipment": "Sbarra",
+      "plannedAsset": "public/training/figures/specific/variant-pullup-supinated.webp",
+      "status": "DA_GENERARE_E_APPROVARE",
+      "requirements": [
+        "Presa supina: orientamento dei palmi chiaramente leggibile",
+        "Corpo sospeso alla sbarra con presa corretta"
+      ]
+    },
+    {
+      "id": "variant-lateral-seated",
+      "name": "Alzate laterali con manubri da seduto",
+      "group": "spalle",
+      "equipment": "Manubri",
+      "plannedAsset": "public/training/figures/specific/variant-lateral-seated.webp",
+      "status": "DA_GENERARE_E_APPROVARE",
+      "requirements": [
+        "Posizione seduta con supporto adeguato",
+        "Abduzione delle braccia sul piano frontale/scapolare"
+      ]
+    },
+    {
+      "id": "variant-lateral-cable-behind",
+      "name": "Alzate laterali al cavo dietro il corpo",
+      "group": "spalle",
+      "equipment": "Cavi",
+      "plannedAsset": "public/training/figures/specific/variant-lateral-cable-behind.webp",
+      "status": "DA_GENERARE_E_APPROVARE",
+      "requirements": [
+        "Puleggia e cavo con posizione dietro al corpo",
+        "Abduzione delle braccia sul piano frontale/scapolare"
+      ]
+    },
+    {
+      "id": "variant-rear-fly-supported",
+      "name": "Alzate posteriori con petto su panca",
+      "group": "spalle",
+      "equipment": "Manubri",
+      "plannedAsset": "public/training/figures/specific/variant-rear-fly-supported.webp",
+      "status": "DA_GENERARE_E_APPROVARE",
+      "requirements": [
+        "Petto effettivamente sostenuto dalla panca",
+        "Abduzione orizzontale con deltoidi posteriori evidenziati"
+      ]
+    },
+    {
+      "id": "variant-row-supported-30",
+      "name": "Rematore con manubri con petto su panca a 30°",
+      "group": "schiena",
+      "equipment": "Manubri",
+      "plannedAsset": "public/training/figures/specific/variant-row-supported-30.webp",
+      "status": "DA_GENERARE_E_APPROVARE",
+      "requirements": [
+        "Inclinazione 30° riprodotta sull'attrezzo, non solo nell'etichetta",
+        "Petto effettivamente sostenuto dalla panca",
+        "Trazione con gomiti dietro il busto, supporto/attrezzo appropriato"
+      ]
+    },
+    {
+      "id": "variant-row-supported-45",
+      "name": "Rematore con manubri con petto su panca a 45°",
+      "group": "schiena",
+      "equipment": "Manubri",
+      "plannedAsset": "public/training/figures/specific/variant-row-supported-45.webp",
+      "status": "DA_GENERARE_E_APPROVARE",
+      "requirements": [
+        "Inclinazione 45° riprodotta sull'attrezzo, non solo nell'etichetta",
+        "Petto effettivamente sostenuto dalla panca",
+        "Trazione con gomiti dietro il busto, supporto/attrezzo appropriato"
+      ]
+    },
+    {
+      "id": "variant-shoulder-press-75",
+      "name": "Spinte spalle con manubri da seduto a 75°",
+      "group": "spalle",
+      "equipment": "Manubri",
+      "plannedAsset": "public/training/figures/specific/variant-shoulder-press-75.webp",
+      "status": "DA_GENERARE_E_APPROVARE",
+      "requirements": [
+        "Inclinazione 75° riprodotta sull'attrezzo, non solo nell'etichetta",
+        "Posizione seduta con supporto adeguato"
+      ]
+    },
+    {
+      "id": "variant-shoulder-press-90",
+      "name": "Spinte spalle con manubri da seduto a 90°",
+      "group": "spalle",
+      "equipment": "Manubri",
+      "plannedAsset": "public/training/figures/specific/variant-shoulder-press-90.webp",
+      "status": "DA_GENERARE_E_APPROVARE",
+      "requirements": [
+        "Inclinazione 90° riprodotta sull'attrezzo, non solo nell'etichetta",
+        "Posizione seduta con supporto adeguato"
+      ]
+    },
+    {
+      "id": "variant-v2-lat-prona-media",
+      "name": "Lat machine presa prona media",
+      "group": "schiena",
+      "equipment": "Cavi",
+      "plannedAsset": "public/training/figures/specific/variant-v2-lat-prona-media.webp",
+      "status": "DA_GENERARE_E_APPROVARE",
+      "requirements": [
+        "Presa prona: orientamento dei palmi chiaramente leggibile",
+        "Barra/maniglie davanti al busto, NON dietro al collo"
+      ]
+    },
+    {
+      "id": "variant-v2-lat-prona-stretta",
+      "name": "Lat machine presa prona stretta",
+      "group": "schiena",
+      "equipment": "Cavi",
+      "plannedAsset": "public/training/figures/specific/variant-v2-lat-prona-stretta.webp",
+      "status": "DA_GENERARE_E_APPROVARE",
+      "requirements": [
+        "Presa prona: orientamento dei palmi chiaramente leggibile",
+        "Distanza mani stretta corretta",
+        "Barra/maniglie davanti al busto, NON dietro al collo"
+      ]
+    },
+    {
+      "id": "variant-v2-lat-supina-stretta",
+      "name": "Lat machine presa supina stretta",
+      "group": "schiena",
+      "equipment": "Cavi",
+      "plannedAsset": "public/training/figures/specific/variant-v2-lat-supina-stretta.webp",
+      "status": "DA_GENERARE_E_APPROVARE",
+      "requirements": [
+        "Presa supina: orientamento dei palmi chiaramente leggibile",
+        "Distanza mani stretta corretta",
+        "Barra/maniglie davanti al busto, NON dietro al collo"
+      ]
+    },
+    {
+      "id": "variant-v2-lat-supina-larga",
+      "name": "Lat machine presa supina larga",
+      "group": "schiena",
+      "equipment": "Cavi",
+      "plannedAsset": "public/training/figures/specific/variant-v2-lat-supina-larga.webp",
+      "status": "DA_GENERARE_E_APPROVARE",
+      "requirements": [
+        "Presa supina: orientamento dei palmi chiaramente leggibile",
+        "Distanza mani larga corretta",
+        "Barra/maniglie davanti al busto, NON dietro al collo"
+      ]
+    },
+    {
+      "id": "variant-v2-lat-neutra-stretta",
+      "name": "Lat machine presa neutra con triangolo",
+      "group": "schiena",
+      "equipment": "Cavi",
+      "plannedAsset": "public/training/figures/specific/variant-v2-lat-neutra-stretta.webp",
+      "status": "DA_GENERARE_E_APPROVARE",
+      "requirements": [
+        "Presa neutra: palmi rivolti uno verso l'altro, maniglie compatibili",
+        "Barra/maniglie davanti al busto, NON dietro al collo"
+      ]
+    },
+    {
+      "id": "variant-v2-lat-neutra-media",
+      "name": "Lat machine presa neutra media",
+      "group": "schiena",
+      "equipment": "Cavi",
+      "plannedAsset": "public/training/figures/specific/variant-v2-lat-neutra-media.webp",
+      "status": "DA_GENERARE_E_APPROVARE",
+      "requirements": [
+        "Presa neutra: palmi rivolti uno verso l'altro, maniglie compatibili",
+        "Barra/maniglie davanti al busto, NON dietro al collo"
+      ]
+    },
+    {
+      "id": "variant-v2-lat-neutra-larga",
+      "name": "Lat machine presa neutra larga",
+      "group": "schiena",
+      "equipment": "Cavi",
+      "plannedAsset": "public/training/figures/specific/variant-v2-lat-neutra-larga.webp",
+      "status": "DA_GENERARE_E_APPROVARE",
+      "requirements": [
+        "Presa neutra: palmi rivolti uno verso l'altro, maniglie compatibili",
+        "Distanza mani larga corretta",
+        "Barra/maniglie davanti al busto, NON dietro al collo"
+      ]
+    },
+    {
+      "id": "variant-v2-lat-sagomata-stretta",
+      "name": "Lat machine con maniglia sagomata stretta",
+      "group": "schiena",
+      "equipment": "Cavi",
+      "plannedAsset": "public/training/figures/specific/variant-v2-lat-sagomata-stretta.webp",
+      "status": "DA_GENERARE_E_APPROVARE",
+      "requirements": [
+        "Distanza mani stretta corretta",
+        "Barra/maniglie davanti al busto, NON dietro al collo"
+      ]
+    },
+    {
+      "id": "variant-v2-lat-sagomata-media",
+      "name": "Lat machine con maniglia sagomata media",
+      "group": "schiena",
+      "equipment": "Cavi",
+      "plannedAsset": "public/training/figures/specific/variant-v2-lat-sagomata-media.webp",
+      "status": "DA_GENERARE_E_APPROVARE",
+      "requirements": [
+        "Barra/maniglie davanti al busto, NON dietro al collo"
+      ]
+    },
+    {
+      "id": "variant-v2-lat-sagomata-larga",
+      "name": "Lat machine con maniglia sagomata larga",
+      "group": "schiena",
+      "equipment": "Cavi",
+      "plannedAsset": "public/training/figures/specific/variant-v2-lat-sagomata-larga.webp",
+      "status": "DA_GENERARE_E_APPROVARE",
+      "requirements": [
+        "Distanza mani larga corretta",
+        "Barra/maniglie davanti al busto, NON dietro al collo"
+      ]
+    },
+    {
+      "id": "variant-v2-lat-indipendente",
+      "name": "Lat machine con due maniglie indipendenti",
+      "group": "schiena",
+      "equipment": "Cavi",
+      "plannedAsset": "public/training/figures/specific/variant-v2-lat-indipendente.webp",
+      "status": "DA_GENERARE_E_APPROVARE",
+      "requirements": [
+        "Due maniglie mobili indipendenti",
+        "Sostegno alle parallele o macchina assistita, in base alla variante",
+        "Barra/maniglie davanti al busto, NON dietro al collo"
+      ]
+    },
+    {
+      "id": "variant-v2-lat-unilaterale-neutra",
+      "name": "Lat machine unilaterale presa neutra",
+      "group": "schiena",
+      "equipment": "Cavi",
+      "plannedAsset": "public/training/figures/specific/variant-v2-lat-unilaterale-neutra.webp",
+      "status": "DA_GENERARE_E_APPROVARE",
+      "requirements": [
+        "Presa neutra: palmi rivolti uno verso l'altro, maniglie compatibili",
+        "Un solo arto attivo; non usare la versione bilaterale",
+        "Barra/maniglie davanti al busto, NON dietro al collo"
+      ]
+    },
+    {
+      "id": "variant-v2-lat-unilaterale-supina",
+      "name": "Lat machine unilaterale presa supina",
+      "group": "schiena",
+      "equipment": "Cavi",
+      "plannedAsset": "public/training/figures/specific/variant-v2-lat-unilaterale-supina.webp",
+      "status": "DA_GENERARE_E_APPROVARE",
+      "requirements": [
+        "Presa supina: orientamento dei palmi chiaramente leggibile",
+        "Un solo arto attivo; non usare la versione bilaterale",
+        "Barra/maniglie davanti al busto, NON dietro al collo"
+      ]
+    },
+    {
+      "id": "variant-v2-lat-inginocchio",
+      "name": "Lat machine al cavo in ginocchio",
+      "group": "schiena",
+      "equipment": "Cavi",
+      "plannedAsset": "public/training/figures/specific/variant-v2-lat-inginocchio.webp",
+      "status": "DA_GENERARE_E_APPROVARE",
+      "requirements": [
+        "Posizione in ginocchio, non in piedi",
+        "Barra/maniglie davanti al busto, NON dietro al collo"
+      ]
+    },
+    {
+      "id": "variant-v2-lat-convergente",
+      "name": "Lat machine convergente a dischi",
+      "group": "schiena",
+      "equipment": "Macchina a dischi",
+      "plannedAsset": "public/training/figures/specific/variant-v2-lat-convergente.webp",
+      "status": "DA_GENERARE_E_APPROVARE",
+      "requirements": [
+        "Traiettoria convergente della macchina, non press orizzontale generico",
+        "Macchina plate-loaded con leve e dischi, non pacco pesi",
+        "Barra/maniglie davanti al busto, NON dietro al collo"
+      ]
+    },
+    {
+      "id": "variant-v2-lat-divergente",
+      "name": "Lat machine divergente a dischi",
+      "group": "schiena",
+      "equipment": "Macchina a dischi",
+      "plannedAsset": "public/training/figures/specific/variant-v2-lat-divergente.webp",
+      "status": "DA_GENERARE_E_APPROVARE",
+      "requirements": [
+        "Traiettoria divergente della macchina",
+        "Macchina plate-loaded con leve e dischi, non pacco pesi",
+        "Barra/maniglie davanti al busto, NON dietro al collo"
+      ]
+    },
+    {
+      "id": "variant-v2-lat-machine-single",
+      "name": "Lat machine a dischi unilaterale",
+      "group": "schiena",
+      "equipment": "Macchina a dischi",
+      "plannedAsset": "public/training/figures/specific/variant-v2-lat-machine-single.webp",
+      "status": "DA_GENERARE_E_APPROVARE",
+      "requirements": [
+        "Un solo arto attivo; non usare la versione bilaterale",
+        "Macchina plate-loaded con leve e dischi, non pacco pesi",
+        "Barra/maniglie davanti al busto, NON dietro al collo"
+      ]
+    },
+    {
+      "id": "variant-v2-chest-orizzontale",
+      "name": "Chest press orizzontale presa prona",
+      "group": "petto",
+      "equipment": "Macchina",
+      "plannedAsset": "public/training/figures/specific/variant-v2-chest-orizzontale.webp",
+      "status": "DA_GENERARE_E_APPROVARE",
+      "requirements": [
+        "Presa prona: orientamento dei palmi chiaramente leggibile",
+        "Attrezzo e piano del movimento coerenti con la variante orizzontale"
+      ]
+    },
+    {
+      "id": "variant-v2-chest-neutra",
+      "name": "Chest press orizzontale presa neutra",
+      "group": "petto",
+      "equipment": "Macchina",
+      "plannedAsset": "public/training/figures/specific/variant-v2-chest-neutra.webp",
+      "status": "DA_GENERARE_E_APPROVARE",
+      "requirements": [
+        "Presa neutra: palmi rivolti uno verso l'altro, maniglie compatibili",
+        "Attrezzo e piano del movimento coerenti con la variante orizzontale"
+      ]
+    },
+    {
+      "id": "variant-v2-chest-declinata",
+      "name": "Chest press declinata alla macchina",
+      "group": "petto",
+      "equipment": "Macchina",
+      "plannedAsset": "public/training/figures/specific/variant-v2-chest-declinata.webp",
+      "status": "DA_GENERARE_E_APPROVARE",
+      "requirements": [
+        "Panca o macchina declinata con angolo effettivo"
+      ]
+    },
+    {
+      "id": "variant-v2-chest-convergente",
+      "name": "Chest press convergente orizzontale",
+      "group": "petto",
+      "equipment": "Macchina",
+      "plannedAsset": "public/training/figures/specific/variant-v2-chest-convergente.webp",
+      "status": "DA_GENERARE_E_APPROVARE",
+      "requirements": [
+        "Traiettoria convergente della macchina, non press orizzontale generico",
+        "Attrezzo e piano del movimento coerenti con la variante orizzontale"
+      ]
+    },
+    {
+      "id": "variant-v2-chest-convergente-inclinata",
+      "name": "Chest press convergente inclinata",
+      "group": "petto",
+      "equipment": "Macchina",
+      "plannedAsset": "public/training/figures/specific/variant-v2-chest-convergente-inclinata.webp",
+      "status": "DA_GENERARE_E_APPROVARE",
+      "requirements": [
+        "Traiettoria convergente della macchina, non press orizzontale generico",
+        "Panca o macchina inclinata con angolo effettivo"
+      ]
+    },
+    {
+      "id": "variant-v2-chest-convergente-declinata",
+      "name": "Chest press convergente declinata",
+      "group": "petto",
+      "equipment": "Macchina",
+      "plannedAsset": "public/training/figures/specific/variant-v2-chest-convergente-declinata.webp",
+      "status": "DA_GENERARE_E_APPROVARE",
+      "requirements": [
+        "Traiettoria convergente della macchina, non press orizzontale generico",
+        "Panca o macchina declinata con angolo effettivo"
+      ]
+    },
+    {
+      "id": "variant-v2-chest-unilaterale",
+      "name": "Chest press orizzontale unilaterale",
+      "group": "petto",
+      "equipment": "Macchina",
+      "plannedAsset": "public/training/figures/specific/variant-v2-chest-unilaterale.webp",
+      "status": "DA_GENERARE_E_APPROVARE",
+      "requirements": [
+        "Un solo arto attivo; non usare la versione bilaterale",
+        "Attrezzo e piano del movimento coerenti con la variante orizzontale"
+      ]
+    },
+    {
+      "id": "variant-v2-chest-unilaterale-inclinata",
+      "name": "Chest press inclinata unilaterale",
+      "group": "petto",
+      "equipment": "Macchina",
+      "plannedAsset": "public/training/figures/specific/variant-v2-chest-unilaterale-inclinata.webp",
+      "status": "DA_GENERARE_E_APPROVARE",
+      "requirements": [
+        "Un solo arto attivo; non usare la versione bilaterale",
+        "Panca o macchina inclinata con angolo effettivo"
+      ]
+    },
+    {
+      "id": "variant-v2-chest-alternata",
+      "name": "Chest press con bracci indipendenti alternata",
+      "group": "petto",
+      "equipment": "Macchina",
+      "plannedAsset": "public/training/figures/specific/variant-v2-chest-alternata.webp",
+      "status": "DA_GENERARE_E_APPROVARE",
+      "requirements": [
+        "Alternanza delle braccia leggibile; mostra un braccio nella fase attiva",
+        "Sostegno alle parallele o macchina assistita, in base alla variante"
+      ]
+    },
+    {
+      "id": "variant-v2-chest-inclinata-neutra",
+      "name": "Chest press inclinata presa neutra",
+      "group": "petto",
+      "equipment": "Macchina",
+      "plannedAsset": "public/training/figures/specific/variant-v2-chest-inclinata-neutra.webp",
+      "status": "DA_GENERARE_E_APPROVARE",
+      "requirements": [
+        "Presa neutra: palmi rivolti uno verso l'altro, maniglie compatibili",
+        "Panca o macchina inclinata con angolo effettivo"
+      ]
+    },
+    {
+      "id": "variant-v2-chest-dischi-piana",
+      "name": "Chest press orizzontale a dischi",
+      "group": "petto",
+      "equipment": "Macchina a dischi",
+      "plannedAsset": "public/training/figures/specific/variant-v2-chest-dischi-piana.webp",
+      "status": "DA_GENERARE_E_APPROVARE",
+      "requirements": [
+        "Macchina plate-loaded con leve e dischi, non pacco pesi",
+        "Attrezzo e piano del movimento coerenti con la variante orizzontale"
+      ]
+    },
+    {
+      "id": "variant-v2-chest-dischi-inclinata",
+      "name": "Chest press inclinata a dischi",
+      "group": "petto",
+      "equipment": "Macchina a dischi",
+      "plannedAsset": "public/training/figures/specific/variant-v2-chest-dischi-inclinata.webp",
+      "status": "DA_GENERARE_E_APPROVARE",
+      "requirements": [
+        "Macchina plate-loaded con leve e dischi, non pacco pesi",
+        "Panca o macchina inclinata con angolo effettivo"
+      ]
+    },
+    {
+      "id": "variant-v2-chest-dischi-declinata",
+      "name": "Chest press declinata a dischi",
+      "group": "petto",
+      "equipment": "Macchina a dischi",
+      "plannedAsset": "public/training/figures/specific/variant-v2-chest-dischi-declinata.webp",
+      "status": "DA_GENERARE_E_APPROVARE",
+      "requirements": [
+        "Macchina plate-loaded con leve e dischi, non pacco pesi",
+        "Panca o macchina declinata con angolo effettivo"
+      ]
+    },
+    {
+      "id": "variant-v2-croci-spalle",
+      "name": "Croci ai cavi all’altezza delle spalle",
+      "group": "petto",
+      "equipment": "Cavi",
+      "plannedAsset": "public/training/figures/specific/variant-v2-croci-spalle.webp",
+      "status": "DA_GENERARE_E_APPROVARE",
+      "requirements": [
+        "Gomiti lievemente flessi e movimento di adduzione, non distensione"
+      ]
+    },
+    {
+      "id": "variant-v2-croci-unilaterali-medie",
+      "name": "Croci al cavo unilaterali all’altezza delle spalle",
+      "group": "petto",
+      "equipment": "Cavi",
+      "plannedAsset": "public/training/figures/specific/variant-v2-croci-unilaterali-medie.webp",
+      "status": "DA_GENERARE_E_APPROVARE",
+      "requirements": [
+        "Un solo arto attivo; non usare la versione bilaterale",
+        "Gomiti lievemente flessi e movimento di adduzione, non distensione"
+      ]
+    },
+    {
+      "id": "variant-v2-croci-unilaterali-basse",
+      "name": "Croci al cavo unilaterali dal basso",
+      "group": "petto",
+      "equipment": "Cavi",
+      "plannedAsset": "public/training/figures/specific/variant-v2-croci-unilaterali-basse.webp",
+      "status": "DA_GENERARE_E_APPROVARE",
+      "requirements": [
+        "Un solo arto attivo; non usare la versione bilaterale",
+        "Direzione trazione dal basso verificabile",
+        "Gomiti lievemente flessi e movimento di adduzione, non distensione"
+      ]
+    },
+    {
+      "id": "variant-v2-croci-unilaterali-alte",
+      "name": "Croci al cavo unilaterali dall’alto",
+      "group": "petto",
+      "equipment": "Cavi",
+      "plannedAsset": "public/training/figures/specific/variant-v2-croci-unilaterali-alte.webp",
+      "status": "DA_GENERARE_E_APPROVARE",
+      "requirements": [
+        "Un solo arto attivo; non usare la versione bilaterale",
+        "Gomiti lievemente flessi e movimento di adduzione, non distensione"
+      ]
+    },
+    {
+      "id": "variant-v2-croci-panca-piana",
+      "name": "Croci ai cavi su panca piana (0°)",
+      "group": "petto",
+      "equipment": "Cavi",
+      "plannedAsset": "public/training/figures/specific/variant-v2-croci-panca-piana.webp",
+      "status": "DA_GENERARE_E_APPROVARE",
+      "requirements": [
+        "Attrezzo e piano del movimento coerenti con la variante orizzontale",
+        "Gomiti lievemente flessi e movimento di adduzione, non distensione"
+      ]
+    },
+    {
+      "id": "variant-v2-croci-panca-30",
+      "name": "Croci ai cavi su panca inclinata a 30°",
+      "group": "petto",
+      "equipment": "Cavi",
+      "plannedAsset": "public/training/figures/specific/variant-v2-croci-panca-30.webp",
+      "status": "DA_GENERARE_E_APPROVARE",
+      "requirements": [
+        "Inclinazione 30° riprodotta sull'attrezzo, non solo nell'etichetta",
+        "Panca o macchina inclinata con angolo effettivo",
+        "Gomiti lievemente flessi e movimento di adduzione, non distensione"
+      ]
+    },
+    {
+      "id": "variant-v2-croci-panca-45",
+      "name": "Croci ai cavi su panca inclinata a 45°",
+      "group": "petto",
+      "equipment": "Cavi",
+      "plannedAsset": "public/training/figures/specific/variant-v2-croci-panca-45.webp",
+      "status": "DA_GENERARE_E_APPROVARE",
+      "requirements": [
+        "Inclinazione 45° riprodotta sull'attrezzo, non solo nell'etichetta",
+        "Panca o macchina inclinata con angolo effettivo",
+        "Gomiti lievemente flessi e movimento di adduzione, non distensione"
+      ]
+    },
+    {
+      "id": "variant-v2-croci-panca-declinata",
+      "name": "Croci ai cavi su panca declinata a −15°",
+      "group": "petto",
+      "equipment": "Cavi",
+      "plannedAsset": "public/training/figures/specific/variant-v2-croci-panca-declinata.webp",
+      "status": "DA_GENERARE_E_APPROVARE",
+      "requirements": [
+        "Inclinazione −15° riprodotta sull'attrezzo, non solo nell'etichetta",
+        "Panca o macchina declinata con angolo effettivo",
+        "Gomiti lievemente flessi e movimento di adduzione, non distensione"
+      ]
+    },
+    {
+      "id": "variant-v2-croci-seduto",
+      "name": "Croci ai cavi da seduto",
+      "group": "petto",
+      "equipment": "Cavi",
+      "plannedAsset": "public/training/figures/specific/variant-v2-croci-seduto.webp",
+      "status": "DA_GENERARE_E_APPROVARE",
+      "requirements": [
+        "Posizione seduta con supporto adeguato",
+        "Gomiti lievemente flessi e movimento di adduzione, non distensione"
+      ]
+    },
+    {
+      "id": "variant-v2-croci-inginocchio",
+      "name": "Croci ai cavi alti in ginocchio",
+      "group": "petto",
+      "equipment": "Cavi",
+      "plannedAsset": "public/training/figures/specific/variant-v2-croci-inginocchio.webp",
+      "status": "DA_GENERARE_E_APPROVARE",
+      "requirements": [
+        "Posizione in ginocchio, non in piedi",
+        "Direzione trazione dall'alto verificabile",
+        "Gomiti lievemente flessi e movimento di adduzione, non distensione"
+      ]
+    },
+    {
+      "id": "variant-v2-pulley-unilaterale",
+      "name": "Pulley al cavo unilaterale",
+      "group": "schiena",
+      "equipment": "Cavi",
+      "plannedAsset": "public/training/figures/specific/variant-v2-pulley-unilaterale.webp",
+      "status": "DA_GENERARE_E_APPROVARE",
+      "requirements": [
+        "Un solo arto attivo; non usare la versione bilaterale"
+      ]
+    },
+    {
+      "id": "variant-v2-pulley-supino",
+      "name": "Pulley presa supina",
+      "group": "schiena",
+      "equipment": "Cavi",
+      "plannedAsset": "public/training/figures/specific/variant-v2-pulley-supino.webp",
+      "status": "DA_GENERARE_E_APPROVARE",
+      "requirements": [
+        "Presa supina: orientamento dei palmi chiaramente leggibile"
+      ]
+    },
+    {
+      "id": "variant-v2-row-dischi",
+      "name": "Rematore alla macchina a dischi",
+      "group": "schiena",
+      "equipment": "Macchina a dischi",
+      "plannedAsset": "public/training/figures/specific/variant-v2-row-dischi.webp",
+      "status": "DA_GENERARE_E_APPROVARE",
+      "requirements": [
+        "Macchina plate-loaded con leve e dischi, non pacco pesi",
+        "Trazione con gomiti dietro il busto, supporto/attrezzo appropriato"
+      ]
+    },
+    {
+      "id": "variant-v2-pullover-cable-rope",
+      "name": "Pullover al cavo alto con corda",
+      "group": "schiena",
+      "equipment": "Cavi",
+      "plannedAsset": "public/training/figures/specific/variant-v2-pullover-cable-rope.webp",
+      "status": "DA_GENERARE_E_APPROVARE",
+      "requirements": [
+        "Direzione trazione dall'alto verificabile",
+        "Terminale a corda, non barra o triangolo"
+      ]
+    },
+    {
+      "id": "variant-v2-lateral-machine",
+      "name": "Alzate laterali alla macchina",
+      "group": "spalle",
+      "equipment": "Macchina",
+      "plannedAsset": "public/training/figures/specific/variant-v2-lateral-machine.webp",
+      "status": "DA_GENERARE_E_APPROVARE",
+      "requirements": [
+        "Abduzione delle braccia sul piano frontale/scapolare"
+      ]
+    }
+  ]
+}
