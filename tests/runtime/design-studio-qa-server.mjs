@@ -98,6 +98,14 @@ http
           }),
           env,
         );
+        // QA-only loopback identity: the bootstrap remains the real Worker auth flow.
+        // Rename the synthetic account for screenshots; no production DB is present.
+        if (req.url === "/api/auth/setup" && req.method === "POST" && response.ok) {
+          sql.prepare("UPDATE users SET name = ? WHERE role = ?").run(
+            "AI SuperAdmin QA",
+            "SuperAdmin",
+          );
+        }
         res.writeHead(response.status, Object.fromEntries(response.headers));
         res.end(Buffer.from(await response.arrayBuffer()));
         return;
