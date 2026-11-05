@@ -4,6 +4,10 @@
 
 Per nuove proposte o modifiche UI, partire esclusivamente da screenshot **veri** della build GymTrack corrente nel branch QA, catturati tramite browser e account sintetico SuperAdmin; verificare sorgenti e funzioni attuali. Proporre **solo cambiamenti incrementali sulla schermata esistente**, senza creare layout da zero, collage o mockup ipotetici, **a meno che il proprietario lo chieda esplicitamente**. Distinguere screenshot di test, immagini editate e app pubblicata. Seguire la procedura completa in `QA_ENVIRONMENT.md`. Non allineare QA e produzione senza ordine esplicito del proprietario; preservare ogni implementazione.
 
+## Asset visivi protetti — divieto di modifica senza richiesta esplicita
+
+Il logo ufficiale di GymTrack e tutte le illustrazioni/omini artificiali che indicano gli esercizi sono **intoccabili**, sia nel codice che nelle anteprime: non modificarli, ridisegnarli, generarne varianti, ricolorarli o sostituirli senza **esplicita richiesta del proprietario**. Usare solo risorse originali intatte quando si propongono modifiche incrementali all'UI. Vedi `QA_ENVIRONMENT.md` per le regole di screenshot reali e isolamento.
+
 ## Scopo e architettura
 
 GymTrack è il diario di allenamento esistente: piani, serie, progressi, calendario,
