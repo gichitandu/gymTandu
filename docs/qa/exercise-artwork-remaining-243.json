@@ -1,0 +1,3148 @@
+{
+  "version": 1,
+  "sourceCommit": "adfc6551d74764a52f83eaab6ad9cd2b4a070948",
+  "scope": "All remaining exercises, including legs, arms, core, shoulders, back and chest",
+  "created": "2026-11-05",
+  "environment": "qa/gymtrack-isolato",
+  "preexistingCount": 10,
+  "totalCatalog": 253,
+  "remainingCount": 243,
+  "counts": {
+    "muscle-0": 58,
+    "muscle-1": 41,
+    "muscle-2": 15,
+    "muscle-3": 31,
+    "muscle-4": 70,
+    "muscle-5": 13,
+    "muscle-6": 9,
+    "muscle-7": 6
+  },
+  "publicationGate": "Do not merge to main or deploy before verifying first 10 images live and user approval for this next release",
+  "originalAssetsPreserved": true,
+  "illustrationStatus": "NOT_GENERATED",
+  "pending": [
+    {
+      "id": "exercise-1",
+      "name": "Panca inclinata con manubri (angolo libero)",
+      "equipment": "Manubri",
+      "muscleGroupId": "muscle-0",
+      "tags": [
+        "Petto"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/exercise-1.webp"
+    },
+    {
+      "id": "exercise-3",
+      "name": "Chest press",
+      "equipment": "Macchina",
+      "muscleGroupId": "muscle-0",
+      "tags": [
+        "Petto",
+        "Chest press"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/exercise-3.webp"
+    },
+    {
+      "id": "exercise-4",
+      "name": "Lat machine",
+      "equipment": "Cavi",
+      "muscleGroupId": "muscle-1",
+      "tags": [
+        "Schiena",
+        "Lat machine"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/exercise-4.webp"
+    },
+    {
+      "id": "exercise-5",
+      "name": "Rematore bilanciere",
+      "equipment": "Bilanciere",
+      "muscleGroupId": "muscle-1",
+      "tags": [
+        "Schiena"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/exercise-5.webp"
+    },
+    {
+      "id": "exercise-6",
+      "name": "Pulley",
+      "equipment": "Cavi",
+      "muscleGroupId": "muscle-1",
+      "tags": [
+        "Schiena"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/exercise-6.webp"
+    },
+    {
+      "id": "exercise-7",
+      "name": "Trazioni alla sbarra",
+      "equipment": "Sbarra",
+      "muscleGroupId": "muscle-1",
+      "tags": [
+        "Schiena"
+      ],
+      "loadMode": "bodyweight",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/exercise-7.webp"
+    },
+    {
+      "id": "exercise-10",
+      "name": "Alzate posteriori",
+      "equipment": "Manubri",
+      "muscleGroupId": "muscle-2",
+      "tags": [
+        "Spalle"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/exercise-10.webp"
+    },
+    {
+      "id": "exercise-11",
+      "name": "Squat",
+      "equipment": "Bilanciere",
+      "muscleGroupId": "muscle-3",
+      "tags": [
+        "Gambe"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/exercise-11.webp"
+    },
+    {
+      "id": "exercise-12",
+      "name": "Leg press",
+      "equipment": "Macchina",
+      "muscleGroupId": "muscle-3",
+      "tags": [
+        "Gambe"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/exercise-12.webp"
+    },
+    {
+      "id": "exercise-13",
+      "name": "Leg extension",
+      "equipment": "Macchina",
+      "muscleGroupId": "muscle-3",
+      "tags": [
+        "Gambe"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/exercise-13.webp"
+    },
+    {
+      "id": "exercise-14",
+      "name": "Leg curl",
+      "equipment": "Macchina",
+      "muscleGroupId": "muscle-3",
+      "tags": [
+        "Gambe"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/exercise-14.webp"
+    },
+    {
+      "id": "exercise-15",
+      "name": "Stacco rumeno",
+      "equipment": "Bilanciere",
+      "muscleGroupId": "muscle-3",
+      "tags": [
+        "Gambe"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/exercise-15.webp"
+    },
+    {
+      "id": "exercise-16",
+      "name": "Curl bilanciere",
+      "equipment": "Bilanciere",
+      "muscleGroupId": "muscle-4",
+      "tags": [
+        "Braccia",
+        "Bicipiti"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/exercise-16.webp"
+    },
+    {
+      "id": "exercise-17",
+      "name": "Curl manubri",
+      "equipment": "Manubri",
+      "muscleGroupId": "muscle-4",
+      "tags": [
+        "Braccia",
+        "Bicipiti"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/exercise-17.webp"
+    },
+    {
+      "id": "exercise-18",
+      "name": "Pushdown cavo",
+      "equipment": "Cavi",
+      "muscleGroupId": "muscle-4",
+      "tags": [
+        "Braccia",
+        "Tricipiti"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/exercise-18.webp"
+    },
+    {
+      "id": "exercise-19",
+      "name": "French press",
+      "equipment": "Bilanciere",
+      "muscleGroupId": "muscle-4",
+      "tags": [
+        "Braccia",
+        "Tricipiti"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/exercise-19.webp"
+    },
+    {
+      "id": "exercise-20",
+      "name": "Crunch",
+      "equipment": "Corpo libero",
+      "muscleGroupId": "muscle-5",
+      "tags": [
+        "Core"
+      ],
+      "loadMode": "bodyweight",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/exercise-20.webp"
+    },
+    {
+      "id": "library-barbell_incline_bench_press",
+      "name": "Panca inclinata bilanciere",
+      "equipment": "Bilanciere",
+      "muscleGroupId": "muscle-0",
+      "tags": [
+        "Petto"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/library-barbell_incline_bench_press.webp"
+    },
+    {
+      "id": "library-dumbbells_dumbbell_bench_press",
+      "name": "Panca piana con manubri (0°)",
+      "equipment": "Manubri",
+      "muscleGroupId": "muscle-0",
+      "tags": [
+        "Petto"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/library-dumbbells_dumbbell_bench_press.webp"
+    },
+    {
+      "id": "library-dumbbells_dumbbell_flyes",
+      "name": "Croci manubri",
+      "equipment": "Manubri",
+      "muscleGroupId": "muscle-0",
+      "tags": [
+        "Petto"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/library-dumbbells_dumbbell_flyes.webp"
+    },
+    {
+      "id": "library-dumbbells_incline_dumbbell_flyes",
+      "name": "Croci su panca inclinata",
+      "equipment": "Manubri",
+      "muscleGroupId": "muscle-0",
+      "tags": [
+        "Petto"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/library-dumbbells_incline_dumbbell_flyes.webp"
+    },
+    {
+      "id": "library-machine_butterfly",
+      "name": "Pectoral machine",
+      "equipment": "Macchina",
+      "muscleGroupId": "muscle-0",
+      "tags": [
+        "Petto"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/library-machine_butterfly.webp"
+    },
+    {
+      "id": "library-bodyweight_push_ups",
+      "name": "Piegamenti a terra",
+      "equipment": "Corpo libero",
+      "muscleGroupId": "muscle-0",
+      "tags": [
+        "Petto"
+      ],
+      "loadMode": "bodyweight",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/library-bodyweight_push_ups.webp"
+    },
+    {
+      "id": "library-bodyweight_diamond_push_ups",
+      "name": "Piegamenti a presa stretta",
+      "equipment": "Corpo libero",
+      "muscleGroupId": "muscle-0",
+      "tags": [
+        "Petto"
+      ],
+      "loadMode": "bodyweight",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/library-bodyweight_diamond_push_ups.webp"
+    },
+    {
+      "id": "library-dumbbells_straight_arm_dumbbell_pullover",
+      "name": "Pullover manubrio",
+      "equipment": "Manubri",
+      "muscleGroupId": "muscle-0",
+      "tags": [
+        "Petto"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/library-dumbbells_straight_arm_dumbbell_pullover.webp"
+    },
+    {
+      "id": "library-machine_dip_machine",
+      "name": "Dip alla macchina",
+      "equipment": "Macchina",
+      "muscleGroupId": "muscle-0",
+      "tags": [
+        "Petto"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/library-machine_dip_machine.webp"
+    },
+    {
+      "id": "library-barbell_deadlift",
+      "name": "Stacco da terra",
+      "equipment": "Bilanciere",
+      "muscleGroupId": "muscle-1",
+      "tags": [
+        "Schiena"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/library-barbell_deadlift.webp"
+    },
+    {
+      "id": "library-dumbbells_one_arm_dumbbell_row",
+      "name": "Rematore manubrio",
+      "equipment": "Manubri",
+      "muscleGroupId": "muscle-1",
+      "tags": [
+        "Schiena"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/library-dumbbells_one_arm_dumbbell_row.webp"
+    },
+    {
+      "id": "library-cable_close_grip_front_lat_pulldown",
+      "name": "Lat machine presa stretta",
+      "equipment": "Cavi",
+      "muscleGroupId": "muscle-1",
+      "tags": [
+        "Schiena",
+        "Lat machine"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/library-cable_close_grip_front_lat_pulldown.webp"
+    },
+    {
+      "id": "library-cable_straight_arm_pulldown",
+      "name": "Pulldown braccia tese",
+      "equipment": "Cavi",
+      "muscleGroupId": "muscle-1",
+      "tags": [
+        "Schiena"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/library-cable_straight_arm_pulldown.webp"
+    },
+    {
+      "id": "library-machine_leverage_iso_row",
+      "name": "Rematore alla macchina",
+      "equipment": "Macchina",
+      "muscleGroupId": "muscle-1",
+      "tags": [
+        "Schiena"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/library-machine_leverage_iso_row.webp"
+    },
+    {
+      "id": "library-bodyweight_inverted_row",
+      "name": "Rematore a corpo libero",
+      "equipment": "Corpo libero",
+      "muscleGroupId": "muscle-1",
+      "tags": [
+        "Schiena"
+      ],
+      "loadMode": "bodyweight",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/library-bodyweight_inverted_row.webp"
+    },
+    {
+      "id": "library-bodyweight_back_extension",
+      "name": "Estensioni lombari",
+      "equipment": "Corpo libero",
+      "muscleGroupId": "muscle-1",
+      "tags": [
+        "Schiena"
+      ],
+      "loadMode": "bodyweight",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/library-bodyweight_back_extension.webp"
+    },
+    {
+      "id": "library-cable_one_arm_lat_pulldown",
+      "name": "Lat machine unilaterale",
+      "equipment": "Cavi",
+      "muscleGroupId": "muscle-1",
+      "tags": [
+        "Schiena",
+        "Lat machine"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/library-cable_one_arm_lat_pulldown.webp"
+    },
+    {
+      "id": "library-barbell_shrug",
+      "name": "Scrollate bilanciere",
+      "equipment": "Bilanciere",
+      "muscleGroupId": "muscle-1",
+      "tags": [
+        "Schiena"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/library-barbell_shrug.webp"
+    },
+    {
+      "id": "library-barbell_overhead_press",
+      "name": "Military press",
+      "equipment": "Bilanciere",
+      "muscleGroupId": "muscle-2",
+      "tags": [
+        "Spalle"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/library-barbell_overhead_press.webp"
+    },
+    {
+      "id": "library-dumbbells_arnold_press",
+      "name": "Arnold press",
+      "equipment": "Manubri",
+      "muscleGroupId": "muscle-2",
+      "tags": [
+        "Spalle"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/library-dumbbells_arnold_press.webp"
+    },
+    {
+      "id": "library-dumbbells_front_dumbbell_raise",
+      "name": "Alzate frontali",
+      "equipment": "Manubri",
+      "muscleGroupId": "muscle-2",
+      "tags": [
+        "Spalle"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/library-dumbbells_front_dumbbell_raise.webp"
+    },
+    {
+      "id": "library-cable_face_pull",
+      "name": "Face pull",
+      "equipment": "Cavi",
+      "muscleGroupId": "muscle-2",
+      "tags": [
+        "Spalle"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/library-cable_face_pull.webp"
+    },
+    {
+      "id": "library-cable_standing_low_pulley_deltoid_raise",
+      "name": "Alzate laterali al cavo",
+      "equipment": "Cavi",
+      "muscleGroupId": "muscle-2",
+      "tags": [
+        "Spalle"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/library-cable_standing_low_pulley_deltoid_raise.webp"
+    },
+    {
+      "id": "library-machine_shoulder_military_press",
+      "name": "Shoulder press macchina",
+      "equipment": "Macchina",
+      "muscleGroupId": "muscle-2",
+      "tags": [
+        "Spalle"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/library-machine_shoulder_military_press.webp"
+    },
+    {
+      "id": "library-barbell_upright_row",
+      "name": "Tirate al mento",
+      "equipment": "Bilanciere",
+      "muscleGroupId": "muscle-2",
+      "tags": [
+        "Spalle"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/library-barbell_upright_row.webp"
+    },
+    {
+      "id": "library-dumbbells_external_rotation",
+      "name": "Extrarotazioni con manubrio",
+      "equipment": "Manubri",
+      "muscleGroupId": "muscle-2",
+      "tags": [
+        "Spalle"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/library-dumbbells_external_rotation.webp"
+    },
+    {
+      "id": "library-barbell_front_squat",
+      "name": "Front squat",
+      "equipment": "Bilanciere",
+      "muscleGroupId": "muscle-3",
+      "tags": [
+        "Gambe"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/library-barbell_front_squat.webp"
+    },
+    {
+      "id": "library-dumbbells_db_goblet_squat",
+      "name": "Goblet squat",
+      "equipment": "Manubri",
+      "muscleGroupId": "muscle-3",
+      "tags": [
+        "Gambe"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/library-dumbbells_db_goblet_squat.webp"
+    },
+    {
+      "id": "library-barbell_bulgarian_split_squat",
+      "name": "Squat bulgaro",
+      "equipment": "Bilanciere",
+      "muscleGroupId": "muscle-3",
+      "tags": [
+        "Gambe"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/library-barbell_bulgarian_split_squat.webp"
+    },
+    {
+      "id": "library-dumbbells_lunges",
+      "name": "Affondi con manubri",
+      "equipment": "Manubri",
+      "muscleGroupId": "muscle-3",
+      "tags": [
+        "Gambe"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/library-dumbbells_lunges.webp"
+    },
+    {
+      "id": "library-dumbbells_weighted_step_ups",
+      "name": "Step-up con manubri",
+      "equipment": "Manubri",
+      "muscleGroupId": "muscle-3",
+      "tags": [
+        "Gambe"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/library-dumbbells_weighted_step_ups.webp"
+    },
+    {
+      "id": "library-machine_hack_squat",
+      "name": "Hack squat",
+      "equipment": "Macchina",
+      "muscleGroupId": "muscle-3",
+      "tags": [
+        "Gambe"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/library-machine_hack_squat.webp"
+    },
+    {
+      "id": "library-machine_seated_leg_curl",
+      "name": "Leg curl seduto",
+      "equipment": "Macchina",
+      "muscleGroupId": "muscle-3",
+      "tags": [
+        "Gambe"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/library-machine_seated_leg_curl.webp"
+    },
+    {
+      "id": "library-barbell_sumo_deadlift",
+      "name": "Stacco sumo",
+      "equipment": "Bilanciere",
+      "muscleGroupId": "muscle-3",
+      "tags": [
+        "Gambe"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/library-barbell_sumo_deadlift.webp"
+    },
+    {
+      "id": "library-machine_thigh_adductor",
+      "name": "Adductor machine",
+      "equipment": "Macchina",
+      "muscleGroupId": "muscle-3",
+      "tags": [
+        "Gambe"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/library-machine_thigh_adductor.webp"
+    },
+    {
+      "id": "library-bodyweight_air_squats",
+      "name": "Squat a corpo libero",
+      "equipment": "Corpo libero",
+      "muscleGroupId": "muscle-3",
+      "tags": [
+        "Gambe"
+      ],
+      "loadMode": "bodyweight",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/library-bodyweight_air_squats.webp"
+    },
+    {
+      "id": "library-bodyweight_reverse_lunges",
+      "name": "Affondi indietro",
+      "equipment": "Corpo libero",
+      "muscleGroupId": "muscle-3",
+      "tags": [
+        "Gambe"
+      ],
+      "loadMode": "bodyweight",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/library-bodyweight_reverse_lunges.webp"
+    },
+    {
+      "id": "library-dumbbells_db_hammer_curl",
+      "name": "Hammer curl",
+      "equipment": "Manubri",
+      "muscleGroupId": "muscle-4",
+      "tags": [
+        "Braccia",
+        "Bicipiti"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/library-dumbbells_db_hammer_curl.webp"
+    },
+    {
+      "id": "library-ez_bar_preacher_curl",
+      "name": "Curl panca Scott",
+      "equipment": "Bilanciere EZ",
+      "muscleGroupId": "muscle-4",
+      "tags": [
+        "Braccia",
+        "Bicipiti"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/library-ez_bar_preacher_curl.webp"
+    },
+    {
+      "id": "library-dumbbells_incline_dumbbell_curl",
+      "name": "Curl su panca inclinata",
+      "equipment": "Manubri",
+      "muscleGroupId": "muscle-4",
+      "tags": [
+        "Braccia",
+        "Bicipiti"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/library-dumbbells_incline_dumbbell_curl.webp"
+    },
+    {
+      "id": "library-dumbbells_concentration_curls",
+      "name": "Curl concentrato",
+      "equipment": "Manubri",
+      "muscleGroupId": "muscle-4",
+      "tags": [
+        "Braccia",
+        "Bicipiti"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/library-dumbbells_concentration_curls.webp"
+    },
+    {
+      "id": "library-cable_standing_biceps_cable_curl",
+      "name": "Curl al cavo",
+      "equipment": "Cavi",
+      "muscleGroupId": "muscle-4",
+      "tags": [
+        "Braccia",
+        "Bicipiti"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/library-cable_standing_biceps_cable_curl.webp"
+    },
+    {
+      "id": "library-barbell_reverse_barbell_curl",
+      "name": "Curl inverso",
+      "equipment": "Bilanciere",
+      "muscleGroupId": "muscle-4",
+      "tags": [
+        "Braccia",
+        "Bicipiti"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/library-barbell_reverse_barbell_curl.webp"
+    },
+    {
+      "id": "library-cable_rope_overhead_triceps_extension",
+      "name": "Estensioni tricipiti sopra la testa al cavo",
+      "equipment": "Cavi",
+      "muscleGroupId": "muscle-4",
+      "tags": [
+        "Braccia",
+        "Tricipiti"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/library-cable_rope_overhead_triceps_extension.webp"
+    },
+    {
+      "id": "library-dumbbells_db_overhead_tricep_extension",
+      "name": "Estensioni tricipiti manubrio",
+      "equipment": "Manubri",
+      "muscleGroupId": "muscle-4",
+      "tags": [
+        "Braccia",
+        "Tricipiti"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/library-dumbbells_db_overhead_tricep_extension.webp"
+    },
+    {
+      "id": "library-dumbbells_tricep_dumbbell_kickback",
+      "name": "Kickback tricipiti",
+      "equipment": "Manubri",
+      "muscleGroupId": "muscle-4",
+      "tags": [
+        "Braccia",
+        "Tricipiti"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/library-dumbbells_tricep_dumbbell_kickback.webp"
+    },
+    {
+      "id": "library-barbell_close_grip_bench_press",
+      "name": "Panca presa stretta",
+      "equipment": "Bilanciere",
+      "muscleGroupId": "muscle-4",
+      "tags": [
+        "Braccia",
+        "Tricipiti"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/library-barbell_close_grip_bench_press.webp"
+    },
+    {
+      "id": "library-bodyweight_tricep_dips",
+      "name": "Dip su panca",
+      "equipment": "Corpo libero",
+      "muscleGroupId": "muscle-4",
+      "tags": [
+        "Braccia",
+        "Tricipiti"
+      ],
+      "loadMode": "bodyweight",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/library-bodyweight_tricep_dips.webp"
+    },
+    {
+      "id": "library-dumbbells_palms_up_dumbbell_wrist_curl_over_a_bench",
+      "name": "Wrist curl avambracci",
+      "equipment": "Manubri",
+      "muscleGroupId": "muscle-4",
+      "tags": [
+        "Braccia",
+        "Avambracci"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/library-dumbbells_palms_up_dumbbell_wrist_curl_over_a_bench.webp"
+    },
+    {
+      "id": "library-bodyweight_plank",
+      "name": "Plank",
+      "equipment": "Corpo libero",
+      "muscleGroupId": "muscle-5",
+      "tags": [
+        "Core"
+      ],
+      "loadMode": "bodyweight",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/library-bodyweight_plank.webp"
+    },
+    {
+      "id": "library-bodyweight_side_plank",
+      "name": "Plank laterale",
+      "equipment": "Corpo libero",
+      "muscleGroupId": "muscle-5",
+      "tags": [
+        "Core"
+      ],
+      "loadMode": "bodyweight",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/library-bodyweight_side_plank.webp"
+    },
+    {
+      "id": "library-bodyweight_reverse_crunches",
+      "name": "Crunch inverso",
+      "equipment": "Corpo libero",
+      "muscleGroupId": "muscle-5",
+      "tags": [
+        "Core"
+      ],
+      "loadMode": "bodyweight",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/library-bodyweight_reverse_crunches.webp"
+    },
+    {
+      "id": "library-bodyweight_bicycle_crunches",
+      "name": "Bicycle crunch",
+      "equipment": "Corpo libero",
+      "muscleGroupId": "muscle-5",
+      "tags": [
+        "Core"
+      ],
+      "loadMode": "bodyweight",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/library-bodyweight_bicycle_crunches.webp"
+    },
+    {
+      "id": "library-bodyweight_leg_raises",
+      "name": "Sollevamento gambe",
+      "equipment": "Corpo libero",
+      "muscleGroupId": "muscle-5",
+      "tags": [
+        "Core"
+      ],
+      "loadMode": "bodyweight",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/library-bodyweight_leg_raises.webp"
+    },
+    {
+      "id": "library-cable_crunch",
+      "name": "Crunch al cavo",
+      "equipment": "Cavi",
+      "muscleGroupId": "muscle-5",
+      "tags": [
+        "Core"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/library-cable_crunch.webp"
+    },
+    {
+      "id": "library-bodyweight_dead_bug",
+      "name": "Dead bug",
+      "equipment": "Corpo libero",
+      "muscleGroupId": "muscle-5",
+      "tags": [
+        "Core"
+      ],
+      "loadMode": "bodyweight",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/library-bodyweight_dead_bug.webp"
+    },
+    {
+      "id": "library-bodyweight_bird_dog",
+      "name": "Bird dog",
+      "equipment": "Corpo libero",
+      "muscleGroupId": "muscle-5",
+      "tags": [
+        "Core"
+      ],
+      "loadMode": "bodyweight",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/library-bodyweight_bird_dog.webp"
+    },
+    {
+      "id": "library-bodyweight_russian_twist",
+      "name": "Russian twist",
+      "equipment": "Corpo libero",
+      "muscleGroupId": "muscle-5",
+      "tags": [
+        "Core"
+      ],
+      "loadMode": "bodyweight",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/library-bodyweight_russian_twist.webp"
+    },
+    {
+      "id": "library-bodyweight_mountain_climbers",
+      "name": "Mountain climber",
+      "equipment": "Corpo libero",
+      "muscleGroupId": "muscle-5",
+      "tags": [
+        "Core"
+      ],
+      "loadMode": "bodyweight",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/library-bodyweight_mountain_climbers.webp"
+    },
+    {
+      "id": "library-ab_wheel_wall_rollout",
+      "name": "Ab wheel alla parete",
+      "equipment": "Ruota addominali",
+      "muscleGroupId": "muscle-5",
+      "tags": [
+        "Core"
+      ],
+      "loadMode": "bodyweight",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/library-ab_wheel_wall_rollout.webp"
+    },
+    {
+      "id": "library-barbell_hip_thrust",
+      "name": "Hip thrust",
+      "equipment": "Bilanciere",
+      "muscleGroupId": "muscle-6",
+      "tags": [
+        "Glutei"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/library-barbell_hip_thrust.webp"
+    },
+    {
+      "id": "library-barbell_glute_bridge",
+      "name": "Ponte glutei con bilanciere",
+      "equipment": "Bilanciere",
+      "muscleGroupId": "muscle-6",
+      "tags": [
+        "Glutei"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/library-barbell_glute_bridge.webp"
+    },
+    {
+      "id": "library-bodyweight_glute_bridge",
+      "name": "Ponte glutei",
+      "equipment": "Corpo libero",
+      "muscleGroupId": "muscle-6",
+      "tags": [
+        "Glutei"
+      ],
+      "loadMode": "bodyweight",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/library-bodyweight_glute_bridge.webp"
+    },
+    {
+      "id": "library-bodyweight_single_leg_glute_bridge",
+      "name": "Ponte glutei su una gamba",
+      "equipment": "Corpo libero",
+      "muscleGroupId": "muscle-6",
+      "tags": [
+        "Glutei"
+      ],
+      "loadMode": "bodyweight",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/library-bodyweight_single_leg_glute_bridge.webp"
+    },
+    {
+      "id": "library-cable_one_legged_cable_kickback",
+      "name": "Slanci glutei al cavo",
+      "equipment": "Cavi",
+      "muscleGroupId": "muscle-6",
+      "tags": [
+        "Glutei"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/library-cable_one_legged_cable_kickback.webp"
+    },
+    {
+      "id": "library-machine_thigh_abductor",
+      "name": "Abductor machine",
+      "equipment": "Macchina",
+      "muscleGroupId": "muscle-6",
+      "tags": [
+        "Glutei"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/library-machine_thigh_abductor.webp"
+    },
+    {
+      "id": "library-cable_pull_through",
+      "name": "Pull-through al cavo",
+      "equipment": "Cavi",
+      "muscleGroupId": "muscle-6",
+      "tags": [
+        "Glutei"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/library-cable_pull_through.webp"
+    },
+    {
+      "id": "library-bodyweight_donkey_kicks",
+      "name": "Donkey kick",
+      "equipment": "Corpo libero",
+      "muscleGroupId": "muscle-6",
+      "tags": [
+        "Glutei"
+      ],
+      "loadMode": "bodyweight",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/library-bodyweight_donkey_kicks.webp"
+    },
+    {
+      "id": "library-machine_standing_calf_raises",
+      "name": "Calf raise in piedi",
+      "equipment": "Macchina",
+      "muscleGroupId": "muscle-7",
+      "tags": [
+        "Polpacci"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/library-machine_standing_calf_raises.webp"
+    },
+    {
+      "id": "library-machine_seated_calf_raise",
+      "name": "Calf raise seduto",
+      "equipment": "Macchina",
+      "muscleGroupId": "muscle-7",
+      "tags": [
+        "Polpacci"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/library-machine_seated_calf_raise.webp"
+    },
+    {
+      "id": "library-machine_calf_press_leg_press",
+      "name": "Calf press alla leg press",
+      "equipment": "Macchina",
+      "muscleGroupId": "muscle-7",
+      "tags": [
+        "Polpacci"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/library-machine_calf_press_leg_press.webp"
+    },
+    {
+      "id": "library-bodyweight_standing_calf_raise",
+      "name": "Calf raise a corpo libero",
+      "equipment": "Corpo libero",
+      "muscleGroupId": "muscle-7",
+      "tags": [
+        "Polpacci"
+      ],
+      "loadMode": "bodyweight",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/library-bodyweight_standing_calf_raise.webp"
+    },
+    {
+      "id": "library-dumbbells_standing_dumbbell_calf_raise",
+      "name": "Calf raise con manubri",
+      "equipment": "Manubri",
+      "muscleGroupId": "muscle-7",
+      "tags": [
+        "Polpacci"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/library-dumbbells_standing_dumbbell_calf_raise.webp"
+    },
+    {
+      "id": "variant-db-bench-15",
+      "name": "Panca inclinata con manubri a 15°",
+      "equipment": "Manubri",
+      "muscleGroupId": "muscle-0",
+      "tags": [
+        "Petto",
+        "Variante",
+        "15°"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-db-bench-15.webp"
+    },
+    {
+      "id": "variant-db-bench-45",
+      "name": "Panca inclinata con manubri a 45°",
+      "equipment": "Manubri",
+      "muscleGroupId": "muscle-0",
+      "tags": [
+        "Petto",
+        "Variante",
+        "45°"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-db-bench-45.webp"
+    },
+    {
+      "id": "variant-db-bench-60",
+      "name": "Panca inclinata con manubri a 60°",
+      "equipment": "Manubri",
+      "muscleGroupId": "muscle-0",
+      "tags": [
+        "Petto",
+        "Variante",
+        "60°"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-db-bench-60.webp"
+    },
+    {
+      "id": "variant-db-bench-decline-15",
+      "name": "Panca declinata con manubri a −15°",
+      "equipment": "Manubri",
+      "muscleGroupId": "muscle-0",
+      "tags": [
+        "Petto",
+        "Variante",
+        "-15°"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-db-bench-decline-15.webp"
+    },
+    {
+      "id": "variant-db-bench-decline-30",
+      "name": "Panca declinata con manubri a −30°",
+      "equipment": "Manubri",
+      "muscleGroupId": "muscle-0",
+      "tags": [
+        "Petto",
+        "Variante",
+        "-30°"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-db-bench-decline-30.webp"
+    },
+    {
+      "id": "variant-db-bench-neutral-0",
+      "name": "Panca piana con manubri, presa neutra",
+      "equipment": "Manubri",
+      "muscleGroupId": "muscle-0",
+      "tags": [
+        "Petto",
+        "Variante",
+        "0°"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-db-bench-neutral-0.webp"
+    },
+    {
+      "id": "variant-db-bench-neutral-30",
+      "name": "Panca inclinata a 30° con manubri, presa neutra",
+      "equipment": "Manubri",
+      "muscleGroupId": "muscle-0",
+      "tags": [
+        "Petto",
+        "Variante",
+        "30°"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-db-bench-neutral-30.webp"
+    },
+    {
+      "id": "variant-db-bench-neutral-45",
+      "name": "Panca inclinata a 45° con manubri, presa neutra",
+      "equipment": "Manubri",
+      "muscleGroupId": "muscle-0",
+      "tags": [
+        "Petto",
+        "Variante",
+        "45°"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-db-bench-neutral-45.webp"
+    },
+    {
+      "id": "variant-db-bench-alternate",
+      "name": "Panca piana con manubri alternata",
+      "equipment": "Manubri",
+      "muscleGroupId": "muscle-0",
+      "tags": [
+        "Petto",
+        "Variante"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-db-bench-alternate.webp"
+    },
+    {
+      "id": "variant-db-bench-single",
+      "name": "Panca piana con un manubrio",
+      "equipment": "Manubri",
+      "muscleGroupId": "muscle-0",
+      "tags": [
+        "Petto",
+        "Variante"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-db-bench-single.webp"
+    },
+    {
+      "id": "variant-db-floor-press",
+      "name": "Distensioni con manubri a terra",
+      "equipment": "Manubri",
+      "muscleGroupId": "muscle-0",
+      "tags": [
+        "Petto",
+        "Variante"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-db-floor-press.webp"
+    },
+    {
+      "id": "variant-db-squeeze-press",
+      "name": "Squeeze press con manubri su panca piana",
+      "equipment": "Manubri",
+      "muscleGroupId": "muscle-0",
+      "tags": [
+        "Petto",
+        "Variante"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-db-squeeze-press.webp"
+    },
+    {
+      "id": "variant-db-fly-0",
+      "name": "Croci con manubri su panca piana (0°)",
+      "equipment": "Manubri",
+      "muscleGroupId": "muscle-0",
+      "tags": [
+        "Petto",
+        "Variante",
+        "0°"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-db-fly-0.webp"
+    },
+    {
+      "id": "variant-db-fly-30",
+      "name": "Croci con manubri su panca a 30°",
+      "equipment": "Manubri",
+      "muscleGroupId": "muscle-0",
+      "tags": [
+        "Petto",
+        "Variante",
+        "30°"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-db-fly-30.webp"
+    },
+    {
+      "id": "variant-db-fly-45",
+      "name": "Croci con manubri su panca a 45°",
+      "equipment": "Manubri",
+      "muscleGroupId": "muscle-0",
+      "tags": [
+        "Petto",
+        "Variante",
+        "45°"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-db-fly-45.webp"
+    },
+    {
+      "id": "variant-barbell-bench-15",
+      "name": "Panca inclinata con bilanciere a 15°",
+      "equipment": "Bilanciere",
+      "muscleGroupId": "muscle-0",
+      "tags": [
+        "Petto",
+        "Variante",
+        "15°"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-barbell-bench-15.webp"
+    },
+    {
+      "id": "variant-barbell-bench-30",
+      "name": "Panca inclinata con bilanciere a 30°",
+      "equipment": "Bilanciere",
+      "muscleGroupId": "muscle-0",
+      "tags": [
+        "Petto",
+        "Variante",
+        "30°"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-barbell-bench-30.webp"
+    },
+    {
+      "id": "variant-barbell-bench-45",
+      "name": "Panca inclinata con bilanciere a 45°",
+      "equipment": "Bilanciere",
+      "muscleGroupId": "muscle-0",
+      "tags": [
+        "Petto",
+        "Variante",
+        "45°"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-barbell-bench-45.webp"
+    },
+    {
+      "id": "variant-smith-bench-0",
+      "name": "Panca al multipower piana (0°)",
+      "equipment": "Multipower",
+      "muscleGroupId": "muscle-0",
+      "tags": [
+        "Petto",
+        "Variante",
+        "0°"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-smith-bench-0.webp"
+    },
+    {
+      "id": "variant-smith-bench-30",
+      "name": "Panca al multipower a 30°",
+      "equipment": "Multipower",
+      "muscleGroupId": "muscle-0",
+      "tags": [
+        "Petto",
+        "Variante",
+        "30°"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-smith-bench-30.webp"
+    },
+    {
+      "id": "variant-smith-bench-45",
+      "name": "Panca al multipower a 45°",
+      "equipment": "Multipower",
+      "muscleGroupId": "muscle-0",
+      "tags": [
+        "Petto",
+        "Variante",
+        "45°"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-smith-bench-45.webp"
+    },
+    {
+      "id": "variant-cable-fly-low",
+      "name": "Croci ai cavi dal basso verso l’alto",
+      "equipment": "Cavi",
+      "muscleGroupId": "muscle-0",
+      "tags": [
+        "Petto",
+        "Variante",
+        "Croci ai cavi"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-cable-fly-low.webp"
+    },
+    {
+      "id": "variant-cable-fly-high",
+      "name": "Croci ai cavi dall’alto verso il basso",
+      "equipment": "Cavi",
+      "muscleGroupId": "muscle-0",
+      "tags": [
+        "Petto",
+        "Variante",
+        "Croci ai cavi"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-cable-fly-high.webp"
+    },
+    {
+      "id": "variant-incline-chest-machine",
+      "name": "Chest press inclinata alla macchina",
+      "equipment": "Macchina",
+      "muscleGroupId": "muscle-0",
+      "tags": [
+        "Petto",
+        "Variante",
+        "Chest press"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-incline-chest-machine.webp"
+    },
+    {
+      "id": "variant-lat-supinated",
+      "name": "Lat machine presa supina",
+      "equipment": "Cavi",
+      "muscleGroupId": "muscle-1",
+      "tags": [
+        "Schiena",
+        "Variante",
+        "Lat machine"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-lat-supinated.webp"
+    },
+    {
+      "id": "variant-lat-neutral",
+      "name": "Lat machine presa neutra",
+      "equipment": "Cavi",
+      "muscleGroupId": "muscle-1",
+      "tags": [
+        "Schiena",
+        "Variante",
+        "Lat machine"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-lat-neutral.webp"
+    },
+    {
+      "id": "variant-row-wide",
+      "name": "Pulley presa prona larga",
+      "equipment": "Cavi",
+      "muscleGroupId": "muscle-1",
+      "tags": [
+        "Schiena",
+        "Variante"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-row-wide.webp"
+    },
+    {
+      "id": "variant-pullup-neutral",
+      "name": "Trazioni presa neutra",
+      "equipment": "Sbarra",
+      "muscleGroupId": "muscle-1",
+      "tags": [
+        "Schiena",
+        "Variante"
+      ],
+      "loadMode": "bodyweight",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-pullup-neutral.webp"
+    },
+    {
+      "id": "variant-pullup-supinated",
+      "name": "Trazioni presa supina",
+      "equipment": "Sbarra",
+      "muscleGroupId": "muscle-1",
+      "tags": [
+        "Schiena",
+        "Variante"
+      ],
+      "loadMode": "bodyweight",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-pullup-supinated.webp"
+    },
+    {
+      "id": "variant-lateral-seated",
+      "name": "Alzate laterali con manubri da seduto",
+      "equipment": "Manubri",
+      "muscleGroupId": "muscle-2",
+      "tags": [
+        "Spalle",
+        "Variante"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-lateral-seated.webp"
+    },
+    {
+      "id": "variant-lateral-cable-behind",
+      "name": "Alzate laterali al cavo dietro il corpo",
+      "equipment": "Cavi",
+      "muscleGroupId": "muscle-2",
+      "tags": [
+        "Spalle",
+        "Variante"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-lateral-cable-behind.webp"
+    },
+    {
+      "id": "variant-rear-fly-supported",
+      "name": "Alzate posteriori con petto su panca",
+      "equipment": "Manubri",
+      "muscleGroupId": "muscle-2",
+      "tags": [
+        "Spalle",
+        "Variante"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-rear-fly-supported.webp"
+    },
+    {
+      "id": "variant-squat-high-bar",
+      "name": "Squat con bilanciere alto",
+      "equipment": "Bilanciere",
+      "muscleGroupId": "muscle-3",
+      "tags": [
+        "Gambe",
+        "Variante"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-squat-high-bar.webp"
+    },
+    {
+      "id": "variant-squat-low-bar",
+      "name": "Squat con bilanciere basso",
+      "equipment": "Bilanciere",
+      "muscleGroupId": "muscle-3",
+      "tags": [
+        "Gambe",
+        "Variante"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-squat-low-bar.webp"
+    },
+    {
+      "id": "variant-box-squat",
+      "name": "Box squat con bilanciere",
+      "equipment": "Bilanciere",
+      "muscleGroupId": "muscle-3",
+      "tags": [
+        "Gambe",
+        "Variante"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-box-squat.webp"
+    },
+    {
+      "id": "variant-legpress-single",
+      "name": "Leg press unilaterale",
+      "equipment": "Macchina",
+      "muscleGroupId": "muscle-3",
+      "tags": [
+        "Gambe",
+        "Variante"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-legpress-single.webp"
+    },
+    {
+      "id": "variant-legpress-wide",
+      "name": "Leg press piedi larghi",
+      "equipment": "Macchina",
+      "muscleGroupId": "muscle-3",
+      "tags": [
+        "Gambe",
+        "Variante"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-legpress-wide.webp"
+    },
+    {
+      "id": "variant-legpress-narrow",
+      "name": "Leg press piedi stretti",
+      "equipment": "Macchina",
+      "muscleGroupId": "muscle-3",
+      "tags": [
+        "Gambe",
+        "Variante"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-legpress-narrow.webp"
+    },
+    {
+      "id": "variant-legcurl-lying",
+      "name": "Leg curl sdraiato",
+      "equipment": "Macchina",
+      "muscleGroupId": "muscle-3",
+      "tags": [
+        "Gambe",
+        "Variante"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-legcurl-lying.webp"
+    },
+    {
+      "id": "variant-legextension-single",
+      "name": "Leg extension unilaterale",
+      "equipment": "Macchina",
+      "muscleGroupId": "muscle-3",
+      "tags": [
+        "Gambe",
+        "Variante"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-legextension-single.webp"
+    },
+    {
+      "id": "variant-lunge-walking",
+      "name": "Affondi camminati con manubri",
+      "equipment": "Manubri",
+      "muscleGroupId": "muscle-3",
+      "tags": [
+        "Gambe",
+        "Variante"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-lunge-walking.webp"
+    },
+    {
+      "id": "variant-lunge-reverse",
+      "name": "Affondi indietro con manubri",
+      "equipment": "Manubri",
+      "muscleGroupId": "muscle-3",
+      "tags": [
+        "Gambe",
+        "Variante"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-lunge-reverse.webp"
+    },
+    {
+      "id": "variant-lunge-lateral",
+      "name": "Affondi laterali con manubri",
+      "equipment": "Manubri",
+      "muscleGroupId": "muscle-3",
+      "tags": [
+        "Gambe",
+        "Variante"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-lunge-lateral.webp"
+    },
+    {
+      "id": "variant-rdl-single",
+      "name": "Stacco rumeno con un manubrio su una gamba",
+      "equipment": "Manubri",
+      "muscleGroupId": "muscle-3",
+      "tags": [
+        "Gambe",
+        "Variante"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-rdl-single.webp"
+    },
+    {
+      "id": "variant-curl-alternate",
+      "name": "Curl con manubri alternato",
+      "equipment": "Manubri",
+      "muscleGroupId": "muscle-4",
+      "tags": [
+        "Braccia",
+        "Variante",
+        "Bicipiti"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-curl-alternate.webp"
+    },
+    {
+      "id": "variant-curl-seated",
+      "name": "Curl con manubri da seduto",
+      "equipment": "Manubri",
+      "muscleGroupId": "muscle-4",
+      "tags": [
+        "Braccia",
+        "Variante",
+        "Bicipiti"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-curl-seated.webp"
+    },
+    {
+      "id": "variant-pushdown-rope",
+      "name": "Pushdown con corda",
+      "equipment": "Cavi",
+      "muscleGroupId": "muscle-4",
+      "tags": [
+        "Braccia",
+        "Variante",
+        "Tricipiti"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-pushdown-rope.webp"
+    },
+    {
+      "id": "variant-pushdown-bar",
+      "name": "Pushdown con barra dritta",
+      "equipment": "Cavi",
+      "muscleGroupId": "muscle-4",
+      "tags": [
+        "Braccia",
+        "Variante",
+        "Tricipiti"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-pushdown-bar.webp"
+    },
+    {
+      "id": "variant-pushdown-single",
+      "name": "Pushdown al cavo unilaterale",
+      "equipment": "Cavi",
+      "muscleGroupId": "muscle-4",
+      "tags": [
+        "Braccia",
+        "Variante",
+        "Tricipiti"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-pushdown-single.webp"
+    },
+    {
+      "id": "variant-triceps-single",
+      "name": "Estensioni tricipiti sopra la testa con un manubrio, unilaterali",
+      "equipment": "Manubri",
+      "muscleGroupId": "muscle-4",
+      "tags": [
+        "Braccia",
+        "Variante",
+        "Tricipiti"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-triceps-single.webp"
+    },
+    {
+      "id": "variant-hipthrust-single",
+      "name": "Hip thrust con bilanciere a una gamba",
+      "equipment": "Bilanciere",
+      "muscleGroupId": "muscle-6",
+      "tags": [
+        "Glutei",
+        "Variante"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-hipthrust-single.webp"
+    },
+    {
+      "id": "variant-plank-shoulder-tap",
+      "name": "Plank con tocco delle spalle",
+      "equipment": "Corpo libero",
+      "muscleGroupId": "muscle-5",
+      "tags": [
+        "Core",
+        "Variante"
+      ],
+      "loadMode": "bodyweight",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-plank-shoulder-tap.webp"
+    },
+    {
+      "id": "variant-calf-standing-single",
+      "name": "Calf raise alla macchina in piedi unilaterale",
+      "equipment": "Macchina",
+      "muscleGroupId": "muscle-7",
+      "tags": [
+        "Polpacci",
+        "Variante"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-calf-standing-single.webp"
+    },
+    {
+      "id": "variant-row-supported-30",
+      "name": "Rematore con manubri con petto su panca a 30°",
+      "equipment": "Manubri",
+      "muscleGroupId": "muscle-1",
+      "tags": [
+        "Schiena",
+        "Variante",
+        "30°"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-row-supported-30.webp"
+    },
+    {
+      "id": "variant-row-supported-45",
+      "name": "Rematore con manubri con petto su panca a 45°",
+      "equipment": "Manubri",
+      "muscleGroupId": "muscle-1",
+      "tags": [
+        "Schiena",
+        "Variante",
+        "45°"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-row-supported-45.webp"
+    },
+    {
+      "id": "variant-shoulder-press-75",
+      "name": "Spinte spalle con manubri da seduto a 75°",
+      "equipment": "Manubri",
+      "muscleGroupId": "muscle-2",
+      "tags": [
+        "Spalle",
+        "Variante",
+        "75°"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-shoulder-press-75.webp"
+    },
+    {
+      "id": "variant-shoulder-press-90",
+      "name": "Spinte spalle con manubri da seduto a 90°",
+      "equipment": "Manubri",
+      "muscleGroupId": "muscle-2",
+      "tags": [
+        "Spalle",
+        "Variante",
+        "90°"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-shoulder-press-90.webp"
+    },
+    {
+      "id": "variant-incline-curl-45",
+      "name": "Curl con manubri su panca a 45°",
+      "equipment": "Manubri",
+      "muscleGroupId": "muscle-4",
+      "tags": [
+        "Braccia",
+        "Variante",
+        "45°",
+        "Bicipiti"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-incline-curl-45.webp"
+    },
+    {
+      "id": "variant-incline-curl-60",
+      "name": "Curl con manubri su panca a 60°",
+      "equipment": "Manubri",
+      "muscleGroupId": "muscle-4",
+      "tags": [
+        "Braccia",
+        "Variante",
+        "60°",
+        "Bicipiti"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-incline-curl-60.webp"
+    },
+    {
+      "id": "variant-spider-curl-30",
+      "name": "Spider curl con manubri su panca a 30°",
+      "equipment": "Manubri",
+      "muscleGroupId": "muscle-4",
+      "tags": [
+        "Braccia",
+        "Variante",
+        "30°",
+        "Bicipiti"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-spider-curl-30.webp"
+    },
+    {
+      "id": "variant-spider-curl-45",
+      "name": "Spider curl con manubri su panca a 45°",
+      "equipment": "Manubri",
+      "muscleGroupId": "muscle-4",
+      "tags": [
+        "Braccia",
+        "Variante",
+        "45°",
+        "Bicipiti"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-spider-curl-45.webp"
+    },
+    {
+      "id": "variant-v2-lat-prona-media",
+      "name": "Lat machine presa prona media",
+      "equipment": "Cavi",
+      "muscleGroupId": "muscle-1",
+      "tags": [
+        "Schiena",
+        "Lat machine"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-v2-lat-prona-media.webp"
+    },
+    {
+      "id": "variant-v2-lat-prona-stretta",
+      "name": "Lat machine presa prona stretta",
+      "equipment": "Cavi",
+      "muscleGroupId": "muscle-1",
+      "tags": [
+        "Schiena",
+        "Lat machine"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-v2-lat-prona-stretta.webp"
+    },
+    {
+      "id": "variant-v2-lat-supina-stretta",
+      "name": "Lat machine presa supina stretta",
+      "equipment": "Cavi",
+      "muscleGroupId": "muscle-1",
+      "tags": [
+        "Schiena",
+        "Lat machine"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-v2-lat-supina-stretta.webp"
+    },
+    {
+      "id": "variant-v2-lat-supina-larga",
+      "name": "Lat machine presa supina larga",
+      "equipment": "Cavi",
+      "muscleGroupId": "muscle-1",
+      "tags": [
+        "Schiena",
+        "Lat machine"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-v2-lat-supina-larga.webp"
+    },
+    {
+      "id": "variant-v2-lat-neutra-stretta",
+      "name": "Lat machine presa neutra con triangolo",
+      "equipment": "Cavi",
+      "muscleGroupId": "muscle-1",
+      "tags": [
+        "Schiena",
+        "Lat machine"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-v2-lat-neutra-stretta.webp"
+    },
+    {
+      "id": "variant-v2-lat-neutra-media",
+      "name": "Lat machine presa neutra media",
+      "equipment": "Cavi",
+      "muscleGroupId": "muscle-1",
+      "tags": [
+        "Schiena",
+        "Lat machine"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-v2-lat-neutra-media.webp"
+    },
+    {
+      "id": "variant-v2-lat-neutra-larga",
+      "name": "Lat machine presa neutra larga",
+      "equipment": "Cavi",
+      "muscleGroupId": "muscle-1",
+      "tags": [
+        "Schiena",
+        "Lat machine"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-v2-lat-neutra-larga.webp"
+    },
+    {
+      "id": "variant-v2-lat-sagomata-stretta",
+      "name": "Lat machine con maniglia sagomata stretta",
+      "equipment": "Cavi",
+      "muscleGroupId": "muscle-1",
+      "tags": [
+        "Schiena",
+        "Lat machine"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-v2-lat-sagomata-stretta.webp"
+    },
+    {
+      "id": "variant-v2-lat-sagomata-media",
+      "name": "Lat machine con maniglia sagomata media",
+      "equipment": "Cavi",
+      "muscleGroupId": "muscle-1",
+      "tags": [
+        "Schiena",
+        "Lat machine"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-v2-lat-sagomata-media.webp"
+    },
+    {
+      "id": "variant-v2-lat-sagomata-larga",
+      "name": "Lat machine con maniglia sagomata larga",
+      "equipment": "Cavi",
+      "muscleGroupId": "muscle-1",
+      "tags": [
+        "Schiena",
+        "Lat machine"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-v2-lat-sagomata-larga.webp"
+    },
+    {
+      "id": "variant-v2-lat-indipendente",
+      "name": "Lat machine con due maniglie indipendenti",
+      "equipment": "Cavi",
+      "muscleGroupId": "muscle-1",
+      "tags": [
+        "Schiena",
+        "Lat machine"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-v2-lat-indipendente.webp"
+    },
+    {
+      "id": "variant-v2-lat-unilaterale-neutra",
+      "name": "Lat machine unilaterale presa neutra",
+      "equipment": "Cavi",
+      "muscleGroupId": "muscle-1",
+      "tags": [
+        "Schiena",
+        "Lat machine"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-v2-lat-unilaterale-neutra.webp"
+    },
+    {
+      "id": "variant-v2-lat-unilaterale-supina",
+      "name": "Lat machine unilaterale presa supina",
+      "equipment": "Cavi",
+      "muscleGroupId": "muscle-1",
+      "tags": [
+        "Schiena",
+        "Lat machine"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-v2-lat-unilaterale-supina.webp"
+    },
+    {
+      "id": "variant-v2-lat-inginocchio",
+      "name": "Lat machine al cavo in ginocchio",
+      "equipment": "Cavi",
+      "muscleGroupId": "muscle-1",
+      "tags": [
+        "Schiena",
+        "Lat machine"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-v2-lat-inginocchio.webp"
+    },
+    {
+      "id": "variant-v2-lat-convergente",
+      "name": "Lat machine convergente a dischi",
+      "equipment": "Macchina a dischi",
+      "muscleGroupId": "muscle-1",
+      "tags": [
+        "Schiena",
+        "Lat machine"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-v2-lat-convergente.webp"
+    },
+    {
+      "id": "variant-v2-lat-divergente",
+      "name": "Lat machine divergente a dischi",
+      "equipment": "Macchina a dischi",
+      "muscleGroupId": "muscle-1",
+      "tags": [
+        "Schiena",
+        "Lat machine"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-v2-lat-divergente.webp"
+    },
+    {
+      "id": "variant-v2-lat-machine-single",
+      "name": "Lat machine a dischi unilaterale",
+      "equipment": "Macchina a dischi",
+      "muscleGroupId": "muscle-1",
+      "tags": [
+        "Schiena",
+        "Lat machine"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-v2-lat-machine-single.webp"
+    },
+    {
+      "id": "variant-v2-chest-orizzontale",
+      "name": "Chest press orizzontale presa prona",
+      "equipment": "Macchina",
+      "muscleGroupId": "muscle-0",
+      "tags": [
+        "Petto",
+        "Chest press"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-v2-chest-orizzontale.webp"
+    },
+    {
+      "id": "variant-v2-chest-neutra",
+      "name": "Chest press orizzontale presa neutra",
+      "equipment": "Macchina",
+      "muscleGroupId": "muscle-0",
+      "tags": [
+        "Petto",
+        "Chest press"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-v2-chest-neutra.webp"
+    },
+    {
+      "id": "variant-v2-chest-declinata",
+      "name": "Chest press declinata alla macchina",
+      "equipment": "Macchina",
+      "muscleGroupId": "muscle-0",
+      "tags": [
+        "Petto",
+        "Chest press"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-v2-chest-declinata.webp"
+    },
+    {
+      "id": "variant-v2-chest-convergente",
+      "name": "Chest press convergente orizzontale",
+      "equipment": "Macchina",
+      "muscleGroupId": "muscle-0",
+      "tags": [
+        "Petto",
+        "Chest press"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-v2-chest-convergente.webp"
+    },
+    {
+      "id": "variant-v2-chest-convergente-inclinata",
+      "name": "Chest press convergente inclinata",
+      "equipment": "Macchina",
+      "muscleGroupId": "muscle-0",
+      "tags": [
+        "Petto",
+        "Chest press"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-v2-chest-convergente-inclinata.webp"
+    },
+    {
+      "id": "variant-v2-chest-convergente-declinata",
+      "name": "Chest press convergente declinata",
+      "equipment": "Macchina",
+      "muscleGroupId": "muscle-0",
+      "tags": [
+        "Petto",
+        "Chest press"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-v2-chest-convergente-declinata.webp"
+    },
+    {
+      "id": "variant-v2-chest-unilaterale",
+      "name": "Chest press orizzontale unilaterale",
+      "equipment": "Macchina",
+      "muscleGroupId": "muscle-0",
+      "tags": [
+        "Petto",
+        "Chest press"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-v2-chest-unilaterale.webp"
+    },
+    {
+      "id": "variant-v2-chest-unilaterale-inclinata",
+      "name": "Chest press inclinata unilaterale",
+      "equipment": "Macchina",
+      "muscleGroupId": "muscle-0",
+      "tags": [
+        "Petto",
+        "Chest press"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-v2-chest-unilaterale-inclinata.webp"
+    },
+    {
+      "id": "variant-v2-chest-alternata",
+      "name": "Chest press con bracci indipendenti alternata",
+      "equipment": "Macchina",
+      "muscleGroupId": "muscle-0",
+      "tags": [
+        "Petto",
+        "Chest press"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-v2-chest-alternata.webp"
+    },
+    {
+      "id": "variant-v2-chest-inclinata-neutra",
+      "name": "Chest press inclinata presa neutra",
+      "equipment": "Macchina",
+      "muscleGroupId": "muscle-0",
+      "tags": [
+        "Petto",
+        "Chest press"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-v2-chest-inclinata-neutra.webp"
+    },
+    {
+      "id": "variant-v2-chest-dischi-piana",
+      "name": "Chest press orizzontale a dischi",
+      "equipment": "Macchina a dischi",
+      "muscleGroupId": "muscle-0",
+      "tags": [
+        "Petto",
+        "Chest press"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-v2-chest-dischi-piana.webp"
+    },
+    {
+      "id": "variant-v2-chest-dischi-inclinata",
+      "name": "Chest press inclinata a dischi",
+      "equipment": "Macchina a dischi",
+      "muscleGroupId": "muscle-0",
+      "tags": [
+        "Petto",
+        "Chest press"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-v2-chest-dischi-inclinata.webp"
+    },
+    {
+      "id": "variant-v2-chest-dischi-declinata",
+      "name": "Chest press declinata a dischi",
+      "equipment": "Macchina a dischi",
+      "muscleGroupId": "muscle-0",
+      "tags": [
+        "Petto",
+        "Chest press"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-v2-chest-dischi-declinata.webp"
+    },
+    {
+      "id": "variant-v2-croci-spalle",
+      "name": "Croci ai cavi all’altezza delle spalle",
+      "equipment": "Cavi",
+      "muscleGroupId": "muscle-0",
+      "tags": [
+        "Petto",
+        "Croci ai cavi"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-v2-croci-spalle.webp"
+    },
+    {
+      "id": "variant-v2-croci-unilaterali-medie",
+      "name": "Croci al cavo unilaterali all’altezza delle spalle",
+      "equipment": "Cavi",
+      "muscleGroupId": "muscle-0",
+      "tags": [
+        "Petto",
+        "Croci ai cavi"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-v2-croci-unilaterali-medie.webp"
+    },
+    {
+      "id": "variant-v2-croci-unilaterali-basse",
+      "name": "Croci al cavo unilaterali dal basso",
+      "equipment": "Cavi",
+      "muscleGroupId": "muscle-0",
+      "tags": [
+        "Petto",
+        "Croci ai cavi"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-v2-croci-unilaterali-basse.webp"
+    },
+    {
+      "id": "variant-v2-croci-unilaterali-alte",
+      "name": "Croci al cavo unilaterali dall’alto",
+      "equipment": "Cavi",
+      "muscleGroupId": "muscle-0",
+      "tags": [
+        "Petto",
+        "Croci ai cavi"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-v2-croci-unilaterali-alte.webp"
+    },
+    {
+      "id": "variant-v2-croci-panca-piana",
+      "name": "Croci ai cavi su panca piana (0°)",
+      "equipment": "Cavi",
+      "muscleGroupId": "muscle-0",
+      "tags": [
+        "Petto",
+        "Croci ai cavi"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-v2-croci-panca-piana.webp"
+    },
+    {
+      "id": "variant-v2-croci-panca-30",
+      "name": "Croci ai cavi su panca inclinata a 30°",
+      "equipment": "Cavi",
+      "muscleGroupId": "muscle-0",
+      "tags": [
+        "Petto",
+        "Croci ai cavi"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-v2-croci-panca-30.webp"
+    },
+    {
+      "id": "variant-v2-croci-panca-45",
+      "name": "Croci ai cavi su panca inclinata a 45°",
+      "equipment": "Cavi",
+      "muscleGroupId": "muscle-0",
+      "tags": [
+        "Petto",
+        "Croci ai cavi"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-v2-croci-panca-45.webp"
+    },
+    {
+      "id": "variant-v2-croci-panca-declinata",
+      "name": "Croci ai cavi su panca declinata a −15°",
+      "equipment": "Cavi",
+      "muscleGroupId": "muscle-0",
+      "tags": [
+        "Petto",
+        "Croci ai cavi"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-v2-croci-panca-declinata.webp"
+    },
+    {
+      "id": "variant-v2-croci-seduto",
+      "name": "Croci ai cavi da seduto",
+      "equipment": "Cavi",
+      "muscleGroupId": "muscle-0",
+      "tags": [
+        "Petto",
+        "Croci ai cavi"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-v2-croci-seduto.webp"
+    },
+    {
+      "id": "variant-v2-croci-inginocchio",
+      "name": "Croci ai cavi alti in ginocchio",
+      "equipment": "Cavi",
+      "muscleGroupId": "muscle-0",
+      "tags": [
+        "Petto",
+        "Croci ai cavi"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-v2-croci-inginocchio.webp"
+    },
+    {
+      "id": "variant-v2-curl-ez",
+      "name": "Curl in piedi con bilanciere EZ",
+      "equipment": "Bilanciere EZ",
+      "muscleGroupId": "muscle-4",
+      "tags": [
+        "Braccia",
+        "Bicipiti"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-v2-curl-ez.webp"
+    },
+    {
+      "id": "variant-v2-curl-ez-stretto",
+      "name": "Curl con bilanciere EZ presa stretta",
+      "equipment": "Bilanciere EZ",
+      "muscleGroupId": "muscle-4",
+      "tags": [
+        "Braccia",
+        "Bicipiti"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-v2-curl-ez-stretto.webp"
+    },
+    {
+      "id": "variant-v2-curl-ez-largo",
+      "name": "Curl con bilanciere EZ presa larga",
+      "equipment": "Bilanciere EZ",
+      "muscleGroupId": "muscle-4",
+      "tags": [
+        "Braccia",
+        "Bicipiti"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-v2-curl-ez-largo.webp"
+    },
+    {
+      "id": "variant-v2-curl-bar-stretto",
+      "name": "Curl con bilanciere dritto presa stretta",
+      "equipment": "Bilanciere",
+      "muscleGroupId": "muscle-4",
+      "tags": [
+        "Braccia",
+        "Bicipiti"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-v2-curl-bar-stretto.webp"
+    },
+    {
+      "id": "variant-v2-curl-bar-largo",
+      "name": "Curl con bilanciere dritto presa larga",
+      "equipment": "Bilanciere",
+      "muscleGroupId": "muscle-4",
+      "tags": [
+        "Braccia",
+        "Bicipiti"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-v2-curl-bar-largo.webp"
+    },
+    {
+      "id": "variant-v2-drag-curl",
+      "name": "Drag curl con bilanciere",
+      "equipment": "Bilanciere",
+      "muscleGroupId": "muscle-4",
+      "tags": [
+        "Braccia",
+        "Bicipiti"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-v2-drag-curl.webp"
+    },
+    {
+      "id": "variant-v2-curl-db-simultaneo",
+      "name": "Curl con manubri simultaneo in piedi",
+      "equipment": "Manubri",
+      "muscleGroupId": "muscle-4",
+      "tags": [
+        "Braccia",
+        "Bicipiti"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-v2-curl-db-simultaneo.webp"
+    },
+    {
+      "id": "variant-v2-hammer-alternato",
+      "name": "Curl a martello alternato",
+      "equipment": "Manubri",
+      "muscleGroupId": "muscle-4",
+      "tags": [
+        "Braccia",
+        "Bicipiti"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-v2-hammer-alternato.webp"
+    },
+    {
+      "id": "variant-v2-hammer-seduto",
+      "name": "Curl a martello da seduto",
+      "equipment": "Manubri",
+      "muscleGroupId": "muscle-4",
+      "tags": [
+        "Braccia",
+        "Bicipiti"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-v2-hammer-seduto.webp"
+    },
+    {
+      "id": "variant-v2-hammer-incrociato",
+      "name": "Curl a martello incrociato",
+      "equipment": "Manubri",
+      "muscleGroupId": "muscle-4",
+      "tags": [
+        "Braccia",
+        "Bicipiti"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-v2-hammer-incrociato.webp"
+    },
+    {
+      "id": "variant-v2-zottman",
+      "name": "Curl Zottman con manubri",
+      "equipment": "Manubri",
+      "muscleGroupId": "muscle-4",
+      "tags": [
+        "Braccia",
+        "Bicipiti"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-v2-zottman.webp"
+    },
+    {
+      "id": "variant-v2-hammer-incline-45",
+      "name": "Curl a martello su panca inclinata a 45°",
+      "equipment": "Manubri",
+      "muscleGroupId": "muscle-4",
+      "tags": [
+        "Braccia",
+        "Bicipiti"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-v2-hammer-incline-45.webp"
+    },
+    {
+      "id": "variant-v2-curl-cavo-corda",
+      "name": "Curl al cavo basso con corda",
+      "equipment": "Cavi",
+      "muscleGroupId": "muscle-4",
+      "tags": [
+        "Braccia",
+        "Bicipiti"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-v2-curl-cavo-corda.webp"
+    },
+    {
+      "id": "variant-v2-curl-cavo-barra",
+      "name": "Curl al cavo basso con barra dritta",
+      "equipment": "Cavi",
+      "muscleGroupId": "muscle-4",
+      "tags": [
+        "Braccia",
+        "Bicipiti"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-v2-curl-cavo-barra.webp"
+    },
+    {
+      "id": "variant-v2-curl-cavo-ez",
+      "name": "Curl al cavo basso con barra EZ",
+      "equipment": "Cavi",
+      "muscleGroupId": "muscle-4",
+      "tags": [
+        "Braccia",
+        "Bicipiti"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-v2-curl-cavo-ez.webp"
+    },
+    {
+      "id": "variant-v2-curl-cavo-unilaterale",
+      "name": "Curl al cavo basso unilaterale",
+      "equipment": "Cavi",
+      "muscleGroupId": "muscle-4",
+      "tags": [
+        "Braccia",
+        "Bicipiti"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-v2-curl-cavo-unilaterale.webp"
+    },
+    {
+      "id": "variant-v2-curl-bayesian",
+      "name": "Curl al cavo dietro il corpo (Bayesian)",
+      "equipment": "Cavi",
+      "muscleGroupId": "muscle-4",
+      "tags": [
+        "Braccia",
+        "Bicipiti"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-v2-curl-bayesian.webp"
+    },
+    {
+      "id": "variant-v2-curl-cavi-alti",
+      "name": "Curl ai cavi alti a doppio bicipite",
+      "equipment": "Cavi",
+      "muscleGroupId": "muscle-4",
+      "tags": [
+        "Braccia",
+        "Bicipiti"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-v2-curl-cavi-alti.webp"
+    },
+    {
+      "id": "variant-v2-curl-cavo-inverso",
+      "name": "Curl al cavo presa prona",
+      "equipment": "Cavi",
+      "muscleGroupId": "muscle-4",
+      "tags": [
+        "Braccia",
+        "Bicipiti"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-v2-curl-cavo-inverso.webp"
+    },
+    {
+      "id": "variant-v2-scott-db-single",
+      "name": "Curl su panca Scott con manubrio unilaterale",
+      "equipment": "Manubri",
+      "muscleGroupId": "muscle-4",
+      "tags": [
+        "Braccia",
+        "Bicipiti"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-v2-scott-db-single.webp"
+    },
+    {
+      "id": "variant-v2-scott-bar",
+      "name": "Curl su panca Scott con bilanciere dritto",
+      "equipment": "Bilanciere",
+      "muscleGroupId": "muscle-4",
+      "tags": [
+        "Braccia",
+        "Bicipiti"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-v2-scott-bar.webp"
+    },
+    {
+      "id": "variant-v2-scott-cable",
+      "name": "Curl su panca Scott al cavo",
+      "equipment": "Cavi",
+      "muscleGroupId": "muscle-4",
+      "tags": [
+        "Braccia",
+        "Bicipiti"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-v2-scott-cable.webp"
+    },
+    {
+      "id": "variant-v2-scott-machine",
+      "name": "Curl alla macchina con appoggio Scott",
+      "equipment": "Macchina",
+      "muscleGroupId": "muscle-4",
+      "tags": [
+        "Braccia",
+        "Bicipiti"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-v2-scott-machine.webp"
+    },
+    {
+      "id": "variant-v2-spider-ez-45",
+      "name": "Spider curl con bilanciere EZ su panca a 45°",
+      "equipment": "Bilanciere EZ",
+      "muscleGroupId": "muscle-4",
+      "tags": [
+        "Braccia",
+        "Variante",
+        "45°",
+        "Bicipiti"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-v2-spider-ez-45.webp"
+    },
+    {
+      "id": "variant-v2-pushdown-v",
+      "name": "Pushdown con barra a V",
+      "equipment": "Cavi",
+      "muscleGroupId": "muscle-4",
+      "tags": [
+        "Braccia",
+        "Tricipiti"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-v2-pushdown-v.webp"
+    },
+    {
+      "id": "variant-v2-pushdown-ez",
+      "name": "Pushdown con barra EZ",
+      "equipment": "Cavi",
+      "muscleGroupId": "muscle-4",
+      "tags": [
+        "Braccia",
+        "Tricipiti"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-v2-pushdown-ez.webp"
+    },
+    {
+      "id": "variant-v2-pushdown-supino",
+      "name": "Pushdown con barra presa supina",
+      "equipment": "Cavi",
+      "muscleGroupId": "muscle-4",
+      "tags": [
+        "Braccia",
+        "Tricipiti"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-v2-pushdown-supino.webp"
+    },
+    {
+      "id": "variant-v2-pushdown-unilaterale-supino",
+      "name": "Pushdown unilaterale presa supina",
+      "equipment": "Cavi",
+      "muscleGroupId": "muscle-4",
+      "tags": [
+        "Braccia",
+        "Tricipiti"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-v2-pushdown-unilaterale-supino.webp"
+    },
+    {
+      "id": "variant-v2-pushdown-corda-single",
+      "name": "Pushdown con corda unilaterale",
+      "equipment": "Cavi",
+      "muscleGroupId": "muscle-4",
+      "tags": [
+        "Braccia",
+        "Tricipiti"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-v2-pushdown-corda-single.webp"
+    },
+    {
+      "id": "variant-v2-overhead-cable-bar",
+      "name": "Estensioni tricipiti sopra la testa al cavo con barra",
+      "equipment": "Cavi",
+      "muscleGroupId": "muscle-4",
+      "tags": [
+        "Braccia",
+        "Tricipiti"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-v2-overhead-cable-bar.webp"
+    },
+    {
+      "id": "variant-v2-overhead-cable-single",
+      "name": "Estensioni tricipiti sopra la testa al cavo unilaterali",
+      "equipment": "Cavi",
+      "muscleGroupId": "muscle-4",
+      "tags": [
+        "Braccia",
+        "Tricipiti"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-v2-overhead-cable-single.webp"
+    },
+    {
+      "id": "variant-v2-overhead-cable-seated",
+      "name": "Estensioni tricipiti sopra la testa al cavo da seduto",
+      "equipment": "Cavi",
+      "muscleGroupId": "muscle-4",
+      "tags": [
+        "Braccia",
+        "Tricipiti"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-v2-overhead-cable-seated.webp"
+    },
+    {
+      "id": "variant-v2-french-ez-flat",
+      "name": "French press su panca piana con bilanciere EZ",
+      "equipment": "Bilanciere EZ",
+      "muscleGroupId": "muscle-4",
+      "tags": [
+        "Braccia",
+        "Tricipiti"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-v2-french-ez-flat.webp"
+    },
+    {
+      "id": "variant-v2-french-ez-incline-30",
+      "name": "French press su panca a 30° con bilanciere EZ",
+      "equipment": "Bilanciere EZ",
+      "muscleGroupId": "muscle-4",
+      "tags": [
+        "Braccia",
+        "Tricipiti"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-v2-french-ez-incline-30.webp"
+    },
+    {
+      "id": "variant-v2-french-db-flat",
+      "name": "French press su panca piana con manubri",
+      "equipment": "Manubri",
+      "muscleGroupId": "muscle-4",
+      "tags": [
+        "Braccia",
+        "Tricipiti"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-v2-french-db-flat.webp"
+    },
+    {
+      "id": "variant-v2-french-db-incline-45",
+      "name": "French press su panca a 45° con manubri",
+      "equipment": "Manubri",
+      "muscleGroupId": "muscle-4",
+      "tags": [
+        "Braccia",
+        "Tricipiti"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-v2-french-db-incline-45.webp"
+    },
+    {
+      "id": "variant-v2-french-cable",
+      "name": "French press su panca piana al cavo",
+      "equipment": "Cavi",
+      "muscleGroupId": "muscle-4",
+      "tags": [
+        "Braccia",
+        "Tricipiti"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-v2-french-cable.webp"
+    },
+    {
+      "id": "variant-v2-french-ez-seated",
+      "name": "French press sopra la testa da seduto con bilanciere EZ",
+      "equipment": "Bilanciere EZ",
+      "muscleGroupId": "muscle-4",
+      "tags": [
+        "Braccia",
+        "Tricipiti"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-v2-french-ez-seated.webp"
+    },
+    {
+      "id": "variant-v2-kickback-cable",
+      "name": "Kickback tricipiti al cavo unilaterale",
+      "equipment": "Cavi",
+      "muscleGroupId": "muscle-4",
+      "tags": [
+        "Braccia",
+        "Tricipiti"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-v2-kickback-cable.webp"
+    },
+    {
+      "id": "variant-v2-triceps-crossbody",
+      "name": "Estensioni tricipiti al cavo incrociate davanti al corpo",
+      "equipment": "Cavi",
+      "muscleGroupId": "muscle-4",
+      "tags": [
+        "Braccia",
+        "Tricipiti"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-v2-triceps-crossbody.webp"
+    },
+    {
+      "id": "variant-v2-triceps-machine",
+      "name": "Estensioni tricipiti alla macchina con appoggio gomiti",
+      "equipment": "Macchina",
+      "muscleGroupId": "muscle-4",
+      "tags": [
+        "Braccia",
+        "Tricipiti"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-v2-triceps-machine.webp"
+    },
+    {
+      "id": "variant-v2-dip-parallele",
+      "name": "Dip alle parallele per tricipiti",
+      "equipment": "Parallele",
+      "muscleGroupId": "muscle-4",
+      "tags": [
+        "Braccia",
+        "Tricipiti"
+      ],
+      "loadMode": "bodyweight",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-v2-dip-parallele.webp"
+    },
+    {
+      "id": "variant-v2-dip-assisted",
+      "name": "Dip alla macchina assistita",
+      "equipment": "Macchina assistita",
+      "muscleGroupId": "muscle-4",
+      "tags": [
+        "Braccia",
+        "Tricipiti"
+      ],
+      "loadMode": "assisted",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-v2-dip-assisted.webp"
+    },
+    {
+      "id": "variant-v2-dip-weighted",
+      "name": "Dip alle parallele con zavorra",
+      "equipment": "Parallele",
+      "muscleGroupId": "muscle-4",
+      "tags": [
+        "Braccia",
+        "Tricipiti"
+      ],
+      "loadMode": "weighted-bodyweight",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-v2-dip-weighted.webp"
+    },
+    {
+      "id": "variant-v2-pulley-unilaterale",
+      "name": "Pulley al cavo unilaterale",
+      "equipment": "Cavi",
+      "muscleGroupId": "muscle-1",
+      "tags": [
+        "Schiena"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-v2-pulley-unilaterale.webp"
+    },
+    {
+      "id": "variant-v2-pulley-supino",
+      "name": "Pulley presa supina",
+      "equipment": "Cavi",
+      "muscleGroupId": "muscle-1",
+      "tags": [
+        "Schiena"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-v2-pulley-supino.webp"
+    },
+    {
+      "id": "variant-v2-row-dischi",
+      "name": "Rematore alla macchina a dischi",
+      "equipment": "Macchina a dischi",
+      "muscleGroupId": "muscle-1",
+      "tags": [
+        "Schiena"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-v2-row-dischi.webp"
+    },
+    {
+      "id": "variant-v2-pullover-cable-rope",
+      "name": "Pullover al cavo alto con corda",
+      "equipment": "Cavi",
+      "muscleGroupId": "muscle-1",
+      "tags": [
+        "Schiena"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-v2-pullover-cable-rope.webp"
+    },
+    {
+      "id": "variant-v2-lateral-machine",
+      "name": "Alzate laterali alla macchina",
+      "equipment": "Macchina",
+      "muscleGroupId": "muscle-2",
+      "tags": [
+        "Spalle"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-v2-lateral-machine.webp"
+    },
+    {
+      "id": "variant-v2-legpress-horizontal",
+      "name": "Leg press orizzontale",
+      "equipment": "Macchina",
+      "muscleGroupId": "muscle-3",
+      "tags": [
+        "Gambe"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-v2-legpress-horizontal.webp"
+    },
+    {
+      "id": "variant-v2-legpress-45",
+      "name": "Leg press inclinata a 45°",
+      "equipment": "Macchina",
+      "muscleGroupId": "muscle-3",
+      "tags": [
+        "Gambe"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-v2-legpress-45.webp"
+    },
+    {
+      "id": "variant-v2-smith-squat",
+      "name": "Squat al multipower",
+      "equipment": "Multipower",
+      "muscleGroupId": "muscle-3",
+      "tags": [
+        "Gambe"
+      ],
+      "loadMode": "external",
+      "status": "TODO_GENERATE_AND_VALIDATE",
+      "file": "public/training/figures/specific/variant-v2-smith-squat.webp"
+    }
+  ]
+}
