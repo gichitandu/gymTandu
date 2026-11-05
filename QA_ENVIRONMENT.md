@@ -18,6 +18,12 @@ Questo SHA identifica SOLO il punto di partenza; le successive modifiche sul bra
 
 Questa regola prevale su eventuali preferenze generiche di generare concept visuali. Gli screenshot di riferimento QA sono prodotti da `tests/runtime/qa-screenshots.mjs` e allegati al workflow `qa-visual.yml`.
 
+## Asset visivi intoccabili senza autorizzazione esplicita
+
+**Regola inderogabile del proprietario (5 novembre 2026):** il **logo originale dell'app GymTrack** e le **illustrazioni/omini (anche stilizzati o generati artificialmente) che rappresentano gli esercizi** non devono **mai** essere modificati, ridisegnati, rigenerati, ricolorati, sostituiti, reinterpretati o alterati nelle proposte UI, negli screenshot editati o nel codice **senza una richiesta esplicita e specifica del proprietario**. Non inventare varianti del logo né figure di esercizi durante la creazione di anteprime. Anche modifiche estetiche indirette a tali asset sono fuori ambito per impostazione predefinita. Nelle anteprime dell'interfaccia, mantenere gli elementi originali invariati e riconoscibili (o usare screenshot reali non modificati).
+
+Gli altri miglioramenti UI devono essere incrementali, basati su screenshot reali di QA, e non alterare né gli asset protetti né le funzionalità esistenti. **Non allineare QA e produzione senza richiesta esplicita**, come specificato di seguito.
+
 ## Regola vincolante richiesta dal proprietario
 
 **Non allineare, rebasare, sincronizzare, sovrascrivere o integrare l'ambiente di prova con l'app effettiva (in nessuna direzione) fino a una richiesta esplicita del proprietario.** Questo include merge da/verso il branch principale, deploy in produzione e sostituzione di dati, account, backup o screenshot.
