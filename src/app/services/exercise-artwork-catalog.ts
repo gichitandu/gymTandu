@@ -1,0 +1,1221 @@
+/** Reviewed catalog illustrations. Keep stable IDs and exact name/equipment guards.
+ * Original art and animation assets remain available as family fallbacks.
+ * Artwork provenance: docs/RELEASE_2026-11-05.md.
+ */
+export const CATALOG_EXERCISE_ARTWORK: Readonly<Record<string, Readonly<{name:string;equipment:string;file:string}>>> = {
+  "exercise-1": {
+    "name": "Panca inclinata con manubri (angolo libero)",
+    "equipment": "Manubri",
+    "file": "catalog-v1/exercise-1"
+  },
+  "exercise-3": {
+    "name": "Chest press",
+    "equipment": "Macchina",
+    "file": "catalog-v1/exercise-3"
+  },
+  "exercise-4": {
+    "name": "Lat machine",
+    "equipment": "Cavi",
+    "file": "catalog-v1/exercise-4"
+  },
+  "exercise-5": {
+    "name": "Rematore bilanciere",
+    "equipment": "Bilanciere",
+    "file": "catalog-v1/exercise-5"
+  },
+  "exercise-6": {
+    "name": "Pulley",
+    "equipment": "Cavi",
+    "file": "catalog-v1/exercise-6"
+  },
+  "exercise-7": {
+    "name": "Trazioni alla sbarra",
+    "equipment": "Sbarra",
+    "file": "catalog-v1/exercise-7"
+  },
+  "exercise-10": {
+    "name": "Alzate posteriori",
+    "equipment": "Manubri",
+    "file": "catalog-v1/exercise-10"
+  },
+  "exercise-11": {
+    "name": "Squat",
+    "equipment": "Bilanciere",
+    "file": "catalog-v1/exercise-11"
+  },
+  "exercise-12": {
+    "name": "Leg press",
+    "equipment": "Macchina",
+    "file": "catalog-v1/exercise-12"
+  },
+  "exercise-13": {
+    "name": "Leg extension",
+    "equipment": "Macchina",
+    "file": "catalog-v1/exercise-13"
+  },
+  "exercise-14": {
+    "name": "Leg curl",
+    "equipment": "Macchina",
+    "file": "catalog-v1/exercise-14"
+  },
+  "exercise-15": {
+    "name": "Stacco rumeno",
+    "equipment": "Bilanciere",
+    "file": "catalog-v1/exercise-15"
+  },
+  "exercise-16": {
+    "name": "Curl bilanciere",
+    "equipment": "Bilanciere",
+    "file": "catalog-v1/exercise-16"
+  },
+  "exercise-17": {
+    "name": "Curl manubri",
+    "equipment": "Manubri",
+    "file": "catalog-v1/exercise-17"
+  },
+  "exercise-18": {
+    "name": "Pushdown cavo",
+    "equipment": "Cavi",
+    "file": "catalog-v1/exercise-18"
+  },
+  "exercise-19": {
+    "name": "French press",
+    "equipment": "Bilanciere",
+    "file": "catalog-v1/exercise-19"
+  },
+  "exercise-20": {
+    "name": "Crunch",
+    "equipment": "Corpo libero",
+    "file": "catalog-v1/exercise-20"
+  },
+  "library-barbell_incline_bench_press": {
+    "name": "Panca inclinata bilanciere",
+    "equipment": "Bilanciere",
+    "file": "catalog-v1/library-barbell_incline_bench_press"
+  },
+  "library-dumbbells_dumbbell_bench_press": {
+    "name": "Panca piana con manubri (0°)",
+    "equipment": "Manubri",
+    "file": "catalog-v1/library-dumbbells_dumbbell_bench_press"
+  },
+  "library-dumbbells_dumbbell_flyes": {
+    "name": "Croci manubri",
+    "equipment": "Manubri",
+    "file": "catalog-v1/library-dumbbells_dumbbell_flyes"
+  },
+  "library-dumbbells_incline_dumbbell_flyes": {
+    "name": "Croci su panca inclinata",
+    "equipment": "Manubri",
+    "file": "catalog-v1/library-dumbbells_incline_dumbbell_flyes"
+  },
+  "library-machine_butterfly": {
+    "name": "Pectoral machine",
+    "equipment": "Macchina",
+    "file": "catalog-v1/library-machine_butterfly"
+  },
+  "library-bodyweight_push_ups": {
+    "name": "Piegamenti a terra",
+    "equipment": "Corpo libero",
+    "file": "catalog-v1/library-bodyweight_push_ups"
+  },
+  "library-bodyweight_diamond_push_ups": {
+    "name": "Piegamenti a presa stretta",
+    "equipment": "Corpo libero",
+    "file": "catalog-v1/library-bodyweight_diamond_push_ups"
+  },
+  "library-dumbbells_straight_arm_dumbbell_pullover": {
+    "name": "Pullover manubrio",
+    "equipment": "Manubri",
+    "file": "catalog-v1/library-dumbbells_straight_arm_dumbbell_pullover"
+  },
+  "library-machine_dip_machine": {
+    "name": "Dip alla macchina",
+    "equipment": "Macchina",
+    "file": "catalog-v1/library-machine_dip_machine"
+  },
+  "library-barbell_deadlift": {
+    "name": "Stacco da terra",
+    "equipment": "Bilanciere",
+    "file": "catalog-v1/library-barbell_deadlift"
+  },
+  "library-dumbbells_one_arm_dumbbell_row": {
+    "name": "Rematore manubrio",
+    "equipment": "Manubri",
+    "file": "catalog-v1/library-dumbbells_one_arm_dumbbell_row"
+  },
+  "library-cable_close_grip_front_lat_pulldown": {
+    "name": "Lat machine presa stretta",
+    "equipment": "Cavi",
+    "file": "catalog-v1/library-cable_close_grip_front_lat_pulldown"
+  },
+  "library-cable_straight_arm_pulldown": {
+    "name": "Pulldown braccia tese",
+    "equipment": "Cavi",
+    "file": "catalog-v1/library-cable_straight_arm_pulldown"
+  },
+  "library-machine_leverage_iso_row": {
+    "name": "Rematore alla macchina",
+    "equipment": "Macchina",
+    "file": "catalog-v1/library-machine_leverage_iso_row"
+  },
+  "library-bodyweight_inverted_row": {
+    "name": "Rematore a corpo libero",
+    "equipment": "Corpo libero",
+    "file": "catalog-v1/library-bodyweight_inverted_row"
+  },
+  "library-bodyweight_back_extension": {
+    "name": "Estensioni lombari",
+    "equipment": "Corpo libero",
+    "file": "catalog-v1/library-bodyweight_back_extension"
+  },
+  "library-cable_one_arm_lat_pulldown": {
+    "name": "Lat machine unilaterale",
+    "equipment": "Cavi",
+    "file": "catalog-v1/library-cable_one_arm_lat_pulldown"
+  },
+  "library-barbell_shrug": {
+    "name": "Scrollate bilanciere",
+    "equipment": "Bilanciere",
+    "file": "catalog-v1/library-barbell_shrug"
+  },
+  "library-barbell_overhead_press": {
+    "name": "Military press",
+    "equipment": "Bilanciere",
+    "file": "catalog-v1/library-barbell_overhead_press"
+  },
+  "library-dumbbells_arnold_press": {
+    "name": "Arnold press",
+    "equipment": "Manubri",
+    "file": "catalog-v1/library-dumbbells_arnold_press"
+  },
+  "library-dumbbells_front_dumbbell_raise": {
+    "name": "Alzate frontali",
+    "equipment": "Manubri",
+    "file": "catalog-v1/library-dumbbells_front_dumbbell_raise"
+  },
+  "library-cable_face_pull": {
+    "name": "Face pull",
+    "equipment": "Cavi",
+    "file": "catalog-v1/library-cable_face_pull"
+  },
+  "library-cable_standing_low_pulley_deltoid_raise": {
+    "name": "Alzate laterali al cavo",
+    "equipment": "Cavi",
+    "file": "catalog-v1/library-cable_standing_low_pulley_deltoid_raise"
+  },
+  "library-machine_shoulder_military_press": {
+    "name": "Shoulder press macchina",
+    "equipment": "Macchina",
+    "file": "catalog-v1/library-machine_shoulder_military_press"
+  },
+  "library-barbell_upright_row": {
+    "name": "Tirate al mento",
+    "equipment": "Bilanciere",
+    "file": "catalog-v1/library-barbell_upright_row"
+  },
+  "library-dumbbells_external_rotation": {
+    "name": "Extrarotazioni con manubrio",
+    "equipment": "Manubri",
+    "file": "catalog-v1/library-dumbbells_external_rotation"
+  },
+  "library-barbell_front_squat": {
+    "name": "Front squat",
+    "equipment": "Bilanciere",
+    "file": "catalog-v1/library-barbell_front_squat"
+  },
+  "library-dumbbells_db_goblet_squat": {
+    "name": "Goblet squat",
+    "equipment": "Manubri",
+    "file": "catalog-v1/library-dumbbells_db_goblet_squat"
+  },
+  "library-barbell_bulgarian_split_squat": {
+    "name": "Squat bulgaro",
+    "equipment": "Bilanciere",
+    "file": "catalog-v1/library-barbell_bulgarian_split_squat"
+  },
+  "library-dumbbells_lunges": {
+    "name": "Affondi con manubri",
+    "equipment": "Manubri",
+    "file": "catalog-v1/library-dumbbells_lunges"
+  },
+  "library-dumbbells_weighted_step_ups": {
+    "name": "Step-up con manubri",
+    "equipment": "Manubri",
+    "file": "catalog-v1/library-dumbbells_weighted_step_ups"
+  },
+  "library-machine_hack_squat": {
+    "name": "Hack squat",
+    "equipment": "Macchina",
+    "file": "catalog-v1/library-machine_hack_squat"
+  },
+  "library-machine_seated_leg_curl": {
+    "name": "Leg curl seduto",
+    "equipment": "Macchina",
+    "file": "catalog-v1/library-machine_seated_leg_curl"
+  },
+  "library-barbell_sumo_deadlift": {
+    "name": "Stacco sumo",
+    "equipment": "Bilanciere",
+    "file": "catalog-v1/library-barbell_sumo_deadlift"
+  },
+  "library-machine_thigh_adductor": {
+    "name": "Adductor machine",
+    "equipment": "Macchina",
+    "file": "catalog-v1/library-machine_thigh_adductor"
+  },
+  "library-bodyweight_air_squats": {
+    "name": "Squat a corpo libero",
+    "equipment": "Corpo libero",
+    "file": "catalog-v1/library-bodyweight_air_squats"
+  },
+  "library-bodyweight_reverse_lunges": {
+    "name": "Affondi indietro",
+    "equipment": "Corpo libero",
+    "file": "catalog-v1/library-bodyweight_reverse_lunges"
+  },
+  "library-dumbbells_db_hammer_curl": {
+    "name": "Hammer curl",
+    "equipment": "Manubri",
+    "file": "catalog-v1/library-dumbbells_db_hammer_curl"
+  },
+  "library-ez_bar_preacher_curl": {
+    "name": "Curl panca Scott",
+    "equipment": "Bilanciere EZ",
+    "file": "catalog-v1/library-ez_bar_preacher_curl"
+  },
+  "library-dumbbells_incline_dumbbell_curl": {
+    "name": "Curl su panca inclinata",
+    "equipment": "Manubri",
+    "file": "catalog-v1/library-dumbbells_incline_dumbbell_curl"
+  },
+  "library-dumbbells_concentration_curls": {
+    "name": "Curl concentrato",
+    "equipment": "Manubri",
+    "file": "catalog-v1/library-dumbbells_concentration_curls"
+  },
+  "library-cable_standing_biceps_cable_curl": {
+    "name": "Curl al cavo",
+    "equipment": "Cavi",
+    "file": "catalog-v1/library-cable_standing_biceps_cable_curl"
+  },
+  "library-barbell_reverse_barbell_curl": {
+    "name": "Curl inverso",
+    "equipment": "Bilanciere",
+    "file": "catalog-v1/library-barbell_reverse_barbell_curl"
+  },
+  "library-cable_rope_overhead_triceps_extension": {
+    "name": "Estensioni tricipiti sopra la testa al cavo",
+    "equipment": "Cavi",
+    "file": "catalog-v1/library-cable_rope_overhead_triceps_extension"
+  },
+  "library-dumbbells_db_overhead_tricep_extension": {
+    "name": "Estensioni tricipiti manubrio",
+    "equipment": "Manubri",
+    "file": "catalog-v1/library-dumbbells_db_overhead_tricep_extension"
+  },
+  "library-dumbbells_tricep_dumbbell_kickback": {
+    "name": "Kickback tricipiti",
+    "equipment": "Manubri",
+    "file": "catalog-v1/library-dumbbells_tricep_dumbbell_kickback"
+  },
+  "library-barbell_close_grip_bench_press": {
+    "name": "Panca presa stretta",
+    "equipment": "Bilanciere",
+    "file": "catalog-v1/library-barbell_close_grip_bench_press"
+  },
+  "library-bodyweight_tricep_dips": {
+    "name": "Dip su panca",
+    "equipment": "Corpo libero",
+    "file": "catalog-v1/library-bodyweight_tricep_dips"
+  },
+  "library-dumbbells_palms_up_dumbbell_wrist_curl_over_a_bench": {
+    "name": "Wrist curl avambracci",
+    "equipment": "Manubri",
+    "file": "catalog-v1/library-dumbbells_palms_up_dumbbell_wrist_curl_over_a_bench"
+  },
+  "library-bodyweight_plank": {
+    "name": "Plank",
+    "equipment": "Corpo libero",
+    "file": "catalog-v1/library-bodyweight_plank"
+  },
+  "library-bodyweight_side_plank": {
+    "name": "Plank laterale",
+    "equipment": "Corpo libero",
+    "file": "catalog-v1/library-bodyweight_side_plank"
+  },
+  "library-bodyweight_reverse_crunches": {
+    "name": "Crunch inverso",
+    "equipment": "Corpo libero",
+    "file": "catalog-v1/library-bodyweight_reverse_crunches"
+  },
+  "library-bodyweight_bicycle_crunches": {
+    "name": "Bicycle crunch",
+    "equipment": "Corpo libero",
+    "file": "catalog-v1/library-bodyweight_bicycle_crunches"
+  },
+  "library-bodyweight_leg_raises": {
+    "name": "Sollevamento gambe",
+    "equipment": "Corpo libero",
+    "file": "catalog-v1/library-bodyweight_leg_raises"
+  },
+  "library-cable_crunch": {
+    "name": "Crunch al cavo",
+    "equipment": "Cavi",
+    "file": "catalog-v1/library-cable_crunch"
+  },
+  "library-bodyweight_dead_bug": {
+    "name": "Dead bug",
+    "equipment": "Corpo libero",
+    "file": "catalog-v1/library-bodyweight_dead_bug"
+  },
+  "library-bodyweight_bird_dog": {
+    "name": "Bird dog",
+    "equipment": "Corpo libero",
+    "file": "catalog-v1/library-bodyweight_bird_dog"
+  },
+  "library-bodyweight_russian_twist": {
+    "name": "Russian twist",
+    "equipment": "Corpo libero",
+    "file": "catalog-v1/library-bodyweight_russian_twist"
+  },
+  "library-bodyweight_mountain_climbers": {
+    "name": "Mountain climber",
+    "equipment": "Corpo libero",
+    "file": "catalog-v1/library-bodyweight_mountain_climbers"
+  },
+  "library-ab_wheel_wall_rollout": {
+    "name": "Ab wheel alla parete",
+    "equipment": "Ruota addominali",
+    "file": "catalog-v1/library-ab_wheel_wall_rollout"
+  },
+  "library-barbell_hip_thrust": {
+    "name": "Hip thrust",
+    "equipment": "Bilanciere",
+    "file": "catalog-v1/library-barbell_hip_thrust"
+  },
+  "library-barbell_glute_bridge": {
+    "name": "Ponte glutei con bilanciere",
+    "equipment": "Bilanciere",
+    "file": "catalog-v1/library-barbell_glute_bridge"
+  },
+  "library-bodyweight_glute_bridge": {
+    "name": "Ponte glutei",
+    "equipment": "Corpo libero",
+    "file": "catalog-v1/library-bodyweight_glute_bridge"
+  },
+  "library-bodyweight_single_leg_glute_bridge": {
+    "name": "Ponte glutei su una gamba",
+    "equipment": "Corpo libero",
+    "file": "catalog-v1/library-bodyweight_single_leg_glute_bridge"
+  },
+  "library-cable_one_legged_cable_kickback": {
+    "name": "Slanci glutei al cavo",
+    "equipment": "Cavi",
+    "file": "catalog-v1/library-cable_one_legged_cable_kickback"
+  },
+  "library-machine_thigh_abductor": {
+    "name": "Abductor machine",
+    "equipment": "Macchina",
+    "file": "catalog-v1/library-machine_thigh_abductor"
+  },
+  "library-cable_pull_through": {
+    "name": "Pull-through al cavo",
+    "equipment": "Cavi",
+    "file": "catalog-v1/library-cable_pull_through"
+  },
+  "library-bodyweight_donkey_kicks": {
+    "name": "Donkey kick",
+    "equipment": "Corpo libero",
+    "file": "catalog-v1/library-bodyweight_donkey_kicks"
+  },
+  "library-machine_standing_calf_raises": {
+    "name": "Calf raise in piedi",
+    "equipment": "Macchina",
+    "file": "catalog-v1/library-machine_standing_calf_raises"
+  },
+  "library-machine_seated_calf_raise": {
+    "name": "Calf raise seduto",
+    "equipment": "Macchina",
+    "file": "catalog-v1/library-machine_seated_calf_raise"
+  },
+  "library-machine_calf_press_leg_press": {
+    "name": "Calf press alla leg press",
+    "equipment": "Macchina",
+    "file": "catalog-v1/library-machine_calf_press_leg_press"
+  },
+  "library-bodyweight_standing_calf_raise": {
+    "name": "Calf raise a corpo libero",
+    "equipment": "Corpo libero",
+    "file": "catalog-v1/library-bodyweight_standing_calf_raise"
+  },
+  "library-dumbbells_standing_dumbbell_calf_raise": {
+    "name": "Calf raise con manubri",
+    "equipment": "Manubri",
+    "file": "catalog-v1/library-dumbbells_standing_dumbbell_calf_raise"
+  },
+  "variant-db-bench-15": {
+    "name": "Panca inclinata con manubri a 15°",
+    "equipment": "Manubri",
+    "file": "catalog-v1/variant-db-bench-15"
+  },
+  "variant-db-bench-45": {
+    "name": "Panca inclinata con manubri a 45°",
+    "equipment": "Manubri",
+    "file": "catalog-v1/variant-db-bench-45"
+  },
+  "variant-db-bench-60": {
+    "name": "Panca inclinata con manubri a 60°",
+    "equipment": "Manubri",
+    "file": "catalog-v1/variant-db-bench-60"
+  },
+  "variant-db-bench-decline-15": {
+    "name": "Panca declinata con manubri a −15°",
+    "equipment": "Manubri",
+    "file": "catalog-v1/variant-db-bench-decline-15"
+  },
+  "variant-db-bench-decline-30": {
+    "name": "Panca declinata con manubri a −30°",
+    "equipment": "Manubri",
+    "file": "catalog-v1/variant-db-bench-decline-30"
+  },
+  "variant-db-bench-neutral-0": {
+    "name": "Panca piana con manubri, presa neutra",
+    "equipment": "Manubri",
+    "file": "catalog-v1/variant-db-bench-neutral-0"
+  },
+  "variant-db-bench-neutral-30": {
+    "name": "Panca inclinata a 30° con manubri, presa neutra",
+    "equipment": "Manubri",
+    "file": "catalog-v1/variant-db-bench-neutral-30"
+  },
+  "variant-db-bench-neutral-45": {
+    "name": "Panca inclinata a 45° con manubri, presa neutra",
+    "equipment": "Manubri",
+    "file": "catalog-v1/variant-db-bench-neutral-45"
+  },
+  "variant-db-bench-alternate": {
+    "name": "Panca piana con manubri alternata",
+    "equipment": "Manubri",
+    "file": "catalog-v1/variant-db-bench-alternate"
+  },
+  "variant-db-bench-single": {
+    "name": "Panca piana con un manubrio",
+    "equipment": "Manubri",
+    "file": "catalog-v1/variant-db-bench-single"
+  },
+  "variant-db-floor-press": {
+    "name": "Distensioni con manubri a terra",
+    "equipment": "Manubri",
+    "file": "catalog-v1/variant-db-floor-press"
+  },
+  "variant-db-squeeze-press": {
+    "name": "Squeeze press con manubri su panca piana",
+    "equipment": "Manubri",
+    "file": "catalog-v1/variant-db-squeeze-press"
+  },
+  "variant-db-fly-0": {
+    "name": "Croci con manubri su panca piana (0°)",
+    "equipment": "Manubri",
+    "file": "catalog-v1/variant-db-fly-0"
+  },
+  "variant-db-fly-30": {
+    "name": "Croci con manubri su panca a 30°",
+    "equipment": "Manubri",
+    "file": "catalog-v1/variant-db-fly-30"
+  },
+  "variant-db-fly-45": {
+    "name": "Croci con manubri su panca a 45°",
+    "equipment": "Manubri",
+    "file": "catalog-v1/variant-db-fly-45"
+  },
+  "variant-barbell-bench-15": {
+    "name": "Panca inclinata con bilanciere a 15°",
+    "equipment": "Bilanciere",
+    "file": "catalog-v1/variant-barbell-bench-15"
+  },
+  "variant-barbell-bench-30": {
+    "name": "Panca inclinata con bilanciere a 30°",
+    "equipment": "Bilanciere",
+    "file": "catalog-v1/variant-barbell-bench-30"
+  },
+  "variant-barbell-bench-45": {
+    "name": "Panca inclinata con bilanciere a 45°",
+    "equipment": "Bilanciere",
+    "file": "catalog-v1/variant-barbell-bench-45"
+  },
+  "variant-smith-bench-0": {
+    "name": "Panca al multipower piana (0°)",
+    "equipment": "Multipower",
+    "file": "catalog-v1/variant-smith-bench-0"
+  },
+  "variant-smith-bench-30": {
+    "name": "Panca al multipower a 30°",
+    "equipment": "Multipower",
+    "file": "catalog-v1/variant-smith-bench-30"
+  },
+  "variant-smith-bench-45": {
+    "name": "Panca al multipower a 45°",
+    "equipment": "Multipower",
+    "file": "catalog-v1/variant-smith-bench-45"
+  },
+  "variant-cable-fly-low": {
+    "name": "Croci ai cavi dal basso verso l’alto",
+    "equipment": "Cavi",
+    "file": "catalog-v1/variant-cable-fly-low"
+  },
+  "variant-cable-fly-high": {
+    "name": "Croci ai cavi dall’alto verso il basso",
+    "equipment": "Cavi",
+    "file": "catalog-v1/variant-cable-fly-high"
+  },
+  "variant-incline-chest-machine": {
+    "name": "Chest press inclinata alla macchina",
+    "equipment": "Macchina",
+    "file": "catalog-v1/variant-incline-chest-machine"
+  },
+  "variant-lat-supinated": {
+    "name": "Lat machine presa supina",
+    "equipment": "Cavi",
+    "file": "catalog-v1/variant-lat-supinated"
+  },
+  "variant-lat-neutral": {
+    "name": "Lat machine presa neutra",
+    "equipment": "Cavi",
+    "file": "catalog-v1/variant-lat-neutral"
+  },
+  "variant-row-wide": {
+    "name": "Pulley presa prona larga",
+    "equipment": "Cavi",
+    "file": "catalog-v1/variant-row-wide"
+  },
+  "variant-pullup-neutral": {
+    "name": "Trazioni presa neutra",
+    "equipment": "Sbarra",
+    "file": "catalog-v1/variant-pullup-neutral"
+  },
+  "variant-pullup-supinated": {
+    "name": "Trazioni presa supina",
+    "equipment": "Sbarra",
+    "file": "catalog-v1/variant-pullup-supinated"
+  },
+  "variant-lateral-seated": {
+    "name": "Alzate laterali con manubri da seduto",
+    "equipment": "Manubri",
+    "file": "catalog-v1/variant-lateral-seated"
+  },
+  "variant-lateral-cable-behind": {
+    "name": "Alzate laterali al cavo dietro il corpo",
+    "equipment": "Cavi",
+    "file": "catalog-v1/variant-lateral-cable-behind"
+  },
+  "variant-rear-fly-supported": {
+    "name": "Alzate posteriori con petto su panca",
+    "equipment": "Manubri",
+    "file": "catalog-v1/variant-rear-fly-supported"
+  },
+  "variant-squat-high-bar": {
+    "name": "Squat con bilanciere alto",
+    "equipment": "Bilanciere",
+    "file": "catalog-v1/variant-squat-high-bar"
+  },
+  "variant-squat-low-bar": {
+    "name": "Squat con bilanciere basso",
+    "equipment": "Bilanciere",
+    "file": "catalog-v1/variant-squat-low-bar"
+  },
+  "variant-box-squat": {
+    "name": "Box squat con bilanciere",
+    "equipment": "Bilanciere",
+    "file": "catalog-v1/variant-box-squat"
+  },
+  "variant-legpress-single": {
+    "name": "Leg press unilaterale",
+    "equipment": "Macchina",
+    "file": "catalog-v1/variant-legpress-single"
+  },
+  "variant-legpress-wide": {
+    "name": "Leg press piedi larghi",
+    "equipment": "Macchina",
+    "file": "catalog-v1/variant-legpress-wide"
+  },
+  "variant-legpress-narrow": {
+    "name": "Leg press piedi stretti",
+    "equipment": "Macchina",
+    "file": "catalog-v1/variant-legpress-narrow"
+  },
+  "variant-legcurl-lying": {
+    "name": "Leg curl sdraiato",
+    "equipment": "Macchina",
+    "file": "catalog-v1/variant-legcurl-lying"
+  },
+  "variant-legextension-single": {
+    "name": "Leg extension unilaterale",
+    "equipment": "Macchina",
+    "file": "catalog-v1/variant-legextension-single"
+  },
+  "variant-lunge-walking": {
+    "name": "Affondi camminati con manubri",
+    "equipment": "Manubri",
+    "file": "catalog-v1/variant-lunge-walking"
+  },
+  "variant-lunge-reverse": {
+    "name": "Affondi indietro con manubri",
+    "equipment": "Manubri",
+    "file": "catalog-v1/variant-lunge-reverse"
+  },
+  "variant-lunge-lateral": {
+    "name": "Affondi laterali con manubri",
+    "equipment": "Manubri",
+    "file": "catalog-v1/variant-lunge-lateral"
+  },
+  "variant-rdl-single": {
+    "name": "Stacco rumeno con un manubrio su una gamba",
+    "equipment": "Manubri",
+    "file": "catalog-v1/variant-rdl-single"
+  },
+  "variant-curl-alternate": {
+    "name": "Curl con manubri alternato",
+    "equipment": "Manubri",
+    "file": "catalog-v1/variant-curl-alternate"
+  },
+  "variant-curl-seated": {
+    "name": "Curl con manubri da seduto",
+    "equipment": "Manubri",
+    "file": "catalog-v1/variant-curl-seated"
+  },
+  "variant-pushdown-rope": {
+    "name": "Pushdown con corda",
+    "equipment": "Cavi",
+    "file": "catalog-v1/variant-pushdown-rope"
+  },
+  "variant-pushdown-bar": {
+    "name": "Pushdown con barra dritta",
+    "equipment": "Cavi",
+    "file": "catalog-v1/variant-pushdown-bar"
+  },
+  "variant-pushdown-single": {
+    "name": "Pushdown al cavo unilaterale",
+    "equipment": "Cavi",
+    "file": "catalog-v1/variant-pushdown-single"
+  },
+  "variant-triceps-single": {
+    "name": "Estensioni tricipiti sopra la testa con un manubrio, unilaterali",
+    "equipment": "Manubri",
+    "file": "catalog-v1/variant-triceps-single"
+  },
+  "variant-hipthrust-single": {
+    "name": "Hip thrust con bilanciere a una gamba",
+    "equipment": "Bilanciere",
+    "file": "catalog-v1/variant-hipthrust-single"
+  },
+  "variant-plank-shoulder-tap": {
+    "name": "Plank con tocco delle spalle",
+    "equipment": "Corpo libero",
+    "file": "catalog-v1/variant-plank-shoulder-tap"
+  },
+  "variant-calf-standing-single": {
+    "name": "Calf raise alla macchina in piedi unilaterale",
+    "equipment": "Macchina",
+    "file": "catalog-v1/variant-calf-standing-single"
+  },
+  "variant-row-supported-30": {
+    "name": "Rematore con manubri con petto su panca a 30°",
+    "equipment": "Manubri",
+    "file": "catalog-v1/variant-row-supported-30"
+  },
+  "variant-row-supported-45": {
+    "name": "Rematore con manubri con petto su panca a 45°",
+    "equipment": "Manubri",
+    "file": "catalog-v1/variant-row-supported-45"
+  },
+  "variant-shoulder-press-75": {
+    "name": "Spinte spalle con manubri da seduto a 75°",
+    "equipment": "Manubri",
+    "file": "catalog-v1/variant-shoulder-press-75"
+  },
+  "variant-shoulder-press-90": {
+    "name": "Spinte spalle con manubri da seduto a 90°",
+    "equipment": "Manubri",
+    "file": "catalog-v1/variant-shoulder-press-90"
+  },
+  "variant-incline-curl-45": {
+    "name": "Curl con manubri su panca a 45°",
+    "equipment": "Manubri",
+    "file": "catalog-v1/variant-incline-curl-45"
+  },
+  "variant-incline-curl-60": {
+    "name": "Curl con manubri su panca a 60°",
+    "equipment": "Manubri",
+    "file": "catalog-v1/variant-incline-curl-60"
+  },
+  "variant-spider-curl-30": {
+    "name": "Spider curl con manubri su panca a 30°",
+    "equipment": "Manubri",
+    "file": "catalog-v1/variant-spider-curl-30"
+  },
+  "variant-spider-curl-45": {
+    "name": "Spider curl con manubri su panca a 45°",
+    "equipment": "Manubri",
+    "file": "catalog-v1/variant-spider-curl-45"
+  },
+  "variant-v2-lat-prona-media": {
+    "name": "Lat machine presa prona media",
+    "equipment": "Cavi",
+    "file": "catalog-v1/variant-v2-lat-prona-media"
+  },
+  "variant-v2-lat-prona-stretta": {
+    "name": "Lat machine presa prona stretta",
+    "equipment": "Cavi",
+    "file": "catalog-v1/variant-v2-lat-prona-stretta"
+  },
+  "variant-v2-lat-supina-stretta": {
+    "name": "Lat machine presa supina stretta",
+    "equipment": "Cavi",
+    "file": "catalog-v1/variant-v2-lat-supina-stretta"
+  },
+  "variant-v2-lat-supina-larga": {
+    "name": "Lat machine presa supina larga",
+    "equipment": "Cavi",
+    "file": "catalog-v1/variant-v2-lat-supina-larga"
+  },
+  "variant-v2-lat-neutra-stretta": {
+    "name": "Lat machine presa neutra con triangolo",
+    "equipment": "Cavi",
+    "file": "catalog-v1/variant-v2-lat-neutra-stretta"
+  },
+  "variant-v2-lat-neutra-media": {
+    "name": "Lat machine presa neutra media",
+    "equipment": "Cavi",
+    "file": "catalog-v1/variant-v2-lat-neutra-media"
+  },
+  "variant-v2-lat-neutra-larga": {
+    "name": "Lat machine presa neutra larga",
+    "equipment": "Cavi",
+    "file": "catalog-v1/variant-v2-lat-neutra-larga"
+  },
+  "variant-v2-lat-sagomata-stretta": {
+    "name": "Lat machine con maniglia sagomata stretta",
+    "equipment": "Cavi",
+    "file": "catalog-v1/variant-v2-lat-sagomata-stretta"
+  },
+  "variant-v2-lat-sagomata-media": {
+    "name": "Lat machine con maniglia sagomata media",
+    "equipment": "Cavi",
+    "file": "catalog-v1/variant-v2-lat-sagomata-media"
+  },
+  "variant-v2-lat-sagomata-larga": {
+    "name": "Lat machine con maniglia sagomata larga",
+    "equipment": "Cavi",
+    "file": "catalog-v1/variant-v2-lat-sagomata-larga"
+  },
+  "variant-v2-lat-indipendente": {
+    "name": "Lat machine con due maniglie indipendenti",
+    "equipment": "Cavi",
+    "file": "catalog-v1/variant-v2-lat-indipendente"
+  },
+  "variant-v2-lat-unilaterale-neutra": {
+    "name": "Lat machine unilaterale presa neutra",
+    "equipment": "Cavi",
+    "file": "catalog-v1/variant-v2-lat-unilaterale-neutra"
+  },
+  "variant-v2-lat-unilaterale-supina": {
+    "name": "Lat machine unilaterale presa supina",
+    "equipment": "Cavi",
+    "file": "catalog-v1/variant-v2-lat-unilaterale-supina"
+  },
+  "variant-v2-lat-inginocchio": {
+    "name": "Lat machine al cavo in ginocchio",
+    "equipment": "Cavi",
+    "file": "catalog-v1/variant-v2-lat-inginocchio"
+  },
+  "variant-v2-lat-convergente": {
+    "name": "Lat machine convergente a dischi",
+    "equipment": "Macchina a dischi",
+    "file": "catalog-v1/variant-v2-lat-convergente"
+  },
+  "variant-v2-lat-divergente": {
+    "name": "Lat machine divergente a dischi",
+    "equipment": "Macchina a dischi",
+    "file": "catalog-v1/variant-v2-lat-divergente"
+  },
+  "variant-v2-lat-machine-single": {
+    "name": "Lat machine a dischi unilaterale",
+    "equipment": "Macchina a dischi",
+    "file": "catalog-v1/variant-v2-lat-machine-single"
+  },
+  "variant-v2-chest-orizzontale": {
+    "name": "Chest press orizzontale presa prona",
+    "equipment": "Macchina",
+    "file": "catalog-v1/variant-v2-chest-orizzontale"
+  },
+  "variant-v2-chest-neutra": {
+    "name": "Chest press orizzontale presa neutra",
+    "equipment": "Macchina",
+    "file": "catalog-v1/variant-v2-chest-neutra"
+  },
+  "variant-v2-chest-declinata": {
+    "name": "Chest press declinata alla macchina",
+    "equipment": "Macchina",
+    "file": "catalog-v1/variant-v2-chest-declinata"
+  },
+  "variant-v2-chest-convergente": {
+    "name": "Chest press convergente orizzontale",
+    "equipment": "Macchina",
+    "file": "catalog-v1/variant-v2-chest-convergente"
+  },
+  "variant-v2-chest-convergente-inclinata": {
+    "name": "Chest press convergente inclinata",
+    "equipment": "Macchina",
+    "file": "catalog-v1/variant-v2-chest-convergente-inclinata"
+  },
+  "variant-v2-chest-convergente-declinata": {
+    "name": "Chest press convergente declinata",
+    "equipment": "Macchina",
+    "file": "catalog-v1/variant-v2-chest-convergente-declinata"
+  },
+  "variant-v2-chest-unilaterale": {
+    "name": "Chest press orizzontale unilaterale",
+    "equipment": "Macchina",
+    "file": "catalog-v1/variant-v2-chest-unilaterale"
+  },
+  "variant-v2-chest-unilaterale-inclinata": {
+    "name": "Chest press inclinata unilaterale",
+    "equipment": "Macchina",
+    "file": "catalog-v1/variant-v2-chest-unilaterale-inclinata"
+  },
+  "variant-v2-chest-alternata": {
+    "name": "Chest press con bracci indipendenti alternata",
+    "equipment": "Macchina",
+    "file": "catalog-v1/variant-v2-chest-alternata"
+  },
+  "variant-v2-chest-inclinata-neutra": {
+    "name": "Chest press inclinata presa neutra",
+    "equipment": "Macchina",
+    "file": "catalog-v1/variant-v2-chest-inclinata-neutra"
+  },
+  "variant-v2-chest-dischi-piana": {
+    "name": "Chest press orizzontale a dischi",
+    "equipment": "Macchina a dischi",
+    "file": "catalog-v1/variant-v2-chest-dischi-piana"
+  },
+  "variant-v2-chest-dischi-inclinata": {
+    "name": "Chest press inclinata a dischi",
+    "equipment": "Macchina a dischi",
+    "file": "catalog-v1/variant-v2-chest-dischi-inclinata"
+  },
+  "variant-v2-chest-dischi-declinata": {
+    "name": "Chest press declinata a dischi",
+    "equipment": "Macchina a dischi",
+    "file": "catalog-v1/variant-v2-chest-dischi-declinata"
+  },
+  "variant-v2-croci-spalle": {
+    "name": "Croci ai cavi all’altezza delle spalle",
+    "equipment": "Cavi",
+    "file": "catalog-v1/variant-v2-croci-spalle"
+  },
+  "variant-v2-croci-unilaterali-medie": {
+    "name": "Croci al cavo unilaterali all’altezza delle spalle",
+    "equipment": "Cavi",
+    "file": "catalog-v1/variant-v2-croci-unilaterali-medie"
+  },
+  "variant-v2-croci-unilaterali-basse": {
+    "name": "Croci al cavo unilaterali dal basso",
+    "equipment": "Cavi",
+    "file": "catalog-v1/variant-v2-croci-unilaterali-basse"
+  },
+  "variant-v2-croci-unilaterali-alte": {
+    "name": "Croci al cavo unilaterali dall’alto",
+    "equipment": "Cavi",
+    "file": "catalog-v1/variant-v2-croci-unilaterali-alte"
+  },
+  "variant-v2-croci-panca-piana": {
+    "name": "Croci ai cavi su panca piana (0°)",
+    "equipment": "Cavi",
+    "file": "catalog-v1/variant-v2-croci-panca-piana"
+  },
+  "variant-v2-croci-panca-30": {
+    "name": "Croci ai cavi su panca inclinata a 30°",
+    "equipment": "Cavi",
+    "file": "catalog-v1/variant-v2-croci-panca-30"
+  },
+  "variant-v2-croci-panca-45": {
+    "name": "Croci ai cavi su panca inclinata a 45°",
+    "equipment": "Cavi",
+    "file": "catalog-v1/variant-v2-croci-panca-45"
+  },
+  "variant-v2-croci-panca-declinata": {
+    "name": "Croci ai cavi su panca declinata a −15°",
+    "equipment": "Cavi",
+    "file": "catalog-v1/variant-v2-croci-panca-declinata"
+  },
+  "variant-v2-croci-seduto": {
+    "name": "Croci ai cavi da seduto",
+    "equipment": "Cavi",
+    "file": "catalog-v1/variant-v2-croci-seduto"
+  },
+  "variant-v2-croci-inginocchio": {
+    "name": "Croci ai cavi alti in ginocchio",
+    "equipment": "Cavi",
+    "file": "catalog-v1/variant-v2-croci-inginocchio"
+  },
+  "variant-v2-curl-ez": {
+    "name": "Curl in piedi con bilanciere EZ",
+    "equipment": "Bilanciere EZ",
+    "file": "catalog-v1/variant-v2-curl-ez"
+  },
+  "variant-v2-curl-ez-stretto": {
+    "name": "Curl con bilanciere EZ presa stretta",
+    "equipment": "Bilanciere EZ",
+    "file": "catalog-v1/variant-v2-curl-ez-stretto"
+  },
+  "variant-v2-curl-ez-largo": {
+    "name": "Curl con bilanciere EZ presa larga",
+    "equipment": "Bilanciere EZ",
+    "file": "catalog-v1/variant-v2-curl-ez-largo"
+  },
+  "variant-v2-curl-bar-stretto": {
+    "name": "Curl con bilanciere dritto presa stretta",
+    "equipment": "Bilanciere",
+    "file": "catalog-v1/variant-v2-curl-bar-stretto"
+  },
+  "variant-v2-curl-bar-largo": {
+    "name": "Curl con bilanciere dritto presa larga",
+    "equipment": "Bilanciere",
+    "file": "catalog-v1/variant-v2-curl-bar-largo"
+  },
+  "variant-v2-drag-curl": {
+    "name": "Drag curl con bilanciere",
+    "equipment": "Bilanciere",
+    "file": "catalog-v1/variant-v2-drag-curl"
+  },
+  "variant-v2-curl-db-simultaneo": {
+    "name": "Curl con manubri simultaneo in piedi",
+    "equipment": "Manubri",
+    "file": "catalog-v1/variant-v2-curl-db-simultaneo"
+  },
+  "variant-v2-hammer-alternato": {
+    "name": "Curl a martello alternato",
+    "equipment": "Manubri",
+    "file": "catalog-v1/variant-v2-hammer-alternato"
+  },
+  "variant-v2-hammer-seduto": {
+    "name": "Curl a martello da seduto",
+    "equipment": "Manubri",
+    "file": "catalog-v1/variant-v2-hammer-seduto"
+  },
+  "variant-v2-hammer-incrociato": {
+    "name": "Curl a martello incrociato",
+    "equipment": "Manubri",
+    "file": "catalog-v1/variant-v2-hammer-incrociato"
+  },
+  "variant-v2-zottman": {
+    "name": "Curl Zottman con manubri",
+    "equipment": "Manubri",
+    "file": "catalog-v1/variant-v2-zottman"
+  },
+  "variant-v2-hammer-incline-45": {
+    "name": "Curl a martello su panca inclinata a 45°",
+    "equipment": "Manubri",
+    "file": "catalog-v1/variant-v2-hammer-incline-45"
+  },
+  "variant-v2-curl-cavo-corda": {
+    "name": "Curl al cavo basso con corda",
+    "equipment": "Cavi",
+    "file": "catalog-v1/variant-v2-curl-cavo-corda"
+  },
+  "variant-v2-curl-cavo-barra": {
+    "name": "Curl al cavo basso con barra dritta",
+    "equipment": "Cavi",
+    "file": "catalog-v1/variant-v2-curl-cavo-barra"
+  },
+  "variant-v2-curl-cavo-ez": {
+    "name": "Curl al cavo basso con barra EZ",
+    "equipment": "Cavi",
+    "file": "catalog-v1/variant-v2-curl-cavo-ez"
+  },
+  "variant-v2-curl-cavo-unilaterale": {
+    "name": "Curl al cavo basso unilaterale",
+    "equipment": "Cavi",
+    "file": "catalog-v1/variant-v2-curl-cavo-unilaterale"
+  },
+  "variant-v2-curl-bayesian": {
+    "name": "Curl al cavo dietro il corpo (Bayesian)",
+    "equipment": "Cavi",
+    "file": "catalog-v1/variant-v2-curl-bayesian"
+  },
+  "variant-v2-curl-cavi-alti": {
+    "name": "Curl ai cavi alti a doppio bicipite",
+    "equipment": "Cavi",
+    "file": "catalog-v1/variant-v2-curl-cavi-alti"
+  },
+  "variant-v2-curl-cavo-inverso": {
+    "name": "Curl al cavo presa prona",
+    "equipment": "Cavi",
+    "file": "catalog-v1/variant-v2-curl-cavo-inverso"
+  },
+  "variant-v2-scott-db-single": {
+    "name": "Curl su panca Scott con manubrio unilaterale",
+    "equipment": "Manubri",
+    "file": "catalog-v1/variant-v2-scott-db-single"
+  },
+  "variant-v2-scott-bar": {
+    "name": "Curl su panca Scott con bilanciere dritto",
+    "equipment": "Bilanciere",
+    "file": "catalog-v1/variant-v2-scott-bar"
+  },
+  "variant-v2-scott-cable": {
+    "name": "Curl su panca Scott al cavo",
+    "equipment": "Cavi",
+    "file": "catalog-v1/variant-v2-scott-cable"
+  },
+  "variant-v2-scott-machine": {
+    "name": "Curl alla macchina con appoggio Scott",
+    "equipment": "Macchina",
+    "file": "catalog-v1/variant-v2-scott-machine"
+  },
+  "variant-v2-spider-ez-45": {
+    "name": "Spider curl con bilanciere EZ su panca a 45°",
+    "equipment": "Bilanciere EZ",
+    "file": "catalog-v1/variant-v2-spider-ez-45"
+  },
+  "variant-v2-pushdown-v": {
+    "name": "Pushdown con barra a V",
+    "equipment": "Cavi",
+    "file": "catalog-v1/variant-v2-pushdown-v"
+  },
+  "variant-v2-pushdown-ez": {
+    "name": "Pushdown con barra EZ",
+    "equipment": "Cavi",
+    "file": "catalog-v1/variant-v2-pushdown-ez"
+  },
+  "variant-v2-pushdown-supino": {
+    "name": "Pushdown con barra presa supina",
+    "equipment": "Cavi",
+    "file": "catalog-v1/variant-v2-pushdown-supino"
+  },
+  "variant-v2-pushdown-unilaterale-supino": {
+    "name": "Pushdown unilaterale presa supina",
+    "equipment": "Cavi",
+    "file": "catalog-v1/variant-v2-pushdown-unilaterale-supino"
+  },
+  "variant-v2-pushdown-corda-single": {
+    "name": "Pushdown con corda unilaterale",
+    "equipment": "Cavi",
+    "file": "catalog-v1/variant-v2-pushdown-corda-single"
+  },
+  "variant-v2-overhead-cable-bar": {
+    "name": "Estensioni tricipiti sopra la testa al cavo con barra",
+    "equipment": "Cavi",
+    "file": "catalog-v1/variant-v2-overhead-cable-bar"
+  },
+  "variant-v2-overhead-cable-single": {
+    "name": "Estensioni tricipiti sopra la testa al cavo unilaterali",
+    "equipment": "Cavi",
+    "file": "catalog-v1/variant-v2-overhead-cable-single"
+  },
+  "variant-v2-overhead-cable-seated": {
+    "name": "Estensioni tricipiti sopra la testa al cavo da seduto",
+    "equipment": "Cavi",
+    "file": "catalog-v1/variant-v2-overhead-cable-seated"
+  },
+  "variant-v2-french-ez-flat": {
+    "name": "French press su panca piana con bilanciere EZ",
+    "equipment": "Bilanciere EZ",
+    "file": "catalog-v1/variant-v2-french-ez-flat"
+  },
+  "variant-v2-french-ez-incline-30": {
+    "name": "French press su panca a 30° con bilanciere EZ",
+    "equipment": "Bilanciere EZ",
+    "file": "catalog-v1/variant-v2-french-ez-incline-30"
+  },
+  "variant-v2-french-db-flat": {
+    "name": "French press su panca piana con manubri",
+    "equipment": "Manubri",
+    "file": "catalog-v1/variant-v2-french-db-flat"
+  },
+  "variant-v2-french-db-incline-45": {
+    "name": "French press su panca a 45° con manubri",
+    "equipment": "Manubri",
+    "file": "catalog-v1/variant-v2-french-db-incline-45"
+  },
+  "variant-v2-french-cable": {
+    "name": "French press su panca piana al cavo",
+    "equipment": "Cavi",
+    "file": "catalog-v1/variant-v2-french-cable"
+  },
+  "variant-v2-french-ez-seated": {
+    "name": "French press sopra la testa da seduto con bilanciere EZ",
+    "equipment": "Bilanciere EZ",
+    "file": "catalog-v1/variant-v2-french-ez-seated"
+  },
+  "variant-v2-kickback-cable": {
+    "name": "Kickback tricipiti al cavo unilaterale",
+    "equipment": "Cavi",
+    "file": "catalog-v1/variant-v2-kickback-cable"
+  },
+  "variant-v2-triceps-crossbody": {
+    "name": "Estensioni tricipiti al cavo incrociate davanti al corpo",
+    "equipment": "Cavi",
+    "file": "catalog-v1/variant-v2-triceps-crossbody"
+  },
+  "variant-v2-triceps-machine": {
+    "name": "Estensioni tricipiti alla macchina con appoggio gomiti",
+    "equipment": "Macchina",
+    "file": "catalog-v1/variant-v2-triceps-machine"
+  },
+  "variant-v2-dip-parallele": {
+    "name": "Dip alle parallele per tricipiti",
+    "equipment": "Parallele",
+    "file": "catalog-v1/variant-v2-dip-parallele"
+  },
+  "variant-v2-dip-assisted": {
+    "name": "Dip alla macchina assistita",
+    "equipment": "Macchina assistita",
+    "file": "catalog-v1/variant-v2-dip-assisted"
+  },
+  "variant-v2-dip-weighted": {
+    "name": "Dip alle parallele con zavorra",
+    "equipment": "Parallele",
+    "file": "catalog-v1/variant-v2-dip-weighted"
+  },
+  "variant-v2-pulley-unilaterale": {
+    "name": "Pulley al cavo unilaterale",
+    "equipment": "Cavi",
+    "file": "catalog-v1/variant-v2-pulley-unilaterale"
+  },
+  "variant-v2-pulley-supino": {
+    "name": "Pulley presa supina",
+    "equipment": "Cavi",
+    "file": "catalog-v1/variant-v2-pulley-supino"
+  },
+  "variant-v2-row-dischi": {
+    "name": "Rematore alla macchina a dischi",
+    "equipment": "Macchina a dischi",
+    "file": "catalog-v1/variant-v2-row-dischi"
+  },
+  "variant-v2-pullover-cable-rope": {
+    "name": "Pullover al cavo alto con corda",
+    "equipment": "Cavi",
+    "file": "catalog-v1/variant-v2-pullover-cable-rope"
+  },
+  "variant-v2-lateral-machine": {
+    "name": "Alzate laterali alla macchina",
+    "equipment": "Macchina",
+    "file": "catalog-v1/variant-v2-lateral-machine"
+  },
+  "variant-v2-legpress-horizontal": {
+    "name": "Leg press orizzontale",
+    "equipment": "Macchina",
+    "file": "catalog-v1/variant-v2-legpress-horizontal"
+  },
+  "variant-v2-legpress-45": {
+    "name": "Leg press inclinata a 45°",
+    "equipment": "Macchina",
+    "file": "catalog-v1/variant-v2-legpress-45"
+  },
+  "variant-v2-smith-squat": {
+    "name": "Squat al multipower",
+    "equipment": "Multipower",
+    "file": "catalog-v1/variant-v2-smith-squat"
+  }
+};

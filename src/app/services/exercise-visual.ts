@@ -1,5 +1,6 @@
 import {Exercise} from '../models/domain';
 import {exerciseIllustration} from './exercise-illustration';
+import {CATALOG_EXERCISE_ARTWORK} from './exercise-artwork-catalog';
 export type MovementKind='bench'|'squat'|'curl'|'lat'|'shoulder'|'fly'|'lateral';
 /** Strict variants: never demonstrate a different machine, grip or incline. */
 export function movementKind(exercise:Exercise|undefined):MovementKind|undefined {
@@ -32,7 +33,7 @@ function artworkKind(exercise:Exercise|undefined):MovementKind|undefined {
  if(dumbbells&&/^(alzate laterali(?: con manubri)?|(?:standing )?dumbbell lateral raises?)$/.test(name))return 'lateral';
  return;
 }
-/** One illustration per movement family, shared across every training screen. */
+/** Catalog artwork and safe family fallbacks, shared across every training screen. */
 export interface ExerciseVisual {source:string;illustration:true;family:string;cell?:number}
 export const EXERCISE_ARTWORK_ATLASES:Readonly<Record<string,readonly string[]>>={
  chest:['bench-incline','bench-decline','bench-fly','chest-press','push-up','dip'],
@@ -47,7 +48,8 @@ export const EXERCISE_ARTWORK_ATLASES:Readonly<Record<string,readonly string[]>>
 const individual:Readonly<Record<string,MovementKind>>={'bench-press':'bench','squat':'squat','biceps-curl':'curl','lat-pulldown':'lat','shoulder-press':'shoulder','cable-fly':'fly','lateral-raise':'lateral'};
 
 /**
- * Explicit exercise-to-artwork mapping for the ten reviewed generated images.
+ * Individual artwork for all 253 bundled exercises, including the first ten
+ * approved images at their original URLs.
  * The (id, name, equipment) guard prevents a renamed/custom exercise from
  * silently receiving an illustration for a different movement or machine.
  * Existing original PNG/atlas assets remain unchanged and are the fallback.
@@ -63,6 +65,7 @@ export const EXERCISE_SPECIFIC_ARTWORK: Readonly<Record<string, Readonly<{name:s
  'exercise-8': {name:'Shoulder press',equipment:'Manubri',file:'shoulder-press-dumbbells'},
  'exercise-9': {name:'Alzate laterali',equipment:'Manubri',file:'lateral-raise-dumbbells'},
  'library-machine_reverse_machine_flyes': {name:'Reverse fly alla macchina',equipment:'Macchina',file:'reverse-machine-fly'},
+ ...CATALOG_EXERCISE_ARTWORK,
 };
 
 /** Uploaded photos and catalog URLs remain in the archive; the app now shows mannequins everywhere. */

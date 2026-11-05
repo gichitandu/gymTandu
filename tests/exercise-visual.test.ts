@@ -1,5 +1,6 @@
 import {expect,it} from 'vitest';
 import {readFileSync,existsSync} from 'node:fs';
+import {createHash} from 'node:crypto';
 import {seed} from '../src/app/core/seed';
 import {EXERCISE_ARTWORK_ATLASES,EXERCISE_SPECIFIC_ARTWORK,exerciseArtwork,exerciseThumbnail,movementKind} from '../src/app/services/exercise-visual';
 
@@ -51,9 +52,10 @@ it('uses neutral mannequin anatomy for unknown exercises without enabling a fals
  for(const name of ['Panca inclinata','Panca declinata','Panca piana presa stretta','Front squat','Squat bulgaro'])expect(movementKind({...base,name})).toBeUndefined();
 });
 
-it('loads all ten generated WebP images only for exact corresponding catalog exercises',()=>{
+it('loads an individual generated WebP for every exact catalog exercise',()=>{
  const exercises=seed().exercises;
- expect(Object.keys(EXERCISE_SPECIFIC_ARTWORK)).toHaveLength(10);
+ expect(Object.keys(EXERCISE_SPECIFIC_ARTWORK)).toHaveLength(253);
+ expect(new Set(exercises.map(e=>e.id))).toEqual(new Set(Object.keys(EXERCISE_SPECIFIC_ARTWORK)));
  for(const [id,artwork] of Object.entries(EXERCISE_SPECIFIC_ARTWORK)){
   const exercise=exercises.find(e=>e.id===id);
   expect(exercise,id).toBeDefined();
@@ -72,12 +74,38 @@ it('loads all ten generated WebP images only for exact corresponding catalog exe
   const renamed={...exercise!,name:exercise!.name+' variante personalizzata'};
   const renamedVisual=exerciseThumbnail(renamed);
   expect(renamedVisual.source).not.toBe(visual.source);
+  expect(exerciseThumbnail({...exercise!,equipment:'Attrezzo personale'}).source).not.toBe(visual.source);
+  expect(exerciseThumbnail({...exercise!,id:'custom-'+id}).source).not.toBe(visual.source);
  }
 });
-it('does not change the old artwork used for unmapped exercise variants',()=>{
- const exercises=seed().exercises, mapped=new Set(Object.keys(EXERCISE_SPECIFIC_ARTWORK));
- for(const e of exercises.filter(x=>!mapped.has(x.id))){
-  const v=exerciseThumbnail(e);
+it('retains family artwork for imported and renamed variants outside the catalog',()=>{
+ for(const e of seed().exercises){
+  const v=exerciseThumbnail({...e,id:'imported-'+e.id});
   expect(v.source,e.name).toMatch(/^\/training\/figures\/(?:atlas-[^/]+-v3\.png|[^/]+-v2\.png)$/);
+  expect(existsSync('public'+v.source),e.name).toBe(true);
+ }
+});
+it('has 253 distinct image URLs and image contents, with no atlas cell reused for the catalog',()=>{
+ const visuals=seed().exercises.map(exerciseThumbnail);
+ expect(new Set(visuals.map(v=>v.source)).size).toBe(253);
+ expect(visuals.every(v=>v.cell===undefined)).toBe(true);
+ const hashes=visuals.map(v=>createHash('sha256').update(readFileSync('public'+v.source)).digest('hex'));
+ expect(new Set(hashes).size).toBe(253);
+});
+it('keeps the ten previously published image URLs while adding 243 optimized catalog images',()=>{
+ const exercises=seed().exercises;
+ const originals=exercises.filter(e=>!EXERCISE_SPECIFIC_ARTWORK[e.id].file.startsWith('catalog-v1/'));
+ expect(originals).toHaveLength(10);
+ expect(exerciseArtwork(exercises.find(e=>e.id==='variant-db-bench-30'))).toBe('/training/figures/generated/bench-incline-dumbbells-30.webp');
+ const added=exercises.filter(e=>EXERCISE_SPECIFIC_ARTWORK[e.id].file.startsWith('catalog-v1/'));
+ expect(added).toHaveLength(243);
+ for(const e of added){
+  const bytes=readFileSync('public'+exerciseArtwork(e));
+  // ImageMagick exports simple lossy VP8 WebP; width/height follow the frame marker.
+  expect(bytes.subarray(12,16).toString('ascii'),e.name).toBe('VP8 ');
+  expect(bytes.subarray(23,26).toString('hex'),e.name).toBe('9d012a');
+  expect(bytes.readUInt16LE(26)&0x3fff,e.name).toBe(512);
+  expect(bytes.readUInt16LE(28)&0x3fff,e.name).toBe(512);
+  expect(bytes.length,e.name).toBeLessThan(100_000);
  }
 });
