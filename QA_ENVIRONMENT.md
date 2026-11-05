@@ -24,6 +24,14 @@ Questa regola prevale su eventuali preferenze generiche di generare concept visu
 
 Gli altri miglioramenti UI devono essere incrementali, basati su screenshot reali di QA, e non alterare né gli asset protetti né le funzionalità esistenti. **Non allineare QA e produzione senza richiesta esplicita**, come specificato di seguito.
 
+## Home: percentuale obiettivo settimanale IMMUTABILE
+
+**Istruzione esplicita e ripetuta del proprietario (5 novembre 2026):** nella Home, la percentuale degli allenamenti completati settimanalmente deve rimanere **grande esattamente come nella schermata reale dell'ambiente di prova**, dentro il **cerchio originale dell'obiettivo settimanale**, con **dimensioni del cerchio, percentuale, posizione, proporzioni e impaginazione identiche** alla build QA di riferimento. È vietato rimpicciolirla, convertirla in una card orizzontale/compatta, spostarla altrove o modificarla negli screenshot proposti o nel codice, salvo richiesta esplicita e specifica del proprietario.
+
+La Home QA usa attualmente `src/app/features/home.component.html` (sezione `home-weekly-overview`, `home-weekly-progress`, `home-goal-ring`, testo `home-goal-copy`), con regole CSS in `home-reference.css` e `home-simple.css`. **Congelare il rendering e tutte le regole rilevanti per questo elemento rispetto alla schermata QA originale**: non assumere che un singolo numero CSS definisca l'aspetto in tutti i viewport. Fare confronto visivo con gli screenshot autentici di QA alle stesse dimensioni.
+
+**Anche le illustrazioni/omini associati agli esercizi vanno conservati esattamente dalla build reale o QA originale.** Non creare figure sintetiche nelle proposte, non cambiare illustrazione, posa, silhouette, colore, immagine, stile o ritaglio; preservare il logo originale senza ritocchi. Le proposte possono migliorare soltanto elementi non protetti.
+
 ## Regola vincolante richiesta dal proprietario
 
 **Non allineare, rebasare, sincronizzare, sovrascrivere o integrare l'ambiente di prova con l'app effettiva (in nessuna direzione) fino a una richiesta esplicita del proprietario.** Questo include merge da/verso il branch principale, deploy in produzione e sostituzione di dati, account, backup o screenshot.
