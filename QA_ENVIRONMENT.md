@@ -5,6 +5,19 @@
 **Fotografia iniziale:** commit `45b403705c2de368c781a2ca1ec52667c0a8b5da` (5 novembre 2026).
 Questo SHA identifica SOLO il punto di partenza; le successive modifiche sul branch principale **non vengono incorporate automaticamente**.
 
+## Regola UI obbligatoria: partire SEMPRE dall'app realmente esistente
+
+**Istruzione esplicita del proprietario (5 novembre 2026).** Per ogni richiesta di miglioramenti, redesign, proposta visiva o foto/screenshot di GymTrack:
+
+1. **Aprire la build reale del branch QA** con l'account sintetico SuperAdmin e catturare schermate autentiche dal browser prima di qualsiasi proposta. Guardare anche i sorgenti Angular e gli stili effettivamente presenti.
+2. **Partire solo da quelle schermate** e proporre modifiche incrementali **sull'interfaccia esistente**, mantenendo componenti, dati, percorsi, pulsanti, comportamenti e tutte le funzionalità già implementate. Non ricreare una GymTrack immaginaria.
+3. Se servono immagini che illustrino le modifiche, **annotare oppure modificare la schermata reale catturata**, dichiarando chiaramente che è una proposta e indicando le differenze dalla build attuale. Prima di mostrare come funziona oggi usare **lo screenshot originale, non un mockup**.
+4. **Non generare da zero layout, schermate, collage o mockup ipotetici**, né chiamare generatori di immagini per sostituire screenshot reali, **salvo richiesta esplicita del proprietario di generare qualcosa da zero**.
+5. Indicare sempre l'origine: «screenshot reale ambiente QA» con branch/commit, «proposta editata a partire dallo screenshot QA», oppure «app pubblicata» soltanto se effettivamente verificata. Non spacciare proposte per schermate distribuite.
+6. Gli esperimenti e le modifiche UI restano **solo in QA**, senza sincronizzazione o pubblicazione nella versione reale finché il proprietario non ordina esplicitamente l'allineamento. Conservare e confrontare tutte le implementazioni prima di qualunque sincronizzazione.
+
+Questa regola prevale su eventuali preferenze generiche di generare concept visuali. Gli screenshot di riferimento QA sono prodotti da `tests/runtime/qa-screenshots.mjs` e allegati al workflow `qa-visual.yml`.
+
 ## Regola vincolante richiesta dal proprietario
 
 **Non allineare, rebasare, sincronizzare, sovrascrivere o integrare l'ambiente di prova con l'app effettiva (in nessuna direzione) fino a una richiesta esplicita del proprietario.** Questo include merge da/verso il branch principale, deploy in produzione e sostituzione di dati, account, backup o screenshot.
