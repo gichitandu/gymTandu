@@ -1,7 +1,7 @@
 import {expect,it} from 'vitest';
 import {readFileSync,existsSync} from 'node:fs';
 import {seed} from '../src/app/core/seed';
-import {EXERCISE_ARTWORK_ATLASES,exerciseArtwork,exerciseThumbnail,movementKind} from '../src/app/services/exercise-visual';
+import {EXERCISE_ARTWORK_ATLASES,EXERCISE_SPECIFIC_ARTWORK,exerciseArtwork,exerciseThumbnail,movementKind} from '../src/app/services/exercise-visual';
 
 const base=seed().exercises[0];
 it('keeps all seven exact animation posters and their imported aliases',()=>{
@@ -19,7 +19,7 @@ it('covers all 253 bundled exercises and all 55 families with local mannequin ar
  expect(new Set(visuals.map(v=>v.family)).size).toBe(55);
  for(const visual of visuals){
   expect(visual.family).not.toBe('movement');
-  expect(visual.source).toMatch(/^\/training\/figures\/.*\.png$/);
+  expect(visual.source).toMatch(/^\/training\/figures\/.*\.(?:png|webp)$/);
   expect(existsSync('public'+visual.source)).toBe(true);
   if(visual.cell!==undefined)expect(visual.cell>=0&&visual.cell<6).toBe(true);
  }
@@ -40,7 +40,7 @@ it('shows the new artwork instead of every old source without mutating saved pho
  const image=new Blob(['saved personal photo'],{type:'image/png'});
  for(const thumbnailUrl of ['https://example.com/catalog.png','/custom/exercise.png','data:image/png;base64,AA==','/exercises/bench-press.svg']){
   const exercise={...base,image,thumbnailUrl},visual=exerciseThumbnail(exercise);
-  expect(visual.source).toBe('/training/figures/bench-v2.png');expect(visual.illustration).toBe(true);
+  expect(visual.source).toBe('/training/figures/generated/bench-flat-barbell.webp');expect(visual.illustration).toBe(true);
   expect(exercise.image).toBe(image);expect(exercise.thumbnailUrl).toBe(thumbnailUrl);
  }
 });
@@ -49,4 +49,35 @@ it('uses neutral mannequin anatomy for unknown exercises without enabling a fals
  expect(exerciseThumbnail(unknown)).toMatchObject({source:'/training/figures/muscle-front-v2.png',family:'movement'});
  expect(movementKind(unknown)).toBeUndefined();
  for(const name of ['Panca inclinata','Panca declinata','Panca piana presa stretta','Front squat','Squat bulgaro'])expect(movementKind({...base,name})).toBeUndefined();
+});
+
+it('loads all ten generated WebP images only for exact corresponding catalog exercises',()=>{
+ const exercises=seed().exercises;
+ expect(Object.keys(EXERCISE_SPECIFIC_ARTWORK)).toHaveLength(10);
+ for(const [id,artwork] of Object.entries(EXERCISE_SPECIFIC_ARTWORK)){
+  const exercise=exercises.find(e=>e.id===id);
+  expect(exercise,id).toBeDefined();
+  expect(exercise?.name).toBe(artwork.name);
+  expect(exercise?.equipment).toBe(artwork.equipment);
+  const visual=exerciseThumbnail(exercise);
+  expect(visual.source).toBe('/training/figures/generated/'+artwork.file+'.webp');
+  expect(visual.illustration).toBe(true);
+  expect(visual.cell).toBeUndefined();
+  const location='public'+visual.source;
+  expect(existsSync(location)).toBe(true);
+  const bytes=readFileSync(location);
+  expect(bytes.subarray(0,4).toString('ascii')).toBe('RIFF');
+  expect(bytes.subarray(8,12).toString('ascii')).toBe('WEBP');
+  expect(bytes.length).toBeGreaterThan(2000);
+  const renamed={...exercise!,name:exercise!.name+' variante personalizzata'};
+  const renamedVisual=exerciseThumbnail(renamed);
+  expect(renamedVisual.source).not.toBe(visual.source);
+ }
+});
+it('does not change the old artwork used for unmapped exercise variants',()=>{
+ const exercises=seed().exercises, mapped=new Set(Object.keys(EXERCISE_SPECIFIC_ARTWORK));
+ for(const e of exercises.filter(x=>!mapped.has(x.id))){
+  const v=exerciseThumbnail(e);
+  expect(v.source,e.name).toMatch(/^\/training\/figures\/(?:atlas-[^/]+-v3\.png|[^/]+-v2\.png)$/);
+ }
 });

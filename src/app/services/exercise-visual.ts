@@ -46,8 +46,32 @@ export const EXERCISE_ARTWORK_ATLASES:Readonly<Record<string,readonly string[]>>
 };
 const individual:Readonly<Record<string,MovementKind>>={'bench-press':'bench','squat':'squat','biceps-curl':'curl','lat-pulldown':'lat','shoulder-press':'shoulder','cable-fly':'fly','lateral-raise':'lateral'};
 
+/**
+ * Explicit exercise-to-artwork mapping for the ten reviewed generated images.
+ * The (id, name, equipment) guard prevents a renamed/custom exercise from
+ * silently receiving an illustration for a different movement or machine.
+ * Existing original PNG/atlas assets remain unchanged and are the fallback.
+ */
+export const EXERCISE_SPECIFIC_ARTWORK: Readonly<Record<string, Readonly<{name:string;equipment:string;file:string}>>> = {
+ 'exercise-0': {name:'Panca piana',equipment:'Bilanciere',file:'bench-flat-barbell'},
+ 'variant-db-bench-30': {name:'Panca inclinata con manubri a 30°',equipment:'Manubri',file:'bench-incline-dumbbells-30'},
+ 'library-barbell_decline_barbell_bench_press': {name:'Panca declinata',equipment:'Bilanciere',file:'bench-decline-barbell'},
+ 'exercise-2': {name:'Croci ai cavi',equipment:'Cavi',file:'cable-fly'},
+ 'variant-lat-pronated-wide': {name:'Lat machine presa prona larga',equipment:'Cavi',file:'lat-wide-pronated'},
+ 'variant-row-neutral': {name:'Pulley presa neutra stretta',equipment:'Cavi',file:'seated-row-neutral-narrow'},
+ 'library-barbell_landmine_t_bar_row': {name:'T-bar row',equipment:'Bilanciere',file:'tbar-row-supported'},
+ 'exercise-8': {name:'Shoulder press',equipment:'Manubri',file:'shoulder-press-dumbbells'},
+ 'exercise-9': {name:'Alzate laterali',equipment:'Manubri',file:'lateral-raise-dumbbells'},
+ 'library-machine_reverse_machine_flyes': {name:'Reverse fly alla macchina',equipment:'Macchina',file:'reverse-machine-fly'},
+};
+
 /** Uploaded photos and catalog URLs remain in the archive; the app now shows mannequins everywhere. */
 export function exerciseThumbnail(exercise:Exercise|undefined):ExerciseVisual {
+ const specific=exercise&&EXERCISE_SPECIFIC_ARTWORK[exercise.id];
+ if(specific&&exercise!.name===specific.name&&exercise!.equipment===specific.equipment){
+  const family=exerciseIllustration(exercise).split('/').pop()!.replace(/\.svg$/,'');
+  return {source:'/training/figures/generated/'+specific.file+'.webp',illustration:true,family};
+ }
  const exact=movementKind(exercise)||artworkKind(exercise);
  const family=exerciseIllustration(exercise).split('/').pop()!.replace(/\.svg$/,'');
  const single=exact||individual[family];
