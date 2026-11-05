@@ -32,6 +32,12 @@ La Home QA usa attualmente `src/app/features/home.component.html` (sezione `home
 
 **Anche le illustrazioni/omini associati agli esercizi vanno conservati esattamente dalla build reale o QA originale.** Non creare figure sintetiche nelle proposte, non cambiare illustrazione, posa, silhouette, colore, immagine, stile o ritaglio; preservare il logo originale senza ritocchi. Le proposte possono migliorare soltanto elementi non protetti.
 
+## Stile verificato degli originali esercizi (NON immaginare)
+
+**Controllo reale effettuato sui file della build QA (`public/training/figures/`, 5 novembre 2026):** le immagini *attualmente usate dall'app* non sono cartoon/flat, omini color carne o illustrazioni viola a fondo trasparente. Sono **render anatomici tridimensionali, con mannequin metallizzato grigio/argento**, definizione muscolare dettagliata, **muscoli coinvolti evidenziati in viola/lilla**, **attrezzi realistici grigio scuro/metallici**, luce di contorno fredda/ciano e **sfondo blu notte quasi nero**. Immagini individuali `bench-v2.png`, `squat-v2.png`, `lat-v2.png`, `curl-v2.png`, `shoulder-v2.png`, `fly-v2.png` e atlanti `atlas-*-v3.png`. Il collegamento esercizio→immagine è definito in `src/app/services/exercise-visual.ts`. Le sequenze guidate usano `public/training/motion/*-frames-v1.png`.
+
+**Nuove immagini solo su richiesta esplicita:** esaminare prima i PNG originali **effettivi** della stessa cartella, non dedurre lo stile da screenshot generici della Home. Usarli come riferimenti visivi diretti per nuovi asset esercizio-specifici. Non sostituire o alterare gli originali esistenti senza esplicita autorizzazione; verificare macchina/impugnatura, posa/anatomia e muscoli prima di proporre l'asset. Non presentare immagini stilisticamente diverse come coerenti. Sono stati esplicitamente rifiutati i vecchi omini cartoon viola con pelle color carne.
+
 ## Regola vincolante richiesta dal proprietario
 
 **Non allineare, rebasare, sincronizzare, sovrascrivere o integrare l'ambiente di prova con l'app effettiva (in nessuna direzione) fino a una richiesta esplicita del proprietario.** Questo include merge da/verso il branch principale, deploy in produzione e sostituzione di dati, account, backup o screenshot.
