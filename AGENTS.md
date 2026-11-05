@@ -8,6 +8,10 @@ Per nuove proposte o modifiche UI, partire esclusivamente da screenshot **veri**
 
 Il logo ufficiale di GymTrack e tutte le illustrazioni/omini artificiali che indicano gli esercizi sono **intoccabili**, sia nel codice che nelle anteprime: non modificarli, ridisegnarli, generarne varianti, ricolorarli o sostituirli senza **esplicita richiesta del proprietario**. Usare solo risorse originali intatte quando si propongono modifiche incrementali all'UI. Vedi `QA_ENVIRONMENT.md` per le regole di screenshot reali e isolamento.
 
+## Vincolo Home: dimensione originale dell'obiettivo settimanale
+
+**Non ridimensionare o spostare** il grande anello `home-goal-ring`, la percentuale al suo centro, o gli altri elementi della sezione originale `home-weekly-overview` della Home. Devono apparire **nella stessa posizione e dimensione della vera Home QA**, anche in anteprime UI. Non sostituire il cerchio con un indicatore piccolo o orizzontale. **Logo GymTrack e immagini/omini degli esercizi devono restare IDENTICI alle risorse originali**, anche nei render/prototipi: vietate figure generate o alterazioni salvo richiesta esplicita. Per validare, partire da screenshot reali QA e confronto pixel/viewport; vedi `QA_ENVIRONMENT.md`.
+
 ## Scopo e architettura
 
 GymTrack è il diario di allenamento esistente: piani, serie, progressi, calendario,
