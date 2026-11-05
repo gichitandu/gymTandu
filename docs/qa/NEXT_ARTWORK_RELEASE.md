@@ -19,6 +19,24 @@ Catalogo predefinito verificato sul branch principale `chore/github-publication-
 5. Lavorare su branch isolato, costruire screenshot/test sull'app vera in QA con SuperAdmin sintetico. **Non allineare indiscriminatamente il branch QA con produzione**: mantenere tutte le implementazioni e applicare soltanto le modifiche autorizzate, dopo diff.
 6. Solo dopo revisione e CI positiva, preparare un aggiornamento separato per l'hosting **già esistente**, senza sostituire identità, D1, R2 o dati. La pubblicazione richiede capacità e autorizzazioni reali all'hosting: non dire che è stata eseguita senza prova verificabile.
 
+## Produzione immagini (strumenti QA, non ancora eseguita)
+
+Il catalogo completo dei 243 esercizi rimanenti è in `docs/qa/exercise-artwork-remaining-243.json`, separato dal manifest delle prime tre aree muscolari. Il codice `tools/qa/generate-artwork.mjs` predispone **un'immagine differente per ogni ID**, incorporando nello specifico prompt la presa, l'angolazione, il tipo di attrezzo e il gruppo muscolare. Usa come riferimento di stile un PNG autentico della build attuale, senza cancellarlo.
+
+**Senza `--execute`:** nessun costo né richiesta esterna.
+
+```sh
+node tools/qa/generate-artwork.mjs --limit 5
+```
+
+**Solo con chiave API esplicitamente disponibile e autorizzazione ai costi:** generazione di candidati NON approvati in `tmp/qa-artwork-unreviewed`, su un clone Git nel branch `qa/gymtrack-isolato`.
+
+```sh
+OPENAI_API_KEY=... node tools/qa/generate-artwork.mjs --execute --id variant-smith-bench-30
+```
+
+I file prodotti **non sono associati all'app e non vengono pubblicati** automaticamente; sono necessari revisione visiva, controllo biomeccanico e approvazione manuale della singola variante. Non esistono 243 immagini finali approvate finché ogni asset non abbia superato questo controllo. Non includere mai la chiave API in commit, script o screenshot. Il costo dell'API è separato dall'abbonamento ChatGPT. Consultare la documentazione ufficiale dell'API per modelli e costi aggiornati.
+
 ## Tracciamento
 
 - Rilascio attuale: commit `adfc6551d74764a52f83eaab6ad9cd2b4a070948` — **pubblicazione non verificata** alla registrazione di questa richiesta.
