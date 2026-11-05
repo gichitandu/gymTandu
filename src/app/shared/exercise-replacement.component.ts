@@ -27,7 +27,7 @@ export interface ExerciseReplacementClosed {applied: boolean; activeChanged?: bo
   @if(visibleAlternatives().length<alternatives().length){
     <button type="button" class="load-more" [disabled]="busy()" (click)="showMore()">Mostra altri esercizi ({{alternatives().length-visibleAlternatives().length}} rimanenti)</button>
   }
-  @if(pinned();as selected){
+  @if(selectedPreview();as selected){
     <div class="candidate-pinned"><gt-exercise-thumb [exercise]="selected"/><span><strong>Selezione conservata</strong><small>{{selected.name}} · {{s.muscle(selected.muscleGroupId)}}</small></span></div>
   }
   <label>Applica la sostituzione<select aria-label="Applica la sostituzione" [ngModel]="scope()" (ngModelChange)="scope.set($event)" [disabled]="busy()">
@@ -69,6 +69,7 @@ export class ExerciseReplacementComponent {
   visibleAlternatives = computed(() => this.alternatives().slice(0, this.visibleCount()));
   chosen = computed(() => this.s.data().exercises.find(row => row.id === this.replacement() && row.active && row.id !== this.original()?.id));
   pinned = computed(() => this.chosen() && !this.alternatives().some(row => row.id === this.chosen()!.id) ? this.chosen() : undefined);
+  selectedPreview = computed(() => this.chosen() && !this.visibleAlternatives().some(row => row.id === this.chosen()!.id) ? this.chosen() : undefined);
   availableDays = computed(() => {
     const source = this.source(), plan = this.plan(); if (!source || !plan) return [];
     const ids = new Set(this.s.data().planExercises.filter(row => row.exerciseId === source.exerciseId).map(row => row.dayId));
