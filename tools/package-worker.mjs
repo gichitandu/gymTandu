@@ -1,6 +1,7 @@
 import { readFile,writeFile,mkdir,cp,readdir,rm } from 'node:fs/promises';
 import path from 'node:path';
 import { createHash } from 'node:crypto';
+import { gzipSync } from 'node:zlib';
 import { embedInstallIcons } from './embed-install-icons.mjs';
 const root='dist/gymtrack/browser';
 await embedInstallIcons(root);
@@ -52,11 +53,20 @@ if(!appGroup.urls.includes('/app-build.json'))appGroup.urls.push('/app-build.jso
 await writeFile(root+'/ngsw.json',JSON.stringify(manifest,null,2));
 const types={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.json':'application/json','.webmanifest':'application/manifest+json','.svg':'image/svg+xml','.png':'image/png','.webp':'image/webp','.ico':'image/x-icon','.txt':'text/plain','.xlsx':'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'};
 const assets={};
-async function scan(dir){for(const e of await readdir(dir,{withFileTypes:true})){const file=path.join(dir,e.name);if(e.isDirectory())await scan(file);else if(!file.endsWith('.map'))assets['/'+path.relative(root,file).replaceAll('\\','/')]={type:types[path.extname(file)]||'application/octet-stream',body:(await readFile(file)).toString('base64')};}}
+let compressedAssets=0;
+async function scan(dir){for(const e of await readdir(dir,{withFileTypes:true})){const file=path.join(dir,e.name);if(e.isDirectory())await scan(file);else if(!file.endsWith('.map')){
+ const original=await readFile(file),compressed=original.length>1024?gzipSync(original,{level:9}):original;
+ const gzip=compressed.length<original.length*.9;
+ assets['/'+path.relative(root,file).replaceAll('\\','/')]={type:types[path.extname(file)]||'application/octet-stream',body:(gzip?compressed:original).toString('base64'),...(gzip?{compression:'gzip'}:{})};
+ if(gzip)compressedAssets++;
+}}}
 await scan(root);
 await rm('dist/server',{recursive:true,force:true});await mkdir('dist/server',{recursive:true});await mkdir('dist/.openai',{recursive:true});
 await writeFile('dist/server/index.js',approvedPaletteSource.replaceAll('export ','')+'\n'+workerSource.replace("/* __APP_BUILD_ID__ */ 'development'",JSON.stringify(buildId)).replace("import { APPROVED_THEME_IDS } from '../shared/approved-palettes.js';",'').replace("import { designStudioApi } from './design-studio.js';",[designPresetsSource,designSystemSource,designApiSource].map(source=>source.replaceAll('export ','')).join('\n')).replace("import { defaultExercises, defaultGroups } from './default-catalog.js';",serverCatalogSource.replaceAll('export const','const')).replace("import { archiveApi } from './archive.js';",archiveSource.replaceAll('export ','')).replace("import { calendarApi, calendarPublish, calendarConfigure } from './calendar.js';",calendarSource.replaceAll('export ','')).replace("import { pushReminderApi } from './push.js';",pushSource.replaceAll('export ','')).replace("import {excelImportsApi,appFeaturesApi} from './program-imports.js';",programSource.replaceAll('export ','')).replace('/* __ASSETS__ */ {}',JSON.stringify(assets)));
+// Keep below the hosting limit (63.9 MiB) before attempting publication.
+const workerBytes=(await readFile('dist/server/index.js')).length;
+if(workerBytes>63*1024*1024)throw Error('Worker exceeds the 63 MiB deployment budget: '+workerBytes+' bytes. No assets were removed.');
 await cp('.openai/hosting.json','dist/.openai/hosting.json');
 await cp('drizzle','dist/drizzle',{recursive:true});
 await writeFile('dist/server/wrangler.json',JSON.stringify({name:'gymtrack',main:'index.js',compatibility_date:'2026-10-15',compatibility_flags:runtimeFlags,d1_databases:[{binding:'DB',database_name:'gymtrack-accounts',database_id:'DB',migrations_dir:'../drizzle'}],r2_buckets:[{binding:'BUCKET',bucket_name:'gymtrack-archives'}]},null,2));
-console.log('Worker packaged with',Object.keys(assets).length,'assets, D1 migrations and build',buildId.slice(0,12));
+console.log('Worker packaged with',Object.keys(assets).length,'assets ('+compressedAssets+' compressed), '+workerBytes+' bytes, D1 migrations and build',buildId.slice(0,12));

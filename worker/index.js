@@ -272,5 +272,12 @@ export default {async fetch(request,env,ctx) {
   if(!['GET','HEAD'].includes(request.method)) return new Response('Method not allowed',{status:405});
   const asset=assets[path==='/'?'/index.html':path];
   if(!asset) return new Response('Not found',{status:404});
-  return new Response(request.method==='HEAD'?null:Uint8Array.from(atob(asset.body),c=>c.charCodeAt(0)),{headers:{'Content-Type':asset.type,'Cache-Control':freshAssets.has(path)?'no-cache':'public,max-age=3600','X-Content-Type-Options':'nosniff','Referrer-Policy':'same-origin'}});
+  // Compression is internal to the deployment package: clients and the PWA
+  // receive the original bytes, independent of Accept-Encoding negotiation.
+  let body=null;
+  if(request.method!=='HEAD'){
+    const bytes=Uint8Array.from(atob(asset.body),c=>c.charCodeAt(0));
+    body=asset.compression==='gzip'?new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip')):bytes;
+  }
+  return new Response(body,{headers:{'Content-Type':asset.type,'Cache-Control':freshAssets.has(path)?'no-cache':'public,max-age=3600','X-Content-Type-Options':'nosniff','Referrer-Policy':'same-origin'}});
 }};
