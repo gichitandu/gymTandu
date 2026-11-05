@@ -104,9 +104,13 @@ it('moves workout schedules with the existing overlap guards and never moves or 
  const draft=s.draft()!,savedSets=structuredClone(s.data().sets);
  expect(await s.removeCalendarEvent('open')).toBe(true);expect(s.draft()).toEqual(draft);expect(s.data().sets).toEqual(savedSets);expect(s.completed()).toHaveLength(1);
  // Another plan still blocks a move, while personal activities do not.
- await s.savePlan('other','Altro piano','');await s.saveDay('other-day','other','Giorno');await s.scheduleWorkout('2026-11-05','other-day','','other-event');
- await s.scheduleWorkout('2026-11-01','day','','movable');
- expect(await s.moveCalendarEvent('movable','2026-11-05')).toBe(false);expect(s.data().scheduledWorkouts.find(row=>row.id==='movable')?.date).toBe('2026-11-01');
+ // Use a future date: a hardcoded date eventually turns into "today".
+ const blockedDate=new Date(Date.now()+45*86400000).toISOString().slice(0,10);
+ await s.savePlan('other','Altro piano','');await s.saveDay('other-day','other','Giorno');
+ expect(await s.scheduleWorkout(blockedDate,'other-day','','other-event')).toBe(true);
+ expect(await s.scheduleWorkout('2026-11-01','day','','movable')).toBe(true);
+ expect(await s.moveCalendarEvent('movable',blockedDate)).toBe(false);
+ expect(s.data().scheduledWorkouts.find(row=>row.id==='movable')?.date).toBe('2026-11-01');
 });
 
 it('roundtrips all new metadata and migrates version 8 backups without replacing legacy data',async()=>{
