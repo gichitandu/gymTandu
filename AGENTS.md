@@ -110,3 +110,14 @@ Dettagli da consultare senza duplicarli qui:
 [protezione e recupero allenamenti](docs/GT_PROTEZIONE_E_RECUPERO_ALLENAMENTI.md),
 [Design Studio](docs/GT_DESIGN_STUDIO_IMPLEMENTAZIONE.md),
 [testi e obiettivo settimanale](docs/GT_LOGO_TESTI_OBIETTIVO_SETTIMANALE.md).
+
+## Verifiche selettive durante lo sviluppo
+
+Per modifiche locali usa `npm run test:affected` e `npm run typecheck` quando tocchi
+TypeScript o template Angular. Per confrontare più commit con una base nota usa
+`npm run test:affected -- --base <ref>`; per vedere la selezione prima di eseguirla
+aggiungi `--list`. Il selettore amplia automaticamente i test sui moduli critici,
+ma NON sostituisce `npm run quality` prima di integrare/rilasciare.
+Non analizzare pagine estranee quando cambia solo una pagina isolata; in caso di
+modifiche a Store, schema, Worker, PWA o servizi condivisi allarga le verifiche.
+Consulta [la strategia dei test selettivi](docs/TEST_SELETTIVI.md).
