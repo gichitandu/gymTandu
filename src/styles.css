@@ -1912,3 +1912,12 @@ body.theme-ready :is(.recording-value input, .nutrition-date-heading input, .cal
 body.theme-ready .pill.orange { color: var(--warning); background: color-mix(in srgb, var(--warning) 10%, var(--card)); }
 body.theme-ready.custom-light :is(.superset-tag, .superset-banner, .pill.purple) { color: #69449a; }
 body.theme-ready.custom-light .favorite-button.favorite-on { color: var(--warning); border-color: color-mix(in srgb, var(--warning) 35%, var(--line)); }
+
+/* Printable training report: hide the application shell without affecting normal UI. */
+@media print {
+  body:has(.gt-insights-print) { --bg:#fff;--card:#fff;--raised:#fff;--text:#111;--muted:#444;--line:#b9b9b9;background:#fff!important;color:#111!important; }
+  body:has(.gt-insights-print) gt-shell :is(.sidebar,.topbar,gt-bottom-navigation,.bottom-nav) { display:none!important; }
+  body:has(.gt-insights-print) gt-shell .app-main { margin:0!important; }
+  body:has(.gt-insights-print) gt-shell main { max-width:none!important;margin:0!important;padding:14mm!important; }
+  body:has(.gt-insights-print) .gt-insights-print .card { color:#111!important;background:#fff!important;box-shadow:none!important; }
+}

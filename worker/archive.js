@@ -4,6 +4,8 @@ export const ARCHIVE_LIMIT_BYTES = 50 * 1024 * 1024;
 function archiveValidThemeConfig(value) {
  return !!value&&typeof value==='object'&&!Array.isArray(value)&&Object.keys(value).every(key=>['palette','mode','background','accent'].includes(key))&&[...APPROVED_THEME_IDS,'oro','argento','multicolore','bianco-elegante','scuro','rosso','verde','viola-neon','blu-azzurro','carbonio','artico','prugna','petrolio','sabbia','ghiaccio'].includes(value.palette)&&['dark','light','system'].includes(value.mode)&&['background','accent'].every(key=>value[key]===undefined||typeof value[key]==='string'&&/^#[0-9a-fA-F]{6}$/.test(value[key]));
 }
+// Current client backup schema; older versions stay readable via client migrations.
+const ARCHIVE_CURRENT_SCHEMA_VERSION = 11;
 const ARCHIVE_RETAINED_VERSIONS = 10;
 const archiveTables = ['profiles','roles','plans','days','planExercises','exercises','muscleGroups','workouts','workoutExercises','sets','settings','meals','scheduledWorkouts','measurements','exercisePreferences','workoutUi','wellnessLogs'];
 const archiveRowLimits={profiles:1,roles:3,plans:10000,days:100000,planExercises:100000,exercises:10000,muscleGroups:1000,workouts:100000,workoutExercises:300000,sets:1000000,settings:1,meals:10000,scheduledWorkouts:10000,measurements:10000,exercisePreferences:10000,workoutUi:1,wellnessLogs:10000};
@@ -29,7 +31,7 @@ async function archiveBody(request) {
 }
 function archiveValidate(text) {
  let backup;try{backup=JSON.parse(text);}catch{archiveFail('La copia non è un JSON valido.');}
- if(backup?.app!=='GymTrack'||!Number.isInteger(backup.schemaVersion)||backup.schemaVersion<1||typeof backup.exportedAt!=='string'||!Number.isFinite(Date.parse(backup.exportedAt))||!backup.data||typeof backup.data!=='object'||Array.isArray(backup.data))archiveFail('La copia non è un archivio GymTrack valido.');
+ if(backup?.app!=='GymTrack'||!Number.isInteger(backup.schemaVersion)||backup.schemaVersion<1||backup.schemaVersion>ARCHIVE_CURRENT_SCHEMA_VERSION||typeof backup.exportedAt!=='string'||!Number.isFinite(Date.parse(backup.exportedAt))||!backup.data||typeof backup.data!=='object'||Array.isArray(backup.data))archiveFail('La copia non è un archivio GymTrack valido.');
  // Full domain validation also runs on the client before upload and restore.
  // This boundary rejects partial/garbage snapshots instead of replacing a head.
  for(const name of archiveTables){
@@ -51,6 +53,8 @@ function archiveValidate(text) {
  for(const day of data.days)if(!nonempty(day.name)||!ids.plans.has(day.planId)||!Number.isInteger(day.order)||day.order<0)archiveFail('Giorno della copia non valido.');
  for(const exercise of data.planExercises)if(!ids.days.has(exercise.dayId)||!ids.exercises.has(exercise.exerciseId)||!Number.isInteger(exercise.sets)||exercise.sets<1||exercise.sets>30||!Number.isInteger(exercise.repsMin)||!Number.isInteger(exercise.repsMax)||exercise.repsMin<1||exercise.repsMax<exercise.repsMin||exercise.repsMax>999||!numeric(exercise.rest))archiveFail('Esercizio del piano della copia non valido.');
  for(const workout of data.workouts)if(!ids.profiles.has(workout.userId)||!nonempty(workout.planName)||!nonempty(workout.dayName)||!['draft','completed'].includes(workout.status))archiveFail('Allenamento della copia non valido.');
+ const validWorkoutDate=value=>typeof value==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(value)&&Number.isFinite(Date.parse(value+'T12:00:00Z'))&&new Date(value+'T12:00:00Z').toISOString().slice(0,10)===value;
+ for(const workout of data.workouts)if(!validWorkoutDate(workout.date))archiveFail('Data dell’allenamento non valida.');
  for(const exercise of data.workoutExercises)if(!ids.workouts.has(exercise.workoutId)||!nonempty(exercise.name))archiveFail('Esercizio registrato della copia non valido.');
  for(const set of data.sets)if(!ids.workoutExercises.has(set.workoutExerciseId)||!Number.isInteger(set.number)||set.number<1||!numeric(set.weight)||!Number.isInteger(set.reps)||set.reps<1||set.reps>999||typeof set.completed!=='boolean')archiveFail('Serie della copia non valida.');
  if(settings.neonGlow!==undefined&&(!Number.isInteger(settings.neonGlow)||settings.neonGlow<0||settings.neonGlow>100)||settings.dynamicBackground!==undefined&&typeof settings.dynamicBackground!=='boolean')archiveFail('Aspetto non valido.');

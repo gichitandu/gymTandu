@@ -29,6 +29,7 @@ import { matchesExercise } from '../services/exercise-search';
   template: `<div class="reference-progress">
     <header class="progress-page-heading ref-page-header"><div><h1 gtDesign="progress.title" gtDesignLabel="progress.title">Progressi</h1><p class="ref-progress-subtitle" gtDesign="progress.subtitle" gtDesignLabel="progress.subtitle">Analizza i tuoi risultati</p></div><span class="progress-header-bars" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span></header>
     <gt-status />
+    <div class="actions" style="margin:0 0 18px"><a class="button primary" routerLink="/analisi"><gt-icon name="chart"/> Analisi avanzate, promemoria e report <gt-icon name="arrow"/></a></div>
     <details class="card progress-exercise-details" gtDesign="progress.exerciseChart">
      <summary><gt-icon name="chart"/><span><strong gtDesign="progress.exerciseChart.title" gtDesignLabel="progress.exerciseChart.title">Progressi per esercizio</strong><small>Peso, volume, ripetizioni e 1RM stimato</small></span><span class="progress-detail-chevron">›</span></summary>
      <div class="progress-details-body"><gt-progress-chart /></div>

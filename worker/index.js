@@ -82,6 +82,27 @@ function exerciseFields(b,groups) {
   if(typeof e.imageData!=='string'||e.imageData.length>2800000||e.imageData && !/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/.test(e.imageData)) fail('Immagine non valida.');
   return e;
 }
+/** Stop reading oversized JSON before allocating the complete request body. */
+async function readLimitedJsonBody(request,limit) {
+ const declared=request.headers.get('content-length');
+ if(declared!==null&&(!/^\d+$/.test(declared)||Number(declared)>limit))fail('Richiesta troppo grande.',413);
+ const reader=request.body?.getReader();
+ if(!reader)fail('Richiesta non valida.');
+ const decoder=new TextDecoder('utf-8',{fatal:true});let bytes=0;const chunks=[];
+ try{
+  while(true){
+   const {done,value}=await reader.read();if(done)break;
+   bytes+=value.byteLength;
+   if(bytes>limit){await reader.cancel();fail('Richiesta troppo grande.',413);}
+   chunks.push(decoder.decode(value,{stream:true}));
+  }
+  chunks.push(decoder.decode());
+ }catch(error){
+  if(error?.status)throw error;
+  fail('Richiesta non valida.');
+ }
+ try{return JSON.parse(chunks.join(''));}catch{fail('Richiesta non valida.');}
+}
 export async function api(request,env,ctx) {
   try {
     const url=new URL(request.url), path=url.pathname, db=env.DB;
@@ -141,9 +162,7 @@ export async function api(request,env,ctx) {
     }
     if(request.method==='GET') fail('Pagina non trovata.',404);
     const bodyLimit=path==='/api/catalog/exercise'?3000000:8192;
-    if(Number(request.headers.get('content-length')||0)>bodyLimit) fail('Richiesta troppo grande.',413);
-    const raw=await request.text(); if(raw.length>bodyLimit) fail('Richiesta troppo grande.',413);
-    let b; try { b=JSON.parse(raw); } catch { fail('Richiesta non valida.'); }
+    const b=await readLimitedJsonBody(request,bodyLimit);
     if(path==='/api/auth/setup'&&request.method==='POST') {
       if(request.headers.get('oai-authenticated-user-email')?.toLowerCase()!==OWNER) fail('Solo il proprietario può attivare il Super Admin.',403);
       validPassword(b.password); const salt=random(), hash=await passwordHash(b.password,salt);
