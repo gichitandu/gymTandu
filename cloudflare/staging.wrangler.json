@@ -1,0 +1,17 @@
+{
+  "name": "gymtrack-staging",
+  "main": "../dist/server/index.js",
+  "compatibility_date": "2026-10-15",
+  "compatibility_flags": [
+    "nodejs_compat",
+    "global_fetch_strictly_public"
+  ],
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "gymtrack-staging-db",
+      "database_id": "f34b436f-fe40-481d-a08c-c4df9d24aff1",
+      "migrations_dir": "../drizzle"
+    }
+  ]
+}
