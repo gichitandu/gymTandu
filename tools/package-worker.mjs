@@ -59,7 +59,13 @@ const bundledServer=approvedPaletteSource.replaceAll('export ','')+'\n'+workerSo
 // Preserve the existing Sites package and prepare a separate asset-free API bundle.
 // This file is NOT deployable until authentication and archive migration pass QA.
 await writeFile('dist/server/index.js',bundledServer);
-await writeFile('dist/server/api-only.js',bundledServer.replace(JSON.stringify(assets),'{}'));
+// The candidate must fail closed if someone accidentally deploys it before
+// standalone auth, CSRF and D1 archive storage are implemented and verified.
+const apiOnlyCandidate=bundledServer.replace(JSON.stringify(assets),'{}')
+  .replace("if(path.startsWith('/api/')) return api(request,env,ctx);",
+    "if(path.startsWith('/api/')) return Response.json({error:'Migrazione in corso: API non ancora attiva.'},{status:503,headers:{'Cache-Control':'no-store'}});");
+if(!bundledServer.includes('const assets ='))throw Error('unexpected');
+await writeFile('dist/server/api-only.js',apiOnlyCandidate);
 await cp('.openai/hosting.json','dist/.openai/hosting.json');
 await cp('drizzle','dist/drizzle',{recursive:true});
 await writeFile('dist/server/wrangler.json',JSON.stringify({name:'gymtrack',main:'index.js',compatibility_date:'2026-10-15',compatibility_flags:runtimeFlags,d1_databases:[{binding:'DB',database_name:'gymtrack-accounts',database_id:'DB',migrations_dir:'../drizzle'}],r2_buckets:[{binding:'BUCKET',bucket_name:'gymtrack-archives'}]},null,2));
