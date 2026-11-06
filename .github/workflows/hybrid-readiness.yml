@@ -1,0 +1,41 @@
+name: Verifica migrazione GitHub Pages + Cloudflare D1
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - qa/gymtrack-isolato
+    paths:
+      - 'worker/**'
+      - 'tools/check-cloudflare-d1-staging.mjs'
+      - 'tools/package-worker.mjs'
+      - 'cloudflare/**'
+      - '.github/workflows/hybrid-readiness.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  readiness:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - name: Compila frontend e backend
+        run: npm run build
+      - name: Verifica dimensioni backend
+        run: |
+          node --input-type=module -e "import {readFileSync} from 'node:fs';import {gzipSync} from 'node:zlib';const b=readFileSync('dist/server/index.js');console.log('Worker completo:',(b.length/1048576).toFixed(2),'MiB; gzip:',(gzipSync(b).length/1048576).toFixed(2),'MiB');"
+      - name: Gate sicurezza Cloudflare D1-only (bloccante)
+        run: node tools/check-cloudflare-d1-staging.mjs
+      - name: Verifica qualità solo se gate superato
+        run: npm run quality
+
+# Questo workflow NON pubblica nulla e non usa token Cloudflare.
+# Prima del deploy occorrono backend API-only, autenticazione verificata,
+# backup D1 testati, CORS/cookie compatibili con Pages e approvazione staging.
