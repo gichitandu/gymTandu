@@ -31,7 +31,7 @@ jobs:
       - name: Verifica dimensioni backend
         run: |
           node --input-type=module -e "import {readFileSync} from 'node:fs';import {gzipSync} from 'node:zlib';for(const file of ['dist/server/index.js','dist/server/api-only.js']){const b=readFileSync(file);console.log(file+':',(b.length/1048576).toFixed(2),'MiB; gzip:',(gzipSync(b).length/1048576).toFixed(2),'MiB');}"
-      - name: Test pacchetto API-only e budget Free\n        run: node tests/runtime/api-only-package-check.mjs\n      - name: Gate sicurezza Cloudflare D1-only (bloccante)
+      - name: Test autenticazione autonoma\n        run: node tests/runtime/standalone-auth-check.mjs\n      - name: Test pacchetto API-only e budget Free\n        run: node tests/runtime/api-only-package-check.mjs\n      - name: Gate sicurezza Cloudflare D1-only (bloccante)
         run: node tools/check-cloudflare-d1-staging.mjs
       - name: Verifica qualità solo se gate superato
         run: npm run quality
