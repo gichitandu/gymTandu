@@ -35,6 +35,7 @@ import { AppActivationUncertainError, AppReleaseService } from '../services/app-
 <form #loginForm="ngForm" (ngSubmit)="submit()" autocomplete="on" class="entry-form">
 @if(auth.setup()){
 <div class="entry-field"><gt-icon name="mail"/><div><label for="setup-email">Email dell’account</label><input id="setup-email" name="email" type="email" autocomplete="email" [ngModel]="auth.ownerEmail()" readonly /></div></div>
+@if(auth.setupCodeRequired()){<div class="entry-field"><gt-icon name="lock"/><div><label for="setup-code">Codice di setup</label><input id="setup-code" name="setup-code" type="password" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" [(ngModel)]="setupCode" required maxlength="128" placeholder="Il codice scelto durante il deploy" /></div></div>}
 <div class="entry-field"><gt-icon name="user"/><div><label for="setup-username">Scegli un nome utente</label><input id="setup-username" name="username" autocomplete="username" [(ngModel)]="username" autocapitalize="none" autocorrect="off" spellcheck="false" required minlength="3" maxlength="30" pattern="[A-Za-z0-9][A-Za-z0-9._-]{2,29}" placeholder="Il tuo nome univoco" /></div></div>
 }@else{
 <div class="entry-field"><gt-icon name="user"/><div><label for="login-identifier">Nome utente o email</label><input id="login-identifier" name="username" type="text" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" required maxlength="254" [(ngModel)]="email" placeholder="Il tuo username o la tua email" /></div></div>
@@ -66,7 +67,7 @@ export class AppComponent {
  features=inject(AppFeaturesService,{optional:true});
  private viewport=inject(ViewportService);
  private feedback=feedbackForContext();
- auth=inject(AuthService);private theme=inject(ThemeService);welcome=signal(false);tab=signal<'account'|'local'>('account');help=signal(false);remember=true;username='';email='';password='';confirm='';busy=signal(false);error=feedbackSignal('error',this.feedback);show=signal(false);
+ auth=inject(AuthService);private theme=inject(ThemeService);welcome=signal(false);tab=signal<'account'|'local'>('account');help=signal(false);remember=true;username='';setupCode='';email='';password='';confirm='';busy=signal(false);error=feedbackSignal('error',this.feedback);show=signal(false);
  private releases=inject(AppReleaseService);entryUpdating=signal(false);private attemptedEntryBuild='';
  constructor(){this.theme.restoreEntryTheme();effect(()=>{if(!this.auth.user())untracked(()=>this.theme.restoreEntryTheme());});effect(()=>{if(!this.auth.loading()&&!this.auth.loggingOut()&&!this.auth.user()&&!this.busy()&&this.releases.autoUpdateReady())queueMicrotask(()=>void this.updateSignedOut());});}
  private async updateSignedOut(){
@@ -83,7 +84,7 @@ export class AppComponent {
   if(this.auth.setup()&&this.password!==this.confirm) {this.error.set('Le password non coincidono.');return;}
   if(this.auth.setup() && !/^[a-zA-Z0-9][a-zA-Z0-9._-]{2,29}$/.test(this.username.trim())) {this.error.set('Scegli un nome utente valido di 3–30 caratteri.');return;}
   this.busy.set(true);
-  try {await this.auth.login(this.auth.setup()?this.auth.ownerEmail():this.email,this.password,this.auth.setup(),this.remember,this.username);this.password='';this.confirm='';}
+  try {await this.auth.login(this.auth.setup()?this.auth.ownerEmail():this.email,this.password,this.auth.setup(),this.remember,this.username,this.setupCode.trim());this.password='';this.confirm='';this.setupCode='';}
   catch(e) {this.error.set(e instanceof Error?e.message:'Accesso non riuscito.');}
   finally {this.busy.set(false);}
  }

@@ -128,9 +128,11 @@ async function completedCheckpointStatements(db, scope, row, text, known) {
 }
 
 export async function archiveApi(request,env,me,onSaved) {
- const url=new URL(request.url),kind=url.searchParams.get('scope')||'device',visitor=request.headers.get('oai-authenticated-user-id');
+ const url=new URL(request.url),kind=url.searchParams.get('scope')||'device',selfHosted=env.SELF_HOSTED==='1',visitor=selfHosted?'standalone':request.headers.get('oai-authenticated-user-id');
  if(!visitor)archiveFail('Accedi prima con ChatGPT.',401);
  if(!['device','account'].includes(kind))archiveFail('Archivio non valido.');
+ // Senza identità della piattaforma lo spazio senza account non ha un proprietario verificabile.
+ if(selfHosted&&kind==='device')archiveFail('La copia sul server richiede un account. I dati restano su questo dispositivo.',403);
  if(kind==='account'&&!me)archiveFail('Accedi all’account per aprire la sua copia persistente.',401);
  if(!env.BUCKET)archiveFail('Copia persistente non ancora configurata. I dati sul dispositivo sono conservati.',503);
  const scope=await archiveDigest(kind==='account'?'account:'+me.id:'visitor:'+visitor),db=env.DB;

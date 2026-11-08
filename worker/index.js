@@ -10,6 +10,14 @@ import { calendarApi, calendarPublish, calendarConfigure } from './calendar.js';
 const OWNER = 'giacomotanduo004@gmail.com';
 const COOKIE = '__Host-gymtrack';
 const TTL = 60 * 60 * 24 * 30;
+// Modalità autonoma (Cloudflare): con la variabile SELF_HOSTED=1 gli header
+// oai-* della piattaforma Sites vengono ignorati del tutto, anche se inviati da
+// un client. Il primo accesso del proprietario richiede il segreto SETUP_CODE.
+// Senza SELF_HOSTED il comportamento resta quello originale su Sites.
+const standalone = env => env?.SELF_HOSTED === '1';
+const visitorId = (request, env) => standalone(env) ? 'standalone' : request.headers.get('oai-authenticated-user-id') || '';
+const platformEmail = (request, env) => standalone(env) ? '' : request.headers.get('oai-authenticated-user-email')?.toLowerCase() || '';
+const clientKey = (request, env) => standalone(env) ? 'ip:' + (request.headers.get('cf-connecting-ip') || 'unknown') : request.headers.get('oai-authenticated-user-id');
 // One-time recovery requested by the owner for the iPhone session stuck on the
 // old backup gate. Logins created after this cutoff are never signed out.
 export const IOS_LOGOUT_RECOVERY_BEFORE = Date.parse('2026-10-29T21:41:00Z');
@@ -49,18 +57,25 @@ function fields(body) {
   if(!['Admin','User'].includes(body.role)) fail('Seleziona Admin o Cliente.');
   return {email,name,username:username(body.username),role:body.role};
 }
-async function session(request,db) {
+async function session(request,db,env) {
   const token=request.headers.get('cookie')?.split(';').map(s=>s.trim()).find(s=>s.startsWith(COOKIE+'='))?.slice(COOKIE.length+1);
   if(!token) return null;
-  return db.prepare('SELECT u.* FROM users u JOIN sessions s ON s.user_id=u.id WHERE s.token_hash=? AND s.expires_at>? AND s.visitor_id=? AND u.active=1').bind(await digest(token),Date.now(),request.headers.get('oai-authenticated-user-id')||'').first();
+  return db.prepare('SELECT u.* FROM users u JOIN sessions s ON s.user_id=u.id WHERE s.token_hash=? AND s.expires_at>? AND s.visitor_id=? AND u.active=1').bind(await digest(token),Date.now(),visitorId(request,env)).first();
 }
-async function startSession(request,db,u) {
+async function startSession(request,db,u,env) {
   const token=random(), at=Date.now();
   await db.batch([
     db.prepare('DELETE FROM sessions WHERE expires_at<?').bind(at),
-    db.prepare('INSERT INTO sessions(token_hash,user_id,visitor_id,expires_at) VALUES(?,?,?,?)').bind(await digest(token),u.id,request.headers.get('oai-authenticated-user-id')||'',at+TTL*1000)
+    db.prepare('INSERT INTO sessions(token_hash,user_id,visitor_id,expires_at) VALUES(?,?,?,?)').bind(await digest(token),u.id,visitorId(request,env),at+TTL*1000)
   ]);
   return json({user:publicUser(u)},200,{'Set-Cookie':`${COOKIE}=${token}; Path=/; Secure; HttpOnly; SameSite=Strict; Max-Age=${TTL}`});
+}
+/** Conta un tentativo sensibile (login/setup) e blocca oltre 10 in 15 minuti per la stessa chiave. */
+async function attempt(db,key) {
+  const now=Date.now();
+  await db.prepare('INSERT INTO login_limits(id,attempts,reset_at) VALUES(?,1,?) ON CONFLICT(id) DO UPDATE SET attempts=CASE WHEN reset_at<? THEN 1 ELSE attempts+1 END, reset_at=CASE WHEN reset_at<? THEN excluded.reset_at ELSE reset_at END').bind(key,now+900000,now,now).run();
+  const limit=await db.prepare('SELECT attempts FROM login_limits WHERE id=?').bind(key).first();
+  if(limit.attempts>10) fail('Troppi tentativi. Riprova tra 15 minuti.',429);
 }
 async function catalog(db) {
   const [ex, groups] = await Promise.all([db.prepare('SELECT payload FROM catalog_exercises').all(),db.prepare('SELECT id,name FROM catalog_groups').all()]);
@@ -107,16 +122,17 @@ export async function api(request,env,ctx) {
   try {
     const url=new URL(request.url), path=url.pathname, db=env.DB;
     if(!db) fail('Servizio account non ancora configurato.',503);
-    // Never replace or bypass Sites authentication, including for bootstrap.
-    if(!request.headers.get('oai-authenticated-user-id')) fail('Accedi prima con ChatGPT.',401);
+    // Su Sites l'autenticazione della piattaforma non va mai sostituita, bootstrap compreso.
+    // In modalità autonoma l'identità è solo quella degli account dell'app.
+    if(!visitorId(request,env)) fail('Accedi prima con ChatGPT.',401);
     if(request.method!=='GET' && request.headers.get('origin')!==url.origin) fail('Richiesta non autorizzata.',403);
     if(request.method!=='GET' && !request.headers.get('content-type')?.startsWith('application/json')) fail('Formato non supportato.',415);
-    const me=await session(request,db);
+    const me=await session(request,db,env);
     if(path.startsWith('/api/design/'))return await designStudioApi(request,env,me);
     if(path.startsWith('/api/excel-imports'))return await excelImportsApi(request,env,me);
     if(path==='/api/app-features')return await appFeaturesApi(request,env,me);
     if(path==='/api/auth/device-recovery'&&request.method==='POST'){
-      const ownerDevice= /iPhone/i.test(request.headers.get('user-agent')||'') && (me?me.email===OWNER:request.headers.get('oai-authenticated-user-email')?.toLowerCase()===OWNER);
+      const ownerDevice= /iPhone/i.test(request.headers.get('user-agent')||'') && (me?me.email===OWNER:platformEmail(request,env)===OWNER);
       if(!ownerDevice)return json({signedOut:false});
       const token=request.headers.get('cookie')?.split(';').map(s=>s.trim()).find(s=>s.startsWith(COOKIE+'='))?.slice(COOKIE.length+1);
       const result=me&&token?await db.prepare('DELETE FROM sessions WHERE token_hash=? AND user_id=? AND expires_at<=?').bind(await digest(token),me.id,IOS_LOGOUT_RECOVERY_BEFORE+TTL*1000).run():null;
@@ -141,7 +157,8 @@ export async function api(request,env,ctx) {
     }
     if(path==='/api/auth/me'&&request.method==='GET') {
       const owner=await db.prepare('SELECT id FROM users WHERE email=?').bind(OWNER).first();
-      return json({user:me?publicUser(me):null,setup:!owner && request.headers.get('oai-authenticated-user-email')?.toLowerCase()===OWNER,platformOwner:request.headers.get('oai-authenticated-user-email')?.toLowerCase()===OWNER,ownerEmail:OWNER});
+      const platformOwner=standalone(env)?!!me&&me.email===OWNER:platformEmail(request,env)===OWNER;
+      return json({user:me?publicUser(me):null,setup:!owner&&(standalone(env)||platformEmail(request,env)===OWNER),platformOwner,ownerEmail:OWNER,...(standalone(env)&&!owner?{setupCodeRequired:true}:{})});
     }
     if(request.method==='GET'&&path==='/api/catalog') {
       if(!me) fail('Accedi per consultare gli esercizi.',401);
@@ -164,27 +181,31 @@ export async function api(request,env,ctx) {
     const bodyLimit=path==='/api/catalog/exercise'?3000000:8192;
     const b=await readLimitedJsonBody(request,bodyLimit);
     if(path==='/api/auth/setup'&&request.method==='POST') {
-      if(request.headers.get('oai-authenticated-user-email')?.toLowerCase()!==OWNER) fail('Solo il proprietario può attivare il Super Admin.',403);
+      if(standalone(env)) {
+        // Il codice di setup è un segreto del deploy: senza di esso nessuno può reclamare l'account proprietario.
+        const code=String(env.SETUP_CODE||'');
+        if(code.length<16) fail('Attivazione non configurata: imposta il segreto SETUP_CODE (almeno 16 caratteri).',503);
+        await attempt(db,'setup:'+clientKey(request,env));
+        if(typeof b.setupCode!=='string'||!equal(await digest(b.setupCode),await digest(code))) fail('Codice di setup non valido.',403);
+      } else if(platformEmail(request,env)!==OWNER) fail('Solo il proprietario può attivare il Super Admin.',403);
       validPassword(b.password); const salt=random(), hash=await passwordHash(b.password,salt);
       const handle=b.username===undefined?null:username(b.username);if(handle)await availableUsername(db,handle);
       const u={id:crypto.randomUUID(),email:OWNER,name:'Giacomo Tanduo',username:handle,role:'SuperAdmin',active:1};
       const result=await db.prepare('INSERT OR IGNORE INTO users(id,email,name,username,role,active,salt,password_hash,created_at) VALUES(?,?,?,?,?,?,?,?,?)').bind(u.id,u.email,u.name,u.username,u.role,1,salt,hash,Date.now()).run();
       if(!result.meta.changes) fail('Account già attivato. Accedi con la password.',409);
-      return startSession(request,db,u);
+      return startSession(request,db,u,env);
     }
     if(path==='/api/auth/login'&&request.method==='POST') {
       const identifier=String(b.identifier??b.email??b.username??'').trim().toLowerCase(), password=String(b.password||'');
       if(identifier.length>254||password.length>128) fail('Credenziali non valide.',401);
-      // One shared throttle key per platform visitor stops unknown-email flooding too.
-      const key=request.headers.get('oai-authenticated-user-id'), now=Date.now();
-      await db.prepare('INSERT INTO login_limits(id,attempts,reset_at) VALUES(?,1,?) ON CONFLICT(id) DO UPDATE SET attempts=CASE WHEN reset_at<? THEN 1 ELSE attempts+1 END, reset_at=CASE WHEN reset_at<? THEN excluded.reset_at ELSE reset_at END').bind(key,now+900000,now,now).run();
-      const limit=await db.prepare('SELECT attempts FROM login_limits WHERE id=?').bind(key).first();
-      if(limit.attempts>10) fail('Troppi tentativi. Riprova tra 15 minuti.',429);
+      // One shared throttle key per platform visitor (o per IP in modalità autonoma) stops unknown-email flooding too.
+      const key=clientKey(request,env);
+      await attempt(db,key);
       const u=await db.prepare(identifier.includes('@')?'SELECT * FROM users WHERE email=?':'SELECT * FROM users WHERE username=?').bind(identifier).first();
       const hash=await passwordHash(password,u?.salt||'unknown-account-dummy-salt');
       if(!u||!u.active||!equal(hash,u.password_hash)) fail('Nome utente, email o password non validi.',401);
       await db.prepare('DELETE FROM login_limits WHERE id=?').bind(key).run();
-      return startSession(request,db,u);
+      return startSession(request,db,u,env);
     }
     if(path==='/api/auth/logout'&&request.method==='POST') {
       const token=request.headers.get('cookie')?.split(';').map(s=>s.trim()).find(s=>s.startsWith(COOKIE+'='))?.slice(COOKIE.length+1);
@@ -232,7 +253,7 @@ export async function api(request,env,ctx) {
       if(!equal(await passwordHash(String(b.currentPassword||''),me.salt),me.password_hash)) fail('Password attuale errata.',403);
       const salt=random();
       await db.batch([db.prepare('UPDATE users SET salt=?,password_hash=? WHERE id=?').bind(salt,await passwordHash(b.password,salt),me.id),db.prepare('DELETE FROM sessions WHERE user_id=?').bind(me.id)]);
-      return startSession(request,db,me);
+      return startSession(request,db,me,env);
     }
     if(me.role!=='SuperAdmin') fail('Accesso riservato al Super Admin.',403);
     if(path==='/api/users'&&request.method==='POST') {
@@ -269,6 +290,8 @@ const freshAssets=new Set(['/', '/index.html', '/ngsw.json', '/app-build.json', 
 export default {async fetch(request,env,ctx) {
   const path=new URL(request.url).pathname;
   if(path.startsWith('/api/')) return api(request,env,ctx);
+  // Su Cloudflare i file statici arrivano dal binding ASSETS (Workers Static Assets), non dal bundle.
+  if(env?.ASSETS?.fetch) return env.ASSETS.fetch(request);
   if(!['GET','HEAD'].includes(request.method)) return new Response('Method not allowed',{status:405});
   const asset=assets[path==='/'?'/index.html':path];
   if(!asset) return new Response('Not found',{status:404});

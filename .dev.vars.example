@@ -1,0 +1,3 @@
+# Copia in .dev.vars (ignorato da Git) per provare il Worker in locale con `npx wrangler dev`.
+# In produzione il codice si imposta con: npx wrangler secret put SETUP_CODE
+SETUP_CODE=sostituisci-con-un-codice-lungo-e-casuale

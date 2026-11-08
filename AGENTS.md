@@ -41,7 +41,9 @@ devono cambiare handler, route, form, stati disabled o valori calcolati.
 - Salvaguardare il flush delle bozze prima di navigazione/aggiornamento e la copia
   protetta prima del reload in `src/app/services/pwa.ts`. Usare dati sintetici nelle prove; non
   dichiarare recuperata una seduta reale sulla base dei soli test.
-- Le API sono relative a `/api/`. Conservare identità verificata dall'hosting Sites,
+- Le API sono relative a `/api/`. Conservare identità verificata dall'hosting Sites
+  (oppure, con `SELF_HOSTED=1` su Cloudflare, il codice di setup `SETUP_CODE`: vedi
+  `docs/CLOUDFLARE_DEPLOY.md`; in quella modalità gli header `oai-*` vengono ignorati),
   sessioni con cookie protetti e controlli Origin/formato in `worker/index.js`.
   Ruoli locali e visibilità dei pulsanti non autorizzano operazioni server;
   l'accesso amministrativo a Design Studio va verificato anche nel Worker.

@@ -126,6 +126,8 @@ Le verifiche automatiche e browser effettivamente eseguite sono registrate nei d
 
 L'app completa richiede il Worker con binding D1 `DB` e R2 `BUCKET`, oltre agli asset Angular. `npm run build` prepara il Worker in `dist/server/`; `npm run package:deploy` crea l'archivio con `.openai/hosting.json`, `drizzle/` alla root e `dist/`. Questi comandi non pubblicano né applicano migrazioni a database remoti. Preservare progetto, dominio, storage e policy di accesso dell'hosting esistente. Il codice server si affida all'identità verificata da Sites: non esporlo direttamente su un altro hosting senza progettare un confine di autenticazione equivalente.
 
+Per pubblicare su un account Cloudflare tuo, senza l'hosting Sites, vedi [docs/CLOUDFLARE_DEPLOY.md](docs/CLOUDFLARE_DEPLOY.md): usa `wrangler.jsonc`, `SELF_HOSTED=1` e il segreto `SETUP_CODE`.
+
 Il workflow `.github/workflows/quality.yml` verifica push e pull request e prepara un artefatto completo; non esegue deploy. Il pulsante interno “Distribuisci ultima versione” attiva sui dispositivi una versione già pubblicata, non compila il repository.
 
 L'app usa routing hash (`/#/piani`) e base relativa, così può essere servita in una sottocartella senza rewrite backend.

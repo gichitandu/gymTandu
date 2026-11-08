@@ -1,0 +1,33 @@
+{
+  // Configurazione per pubblicare GymTrack su Cloudflare in modalità autonoma.
+  // Guida completa: docs/CLOUDFLARE_DEPLOY.md
+  "name": "gymtrack",
+  "main": "dist/cloudflare/index.js",
+  "compatibility_date": "2026-10-15",
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "assets": {
+    "directory": "dist/gymtrack/browser",
+    "binding": "ASSETS",
+    "run_worker_first": ["/api/*"]
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "gymtrack-accounts",
+      "database_id": "REPLACE_WITH_D1_DATABASE_ID",
+      "migrations_dir": "drizzle"
+    }
+  ],
+  "r2_buckets": [
+    {
+      "binding": "BUCKET",
+      "bucket_name": "gymtrack-archives"
+    }
+  ],
+  "vars": {
+    "SELF_HOSTED": "1"
+  },
+  "observability": {
+    "enabled": false
+  }
+}
