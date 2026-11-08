@@ -1,36 +1,55 @@
-<div class="cal-page">
+<div class="cal-page" [attr.data-view]="view()">
   <header class="cal-heading">
-    <h1>Calendario</h1>
+    <div class="cal-heading-copy">
+      <p class="cal-eyebrow">Calendario</p>
+      <h1>{{ headTitle() }}<em>{{ headSub() }}</em></h1>
+    </div>
     <div class="cal-heading-actions">
       <button
         type="button"
-        class="cal-today"
+        class="cal-round cal-today"
         [class.is-today]="selected() === today"
+        aria-label="Vai a oggi"
+        title="Oggi"
         (click)="choose(today)"
       >
-        Oggi
+        <gt-icon name="calendar" />
       </button>
       <button
         type="button"
-        class="cal-add"
-        aria-label="Aggiungi al calendario"
-        (click)="open()"
-        [disabled]="!s.ready()"
+        class="cal-round cal-filter-button"
+        aria-haspopup="dialog"
+        [attr.aria-expanded]="filtersOpen()"
+        aria-label="Filtri"
+        title="Filtri"
+        (click)="addOpen.set(false); filtersOpen.set(true)"
       >
-        <gt-icon name="plus" />
+        <gt-icon name="sliders" />
+        @if (filtersActive()) {
+          <span class="cal-filter-dot" aria-label="Filtri attivi"></span>
+        }
       </button>
     </div>
   </header>
   <gt-status />
 
   <div class="cal-view-switch" role="group" aria-label="Vista del calendario">
+    <span
+      class="cal-view-glider"
+      aria-hidden="true"
+      [style.transform]="
+        'translateX(' +
+        (view() === 'day' ? 0 : view() === 'week' ? 100 : 200) +
+        '%)'
+      "
+    ></span>
     <button
       type="button"
       [class.active]="view() === 'day'"
       [attr.aria-pressed]="view() === 'day'"
       (click)="view.set('day')"
     >
-      Giorno
+      <gt-icon name="clock" />Giorno
     </button>
     <button
       type="button"
@@ -38,7 +57,7 @@
       [attr.aria-pressed]="view() === 'week'"
       (click)="view.set('week')"
     >
-      Settimana
+      <gt-icon name="plans" />Settimana
     </button>
     <button
       type="button"
@@ -46,11 +65,11 @@
       [attr.aria-pressed]="view() === 'month'"
       (click)="view.set('month')"
     >
-      Mese
+      <gt-icon name="calendar" />Mese
     </button>
   </div>
 
-  <section class="cal-board" aria-label="Seleziona una data">
+  <ng-template #periodNav>
     <div class="cal-period-nav">
       <button
         type="button"
@@ -60,7 +79,10 @@
       >
         <gt-icon name="back" />
       </button>
-      <h2 aria-live="polite">{{ periodLabel() }}</h2>
+      <div class="cal-nav-mid" aria-live="polite">
+        <span class="cal-sr-only">{{ periodLabel() }}. </span>
+        <strong>{{ navSummary() }}</strong>
+      </div>
       <button
         type="button"
         class="cal-arrow"
@@ -76,542 +98,779 @@
           (ngModelChange)="choose($event)"
       /></label>
     </div>
-    @if (view() === "week") {
-      <div
-        class="cal-week-rail"
-        data-week-rail
-        aria-label="Giorni della settimana"
+  </ng-template>
+
+  <ng-template #itemRow let-item let-index="index">
+    <article
+      class="cal-row-item"
+      [class.selected]="isSelected(item)"
+      [attr.data-state]="item.status"
+      [attr.data-kind]="item.kind"
+      [style.--i]="index"
+    >
+      <span
+        class="cal-row-time"
+        [attr.aria-label]="
+          itemTime(item) ? 'Orario ' + itemTime(item) : 'Orario non indicato'
+        "
+        >{{ itemTime(item) || "—" }}</span
       >
-        @for (date of dates(); track date) {
-          <button
-            type="button"
-            class="cal-week-day"
-            [class.selected]="selected() === date"
-            [class.today]="date === today"
-            [class.has-done]="dateHas(date, 'completed')"
-            [class.has-partial]="dateHas(date, 'partial')"
-            [attr.aria-label]="dayAria(date)"
-            [attr.aria-pressed]="selected() === date"
-            [attr.aria-current]="date === today ? 'date' : null"
-            (click)="choose(date)"
-          >
-            <span class="cal-week-name">{{ weekday(date) }}</span
-            ><strong>{{ +date.slice(8) }}</strong>
-            <span class="cal-week-marks" aria-hidden="true">
-              @for (marker of dateMarkers(date); track $index) {
-                <span
-                  class="cal-marker"
-                  [attr.data-state]="marker.status"
-                  [attr.data-kind]="marker.kind"
-                  [title]="marker.label"
-                  ><gt-icon [name]="marker.icon"
-                /></span>
-              } @empty {
-                <span class="cal-no-mark"></span>
-              }
-            </span>
-          </button>
-        }
-      </div>
-    } @else if (view() === "month") {
-      <div class="cal-month-weekdays" aria-hidden="true">
-        @for (name of weekdays; track $index) {
-          <span>{{ name }}</span>
-        }
-      </div>
-      <div class="cal-month-grid" aria-label="Giorni del mese">
-        @for (date of dates(); track date) {
-          <button
-            type="button"
-            class="cal-month-day"
-            [class.selected]="selected() === date"
-            [class.today]="date === today"
-            [class.outside]="date.slice(0, 7) !== selected().slice(0, 7)"
-            [attr.aria-label]="dayAria(date)"
-            [attr.aria-pressed]="selected() === date"
-            [attr.aria-current]="date === today ? 'date' : null"
-            (click)="choose(date)"
-          >
-            <strong>{{ +date.slice(8) }}</strong
-            ><span class="cal-month-marks" aria-hidden="true">
-              @for (marker of dateMarkers(date); track $index) {
-                <span
-                  class="cal-marker"
-                  [attr.data-state]="marker.status"
-                  [attr.data-kind]="marker.kind"
-                  [title]="marker.label"
-                  ><gt-icon [name]="marker.icon"
-                /></span>
-              }
-            </span>
-          </button>
-        }
-      </div>
-    }
-  </section>
+      <button
+        type="button"
+        class="cal-item-select"
+        (click)="pickItem(item)"
+        [attr.aria-pressed]="isSelected(item)"
+        [attr.aria-label]="'Seleziona ' + item.title"
+      >
+        <span class="cal-item-thumb">
+          @if (itemExercise(item); as exercise) {
+            <gt-exercise-thumb [exercise]="exercise" />
+          } @else {
+            <gt-icon [name]="itemIcon(item)" />
+          }
+        </span>
+        <span class="cal-item-copy"
+          ><strong>{{ item.title }}</strong
+          ><small>{{ itemDetails(item) }}</small></span
+        >
+      </button>
+      @if (itemCanStart(item)) {
+        <button
+          type="button"
+          class="cal-item-action"
+          [attr.aria-label]="itemActionLabel(item) + ' · ' + item.title"
+          [title]="itemActionLabel(item)"
+          (click)="startItem(item)"
+          [disabled]="actionBusy() || s.busy()"
+        >
+          <gt-icon name="play" />
+        </button>
+      } @else if (item.kind !== "workout" && item.kind !== "rest") {
+        <button
+          type="button"
+          class="cal-item-action"
+          [class.is-done]="item.status === 'completed'"
+          [attr.aria-label]="
+            (item.status === 'completed' ? 'Riapri ' : 'Completa ') + item.title
+          "
+          [title]="
+            item.status === 'completed'
+              ? 'Riapri attività'
+              : 'Segna come completata'
+          "
+          (click)="toggleItem(item)"
+          [disabled]="actionBusy() || s.busy()"
+        >
+          <gt-icon [name]="item.status === 'completed' ? 'check' : 'circle'" />
+        </button>
+      } @else if (item.status === "completed") {
+        <button
+          type="button"
+          class="cal-item-action is-done"
+          [attr.aria-label]="'Vedi sessione ' + item.title"
+          (click)="viewItem(item)"
+        >
+          <gt-icon name="check" />
+        </button>
+      }
+    </article>
+  </ng-template>
 
   @if (view() === "day") {
-    <div
-      class="cal-quick-actions"
-      role="group"
-      aria-label="Azioni sulla voce selezionata"
-    >
-      <button type="button" (click)="open()" [disabled]="!s.ready()">
-        <gt-icon name="plus" /><span>Aggiungi</span>
-      </button>
-      <button
-        type="button"
-        (click)="quickDuplicate()"
-        [disabled]="actionBusy() || !canDuplicate(selectedItem())"
-        title="Duplica la voce selezionata"
+    <div class="cal-view cal-view-day">
+      <div
+        class="cal-strip"
+        data-week-rail
+        role="group"
+        aria-label="Giorni della settimana"
       >
-        <gt-icon name="copy" /><span>Duplica</span>
-      </button>
-      <button
-        type="button"
-        (click)="quickMove()"
-        [disabled]="actionBusy() || !canMove(selectedItem())"
-        title="Sposta una voce non ancora iniziata"
-      >
-        <gt-icon name="calendar" /><span>Sposta</span>
-      </button>
-      <button
-        type="button"
-        class="cal-delete-action"
-        (click)="quickRemove()"
-        [disabled]="actionBusy() || !canRemove(selectedItem())"
-        [title]="selectedItem()?.workout?'Elimina allenamento e relativa voce nel calendario':'Elimina la programmazione selezionata'"
-      >
-        <gt-icon name="trash" /><span>Elimina</span>
-      </button>
-      <button
-        type="button"
-        (click)="moreOpen.set(!moreOpen())"
-        [attr.aria-expanded]="moreOpen()"
-        aria-controls="cal-more-panel"
-      >
-        <span class="cal-more-dots" aria-hidden="true">•••</span
-        ><span>Altro</span>
-      </button>
-    </div>
-    @if (moreOpen()) {
-      <div class="cal-more-panel" id="cal-more-panel">
-        @if (selectedItem(); as item) {
-          <strong>{{ item.title }}</strong
-          ><button
+        @for (date of weekStrip(); track date; let i = $index) {
+          <button
             type="button"
-            (click)="editSelected()"
-            [disabled]="!canMove(item)"
+            class="cal-strip-day"
+            [class.selected]="selected() === date"
+            [class.today]="date === today"
+            [attr.aria-label]="dayAria(date)"
+            [attr.aria-pressed]="selected() === date"
+            [attr.aria-current]="date === today ? 'date' : null"
+            [style.--i]="i"
+            (click)="choose(date)"
           >
-            <gt-icon name="edit" />Modifica programma
+            <small>{{ weekday(date) }}</small
+            ><strong>{{ +date.slice(8) }}</strong
+            ><i class="cal-strip-dot" [attr.data-state]="dayState(date)"></i>
           </button>
-          @if (item.kind === "workout") {
-            <button type="button" (click)="viewItem(item)">
-              <gt-icon name="eye" />{{
-                item.status === "completed"
-                  ? "Vedi sessione"
-                  : "Vedi allenamento"
-              }}
-            </button>
-          }
         }
-        <a routerLink="/profilo" [queryParams]="{ section: 'calendar' }"
-          ><gt-icon name="calendar" />Calendario iPhone</a
-        >
       </div>
-    }
-    <div class="cal-stats cal-day-stats" aria-label="Riepilogo della giornata">
-      <div class="cal-stat">
-        <span
-          class="cal-progress-ring"
-          [style.--cal-progress]="dayStats().completionPercent + '%'"
-          aria-hidden="true"
-        ></span>
-        <div>
-          <strong>{{ dayStats().completed }}/{{ dayStats().total }}</strong
-          ><small>Completati</small>
-        </div>
-      </div>
-      <div class="cal-stat">
-        <gt-icon name="fire" />
-        <div>
-          <strong>{{
-            dayStats().hasCalories
-              ? dayStats().estimatedCalories.toLocaleString("it-IT", {
-                  maximumFractionDigits: 0,
-                })
-              : "—"
-          }}</strong
-          ><small>kcal stimate</small>
-        </div>
-      </div>
-      <div class="cal-stat">
-        <gt-icon name="clock" />
-        <div>
-          <strong>{{
-            dayStats().hasDuration
-              ? durationText(dayStats().durationMinutes)
-              : "—"
-          }}</strong
-          ><small>Durata nota</small>
-        </div>
-      </div>
-    </div>
-  } @else if (view() === "week") {
-    <div class="cal-stats" aria-label="Riepilogo della settimana">
-      <div class="cal-stat">
-        <gt-icon name="weight" />
-        <div>
-          <strong>{{ summary().total }}</strong
-          ><small>Attività</small>
-        </div>
-      </div>
-      <div class="cal-stat">
-        <gt-icon name="moon" />
-        <div>
-          <strong>{{ summary().rest }}</strong
-          ><small>Riposo</small>
-        </div>
-      </div>
-      <div class="cal-stat">
-        <span
-          class="cal-progress-ring"
-          [style.--cal-progress]="summary().completionPercent + '%'"
-          aria-hidden="true"
-        ></span>
-        <div>
-          <strong>{{ summary().completionPercent }}%</strong
-          ><small>Completati</small>
-        </div>
-      </div>
-    </div>
-  }
+      <ng-container *ngTemplateOutlet="periodNav" />
 
-  <div class="cal-filter-strip" role="group" aria-label="Filtra per stato">
-    <button
-      type="button"
-      [class.active]="filter() === 'all'"
-      [attr.aria-pressed]="filter() === 'all'"
-      (click)="selectFilter('all')"
-    >
-      Tutto
-    </button>
-    <button
-      type="button"
-      [class.active]="filter() === 'completed'"
-      [attr.aria-pressed]="filter() === 'completed'"
-      (click)="selectFilter('completed')"
-    >
-      <span class="cal-filter-mark" data-state="completed"
-        ><gt-icon name="check" /></span
-      >Completato
-    </button>
-    <button
-      type="button"
-      [class.active]="filter() === 'planned'"
-      [attr.aria-pressed]="filter() === 'planned'"
-      (click)="selectFilter('planned')"
-    >
-      <span class="cal-filter-mark" data-state="planned"></span>In programma
-    </button>
-    <button
-      type="button"
-      [class.active]="filter() === 'partial'"
-      [attr.aria-pressed]="filter() === 'partial'"
-      (click)="selectFilter('partial')"
-    >
-      <span class="cal-filter-mark" data-state="partial"
-        ><gt-icon name="clock" /></span
-      >Parziale
-    </button>
-    <button
-      type="button"
-      [class.active]="filter() === 'rest'"
-      [attr.aria-pressed]="filter() === 'rest'"
-      (click)="selectFilter('rest')"
-    >
-      <span class="cal-filter-mark" data-state="rest"
-        ><gt-icon name="moon" /></span
-      >Riposo
-    </button>
-    <button
-      type="button"
-      [class.active]="filter() === 'other'"
-      [attr.aria-pressed]="filter() === 'other'"
-      (click)="selectFilter('other')"
-    >
-      <span class="cal-filter-mark" data-state="other"></span>Altro
-    </button>
-  </div>
+      <div class="cal-stats cal-day-stats" aria-label="Riepilogo della giornata">
+        <div class="cal-stat">
+          <span
+            class="cal-progress-ring"
+            [style.--p]="dayStats().completionPercent"
+            aria-hidden="true"
+          ></span>
+          <div>
+            <strong>{{ dayStats().completed }}/{{ dayStats().total }}</strong
+            ><small>Completati</small>
+          </div>
+        </div>
+        <div class="cal-stat">
+          <gt-icon name="fire" />
+          <div>
+            <strong>{{
+              dayStats().hasCalories
+                ? dayStats().estimatedCalories.toLocaleString("it-IT", {
+                    maximumFractionDigits: 0,
+                  })
+                : "—"
+            }}</strong
+            ><small>kcal stimate</small>
+          </div>
+        </div>
+        <div class="cal-stat">
+          <gt-icon name="clock" />
+          <div>
+            <strong>{{
+              dayStats().hasDuration
+                ? durationText(dayStats().durationMinutes)
+                : "—"
+            }}</strong
+            ><small>Durata nota</small>
+          </div>
+        </div>
+      </div>
 
-  <div class="cal-agenda-heading">
-    <div>
-      <h2>{{ label(selected()) }}</h2>
-      @if (selected() === today) {
-        <span class="cal-now-label">Oggi</span>
+      <p class="cal-sr-only" role="status">
+        {{ visibleAgenda().length }} voci per {{ label(selected()) }}
+      </p>
+      @if (timeline(); as tl) {
+        @if (tl.untimed.length) {
+          <div class="cal-untimed" aria-label="Voci senza orario">
+            <p class="cal-untimed-title">Senza orario</p>
+            @for (item of tl.untimed; track item.id; let i = $index) {
+              <ng-container
+                *ngTemplateOutlet="
+                  itemRow;
+                  context: { $implicit: item, index: i }
+                "
+              />
+            }
+          </div>
+        }
+        @if (tl.blocks.length) {
+          <div
+            class="cal-timeline"
+            [style.height.px]="tl.height"
+            aria-label="Agenda del giorno"
+          >
+            @for (hour of tl.hours; track hour.label) {
+              <div class="cal-hour" [style.top.px]="hour.top">
+                <span>{{ hour.label }}</span>
+              </div>
+            }
+            @if (tl.now; as now) {
+              <div class="cal-now" [style.top.px]="now.top" aria-hidden="true">
+                <span>{{ now.label }}</span>
+              </div>
+            }
+            <div class="cal-blocks">
+              @for (block of tl.blocks; track block.item.id; let i = $index) {
+                <article
+                  class="cal-block"
+                  [class.selected]="isSelected(block.item)"
+                  [attr.data-state]="block.item.status"
+                  [attr.data-kind]="block.item.kind"
+                  [style.top.px]="block.top"
+                  [style.height.px]="block.height"
+                  [style.left.%]="(block.lane * 100) / block.lanes"
+                  [style.width]="'calc(' + 100 / block.lanes + '% - 6px)'"
+                  [style.--i]="i"
+                >
+                  <button
+                    type="button"
+                    class="cal-item-select"
+                    (click)="pickItem(block.item)"
+                    [attr.aria-pressed]="isSelected(block.item)"
+                    [attr.aria-label]="
+                      'Seleziona ' +
+                      block.item.title +
+                      ' · ' +
+                      itemTime(block.item)
+                    "
+                  >
+                    <span class="cal-item-thumb">
+                      @if (itemExercise(block.item); as exercise) {
+                        <gt-exercise-thumb [exercise]="exercise" />
+                      } @else {
+                        <gt-icon [name]="itemIcon(block.item)" />
+                      }
+                    </span>
+                    <span class="cal-item-copy"
+                      ><strong>{{ block.item.title }}</strong
+                      ><small
+                        >{{ itemTime(block.item) }} ·
+                        {{ itemDetails(block.item) }}</small
+                      >
+                      @if (
+                        block.item.status === "partial" && block.item.totalSets
+                      ) {
+                        <span class="cal-block-progress" aria-hidden="true"
+                          ><i
+                            [style.width.%]="
+                              (block.item.completedSets * 100) /
+                              block.item.totalSets
+                            "
+                          ></i
+                        ></span>
+                      }
+                    </span>
+                  </button>
+                  @if (block.item.status === "completed") {
+                    <span class="cal-block-badge" aria-hidden="true"
+                      ><gt-icon name="check"
+                    /></span>
+                  } @else if (itemCanStart(block.item)) {
+                    <button
+                      type="button"
+                      class="cal-item-action"
+                      [attr.aria-label]="
+                        itemActionLabel(block.item) + ' · ' + block.item.title
+                      "
+                      [title]="itemActionLabel(block.item)"
+                      (click)="startItem(block.item)"
+                      [disabled]="actionBusy() || s.busy()"
+                    >
+                      <gt-icon name="play" />
+                    </button>
+                  } @else if (
+                    block.item.kind !== "workout" && block.item.kind !== "rest"
+                  ) {
+                    <button
+                      type="button"
+                      class="cal-item-action"
+                      [attr.aria-label]="'Completa ' + block.item.title"
+                      title="Segna come completata"
+                      (click)="toggleItem(block.item)"
+                      [disabled]="actionBusy() || s.busy()"
+                    >
+                      <gt-icon name="circle" />
+                    </button>
+                  }
+                </article>
+              }
+            </div>
+          </div>
+        }
       }
-    </div>
-    <label class="cal-kind-filter"
-      ><span class="cal-sr-only">Tipo di attività</span
-      ><select
-        aria-label="Filtra per tipo di attività"
-        [ngModel]="kindFilter()"
-        (ngModelChange)="kindFilter.set($event)"
-      >
-        <option value="all">Tutti i tipi</option>
-        @for (option of kindOptions; track option.value) {
-          <option [value]="option.value">{{ option.label }}</option>
-        }
-      </select></label
-    >
-  </div>
-
-  <p class="cal-sr-only" role="status">
-    {{ visibleAgenda().length }} voci per {{ label(selected()) }}
-  </p>
-  <ol class="cal-agenda" aria-label="Agenda del giorno">
-    @for (item of visibleAgenda(); track item.id) {
-      <li
-        class="cal-timeline-row"
-        [attr.data-state]="item.status"
-        [attr.data-kind]="item.kind"
-      >
-        <span
-          class="cal-event-time"
-          [attr.aria-label]="
-            itemTime(item) ? 'Orario ' + itemTime(item) : 'Orario non indicato'
-          "
-          >{{ itemTime(item) || "—" }}</span
-        >
-        <span class="cal-node" aria-hidden="true"
-          ><gt-icon
-            [name]="
-              item.status === 'completed'
-                ? 'check'
-                : item.status === 'partial'
-                  ? 'clock'
-                  : itemIcon(item)
-            "
-        /></span>
-        <article
-          class="cal-item"
-          [class.selected]="selectedItem()?.id === item.id"
-          [attr.data-state]="item.status"
-          [attr.data-kind]="item.kind"
-        >
-          <div class="cal-item-top">
+      @if (!visibleAgenda().length) {
+        <div class="cal-empty">
+          <gt-icon name="calendar" />
+          <h3>
+            {{
+              agendaItems().length
+                ? "Nessuna voce con questi filtri"
+                : "La giornata è libera"
+            }}
+          </h3>
+          <p>
+            {{
+              agendaItems().length
+                ? "Prova un altro stato o tipo di attività."
+                : "Aggiungi un allenamento, un’attività o un momento di riposo."
+            }}
+          </p>
+          @if (agendaItems().length) {
+            <button type="button" class="cal-preview" (click)="resetFilters()">
+              Mostra tutto
+            </button>
+          } @else {
             <button
               type="button"
-              class="cal-item-select"
-              (click)="selectItem(item)"
-              [attr.aria-pressed]="selectedItem()?.id === item.id"
-              [attr.aria-expanded]="selectedItem()?.id === item.id"
-              [attr.aria-label]="'Seleziona ' + item.title"
+              class="cal-primary"
+              (click)="open()"
+              [disabled]="!s.ready()"
             >
-              <span class="cal-item-thumb">
-                @if (itemExercise(item); as exercise) {
-                  <gt-exercise-thumb [exercise]="exercise" />
-                } @else {
-                  <gt-icon [name]="itemIcon(item)" />
-                }
-              </span>
-              <span class="cal-item-copy"
-                ><strong>{{ item.title }}</strong
-                ><small>{{ itemDetails(item) }}</small
-                ><span class="cal-item-state-label">{{
-                  itemStatus(item)
-                }}</span></span
-              >
-              <gt-icon class="cal-item-chevron" name="arrow" />
+              <gt-icon name="plus" />Aggiungi al calendario
             </button>
-            @if (itemCanStart(item)) {
+          }
+        </div>
+      }
+    </div>
+  } @else if (view() === "week") {
+    <div class="cal-view cal-view-week">
+      <section class="cal-overview" aria-label="Riepilogo della settimana">
+        <div class="cal-bigring" [style.--p]="scoreProgress()">
+          <strong
+            >{{ summary().completed
+            }}<small>/{{ target() || summary().total }}</small></strong
+          >
+        </div>
+        <div class="cal-overview-text">
+          <strong>{{
+            target() ? "Obiettivo settimanale" : "Completamento"
+          }}</strong>
+          <small>{{ weekGoalText() }}</small>
+          <div class="cal-bars" aria-hidden="true">
+            @for (date of dates(); track date; let i = $index) {
+              <span class="cal-bar" [class.today]="date === today"
+                ><i
+                  [attr.data-state]="dayState(date)"
+                  [style.height.px]="dayBarHeight(date)"
+                  [style.--i]="i"
+                ></i
+              ></span>
+            }
+          </div>
+        </div>
+      </section>
+      <ng-container *ngTemplateOutlet="periodNav" />
+      <div class="cal-week-list" aria-label="Giorni della settimana">
+        @for (date of dates(); track date; let i = $index) {
+          @let items = visibleFor(date);
+          <div
+            class="cal-week-row"
+            [class.selected]="selected() === date"
+            [class.today]="date === today"
+            [attr.data-state]="dayState(date)"
+            [style.--i]="i"
+          >
+            <button
+              type="button"
+              class="cal-week-date"
+              [attr.aria-label]="dayAria(date)"
+              [attr.aria-pressed]="selected() === date"
+              [attr.aria-current]="date === today ? 'date' : null"
+              (click)="choose(date)"
+            >
+              <small>{{ weekday(date) }}</small
+              ><strong>{{ +date.slice(8) }}</strong>
+            </button>
+            <div class="cal-week-body">
+              @if (selected() === date) {
+                @for (item of items; track item.id; let n = $index) {
+                  <ng-container
+                    *ngTemplateOutlet="
+                      itemRow;
+                      context: { $implicit: item, index: n }
+                    "
+                  />
+                } @empty {
+                  <button
+                    type="button"
+                    class="cal-week-free"
+                    (click)="open()"
+                    [disabled]="!s.ready()"
+                  >
+                    <gt-icon name="plus" />{{
+                      hiddenByFilters(date)
+                        ? "Nessuna voce con questi filtri"
+                        : "Giornata libera · aggiungi"
+                    }}
+                  </button>
+                }
+              } @else {
+                <button
+                  type="button"
+                  class="cal-week-pills"
+                  (click)="choose(date)"
+                  [attr.aria-label]="'Apri ' + label(date)"
+                >
+                  @for (item of items; track item.id) {
+                    <span
+                      class="cal-pill"
+                      [attr.data-state]="item.status"
+                      [attr.data-kind]="item.kind"
+                      ><gt-icon
+                        [name]="
+                          item.status === 'completed'
+                            ? 'check'
+                            : item.status === 'partial'
+                              ? 'clock'
+                              : itemIcon(item)
+                        " /><span>{{ item.title }}</span></span
+                    >
+                  } @empty {
+                    <span class="cal-week-free-text">{{
+                      hiddenByFilters(date)
+                        ? "Nessuna voce con questi filtri"
+                        : "Giornata libera"
+                    }}</span>
+                  }
+                </button>
+              }
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+  } @else {
+    <div class="cal-view cal-view-month">
+      <section class="cal-board" aria-label="Seleziona una data">
+        <ng-container *ngTemplateOutlet="periodNav" />
+        <div class="cal-month-weekdays" aria-hidden="true">
+          @for (name of weekdays; track $index) {
+            <span>{{ name }}</span>
+          }
+        </div>
+        <div class="cal-month-grid" aria-label="Giorni del mese">
+          @for (cell of monthCells(); track cell.date; let i = $index) {
+            <div
+              class="cal-cw"
+              [class.join-l]="cell.joinLeft"
+              [class.join-r]="cell.joinRight"
+            >
               <button
                 type="button"
-                class="cal-item-action"
-                [attr.aria-label]="itemActionLabel(item) + ' · ' + item.title"
-                [title]="itemActionLabel(item)"
-                (click)="startItem(item)"
-                [disabled]="actionBusy() || s.busy()"
+                class="cal-day"
+                [attr.data-state]="cell.state"
+                [class.selected]="selected() === cell.date"
+                [class.today]="cell.date === today"
+                [attr.aria-label]="dayAria(cell.date)"
+                [attr.aria-pressed]="selected() === cell.date"
+                [attr.aria-current]="cell.date === today ? 'date' : null"
+                [style.--i]="i"
+                (click)="choose(cell.date)"
               >
-                <gt-icon name="play" />
+                <span class="cal-day-ring" aria-hidden="true"></span>
+                <strong>{{ +cell.date.slice(8) }}</strong>
+                @if (cell.extra) {
+                  <span class="cal-day-extra" aria-hidden="true"
+                    ><gt-icon name="activity"
+                  /></span>
+                }
               </button>
-            } @else if (item.kind !== "workout" && item.kind !== "rest") {
+            </div>
+          }
+        </div>
+        <div class="cal-legend" aria-hidden="true">
+          <span><i data-state="completed"></i>Fatto</span>
+          <span><i data-state="partial"></i>Parziale</span>
+          <span><i data-state="planned"></i>Previsto</span>
+          <span><i data-state="rest"></i>Riposo</span>
+        </div>
+      </section>
+
+      <div class="cal-agenda-heading">
+        <div>
+          <h2>{{ label(selected()) }}</h2>
+          @if (selected() === today) {
+            <span class="cal-now-label">Oggi</span>
+          }
+        </div>
+        <span class="cal-agenda-count"
+          >{{ visibleAgenda().length }}
+          {{ visibleAgenda().length === 1 ? "voce" : "voci" }}</span
+        >
+      </div>
+      <p class="cal-sr-only" role="status">
+        {{ visibleAgenda().length }} voci per {{ label(selected()) }}
+      </p>
+      <div class="cal-agenda-list" aria-label="Agenda del giorno">
+        @for (item of visibleAgenda(); track item.id; let n = $index) {
+          <ng-container
+            *ngTemplateOutlet="itemRow; context: { $implicit: item, index: n }"
+          />
+        } @empty {
+          <div class="cal-empty">
+            <gt-icon name="calendar" />
+            <h3>
+              {{
+                agendaItems().length
+                  ? "Nessuna voce con questi filtri"
+                  : "La giornata è libera"
+              }}
+            </h3>
+            <p>
+              {{
+                agendaItems().length
+                  ? "Prova un altro stato o tipo di attività."
+                  : "Aggiungi un allenamento, un’attività o un momento di riposo."
+              }}
+            </p>
+            @if (agendaItems().length) {
               <button
                 type="button"
-                class="cal-item-action"
-                [class.is-done]="item.status === 'completed'"
-                [attr.aria-label]="
-                  (item.status === 'completed' ? 'Riapri ' : 'Completa ') +
-                  item.title
-                "
-                [title]="
-                  item.status === 'completed'
-                    ? 'Riapri attività'
-                    : 'Segna come completata'
-                "
-                (click)="toggleItem(item)"
-                [disabled]="actionBusy() || s.busy()"
+                class="cal-preview"
+                (click)="resetFilters()"
               >
-                <gt-icon
-                  [name]="item.status === 'completed' ? 'check' : 'circle'"
-                />
+                Mostra tutto
               </button>
-            } @else if (item.status === "completed") {
+            } @else {
               <button
                 type="button"
-                class="cal-item-action is-done"
-                [attr.aria-label]="'Vedi sessione ' + item.title"
-                (click)="viewItem(item)"
+                class="cal-primary"
+                (click)="open()"
+                [disabled]="!s.ready()"
               >
-                <gt-icon name="check" />
+                <gt-icon name="plus" />Aggiungi al calendario
               </button>
             }
           </div>
-          @if (selectedItem()?.id === item.id) {
-            <div class="cal-item-details">
-              @if (item.planName) {
-                <p class="cal-plan-name">{{ item.planName }}</p>
-              }
-              @if (itemMuscles(item)) {
-                <p class="cal-muscles">{{ itemMuscles(item) }}</p>
-              }
-              @if (item.status === "partial" && item.totalSets) {
-                <div class="cal-set-progress">
-                  <span
-                    >{{ item.completedSets }}/{{ item.totalSets }} serie
-                    completate</span
-                  ><progress
-                    [value]="item.completedSets"
-                    [max]="item.totalSets"
-                    aria-label="Serie completate"
-                  ></progress>
-                </div>
-              }
-              @if (item.notes) {
-                <details class="cal-item-notes">
-                  <summary>
-                    <gt-icon name="note" />Note e consigli<gt-icon
-                      name="arrow"
-                    />
-                  </summary>
-                  <p>{{ item.notes }}</p>
-                </details>
-              }
-              @if (restFor(item); as rest) {
-                <button type="button" class="cal-rest" (click)="openRest(item)">
-                  <gt-icon name="clock" /><span
-                    >Recupero {{ rest.paused ? "in pausa" : "" }}
-                    <strong>{{ rest.time }}</strong></span
-                  ><gt-icon name="arrow" />
-                </button>
-              }
-              @if (item.kind === "workout") {
-                <button
-                  type="button"
-                  class="cal-preview"
-                  (click)="viewItem(item)"
-                >
-                  <gt-icon name="eye" />{{
-                    item.status === "completed"
-                      ? "Vedi sessione"
-                      : "Vedi allenamento"
-                  }}<gt-icon name="arrow" />
-                </button>
-                @if (itemCanStart(item)) {
-                  <button
-                    type="button"
-                    class="cal-primary cal-start"
-                    (click)="startItem(item)"
-                    [disabled]="actionBusy() || s.busy()"
-                  >
-                    <gt-icon name="play" />{{ itemActionLabel(item) }}
-                  </button>
-                }
-              }
-              <div class="cal-item-tools">
-                @if (canMove(item)) {
-                  <button
-                    type="button"
-                    (click)="editSelected()"
-                    [disabled]="actionBusy()"
-                  >
-                    <gt-icon name="edit" />Modifica
-                  </button>
-                }
-                @if (canDuplicate(item)) {
-                  <button
-                    type="button"
-                    (click)="quickDuplicate()"
-                    [disabled]="actionBusy()"
-                  >
-                    <gt-icon name="copy" />Duplica
-                  </button>
-                }
-                @if (canRemove(item)) {
-                  <button
-                    type="button"
-                    class="cal-remove"
-                    (click)="quickRemove()"
-                    [disabled]="actionBusy()"
-                  >
-                    <gt-icon name="trash" />Elimina
-                  </button>
-                }
-              </div>
-            </div>
-          }
-        </article>
-      </li>
-    } @empty {
-      <li class="cal-empty">
-        <gt-icon name="calendar" />
-        <h3>
-          {{
-            agendaItems().length
-              ? "Nessuna voce con questi filtri"
-              : "La giornata è libera"
-          }}
-        </h3>
-        <p>
-          {{
-            agendaItems().length
-              ? "Prova un altro stato o tipo di attività."
-              : "Aggiungi un allenamento, un’attività o un momento di riposo."
-          }}
-        </p>
-        @if (agendaItems().length) {
-          <button
-            type="button"
-            class="cal-preview"
-            (click)="selectFilter('all'); kindFilter.set('all')"
-          >
-            Mostra tutto
-          </button>
-        } @else {
-          <button
-            type="button"
-            class="cal-primary"
-            (click)="open()"
-            [disabled]="!s.ready()"
-          >
-            <gt-icon name="plus" />Aggiungi al calendario
-          </button>
         }
-      </li>
-    }
-  </ol>
-  @if (visibleAgenda().length) {
-    <button
-      type="button"
-      class="cal-add-inline"
-      (click)="open()"
-      [disabled]="!s.ready()"
-    >
-      <gt-icon name="plus" />Aggiungi allenamento o attività
-    </button>
+      </div>
+    </div>
+  }
+
+  @if (dockVisible() && selectedItem(); as item) {
+    <section class="cal-detail" aria-label="Dettagli della voce selezionata">
+      <div class="cal-detail-head">
+        <strong>{{ item.title }}</strong
+        ><span class="cal-item-state-label" [attr.data-state]="item.status">{{
+          itemStatus(item)
+        }}</span>
+      </div>
+      @if (item.planName) {
+        <p class="cal-plan-name">{{ item.planName }}</p>
+      }
+      @if (itemMuscles(item)) {
+        <p class="cal-muscles">{{ itemMuscles(item) }}</p>
+      }
+      @if (item.status === "partial" && item.totalSets) {
+        <div class="cal-set-progress">
+          <span
+            >{{ item.completedSets }}/{{ item.totalSets }} serie completate</span
+          ><progress
+            [value]="item.completedSets"
+            [max]="item.totalSets"
+            aria-label="Serie completate"
+          ></progress>
+        </div>
+      }
+      @if (item.notes) {
+        <details class="cal-item-notes">
+          <summary>
+            <gt-icon name="note" />Note e consigli<gt-icon name="arrow" />
+          </summary>
+          <p>{{ item.notes }}</p>
+        </details>
+      }
+      @if (restFor(item); as rest) {
+        <button type="button" class="cal-rest" (click)="openRest(item)">
+          <gt-icon name="clock" /><span
+            >Recupero {{ rest.paused ? "in pausa" : "" }}
+            <strong>{{ rest.time }}</strong></span
+          ><gt-icon name="arrow" />
+        </button>
+      }
+      @if (item.kind === "workout") {
+        <button type="button" class="cal-preview" (click)="viewItem(item)">
+          <gt-icon name="eye" />{{
+            item.status === "completed" ? "Vedi sessione" : "Vedi allenamento"
+          }}<gt-icon name="arrow" />
+        </button>
+      }
+    </section>
   }
   <gt-calendar-subscription class="cal-sync" />
+
+  @if (addOpen()) {
+    <div
+      class="cal-scrim"
+      (click)="addOpen.set(false)"
+      aria-hidden="true"
+    ></div>
+  }
+  <div class="cal-float">
+    <div class="cal-float-inner">
+      @if (addOpen()) {
+        <div
+          class="cal-add-menu"
+          role="menu"
+          aria-label="Cosa vuoi aggiungere?"
+          (keydown.escape)="addOpen.set(false)"
+        >
+          @for (option of addOptions; track option.kind; let i = $index) {
+            <button
+              type="button"
+              role="menuitem"
+              [style.--i]="i"
+              (click)="openAdd(option.kind)"
+              [disabled]="!s.ready()"
+            >
+              <gt-icon [name]="option.icon" />{{ option.label }}
+            </button>
+          }
+        </div>
+      }
+      <button
+        type="button"
+        class="cal-fab"
+        [class.open]="addOpen()"
+        aria-haspopup="menu"
+        [attr.aria-expanded]="addOpen()"
+        aria-label="Aggiungi al calendario"
+        (click)="addOpen.set(!addOpen())"
+        [disabled]="!s.ready()"
+      >
+        <gt-icon name="plus" />
+      </button>
+      @if (dockVisible() && selectedItem(); as item) {
+        <div
+          class="cal-dock"
+          role="group"
+          aria-label="Azioni sulla voce selezionata"
+        >
+          @if (itemCanStart(item)) {
+            <button
+              type="button"
+              class="cal-dock-go"
+              (click)="startItem(item)"
+              [disabled]="actionBusy() || s.busy()"
+            >
+              <gt-icon name="play" />{{
+                item.status === "partial" ? "Riprendi" : "Avvia"
+              }}
+            </button>
+          } @else if (item.kind === "workout") {
+            <button type="button" class="cal-dock-go" (click)="viewItem(item)">
+              <gt-icon name="eye" />Vedi
+            </button>
+          } @else if (item.kind !== "rest") {
+            <button
+              type="button"
+              class="cal-dock-go"
+              (click)="toggleItem(item)"
+              [disabled]="actionBusy() || s.busy()"
+            >
+              <gt-icon
+                [name]="item.status === 'completed' ? 'check' : 'circle'"
+              />{{ item.status === "completed" ? "Riapri" : "Completa" }}
+            </button>
+          }
+          <button
+            type="button"
+            (click)="editSelected()"
+            [disabled]="actionBusy() || !canMove(item)"
+            title="Modifica la programmazione"
+          >
+            <gt-icon name="edit" /><span>Modifica</span>
+          </button>
+          <button
+            type="button"
+            (click)="quickDuplicate()"
+            [disabled]="actionBusy() || !canDuplicate(item)"
+            title="Duplica la voce selezionata"
+          >
+            <gt-icon name="copy" /><span>Duplica</span>
+          </button>
+          <button
+            type="button"
+            (click)="quickMove()"
+            [disabled]="actionBusy() || !canMove(item)"
+            title="Sposta una voce non ancora iniziata"
+          >
+            <gt-icon name="calendar" /><span>Sposta</span>
+          </button>
+          <button
+            type="button"
+            class="cal-delete-action"
+            (click)="quickRemove()"
+            [disabled]="actionBusy() || !canRemove(item)"
+            [title]="
+              item.workout
+                ? 'Elimina allenamento e relativa voce nel calendario'
+                : 'Elimina la programmazione selezionata'
+            "
+          >
+            <gt-icon name="trash" /><span>Elimina</span>
+          </button>
+        </div>
+      }
+    </div>
+  </div>
 </div>
+
+@if (filtersOpen()) {
+  <div
+    class="cal-sheet-backdrop"
+    (click)="$event.target === $event.currentTarget && filtersOpen.set(false)"
+  >
+    <section
+      class="cal-filter-sheet"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="filters-title"
+      cdkTrapFocus
+      [cdkTrapFocusAutoCapture]="true"
+      (keydown.escape)="filtersOpen.set(false)"
+    >
+      <div class="cal-sheet-grab" aria-hidden="true"></div>
+      <div class="cal-modal-heading">
+        <h2 id="filters-title">Filtri</h2>
+        <button type="button" class="cal-link-button" (click)="resetFilters()">
+          Reimposta
+        </button>
+      </div>
+      <h3 class="cal-filter-label">Stato</h3>
+      <div class="cal-filter-chips" role="group" aria-label="Filtra per stato">
+        @for (option of stateOptions; track option.value) {
+          <button
+            type="button"
+            [class.active]="filter() === option.value"
+            [attr.aria-pressed]="filter() === option.value"
+            (click)="selectFilter(option.value)"
+          >
+            @if (option.value !== "all") {
+              <span class="cal-filter-mark" [attr.data-state]="option.state"
+                ><gt-icon
+                  [name]="
+                    option.state === 'completed'
+                      ? 'check'
+                      : option.state === 'partial'
+                        ? 'clock'
+                        : option.state === 'rest'
+                          ? 'moon'
+                          : 'circle'
+                  "
+              /></span>
+            }{{ option.label }}
+          </button>
+        }
+      </div>
+      <h3 class="cal-filter-label">Tipo di attività</h3>
+      <div
+        class="cal-filter-chips"
+        role="group"
+        aria-label="Filtra per tipo di attività"
+      >
+        <button
+          type="button"
+          [class.active]="kindFilter() === 'all'"
+          [attr.aria-pressed]="kindFilter() === 'all'"
+          (click)="kindFilter.set('all')"
+        >
+          Tutti i tipi
+        </button>
+        @for (option of kindOptions; track option.value) {
+          <button
+            type="button"
+            [class.active]="kindFilter() === option.value"
+            [attr.aria-pressed]="kindFilter() === option.value"
+            (click)="kindFilter.set(option.value)"
+          >
+            <gt-icon [name]="option.icon" />{{ option.label }}
+          </button>
+        }
+      </div>
+      <button
+        type="button"
+        class="cal-primary cal-filter-apply"
+        (click)="filtersOpen.set(false)"
+      >
+        Mostra {{ visibleCount() }} {{ visibleCount() === 1 ? "voce" : "voci" }}
+      </button>
+      <a
+        class="cal-filter-link"
+        routerLink="/profilo"
+        [queryParams]="{ section: 'calendar' }"
+        (click)="closeSheets()"
+        ><gt-icon name="calendar" />Calendario iPhone</a
+      >
+    </section>
+  </div>
+}
 
 @if (modal()) {
   <div class="modal-backdrop cal-modal-backdrop" (click)="backdrop($event)">

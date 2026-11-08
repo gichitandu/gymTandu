@@ -84,3 +84,37 @@ it('keeps a preserved historical link protected when the linked session is unava
  c.quickMove();expect(c.modal()).toBe(false);c.open(event);expect(c.modal()).toBe(false);
  expect(s.data().scheduledWorkouts[0]).toEqual(event);
 });
+
+it('lays timed items on an hour grid with side-by-side lanes and keeps untimed rows apart',async()=>{
+ await s.scheduleCalendarActivity({id:'a',date:'2026-10-30',kind:'cardio',title:'Corsa',time:'18:00',durationMinutes:60});
+ await s.scheduleCalendarActivity({id:'b',date:'2026-10-30',kind:'other',title:'Visita',time:'18:30',durationMinutes:30});
+ await s.scheduleCalendarActivity({id:'c',date:'2026-10-30',kind:'rest',title:'Riposo'});
+ const timeline=c.timeline();
+ expect(timeline.blocks.map(block=>block.item.id)).toEqual(['event:a','event:b']);
+ expect(timeline.blocks.map(block=>block.lane)).toEqual([0,1]);expect(timeline.blocks.map(block=>block.lanes)).toEqual([2,2]);
+ expect(timeline.untimed.map(item=>item.id)).toEqual(['event:c']);expect(timeline.hours[0].label).toBe('17:00');
+});
+
+it('summarises each day for the month rings and joins consecutive completed days',async()=>{
+ await s.scheduleCalendarActivity({id:'x1',date:'2026-10-27',kind:'cardio',title:'Corsa',done:true});
+ await s.scheduleCalendarActivity({id:'x2',date:'2026-10-28',kind:'cardio',title:'Corsa',done:true});
+ await s.scheduleCalendarActivity({id:'x3',date:'2026-10-29',kind:'rest',title:'Riposo'});
+ c.view.set('month');
+ expect(c.dayState('2026-10-27')).toBe('completed');expect(c.dayState('2026-10-29')).toBe('rest');expect(c.dayState('2026-10-26')).toBe('');
+ const cells=c.monthCells(),first=cells.find(cell=>cell.date==='2026-10-27')!,second=cells.find(cell=>cell.date==='2026-10-28')!;
+ expect(first.joinRight).toBe(true);expect(second.joinLeft).toBe(true);expect(cells.find(cell=>cell.date==='2026-10-29')!.joinLeft).toBe(false);
+});
+
+it('shows the contextual dock only for a chosen row outside the day view and resets filters in one step',async()=>{
+ await s.scheduleCalendarActivity({id:'run',date:'2026-10-30',kind:'cardio',title:'Corsa',time:'11:00'});
+ c.view.set('week');expect(c.dockVisible()).toBe(false);
+ c.pickItem(c.agendaItems()[0]);expect(c.dockVisible()).toBe(true);
+ c.view.set('day');c.kindFilter.set('workout');
+ expect(c.filtersActive()).toBe(true);expect(c.visibleCount()).toBe(0);expect(c.dockVisible()).toBe(false);
+ c.resetFilters();expect(c.filtersActive()).toBe(false);expect(c.visibleCount()).toBe(1);
+});
+
+it('opens the schedule form with the kind chosen from the floating add menu',()=>{
+ c.addOpen.set(true);c.openAdd('rest');
+ expect(c.addOpen()).toBe(false);expect(c.modal()).toBe(true);expect(c.kind).toBe('rest');expect(c.formMode()).toBe('create');
+});
