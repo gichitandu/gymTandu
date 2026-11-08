@@ -112,4 +112,34 @@ describe('restored weekly completion percentage', () => {
     today.set('2026-11-09'); expect(home.weekCount()).toBe(0); expect(home.weeklyProgress()).toBe(0);
     expect(home.week[0].date).toBe('2026-11-09');
   }));
+  it('writes the Home headline and streak from real completed days and calendar rest days', () => withHome((home, data) => {
+    expect(home.headline()).toBe('pronto a partire?');
+    data.update(value => ({...value, settings: [{...value.settings[0], goals: {workoutsPerWeek: 3}}], workouts: [workout('a', '2026-11-04'), workout('b', '2026-11-02')]}));
+    expect(home.goalRemaining()).toBe(1);
+    expect(home.headline()).toBe('sei a un passo.');
+    expect(home.streak()).toBe(1);
+    data.update(value => ({...value, scheduledWorkouts: [{id: 'rest', kind: 'rest', date: '2026-11-03', planId: '', dayId: '', planName: '', dayName: 'Riposo', notes: ''}]}));
+    expect(home.streak()).toBe(3);
+    data.update(value => ({...value, workouts: [...value.workouts, workout('c', '2026-11-05')]}));
+    expect(home.headline()).toBe('obiettivo raggiunto.');
+    expect(home.weekMinutes()).toBe(90);
+    data.update(value => ({...value, settings: [{...value.settings[0], goals: {workoutsPerWeek: 6}}]}));
+    expect(home.headline()).toBe('ancora 3 allenamenti.');
+  }));
+  it('classifies each weekday bar and builds an eight-week trend line', () => withHome((home, data) => {
+    data.update(value => ({...value, workouts: [workout('a', '2026-11-02'), workout('b', '2026-10-20')], scheduledWorkouts: [
+      {id: 'rest', kind: 'rest', date: '2026-11-03', planId: '', dayId: '', planName: '', dayName: 'Riposo', notes: ''},
+      {id: 'cardio', kind: 'cardio', date: '2026-11-05', planId: '', dayId: '', planName: '', dayName: 'Corsa', notes: ''},
+      {id: 'next', date: '2026-11-06', planId: 'p', dayId: 'd', planName: 'Piano', dayName: 'Seduta', notes: ''},
+    ]}));
+    expect(home.dayInfo('2026-11-02')).toEqual({state: 'done', height: 40});
+    expect(home.dayInfo('2026-11-03').state).toBe('rest');
+    expect(home.dayInfo('2026-11-04').state).toBe('empty');
+    expect(home.dayInfo('2026-11-05').state).toBe('cardio');
+    expect(home.dayInfo('2026-11-06').state).toBe('plan');
+    const trend = home.trend();
+    expect(trend.total).toBe(2);
+    expect(trend.line.startsWith('M4.0 ')).toBe(true);
+    expect(trend.line.split('L')).toHaveLength(8);
+  }));
 });

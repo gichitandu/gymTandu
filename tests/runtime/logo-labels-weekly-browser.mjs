@@ -47,11 +47,10 @@ try {
   await context.request.post(origin + '/api/auth/setup', {headers: {Origin: origin}, data: {password}});
   await call('auth/login', {email: 'giacomotanduo004@gmail.com', password});
   await page.goto(origin + '/#/'); await waitHome();
-  assert.equal(await page.locator('.home-weekly-progress strong').innerText(), '—');
-  assert.equal(await page.locator('.home-health-disclosure').getAttribute('open'), null);
-  const top = await page.locator('.home-weekly-overview').boundingBox(), actions = await page.locator('.home-main-actions').boundingBox();
+  assert.equal(await page.locator('.hx-core strong').innerText(), '—');
+  const top = await page.locator('.hx-orbit').boundingBox(), actions = await page.locator('.hx-next').boundingBox();
   assert(top.y < actions.y && top.y < 180);
-  mark('Weekly goal is visible at the top of Home, outside the closed wellness panel');
+  mark('Weekly goal is visible at the top of Home, above the next-session card');
   await page.locator('main [data-design-id="home.goals"]').click();
   await page.getByLabel('Allenamenti per settimana', {exact: true}).fill('3');
   await page.getByRole('button', {name: 'Salva obiettivi', exact: true}).click();
@@ -76,7 +75,7 @@ try {
   });
   await page.reload(); await waitHome();
   assert.equal(await page.getByRole('progressbar').getAttribute('aria-valuenow'), '67');
-  assert.match(await page.locator('.home-goal-copy').innerText(), /2 di 3 allenamenti/);
+  assert.match(await page.locator('.hx-goal-count').innerText(), /2 di 3/);
   assert.match(await page.locator('[data-design-id="home.stats.workouts"]').innerText(), /3/);
   const before = await archive();
   mark('Saved goal and real completed-session archive restore 67 percent, excluding previous weeks');
@@ -109,7 +108,7 @@ try {
   await page.getByRole('status').filter({hasText: 'Tema pubblicato.'}).waitFor();
   await actual.reload();
   await actual.locator('main h1').filter({hasText: 'Il mio spazio'}).waitFor();
-  assert.equal(await actual.locator('.today-motto').innerText(), 'Una seduta alla volta');
+  assert.equal(await actual.locator('.hx-motto').innerText(), 'Una seduta alla volta');
   const navHome = actual.locator('.bottom-nav [data-design-id="navigation.home"]');
   assert.equal(await navHome.getAttribute('aria-label'), 'Inizio');
   assert.match(await navHome.getAttribute('href'), /#\/$/);

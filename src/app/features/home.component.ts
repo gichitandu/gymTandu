@@ -25,7 +25,7 @@ interface HomeUpcomingSession {
     StatusComponent,
   ],
   templateUrl: "./home.component.html",
-  styleUrls: ["./home-simple.css", "./home-reference.css"],
+  styleUrls: ["./home-redesign.css"],
 })
 export class HomeComponent {
   s = inject(Store);
@@ -128,6 +128,68 @@ export class HomeComponent {
         .completed()
         .filter((w) => this.week.some((day) => day.date === w.date)).length,
   );
+  initial = computed(() => this.firstName().slice(0, 1).toLocaleUpperCase('it-IT'));
+  weekMinutes = computed(() => Math.round(this.s.completed().filter((w) => this.week.some((day) => day.date === w.date)).reduce((sum, w) => sum + (w.duration || 0), 0)));
+  goalRemaining = computed(() => {
+    const goal = this.goals()?.workoutsPerWeek;
+    return goal ? Math.max(0, goal - this.weekCount()) : undefined;
+  });
+  headline = computed(() => {
+    const left = this.goalRemaining();
+    if (left === undefined) return this.weekCount() ? 'ottimo ritmo.' : 'pronto a partire?';
+    if (left === 0) return 'obiettivo raggiunto.';
+    return left === 1 ? 'sei a un passo.' : 'ancora ' + left + ' allenamenti.';
+  });
+  /** Giorni consecutivi (fino a oggi, o a ieri se oggi è libero) con un allenamento svolto o un giorno di riposo registrato. */
+  streak = computed(() => {
+    const active = new Set<string>(this.s.completed().map((w) => w.date));
+    for (const event of this.s.data().scheduledWorkouts) if (event.kind === 'rest') active.add(event.date);
+    const cursor = new Date(this.today + 'T12:00:00');
+    if (!active.has(localDate(cursor))) cursor.setDate(cursor.getDate() - 1);
+    let days = 0;
+    while (active.has(localDate(cursor))) { days++; cursor.setDate(cursor.getDate() - 1); }
+    return days;
+  });
+  dayInfo(date: string): { state: 'done' | 'cardio' | 'rest' | 'plan' | 'empty'; height: number } {
+    const workouts = this.s.completed().filter((w) => w.date === date);
+    if (workouts.length) return { state: 'done', height: Math.min(100, Math.max(34, Math.round(workouts.reduce((sum, w) => sum + (w.duration || 0), 0) / 75 * 100))) };
+    const events = this.s.data().scheduledWorkouts.filter((e) => e.date === date);
+    const other = events.find((e) => e.kind === 'cardio' || e.kind === 'mobility' || e.kind === 'other');
+    if (other) return { state: 'cardio', height: 50 };
+    if (events.some((e) => e.kind === 'rest')) return { state: 'rest', height: 30 };
+    if (this.planned(date)) return { state: 'plan', height: 0 };
+    return { state: 'empty', height: 0 };
+  }
+  /** Allenamenti completati per settimana nelle ultime 8, come punti 0..100 di una polilinea 132x54. */
+  trend = computed(() => {
+    const start = new Date(this.today + 'T12:00:00');
+    start.setDate(start.getDate() - ((start.getDay() + 6) % 7) - 49);
+    const counts = Array.from({ length: 8 }, (_, i) => {
+      const from = new Date(start); from.setDate(from.getDate() + i * 7);
+      const to = new Date(from); to.setDate(to.getDate() + 6);
+      const a = localDate(from), b = localDate(to);
+      return this.s.completed().filter((w) => w.date >= a && w.date <= b).length;
+    });
+    const max = Math.max(1, ...counts);
+    const points = counts.map((n, i) => ({ x: 4 + i * (124 / 7), y: 48 - (n / max) * 40 }));
+    const line = points.map((p, i) => (i ? 'L' : 'M') + p.x.toFixed(1) + ' ' + p.y.toFixed(1)).join(' ');
+    const last = points[points.length - 1];
+    return { line, area: line + ' L' + last.x.toFixed(1) + ' 54 L' + points[0].x.toFixed(1) + ' 54Z', x: last.x, y: last.y, total: counts.reduce((a, b) => a + b, 0) };
+  });
+  energyPct = computed(() => Math.min(100, Math.round(((this.wellness()?.energy || 0) / 5) * 100)));
+  sleepPct = computed(() => Math.min(100, Math.round(((this.wellness()?.sleepMinutes || 0) / 480) * 100)));
+  caloriePct = computed(() => { const goal = this.goals()?.calories; return goal ? Math.min(100, Math.round(this.totals().calories / goal * 100)) : 0; });
+  upcomingMuscles = computed(() => {
+    const dayId = this.upcoming()?.dayId;
+    if (!dayId) return [] as string[];
+    const groups = this.s.data().muscleGroups, exercises = this.s.data().exercises, names: string[] = [];
+    for (const row of this.s.planExercises(dayId)) {
+      const groupId = exercises.find((exercise) => exercise.id === row.exerciseId)?.muscleGroupId;
+      const name = groups.find((group) => group.id === groupId)?.name;
+      if (name && !names.includes(name)) names.push(name);
+    }
+    return names.slice(0, 3);
+  });
   done(date: string) {
     return this.s.completed().some((w) => w.date === date);
   }
