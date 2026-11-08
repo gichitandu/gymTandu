@@ -3,7 +3,7 @@ import { pushReminderApi } from './push.js';
 import {excelImportsApi,appFeaturesApi} from './program-imports.js';
 import { archiveApi } from './archive.js';
 import { designStudioApi } from './design-studio.js';
-import { storageAlert } from './storage-alert.js';
+import { storageAlert, storageStatus } from './storage-alert.js';
 import { APPROVED_THEME_IDS } from '../shared/approved-palettes.js';
 import { calendarApi, calendarPublish, calendarConfigure } from './calendar.js';
 // The platform's ChatGPT access boundary remains in place. App sessions are
@@ -129,6 +129,12 @@ export async function api(request,env,ctx) {
     if(request.method!=='GET' && request.headers.get('origin')!==url.origin) fail('Richiesta non autorizzata.',403);
     if(request.method!=='GET' && !request.headers.get('content-type')?.startsWith('application/json')) fail('Formato non supportato.',415);
     const me=await session(request,db,env);
+    if(path==='/api/storage-status'){
+      if(!me)fail('Accedi al tuo account.',401);
+      if(me.role!=='SuperAdmin')fail('Accesso riservato al Super Admin.',403);
+      if(request.method!=='GET')fail('Metodo non supportato.',405);
+      return json(await storageStatus(env));
+    }
     if(path.startsWith('/api/design/'))return await designStudioApi(request,env,me);
     if(path.startsWith('/api/excel-imports'))return await excelImportsApi(request,env,me);
     if(path==='/api/app-features')return await appFeaturesApi(request,env,me);

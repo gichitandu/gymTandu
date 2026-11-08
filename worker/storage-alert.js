@@ -26,6 +26,36 @@ export function thresholdsFor(env) {
   return Number.isFinite(test) && test >= 0 ? [test] : STORAGE_THRESHOLDS;
 }
 
+const CATEGORY_LABELS = { archives: 'Backup e copie archivio', 'excel-imports': 'Programmi importati', system: 'Sistema', other: 'Altro' };
+
+/**
+ * Stato dello spazio per la schermata dei Super Admin: totale, soglie, ultimo livello
+ * avvisato e ripartizione per tipo di file (primo segmento della chiave). Sola lettura.
+ */
+export async function storageStatus(env) {
+  const limitBytes = LIMIT_GB * GB, thresholds = thresholdsFor(env);
+  if (!env.BUCKET) return { available: false, bytes: 0, limitBytes, thresholds, level: 0, categories: [] };
+  const sizes = new Map();
+  let total = 0, cursor;
+  do {
+    const page = await env.BUCKET.list({ cursor, limit: 1000 });
+    for (const object of page.objects) {
+      const head = String(object.key ?? '').split('/')[0];
+      const id = Object.hasOwn(CATEGORY_LABELS, head) ? head : 'other';
+      sizes.set(id, (sizes.get(id) || 0) + object.size);
+      total += object.size;
+    }
+    cursor = page.truncated ? page.cursor : undefined;
+  } while (cursor);
+  let alert = { level: 0, updatedAt: null };
+  try {
+    const object = await env.BUCKET.get(STATE_KEY), value = object ? JSON.parse(await object.text()) : null;
+    if (Number.isInteger(value?.level) && value.level >= 0 && value.level <= STORAGE_THRESHOLDS.length) alert = { level: value.level, updatedAt: typeof value.updatedAt === 'string' ? value.updatedAt : null };
+  } catch { /* stato assente o non leggibile: nessun avviso registrato */ }
+  const categories = [...sizes].map(([id, bytes]) => ({ id, label: CATEGORY_LABELS[id], bytes })).sort((a, b) => b.bytes - a.bytes);
+  return { available: true, bytes: total, limitBytes, thresholds, level: thresholds.filter(threshold => total >= threshold).length, lastAlertLevel: alert.level, lastAlertAt: alert.updatedAt, categories };
+}
+
 async function readState(bucket) {
   try {
     const object = await bucket.get(STATE_KEY);

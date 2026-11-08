@@ -4,6 +4,7 @@ import {ThemePickerComponent} from '../shared/theme-picker.component';
 import {InstallHelpComponent} from '../shared/install-help.component';
 import {AppFeaturesService} from '../services/app-features';
 import {AppFeaturesComponent} from '../shared/app-features.component';
+import {StorageStatusComponent} from '../shared/storage-status.component';
 import {PushReminderComponent} from '../shared/push-reminder.component';
 import {CalendarSubscriptionComponent} from '../shared/calendar-subscription.component';
 import { DateFieldComponent } from '../shared/date-field.component';
@@ -49,7 +50,7 @@ interface ProfileFormDraft {
 @Component({
   standalone: true,
   styleUrls: ["./account-polish.css", "./profile-redesign.css"],
-  imports: [InstallHelpComponent,...DESIGN_DIRECTIVES,ThemePickerComponent,AppFeaturesComponent,PushReminderComponent,CalendarSubscriptionComponent,DateFieldComponent,BackupReminderComponent,ArchiveSyncComponent,AppUpdatesComponent,
+  imports: [InstallHelpComponent,...DESIGN_DIRECTIVES,ThemePickerComponent,AppFeaturesComponent,StorageStatusComponent,PushReminderComponent,CalendarSubscriptionComponent,DateFieldComponent,BackupReminderComponent,ArchiveSyncComponent,AppUpdatesComponent,
     A11yModule,
     AvatarComponent,
     IosStatusComponent,
@@ -221,7 +222,7 @@ interface ProfileFormDraft {
  <details class="settings-disclosure settings-component"><summary><gt-icon name="download"/><span><strong>Aggiornamenti dell’app</strong><small>Versione installata e disponibilità</small></span><span class="disclosure-chevron">›</span></summary><div class="settings-disclosure-body"><gt-app-updates/></div></details>
  <details class="settings-disclosure settings-component"><summary><gt-icon name="home"/><span><strong>Icona e collegamento Home</strong><small>Logo GT e link diretto dell’app</small></span><span class="disclosure-chevron">›</span></summary><div class="settings-disclosure-body"><gt-install-help/></div></details>
  <div class="profile-menu-group settings-shortcuts"><div class="account-section-label"><span>GESTIONE</span></div><nav class="profile-menu" aria-label="Gestione">@if(auth.canManageBackups()){<button (click)="panel.set('backup')"><gt-icon name="download"/><span><strong>Dati e backup</strong><small>Copia, esporta o ripristina</small></span>›</button>}<button (click)="panel.set('security')"><gt-icon name="shield"/><span><strong>Account e sicurezza</strong><small>Accesso e credenziali</small></span>›</button><a routerLink="/catalogo"><gt-icon name="weight"/><span><strong>{{s.canEditCatalog()?'Gestione esercizi':'Catalogo esercizi'}}</strong><small>Varianti, preferiti e configurazioni</small></span>›</a><a routerLink="/calendario"><gt-icon name="calendar"/><span><strong>Calendario allenamenti</strong><small>Il tuo ritmo, giorno per giorno</small></span>›</a></nav></div>
- @if(auth.uiRole()==='SuperAdmin'){<details class="settings-disclosure settings-component"><summary><gt-icon name="shield"/><span><strong>Amministrazione</strong><small>Utenti e sezioni dell’app</small></span><span class="disclosure-chevron">›</span></summary><div class="settings-disclosure-body"><gt-app-features/><a class="button full-width" routerLink="/utenti">Gestione utenti <gt-icon name="arrow"/></a></div></details>}
+ @if(auth.uiRole()==='SuperAdmin'){<details class="settings-disclosure settings-component"><summary><gt-icon name="shield"/><span><strong>Amministrazione</strong><small>Utenti e sezioni dell’app</small></span><span class="disclosure-chevron">›</span></summary><div class="settings-disclosure-body"><gt-app-features/><gt-storage-status/><a class="button full-width" routerLink="/utenti">Gestione utenti <gt-icon name="arrow"/></a></div></details>}
  <section class="card profile-logout-card" style="margin-top:20px"><h2>Accesso all’app</h2><p class="subtle" style="margin:12px 0">Puoi uscire senza fare un backup. Piani, esercizi e allenamenti salvati restano nel tuo archivio.</p><button type="button" class="full-width" gtDesign="profile.logout" [disabled]="loggingOut()" (click)="logout()">{{loggingOut()?'Uscita…':'Esci dall’app'}}</button></section>}
     @if(panel()==='backup'&&auth.canManageBackups()){<a class="button primary full-width" routerLink="/recupera-allenamenti">Recupera una singola seduta · progressi e serie</a><gt-archive-sync (recover)="recoverCloud($event)"/><gt-backup-reminder mode="settings"/><section class="card" style="margin-top:20px">
       <div class="card-head">

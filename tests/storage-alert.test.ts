@@ -116,3 +116,34 @@ it('ignora valori non validi di STORAGE_ALERT_TEST_BYTES', () => {
   for (const raw of [undefined, '', 'abc', '-5']) expect(thresholdsFor({ STORAGE_ALERT_TEST_BYTES: raw })).toBe(STORAGE_THRESHOLDS);
   expect(thresholdsFor({ STORAGE_ALERT_TEST_BYTES: '1000' })).toEqual([1000]);
 });
+
+import { storageStatus } from '../worker/storage-alert.js';
+
+it('storageStatus riassume totale, soglie e ripartizione per tipo', async () => {
+  const objects = [
+    { key: 'archives/a/1/x.json', size: 5 * GB },
+    { key: 'archives/a/2/y.json', size: 3.2 * GB },
+    { key: 'excel-imports/s/z.xlsx', size: 1_000_000 },
+    { key: 'system/storage-alert.json', size: 100 },
+    { key: 'altro/file', size: 50 },
+  ];
+  const bucket = {
+    async list({ cursor }: { cursor?: string } = {}) {
+      const start = cursor ? Number(cursor) : 0, end = start + 2;
+      return { objects: objects.slice(start, end), truncated: end < objects.length, cursor: String(end) };
+    },
+    async get() { return { text: async () => JSON.stringify({ level: 1, updatedAt: '2026-11-01T10:00:00.000Z' }) }; },
+  };
+  const status = await storageStatus({ BUCKET: bucket });
+  expect(status.available).toBe(true);
+  expect(status.bytes).toBe(8.2 * GB + 1_000_000 + 150);
+  expect(status.level).toBe(1);
+  expect(status.lastAlertLevel).toBe(1);
+  expect(status.thresholds).toEqual(STORAGE_THRESHOLDS);
+  expect(status.categories.map((c: any) => c.id)).toEqual(['archives', 'excel-imports', 'system', 'other']);
+  expect(status.categories[0].bytes).toBe(8.2 * GB);
+});
+
+it('storageStatus senza bucket non fallisce', async () => {
+  expect(await storageStatus({})).toMatchObject({ available: false, bytes: 0, categories: [] });
+});
