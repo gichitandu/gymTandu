@@ -1,0 +1,421 @@
+/* Workout screens redesign: exercise list, set recording and rest timer.
+   Theme-aware (tokens only). Exercise images (gt-exercise-thumb) are never restyled:
+   only the size variables the component already exposes are used. `:host .x` is used to
+   out-rank the global gt-shell rules without !important. */
+@keyframes wrRise { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
+@keyframes wrPop { 0% { transform: scale(.6); opacity: 0; } 70% { transform: scale(1.12); } 100% { transform: scale(1); opacity: 1; } }
+@keyframes wrPulse { 0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 38%, transparent); } 50% { box-shadow: 0 0 0 7px transparent; } }
+@keyframes wrBreath { 0%, 100% { opacity: .55; transform: scale(1); } 50% { opacity: .9; transform: scale(1.04); } }
+
+/* ---------- Toolbar ---------- */
+:host .gym-toolbar {
+  margin: 6px 0 14px;
+}
+
+:host .gym-toolbar label {
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--text) 4%, transparent);
+  font-weight: 600;
+}
+
+/* ---------- Exercise list ---------- */
+:host .training-list {
+  display: grid;
+  gap: 10px;
+}
+
+:host .training-list-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 14px 14px 12px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  background: linear-gradient(160deg, color-mix(in srgb, var(--text) 6%, transparent), color-mix(in srgb, var(--text) 1.5%, transparent));
+  box-shadow: 0 10px 26px color-mix(in srgb, #000 14%, transparent), inset 0 1px color-mix(in srgb, var(--text) 6%, transparent);
+  text-align: left;
+  animation: wrRise .5s cubic-bezier(.2, .8, .2, 1) both;
+  transition: transform .18s ease, border-color .2s ease, box-shadow .2s ease;
+}
+
+:host .training-list-row:nth-child(2) { animation-delay: .05s; }
+:host .training-list-row:nth-child(3) { animation-delay: .1s; }
+:host .training-list-row:nth-child(4) { animation-delay: .15s; }
+:host .training-list-row:nth-child(5) { animation-delay: .2s; }
+:host .training-list-row:nth-child(n+6) { animation-delay: .25s; }
+
+:host .training-list-row:active {
+  transform: scale(.985);
+}
+
+:host .training-list-row gt-exercise-thumb {
+  --thumb-width: 58px;
+  --thumb-height: 58px;
+  flex: none;
+  border-radius: 15px;
+}
+
+:host .training-list-row > span:nth-child(2) {
+  flex: 1;
+  min-width: 0;
+}
+
+:host .training-list-row strong {
+  display: block;
+  font-size: 16px;
+  font-weight: 650;
+  letter-spacing: -.25px;
+  line-height: 1.25;
+}
+
+:host .training-list-row small {
+  display: block;
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 12.5px;
+}
+
+/* Per-exercise progress line, driven by --done set from the template. */
+:host .training-list-row::after {
+  content: "";
+  position: absolute;
+  left: 14px;
+  right: 14px;
+  bottom: 6px;
+  height: 3px;
+  border-radius: 3px;
+  background: linear-gradient(90deg, var(--accent-text) var(--done, 0%), color-mix(in srgb, var(--text) 9%, transparent) 0);
+  transition: background .4s ease;
+}
+
+:host .training-list-row .exercise-state {
+  flex: none;
+  min-width: 0;
+  padding: 7px 13px;
+  border-radius: 99px;
+  color: var(--accent-text);
+  background: color-mix(in srgb, var(--accent) 15%, transparent);
+  font-size: 12.5px;
+  font-weight: 700;
+}
+
+:host .training-list-row .exercise-state.complete {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  color: var(--accent-ink);
+  background: var(--green, #5df0b4);
+  font-size: 16px;
+  animation: wrPop .4s cubic-bezier(.2, .8, .2, 1) both;
+}
+
+:host .training-list-row.in-progress {
+  border-color: color-mix(in srgb, var(--accent-text) 55%, var(--line));
+  background: linear-gradient(90deg, color-mix(in srgb, var(--accent) 14%, transparent), color-mix(in srgb, var(--accent) 3%, transparent));
+  box-shadow: 0 0 0 3px var(--accent-soft), 0 12px 30px var(--entry-halo, color-mix(in srgb, var(--accent) 20%, transparent));
+}
+
+:host .training-list-row.in-progress .exercise-state {
+  animation: wrPulse 2s ease-in-out infinite;
+}
+
+:host .training-list-row.is-done {
+  opacity: .78;
+}
+
+:host .superset-tag {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 2px 8px;
+  border-radius: 99px;
+  color: var(--accent-text);
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+/* ---------- Focus heading ---------- */
+:host .focus-heading {
+  align-items: center;
+}
+
+:host .focus-heading .pill {
+  padding: 6px 12px;
+  border-radius: 99px;
+  color: var(--accent-text);
+  background: color-mix(in srgb, var(--accent) 15%, transparent);
+  font-weight: 700;
+}
+
+:host .exercise-target span {
+  padding: 4px 10px;
+  border-radius: 99px;
+  background: color-mix(in srgb, var(--text) 6%, transparent);
+  font-size: 12px;
+}
+
+/* ---------- Recording ---------- */
+:host .recording-pad {
+  animation: wrRise .45s cubic-bezier(.2, .8, .2, 1) both;
+}
+
+:host .recording-top {
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: linear-gradient(160deg, color-mix(in srgb, var(--text) 6%, transparent), color-mix(in srgb, var(--text) 1.5%, transparent));
+}
+
+:host .recording-top gt-exercise-thumb {
+  --thumb-width: 52px;
+  --thumb-height: 52px;
+}
+
+:host .recording-top strong {
+  font-size: 16px;
+  letter-spacing: -.2px;
+}
+
+:host .recording-series {
+  gap: 9px;
+  justify-content: center;
+}
+
+:host .recording-series button {
+  width: 42px;
+  min-width: 42px;
+  height: 42px;
+  min-height: 42px;
+  border: 1px solid var(--line);
+  background: color-mix(in srgb, var(--text) 5%, transparent);
+  font-weight: 700;
+  transition: transform .18s ease, background .2s ease, border-color .2s ease;
+}
+
+:host .recording-series button.complete {
+  color: var(--accent-ink);
+  border-color: transparent;
+  background: var(--green, #5df0b4);
+}
+
+:host .recording-series button.current-series {
+  color: var(--accent-ink);
+  border-color: transparent;
+  background: linear-gradient(135deg, var(--accent-text), var(--theme-secondary, var(--accent)));
+  box-shadow: 0 8px 22px var(--entry-halo, color-mix(in srgb, var(--accent) 30%, transparent));
+  outline: 0;
+  transform: scale(1.12);
+}
+
+:host .recording-value {
+  padding: 16px 12px 12px;
+  border-radius: 22px;
+  background: linear-gradient(160deg, color-mix(in srgb, var(--text) 7%, transparent), color-mix(in srgb, var(--text) 2%, transparent));
+  box-shadow: 0 12px 30px color-mix(in srgb, #000 16%, transparent), inset 0 1px color-mix(in srgb, var(--text) 7%, transparent);
+  transition: border-color .2s ease, box-shadow .2s ease;
+}
+
+:host .recording-value:focus-within {
+  border-color: var(--accent-text);
+  box-shadow: 0 0 0 4px var(--accent-soft), 0 14px 34px var(--entry-halo, color-mix(in srgb, var(--accent) 20%, transparent));
+}
+
+:host .recording-value label {
+  font-size: 12.5px;
+  font-weight: 650;
+  letter-spacing: .2px;
+}
+
+:host .recording-value input {
+  font-size: clamp(42px, 12vw, 54px);
+  font-weight: 750;
+  letter-spacing: -2px;
+  min-height: 82px;
+}
+
+:host .recording-adjust {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 7px;
+}
+
+:host .recording-adjust button {
+  flex: 1 1 auto;
+  min-width: 52px;
+  border-radius: 99px;
+  font-weight: 700;
+  transition: transform .15s ease, background .2s ease;
+}
+
+:host .recording-adjust button:active {
+  transform: scale(.92);
+  background: color-mix(in srgb, var(--accent) 22%, var(--raised));
+}
+
+:host .recording-reference {
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--accent) 9%, transparent);
+  border-color: color-mix(in srgb, var(--accent-text) 28%, var(--line));
+  font-weight: 650;
+}
+
+:host .recording-more {
+  border-radius: 18px;
+}
+
+:host .recording-save {
+  padding: 10px 0 0;
+}
+
+:host .recording-save > .primary,
+:host .save-series {
+  min-height: 58px;
+  border: 1px solid color-mix(in srgb, var(--text) 24%, transparent);
+  border-radius: 19px;
+  color: var(--bg);
+  background: linear-gradient(180deg, var(--text), color-mix(in srgb, var(--text) 84%, var(--accent-text)));
+  box-shadow: 0 14px 34px var(--entry-halo, color-mix(in srgb, var(--accent) 24%, transparent)), inset 0 1px color-mix(in srgb, #fff 30%, transparent);
+  font-size: 16.5px;
+  font-weight: 700;
+  letter-spacing: -.2px;
+  transition: transform .15s ease, filter .2s ease;
+}
+
+:host .save-series:active {
+  transform: scale(.98);
+}
+
+:host .save-series:disabled {
+  opacity: .6;
+}
+
+/* Inline recovery bar shown while recording. */
+:host .inline-recovery {
+  border-radius: 20px;
+  background: linear-gradient(160deg, color-mix(in srgb, var(--accent) 12%, transparent), color-mix(in srgb, var(--text) 2%, transparent));
+  border-color: color-mix(in srgb, var(--accent-text) 30%, var(--line));
+}
+
+:host .inline-recovery strong {
+  font-weight: 750;
+  letter-spacing: -1px;
+}
+
+:host .inline-recovery button {
+  border-radius: 99px;
+}
+
+/* ---------- Rest timer ---------- */
+:host .recovery-panel {
+  position: relative;
+  padding: 22px 18px 18px;
+  overflow: hidden;
+  border-radius: 28px;
+  background: linear-gradient(160deg, color-mix(in srgb, var(--text) 7%, transparent), color-mix(in srgb, var(--text) 2%, transparent));
+  box-shadow: 0 20px 50px color-mix(in srgb, #000 24%, transparent), inset 0 1px color-mix(in srgb, var(--text) 8%, transparent);
+  animation: wrRise .5s cubic-bezier(.2, .8, .2, 1) both;
+}
+
+:host .recovery-clock {
+  position: relative;
+  display: grid;
+  place-content: center;
+  width: min(260px, 72vw);
+  aspect-ratio: 1;
+  margin: 4px auto 6px;
+  border-radius: 50%;
+  /* --rest (percentage of the pause still to go) is set from the template. */
+  background:
+    radial-gradient(closest-side, var(--bg) 82%, transparent 83%),
+    conic-gradient(from 0deg, var(--accent-text), var(--theme-secondary, var(--accent)) calc(var(--rest, 100%) * .85), color-mix(in srgb, var(--text) 9%, transparent) 0);
+  transition: background .4s linear;
+}
+
+:host .recovery-clock::before {
+  content: "";
+  position: absolute;
+  inset: -14px;
+  z-index: -1;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--accent) 26%, transparent), transparent);
+  animation: wrBreath 3.4s ease-in-out infinite;
+}
+
+:host .recovery-clock strong {
+  margin: 4px 0;
+  font-size: clamp(46px, 14vw, 62px);
+  font-weight: 750;
+  letter-spacing: -2.5px;
+  text-align: center;
+}
+
+:host .recovery-clock small,
+:host .recovery-clock span {
+  text-align: center;
+}
+
+:host .recovery-panel .timer-controls {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin: 18px 0;
+}
+
+:host .recovery-panel .timer-controls button {
+  min-height: 48px;
+  min-width: 68px;
+  padding: 0 16px;
+  border: 1px solid var(--line);
+  border-radius: 99px;
+  background: color-mix(in srgb, var(--text) 6%, transparent);
+  font-weight: 700;
+}
+
+:host .recovery-panel .timer-controls button:nth-child(2) {
+  min-width: 58px;
+  color: var(--accent-ink);
+  border-color: transparent;
+  background: linear-gradient(135deg, var(--accent-text), var(--theme-secondary, var(--accent)));
+}
+
+:host .recovery-next {
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--text) 4%, transparent);
+}
+
+:host .recovery-panel > .primary {
+  min-height: 56px;
+  border: 1px solid color-mix(in srgb, var(--text) 24%, transparent);
+  border-radius: 19px;
+  color: var(--bg);
+  background: linear-gradient(180deg, var(--text), color-mix(in srgb, var(--text) 84%, var(--accent-text)));
+  font-size: 16.5px;
+  font-weight: 700;
+}
+
+/* ---------- Set list (detail tab) ---------- */
+:host .focus-set-list {
+  border-radius: 20px;
+}
+
+:host .focus-set-row.is-complete {
+  background: color-mix(in srgb, var(--green, #5df0b4) 10%, transparent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :host *,
+  :host *::before,
+  :host *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
