@@ -122,7 +122,7 @@ import { storageStatus } from '../worker/storage-alert.js';
 it('storageStatus riassume totale, soglie e ripartizione per tipo', async () => {
   const objects = [
     { key: 'archives/a/1/x.json', size: 5 * GB },
-    { key: 'archives/a/2/y.json', size: 3.2 * GB },
+    { key: 'archives/a/2/y.json', size: 3_200_000_000 },
     { key: 'excel-imports/s/z.xlsx', size: 1_000_000 },
     { key: 'system/storage-alert.json', size: 100 },
     { key: 'altro/file', size: 50 },
@@ -136,12 +136,12 @@ it('storageStatus riassume totale, soglie e ripartizione per tipo', async () => 
   };
   const status = await storageStatus({ BUCKET: bucket });
   expect(status.available).toBe(true);
-  expect(status.bytes).toBe(8.2 * GB + 1_000_000 + 150);
+  expect(status.bytes).toBe(8_201_000_150);
   expect(status.level).toBe(1);
   expect(status.lastAlertLevel).toBe(1);
   expect(status.thresholds).toEqual(STORAGE_THRESHOLDS);
   expect(status.categories.map((c: any) => c.id)).toEqual(['archives', 'excel-imports', 'system', 'other']);
-  expect(status.categories[0].bytes).toBe(8.2 * GB);
+  expect(status.categories[0].bytes).toBe(8_200_000_000);
 });
 
 it('storageStatus senza bucket non fallisce', async () => {
