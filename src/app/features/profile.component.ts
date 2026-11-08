@@ -48,7 +48,7 @@ interface ProfileFormDraft {
 }
 @Component({
   standalone: true,
-  styleUrl: "./account-polish.css",
+  styleUrls: ["./account-polish.css", "./profile-redesign.css"],
   imports: [InstallHelpComponent,...DESIGN_DIRECTIVES,ThemePickerComponent,AppFeaturesComponent,PushReminderComponent,CalendarSubscriptionComponent,DateFieldComponent,BackupReminderComponent,ArchiveSyncComponent,AppUpdatesComponent,
     A11yModule,
     AvatarComponent,

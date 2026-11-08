@@ -29,7 +29,7 @@ type CatalogEditorDraft = {
 };
 @Component({
   standalone: true,
-  styleUrls: ["./account-polish.css", "./catalog-design.css"],
+  styleUrls: ["./account-polish.css", "./catalog-design.css", "./catalog-redesign.css"],
   imports: [AnimationLibraryComponent,RouterLink,ExerciseMotionComponent, ExerciseThumbComponent,
     A11yModule,ExerciseScopeComponent,MachineSetupComponent,
     ExerciseFamiliesComponent,

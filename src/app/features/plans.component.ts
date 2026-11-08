@@ -40,7 +40,7 @@ type PlanEditorDraft = {
 };
 @Component({
   standalone: true,
-  styleUrls: ["./feature-polish.css", "./plans-simple.css", "./plans-reference.css"],
+  styleUrls: ["./feature-polish.css", "./plans-simple.css", "./plans-reference.css", "./plans-redesign.css"],
   imports: [ExerciseReplacementComponent,...DESIGN_DIRECTIVES,AnimationLibraryComponent,DateFieldComponent,OpenWorkoutsComponent,
     A11yModule,ExerciseScopeComponent,
     ExerciseFamiliesComponent,

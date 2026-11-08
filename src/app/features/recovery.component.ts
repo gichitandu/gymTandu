@@ -10,7 +10,7 @@ import {DateFieldComponent} from '../shared/date-field.component';
 import {IconComponent} from '../shared/icon.component';
 import {StatusComponent} from '../shared/status.component';
 type RecoveryDraft=WellnessLog&{restTitle?:string;restNotes?:string};
-@Component({standalone:true,imports:[FormsModule,RouterLink,DateFieldComponent,IconComponent,StatusComponent],templateUrl:'./recovery.component.html',styleUrls:['./wellness-design.css']})
+@Component({standalone:true,imports:[FormsModule,RouterLink,DateFieldComponent,IconComponent,StatusComponent],templateUrl:'./recovery.component.html',styleUrls:['./wellness-design.css','./recovery-redesign.css']})
 export class RecoveryComponent {
  s=inject(Store);clock=inject(TodayService);route=inject(ActivatedRoute);drafts=inject(FormDraftService);
  mode=this.route.snapshot.data['mode']||'recovery';title=this.mode==='sleep'?'Sonno':this.mode==='rest'?'Il tuo riposo':'Recovery';

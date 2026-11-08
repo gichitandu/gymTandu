@@ -1,0 +1,150 @@
+@keyframes pgRise { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
+:host .meals-heading::before {
+  content: "DIARIO ALIMENTARE";
+  display: block;
+  margin-bottom: 4px;
+  color: var(--accent-text);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 2.2px;
+}
+
+:host .meals-heading h1 {
+  font-size: clamp(34px, 9.5vw, 42px);
+  font-weight: 750;
+  letter-spacing: -.055em;
+  line-height: 1.02;
+}
+
+:host .nutrition-day-selector {
+  align-items: center;
+  padding: 6px;
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  background: linear-gradient(160deg, color-mix(in srgb, var(--text) 6.5%, transparent), color-mix(in srgb, var(--text) 1.8%, transparent));
+}
+
+:host .nutrition-date-heading strong {
+  font-weight: 700;
+  letter-spacing: -.02em;
+}
+
+:host .meal-summary {
+  display: grid;
+  grid-template-columns: 132px minmax(0, 1fr);
+  grid-template-areas: "ring macros" "ring bars" "goal goal";
+  grid-template-rows: auto auto auto;
+  align-items: center;
+  gap: 4px 18px;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 26px;
+  background: linear-gradient(160deg, color-mix(in srgb, var(--text) 6.5%, transparent), color-mix(in srgb, var(--text) 1.8%, transparent));
+  box-shadow: 0 12px 30px color-mix(in srgb, #000 16%, transparent), inset 0 1px color-mix(in srgb, var(--text) 7%, transparent);
+  animation: pgRise .55s cubic-bezier(.2, .8, .2, 1) both;
+}
+
+/* Calorie ring: --p comes from the template (percentage of the daily goal). */
+:host .meal-calories {
+  grid-area: ring;
+  position: relative;
+  display: grid;
+  place-content: center;
+  width: 132px;
+  height: 132px;
+  border-radius: 50%;
+  text-align: center;
+  background:
+    radial-gradient(closest-side, var(--bg) 80%, transparent 81%),
+    conic-gradient(from 0deg, var(--accent-text), var(--theme-secondary, var(--accent)) var(--p, 0%), color-mix(in srgb, var(--text) 9%, transparent) 0);
+  transition: background .6s ease;
+}
+
+:host .meal-calories strong {
+  font-size: 28px;
+  font-weight: 750;
+  letter-spacing: -.05em;
+  font-variant-numeric: tabular-nums;
+}
+
+:host .meal-calories span {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+:host .meal-progress {
+  display: none;
+}
+
+:host .meal-macros {
+  grid-area: macros;
+  margin: 0;
+  font-size: 12.5px;
+  font-weight: 650;
+  color: var(--muted);
+}
+
+:host .meal-macro-bars {
+  grid-area: bars;
+  display: grid;
+  gap: 8px;
+  align-self: start;
+}
+
+:host .meal-macros {
+  align-self: end;
+}
+
+:host .meal-macro-bars i {
+  display: block;
+  height: 7px;
+  border-radius: 7px;
+  transform-origin: left;
+  animation: mealGrow .9s .2s cubic-bezier(.2, .8, .2, 1) both;
+}
+
+:host .meal-macro-bars i:nth-child(1) { background: linear-gradient(90deg, #4ee1a0, #2dc4f5); }
+:host .meal-macro-bars i:nth-child(2) { background: linear-gradient(90deg, #ffd166, #ffb020); animation-delay: .3s; }
+:host .meal-macro-bars i:nth-child(3) { background: linear-gradient(90deg, #ff7b9c, #ff5d8f); animation-delay: .4s; }
+
+@keyframes mealGrow { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+
+:host .meal-goal-link {
+  grid-area: goal;
+  justify-self: start;
+  margin-top: 8px;
+  color: var(--accent-text);
+  font-weight: 700;
+}
+
+:host .meal-list-heading h2 {
+  font-weight: 750;
+  letter-spacing: -.04em;
+}
+
+:host .meal-diary-row {
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  background: linear-gradient(160deg, color-mix(in srgb, var(--text) 6.5%, transparent), color-mix(in srgb, var(--text) 1.8%, transparent));
+  box-shadow: 0 12px 30px color-mix(in srgb, #000 16%, transparent), inset 0 1px color-mix(in srgb, var(--text) 7%, transparent);
+  animation: pgRise .5s cubic-bezier(.2, .8, .2, 1) both;
+}
+
+:host .meal-fallback {
+  border-radius: 14px;
+  color: var(--accent-text);
+  background: color-mix(in srgb, var(--accent) 16%, transparent);
+}
+
+:host .meal-add > .primary {
+  min-height: 54px;
+  border-radius: 18px;
+  color: var(--accent-ink);
+  background: linear-gradient(135deg, var(--accent-text), var(--theme-secondary, var(--accent)));
+  box-shadow: 0 12px 30px color-mix(in srgb, var(--accent) 30%, transparent);
+  font-weight: 700;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :host *, :host *::before, :host *::after { animation: none !important; transition: none !important; }
+}

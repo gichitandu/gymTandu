@@ -16,7 +16,7 @@ import { ExerciseThumbComponent } from '../shared/exercise-thumb.component';
 import { matchesExercise } from '../services/exercise-search';
 @Component({
   standalone: true,
-  styleUrls: ["./feature-polish.css", "./progress-design.css", "./progress-reference.css"],
+  styleUrls: ["./feature-polish.css", "./progress-design.css", "./progress-reference.css", "./progress-redesign.css"],
   imports: [...DESIGN_DIRECTIVES,
     FormsModule,
     DataChartComponent,

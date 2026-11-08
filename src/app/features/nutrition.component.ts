@@ -21,15 +21,16 @@ interface MealFormDraft {
  grams:number;calories:number;protein:number;carbs:number;fat:number;notes:string;foodId:string;source:Meal['source'];
  photo?:Blob;pendingPhoto?:Blob;ingredients:MealIngredient[];composedName:string;followDay:boolean;followMealDate:boolean;
 }
-@Component({standalone:true,styleUrls:["./feature-polish.css","./nutrition-simple.css"],imports: [DateFieldComponent,RouterLink,FormsModule,StatusComponent,IconComponent],template:`
+@Component({standalone:true,styleUrls:["./feature-polish.css","./nutrition-simple.css", "./nutrition-redesign.css"],imports: [DateFieldComponent,RouterLink,FormsModule,StatusComponent,IconComponent],template:`
 <header class="meals-heading"><h1>Pasti</h1></header>
 <div class="nutrition-day-selector"><button class="icon-btn ghost" aria-label="Giorno precedente" (click)="moveDay(-1)"><gt-icon name="back"/></button><label class="nutrition-date-heading"><strong>{{day===today?'Oggi · ':''}}{{dayLabel()}}</strong><gt-date-field aria-label="Data alimentazione" [ngModel]="day" (ngModelChange)="selectDay($event)"></gt-date-field></label><button class="icon-btn ghost" aria-label="Giorno successivo" (click)="moveDay(1)">›</button></div><gt-status/>
 <input #camera hidden type="file" accept="image/*" capture="environment" (change)="takePhoto($event)"/><input #gallery hidden type="file" accept="image/*" (change)="takePhoto($event)"/>
 @if(!showForm()){
-<section class="meal-summary" aria-label="Riepilogo alimentazione">
+<section class="meal-summary" aria-label="Riepilogo alimentazione" [style.--p]="calorieProgress()+'%'">
  <div class="meal-calories"><strong>{{totals().calories.toLocaleString('it-IT',{maximumFractionDigits:0})}}</strong>@if(s.settings().goals?.calories){<span> / {{s.settings().goals?.calories?.toLocaleString('it-IT')}} kcal</span>}@else{<span> kcal</span>}</div>
  @if(s.settings().goals?.calories){<div class="meal-progress" role="progressbar" aria-label="Obiettivo calorie" aria-valuemin="0" aria-valuemax="100" [attr.aria-valuenow]="calorieProgress()"><span [style.width.%]="calorieProgress()"></span></div>}
  <p class="meal-macros" aria-label="Macronutrienti">P {{totals().protein.toLocaleString('it-IT',{maximumFractionDigits:0})}} g · C {{totals().carbs.toLocaleString('it-IT',{maximumFractionDigits:0})}} g · G {{totals().fat.toLocaleString('it-IT',{maximumFractionDigits:0})}} g</p>
+ <div class="meal-macro-bars" aria-hidden="true"><i [style.width.%]="macroPct('protein')"></i><i [style.width.%]="macroPct('carbs')"></i><i [style.width.%]="macroPct('fat')"></i></div>
  <a class="meal-goal-link" routerLink="/profilo" [queryParams]="{section:'goals'}">{{s.settings().goals?.calories?'Modifica obiettivo':'Imposta obiettivo'}}</a>
 </section>
 <div class="meal-list-heading"><h2>Diario</h2><span>{{meals().length}} {{meals().length===1?'pasto':'pasti'}}</span></div>
@@ -84,6 +85,7 @@ export class NutritionComponent {
  private todayService=inject(TodayService,{optional:true});private lastToday=localDate();private followDay=true;private followMealDate=true;
  get today(){return this.todayService?.date()||localDate();}
  captureMenu=signal(false);
+ macroPct(key:'protein'|'carbs'|'fat'){const t=this.totals();const sum=t.protein+t.carbs+t.fat;return sum?Math.max(6,Math.round(t[key]/sum*100)):0;}
  calorieProgress(){const goal=this.s.settings().goals?.calories;return goal?Math.min(100,Math.max(0,this.totals().calories/goal*100)):0;}
  showForm=signal(false);mealType:NonNullable<Meal['mealType']>='breakfast';
  constructor(){const date=inject(ActivatedRoute).snapshot.queryParamMap.get('date');if(date){try{parseLocalDate(date);this.day=date;this.mealDate=date;this.followDay=false;this.followMealDate=false;}catch{}}if(this.todayService)effect(()=>{const next=this.todayService!.date(),previous=this.lastToday;if(next===previous)return;if(this.followDay&&this.day===previous)this.day=next;if(this.followMealDate&&this.mealDate===previous)this.mealDate=next;this.lastToday=next;});}

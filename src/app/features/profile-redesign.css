@@ -1,0 +1,76 @@
+@keyframes pgRise { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
+:host .profile-page-heading h1 {
+  font-size: clamp(34px, 9.5vw, 42px);
+  font-weight: 750;
+  letter-spacing: -.055em;
+  line-height: 1.02;
+}
+
+:host .profile-dashboard {
+  text-align: center;
+}
+
+:host .profile-avatar {
+  box-shadow: 0 16px 40px color-mix(in srgb, var(--accent) 34%, transparent), inset 0 1px color-mix(in srgb, #fff 40%, transparent);
+  animation: pgRise .5s cubic-bezier(.2, .8, .2, 1) both;
+}
+
+:host .identity-name {
+  font-weight: 750;
+  letter-spacing: -.05em;
+}
+
+:host .profile-key-stats > * {
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: linear-gradient(160deg, color-mix(in srgb, var(--text) 6.5%, transparent), color-mix(in srgb, var(--text) 1.8%, transparent));
+  box-shadow: 0 12px 30px color-mix(in srgb, #000 16%, transparent), inset 0 1px color-mix(in srgb, var(--text) 7%, transparent);
+  animation: pgRise .5s .1s cubic-bezier(.2, .8, .2, 1) both;
+}
+
+:host .profile-key-stats strong {
+  font-weight: 750;
+  letter-spacing: -.04em;
+  font-variant-numeric: tabular-nums;
+}
+
+:host .profile-menu-group {
+  display: grid;
+  gap: 10px;
+}
+
+:host .profile-menu {
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: linear-gradient(160deg, color-mix(in srgb, var(--text) 6.5%, transparent), color-mix(in srgb, var(--text) 1.8%, transparent));
+  box-shadow: 0 12px 30px color-mix(in srgb, #000 16%, transparent), inset 0 1px color-mix(in srgb, var(--text) 7%, transparent);
+  animation: pgRise .5s cubic-bezier(.2, .8, .2, 1) both;
+  transition: transform .18s ease, border-color .2s ease;
+}
+
+:host .profile-menu:active {
+  transform: scale(.985);
+}
+
+:host .profile-menu gt-icon:first-child {
+  box-sizing: content-box;
+  padding: 9px;
+  border-radius: 13px;
+  color: var(--accent-text);
+  background: color-mix(in srgb, var(--accent) 16%, transparent);
+}
+
+:host .account-section-label {
+  color: var(--accent-text);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 2px;
+}
+
+:host .settings-disclosure {
+  border-radius: 22px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :host *, :host *::before, :host *::after { animation: none !important; transition: none !important; }
+}
