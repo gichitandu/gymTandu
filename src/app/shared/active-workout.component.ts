@@ -18,6 +18,7 @@ import { validWorkoutUi,WorkoutResumeService } from '../services/workout-resume'
 import { IconComponent } from './icon.component';
 import { LoadProgressionComponent } from './load-progression.component';
 import { ExternalTimerService } from '../services/external-timer';
+import { coachNextSet, readinessFromWellness } from '../services/coach-shadow';
 import type { AppUpdateEvent } from '../services/pwa';
 import { FormDraftService } from '../services/form-drafts';
 type ActiveSetDraft={weight:number;reps:number;rpe:number|undefined;setNotes:string;kind:'work'|'warmup'};
@@ -88,6 +89,22 @@ export class ActiveWorkoutComponent {
  record(set:WorkoutLogSet){if(this.step()==='record'&&this.setId()===set.id)return;if(this.step()==='record'&&this.setId()!==set.id)void this.saveDraft();clearTimeout(this.inputTimer);this.setId.set(set.id);const inputs=this.inputDrafts.get(set.id);this.weight=inputs?inputs.weight:this.s.weight(set.weight);this.reps=inputs?inputs.reps:set.reps;this.rpe=inputs?inputs.rpe:set.rpe;this.setNotes=inputs?inputs.setNotes:set.notes||'';this.kind=inputs?inputs.kind:set.kind||'work';this.step.set('record');this.remember();}
  referenceSet=computed(()=>{const e=this.selected(),set=this.currentSet();if(!e||!set)return undefined;return this.s.sets(e.id).filter(s=>s.id!==set.id&&s.number<set.number&&s.completed&&s.kind===set.kind).at(-1)||this.previous()[Math.max(0,this.s.sets(e.id).filter(s=>s.number<set.number&&s.kind!=='warmup').length)];});
  useReference(){const ref=this.referenceSet();if(!ref)return;this.weight=this.s.weight(ref.weight);this.reps=ref.reps;this.rpe=ref.rpe;this.inputChanged();}
+ /** Coach Ombra: proposta per la serie allenante in corso, calcolata da storico, serie di oggi e check-in. */
+ coachDismissed=signal<ReadonlySet<string>>(new Set());
+ coach=computed(()=>{
+  const e=this.selected(),set=this.currentSet();
+  if(!e||!set||set.kind==='warmup'||set.completed||this.coachDismissed().has(set.id))return null;
+  if(!['external','weighted-bodyweight'].includes(e.loadMode)||e.repsMin===undefined||e.repsMax===undefined)return null;
+  const working=this.s.sets(e.id).filter(x=>x.kind!=='warmup');
+  const done=working.filter(x=>x.completed&&x.number<set.number).map(x=>({weight:x.weight,reps:x.reps,rpe:x.rpe}));
+  const reference=this.previous().filter(x=>x.completed&&x.kind!=='warmup').map(x=>({weight:x.weight,reps:x.reps,rpe:x.rpe}));
+  const today=this.s.data().wellnessLogs.find(w=>w.date===localDate());
+  const suggestion=coachNextSet({repsMin:e.repsMin,repsMax:e.repsMax,incrementKg:this.s.preference(e.exerciseId)?.weightStep||2.5,plannedWeight:set.weight,reference,done,readiness:readinessFromWellness(today)});
+  return suggestion&&suggestion.basis!=='none'?suggestion:null;
+ });
+ coachDeltaLabel(){const c=this.coach(),set=this.currentSet();if(!c||!set)return '';const d=c.weight-set.weight;if(Math.abs(d)<0.000001)return 'Mantieni';return (d>0?'+':'−')+this.s.formatWeight(Math.abs(d))+' '+this.s.settings().unit;}
+ applyCoach(){const c=this.coach();if(!c)return;this.weight=this.s.weight(c.weight);this.reps=c.reps;this.inputChanged();}
+ dismissCoach(){const set=this.currentSet();if(!set)return;this.coachDismissed.update(v=>new Set(v).add(set.id));}
  nextRecord(){const e=this.selected();if(!e)return;const sets=this.s.sets(e.id),set=sets.find(s=>!s.completed)||sets[0];if(set)this.record(set);}
  adjustWeight(delta:number){this.weight=Math.max(0,+(this.weight+delta).toFixed(2));this.inputChanged();}
  adjustReps(delta:number){this.reps=Math.min(999,Math.max(1,this.reps+delta));this.inputChanged();}
