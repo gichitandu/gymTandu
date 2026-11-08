@@ -8,6 +8,25 @@ export interface TrainingPeriod {
 export interface TrainingInsight {title:string;message:string;kind:'progress'|'consistency'|'recovery'|'schedule';}
 const fromDays=(today:string,days:number)=>{const date=new Date(today+'T12:00:00');date.setDate(date.getDate()-days+1);return localDate(date);};
 const finished=(data:DataSet,from:string,to:string)=>data.workouts.filter(w=>w.status==='completed'&&w.date>=from&&w.date<=to);
+/**
+ * Settimana di scarico: suggerisce una pausa più leggera dopo molte settimane consecutive
+ * con almeno due sedute (finestre mobili di 7 giorni che terminano oggi). Solo osservazione:
+ * non modifica piani né carichi.
+ */
+export function deloadInsight(data:DataSet,today=localDate(),minWeeks=4):TrainingInsight|null {
+ let weeks=0;
+ for(let i=0;i<8;i++){
+  const to=i===0?today:fromDays(today,i*7+1);
+  if(finished(data,fromDays(to,7),to).length<2)break;
+  weeks++;
+ }
+ if(weeks<minWeeks)return null;
+ const recent=finished(data,fromDays(today,7),today),ids=new Set(data.workoutExercises.filter(e=>recent.some(w=>w.id===e.workoutId)).map(e=>e.id));
+ const rpe=data.sets.filter(x=>x.completed&&x.kind!=='warmup'&&x.rpe!==undefined&&ids.has(x.workoutExerciseId)).map(x=>x.rpe as number);
+ const hard=rpe.length>=5&&rpe.reduce((n,v)=>n+v,0)/rpe.length>=8.5;
+ return {kind:'recovery',title:'Valuta una settimana di scarico',
+  message:`Ti alleni con continuità da ${weeks} settimane, senza una settimana più leggera.${hard?' Nell’ultima settimana lo sforzo medio è stato alto (RPE 8,5 o più).':''} Puoi provare per una settimana a ridurre volume o carichi di circa il 30–40%, oppure confrontarti con un professionista. È solo un’indicazione: il piano non viene cambiato.`};
+}
 export function summarizeTraining(data:DataSet,days=28,today=localDate()):{current:TrainingPeriod;previous:TrainingPeriod;insights:TrainingInsight[]} {
  const from=fromDays(today,days),beforeDate=new Date(from+'T12:00:00');beforeDate.setDate(beforeDate.getDate()-1);
  const previousTo=localDate(beforeDate),previousFrom=fromDays(previousTo,days);
@@ -38,6 +57,8 @@ export function summarizeTraining(data:DataSet,days=28,today=localDate()):{curre
  const wellness=data.wellnessLogs.find(row=>row.date===today);
  if(wellness&&((wellness.energy!==undefined&&wellness.energy<=2)||(wellness.stress!==undefined&&wellness.stress>=4)))
   insights.push({kind:'recovery',title:'Ascolta le sensazioni',message:'Oggi hai registrato poca energia o stress elevato. Valuta personalmente l’intensità e, se necessario, confrontati con un professionista.'});
+ const deload=deloadInsight(data,today);
+ if(deload)insights.push(deload);
  return {current,previous,insights};
 }
 /** Weekly comparison points for the existing SVG chart, with no persistence or server calls. */
