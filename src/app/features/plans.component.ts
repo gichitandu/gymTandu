@@ -18,6 +18,7 @@ import {
 } from "@angular/forms";
 import { ActivatedRoute, Router, RouterLink } from "@angular/router";
 import { Store } from "../services/store";
+import { planOverlaps } from "../services/plan-overlap";
 import {
   TrainingPlan,
   TrainingPlanDay,
@@ -80,6 +81,14 @@ type PlanEditorDraft = {
       <div class="training-manager-controls" aria-label="Gestisci gli allenamenti"><button type="button" class="button secondary" (click)="hub.set('plans');archived.set(false)"><gt-icon name="layers"/>I miei piani</button><a class="button secondary" routerLink="/allenamenti"><gt-icon name="clock"/>Storico</a><button type="button" class="button secondary" (click)="openPlan()" [disabled]="!s.ready()" aria-label="Nuovo piano"><gt-icon name="plus"/><span>Nuovo piano</span></button></div>
     }
     <div [hidden]="hub()==='today'">
+    @if(!archived()&&overlaps().length){<section class="card plan-overlap" role="status" aria-label="Piani con date sovrapposte">
+     <h3>Piani sovrapposti</h3>
+     @for(o of overlaps();track o.keep.plan.id+o.drop.plan.id){<div class="plan-overlap-row">
+      <p>“{{o.keep.plan.name}}” ({{o.keep.workouts}} sedute, {{o.keep.sets}} serie) e “{{o.drop.plan.name}}” ({{o.drop.workouts}} sedute, {{o.drop.sets}} serie) occupano le stesse date.</p>
+      <button type="button" class="button" [disabled]="s.busy()" (click)="resolveOverlap(o.keep.plan.id,o.drop.plan.id)">Tieni “{{o.keep.plan.name}}” e concludi l’altro</button>
+     </div>}
+     <small>Il piano concluso va in archivio: sedute, serie e statistiche restano consultabili.</small>
+    </section>}
     <div class="plans-list-heading"><h2>{{archived()?'Piani archiviati':'I miei piani'}}</h2><button type="button" class="ghost archive-toggle" [class.selected]="archived()" (click)="archived.set(!archived())">{{archived()?'Piani attivi':'Archivio'}}<gt-icon name="clock"/></button></div>
     <a class="excel-archive-link" routerLink="/importa-excel" [queryParams]="{tab:'archive'}"><gt-icon name="download"/>Excel importati<gt-icon name="arrow"/></a>
     <div class="list simple-plan-list" gtDesign="training.plans">
@@ -298,6 +307,12 @@ export class PlansComponent {
   selectedWeeks=signal<Record<string,number>>({});
   fb = inject(FormBuilder);
   hub=signal<'today'|'plans'>('today');
+  overlaps=computed(()=>planOverlaps(this.s.data()));
+  async resolveOverlap(keepId:string,dropId:string){
+   const keep=this.s.data().plans.find(p=>p.id===keepId),drop=this.s.data().plans.find(p=>p.id===dropId);
+   if(!keep||!drop||!await this.confirmation.ask('Concludere “'+drop.name+'” e tenere “'+keep.name+'”? Le sedute registrate restano nello storico.'))return;
+   await this.s.finishPlan(dropId,true);
+  }
   todayExerciseCount=computed(()=>{const draft=this.s.draft(),day=this.todayDay();return draft?this.s.workoutExercises(draft.id).length:day?this.s.planExercises(day.id).length:0;});
   todaySetCount=computed(()=>{const draft=this.s.draft();if(draft)return this.s.workoutExercises(draft.id).reduce((total,row)=>total+this.s.sets(row.id).filter(set=>set.kind!=='warmup').length,0);const day=this.todayDay();return day?this.s.planExercises(day.id).reduce((total,row)=>total+row.sets,0):0;});
   completedForPlan(id:string){return this.s.completed().filter(workout=>workout.planId===id).length;}

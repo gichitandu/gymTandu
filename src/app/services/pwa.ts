@@ -84,7 +84,7 @@ export class PwaService {
    await this.waitForLocalWrites();
    await this.store.createRecoveryCheckpoint?.('before-update');
    if (this.cloud?.currentScope?.() && navigator.onLine !== false) {
-    if (!await this.cloud.checkpointForUpdate()) throw Error('La copia protetta sul server non è ancora confermata. Gli allenamenti restano salvati su questa icona: riprova quando la sincronizzazione è completata.');
+    if (!await this.cloud.checkpointForUpdate()) throw Error(this.syncBlockReason());
     await this.waitForLocalWrites();
    }
    this.updateNotice.set('Copia di sicurezza verificata. Allenamenti, progressi e bozze sono conservati.');
@@ -93,6 +93,12 @@ export class PwaService {
    this.updateError.set('Aggiornamento sospeso: '+(error instanceof Error?error.message:'Salvataggio non riuscito. I dati presenti sono conservati.'));
    return false;
   }
+ }
+ /** Spiega perché la copia protetta non è confermata, senza saltare il controllo. */
+ private syncBlockReason(){
+  const status=this.cloud?.status?.(),detail=this.cloud?.message?.();
+  const base=status==='conflict'?'La copia sul server e quella su questo telefono non coincidono.':status==='offline'?'Il server non è raggiungibile.':status==='syncing'?'La sincronizzazione è ancora in corso.':'La copia protetta sul server non è ancora confermata.';
+  return base+(status==='conflict'&&detail?' '+detail:'')+' Gli allenamenti restano salvati su questa icona. Controlla la sincronizzazione nel Profilo e riprova.';
  }
  private scheduleAuto(){clearTimeout(this.autoTimer);this.autoTimer=setTimeout(()=>{this.autoTimer=undefined;void this.tryAutoReload();},30000);}
  private async tryAutoReload(){
