@@ -11,16 +11,24 @@ import { IconComponent } from '../shared/icon.component';
 import { FeedbackPopupsComponent } from '../shared/feedback-popups.component';
 import { feedbackForContext, feedbackSignal } from '../services/feedback';
 import { AppActivationUncertainError, AppReleaseService } from '../services/app-release';
-@Component({selector:'app-root',standalone:true,imports:[WorkoutStartOptionsComponent,ConfirmationDialogComponent,FormsModule,ShellComponent,IconComponent,FeedbackPopupsComponent],styleUrl:'./entry.css',template:`
+@Component({selector:'app-root',standalone:true,imports:[WorkoutStartOptionsComponent,ConfirmationDialogComponent,FormsModule,ShellComponent,IconComponent,FeedbackPopupsComponent],styleUrls:['./entry.css','./entry-redesign.css'],template:`
 <gt-feedback-popups/><gt-confirmation-dialog/>
 @if(auth.user()) { <gt-shell /><gt-workout-start-options/> } @else {
 @if(auth.loggingOut()){<p class="entry-status" role="status">Uscita e aggiornamento…</p>}
 <main class="entry-page" [class.welcome-state]="welcome() && !auth.setup()" [attr.inert]="entryUpdating()||auth.loggingOut()?'':null">
 <div class="entry-layout">
 <aside class="entry-hero" [attr.aria-label]="features?.nutritionEnabled()?'GymTrack, allenamento e nutrizione':'GymTrack, allenamento e progressi'">
-<div class="hero-emblem"><div class="emblem-orbit" aria-hidden="true"></div><img src="/brand/gt-modern-mark.png" alt="Logo GT GymTrack"/><div class="entry-wordmark">Gym<span>Track</span></div><p class="brand-tagline">{{features?.nutritionEnabled()?'ALLENAMENTO · NUTRIZIONE · PROGRESSI':'ALLENAMENTO · PROGRESSI'}}</p></div>
-<div class="hero-introduction"><p class="entry-eyebrow">DISCIPLINA OGGI</p><h1>Una versione<br/><span>migliore</span> di te domani.</h1></div>
-<div class="entry-features" [style.grid-template-columns]="features?.nutritionEnabled()?'repeat(3,minmax(0,1fr))':'repeat(2,minmax(0,1fr))'"><div><gt-icon name="weight"/><b>Allenamento</b><span>Piani, esercizi,<br/>progressi</span></div>@if(features?.nutritionEnabled()){<div><gt-icon name="nutrition"/><b>Nutrizione</b><span>Diario alimentare<br/>e foto dei pasti</span></div>}<div><gt-icon name="chart"/><b>Risultati</b><span>Statistiche chiare<br/>e personali</span></div></div>
+<div class="xl-top"><img src="/brand/gt-modern-mark.png" alt="Logo GT GymTrack"/><div class="entry-wordmark">Gym<span>Track</span></div></div>
+<div class="hero-introduction"><h1><span class="xl-w">Allenati.</span><span class="xl-w">Registra.</span><span class="xl-w xl-g">Migliora.</span></h1><p class="xl-lead">{{features?.nutritionEnabled()?'Schede, carichi, pasti e progressi in un unico posto, sempre con te.':'Schede, carichi e progressi in un unico posto, sempre con te.'}}</p></div>
+<div class="entry-features"><div><gt-icon name="weight"/><b>Allenamenti</b><span>serie, carichi, recupero</span></div><div><gt-icon name="chart"/><b>Progressi</b><span>volume e record</span></div>@if(features?.nutritionEnabled()){<div><gt-icon name="nutrition"/><b>Nutrizione</b><span>pasti e calorie</span></div>}</div>
+<div class="xl-chart" aria-hidden="true"><div class="xl-chart-head"><div><small>Esempio · volume, 8 settimane</small><div class="xl-big"></div></div><span class="xl-chip">+18%</span></div>
+<svg viewBox="0 0 342 110" role="presentation" focusable="false"><defs><linearGradient id="xl-stroke" x1="0" x2="1"><stop offset="0" style="stop-color:var(--accent-text)"/><stop offset="1" style="stop-color:var(--theme-secondary,var(--accent))"/></linearGradient><linearGradient id="xl-fill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--accent-text)" stop-opacity=".34"/><stop offset="1" style="stop-color:var(--accent-text)" stop-opacity="0"/></linearGradient></defs>
+<g class="xl-grid"><line x1="0" x2="342" y1="20" y2="20"/><line x1="0" x2="342" y1="55" y2="55"/><line x1="0" x2="342" y1="90" y2="90"/></g>
+<path class="xl-area" d="M0 88 C30 84 40 70 68 72 S110 80 136 62 S186 56 212 44 S262 38 286 22 S322 14 342 10 L342 110 L0 110Z" fill="url(#xl-fill)"/>
+<path class="xl-glow" pathLength="1" d="M0 88 C30 84 40 70 68 72 S110 80 136 62 S186 56 212 44 S262 38 286 22 S322 14 342 10" fill="none" stroke="url(#xl-stroke)" stroke-width="8"/>
+<path class="xl-line" pathLength="1" d="M0 88 C30 84 40 70 68 72 S110 80 136 62 S186 56 212 44 S262 38 286 22 S322 14 342 10" fill="none" stroke="url(#xl-stroke)" stroke-width="3" stroke-linecap="round"/>
+<circle class="xl-ring" cx="286" cy="22" r="11"/><circle class="xl-dot" cx="286" cy="22" r="5.5"/></svg>
+<span class="xl-pr"><gt-icon name="trophy"/>Record · 100 kg</span></div>
 <div class="hero-entry-actions"><button class="entry-primary" (click)="welcome.set(false);tab.set('local')">Inizia ora <gt-icon name="arrow"/></button><p>Hai già un account? <button class="entry-text-button" (click)="welcome.set(false);tab.set('account')">Accedi</button></p></div>
 </aside>
 <section class="entry-panel" aria-labelledby="entry-title">
