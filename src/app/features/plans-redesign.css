@@ -103,3 +103,51 @@
 @media (prefers-reduced-motion: reduce) {
   :host *, :host *::before, :host *::after { animation: none !important; transition: none !important; }
 }
+
+/* Menu "⋯" del piano: pannello opaco, sopra le altre card, voci compatte */
+:host .simple-plan:has(.simple-menu[open]) {
+  position: relative;
+  z-index: 40;
+  animation: none;
+}
+
+:host .simple-plan .simple-menu-panel {
+  display: grid;
+  gap: 2px;
+  width: 236px;
+  padding: 6px;
+  border: 1px solid color-mix(in srgb, var(--accent-text) 30%, var(--line));
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--text) 9%, var(--bg));
+  box-shadow: 0 18px 44px rgba(0, 0, 0, .55);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  z-index: 50;
+}
+
+:host .simple-plan .simple-menu-panel > button {
+  min-height: 44px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  color: var(--text);
+  font-size: 14.5px;
+  font-weight: 650;
+  box-shadow: none;
+  background: transparent;
+}
+
+:host .simple-plan .simple-menu-panel > button:active {
+  background: color-mix(in srgb, var(--text) 10%, transparent);
+}
+
+:host .simple-plan .simple-menu-panel > button.danger {
+  color: #ff8da6;
+  border-top: 1px solid color-mix(in srgb, var(--text) 10%, transparent);
+  border-radius: 0 0 12px 12px;
+}
+
+:host .simple-plan-title strong {
+  font-size: clamp(16px, 4.6vw, 19px);
+  line-height: 1.2;
+  letter-spacing: -.02em;
+}
