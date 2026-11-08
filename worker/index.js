@@ -3,6 +3,7 @@ import { pushReminderApi } from './push.js';
 import {excelImportsApi,appFeaturesApi} from './program-imports.js';
 import { archiveApi } from './archive.js';
 import { designStudioApi } from './design-studio.js';
+import { storageAlert } from './storage-alert.js';
 import { APPROVED_THEME_IDS } from '../shared/approved-palettes.js';
 import { calendarApi, calendarPublish, calendarConfigure } from './calendar.js';
 // The platform's ChatGPT access boundary remains in place. App sessions are
@@ -287,7 +288,12 @@ export async function api(request,env,ctx) {
 // __ASSETS__ is replaced by the build, keeping this deployment dependency-free.
 const assets = /* __ASSETS__ */ {};
 const freshAssets=new Set(['/', '/index.html', '/ngsw.json', '/app-build.json', '/ngsw-worker.js', '/gymtrack-sw.js', '/gymtrack-app-worker-v3.js', '/gymtrack-offline-engine-v3.js', '/gymtrack-worker-migration.js', '/gymtrack-session-recovery.js', '/gymtrack-update-now.js', '/aggiorna.html']);
-export default {async fetch(request,env,ctx) {
+export default {
+// Controllo giornaliero dello spazio R2 (cron in wrangler.jsonc): email a 8, 9 e 9,5 GB.
+async scheduled(event,env,ctx) {
+  ctx.waitUntil(storageAlert(env,OWNER).catch(error=>console.error('Controllo spazio R2 non riuscito:',error?.message||error)));
+},
+async fetch(request,env,ctx) {
   const path=new URL(request.url).pathname;
   if(path.startsWith('/api/')) return api(request,env,ctx);
   // Su Cloudflare i file statici arrivano dal binding ASSETS (Workers Static Assets), non dal bundle.

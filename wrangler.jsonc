@@ -27,6 +27,10 @@
   "vars": {
     "SELF_HOSTED": "1"
   },
+  // Controllo giornaliero dello spazio R2 (alle 06:00 UTC): vedi docs/CLOUDFLARE_DEPLOY.md
+  "triggers": {
+    "crons": ["0 6 * * *"]
+  },
   "observability": {
     "enabled": false
   }

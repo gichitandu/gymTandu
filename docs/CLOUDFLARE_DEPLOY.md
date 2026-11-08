@@ -107,6 +107,28 @@ Prima attiva R2 dal pannello Cloudflare. Poi, in GitHub, apri la scheda Actions,
 scegli "Pubblica su Cloudflare" e premi "Run workflow". Gli stessi passi si
 ripetono per ogni aggiornamento.
 
+## Avvisi sullo spazio R2 (email a 8, 9 e 9,5 GB)
+
+Il Worker controlla ogni giorno (alle 06:00 UTC, cioè le 07:00 o 08:00 in Italia)
+lo spazio occupato nel bucket R2 e invia una mail a giacomotanduo004@gmail.com
+quando supera 8, 9 e 9,5 GB. Il piano gratuito include 10 GB. Gli avvisi usano GB
+decimali (1 GB = 1.000.000.000 byte), quindi sono leggermente prudenti. Ogni
+soglia avvisa una sola volta; se lo spazio scende e poi risale, riavvisa.
+
+Cloudflare non permette di spedire email da un Worker senza un dominio tuo, quindi
+l'invio passa da Resend (gratuito):
+
+1. Registrati su resend.com **con lo stesso indirizzo email degli avvisi**
+   (giacomotanduo004@gmail.com): senza un dominio verificato, Resend consegna solo
+   a quell'indirizzo.
+2. In Resend crea una chiave (API Keys, Create API Key, permesso "Sending access")
+   e copiala.
+3. Su GitHub crea il segreto `RESEND_API_KEY` con quella chiave.
+4. Rilancia "Pubblica su Cloudflare": il flusso imposta la chiave sul Worker.
+
+Senza la chiave il controllo gira ma non invia nulla (solo una riga nel registro
+del Worker). L'indirizzo si può cambiare con la variabile `ALERT_EMAIL`.
+
 ## Aggiornamenti
 
 Dopo ogni modifica al codice: `npm run build`, poi `npx wrangler deploy`. Le
