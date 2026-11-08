@@ -1,5 +1,5 @@
 import { it, expect } from 'vitest';
-import { storageAlert, bucketBytes, STORAGE_THRESHOLDS } from '../worker/storage-alert.js';
+import { storageAlert, bucketBytes, thresholdsFor, STORAGE_THRESHOLDS } from '../worker/storage-alert.js';
 
 const GB = 1_000_000_000;
 const owner = 'giacomotanduo004@gmail.com';
@@ -97,4 +97,22 @@ it('usa ALERT_EMAIL se impostato e ignora il controllo senza bucket', async () =
   expect(JSON.parse(f.calls[0].init.body).to).toEqual(['altro@example.com']);
   expect((await storageAlert({}, owner, f.impl)).sent).toBe(false);
   expect(STORAGE_THRESHOLDS).toEqual([8 * GB, 9 * GB, 9.5 * GB]);
+});
+it('con STORAGE_ALERT_TEST_BYTES invia una email di prova anche con il bucket vuoto, una sola volta', async () => {
+  const f = fakeFetch(), bucket = fakeBucket([]);
+  const env = envWith(bucket, { STORAGE_ALERT_TEST_BYTES: '0' });
+  expect((await storageAlert(env, owner, f.impl)).sent).toBe(true);
+  expect((await storageAlert(env, owner, f.impl)).sent).toBe(false);
+  expect(f.calls.length).toBe(1);
+  const body = JSON.parse(f.calls[0].init.body);
+  expect(body.subject).toBe('[PROVA] GymTrack: spazio R2 oltre 0,00 MB');
+  expect(body.text).toContain('email di prova');
+  // tornando alle soglie reali lo stato si riallinea senza inviare nulla
+  const after = await storageAlert(envWith(bucket), owner, f.impl);
+  expect(after.sent).toBe(false);
+  expect(f.calls.length).toBe(1);
+});
+it('ignora valori non validi di STORAGE_ALERT_TEST_BYTES', () => {
+  for (const raw of [undefined, '', 'abc', '-5']) expect(thresholdsFor({ STORAGE_ALERT_TEST_BYTES: raw })).toBe(STORAGE_THRESHOLDS);
+  expect(thresholdsFor({ STORAGE_ALERT_TEST_BYTES: '1000' })).toEqual([1000]);
 });
