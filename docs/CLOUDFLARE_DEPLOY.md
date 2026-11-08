@@ -90,6 +90,23 @@ per una ventina di utenti.
    ciascuno nome utente e password. Possono poi cambiare la password dal Profilo.
 3. Su iPhone: apri l'indirizzo in Safari e aggiungi l'app alla schermata Home.
 
+## Pubblicazione da GitHub (senza Terminale, anche da telefono)
+
+Il flusso `.github/workflows/cloudflare-deploy.yml` fa tutto sui server di GitHub:
+verifiche, creazione di database e bucket, migrazioni, pubblicazione e codice di
+setup. Servono solo tre segreti nel repository (Settings, Secrets and variables,
+Actions, New repository secret):
+
+- `CLOUDFLARE_ACCOUNT_ID`: l'ID dell'account, visibile nella panoramica del
+  pannello Cloudflare.
+- `CLOUDFLARE_API_TOKEN`: una chiave creata da Cloudflare (Profilo, API Tokens,
+  Create Token) con permessi di modifica su Workers Scripts, D1 e R2.
+- `SETUP_CODE`: il codice di setup che hai scelto (almeno 16 caratteri).
+
+Prima attiva R2 dal pannello Cloudflare. Poi, in GitHub, apri la scheda Actions,
+scegli "Pubblica su Cloudflare" e premi "Run workflow". Gli stessi passi si
+ripetono per ogni aggiornamento.
+
 ## Aggiornamenti
 
 Dopo ogni modifica al codice: `npm run build`, poi `npx wrangler deploy`. Le
