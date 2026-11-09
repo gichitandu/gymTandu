@@ -248,3 +248,35 @@ it('non perde il comando Completa se il salvataggio automatico della stessa seri
   const automatic=c.saveDraft();const completing=c.complete();release();await automatic;await completing;
   expect(s.sets(c.selected()!.id)[0]).toMatchObject({weight:70,reps:10,completed:true});expect(c.step()).toBe('record');
 });
+it('avvia il recupero anche quando aggiorna una serie già registrata e non c’è un timer in corso', async () => {
+  const c = await setup(), exercise = c.exercises()[0], row = s.sets(exercise.id)[0];
+  await s.updateSet(row.id, {completed: true, weight: 60});
+  c.open(exercise); c.record(s.sets(exercise.id)[0]); c.restEnd.set(0);
+  c.weight = 62.5; await c.complete();
+  expect(c.restEnd()).toBeGreaterThan(Date.now()); expect(c.restTotal()).toBe(90);
+});
+it('passa alla serie precedente e successiva con le frecce', async () => {
+  const c = await setup(), exercise = c.exercises()[0], rows = s.sets(exercise.id);
+  c.open(exercise); c.record(rows[0]);
+  expect(c.neighborSet(-1)).toBeUndefined();
+  c.stepSet(1); expect(c.setId()).toBe(rows[1].id);
+  c.stepSet(1); expect(c.setId()).toBe(rows[2].id);
+  c.stepSet(-1); expect(c.setId()).toBe(rows[1].id);
+});
+it('aggiunge una serie di riscaldamento o allenante e la apre subito', async () => {
+  const c = await setup(), exercise = c.exercises()[0];
+  c.open(exercise); c.nextRecord();
+  await c.addExtra('warmup');
+  expect(s.sets(exercise.id)).toHaveLength(4); expect(c.currentSet()!.kind).toBe('warmup'); expect(c.kind).toBe('warmup');
+  await c.addExtra('work');
+  expect(s.sets(exercise.id)).toHaveLength(5); expect(c.currentSet()).toMatchObject({kind: 'work', number: 5});
+});
+it('regola il peso trascinando il righello: a sinistra sale, a destra scende, di un incremento per tacca', async () => {
+  const c = await setup(); c.quickRecord(c.exercises()[0]); c.weight = 50;
+  const target = {setPointerCapture: () => {}} as unknown as HTMLElement;
+  c.rulerStart({clientX: 200, pointerId: 1, currentTarget: target} as unknown as PointerEvent);
+  c.rulerMove({clientX: 200 - 16 * 3, pointerId: 1} as PointerEvent); expect(c.weight).toBe(57.5);
+  c.rulerMove({clientX: 200 + 16 * 2, pointerId: 1} as PointerEvent); expect(c.weight).toBe(45);
+  c.rulerEnd({pointerId: 1} as PointerEvent); expect(c.rulerDragging()).toBe(false);
+  c.rulerMove({clientX: 0, pointerId: 1} as PointerEvent); expect(c.weight).toBe(45);
+});

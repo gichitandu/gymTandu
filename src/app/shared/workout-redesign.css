@@ -857,3 +857,41 @@
     transition: none !important;
   }
 }
+
+/* Righello trascinabile: le tacche scorrono sotto il dito, l'indicatore resta al centro */
+:host .recording-ruler {
+  height: 44px;
+  cursor: grab;
+  touch-action: pan-y;
+  user-select: none;
+  -webkit-user-select: none;
+  background-position: calc(50% + var(--ruler-shift, 0px)) bottom, calc(50% + var(--ruler-shift, 0px)) bottom;
+  background-size: calc(100% + 160px) 12px, calc(100% + 160px) 24px;
+  transition: background-position .12s ease-out;
+}
+:host .recording-ruler.dragging { cursor: grabbing; transition: none; }
+:host .recording-ruler.dragging::after { box-shadow: 0 0 22px color-mix(in srgb, var(--accent) 95%, transparent); }
+:host .recording-ruler:focus-visible { outline: 2px solid var(--accent-text); outline-offset: 4px; border-radius: 8px; }
+
+/* Serie: frecce per precedente/successiva e chip per aggiungerne una */
+:host .recording-series-nav { display: flex; align-items: center; gap: 6px; margin: 12px 0 14px; }
+:host .recording-series-nav > .recording-series { flex: 1; min-width: 0; margin: 0; }
+:host .recording-series-nav .series-step {
+  flex: 0 0 auto; width: 40px; min-width: 40px; height: 56px; min-height: 56px; padding: 0;
+  display: grid; place-items: center; border-radius: 14px;
+  border: 1px solid var(--line); background: color-mix(in srgb, var(--text) 5%, transparent); color: var(--text);
+}
+:host .recording-series-nav .series-step gt-icon { width: 20px; height: 20px; }
+:host .recording-series-nav .series-step:disabled { opacity: .3; }
+:host .recording-series .series-add {
+  flex: 0 0 56px; min-width: 56px; border-style: dashed; opacity: 1 !important;
+  color: var(--accent-text); background: transparent;
+}
+:host .recording-series .series-add small { color: var(--accent-text); font-size: 18px; letter-spacing: 0; line-height: 1; }
+:host .recording-series .series-add b { font-size: 12px; }
+:host .recording-series .series-add.open { border-style: solid; border-color: var(--accent-text); background: color-mix(in srgb, var(--accent) 14%, transparent); }
+:host .series-add-menu { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: -6px 0 14px; animation: seriesMenu .2s ease-out both; }
+:host .series-add-menu button { min-height: 48px; border-radius: 14px; display: flex; align-items: center; justify-content: center; gap: 6px; font-weight: 700; border: 1px solid color-mix(in srgb, var(--accent-text) 45%, var(--line)); background: color-mix(in srgb, var(--accent) 12%, transparent); color: var(--text); }
+:host .series-add-menu gt-icon { width: 16px; height: 16px; color: var(--accent-text); }
+@keyframes seriesMenu { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { :host .series-add-menu { animation: none; } :host .recording-ruler { transition: none; } }
