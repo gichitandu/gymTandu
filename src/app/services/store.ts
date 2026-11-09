@@ -31,7 +31,7 @@ import { ArchiveSyncService, archiveFingerprint } from "./archive-sync";
 import { exportBackup } from "./backup";
 import { TodayService } from "./today";
 import { ExcelProgramDraft } from '../models/excel-import';
-import { autoCompletePlan,effectiveProgramRange,excelProgramConflicts,normalizedExerciseName,prescriptionDetails,scheduleConflicts,validateExcelProgram } from './plan-program';
+import { autoCompletePlan,effectiveProgramRange,excelProgramConflicts,missingProgramEvents,normalizedExerciseName,prescriptionDetails,scheduleConflicts,validateExcelProgram } from './plan-program';
 @Injectable({ providedIn: "root" })
 export class Store {
   saveWellness(row:import('../models/domain').WellnessLog){return this.change(d=>{const existing=d.wellnessLogs.find(v=>v.date===row.date);const next={...structuredClone(row),id:existing?.id||row.id};d.wellnessLogs=d.wellnessLogs.filter(v=>v.date!==row.date);d.wellnessLogs.push(next);},'Diario recupero salvato',false);}
@@ -182,6 +182,7 @@ export class Store {
         if (this.auth?.user() && !this.auth.offlineMode() && navigator.onLine) {
           try {await this.refreshCatalog();} catch {this.message.set("Catalogo online non raggiungibile: uso la copia locale. Allenamenti e pasti restano disponibili.");}
         }
+        if(initialization===this.initialization)await this.restoreProgramSchedule();
       })().catch(()=>{this.message.set('Copia online momentaneamente non disponibile. L’archivio locale resta utilizzabile.');});
       void this.theme?.load().then(()=>{if(initialization===this.initialization)this.applyTheme();}).catch(()=>{});
     } catch (e) {
@@ -515,6 +516,12 @@ export class Store {
       );
     }, "Giorno duplicato.");
   }
+  /** Aggiunge al calendario le sedute del piano attivo rimaste senza evento. Solo aggiunte, mai sovrascritture. */
+  async restoreProgramSchedule() {
+    const plan=this.activePlan();
+    if(!plan?.program||!this.ready()||this.conflicted()||!missingProgramEvents(this.data(),[plan.id]).length)return false;
+    return this.change(d=>{d.scheduledWorkouts.push(...missingProgramEvents(d,[plan.id]));},'Calendario del piano attivo ripristinato.',false);
+  }
   openSessionMessage(workout: {planName:string;dayName:string;date:string}) {
     const date=parseLocalDate(workout.date).toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit',year:'numeric'});
     return `Hai una sessione aperta: ${workout.planName} · ${workout.dayName} · ${date}. Apri “Sessione” e premi “Termina allenamento” prima di registrare un altro giorno.`;
@@ -549,7 +556,8 @@ export class Store {
           "Aggiungi almeno un esercizio al giorno prima di iniziare.",
         );
       if(plan.completedAt)throw Error('Questo piano è concluso. Puoi consultare le sue sedute nello storico.');
-      const conflicts=plan.program?scheduleConflicts(d,[workoutDate],plan.id):d.plans.filter(other=>other.id!==plan.id&&other.program&&!other.archived).flatMap(other=>{
+      // Il piano attivo è quello in uso: un altro piano aperto ma non attivo non ne blocca l'avvio.
+      const conflicts=plan.program?scheduleConflicts(d,[workoutDate],plan.id,undefined,{onlyActivePlans:plan.active}):d.plans.filter(other=>other.id!==plan.id&&other.program&&!other.archived&&!other.completedAt&&(!plan.active||other.active)).flatMap(other=>{
         const range=effectiveProgramRange(d,other);
         return range&&workoutDate>=range.startDate&&workoutDate<=range.endDate?[`Il periodo è già occupato dal piano “${other.name}”.`]:[];
       });

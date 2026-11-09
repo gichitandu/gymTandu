@@ -139,3 +139,6 @@ body.theme-ready gt-shell .mobile-brand .app-brand-mark,
 body.theme-ready gt-shell.design-v2 .mobile-brand .app-brand-mark { width: 36px; height: 36px; margin-right: 8px; }
 body.theme-ready gt-shell .brand { color: var(--text); }
 body.theme-ready gt-shell .brand span { color: var(--accent-text); }
+
+/* Logo GT nell'intestazione: marchio ad alto contrasto (lettere bianche su gradiente), leggibile anche piccolo */
+body.theme-ready gt-shell .brand .app-brand-mark { border-radius: 11px; box-shadow: 0 6px 18px color-mix(in srgb, #16e0ff 22%, transparent); object-fit: cover; }

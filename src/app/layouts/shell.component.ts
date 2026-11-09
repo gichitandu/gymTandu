@@ -24,7 +24,7 @@ import { canResumeAtHome, MobileNavigationService } from "../services/mobile-nav
   encapsulation: ViewEncapsulation.None,
   template: ` <gt-workout-clock/><aside class="sidebar">
       <a class="brand" routerLink="/"
-        ><img class="app-brand-mark" src="/brand/gt-modern-mark.png" alt=""/>Gym<span>Track</span></a
+        ><img class="app-brand-mark" src="/brand/gt-header-mark.svg" alt="" width="36" height="36"/>Gym<span>Track</span></a
       >
       <nav>
         @for (item of desktopNav; track item.path) {
@@ -40,7 +40,7 @@ import { canResumeAtHome, MobileNavigationService } from "../services/mobile-nav
     </aside>
     <div class="app-main">
       @if(!router.url.startsWith('/sessione')){<header class="topbar">
-        <a class="mobile-brand brand" routerLink="/"><img class="app-brand-mark" src="/brand/gt-modern-mark.png" alt=""/>Gym<span>Track</span></a
+        <a class="mobile-brand brand" routerLink="/"><img class="app-brand-mark" src="/brand/gt-header-mark.svg" alt="" width="36" height="36"/>Gym<span>Track</span></a
         >        <div class="topbar-right"><gt-data-status class="header-data-status"/>
           <a class="avatar" routerLink="/profilo" aria-label="Apri profilo"><gt-avatar [photo]="s.profile().photo" [name]="s.profile().name" /></a>
         </div>

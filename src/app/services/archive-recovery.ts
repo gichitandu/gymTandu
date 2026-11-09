@@ -6,6 +6,7 @@ import { DataSet, Exercise, TABLES, TrainingPlan } from '../models/domain';
 import { seed } from '../core/seed';
 import { validateIntegrity } from './integrity';
 import { exportBackup } from './backup';
+import { missingProgramEvents } from './plan-program';
 
 const DEVICE_ARCHIVE = 'gymtrack-user-device-local';
 export function allowedArchiveNames(account: Pick<Account, 'id' | 'owner'> | null, platformOwner = false): string[] {
@@ -95,6 +96,9 @@ export async function mergeRecoveredArchive(current: DataSet, source: DataSet, s
       }
     }
   }
+  // Il recupero copiava piano e giorni ma non gli eventi: i programmi a date fisse sparivano dal calendario.
+  const recoveredPlans = next.plans.filter(plan => !current.plans.some(item => item.id === plan.id)).map(plan => plan.id);
+  if (recoveredPlans.length) next.scheduledWorkouts.push(...missingProgramEvents(next, recoveredPlans));
   validateIntegrity(next);
   return next;
 }

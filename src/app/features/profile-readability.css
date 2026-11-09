@@ -57,38 +57,65 @@
   white-space: normal;
 }
 
-/* Gruppi di menu: riquadro con respiro, voci ben separate, testo più grande */
+/* Gruppi di menu: una riga per voce (icona, testo, badge, freccia). Le due colonne strette
+   schiacciavano il testo fino a una lettera per riga e spingevano l'icona in fondo alla card. */
 :host .profile-menu-group { margin-top: 30px; gap: 12px; }
 :host .profile-menu-group .account-section-label { padding: 0 6px; font-size: 11px; letter-spacing: 1.6px; }
 :host .profile-menu-group .profile-menu {
-  padding: 12px;
-  gap: 12px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  padding: 8px;
+  gap: 8px;
   border-radius: 24px;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 :host .profile-menu-group .profile-menu > a,
 :host .profile-menu-group .profile-menu > button {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
   min-width: 0;
-  min-height: 104px;
-  padding: 16px 14px;
-  gap: 10px;
+  min-height: 72px;
+  padding: 14px 16px;
+  gap: 14px;
   border-radius: 18px;
-  align-items: flex-start;
   text-align: left;
   overflow: hidden;
+  font-size: 20px;
 }
+:host .profile-menu-group .profile-menu > a > gt-icon:first-child,
+:host .profile-menu-group .profile-menu > button > gt-icon:first-child {
+  flex: 0 0 auto;
+  align-self: center;
+  margin: 0;
+  width: 22px;
+  height: 22px;
+}
+:host .profile-menu-group .profile-menu > a > span,
+:host .profile-menu-group .profile-menu > button > span { flex: 1 1 auto; min-width: 0; }
 :host .profile-menu-group .profile-menu strong {
-  font-size: 14px;
+  display: block;
+  font-size: 15px;
   line-height: 1.3;
-  overflow-wrap: anywhere;
+  overflow-wrap: normal;
+  word-break: normal;
   white-space: normal;
 }
 :host .profile-menu-group .profile-menu small {
+  display: block;
   font-size: 12px;
   line-height: 1.4;
-  margin-top: 4px;
-  overflow-wrap: anywhere;
+  margin-top: 3px;
+  overflow-wrap: normal;
+  word-break: normal;
   white-space: normal;
+}
+:host .profile-menu-group .profile-menu .menu-badge {
+  flex: 0 0 auto;
+  margin-left: 0;
+  white-space: nowrap;
+}
+@media (min-width: 900px) {
+  :host .profile-menu-group .profile-menu { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 /* Azioni foto e righe impostazioni: niente uscite dal contenitore */
@@ -99,8 +126,3 @@
 :host .settings-disclosure .button,
 :host .settings-disclosure button { white-space: normal; overflow-wrap: anywhere; line-height: 1.3; }
 
-@media (max-width: 400px) {
-  :host .profile-menu-group .profile-menu { padding: 10px; gap: 10px; }
-  :host .profile-menu-group .profile-menu > a,
-  :host .profile-menu-group .profile-menu > button { padding: 14px 12px; min-height: 100px; }
-}
