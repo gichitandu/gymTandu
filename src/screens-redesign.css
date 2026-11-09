@@ -131,3 +131,11 @@ body.theme-ready gt-shell .modal-backdrop {
     transition: none !important;
   }
 }
+
+/* Logo GT: più grande, non corsivo e senza lettere compresse, per leggerlo bene su sfondo scuro */
+body.theme-ready gt-shell .brand:has(.app-brand-mark) { font-style: normal; letter-spacing: 0; font-weight: 800; }
+body.theme-ready gt-shell .brand .app-brand-mark { width: 40px; height: 40px; margin-right: 9px; }
+body.theme-ready gt-shell .mobile-brand .app-brand-mark,
+body.theme-ready gt-shell.design-v2 .mobile-brand .app-brand-mark { width: 36px; height: 36px; margin-right: 8px; }
+body.theme-ready gt-shell .brand { color: var(--text); }
+body.theme-ready gt-shell .brand span { color: var(--accent-text); }

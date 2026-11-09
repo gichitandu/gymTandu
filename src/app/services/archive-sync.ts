@@ -351,10 +351,17 @@ export class ArchiveSyncService {
   async checkpointForUpdate(): Promise<boolean> {
     if (!this.scope) return true;
     if (!this.latest || typeof navigator !== 'undefined' && !navigator.onLine) return false;
-    this.pinOnNextSave = true;
-    this.pending ||= this.pendingJob(this.latest);
-    const saved = await this.flush();
-    return saved && !this.pinOnNextSave;
+    // Un'apertura o un salvataggio concorrente può azzerare la copia in attesa prima che
+    // la copia protetta venga inviata: si ritenta, ma mai oltre un conflitto reale.
+    for (let attempt = 0; attempt < 3; attempt++) {
+      if (this.running) await this.running.catch(() => false);
+      if (!this.latest || this.status() === 'conflict' || this.meta?.blocked || typeof navigator !== 'undefined' && !navigator.onLine) return false;
+      this.pinOnNextSave = true;
+      this.pending ||= this.pendingJob(this.latest);
+      const saved = await this.flush();
+      if (saved && !this.pinOnNextSave) return true;
+    }
+    return false;
   }
   async history(date?: string): Promise<{revision: number; updatedAt: number; reason?: string; workoutId?: string; workoutDate?: string; dayName?: string}[]> {
     if (!this.scope) return [];

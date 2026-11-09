@@ -545,7 +545,7 @@ export class Store {
           "Aggiungi almeno un esercizio al giorno prima di iniziare.",
         );
       if(plan.completedAt)throw Error('Questo piano è concluso. Puoi consultare le sue sedute nello storico.');
-      const conflicts=plan.program?scheduleConflicts(d,[workoutDate],plan.id):d.plans.filter(other=>other.id!==plan.id&&other.program).flatMap(other=>{
+      const conflicts=plan.program?scheduleConflicts(d,[workoutDate],plan.id):d.plans.filter(other=>other.id!==plan.id&&other.program&&!other.archived).flatMap(other=>{
         const range=effectiveProgramRange(d,other);
         return range&&workoutDate>=range.startDate&&workoutDate<=range.endDate?[`Il periodo è già occupato dal piano “${other.name}”.`]:[];
       });

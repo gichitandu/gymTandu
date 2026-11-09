@@ -58,7 +58,7 @@ export function excelProgramConflicts(data:DataSet,draft:Pick<ExcelProgramDraft,
 export function scheduleConflicts(data:DataSet,dates:string[],planId:string,ignoreEventId?:string):string[]{
  const messages:string[]=[];
  for(const date of dates){
-  for(const plan of data.plans){const range=effectiveProgramRange(data,plan);if(plan.id!==planId&&range&&date>=range.startDate&&date<=range.endDate)messages.push(`${dateLabel(date)}: il periodo è già occupato dal piano “${plan.name}”.`);}
+  for(const plan of data.plans){if(plan.archived)continue;const range=effectiveProgramRange(data,plan);if(plan.id!==planId&&range&&date>=range.startDate&&date<=range.endDate)messages.push(`${dateLabel(date)}: il periodo è già occupato dal piano “${plan.name}”.`);}
   for(const entry of data.scheduledWorkouts)if((entry.kind??'workout')==='workout'&&entry.id!==ignoreEventId&&entry.planId!==planId&&entry.date===date)messages.push(`${dateLabel(date)}: “${entry.dayName}” del piano “${entry.planName}” è già programmato.`);
   for(const entry of data.workouts)if(entry.planId!==planId&&entry.date===date)messages.push(`${dateLabel(date)}: “${entry.dayName}” del piano “${entry.planName}” è già registrato.`);
  }

@@ -98,7 +98,8 @@ export class PwaService {
  private syncBlockReason(){
   const status=this.cloud?.status?.(),detail=this.cloud?.message?.();
   const base=status==='conflict'?'La copia sul server e quella su questo telefono non coincidono.':status==='offline'?'Il server non è raggiungibile.':status==='syncing'?'La sincronizzazione è ancora in corso.':'La copia protetta sul server non è ancora confermata.';
-  return base+(status==='conflict'&&detail?' '+detail:'')+' Gli allenamenti restano salvati su questa icona. Controlla la sincronizzazione nel Profilo e riprova.';
+  const server=this.cloud?.lastErrorMessage?.();
+  return base+(status==='conflict'&&detail?' '+detail:'')+(server?' Risposta del server: '+server:'')+' Gli allenamenti restano salvati su questa icona. Controlla la sincronizzazione nel Profilo e riprova.';
  }
  private scheduleAuto(){clearTimeout(this.autoTimer);this.autoTimer=setTimeout(()=>{this.autoTimer=undefined;void this.tryAutoReload();},30000);}
  private async tryAutoReload(){
@@ -120,7 +121,7 @@ export class PwaService {
    // Freeze before the snapshot: typing while the server copy is pending must
    // not create a newer draft between the last flush and the page reload.
    if(root)root.inert=true;
-   if(!await this.prepareExit('update'))return;
+   if(!await this.prepareExit('update')){if(automatic)this.updateError.set('');return;}
    if(automatic&&this.store.draft?.()){this.scheduleAuto();return;}
    const activated=await this.releases.activateReady(automatic?this.releases.policy()?.requestedBuildId||undefined:undefined);
    if(automatic&&!activated)return;

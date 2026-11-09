@@ -49,7 +49,7 @@ interface ProfileFormDraft {
 }
 @Component({
   standalone: true,
-  styleUrls: ["./account-polish.css", "./profile-redesign.css"],
+  styleUrls: ["./account-polish.css", "./profile-redesign.css", "./profile-readability.css"],
   imports: [InstallHelpComponent,...DESIGN_DIRECTIVES,ThemePickerComponent,AppFeaturesComponent,StorageStatusComponent,PushReminderComponent,CalendarSubscriptionComponent,DateFieldComponent,BackupReminderComponent,ArchiveSyncComponent,AppUpdatesComponent,
     A11yModule,
     AvatarComponent,
