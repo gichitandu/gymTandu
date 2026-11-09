@@ -49,7 +49,7 @@ export function excelProgramConflicts(data:DataSet,draft:Pick<ExcelProgramDraft,
  const seen=new Set<string>();
  const occupied=[...data.scheduledWorkouts.filter(item=>(item.kind??'workout')==='workout').map(item=>({date:item.date,planId:item.planId,planName:item.planName,title:item.dayName})),...data.workouts.map(item=>({date:item.date,planId:item.planId,planName:item.planName,title:item.dayName}))];
  for(const item of occupied){
-  if(item.planId===ignorePlanId||!planIsOpen(data,item.planId)||item.date<draft.startDate||item.date>draft.endDate)continue;
+  if(item.planId===ignorePlanId||planIsClosed(data,item.planId)||item.date<draft.startDate||item.date>draft.endDate)continue;
   const key=item.date+':'+item.planId+':'+item.title;if(seen.has(key))continue;seen.add(key);
   messages.push(`${dateLabel(item.date)}: “${item.title}” del piano “${item.planName}” è già presente nel calendario o nello storico.`);
  }
@@ -57,9 +57,12 @@ export function excelProgramConflicts(data:DataSet,draft:Pick<ExcelProgramDraft,
 }
 /** Un piano archiviato, concluso o eliminato non occupa più date del calendario. */
 export function planIsOpen(data:DataSet,planId:string){const plan=data.plans.find(item=>item.id===planId);return !!plan&&!plan.archived&&!plan.completedAt;}
+/** Piano archiviato o concluso (non eliminato): i suoi allenamenti registrati non occupano più le date. */
+const planIsClosed=(data:DataSet,planId:string)=>{const plan=data.plans.find(item=>item.id===planId);return !!plan&&(!!plan.archived||!!plan.completedAt);};
 /**
- * Conflitti di data con altri piani ancora aperti. Con `onlyActivePlans` contano solo i piani attivi:
- * serve ad avviare il piano attivo senza che un piano inattivo ancora aperto lo blocchi.
+ * Conflitti di data con altri piani ancora aperti. Un allenamento già registrato blocca sempre la data
+ * (salvo piani archiviati o conclusi). Con `onlyActivePlans` periodi e sedute solo programmate dei piani
+ * non attivi non bloccano l'avvio del piano attivo.
  */
 export function scheduleConflicts(data:DataSet,dates:string[],planId:string,ignoreEventId?:string,options:{onlyActivePlans?:boolean}={}):string[]{
  const messages:string[]=[];
@@ -67,7 +70,7 @@ export function scheduleConflicts(data:DataSet,dates:string[],planId:string,igno
  for(const date of dates){
   for(const plan of data.plans){if(!counts(plan.id))continue;const range=effectiveProgramRange(data,plan);if(range&&date>=range.startDate&&date<=range.endDate)messages.push(`${dateLabel(date)}: il periodo è già occupato dal piano “${plan.name}”.`);}
   for(const entry of data.scheduledWorkouts)if((entry.kind??'workout')==='workout'&&entry.id!==ignoreEventId&&counts(entry.planId)&&entry.date===date)messages.push(`${dateLabel(date)}: “${entry.dayName}” del piano “${entry.planName}” è già programmato.`);
-  for(const entry of data.workouts)if(counts(entry.planId)&&entry.date===date)messages.push(`${dateLabel(date)}: “${entry.dayName}” del piano “${entry.planName}” è già registrato.`);
+  for(const entry of data.workouts)if(entry.planId!==planId&&!planIsClosed(data,entry.planId)&&entry.date===date)messages.push(`${dateLabel(date)}: “${entry.dayName}” del piano “${entry.planName}” è già registrato.`);
  }
  return [...new Set(messages)];
 }

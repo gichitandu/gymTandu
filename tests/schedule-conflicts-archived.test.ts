@@ -35,6 +35,8 @@ describe("piano attivo e calendario del programma", () => {
     data.scheduledWorkouts.push({ id: "e1", date: "2026-11-09", planId: "inattivo", dayId: "d", planName: "inattivo", dayName: "A", notes: "" });
     expect(scheduleConflicts(data, ["2026-11-09"], "attivo").length).toBeGreaterThan(0);
     expect(scheduleConflicts(data, ["2026-11-09"], "attivo", undefined, { onlyActivePlans: true })).toEqual([]);
+    data.workouts.push({ id: "w2", userId: "local", planId: "inattivo", dayId: "d", planName: "inattivo", dayName: "A", date: "2026-11-09", startedAt: "2026-11-09T08:00:00.000Z", duration: 0, notes: "", status: "completed" });
+    expect(scheduleConflicts(data, ["2026-11-09"], "attivo", undefined, { onlyActivePlans: true }).length).toBe(1);
   });
   it("ricrea solo gli eventi mancanti delle sedute del programma, collegando quelle già registrate", () => {
     const data = seed() as any;
