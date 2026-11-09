@@ -4,13 +4,6 @@ export function epley(weight: number, reps: number): number {
   // Con una sola ripetizione il massimale stimato coincide con il carico sollevato.
   return weight > 0 && reps > 0 ? (reps === 1 ? weight : weight * (1 + reps / 30)) : 0;
 }
-/** Sposta di N mesi senza sforare a fine mese (31/03 − 1 mese = 28/02, non 03/03). */
-export function shiftMonths(date: Date, delta: number): void {
-  const day = date.getDate();
-  date.setDate(1);
-  date.setMonth(date.getMonth() + delta);
-  date.setDate(Math.min(day, new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate()));
-}
 export function volume(sets: WorkoutLogSet[], mode: LoadMode): number {
   return mode === "external"
     ? sets.filter((s) => s.completed&&s.kind!=="warmup").reduce((v, s) => v + s.weight * s.reps, 0)
@@ -91,7 +84,7 @@ export function chartSeries(
   const days = options.days;
   const hasDays = days !== undefined && Number.isFinite(days) && days > 0;
   if (hasDays) cutoffDate.setDate(cutoffDate.getDate() - days + 1);
-  else if (months) shiftMonths(cutoffDate, -months);
+  else if (months) cutoffDate.setMonth(cutoffDate.getMonth() - months);
   const cutoff = hasDays || months ? localDate(cutoffDate) : "";
   const logs = data.workouts
     .filter(

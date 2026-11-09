@@ -1,5 +1,5 @@
 import { DESIGN_DIRECTIVES } from '../design/design-directives';
-import {sessionVolume,exerciseRecords,shiftMonths} from '../services/statistics';
+import {sessionVolume,exerciseRecords} from '../services/statistics';
 import {TodayService} from '../services/today';
 import {AppFeaturesService} from '../services/app-features';
 import {setupKey} from "../services/training-flow";
@@ -153,7 +153,7 @@ export class ProgressComponent {
   overviewPlan=signal('');
   private clock=inject(TodayService,{optional:true});
   get today(){return this.clock?.date()||localDate();}
-  cutoff(){if(!this.period())return '';const d=new Date(this.today+'T12:00:00');if(this.period()<0)d.setDate(d.getDate()+this.period()+1);else shiftMonths(d,-this.period());return localDate(d);}
+  cutoff(){if(!this.period())return '';const d=new Date(this.today+'T12:00:00');if(this.period()<0)d.setDate(d.getDate()+this.period()+1);else d.setMonth(d.getMonth()-this.period());return localDate(d);}
   measurements=computed(()=>this.s.data().measurements.filter(m=>!this.cutoff()||m.date>=this.cutoff()).sort((a,b)=>a.date.localeCompare(b.date)));
   dateLabel(date:string){return new Date(date+'T12:00:00').toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit'});}
   weightPoints=computed(()=>this.measurements().map(m=>({label:this.dateLabel(m.date),value:this.s.weight(m.weight)})));

@@ -78,7 +78,7 @@ export class HomeComponent {
         .scheduledWorkouts.filter(
           (e) =>
             (e.kind??'workout')==='workout' && e.date >= this.today &&
-            !this.concluded(e.planId)&&this.s.data().days.some((day)=>day.id===e.dayId)&&
+            !this.concluded(e.planId)&&
             !this.s.completed().some((w) => w.id === e.workoutId),
         )
         .sort((a, b) => a.date.localeCompare(b.date) || (a.time||'99:99').localeCompare(b.time||'99:99'))[0],
