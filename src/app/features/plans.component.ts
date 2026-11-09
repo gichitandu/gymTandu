@@ -552,8 +552,10 @@ export class PlansComponent {
   async removePlan(plan:TrainingPlan){
     if(this.deletingPlan())return;
     if(!await this.confirmation.ask({title:'Eliminare il piano?',confirmLabel:'Elimina piano',detail:plan.name+' · '+this.s.days(plan.id).length+' giorni',message:`Eliminare il piano “${plan.name}” con i giorni e gli esercizi programmati? Gli allenamenti già registrati e le loro serie resteranno nello storico. Gli altri piani non saranno modificati.`,tone:'danger'}))return;
+    const planned=this.s.plannedEventsOf(plan.id).length;
+    const removePlannedEvents=planned>0&&await this.confirmation.ask({title:'E le sedute nel calendario?',confirmLabel:'Elimina anche dal calendario',cancelLabel:'Mantieni nel calendario',tone:'danger',detail:planned===1?'1 seduta in programma':planned+' sedute in programma',message:`Il piano “${plan.name}” ha sedute in programma nel calendario non ancora svolte. Vuoi eliminarle insieme al piano? Gli allenamenti già registrati restano comunque nello storico.`});
     this.deletingPlan.set(plan.id);
-    try{if(await this.s.deletePlan(plan.id)){if(this.expanded()===plan.id)this.expanded.set('');}}
+    try{if(await this.s.deletePlan(plan.id,{removePlannedEvents})){if(this.expanded()===plan.id)this.expanded.set('');}}
     finally{this.deletingPlan.set('');}
   }
   async removeDay(day: TrainingPlanDay) {

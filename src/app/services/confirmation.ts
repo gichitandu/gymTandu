@@ -1,6 +1,6 @@
 import { inject, Injectable, signal } from '@angular/core';
-export interface ConfirmationOptions {message:string;title?:string;confirmLabel?:string;detail?:string;tone?:'danger'|'info'}
-export interface ConfirmationRequest {message:string;title:string;confirmLabel:string;detail?:string;tone:'danger'|'info'}
+export interface ConfirmationOptions {message:string;title?:string;confirmLabel?:string;cancelLabel?:string;detail?:string;tone?:'danger'|'info'}
+export interface ConfirmationRequest {message:string;title:string;confirmLabel:string;cancelLabel?:string;detail?:string;tone:'danger'|'info'}
 @Injectable({providedIn:'root'})
 export class ConfirmationService {
  readonly current=signal<ConfirmationRequest|null>(null);

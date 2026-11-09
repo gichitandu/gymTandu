@@ -803,6 +803,20 @@
           Reimposta
         </button>
       </div>
+      <h3 class="cal-filter-label">Piano</h3>
+      <div class="cal-filter-chips" role="group" aria-label="Filtra per piano">
+        <button type="button" [class.active]="planScope() === 'active'" [attr.aria-pressed]="planScope() === 'active'" (click)="planScope.set('active')">
+          Solo piano attivo
+        </button>
+        <button type="button" [class.active]="planScope() === 'all'" [attr.aria-pressed]="planScope() === 'all'" (click)="planScope.set('all')">
+          Tutti i piani
+        </button>
+      </div>
+      @if (orphanCount()) {
+        <button type="button" class="cal-orphan-cleanup" (click)="removeOrphans()" [disabled]="actionBusy()">
+          Elimina sedute di piani eliminati ({{ orphanCount() }})
+        </button>
+      }
       <h3 class="cal-filter-label">Stato</h3>
       <div class="cal-filter-chips" role="group" aria-label="Filtra per stato">
         @for (option of stateOptions; track option.value) {

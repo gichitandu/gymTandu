@@ -151,3 +151,14 @@ export function formatCalendarDuration(minutes:number):string {
  const rounded=Math.round(minutes),hours=Math.floor(rounded/60),remaining=rounded%60;
  return hours?`${hours} h${remaining?' '+remaining+' min':''}`:`${remaining} min`;
 }
+
+/**
+ * Vista del calendario limitata a un piano: restano le sedute e gli allenamenti di quel piano
+ * e le attività senza piano (cardio, mobilità, riposo, altro). Senza piano indicato restituisce tutto.
+ */
+export function calendarPlanScope(data:DataSet,planId:string|undefined):DataSet {
+ if(!planId)return data;
+ return {...data,
+  scheduledWorkouts:data.scheduledWorkouts.filter(event=>(event.kind??'workout')!=='workout'||event.planId===planId),
+  workouts:data.workouts.filter(workout=>workout.planId===planId)};
+}

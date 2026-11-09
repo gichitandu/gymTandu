@@ -95,3 +95,15 @@ it('annulla un allenamento iniziato: elimina serie e seduta aperta, ma l’appun
  expect(await s.startScheduled('event')).toBe(true);await s.finish(true);
  expect(await s.cancelWorkout(s.data().workouts[0].id)).toBe(false);expect(s.data().workouts).toHaveLength(1);
 });
+it('di default il calendario mostra solo il piano attivo e le attività senza piano',async()=>{
+ const {calendarPlanScope}=await import('../src/app/services/calendar-agenda');
+ const data=seed();
+ data.scheduledWorkouts.push(
+  {id:'a',date:'2026-11-10',planId:'attivo',dayId:'d1',planName:'Attivo',dayName:'A',notes:''},
+  {id:'b',date:'2026-11-10',planId:'vecchio',dayId:'d2',planName:'Vecchio',dayName:'B',notes:''},
+  {id:'c',kind:'cardio',date:'2026-11-10',planId:'',dayId:'',planName:'',dayName:'Corsa',notes:''} as any);
+ data.workouts.push({id:'w1',userId:'local',planId:'vecchio',dayId:'d2',planName:'Vecchio',dayName:'B',date:'2026-11-03',startedAt:'2026-11-03T08:00:00Z',duration:0,notes:'',status:'completed'} as any);
+ const scoped=calendarPlanScope(data,'attivo');
+ expect(scoped.scheduledWorkouts.map(e=>e.id)).toEqual(['a','c']);expect(scoped.workouts).toEqual([]);
+ expect(calendarPlanScope(data,undefined)).toBe(data);
+});

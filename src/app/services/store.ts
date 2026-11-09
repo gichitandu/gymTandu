@@ -460,7 +460,14 @@ export class Store {
       p.updatedAt = now();
     }, "Allenamento del piano salvato.");
   }
-  async deletePlan(id:string){
+  /** Sedute ancora in programma (non avviate) collegate a un piano: sono quelle che si possono togliere dal calendario. */
+  plannedEventsOf(planId:string){return this.data().scheduledWorkouts.filter(event=>event.planId===planId&&(event.kind??'workout')==='workout'&&!event.workoutId);}
+  /** Sedute in programma (mai avviate) il cui piano non esiste più. */
+  orphanPlannedEvents(){const plans=new Set(this.data().plans.map(plan=>plan.id));return this.data().scheduledWorkouts.filter(event=>(event.kind??'workout')==='workout'&&!event.workoutId&&!plans.has(event.planId));}
+  async removeOrphanPlannedEvents(){
+    return this.change(d=>{const plans=new Set(d.plans.map(plan=>plan.id));d.scheduledWorkouts=d.scheduledWorkouts.filter(event=>!((event.kind??'workout')==='workout'&&!event.workoutId&&!plans.has(event.planId)));},'Sedute senza piano eliminate dal calendario. Gli allenamenti registrati sono conservati.',false);
+  }
+  async deletePlan(id:string,options:{removePlannedEvents?:boolean}={}){
     return this.change(d=>{
       if(!d.plans.some(plan=>plan.id===id))throw Error('Piano non trovato.');
       if(d.workouts.some(workout=>workout.planId===id&&workout.status==='draft'))throw Error('Concludi o riprendi la sessione aperta di questo piano prima di eliminarlo.');
@@ -470,7 +477,9 @@ export class Store {
       d.planExercises=d.planExercises.filter(exercise=>!days.has(exercise.dayId));
       d.days=d.days.filter(day=>!days.has(day.id));
       d.plans=d.plans.filter(plan=>plan.id!==id);
-    },'Piano eliminato. Gli allenamenti registrati sono conservati.',false);
+      // Solo su richiesta: le sedute in programma (mai avviate) spariscono dal calendario; quelle già registrate restano.
+      if(options.removePlannedEvents)d.scheduledWorkouts=d.scheduledWorkouts.filter(event=>!(event.planId===id&&(event.kind??'workout')==='workout'&&!event.workoutId));
+    },options.removePlannedEvents?'Piano eliminato insieme alle sedute in programma. Gli allenamenti registrati sono conservati.':'Piano eliminato. Gli allenamenti registrati e il calendario sono conservati.',false);
   }
   async duplicatePlan(id: string) {
     await this.change((d) => {

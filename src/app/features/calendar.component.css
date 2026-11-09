@@ -2282,3 +2282,6 @@
     scroll-behavior: auto !important;
   }
 }
+
+/* Pulizia delle sedute rimaste da piani eliminati */
+.cal-orphan-cleanup{width:100%;min-height:44px;margin:10px 0 4px;border-radius:14px;font-size:13px;font-weight:700;color:var(--danger,#ff6b81);border:1px solid color-mix(in srgb,var(--danger,#ff6b81) 40%,transparent);background:color-mix(in srgb,var(--danger,#ff6b81) 8%,transparent)}

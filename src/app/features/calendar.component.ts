@@ -12,7 +12,7 @@ import {A11yModule} from '@angular/cdk/a11y';
 import {Store} from '../services/store';
 import {CalendarEventKind,localDate,ScheduledWorkout,uid} from '../models/domain';
 import {CalendarView,calendarDays,calendarActivity,DayActivity,moveDate,movePeriod,parseLocalDate,weeklyDates} from '../services/calendar';
-import {CalendarAgendaItem,calendarAgendaByDate,calendarAgendaStats,calendarKindIcon,calendarKindLabel,calendarStatusLabel,formatCalendarDuration} from '../services/calendar-agenda';
+import {CalendarAgendaItem,calendarAgendaByDate,calendarAgendaStats,calendarPlanScope,calendarKindIcon,calendarKindLabel,calendarStatusLabel,formatCalendarDuration} from '../services/calendar-agenda';
 import {WorkoutResumeService,validWorkoutUi} from '../services/workout-resume';
 import {formatSeconds,remainingSeconds} from '../services/rest-clock';
 import {IconComponent} from '../shared/icon.component';
@@ -38,7 +38,11 @@ export class CalendarComponent {
  readonly dates=computed(()=>{const dates=calendarDays(this.selected(),this.view());if(this.view()!=='month')return dates;const month=this.selected().slice(0,7);while(dates.length>28&&dates.slice(-7).every(date=>date.slice(0,7)!==month))dates.splice(-7);return dates;});
  readonly periodDates=computed(()=>this.view()==='month'?this.dates().filter(date=>date.slice(0,7)===this.selected().slice(0,7)):this.dates());
  // Index the archive once per change, not once per cell or clock tick.
- private agendaByDate=computed(()=>calendarAgendaByDate(this.s.data()));
+ /** Di default il calendario mostra solo il piano attivo (più le attività senza piano); "Tutti i piani" mostra anche gli altri. */
+ readonly planScope=signal<'active'|'all'>('active');
+ readonly orphanCount=computed(()=>this.s.orphanPlannedEvents().length);
+ async removeOrphans(){const count=this.orphanCount();if(!count||this.actionBusy())return;if(!await this.confirmation.ask({title:'Eliminare le sedute senza piano?',confirmLabel:'Elimina sedute',tone:'danger',detail:count===1?'1 seduta in programma':count+' sedute in programma',message:'Queste sedute in programma appartengono a piani già eliminati. Verranno tolte dal calendario; gli allenamenti già registrati restano nello storico.'}))return;this.actionBusy.set(true);try{await this.s.removeOrphanPlannedEvents();}finally{this.actionBusy.set(false);}}
+ private agendaByDate=computed(()=>calendarAgendaByDate(calendarPlanScope(this.s.data(),this.planScope()==='active'?this.s.activePlan()?.id:undefined)));
  readonly agendaItems=computed(()=>this.agendaByDate().get(this.selected())||[]);
  readonly filter=signal<AgendaFilter>('all');readonly kindFilter=signal<'all'|CalendarEventKind>('all');
  readonly visibleAgenda=computed(()=>this.agendaItems().filter(item=>this.passes(item)));
@@ -54,7 +58,7 @@ export class CalendarComponent {
   {value:'partial',label:'Parziale',state:'partial'},{value:'rest',label:'Riposo',state:'rest'},{value:'other',label:'Altro',state:'other'}];
  readonly addOptions:{kind:CalendarEventKind;label:string;icon:string}[]=[
   {kind:'workout',label:'Allenamento',icon:'weight'},{kind:'cardio',label:'Attività',icon:'activity'},{kind:'rest',label:'Riposo',icon:'moon'}];
- readonly filtersActive=computed(()=>this.filter()!=='all'||this.kindFilter()!=='all');
+ readonly filtersActive=computed(()=>this.filter()!=='all'||this.kindFilter()!=='all'||this.planScope()!=='active');
  readonly weekStrip=computed(()=>calendarDays(this.selected(),'week'));
  private explicitSelection=computed(()=>!!this.selectedItemId()&&this.visibleAgenda().some(item=>item.id===this.selectedItemId()));
  readonly dockVisible=computed(()=>!!this.selectedItem()&&(this.view()==='day'||this.explicitSelection()));
@@ -155,7 +159,7 @@ export class CalendarComponent {
  openAdd(kind:CalendarEventKind){this.addOpen.set(false);this.open();this.kind=kind;this.formKindChanged();}
  closeSheets(){this.filtersOpen.set(false);this.addOpen.set(false);}
  pickItem(item:CalendarAgendaItem){if(item.date!==this.selected())this.choose(item.date);this.selectedItemId.set(item.id);this.moreOpen.set(false);}
- resetFilters(){this.filter.set('all');this.kindFilter.set('all');this.resetSelection();}
+ resetFilters(){this.filter.set('all');this.kindFilter.set('all');this.planScope.set('active');this.resetSelection();}
  choose(date:string){try{parseLocalDate(date);this.followsToday=date===this.today;this.selected.set(date);this.resetSelection();}catch{}}
  tomorrow(){this.choose(moveDate(this.today,1));}
  private resetSelection(){this.selectedItemId.set('');this.moreOpen.set(false);}

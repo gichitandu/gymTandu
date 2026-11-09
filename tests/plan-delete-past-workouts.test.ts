@@ -60,7 +60,7 @@ it('requires a named confirmation and does not call deletion when the user cance
   const confirm=vi.fn().mockReturnValue(false);vi.stubGlobal('confirm',confirm);
   await component.removePlan(s.data().plans[0]);
   expect(confirm.mock.calls[0][0]).toContain('Piano Tandu');expect(remove).not.toHaveBeenCalled();expect(await db.snapshot()).toEqual(before);
-  confirm.mockReturnValue(true);await component.removePlan(s.data().plans[0]);expect(remove).toHaveBeenCalledExactlyOnceWith('tandu-plan');
+  confirm.mockReturnValue(true);await component.removePlan(s.data().plans[0]);expect(remove).toHaveBeenCalledExactlyOnceWith('tandu-plan',{removePlannedEvents:false});
 });
 it('refuses to delete a plan belonging to an unfinished session',async()=>{
   await s.start('day-a');const before=await db.snapshot();
@@ -206,4 +206,33 @@ it('shows a live recovery clock after navigation and freezes elapsed time when p
   widget.clock.set(end+15000);expect(widget.elapsed()).toBe(105);expect(widget.remaining()).toBe(0);
   await s.rememberWorkout({...state,paused:true,pausedSeconds:30});widget.clock.set(end+30000);expect(widget.elapsed()).toBe(60);expect(widget.remaining()).toBe(30);
   }finally{widget.ngOnDestroy();}
+});
+
+it('su richiesta elimina con il piano anche le sedute in programma, mai quelle già registrate o le attività',async()=>{
+  const done=await complete();const today=localDate();
+  await s.change(d=>{d.scheduledWorkouts.push(
+    {id:'linked',date:today,planId:'tandu-plan',dayId:'day-a',planName:'Piano Tandu',dayName:'A',notes:'',workoutId:done},
+    {id:'future',date:moveDate(today,3),planId:'tandu-plan',dayId:'day-a',planName:'Piano Tandu',dayName:'A',notes:''},
+    {id:'cardio',kind:'cardio',date:moveDate(today,3),planId:'',dayId:'',planName:'',dayName:'Corsa',notes:''});},'',false);
+  expect(s.plannedEventsOf('tandu-plan').map(e=>e.id)).toEqual(['future']);
+  expect(await s.deletePlan('tandu-plan',{removePlannedEvents:true})).toBe(true);
+  expect(s.data().scheduledWorkouts.map(e=>e.id).sort()).toEqual(['cardio','linked']);
+  expect(s.data().workouts.map(w=>w.id)).toContain(done);
+});
+it('chiede cosa fare delle sedute nel calendario quando il piano ne ha in programma',async()=>{
+  await s.scheduleWorkout(moveDate(localDate(),2),'day-a','','future');
+  const component=runInInjectionContext(injector,()=>new PlansComponent()),remove=vi.spyOn(s,'deletePlan');
+  const confirm=vi.fn().mockReturnValueOnce(true).mockReturnValueOnce(false);vi.stubGlobal('confirm',confirm);
+  await component.removePlan(s.data().plans[0]);
+  expect(confirm).toHaveBeenCalledTimes(2);expect(confirm.mock.calls[1][0]).toContain('sedute in programma');
+  expect(remove).toHaveBeenCalledExactlyOnceWith('tandu-plan',{removePlannedEvents:false});
+  expect(s.data().scheduledWorkouts.map(e=>e.id)).toEqual(['future']);
+});
+it('elimina solo le sedute in programma dei piani già eliminati',async()=>{
+  await s.change(d=>{d.scheduledWorkouts.push(
+    {id:'orphan',date:moveDate(localDate(),2),planId:'gone',dayId:'x',planName:'Eliminato',dayName:'A',notes:''},
+    {id:'mine',date:moveDate(localDate(),2),planId:'tandu-plan',dayId:'day-a',planName:'Piano Tandu',dayName:'A',notes:''});},'',false);
+  expect(s.orphanPlannedEvents().map(e=>e.id)).toEqual(['orphan']);
+  expect(await s.removeOrphanPlannedEvents()).toBe(true);
+  expect(s.data().scheduledWorkouts.map(e=>e.id)).toEqual(['mine']);
 });
