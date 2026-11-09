@@ -1,4 +1,3 @@
-import {validateImportedProgramOverlaps} from './program-imports.js';
 import { APPROVED_THEME_IDS } from '../shared/approved-palettes.js';
 export const ARCHIVE_LIMIT_BYTES = 50 * 1024 * 1024;
 function archiveValidThemeConfig(value) {
@@ -93,7 +92,8 @@ function archiveValidate(text) {
   if(e.repsMin!==undefined&&(!Number.isInteger(e.repsMin)||e.repsMin<1||e.repsMin>999)||e.repsMax!==undefined&&(!Number.isInteger(e.repsMax)||e.repsMax<1||e.repsMax>999)||e.repsMin!==undefined&&e.repsMax!==undefined&&e.repsMin>e.repsMax)archiveFail('Ripetizioni della prescrizione non valide.');
  }
  for(const w of data.workouts)if(w.programWeek!==undefined&&(!Number.isInteger(w.programWeek)||w.programWeek<1||w.programWeek>10000)||w.programPhase!==undefined&&(typeof w.programPhase!=='string'||w.programPhase.length>200))archiveFail('Contesto della settimana non valido.');
- validateImportedProgramOverlaps(data);
+ // Le sovrapposizioni tra piani si controllano solo nell'importazione Excel (program-imports.js):
+ // la copia completa del proprio dispositivo non viene rifiutata, l'app le segnala e propone come risolverle.
 }
 async function archiveCleanup(db,bucket,scope) {
  // Cleanup is outside the successful head transaction. A cleanup failure leaves

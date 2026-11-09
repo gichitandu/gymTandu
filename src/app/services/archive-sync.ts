@@ -403,6 +403,30 @@ export class ArchiveSyncService {
     this.pending = this.pendingJob(this.latest); this.saveMeta(); this.status.set('syncing');
     return this.flush();
   }
+  /**
+   * Scelta esplicita dell'utente in caso di copie diverse: la copia di questo dispositivo diventa quella del server.
+   * La copia server precedente resta nello storico come copia protetta; una reimpostazione dell'account resta prioritaria.
+   */
+  async keepDeviceCopy(): Promise<boolean> {
+    if (!this.scope || !this.latest) return false;
+    if (typeof navigator !== 'undefined' && !navigator.onLine) { this.offline(); return false; }
+    if (this.running) await this.running.catch(() => false);
+    const generation = this.generation, response = await this.request();
+    if (!response.ok || generation !== this.generation || !this.latest) return false;
+    const head = await response.json() as ArchiveHead;
+    if (!Number.isSafeInteger(head.revision) || head.revision < 0 || !(head.backup === null || typeof head.backup === 'string')) throw Error('Copia server non valida. La copia del dispositivo è conservata.');
+    const remote = head.backup ? await importBackup(head.backup) : undefined;
+    if (remote?.settings[0]?.archiveResetId && remote.settings[0].archiveResetId !== this.latest.settings[0]?.archiveResetId) {
+      this.conflict(); this.message.set('L’account è stato reimpostato su richiesta: riapri l’app per usare il nuovo archivio.'); return false;
+    }
+    this.revision.set(head.revision); this.knownHead = true;
+    this.meta = {revision: head.revision, fingerprint: head.backup ? await archiveFingerprint(head.backup) : '', pending: true};
+    this.pinOnNextSave = !!head.backup; this.pending = this.pendingJob(this.latest); this.saveMeta();
+    this.status.set('syncing'); this.message.set('Invio della copia di questo dispositivo…');
+    const saved = await this.flush();
+    if (!saved && this.status() !== 'conflict') this.message.set(this.lastErrorMessage() || 'Copia server non aggiornata. La copia del dispositivo è conservata.');
+    return saved;
+  }
   canRecoverDevice(){return this.scope==='account'&&!!this.auth?.user()?.owner;}
   async readRemote(sourceScope = this.scope): Promise<DataSet | undefined> {
     if (!this.scope || (typeof navigator !== 'undefined' && !navigator.onLine)) { this.offline();return; }

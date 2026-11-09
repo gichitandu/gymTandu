@@ -264,3 +264,12 @@ it('round-trips all approved palette IDs through server backups without changing
   expect(saved.data.plans).toEqual(original.data.plans);expect(saved.data.sets).toEqual(original.data.sets);expect(saved.data.profiles).toEqual(original.data.profiles);
  }
 });
+it('accepts the owner’s own archive even when two plans overlap (overlaps are checked only during Excel imports)',async()=>{
+ const data=JSON.parse(backup),program={importId:'i',sourceName:'p.xlsx',sourceKind:'original',fileHash:'a'.repeat(64),startDate:'2026-11-02',endDate:'2026-12-27',weeks:8,importedAt:'2026-11-01T00:00:00.000Z',sessionCount:1,createdExerciseIds:[],createdGroupIds:[]};
+ for(const [id,name] of [['orig','MASSA MUSCOLARE'],['copy','MASSA MUSCOLARE · recuperato']]){
+  data.data.plans.push({id,userId:'local',name,description:'',createdAt:'2026-11-01T00:00:00.000Z',updatedAt:'2026-11-01T00:00:00.000Z',active:id==='copy',archived:false,program});
+  data.data.days.push({id:'day-'+id,planId:id,name:'Lun - Petto Schiena',order:0,sessionDate:'2026-11-03'});
+  data.data.scheduledWorkouts.push({id:'event-'+id,date:'2026-11-03',planId:id,dayId:'day-'+id,planName:name,dayName:'Lun - Petto Schiena',notes:''});
+ }
+ const saved=await put(JSON.stringify(data));expect(saved.response.status).toBe(200);expect(saved.data.revision).toBe(1);
+});
