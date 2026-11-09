@@ -88,9 +88,9 @@ export class ActiveWorkoutComponent {
  count(id:string){return this.s.sets(id).filter(s=>s.completed).length;}
  open(e:WorkoutLogExercise){this.exerciseId.set(e.id);this.tab.set('sets');this.step.set('detail');this.remember();}
  quickRecord(e:WorkoutLogExercise){if(this.step()==='record')void this.saveDraft();this.open(e);this.nextRecord();}
- record(set:WorkoutLogSet){if(this.step()==='record'&&this.setId()===set.id)return;if(this.step()==='record'&&this.setId()!==set.id)void this.saveDraft();clearTimeout(this.inputTimer);this.setId.set(set.id);const inputs=this.inputDrafts.get(set.id);this.weight=inputs?inputs.weight:this.s.weight(set.weight);this.reps=inputs?inputs.reps:set.reps;this.rpe=inputs?inputs.rpe:set.rpe;this.setNotes=inputs?inputs.setNotes:set.notes||'';this.kind=inputs?inputs.kind:set.kind||'work';this.step.set('record');this.remember();}
+ record(set:WorkoutLogSet){if(this.step()==='record'&&this.setId()===set.id)return;if(this.step()==='record'&&this.setId()!==set.id)void this.saveDraft();clearTimeout(this.inputTimer);this.setId.set(set.id);const inputs=this.inputDrafts.get(set.id);this.weight=inputs?inputs.weight:this.s.weightInput(set.weight);this.reps=inputs?inputs.reps:set.reps;this.rpe=inputs?inputs.rpe:set.rpe;this.setNotes=inputs?inputs.setNotes:set.notes||'';this.kind=inputs?inputs.kind:set.kind||'work';this.step.set('record');this.remember();}
  referenceSet=computed(()=>{const e=this.selected(),set=this.currentSet();if(!e||!set)return undefined;return this.s.sets(e.id).filter(s=>s.id!==set.id&&s.number<set.number&&s.completed&&s.kind===set.kind).at(-1)||this.previous()[Math.max(0,this.s.sets(e.id).filter(s=>s.number<set.number&&s.kind!=='warmup').length)];});
- useReference(){const ref=this.referenceSet();if(!ref)return;this.weight=this.s.weight(ref.weight);this.reps=ref.reps;this.rpe=ref.rpe;this.inputChanged();}
+ useReference(){const ref=this.referenceSet();if(!ref)return;this.weight=this.s.weightInput(ref.weight);this.reps=ref.reps;this.rpe=ref.rpe;this.inputChanged();}
  /** Coach Ombra: proposta per la serie allenante in corso, calcolata da storico, serie di oggi e check-in. */
  coachDismissed=signal<ReadonlySet<string>>(new Set());
  coach=computed(()=>{
@@ -105,7 +105,7 @@ export class ActiveWorkoutComponent {
   return suggestion&&suggestion.basis!=='none'?suggestion:null;
  });
  coachDeltaLabel(){const c=this.coach(),set=this.currentSet();if(!c||!set)return '';const d=c.weight-set.weight;if(Math.abs(d)<0.000001)return 'Mantieni';return (d>0?'+':'−')+this.s.formatWeight(Math.abs(d))+' '+this.s.settings().unit;}
- applyCoach(){const c=this.coach();if(!c)return;this.weight=this.s.weight(c.weight);this.reps=c.reps;this.inputChanged();}
+ applyCoach(){const c=this.coach();if(!c)return;this.weight=this.s.weightInput(c.weight);this.reps=c.reps;this.inputChanged();}
  dismissCoach(){const set=this.currentSet();if(!set)return;this.coachDismissed.update(v=>new Set(v).add(set.id));}
  nextRecord(){const e=this.selected();if(!e)return;const sets=this.s.sets(e.id),set=sets.find(s=>!s.completed)||sets[0];if(set)this.record(set);}
 
@@ -121,11 +121,11 @@ export class ActiveWorkoutComponent {
  lastWorkSet(){return this.previous().find(x=>x.completed&&x.kind!=='warmup');}
  deltaLabel(){const e=this.selected(),last=this.lastWorkSet();if(!e||e.loadMode==='bodyweight'||!last)return '';const delta=+(this.weight-this.s.weight(last.weight)).toFixed(2);return delta===0?'= ultima volta':(delta>0?'+':'−')+this.fmt(Math.abs(delta))+' vs ultima volta';}
  deltaUp(){const last=this.lastWorkSet();return !!last&&this.weight>this.s.weight(last.weight);}
- usePreviousWeight(){const last=this.lastWorkSet();if(!last)return;this.weight=this.s.weight(last.weight);this.inputChanged();}
+ usePreviousWeight(){const last=this.lastWorkSet();if(!last)return;this.weight=this.s.weightInput(last.weight);this.inputChanged();}
  est1rm(){const e=this.selected();if(!e||e.loadMode==='bodyweight'||!(this.weight>0)||!(this.reps>=1))return 0;return this.reps===1?this.weight:this.weight*(1+this.reps/30);}
  volumeNow(){const e=this.selected();return !e||e.loadMode==='bodyweight'||!(this.weight>0)||!(this.reps>=1)?0:this.weight*this.reps;}
  repsProgress(){const e=this.selected(),target=e?.repsMax??e?.repsMin??10;return Math.min(100,Math.max(0,this.reps/Math.max(1,target)*100));}
- newBest(){const e=this.selected(),rows=this.comparison();if(!e||e.loadMode==='bodyweight'||e.loadMode==='assisted'||!rows.length||!(this.weight>0))return false;return this.weight>Math.max(...rows.map(row=>this.s.weight(row.weight)));}
+ newBest(){const e=this.selected(),rows=this.comparison();if(!e||e.loadMode==='bodyweight'||e.loadMode==='assisted'||!rows.length||!(this.weight>0))return false;return this.weight>Math.max(...rows.map(row=>this.s.weightInput(row.weight)))+0.005;}
  platePlan(){const e=this.selected();if(!e||e.loadMode==='bodyweight'||e.loadMode==='assisted'||e.loadMode==='weighted-bodyweight')return undefined;const lb=this.s.settings().unit!=='kg',bar=lb?45:20,available=lb?[45,35,25,10,5,2.5]:[25,20,15,10,5,2.5,1.25];let side=(this.weight-bar)/2;if(!(side>0))return undefined;const plates:number[]=[];for(const plate of available){while(side>=plate-1e-9){plates.push(plate);side=+(side-plate).toFixed(3);}}return {bar,plates,left:+side.toFixed(2)};}
  warmupIdeas(){const e=this.selected(),set=this.currentSet();if(!e||!set||set.kind==='warmup'||set.number>1||e.loadMode==='bodyweight'||e.loadMode==='assisted'||e.loadMode==='weighted-bodyweight'||!(this.weight>=30))return [];const step=Math.max(.5,this.weightStep());const round=(value:number)=>Math.max(step,Math.round(value/step)*step);return [{weight:round(this.weight*.5),reps:10},{weight:round(this.weight*.7),reps:5},{weight:round(this.weight*.85),reps:3}];}
  spark(){const rows=[...this.comparison()].reverse().map(row=>this.s.weight(row.weight));if(!rows.length||!(this.weight>0))return undefined;const values=[...rows,this.weight],min=Math.min(...values),max=Math.max(...values),span=Math.max(1,max-min);const points=values.map((value,index)=>({x:8+index*(184/Math.max(1,values.length-1)),y:44-(value-min)/span*34}));return {points,line:points.map(point=>point.x.toFixed(1)+','+point.y.toFixed(1)).join(' '),first:values[0],last:values.at(-1)??0};}

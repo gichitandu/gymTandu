@@ -78,10 +78,10 @@ export class HomeComponent {
         .scheduledWorkouts.filter(
           (e) =>
             (e.kind??'workout')==='workout' && e.date >= this.today &&
-            !this.concluded(e.planId)&&
+            !this.concluded(e.planId)&&this.s.data().days.some((day)=>day.id===e.dayId)&&
             !this.s.completed().some((w) => w.id === e.workoutId),
         )
-        .sort((a, b) => a.date.localeCompare(b.date))[0],
+        .sort((a, b) => a.date.localeCompare(b.date) || (a.time||'99:99').localeCompare(b.time||'99:99'))[0],
   );
   upcoming=computed<HomeUpcomingSession|undefined>(()=>{
     const draft=this.s.draft(),event=this.nextScheduled(),day=this.nextDay();

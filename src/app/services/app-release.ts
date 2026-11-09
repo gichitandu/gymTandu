@@ -60,7 +60,7 @@ export class AppReleaseService {
     if(running)this.recordRunning(running);
    }
    if(event.type==='NO_NEW_VERSION_DETECTED'&&id&&id===this.currentBuild())this.recordRunning(id);
-   if(id){this.downloadedBuild.set(id);this.updateReady.set(id!==this.currentBuild());}
+   if(id){this.downloadedBuild.set(id);this.updateReady.set(!!this.currentBuild()&&id!==this.currentBuild());}
    if(this.updateReady())this.message.set('Nuova versione pronta. Verrà applicata quando i salvataggi sono al sicuro.');
   }else if(event.type==='VERSION_INSTALLATION_FAILED'){
    this.message.set('Download dell’aggiornamento non completato. La versione attuale resta utilizzabile; il controllo verrà ripetuto.');

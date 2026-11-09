@@ -98,10 +98,13 @@ export class ArchiveSyncService {
     } catch {} return undefined;
   }
   private saveMeta() { if (this.meta) try {if(this.intents.size)this.meta.historyIntent=Object.fromEntries(this.intents);else delete this.meta.historyIntent; localStorage.setItem(this.storageKey(), JSON.stringify(this.meta)); } catch {} }
+  /** Il server (modalità self-hosted) non conserva copie per chi usa solo questo dispositivo. */
+  private deviceLocalOnly = false;
   private identify(archive: string) {
     const user = this.auth?.user();
     if (!user || archive !== (user.owner ? 'gymtrack-v1' : 'gymtrack-user-' + user.id)) return undefined;
-    return user.id === 'device-local' ? 'device' as const : 'account' as const;
+    if (user.id === 'device-local') return this.deviceLocalOnly ? undefined : 'device' as const;
+    return 'account' as const;
   }
   private async request(method = 'GET', body?: string, scope = this.scope, query = ''): Promise<Pick<Response,'ok'|'status'|'json'>> {
     const controller = new AbortController();this.controller = controller;
@@ -111,10 +114,17 @@ export class ArchiveSyncService {
         headers: body === undefined ? {} : { 'Content-Type': 'application/json', 'If-Match': String(this.revision()) }, body });
       // Keep the timeout active until the backup body is received as well.
       const value=await response.json().catch(()=>undefined);
+      if (scope === 'device' && response.status === 403) {
+        // Nessuna copia server possibile: i dati restano sul dispositivo e gli aggiornamenti non vanno bloccati.
+        this.deviceLocalOnly = true;this.scope = undefined;this.pending = undefined;
+        this.status.set('local');this.message.set('Archivio conservato su questo dispositivo.');
+        throw new Error('La copia sul server richiede un account.');
+      }
       return {ok:response.ok,status:response.status,json:async()=>value};
     } finally { clearTimeout(timer);if (this.controller === controller) this.controller = undefined; }
   }
   private offline(error?: unknown) {
+    if (!this.scope) { this.status.set('local');return; }
     this.status.set('offline');
     this.message.set('Modifiche conservate su questo dispositivo. Copia server da completare quando la connessione e l’accesso sono disponibili.');
     if (this.meta) { this.meta.pending = !!this.pending || this.meta.pending;this.saveMeta(); }

@@ -295,6 +295,10 @@ export class Store {
   records(id: string,machine?:string) {
     return exerciseRecords(this.data(), id,machine);
   }
+  /** Valore per i campi di inserimento: stessa conversione di weight(), ma senza decimali spuri. */
+  weightInput(kg: number) {
+    return +this.weight(kg).toFixed(2);
+  }
   weight(kg: number) {
     return this.settings().unit === "lb" ? kg * 2.2046226218 : kg;
   }

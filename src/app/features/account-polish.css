@@ -719,10 +719,10 @@
 }
 .users-panels .user-row > button {
   min-height: 44px;
-  font-size: 11px;
+  font-size: 12px;
 }
 .users-panels .user-row > .muted {
-  font-size: 10px;
+  font-size: 12px;
   flex-basis: 100%;
   text-align: right;
 }

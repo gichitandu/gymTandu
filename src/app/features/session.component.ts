@@ -66,7 +66,7 @@ export class SessionComponent {
     void this.s.change((d) => {
       const workout=d.workouts.find(w=>w.id===id);if(!workout)throw Error('Allenamento non trovato.');
       if(key==='duration')workout.duration=Number(value);else workout[key]=String(value);
-    });
+    },'',false);
   }
   async finish() {
     if(this.finishing())return;

@@ -255,7 +255,7 @@ export class WorkoutEditorComponent {
   }
   numberValue(set: WorkoutLogSet, key: NumberField) {
     const draft = this.drafts.get(set.id);
-    return draft && Object.hasOwn(draft, key) ? draft[key] : key === 'weight' ? this.s.weight(set.weight) : set[key];
+    return draft && Object.hasOwn(draft, key) ? draft[key] : key === 'weight' ? this.s.weightInput(set.weight) : set[key];
   }
   notesValue(set: WorkoutLogSet) { return this.drafts.get(set.id)?.notes ?? set.notes ?? ''; }
   kindValue(set: WorkoutLogSet) { return this.drafts.get(set.id)?.kind ?? set.kind ?? 'work'; }
