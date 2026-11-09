@@ -678,6 +678,7 @@ export class PlansComponent {
       if(await this.s.startScheduled(event.id,date))await this.router.navigateByUrl('/sessione');
       return;
     }
+    if(day?.sessionDate&&day.sessionDate>this.today&&!await this.confirmation.ask('Iniziare ora questo allenamento? La sessione verrà registrata nella data di oggi.'))return;
     if (await this.s.start(dayId)) await this.router.navigateByUrl("/sessione");
   }
   async startPast(day:string){

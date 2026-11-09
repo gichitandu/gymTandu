@@ -520,7 +520,7 @@ export class Store {
     try{parseLocalDate(workoutDate);if(workoutDate>localDate())throw Error('Per registrare un allenamento scegli oggi o una data passata.');}
     catch(error){this.error.set(error instanceof Error?error.message:'Data non valida.');return false;}
     if (this.draft()) {
-      if(date!==undefined&&(this.draft()!.dayId!==dayId||this.draft()!.date!==workoutDate)){this.error.set(this.openSessionMessage(this.draft()!));return false;}
+      const open=this.draft()!;if(open.dayId!==dayId||date!==undefined&&open.date!==workoutDate){this.error.set(this.openSessionMessage(open));return false;}
       return true;
     }
     const previousWeek = previousWeekWorkout(this.data(), dayId, workoutDate);
@@ -539,7 +539,7 @@ export class Store {
         .filter((e) => e.dayId === dayId)
         .sort((a, b) => a.order - b.order);
       const open=d.workouts.find(w=>w.status==='draft');
-      if(open){if(date!==undefined&&(open.dayId!==dayId||open.date!==workoutDate))throw Error(this.openSessionMessage(open));return;}
+      if(open){if(open.dayId!==dayId||date!==undefined&&open.date!==workoutDate)throw Error(this.openSessionMessage(open));return;}
       if (!day || !plan || !entries.length)
         throw Error(
           "Aggiungi almeno un esercizio al giorno prima di iniziare.",
