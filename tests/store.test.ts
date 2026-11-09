@@ -45,12 +45,28 @@ it("crea e modifica un piano con primo piano attivo e giorni indipendenti dal ca
   expect(await s.savePlan("bad", "  ", "")).toBe(false);
   expect(s.data().plans).toHaveLength(2);
 });
-it('serializza i check-in giornalieri con le altre modifiche e conserva una sola voce per data dopo la riapertura',async()=>{
-  const row={id:'wellness-2026-11-02',date:'2026-11-02',sleepMinutes:465,energy:4,soreness:{},notes:''};
-  const [first,planSave,second]=await Promise.all([s.saveWellness(row),s.savePlan('p','Piano conservato',''),s.saveWellness({...row,id:'second-tap',notes:'Aggiornato'})]);
-  expect([first,planSave,second]).toEqual([true,true,true]);expect(s.data().wellnessLogs).toHaveLength(1);expect(s.data().wellnessLogs[0].notes).toBe('Aggiornato');
-  await s.init();expect(s.data().plans[0].name).toBe('Piano conservato');expect(s.data().wellnessLogs[0].sleepMinutes).toBe(465);
-  expect(await s.saveWellness({...row,energy:8})).toBe(false);expect(s.data().wellnessLogs[0].energy).toBe(4);
+it("serializza i check-in giornalieri con le altre modifiche e conserva una sola voce per data dopo la riapertura", async () => {
+  const row = {
+    id: "wellness-2026-11-02",
+    date: "2026-11-02",
+    sleepMinutes: 465,
+    energy: 4,
+    soreness: {},
+    notes: "",
+  };
+  const [first, planSave, second] = await Promise.all([
+    s.saveWellness(row),
+    s.savePlan("p", "Piano conservato", ""),
+    s.saveWellness({ ...row, id: "second-tap", notes: "Aggiornato" }),
+  ]);
+  expect([first, planSave, second]).toEqual([true, true, true]);
+  expect(s.data().wellnessLogs).toHaveLength(1);
+  expect(s.data().wellnessLogs[0].notes).toBe("Aggiornato");
+  await s.init();
+  expect(s.data().plans[0].name).toBe("Piano conservato");
+  expect(s.data().wellnessLogs[0].sleepMinutes).toBe(465);
+  expect(await s.saveWellness({ ...row, energy: 8 })).toBe(false);
+  expect(s.data().wellnessLogs[0].energy).toBe(4);
 });
 async function plan() {
   await s.savePlan("p", "Forza", "");

@@ -3,38 +3,99 @@
    fields, modals) so every screen follows the Home/Calendar look and the theme tokens.
    Home and Calendar use their own hx-/cal- classes and are not affected. Exercise images
    (gt-exercise-thumb) are not touched. Loaded before design-runtime.css so Design Studio wins. */
-@keyframes srRise { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
-@keyframes srFade { from { opacity: 0; } to { opacity: 1; } }
-
-/* Page entrance: first blocks of each page rise in sequence. */
-body.theme-ready gt-shell main:not(.session-main) > *:not(router-outlet) > :nth-child(-n+7) {
-  animation: srRise .55s cubic-bezier(.2, .8, .2, 1) both;
+@keyframes srRise {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes srFade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
-body.theme-ready gt-shell main:not(.session-main) > *:not(router-outlet) > :nth-child(2) { animation-delay: .05s; }
-body.theme-ready gt-shell main:not(.session-main) > *:not(router-outlet) > :nth-child(3) { animation-delay: .1s; }
-body.theme-ready gt-shell main:not(.session-main) > *:not(router-outlet) > :nth-child(4) { animation-delay: .15s; }
-body.theme-ready gt-shell main:not(.session-main) > *:not(router-outlet) > :nth-child(5) { animation-delay: .2s; }
-body.theme-ready gt-shell main:not(.session-main) > *:not(router-outlet) > :nth-child(n+6) { animation-delay: .25s; }
+/* Page entrance: first blocks of each page rise in sequence. */
+body.theme-ready
+  gt-shell
+  main:not(.session-main)
+  > *:not(router-outlet)
+  > :nth-child(-n + 7) {
+  animation: srRise 0.55s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+body.theme-ready
+  gt-shell
+  main:not(.session-main)
+  > *:not(router-outlet)
+  > :nth-child(2) {
+  animation-delay: 0.05s;
+}
+body.theme-ready
+  gt-shell
+  main:not(.session-main)
+  > *:not(router-outlet)
+  > :nth-child(3) {
+  animation-delay: 0.1s;
+}
+body.theme-ready
+  gt-shell
+  main:not(.session-main)
+  > *:not(router-outlet)
+  > :nth-child(4) {
+  animation-delay: 0.15s;
+}
+body.theme-ready
+  gt-shell
+  main:not(.session-main)
+  > *:not(router-outlet)
+  > :nth-child(5) {
+  animation-delay: 0.2s;
+}
+body.theme-ready
+  gt-shell
+  main:not(.session-main)
+  > *:not(router-outlet)
+  > :nth-child(n + 6) {
+  animation-delay: 0.25s;
+}
 
 /* Headings */
 body.theme-ready gt-shell main:not(.session-main) h1 {
   font-weight: 750;
-  letter-spacing: -.055em;
+  letter-spacing: -0.055em;
   line-height: 1.04;
 }
 
 body.theme-ready gt-shell main .section-title h2 {
   font-weight: 750;
-  letter-spacing: -.04em;
+  letter-spacing: -0.04em;
 }
 
 /* Glass cards */
-body.theme-ready gt-shell main :is(.card, .stat, .empty):not(.training-list-row):not(.hx-next):not(.focus-set-list) {
+body.theme-ready
+  gt-shell
+  main
+  :is(.card, .stat, .empty):not(.training-list-row):not(.hx-next):not(
+    .focus-set-list
+  ) {
   border: 1px solid var(--line);
   border-radius: 22px;
-  background: linear-gradient(160deg, color-mix(in srgb, var(--text) 6.5%, transparent), color-mix(in srgb, var(--text) 1.8%, transparent));
-  box-shadow: 0 14px 34px color-mix(in srgb, #000 16%, transparent), inset 0 1px color-mix(in srgb, var(--text) 7%, transparent);
+  background: linear-gradient(
+    160deg,
+    color-mix(in srgb, var(--text) 6.5%, transparent),
+    color-mix(in srgb, var(--text) 1.8%, transparent)
+  );
+  box-shadow:
+    0 14px 34px color-mix(in srgb, #000 16%, transparent),
+    inset 0 1px color-mix(in srgb, var(--text) 7%, transparent);
 }
 
 /* Segmented controls become pill tabs */
@@ -51,37 +112,65 @@ body.theme-ready gt-shell main .segmented > button {
   border-radius: 14px;
   font-size: 13px;
   font-weight: 650;
-  transition: background .25s ease, color .25s ease, box-shadow .25s ease;
+  transition:
+    background 0.25s ease,
+    color 0.25s ease,
+    box-shadow 0.25s ease;
 }
 
 body.theme-ready gt-shell main .segmented > button.active {
   color: var(--accent-ink);
-  background: linear-gradient(135deg, var(--accent-text), var(--theme-secondary, var(--accent)));
+  background: linear-gradient(
+    135deg,
+    var(--accent-text),
+    var(--theme-secondary, var(--accent))
+  );
   box-shadow: 0 8px 20px color-mix(in srgb, var(--accent) 32%, transparent);
 }
 
 /* Primary actions */
-body.theme-ready gt-shell main :is(button.primary, a.button.primary):not(.save-series):not(.cal-fab) {
+body.theme-ready
+  gt-shell
+  main
+  :is(button.primary, a.button.primary):not(.save-series):not(.cal-fab) {
   min-height: 52px;
   border: 1px solid color-mix(in srgb, var(--accent-text) 50%, transparent);
   border-radius: 17px;
   color: var(--accent-ink);
-  background: linear-gradient(135deg, var(--accent-text), var(--theme-secondary, var(--accent)));
-  box-shadow: 0 12px 30px color-mix(in srgb, var(--accent) 30%, transparent), inset 0 1px color-mix(in srgb, #fff 32%, transparent);
+  background: linear-gradient(
+    135deg,
+    var(--accent-text),
+    var(--theme-secondary, var(--accent))
+  );
+  box-shadow:
+    0 12px 30px color-mix(in srgb, var(--accent) 30%, transparent),
+    inset 0 1px color-mix(in srgb, #fff 32%, transparent);
   font-weight: 700;
-  letter-spacing: -.1px;
-  transition: transform .15s ease, filter .2s ease, box-shadow .2s ease;
+  letter-spacing: -0.1px;
+  transition:
+    transform 0.15s ease,
+    filter 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
-body.theme-ready gt-shell main :is(button.primary, a.button.primary):not(:disabled):hover {
+body.theme-ready
+  gt-shell
+  main
+  :is(button.primary, a.button.primary):not(:disabled):hover {
   filter: brightness(1.06);
 }
 
-body.theme-ready gt-shell main :is(button.primary, a.button.primary):not(:disabled):active {
-  transform: scale(.98);
+body.theme-ready
+  gt-shell
+  main
+  :is(button.primary, a.button.primary):not(:disabled):active {
+  transform: scale(0.98);
 }
 
-body.theme-ready gt-shell main :is(button.ghost, a.button.ghost, button.secondary) {
+body.theme-ready
+  gt-shell
+  main
+  :is(button.ghost, a.button.ghost, button.secondary) {
   border-radius: 16px;
   border-color: var(--line);
   background: color-mix(in srgb, var(--text) 4%, transparent);
@@ -95,12 +184,25 @@ body.theme-ready gt-shell main .pill {
 }
 
 /* Fields */
-body.theme-ready gt-shell main :is(input, select, textarea):not([type="checkbox"]):not([type="radio"]):not([type="range"]) {
+body.theme-ready
+  gt-shell
+  main
+  :is(input, select, textarea):not([type="checkbox"]):not([type="radio"]):not(
+    [type="range"]
+  ) {
   border-radius: 14px;
-  transition: border-color .2s ease, box-shadow .2s ease, background .2s ease;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    background 0.2s ease;
 }
 
-body.theme-ready gt-shell main :is(input, select, textarea):not([type="checkbox"]):not([type="radio"]):not([type="range"]):focus {
+body.theme-ready
+  gt-shell
+  main
+  :is(input, select, textarea):not([type="checkbox"]):not([type="radio"]):not(
+    [type="range"]
+  ):focus {
   border-color: var(--accent-text);
   box-shadow: 0 0 0 4px var(--accent-soft);
 }
@@ -113,14 +215,16 @@ body.theme-ready gt-shell main .notice {
 /* Dialogs */
 body.theme-ready gt-shell .modal {
   border-radius: 26px;
-  box-shadow: 0 30px 80px color-mix(in srgb, #000 45%, transparent), inset 0 1px color-mix(in srgb, var(--text) 8%, transparent);
-  animation: srRise .35s cubic-bezier(.2, .8, .2, 1) both;
+  box-shadow:
+    0 30px 80px color-mix(in srgb, #000 45%, transparent),
+    inset 0 1px color-mix(in srgb, var(--text) 8%, transparent);
+  animation: srRise 0.35s cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
 
 body.theme-ready gt-shell .modal-backdrop {
   -webkit-backdrop-filter: blur(8px);
   backdrop-filter: blur(8px);
-  animation: srFade .25s ease both;
+  animation: srFade 0.25s ease both;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -133,12 +237,32 @@ body.theme-ready gt-shell .modal-backdrop {
 }
 
 /* Logo GT: più grande, non corsivo e senza lettere compresse, per leggerlo bene su sfondo scuro */
-body.theme-ready gt-shell .brand:has(.app-brand-mark) { font-style: normal; letter-spacing: 0; font-weight: 800; }
-body.theme-ready gt-shell .brand .app-brand-mark { width: 40px; height: 40px; margin-right: 9px; }
+body.theme-ready gt-shell .brand:has(.app-brand-mark) {
+  font-style: normal;
+  letter-spacing: 0;
+  font-weight: 800;
+}
+body.theme-ready gt-shell .brand .app-brand-mark {
+  width: 40px;
+  height: 40px;
+  margin-right: 9px;
+}
 body.theme-ready gt-shell .mobile-brand .app-brand-mark,
-body.theme-ready gt-shell.design-v2 .mobile-brand .app-brand-mark { width: 36px; height: 36px; margin-right: 8px; }
-body.theme-ready gt-shell .brand { color: var(--text); }
-body.theme-ready gt-shell .brand span { color: var(--accent-text); }
+body.theme-ready gt-shell.design-v2 .mobile-brand .app-brand-mark {
+  width: 36px;
+  height: 36px;
+  margin-right: 8px;
+}
+body.theme-ready gt-shell .brand {
+  color: var(--text);
+}
+body.theme-ready gt-shell .brand span {
+  color: var(--accent-text);
+}
 
 /* Logo GT nell'intestazione: marchio ad alto contrasto (lettere bianche su gradiente), leggibile anche piccolo */
-body.theme-ready gt-shell .brand .app-brand-mark { border-radius: 11px; box-shadow: 0 6px 18px color-mix(in srgb, #16e0ff 22%, transparent); object-fit: cover; }
+body.theme-ready gt-shell .brand .app-brand-mark {
+  border-radius: 11px;
+  box-shadow: 0 6px 18px color-mix(in srgb, #16e0ff 22%, transparent);
+  object-fit: cover;
+}

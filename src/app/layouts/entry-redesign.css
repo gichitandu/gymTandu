@@ -1,25 +1,137 @@
 /* Login redesign: sober, modern, theme-aware. Loaded after entry.css, so every rule
    is scoped with .entry-page to win over the base and mobile rules without !important. */
-@property --xa { syntax: "<integer>"; inherits: false; initial-value: 0; }
-@property --xb { syntax: "<integer>"; inherits: false; initial-value: 0; }
+@property --xa {
+  syntax: "<integer>";
+  inherits: false;
+  initial-value: 0;
+}
+@property --xb {
+  syntax: "<integer>";
+  inherits: false;
+  initial-value: 0;
+}
 
-@keyframes xlRise { from { opacity: 0; transform: translateY(26px); } to { opacity: 1; transform: none; } }
-@keyframes xlSlide { from { opacity: 0; transform: translateX(36px); } to { opacity: 1; transform: none; } }
-@keyframes xlFade { from { opacity: 0; } to { opacity: 1; } }
-@keyframes xlDraw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
-@keyframes xlPop { 0% { opacity: 0; transform: scale(.3); } 70% { opacity: 1; transform: scale(1.18); } 100% { opacity: 1; transform: scale(1); } }
-@keyframes xlCount { from { --xa: 0; --xb: 0; } to { --xa: 12; --xb: 5; } }
-@keyframes xlPulse { 0%, 100% { opacity: .15; transform: scale(1); } 50% { opacity: .38; transform: scale(1.35); } }
-@keyframes xlDriftA { 0%, 100% { transform: translate3d(0, 0, 0); } 50% { transform: translate3d(26px, 14px, 0); } }
-@keyframes xlDriftB { 0%, 100% { transform: translate3d(0, 0, 0); } 50% { transform: translate3d(-24px, 18px, 0); } }
-@keyframes xlGlow { 0%, 100% { box-shadow: 0 14px 36px var(--entry-halo), inset 0 1px color-mix(in srgb, #fff 30%, transparent); } 50% { box-shadow: 0 16px 48px color-mix(in srgb, var(--accent) 38%, transparent), inset 0 1px color-mix(in srgb, #fff 30%, transparent); } }
+@keyframes xlRise {
+  from {
+    opacity: 0;
+    transform: translateY(26px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes xlSlide {
+  from {
+    opacity: 0;
+    transform: translateX(36px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes xlFade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes xlDraw {
+  from {
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+@keyframes xlPop {
+  0% {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+  70% {
+    opacity: 1;
+    transform: scale(1.18);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+@keyframes xlCount {
+  from {
+    --xa: 0;
+    --xb: 0;
+  }
+  to {
+    --xa: 12;
+    --xb: 5;
+  }
+}
+@keyframes xlPulse {
+  0%,
+  100% {
+    opacity: 0.15;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.38;
+    transform: scale(1.35);
+  }
+}
+@keyframes xlDriftA {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(26px, 14px, 0);
+  }
+}
+@keyframes xlDriftB {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(-24px, 18px, 0);
+  }
+}
+@keyframes xlGlow {
+  0%,
+  100% {
+    box-shadow:
+      0 14px 36px var(--entry-halo),
+      inset 0 1px color-mix(in srgb, #fff 30%, transparent);
+  }
+  50% {
+    box-shadow:
+      0 16px 48px color-mix(in srgb, var(--accent) 38%, transparent),
+      inset 0 1px color-mix(in srgb, #fff 30%, transparent);
+  }
+}
 
 /* ---------- Atmosphere ---------- */
 .entry-page::before {
   inset: -10%;
   background:
-    radial-gradient(closest-side at 80% 8%, color-mix(in srgb, var(--accent) 18%, transparent), transparent),
-    radial-gradient(closest-side at 6% 36%, color-mix(in srgb, var(--theme-secondary, var(--accent)) 16%, transparent), transparent);
+    radial-gradient(
+      closest-side at 80% 8%,
+      color-mix(in srgb, var(--accent) 18%, transparent),
+      transparent
+    ),
+    radial-gradient(
+      closest-side at 6% 36%,
+      color-mix(
+        in srgb,
+        var(--theme-secondary, var(--accent)) 16%,
+        transparent
+      ),
+      transparent
+    );
   animation: xlDriftA 14s ease-in-out infinite;
 }
 
@@ -32,7 +144,11 @@
   height: 360px;
   border-radius: 50%;
   transform: none;
-  background: radial-gradient(closest-side, color-mix(in srgb, var(--theme-secondary, var(--accent)) 14%, transparent), transparent);
+  background: radial-gradient(
+    closest-side,
+    color-mix(in srgb, var(--theme-secondary, var(--accent)) 14%, transparent),
+    transparent
+  );
   animation: xlDriftB 17s ease-in-out infinite;
 }
 
@@ -45,7 +161,7 @@
   display: flex;
   align-items: center;
   gap: 11px;
-  animation: xlFade .6s ease both;
+  animation: xlFade 0.6s ease both;
 }
 
 .entry-page .xl-top > img {
@@ -60,7 +176,7 @@
   font-size: 19px;
   font-style: normal;
   font-weight: 750;
-  letter-spacing: -.4px;
+  letter-spacing: -0.4px;
 }
 
 .entry-page .hero-introduction {
@@ -71,22 +187,29 @@
   display: block;
   font-size: clamp(42px, 5.2vw, 60px);
   font-weight: 750;
-  letter-spacing: -.055em;
+  letter-spacing: -0.055em;
   line-height: 1.02;
 }
 
 .entry-page .xl-w {
   display: block;
   color: color-mix(in srgb, var(--text) 32%, var(--bg));
-  animation: xlRise .8s cubic-bezier(.2, .8, .2, 1) both;
+  animation: xlRise 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
 
-.entry-page .xl-w:nth-child(2) { animation-delay: .14s; }
+.entry-page .xl-w:nth-child(2) {
+  animation-delay: 0.14s;
+}
 
 .entry-page .xl-w.xl-g {
-  animation-delay: .28s;
+  animation-delay: 0.28s;
   color: transparent;
-  background: linear-gradient(95deg, var(--accent-text), var(--theme-secondary, var(--accent)) 62%, color-mix(in srgb, var(--accent-text) 55%, #a98bff));
+  background: linear-gradient(
+    95deg,
+    var(--accent-text),
+    var(--theme-secondary, var(--accent)) 62%,
+    color-mix(in srgb, var(--accent-text) 55%, #a98bff)
+  );
   -webkit-background-clip: text;
   background-clip: text;
 }
@@ -97,7 +220,7 @@
   color: var(--muted);
   font-size: 15.5px;
   line-height: 1.45;
-  animation: xlRise .7s .5s cubic-bezier(.2, .8, .2, 1) both;
+  animation: xlRise 0.7s 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
 
 .entry-page .entry-features {
@@ -120,12 +243,18 @@
   border-radius: 0;
   background: transparent;
   box-shadow: none;
-  animation: xlSlide .6s cubic-bezier(.2, .8, .2, 1) both;
+  animation: xlSlide 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
 
-.entry-page .entry-features > div:nth-child(1) { animation-delay: .7s; }
-.entry-page .entry-features > div:nth-child(2) { animation-delay: .85s; }
-.entry-page .entry-features > div:nth-child(3) { animation-delay: 1s; }
+.entry-page .entry-features > div:nth-child(1) {
+  animation-delay: 0.7s;
+}
+.entry-page .entry-features > div:nth-child(2) {
+  animation-delay: 0.85s;
+}
+.entry-page .entry-features > div:nth-child(3) {
+  animation-delay: 1s;
+}
 
 .entry-page .entry-features gt-icon {
   flex: none;
@@ -136,13 +265,17 @@
   border: 1px solid var(--line);
   border-radius: 12px;
   color: var(--accent-text);
-  background: linear-gradient(145deg, color-mix(in srgb, var(--accent) 18%, transparent), color-mix(in srgb, var(--theme-secondary, var(--accent)) 12%, transparent));
+  background: linear-gradient(
+    145deg,
+    color-mix(in srgb, var(--accent) 18%, transparent),
+    color-mix(in srgb, var(--theme-secondary, var(--accent)) 12%, transparent)
+  );
 }
 
 .entry-page .entry-features b {
   font-size: 15.5px;
   font-weight: 650;
-  letter-spacing: -.2px;
+  letter-spacing: -0.2px;
 }
 
 .entry-page .entry-features span {
@@ -160,9 +293,15 @@
   padding: 16px 16px 8px;
   border: 1px solid var(--line);
   border-radius: 22px;
-  background: linear-gradient(160deg, color-mix(in srgb, var(--text) 7%, transparent), color-mix(in srgb, var(--text) 2%, transparent));
-  box-shadow: 0 20px 50px color-mix(in srgb, #000 28%, transparent), inset 0 1px color-mix(in srgb, var(--text) 8%, transparent);
-  animation: xlRise .8s 1.15s cubic-bezier(.2, .8, .2, 1) both;
+  background: linear-gradient(
+    160deg,
+    color-mix(in srgb, var(--text) 7%, transparent),
+    color-mix(in srgb, var(--text) 2%, transparent)
+  );
+  box-shadow:
+    0 20px 50px color-mix(in srgb, #000 28%, transparent),
+    inset 0 1px color-mix(in srgb, var(--text) 8%, transparent);
+  animation: xlRise 0.8s 1.15s cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
 
 .entry-page .xl-chart-head {
@@ -193,7 +332,7 @@
   --xb: 5;
   counter-reset: xa var(--xa) xb var(--xb);
   content: counter(xa) "," counter(xb) " t";
-  animation: xlCount 1.6s 1.5s cubic-bezier(.2, .7, .2, 1) both;
+  animation: xlCount 1.6s 1.5s cubic-bezier(0.2, 0.7, 0.2, 1) both;
 }
 
 .entry-page .xl-chip {
@@ -203,7 +342,7 @@
   background: color-mix(in srgb, var(--green, #5df0b4) 14%, transparent);
   font-size: 12px;
   font-weight: 700;
-  animation: xlPop .5s 3.1s both;
+  animation: xlPop 0.5s 3.1s both;
 }
 
 .entry-page .xl-chart svg {
@@ -214,21 +353,25 @@
   overflow: visible;
 }
 
-.entry-page .xl-grid line { stroke: var(--line); }
+.entry-page .xl-grid line {
+  stroke: var(--line);
+}
 
 .entry-page .xl-line,
 .entry-page .xl-glow {
   stroke-dasharray: 1;
   stroke-linecap: round;
-  animation: xlDraw 1.6s 1.5s cubic-bezier(.4, 0, .2, 1) both;
+  animation: xlDraw 1.6s 1.5s cubic-bezier(0.4, 0, 0.2, 1) both;
 }
 
 .entry-page .xl-glow {
-  opacity: .45;
+  opacity: 0.45;
   filter: blur(5px);
 }
 
-.entry-page .xl-area { animation: xlFade 1.6s 1.7s ease both; }
+.entry-page .xl-area {
+  animation: xlFade 1.6s 1.7s ease both;
+}
 
 .entry-page .xl-ring,
 .entry-page .xl-dot {
@@ -238,15 +381,17 @@
 
 .entry-page .xl-ring {
   fill: var(--theme-secondary, var(--accent));
-  opacity: .25;
-  animation: xlPop .5s 3.1s both, xlPulse 2.4s 3.6s ease-in-out infinite;
+  opacity: 0.25;
+  animation:
+    xlPop 0.5s 3.1s both,
+    xlPulse 2.4s 3.6s ease-in-out infinite;
 }
 
 .entry-page .xl-dot {
   fill: #fff;
   stroke: var(--theme-secondary, var(--accent));
   stroke-width: 3;
-  animation: xlPop .5s 3.1s both;
+  animation: xlPop 0.5s 3.1s both;
 }
 
 .entry-page .xl-pr {
@@ -264,7 +409,7 @@
   font-size: 12px;
   font-weight: 650;
   white-space: nowrap;
-  animation: xlRise .45s 3.35s cubic-bezier(.2, .8, .2, 1) both;
+  animation: xlRise 0.45s 3.35s cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
 
 .entry-page .xl-pr gt-icon {
@@ -276,7 +421,7 @@
 .entry-page .hero-entry-actions {
   max-width: 460px;
   margin-top: 26px;
-  animation: xlRise .7s 2s cubic-bezier(.2, .8, .2, 1) both;
+  animation: xlRise 0.7s 2s cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
 
 /* ---------- Primary button (theme-aware, high contrast) ---------- */
@@ -285,11 +430,17 @@
   border: 1px solid color-mix(in srgb, var(--text) 28%, transparent);
   border-radius: 18px;
   color: var(--bg);
-  background: linear-gradient(180deg, var(--text), color-mix(in srgb, var(--text) 84%, var(--accent-text)));
-  box-shadow: 0 14px 36px var(--entry-halo), inset 0 1px color-mix(in srgb, #fff 30%, transparent);
+  background: linear-gradient(
+    180deg,
+    var(--text),
+    color-mix(in srgb, var(--text) 84%, var(--accent-text))
+  );
+  box-shadow:
+    0 14px 36px var(--entry-halo),
+    inset 0 1px color-mix(in srgb, #fff 30%, transparent);
   font-size: 16.5px;
   font-weight: 700;
-  letter-spacing: -.2px;
+  letter-spacing: -0.2px;
   animation: xlGlow 3.2s 2.6s ease-in-out infinite;
 }
 
@@ -298,7 +449,7 @@
 }
 
 .entry-page .entry-primary gt-icon {
-  transition: transform .2s ease;
+  transition: transform 0.2s ease;
 }
 
 .entry-page .entry-primary:hover:not(:disabled) gt-icon {
@@ -313,22 +464,38 @@
 .entry-page .entry-panel {
   border-radius: 30px;
   background:
-    radial-gradient(ellipse 90% 45% at 50% 0, var(--entry-wash), transparent 74%),
+    radial-gradient(
+      ellipse 90% 45% at 50% 0,
+      var(--entry-wash),
+      transparent 74%
+    ),
     color-mix(in srgb, var(--card) 78%, transparent);
   -webkit-backdrop-filter: blur(18px);
   backdrop-filter: blur(18px);
 }
 
 .entry-page .entry-panel > * {
-  animation: xlRise .7s cubic-bezier(.2, .8, .2, 1) both;
+  animation: xlRise 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
 
-.entry-page .entry-panel > :nth-child(1) { animation-delay: 0s; }
-.entry-page .entry-panel > :nth-child(2) { animation-delay: .06s; }
-.entry-page .entry-panel > :nth-child(3) { animation-delay: .12s; }
-.entry-page .entry-panel > :nth-child(4) { animation-delay: .18s; }
-.entry-page .entry-panel > :nth-child(5) { animation-delay: .24s; }
-.entry-page .entry-panel > :nth-child(n+6) { animation-delay: .3s; }
+.entry-page .entry-panel > :nth-child(1) {
+  animation-delay: 0s;
+}
+.entry-page .entry-panel > :nth-child(2) {
+  animation-delay: 0.06s;
+}
+.entry-page .entry-panel > :nth-child(3) {
+  animation-delay: 0.12s;
+}
+.entry-page .entry-panel > :nth-child(4) {
+  animation-delay: 0.18s;
+}
+.entry-page .entry-panel > :nth-child(5) {
+  animation-delay: 0.24s;
+}
+.entry-page .entry-panel > :nth-child(n + 6) {
+  animation-delay: 0.3s;
+}
 
 .entry-page .entry-brand {
   flex-direction: row;
@@ -353,7 +520,7 @@
   font-size: 19px;
   font-style: normal;
   font-weight: 750;
-  letter-spacing: -.4px;
+  letter-spacing: -0.4px;
 }
 
 .entry-page .entry-brand .brand-tagline {
@@ -375,7 +542,7 @@
 .entry-page .entry-heading h1 {
   font-size: clamp(38px, 10vw, 46px);
   font-weight: 750;
-  letter-spacing: -.055em;
+  letter-spacing: -0.055em;
   line-height: 1.02;
   margin-bottom: 10px;
 }
@@ -398,7 +565,10 @@
   border-radius: 12px;
   font-size: 14px;
   font-weight: 650;
-  transition: background .25s ease, color .25s ease, box-shadow .25s ease;
+  transition:
+    background 0.25s ease,
+    color 0.25s ease,
+    box-shadow 0.25s ease;
 }
 
 .entry-page .entry-tabs button.active {
@@ -413,15 +583,27 @@
 }
 
 .entry-page .entry-form > * {
-  animation: xlRise .6s cubic-bezier(.2, .8, .2, 1) both;
+  animation: xlRise 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
 
-.entry-page .entry-form > :nth-child(1) { animation-delay: .1s; }
-.entry-page .entry-form > :nth-child(2) { animation-delay: .17s; }
-.entry-page .entry-form > :nth-child(3) { animation-delay: .24s; }
-.entry-page .entry-form > :nth-child(4) { animation-delay: .31s; }
-.entry-page .entry-form > :nth-child(5) { animation-delay: .38s; }
-.entry-page .entry-form > :nth-child(n+6) { animation-delay: .45s; }
+.entry-page .entry-form > :nth-child(1) {
+  animation-delay: 0.1s;
+}
+.entry-page .entry-form > :nth-child(2) {
+  animation-delay: 0.17s;
+}
+.entry-page .entry-form > :nth-child(3) {
+  animation-delay: 0.24s;
+}
+.entry-page .entry-form > :nth-child(4) {
+  animation-delay: 0.31s;
+}
+.entry-page .entry-form > :nth-child(5) {
+  animation-delay: 0.38s;
+}
+.entry-page .entry-form > :nth-child(n + 6) {
+  animation-delay: 0.45s;
+}
 
 .entry-page .entry-field {
   min-height: 66px;
@@ -429,15 +611,31 @@
   padding: 10px 16px 10px 12px;
   border: 1px solid var(--line);
   border-radius: 20px;
-  background: linear-gradient(160deg, color-mix(in srgb, var(--text) 6%, transparent), color-mix(in srgb, var(--text) 1.5%, transparent));
-  box-shadow: 0 10px 26px color-mix(in srgb, #000 16%, transparent), inset 0 1px color-mix(in srgb, var(--text) 6%, transparent);
-  transition: border-color .22s ease, box-shadow .22s ease, background .22s ease, transform .22s ease;
+  background: linear-gradient(
+    160deg,
+    color-mix(in srgb, var(--text) 6%, transparent),
+    color-mix(in srgb, var(--text) 1.5%, transparent)
+  );
+  box-shadow:
+    0 10px 26px color-mix(in srgb, #000 16%, transparent),
+    inset 0 1px color-mix(in srgb, var(--text) 6%, transparent);
+  transition:
+    border-color 0.22s ease,
+    box-shadow 0.22s ease,
+    background 0.22s ease,
+    transform 0.22s ease;
 }
 
 .entry-page .entry-field:focus-within {
   border-color: var(--accent-text);
-  background: linear-gradient(90deg, color-mix(in srgb, var(--accent) 12%, transparent), color-mix(in srgb, var(--accent) 3%, transparent));
-  box-shadow: 0 0 0 4px var(--accent-soft), 0 12px 30px var(--entry-halo);
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--accent) 12%, transparent),
+    color-mix(in srgb, var(--accent) 3%, transparent)
+  );
+  box-shadow:
+    0 0 0 4px var(--accent-soft),
+    0 12px 30px var(--entry-halo);
   transform: translateY(-1px);
 }
 
@@ -450,7 +648,9 @@
   border-radius: 13px;
   color: var(--accent-text);
   background: color-mix(in srgb, var(--accent) 16%, transparent);
-  transition: background .22s ease, transform .22s ease;
+  transition:
+    background 0.22s ease,
+    transform 0.22s ease;
 }
 
 .entry-page .entry-field:focus-within > gt-icon {
@@ -477,11 +677,11 @@
   width: 22px;
   height: 22px;
   min-height: 22px;
-  transition: transform .2s ease;
+  transition: transform 0.2s ease;
 }
 
 .entry-page .remember-option input:active {
-  transform: scale(.88);
+  transform: scale(0.88);
 }
 
 .entry-page .entry-text-button {
@@ -582,5 +782,7 @@
     transition: none !important;
   }
 
-  .entry-page .xl-glow { opacity: .45; }
+  .entry-page .xl-glow {
+    opacity: 0.45;
+  }
 }

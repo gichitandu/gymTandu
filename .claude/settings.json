@@ -16,5 +16,19 @@
       "Read(./.dev.vars)",
       "Read(./**/.env*)"
     ]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/prettier-dopo-modifica.mjs\"",
+            "timeout": 30
+          }
+        ]
+      }
+    ]
   }
 }

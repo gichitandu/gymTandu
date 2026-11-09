@@ -11,5 +11,8 @@ import { Store } from "../services/store";
 })
 export class StatusComponent {
   s = inject(Store);
-  retry() { this.s.error.set(''); void this.s.init(); }
+  retry() {
+    this.s.error.set("");
+    void this.s.init();
+  }
 }

@@ -1,6 +1,6 @@
-import {AuthService} from '../services/auth';
-import { DateFieldComponent } from '../shared/date-field.component';
-import { confirmationForContext } from '../services/confirmation';
+import { AuthService } from "../services/auth";
+import { DateFieldComponent } from "../shared/date-field.component";
+import { confirmationForContext } from "../services/confirmation";
 import { Component, inject, signal, viewChild } from "@angular/core";
 import { ActivatedRoute, Router, RouterLink } from "@angular/router";
 import { FormsModule } from "@angular/forms";
@@ -8,18 +8,19 @@ import { Store } from "../services/store";
 import { StatusComponent } from "../shared/status.component";
 import { IconComponent } from "../shared/icon.component";
 import { ActiveWorkoutComponent } from "../shared/active-workout.component";
-import { localDate } from '../models/domain';
-import { parseLocalDate } from '../services/calendar';
+import { localDate } from "../models/domain";
+import { parseLocalDate } from "../services/calendar";
 @Component({
   standalone: true,
-  imports: [DateFieldComponent,
+  imports: [
+    DateFieldComponent,
     FormsModule,
     RouterLink,
     StatusComponent,
     IconComponent,
     ActiveWorkoutComponent,
   ],
-  styleUrl:'./session-simple.css',
+  styleUrl: "./session-simple.css",
   template: `<gt-status />
     @if(s.draft();as w){
       @if(s.conflicted()){<p class="notice" role="alert">Archivio da verificare. @if(auth?.canManageBackups()){<a routerLink="/profilo" [queryParams]="{section:'backup'}">Apri backup e ripristino</a>}@else{Contatta un Super Admin.}</p>}
@@ -40,57 +41,151 @@ import { parseLocalDate } from '../services/calendar';
     }`,
 })
 export class SessionComponent {
-  auth=inject(AuthService,{optional:true});
- private confirmation=confirmationForContext();
+  auth = inject(AuthService, { optional: true });
+  private confirmation = confirmationForContext();
   s = inject(Store);
-  requestedDate = inject(ActivatedRoute,{optional:true})?.snapshot.queryParamMap.get('requestedDate') || '';
-  formatDate(date:string){try{return parseLocalDate(date).toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit',year:'numeric'});}catch{return date;}}
+  requestedDate =
+    inject(ActivatedRoute, { optional: true })?.snapshot.queryParamMap.get(
+      "requestedDate",
+    ) || "";
+  formatDate(date: string) {
+    try {
+      return parseLocalDate(date).toLocaleDateString("it-IT", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      });
+    } catch {
+      return date;
+    }
+  }
   activeWorkout = viewChild(ActiveWorkoutComponent);
   finishing = signal(false);
   router = inject(Router);
   clock = signal(Date.now());
-  get today(){return localDate(new Date(this.clock()));}
+  get today() {
+    return localDate(new Date(this.clock()));
+  }
   timer = setInterval(() => this.clock.set(Date.now()), 1000);
   ngOnDestroy() {
     clearInterval(this.timer);
   }
-  durationText(w:{duration:number;date:string;startedAt:string;durationUnknown?:boolean}){return w.duration>0?w.duration+' min registrati':w.durationUnknown||w.date<localDate(new Date(w.startedAt))?'Durata non indicata':this.elapsed(w.startedAt);}
-  elapsed(date:string){const seconds=Math.max(0,Math.floor((this.clock()-new Date(date).getTime())/1000));return `${Math.floor(seconds/3600).toString().padStart(2,'0')}:${Math.floor(seconds%3600/60).toString().padStart(2,'0')}:${(seconds%60).toString().padStart(2,'0')}`;}
+  durationText(w: {
+    duration: number;
+    date: string;
+    startedAt: string;
+    durationUnknown?: boolean;
+  }) {
+    return w.duration > 0
+      ? w.duration + " min registrati"
+      : w.durationUnknown || w.date < localDate(new Date(w.startedAt))
+        ? "Durata non indicata"
+        : this.elapsed(w.startedAt);
+  }
+  elapsed(date: string) {
+    const seconds = Math.max(
+      0,
+      Math.floor((this.clock() - new Date(date).getTime()) / 1000),
+    );
+    return `${Math.floor(seconds / 3600)
+      .toString()
+      .padStart(2, "0")}:${Math.floor((seconds % 3600) / 60)
+      .toString()
+      .padStart(2, "0")}:${(seconds % 60).toString().padStart(2, "0")}`;
+  }
   allSets(id: string) {
     return this.s.workoutExercises(id).flatMap((e) => this.s.sets(e.id));
   }
-  completedSets(id:string){return this.allSets(id).filter(set=>set.completed).length;}
-  update(id: string, key: "date" | "notes" | "duration", value: string | number | null) {
-    if(key==='date'){try{parseLocalDate(String(value));if(String(value)>this.today)throw Error('Scegli oggi o una data passata.');}catch(error){this.s.error.set(error instanceof Error?error.message:'Data non valida.');return;}}
-    if(key==='duration'&&(value===null||value===''||!Number.isInteger(+value)||+value<1||+value>1440))return;
-    void this.s.change((d) => {
-      const workout=d.workouts.find(w=>w.id===id);if(!workout)throw Error('Allenamento non trovato.');
-      if(key==='duration')workout.duration=Number(value);else workout[key]=String(value);
-    },'',false);
+  completedSets(id: string) {
+    return this.allSets(id).filter((set) => set.completed).length;
+  }
+  update(
+    id: string,
+    key: "date" | "notes" | "duration",
+    value: string | number | null,
+  ) {
+    if (key === "date") {
+      try {
+        parseLocalDate(String(value));
+        if (String(value) > this.today)
+          throw Error("Scegli oggi o una data passata.");
+      } catch (error) {
+        this.s.error.set(
+          error instanceof Error ? error.message : "Data non valida.",
+        );
+        return;
+      }
+    }
+    if (
+      key === "duration" &&
+      (value === null ||
+        value === "" ||
+        !Number.isInteger(+value) ||
+        +value < 1 ||
+        +value > 1440)
+    )
+      return;
+    void this.s.change(
+      (d) => {
+        const workout = d.workouts.find((w) => w.id === id);
+        if (!workout) throw Error("Allenamento non trovato.");
+        if (key === "duration") workout.duration = Number(value);
+        else workout[key] = String(value);
+      },
+      "",
+      false,
+    );
   }
   async finish() {
-    if(this.finishing())return;
+    if (this.finishing()) return;
     this.finishing.set(true);
     try {
-      const active=this.activeWorkout();
-      if(active&&!await active.flushForFinish())return;
+      const active = this.activeWorkout();
+      if (active && !(await active.flushForFinish())) return;
       await this.s.settled();
-      const workout=this.s.draft();
-      if(!workout)return;
-      const withoutCompletedSets=this.completedSets(workout.id)===0;
-      if(withoutCompletedSets&&!await this.confirmation.ask('Nessuna serie è stata segnata come completata. Vuoi terminare comunque l’allenamento? Tutti i valori inseriti saranno conservati nello storico e potrai registrare un altro giorno.'))return;
+      const workout = this.s.draft();
+      if (!workout) return;
+      const withoutCompletedSets = this.completedSets(workout.id) === 0;
+      if (
+        withoutCompletedSets &&
+        !(await this.confirmation.ask(
+          "Nessuna serie è stata segnata come completata. Vuoi terminare comunque l’allenamento? Tutti i valori inseriti saranno conservati nello storico e potrai registrare un altro giorno.",
+        ))
+      )
+        return;
       if (await this.s.finish(withoutCompletedSets)) {
         active?.externalTimer?.stop();
-        const plan=this.s.data().plans.find(plan=>plan.id===workout.planId);
-        await this.router.navigateByUrl('/riepilogo/'+encodeURIComponent(workout.id));
+        const plan = this.s
+          .data()
+          .plans.find((plan) => plan.id === workout.planId);
+        await this.router.navigateByUrl(
+          "/riepilogo/" + encodeURIComponent(workout.id),
+        );
       }
-    } finally { this.finishing.set(false); }
+    } finally {
+      this.finishing.set(false);
+    }
   }
   async cancel(id: string) {
-    const sets=this.completedSets(id);
-    if(!await this.confirmation.ask({title:'Annullare l’allenamento?',confirmLabel:'Annulla allenamento',tone:'danger',detail:sets?sets+' serie registrate':'Nessuna serie registrata',message:'L’allenamento in corso viene eliminato insieme alle serie registrate. Se era programmato nel calendario o nel piano, la seduta torna in programma. Il piano e gli altri allenamenti restano conservati.'}))return;
+    const sets = this.completedSets(id);
+    if (
+      !(await this.confirmation.ask({
+        title: "Annullare l’allenamento?",
+        confirmLabel: "Annulla allenamento",
+        tone: "danger",
+        detail: sets ? sets + " serie registrate" : "Nessuna serie registrata",
+        message:
+          "L’allenamento in corso viene eliminato insieme alle serie registrate. Se era programmato nel calendario o nel piano, la seduta torna in programma. Il piano e gli altri allenamenti restano conservati.",
+      }))
+    )
+      return;
     this.finishing.set(true);
-    try{if(await this.s.cancelWorkout(id))await this.router.navigateByUrl('/piani');}finally{this.finishing.set(false);}
+    try {
+      if (await this.s.cancelWorkout(id))
+        await this.router.navigateByUrl("/piani");
+    } finally {
+      this.finishing.set(false);
+    }
   }
   async discard(id: string) {
     if (

@@ -4,12 +4,13 @@
 // e l'email parte una sola volta per soglia, finché l'uso non scende di nuovo.
 const GB = 1_000_000_000;
 export const STORAGE_THRESHOLDS = [8 * GB, 9 * GB, 9.5 * GB];
-const STATE_KEY = 'system/storage-alert.json';
+const STATE_KEY = "system/storage-alert.json";
 const LIMIT_GB = 10;
 
 /** Somma le dimensioni di tutti gli oggetti del bucket. */
 export async function bucketBytes(bucket) {
-  let total = 0, cursor;
+  let total = 0,
+    cursor;
   do {
     const page = await bucket.list({ cursor, limit: 1000 });
     for (const object of page.objects) total += object.size;
@@ -18,15 +19,23 @@ export async function bucketBytes(bucket) {
   return total;
 }
 
-const gb = bytes => bytes >= GB ? (bytes / GB).toFixed(2).replace('.', ',') + ' GB' : (bytes / 1_000_000).toFixed(2).replace('.', ',') + ' MB';
+const gb = (bytes) =>
+  bytes >= GB
+    ? (bytes / GB).toFixed(2).replace(".", ",") + " GB"
+    : (bytes / 1_000_000).toFixed(2).replace(".", ",") + " MB";
 // Solo per provare le email: STORAGE_ALERT_TEST_BYTES (numero di byte, anche 0) sostituisce le tre soglie con una sola.
 export function thresholdsFor(env) {
   const raw = env?.STORAGE_ALERT_TEST_BYTES;
-  const test = raw === undefined || raw === '' ? NaN : Number(raw);
+  const test = raw === undefined || raw === "" ? NaN : Number(raw);
   return Number.isFinite(test) && test >= 0 ? [test] : STORAGE_THRESHOLDS;
 }
 
-const CATEGORY_LABELS = { archives: 'Backup e copie archivio', 'excel-imports': 'Programmi importati', system: 'Sistema', other: 'Altro' };
+const CATEGORY_LABELS = {
+  archives: "Backup e copie archivio",
+  "excel-imports": "Programmi importati",
+  system: "Sistema",
+  other: "Altro",
+};
 
 /**
  * Stato dello spazio per la schermata dei Super Admin: totale, soglie, ultimo livello
@@ -34,55 +43,107 @@ const CATEGORY_LABELS = { archives: 'Backup e copie archivio', 'excel-imports': 
  */
 const MAX_STATUS_PAGES = 40;
 export async function storageStatus(env) {
-  const limitBytes = LIMIT_GB * GB, thresholds = thresholdsFor(env);
-  if (!env.BUCKET) return { available: false, bytes: 0, limitBytes, thresholds, level: 0, categories: [] };
+  const limitBytes = LIMIT_GB * GB,
+    thresholds = thresholdsFor(env);
+  if (!env.BUCKET)
+    return {
+      available: false,
+      bytes: 0,
+      limitBytes,
+      thresholds,
+      level: 0,
+      categories: [],
+    };
   const sizes = new Map();
-  let total = 0, cursor, pages = 0, partial = false;
+  let total = 0,
+    cursor,
+    pages = 0,
+    partial = false;
   do {
     const page = await env.BUCKET.list({ cursor, limit: 1000 });
     pages++;
     for (const object of page.objects) {
-      const head = String(object.key ?? '').split('/')[0];
-      const id = Object.hasOwn(CATEGORY_LABELS, head) ? head : 'other';
+      const head = String(object.key ?? "").split("/")[0];
+      const id = Object.hasOwn(CATEGORY_LABELS, head) ? head : "other";
       sizes.set(id, (sizes.get(id) || 0) + object.size);
       total += object.size;
     }
     cursor = page.truncated ? page.cursor : undefined;
-    if (cursor && pages >= MAX_STATUS_PAGES) { partial = true; cursor = undefined; }
+    if (cursor && pages >= MAX_STATUS_PAGES) {
+      partial = true;
+      cursor = undefined;
+    }
   } while (cursor);
   let alert = { level: 0, updatedAt: null };
   try {
-    const object = await env.BUCKET.get(STATE_KEY), value = object ? JSON.parse(await object.text()) : null;
-    if (Number.isInteger(value?.level) && value.level >= 0 && value.level <= STORAGE_THRESHOLDS.length) alert = { level: value.level, updatedAt: typeof value.updatedAt === 'string' ? value.updatedAt : null };
-  } catch { /* stato assente o non leggibile: nessun avviso registrato */ }
-  const categories = [...sizes].map(([id, bytes]) => ({ id, label: CATEGORY_LABELS[id], bytes })).sort((a, b) => b.bytes - a.bytes);
-  return { available: true, bytes: total, limitBytes, thresholds, level: thresholds.filter(threshold => total >= threshold).length, lastAlertLevel: alert.level, lastAlertAt: alert.updatedAt, categories, partial };
+    const object = await env.BUCKET.get(STATE_KEY),
+      value = object ? JSON.parse(await object.text()) : null;
+    if (
+      Number.isInteger(value?.level) &&
+      value.level >= 0 &&
+      value.level <= STORAGE_THRESHOLDS.length
+    )
+      alert = {
+        level: value.level,
+        updatedAt: typeof value.updatedAt === "string" ? value.updatedAt : null,
+      };
+  } catch {
+    /* stato assente o non leggibile: nessun avviso registrato */
+  }
+  const categories = [...sizes]
+    .map(([id, bytes]) => ({ id, label: CATEGORY_LABELS[id], bytes }))
+    .sort((a, b) => b.bytes - a.bytes);
+  return {
+    available: true,
+    bytes: total,
+    limitBytes,
+    thresholds,
+    level: thresholds.filter((threshold) => total >= threshold).length,
+    lastAlertLevel: alert.level,
+    lastAlertAt: alert.updatedAt,
+    categories,
+    partial,
+  };
 }
 
 async function readState(bucket) {
   try {
     const object = await bucket.get(STATE_KEY);
     const value = object ? JSON.parse(await object.text()) : null;
-    return Number.isInteger(value?.level) && value.level >= 0 && value.level <= STORAGE_THRESHOLDS.length ? value.level : 0;
-  } catch { return 0; }
+    return Number.isInteger(value?.level) &&
+      value.level >= 0 &&
+      value.level <= STORAGE_THRESHOLDS.length
+      ? value.level
+      : 0;
+  } catch {
+    return 0;
+  }
 }
-const writeState = (bucket, level, bytes) => bucket.put(STATE_KEY, JSON.stringify({ level, bytes, updatedAt: new Date().toISOString() }));
+const writeState = (bucket, level, bytes) =>
+  bucket.put(
+    STATE_KEY,
+    JSON.stringify({ level, bytes, updatedAt: new Date().toISOString() }),
+  );
 
 async function sendEmail(env, to, level, bytes, fetchImpl, thresholds) {
   const threshold = thresholds[level - 1];
-  const trial = thresholds !== STORAGE_THRESHOLDS ? '[PROVA] ' : '';
-  const percent = Math.round(bytes / (LIMIT_GB * GB) * 100);
-  const response = await fetchImpl('https://api.resend.com/emails', {
-    method: 'POST',
-    headers: { Authorization: 'Bearer ' + env.RESEND_API_KEY, 'Content-Type': 'application/json' },
+  const trial = thresholds !== STORAGE_THRESHOLDS ? "[PROVA] " : "";
+  const percent = Math.round((bytes / (LIMIT_GB * GB)) * 100);
+  const response = await fetchImpl("https://api.resend.com/emails", {
+    method: "POST",
+    headers: {
+      Authorization: "Bearer " + env.RESEND_API_KEY,
+      "Content-Type": "application/json",
+    },
     body: JSON.stringify({
-      from: 'GymTrack <onboarding@resend.dev>',
+      from: "GymTrack <onboarding@resend.dev>",
       to: [to],
       subject: `${trial}GymTrack: spazio R2 oltre ${gb(threshold)}`,
-      text: `${trial ? 'Questa è una email di prova del controllo dello spazio R2.\n\n' : ''}Lo spazio usato su Cloudflare R2 ha superato ${gb(threshold)}.\n\nUso attuale: ${gb(bytes)} su ${LIMIT_GB} GB inclusi nel piano gratuito (${percent}%).\n\nOltre il limite gratuito Cloudflare addebita lo spazio in più. Puoi liberare spazio eliminando vecchie copie dal bucket gymtrack-archives, oppure passare a un piano a pagamento.\n\nQuesto avviso arriva una sola volta per soglia (8, 9 e 9,5 GB).`,
+      text: `${trial ? "Questa è una email di prova del controllo dello spazio R2.\n\n" : ""}Lo spazio usato su Cloudflare R2 ha superato ${gb(threshold)}.\n\nUso attuale: ${gb(bytes)} su ${LIMIT_GB} GB inclusi nel piano gratuito (${percent}%).\n\nOltre il limite gratuito Cloudflare addebita lo spazio in più. Puoi liberare spazio eliminando vecchie copie dal bucket gymtrack-archives, oppure passare a un piano a pagamento.\n\nQuesto avviso arriva una sola volta per soglia (8, 9 e 9,5 GB).`,
     }),
   });
-  if (!response.ok) throw new Error('Invio email non riuscito (' + response.status + ').');
+  if (!response.ok)
+    throw new Error("Invio email non riuscito (" + response.status + ").");
 }
 
 /**
@@ -93,12 +154,27 @@ export async function storageAlert(env, to, fetchImpl = fetch) {
   if (!env.BUCKET) return { bytes: 0, level: 0, sent: false };
   const bytes = await bucketBytes(env.BUCKET);
   const thresholds = thresholdsFor(env);
-  const level = thresholds.filter(threshold => bytes >= threshold).length;
+  const level = thresholds.filter((threshold) => bytes >= threshold).length;
   const known = await readState(env.BUCKET);
   if (level === known) return { bytes, level, sent: false };
-  if (level < known) { await writeState(env.BUCKET, level, bytes); return { bytes, level, sent: false }; }
-  if (!env.RESEND_API_KEY) { console.warn('Soglia R2 superata ma RESEND_API_KEY non è impostata: nessuna email inviata.'); return { bytes, level, sent: false }; }
-  await sendEmail(env, env.ALERT_EMAIL || to, level, bytes, fetchImpl, thresholds);
+  if (level < known) {
+    await writeState(env.BUCKET, level, bytes);
+    return { bytes, level, sent: false };
+  }
+  if (!env.RESEND_API_KEY) {
+    console.warn(
+      "Soglia R2 superata ma RESEND_API_KEY non è impostata: nessuna email inviata.",
+    );
+    return { bytes, level, sent: false };
+  }
+  await sendEmail(
+    env,
+    env.ALERT_EMAIL || to,
+    level,
+    bytes,
+    fetchImpl,
+    thresholds,
+  );
   await writeState(env.BUCKET, level, bytes);
   return { bytes, level, sent: true };
 }

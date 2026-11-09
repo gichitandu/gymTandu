@@ -1,8 +1,108 @@
-:host{display:block;min-width:0}
-:host .session-header.session-compact{position:relative;padding:0;border:0;border-radius:0;background:transparent;box-shadow:none;margin-bottom:18px}
-.simple-session-heading{display:flex;align-items:center;gap:10px;min-width:0;margin-bottom:14px}.simple-session-heading>a{width:44px;min-width:44px;height:44px;padding:10px}.simple-session-heading>div{flex:1;min-width:0}:host .session-compact h1{font-size:21px;line-height:1.25;letter-spacing:-.5px;margin:0;overflow-wrap:anywhere}.simple-session-heading p{font-size:12px;color:var(--muted);margin:3px 0 0;line-height:1.4}:host .session-finish{font-size:14px;color:var(--blue);min-height:44px;min-width:64px;flex:none;padding:8px;box-shadow:none;border-color:transparent}
-.simple-session-meta{display:flex;align-items:center;justify-content:space-between;gap:12px;min-width:0}.simple-session-meta>span{font-size:12px;white-space:nowrap;color:var(--muted);font-variant-numeric:tabular-nums}.session-simple-options{margin-top:20px;border-top:1px solid var(--line);padding:0}.session-simple-options summary{padding:14px 0;min-height:48px;font-size:13px;color:var(--muted);cursor:pointer}.session-simple-options .form-grid{margin:0 0 12px}.session-simple-options .actions{margin:12px 0}.session-simple-options .subtle{font-size:12px}
-@media(max-width:360px){:host .session-compact h1{font-size:18px}.simple-session-heading{gap:6px}}
+:host {
+  display: block;
+  min-width: 0;
+}
+:host .session-header.session-compact {
+  position: relative;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  margin-bottom: 18px;
+}
+.simple-session-heading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  margin-bottom: 14px;
+}
+.simple-session-heading > a {
+  width: 44px;
+  min-width: 44px;
+  height: 44px;
+  padding: 10px;
+}
+.simple-session-heading > div {
+  flex: 1;
+  min-width: 0;
+}
+:host .session-compact h1 {
+  font-size: 21px;
+  line-height: 1.25;
+  letter-spacing: -0.5px;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.simple-session-heading p {
+  font-size: 12px;
+  color: var(--muted);
+  margin: 3px 0 0;
+  line-height: 1.4;
+}
+:host .session-finish {
+  font-size: 14px;
+  color: var(--blue);
+  min-height: 44px;
+  min-width: 64px;
+  flex: none;
+  padding: 8px;
+  box-shadow: none;
+  border-color: transparent;
+}
+.simple-session-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 0;
+}
+.simple-session-meta > span {
+  font-size: 12px;
+  white-space: nowrap;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+.session-simple-options {
+  margin-top: 20px;
+  border-top: 1px solid var(--line);
+  padding: 0;
+}
+.session-simple-options summary {
+  padding: 14px 0;
+  min-height: 48px;
+  font-size: 13px;
+  color: var(--muted);
+  cursor: pointer;
+}
+.session-simple-options .form-grid {
+  margin: 0 0 12px;
+}
+.session-simple-options .actions {
+  margin: 12px 0;
+}
+.session-simple-options .subtle {
+  font-size: 12px;
+}
+@media (max-width: 360px) {
+  :host .session-compact h1 {
+    font-size: 18px;
+  }
+  .simple-session-heading {
+    gap: 6px;
+  }
+}
 
 /* Annulla allenamento: accanto a Termina, distinto ma non dominante */
-.simple-session-heading .session-cancel{flex:0 0 auto;min-height:44px;padding:0 12px;border-radius:12px;font-size:13px;font-weight:700;color:var(--danger,#ff6b81);border:1px solid color-mix(in srgb,var(--danger,#ff6b81) 40%,transparent);background:color-mix(in srgb,var(--danger,#ff6b81) 8%,transparent)}
+.simple-session-heading .session-cancel {
+  flex: 0 0 auto;
+  min-height: 44px;
+  padding: 0 12px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--danger, #ff6b81);
+  border: 1px solid color-mix(in srgb, var(--danger, #ff6b81) 40%, transparent);
+  background: color-mix(in srgb, var(--danger, #ff6b81) 8%, transparent);
+}

@@ -1,17 +1,107 @@
-import {Component,computed,inject,signal} from '@angular/core';
-import {Store} from '../services/store';
-import {ArchiveSyncService} from '../services/archive-sync';
-import {AuthService} from '../services/auth';
-import {PwaService} from '../services/pwa';
-@Component({selector:'gt-data-status',standalone:true,template:`@if(pwa.updateReady()||pwa.releases.updateReady()){<aside class="version-ready" role="status"><strong>Aggiornamento pronto</strong><span>I dati e l’allenamento aperto saranno conservati.</span><button type="button" (click)="pwa.reload()" [disabled]="pwa.updating()">{{pwa.updating()?'Aggiornamento…':'Aggiorna ora'}}</button></aside>}<details class="data-status"><summary><i [class.warning]="warning()"></i><span>{{label()}}</span></summary><div class="status-details"><p>{{localMessage()}}</p><p>{{remoteMessage()}}</p>@if(cloud.lastSaved();as synced){<p>Ultima sincronizzazione confermata: {{date(synced)}}</p>}@if(!auth.offlineMode()){<button type="button" (click)="retry()" [disabled]="retrying()||s.busy()||s.localSaveFailed()||s.conflicted()||cloud.status()==='conflict'||cloud.status()==='syncing'||!pwa.online()">{{retrying()?'Sincronizzazione…':'Riprova sincronizzazione'}}</button>}@if(retryMessage()){<p role="status">{{retryMessage()}}</p>}<p>{{pwa.offlineMessage()}}</p><p>{{identityReady()?'Accesso locale disponibile.':'Accedi con “Ricordami” per riaprire lo stesso account senza rete.'}}</p><button type="button" class="ghost" (click)="pwa.checkOffline()" [disabled]="pwa.offlineChecking()">{{pwa.offlineChecking()?'Verifica…':'Controlla preparazione offline'}}</button><small>Per la prova completa, riapri dall’icona in modalità aereo. Il controllo non richiede backup o ripristini.</small></div></details>`,styles:[`.version-ready{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:14px;border:1px solid var(--accent-text);border-radius:16px;background:var(--card);color:var(--text);margin-bottom:12px}.version-ready strong{font-size:14px}.version-ready span{font-size:12px;flex:1;min-width:160px}.version-ready button{background:var(--accent);color:var(--accent-ink)}:host{display:block;margin:0 0 12px}.data-status{font-size:11px;color:var(--muted)}summary{display:flex;align-items:center;gap:7px;min-height:32px;cursor:pointer;list-style:none}summary::-webkit-details-marker{display:none}summary span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}i{width:7px;height:7px;border-radius:50%;background:var(--green,#6ed7bc);flex:none}i.warning{background:#efbd64}.status-details{padding:12px 14px;border:1px solid var(--line);border-radius:13px;background:var(--card)}p{font-size:12px;line-height:1.6;margin:0 0 8px}small{display:block;line-height:1.6;margin-top:9px}button{min-height:44px;font-size:12px}`]})
-export class DataStatusComponent{
- s=inject(Store);cloud=inject(ArchiveSyncService);auth=inject(AuthService);pwa=inject(PwaService);
- retrying=signal(false);retryMessage=signal('');
- date(value:number){return new Date(value).toLocaleString('it-IT');}
- async retry(){if(this.retrying()||this.auth.offlineMode()||this.s.localSaveFailed()||this.s.conflicted()||this.cloud.status()==='conflict'||!this.pwa.online())return;const archive=this.s.archiveKey(),account=this.auth.user()?.id;this.retrying.set(true);this.retryMessage.set('');try{if(await this.s.settled()===false||archive!==this.s.archiveKey()||account!==this.auth.user()?.id)return;const saved=await this.cloud.flush();this.retryMessage.set(saved?'Sincronizzazione confermata.':this.cloud.message()||'Sincronizzazione in attesa. I dati locali restano disponibili.');}catch{this.retryMessage.set('Sincronizzazione non riuscita. Riprova con una connessione.');}finally{this.retrying.set(false);}}
- identityReady=computed(()=>this.auth.archiveChoice()?.mode==='device'||this.auth.offlineAccount()?.id===this.auth.user()?.id&&!!this.auth.user());
- warning=computed(()=>this.s.localSaveFailed()||this.s.conflicted()||this.cloud.status()==='conflict');
- label=computed(()=>this.s.busy()?'Salvataggio sul telefono…':this.s.localSaveFailed()?'Controlla l’ultimo salvataggio':this.s.conflicted()?'Archivio da verificare':this.cloud.status()==='saved'?'Salvato sul telefono · sincronizzato':this.cloud.status()==='syncing'?'Salvato sul telefono · sincronizzazione…':this.cloud.status()==='offline'?'Salvato sul telefono · in attesa della rete':this.cloud.status()==='conflict'?'Salvato sul telefono · copie da verificare':'Salvato sul telefono');
- localMessage(){const time=this.s.lastLocalSave();return this.s.localSaveFailed()?'L’ultima modifica non è stata confermata. I dati precedenti restano conservati.':time?'Ultimo salvataggio sul telefono: '+new Date(time).toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'}):'Archivio locale aperto sul dispositivo.';}
- remoteMessage(){const time=this.cloud.lastSaved();return this.cloud.status()==='saved'&&time?'Copia online aggiornata: '+new Date(time).toLocaleString('it-IT'):this.cloud.message();}
+import { Component, computed, inject, signal } from "@angular/core";
+import { Store } from "../services/store";
+import { ArchiveSyncService } from "../services/archive-sync";
+import { AuthService } from "../services/auth";
+import { PwaService } from "../services/pwa";
+@Component({
+  selector: "gt-data-status",
+  standalone: true,
+  template: `@if(pwa.updateReady()||pwa.releases.updateReady()){<aside class="version-ready" role="status"><strong>Aggiornamento pronto</strong><span>I dati e l’allenamento aperto saranno conservati.</span><button type="button" (click)="pwa.reload()" [disabled]="pwa.updating()">{{pwa.updating()?'Aggiornamento…':'Aggiorna ora'}}</button></aside>}<details class="data-status"><summary><i [class.warning]="warning()"></i><span>{{label()}}</span></summary><div class="status-details"><p>{{localMessage()}}</p><p>{{remoteMessage()}}</p>@if(cloud.lastSaved();as synced){<p>Ultima sincronizzazione confermata: {{date(synced)}}</p>}@if(!auth.offlineMode()){<button type="button" (click)="retry()" [disabled]="retrying()||s.busy()||s.localSaveFailed()||s.conflicted()||cloud.status()==='conflict'||cloud.status()==='syncing'||!pwa.online()">{{retrying()?'Sincronizzazione…':'Riprova sincronizzazione'}}</button>}@if(retryMessage()){<p role="status">{{retryMessage()}}</p>}<p>{{pwa.offlineMessage()}}</p><p>{{identityReady()?'Accesso locale disponibile.':'Accedi con “Ricordami” per riaprire lo stesso account senza rete.'}}</p><button type="button" class="ghost" (click)="pwa.checkOffline()" [disabled]="pwa.offlineChecking()">{{pwa.offlineChecking()?'Verifica…':'Controlla preparazione offline'}}</button><small>Per la prova completa, riapri dall’icona in modalità aereo. Il controllo non richiede backup o ripristini.</small></div></details>`,
+  styles: [
+    `.version-ready{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:14px;border:1px solid var(--accent-text);border-radius:16px;background:var(--card);color:var(--text);margin-bottom:12px}.version-ready strong{font-size:14px}.version-ready span{font-size:12px;flex:1;min-width:160px}.version-ready button{background:var(--accent);color:var(--accent-ink)}:host{display:block;margin:0 0 12px}.data-status{font-size:11px;color:var(--muted)}summary{display:flex;align-items:center;gap:7px;min-height:32px;cursor:pointer;list-style:none}summary::-webkit-details-marker{display:none}summary span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}i{width:7px;height:7px;border-radius:50%;background:var(--green,#6ed7bc);flex:none}i.warning{background:#efbd64}.status-details{padding:12px 14px;border:1px solid var(--line);border-radius:13px;background:var(--card)}p{font-size:12px;line-height:1.6;margin:0 0 8px}small{display:block;line-height:1.6;margin-top:9px}button{min-height:44px;font-size:12px}`,
+  ],
+})
+export class DataStatusComponent {
+  s = inject(Store);
+  cloud = inject(ArchiveSyncService);
+  auth = inject(AuthService);
+  pwa = inject(PwaService);
+  retrying = signal(false);
+  retryMessage = signal("");
+  date(value: number) {
+    return new Date(value).toLocaleString("it-IT");
+  }
+  async retry() {
+    if (
+      this.retrying() ||
+      this.auth.offlineMode() ||
+      this.s.localSaveFailed() ||
+      this.s.conflicted() ||
+      this.cloud.status() === "conflict" ||
+      !this.pwa.online()
+    )
+      return;
+    const archive = this.s.archiveKey(),
+      account = this.auth.user()?.id;
+    this.retrying.set(true);
+    this.retryMessage.set("");
+    try {
+      if (
+        (await this.s.settled()) === false ||
+        archive !== this.s.archiveKey() ||
+        account !== this.auth.user()?.id
+      )
+        return;
+      const saved = await this.cloud.flush();
+      this.retryMessage.set(
+        saved
+          ? "Sincronizzazione confermata."
+          : this.cloud.message() ||
+              "Sincronizzazione in attesa. I dati locali restano disponibili.",
+      );
+    } catch {
+      this.retryMessage.set(
+        "Sincronizzazione non riuscita. Riprova con una connessione.",
+      );
+    } finally {
+      this.retrying.set(false);
+    }
+  }
+  identityReady = computed(
+    () =>
+      this.auth.archiveChoice()?.mode === "device" ||
+      (this.auth.offlineAccount()?.id === this.auth.user()?.id &&
+        !!this.auth.user()),
+  );
+  warning = computed(
+    () =>
+      this.s.localSaveFailed() ||
+      this.s.conflicted() ||
+      this.cloud.status() === "conflict",
+  );
+  label = computed(() =>
+    this.s.busy()
+      ? "Salvataggio sul telefono…"
+      : this.s.localSaveFailed()
+        ? "Controlla l’ultimo salvataggio"
+        : this.s.conflicted()
+          ? "Archivio da verificare"
+          : this.cloud.status() === "saved"
+            ? "Salvato sul telefono · sincronizzato"
+            : this.cloud.status() === "syncing"
+              ? "Salvato sul telefono · sincronizzazione…"
+              : this.cloud.status() === "offline"
+                ? "Salvato sul telefono · in attesa della rete"
+                : this.cloud.status() === "conflict"
+                  ? "Salvato sul telefono · copie da verificare"
+                  : "Salvato sul telefono",
+  );
+  localMessage() {
+    const time = this.s.lastLocalSave();
+    return this.s.localSaveFailed()
+      ? "L’ultima modifica non è stata confermata. I dati precedenti restano conservati."
+      : time
+        ? "Ultimo salvataggio sul telefono: " +
+          new Date(time).toLocaleTimeString("it-IT", {
+            hour: "2-digit",
+            minute: "2-digit",
+          })
+        : "Archivio locale aperto sul dispositivo.";
+  }
+  remoteMessage() {
+    const time = this.cloud.lastSaved();
+    return this.cloud.status() === "saved" && time
+      ? "Copia online aggiornata: " + new Date(time).toLocaleString("it-IT")
+      : this.cloud.message();
+  }
 }

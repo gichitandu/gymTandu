@@ -1,0 +1,4 @@
+# Template Angular esclusi: riformattarli cambia gli spazi nei testi compilati
+# (contenuto dei blocchi @if/@for, elementi con white-space: pre-wrap).
+# I template inline nei .ts sono protetti da "embeddedLanguageFormatting": "off".
+src/**/*.html

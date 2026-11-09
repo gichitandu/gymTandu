@@ -115,7 +115,11 @@ export class DesignLabelDirective {
         entry = DESIGN_CONTROLS.find((c) => c.id === id),
         config = this.context?.config() || this.runtime.config();
       if (entry?.label)
-        this.element.textContent = resolveDesignLabel(config, id, this.gtDesignLabelDefault());
+        this.element.textContent = resolveDesignLabel(
+          config,
+          id,
+          this.gtDesignLabelDefault(),
+        );
     });
   }
 }

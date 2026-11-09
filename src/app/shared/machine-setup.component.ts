@@ -1,7 +1,38 @@
-import {Component,inject,input,signal} from '@angular/core';
-import {FormsModule} from '@angular/forms';
-import {Store} from '../services/store';
-import {MachineSetup} from '../models/domain';
-import {setupSummary} from '../services/training-flow';
-@Component({selector:'gt-machine-setup',standalone:true,imports:[FormsModule],template:`<details class="machine-details" (toggle)="onToggle($event)"><summary>⚙ Configurazione personale <span>{{summary()||'Macchina, sedile e presa'}}</span></summary>@if(opened()){<div class="form-grid" style="margin-top:16px"><label class="wide">Macchina / modello<input [ngModelOptions]="{standalone:true}" [(ngModel)]="draft.machine" maxlength="120" placeholder="Es. lat machine sala principale"/></label><label>Sedile<input [ngModelOptions]="{standalone:true}" [(ngModel)]="draft.seat" maxlength="80" placeholder="Es. posizione 4"/></label><label>Schienale<input [ngModelOptions]="{standalone:true}" [(ngModel)]="draft.backrest" maxlength="80" placeholder="Es. posizione 2"/></label><label class="wide">Maniglia / presa<input [ngModelOptions]="{standalone:true}" [(ngModel)]="draft.grip" maxlength="120" placeholder="Es. triangolo, presa neutra"/></label><label class="wide">Note personali<textarea [ngModelOptions]="{standalone:true}" [(ngModel)]="draft.notes" maxlength="500" rows="2"></textarea></label><button class="primary wide" type="button" (click)="save()" [disabled]="s.busy()">Salva configurazione</button></div><p class="subtle" style="margin-top:12px">La configurazione è personale. Le serie già registrate conservano quella precedente; le nuove sessioni useranno queste impostazioni.</p>}</details>`,styles:[`.machine-details{padding:14px;background:var(--card);border:1px solid var(--line);border-radius:12px;margin:14px 0}summary{cursor:pointer;font-size:13px;min-height:44px;line-height:1.5}summary span{display:block;font-size:11px;font-weight:400;color:var(--muted);margin-top:5px}`]})
-export class MachineSetupComponent{opened=signal(false);s=inject(Store);exerciseId=input.required<string>();workoutExerciseId=input<string>();draft:MachineSetup={};summary(){return setupSummary(this.s.preference(this.exerciseId())?.machineSetup);}onToggle(event:Event){this.opened.set((event.target as HTMLDetailsElement).open);if(this.opened())this.draft=structuredClone(this.s.preference(this.exerciseId())?.machineSetup||{});}async save(){await this.s.saveMachineSetup(this.exerciseId(),this.draft,this.workoutExerciseId());}}
+import { Component, inject, input, signal } from "@angular/core";
+import { FormsModule } from "@angular/forms";
+import { Store } from "../services/store";
+import { MachineSetup } from "../models/domain";
+import { setupSummary } from "../services/training-flow";
+@Component({
+  selector: "gt-machine-setup",
+  standalone: true,
+  imports: [FormsModule],
+  template: `<details class="machine-details" (toggle)="onToggle($event)"><summary>⚙ Configurazione personale <span>{{summary()||'Macchina, sedile e presa'}}</span></summary>@if(opened()){<div class="form-grid" style="margin-top:16px"><label class="wide">Macchina / modello<input [ngModelOptions]="{standalone:true}" [(ngModel)]="draft.machine" maxlength="120" placeholder="Es. lat machine sala principale"/></label><label>Sedile<input [ngModelOptions]="{standalone:true}" [(ngModel)]="draft.seat" maxlength="80" placeholder="Es. posizione 4"/></label><label>Schienale<input [ngModelOptions]="{standalone:true}" [(ngModel)]="draft.backrest" maxlength="80" placeholder="Es. posizione 2"/></label><label class="wide">Maniglia / presa<input [ngModelOptions]="{standalone:true}" [(ngModel)]="draft.grip" maxlength="120" placeholder="Es. triangolo, presa neutra"/></label><label class="wide">Note personali<textarea [ngModelOptions]="{standalone:true}" [(ngModel)]="draft.notes" maxlength="500" rows="2"></textarea></label><button class="primary wide" type="button" (click)="save()" [disabled]="s.busy()">Salva configurazione</button></div><p class="subtle" style="margin-top:12px">La configurazione è personale. Le serie già registrate conservano quella precedente; le nuove sessioni useranno queste impostazioni.</p>}</details>`,
+  styles: [
+    `.machine-details{padding:14px;background:var(--card);border:1px solid var(--line);border-radius:12px;margin:14px 0}summary{cursor:pointer;font-size:13px;min-height:44px;line-height:1.5}summary span{display:block;font-size:11px;font-weight:400;color:var(--muted);margin-top:5px}`,
+  ],
+})
+export class MachineSetupComponent {
+  opened = signal(false);
+  s = inject(Store);
+  exerciseId = input.required<string>();
+  workoutExerciseId = input<string>();
+  draft: MachineSetup = {};
+  summary() {
+    return setupSummary(this.s.preference(this.exerciseId())?.machineSetup);
+  }
+  onToggle(event: Event) {
+    this.opened.set((event.target as HTMLDetailsElement).open);
+    if (this.opened())
+      this.draft = structuredClone(
+        this.s.preference(this.exerciseId())?.machineSetup || {},
+      );
+  }
+  async save() {
+    await this.s.saveMachineSetup(
+      this.exerciseId(),
+      this.draft,
+      this.workoutExerciseId(),
+    );
+  }
+}

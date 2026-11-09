@@ -1,36 +1,484 @@
-.plan-dashboard{max-width:820px;margin:0 auto;min-width:0}.dashboard-heading{display:flex;align-items:center;gap:13px;margin-bottom:22px}.dashboard-heading .icon-btn{flex:none}.dashboard-heading p{font-size:10px;color:var(--muted);letter-spacing:1.8px;margin:0 0 6px}.dashboard-heading h1{font-size:27px;line-height:1.2;letter-spacing:-.7px;margin:0}.plan-dashboard>.card{margin-top:18px;min-width:0}.plan-dashboard h2{font-size:18px;line-height:1.35;margin:0 0 14px;overflow-wrap:anywhere}.plan-identity label{font-size:12px;color:var(--muted);display:block}.plan-identity select{display:block;width:100%;margin-top:7px;min-width:0;max-width:100%}.plan-summary{display:flex;align-items:flex-start;gap:10px;margin-top:18px}.plan-summary>div{flex:1;min-width:0}.plan-summary h2{font-size:23px;margin:0 0 6px;letter-spacing:-.5px}.plan-summary p,.completion-note,.finish-plan p{font-size:13px;line-height:1.6;color:var(--muted);margin:0 0 12px}.plan-summary .pill{flex:none;font-size:11px}.plan-identity>button{margin-top:8px;min-height:44px}.plan-metrics{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:18px}.plan-metrics .metric{min-width:0;padding:18px}.metric>span{display:block;font-size:12px;line-height:1.4;color:var(--muted);min-height:34px}.metric>strong{display:block;font-size:28px;font-weight:700;line-height:1.3;letter-spacing:-1px;overflow-wrap:anywhere}.metric strong small{font-size:14px;font-weight:500;letter-spacing:0}.metric p{font-size:11px;line-height:1.5;color:var(--muted);margin:8px 0 0}.metric .duration-value{font-size:24px}.recorded-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;text-align:center}.recorded-summary strong{display:block;font-size:23px}.recorded-summary span{display:block;font-size:11px;line-height:1.5;margin-top:6px;color:var(--muted)}.metric-note,.empty-copy,.dashboard-footnote{font-size:12px;line-height:1.7;color:var(--muted);margin:12px 0}.dashboard-details>summary{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:44px;list-style:none;cursor:pointer;font-weight:650}.dashboard-details>summary::-webkit-details-marker{display:none}.dashboard-details>summary gt-icon{width:20px;height:20px}.schedule-totals{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0;font-size:12px;color:var(--muted)}.schedule-totals>span{border:1px solid var(--line);border-radius:8px;padding:6px 9px}.exercise-result{border-top:1px solid var(--line);padding:12px 0}.exercise-result summary{display:flex;align-items:center;justify-content:space-between;gap:10px;cursor:pointer;list-style:none;min-height:48px}.exercise-result summary::-webkit-details-marker{display:none}.exercise-result summary>span:first-child{min-width:0;flex:1}.exercise-result strong{display:block;font-size:14px;line-height:1.5;overflow-wrap:anywhere}.exercise-result small{display:block;font-size:11px;color:var(--muted);margin-top:3px}.record-reps{font-size:12px;white-space:nowrap;color:var(--muted)}.exercise-values{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.exercise-values span{font-size:11px;line-height:1.5;color:var(--muted)}.exercise-values strong{margin-top:4px}.session-row{display:flex;align-items:center;gap:10px;border-top:1px solid var(--line);padding:15px 0}.session-row>div{flex:1;min-width:0}.session-row small,.session-row strong{display:block;overflow-wrap:anywhere}.session-row small{font-size:11px;color:var(--muted);line-height:1.6}.session-row strong{font-size:14px;margin:3px 0 5px}.session-row .button{min-height:44px;font-size:12px;padding:9px 12px;flex:none}.session-row gt-icon{width:15px;height:15px}.session-state{font-size:11px;color:var(--muted)}.session-state.done{color:var(--green,#70d4bd)}.finish-option{display:flex;align-items:center;gap:12px;font-size:13px;line-height:1.6;margin:15px 0}.finish-option input{width:20px;height:20px;flex:none}.finish-plan .actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}.finish-plan button{min-height:46px;white-space:normal}.dashboard-footnote{text-align:center;margin-top:20px}@media(max-width:380px){.dashboard-heading h1{font-size:24px}.plan-metrics{gap:9px}.plan-metrics .metric{padding:13px}.metric>strong{font-size:25px}.metric .duration-value{font-size:22px}.plan-summary h2{font-size:21px}}@media(min-width:650px){.plan-metrics{grid-template-columns:repeat(4,minmax(0,1fr))}}
-.exercise-metric{display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:12px;color:var(--muted);margin:12px 0}.exercise-metric select{max-width:220px;min-height:44px;min-width:0;font-size:13px}.exercise-result gt-data-chart{margin-top:14px}
-.plan-identity select,.exercise-metric select{font-size:16px}
+.plan-dashboard {
+  max-width: 820px;
+  margin: 0 auto;
+  min-width: 0;
+}
+.dashboard-heading {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  margin-bottom: 22px;
+}
+.dashboard-heading .icon-btn {
+  flex: none;
+}
+.dashboard-heading p {
+  font-size: 10px;
+  color: var(--muted);
+  letter-spacing: 1.8px;
+  margin: 0 0 6px;
+}
+.dashboard-heading h1 {
+  font-size: 27px;
+  line-height: 1.2;
+  letter-spacing: -0.7px;
+  margin: 0;
+}
+.plan-dashboard > .card {
+  margin-top: 18px;
+  min-width: 0;
+}
+.plan-dashboard h2 {
+  font-size: 18px;
+  line-height: 1.35;
+  margin: 0 0 14px;
+  overflow-wrap: anywhere;
+}
+.plan-identity label {
+  font-size: 12px;
+  color: var(--muted);
+  display: block;
+}
+.plan-identity select {
+  display: block;
+  width: 100%;
+  margin-top: 7px;
+  min-width: 0;
+  max-width: 100%;
+}
+.plan-summary {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-top: 18px;
+}
+.plan-summary > div {
+  flex: 1;
+  min-width: 0;
+}
+.plan-summary h2 {
+  font-size: 23px;
+  margin: 0 0 6px;
+  letter-spacing: -0.5px;
+}
+.plan-summary p,
+.completion-note,
+.finish-plan p {
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--muted);
+  margin: 0 0 12px;
+}
+.plan-summary .pill {
+  flex: none;
+  font-size: 11px;
+}
+.plan-identity > button {
+  margin-top: 8px;
+  min-height: 44px;
+}
+.plan-metrics {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 18px;
+}
+.plan-metrics .metric {
+  min-width: 0;
+  padding: 18px;
+}
+.metric > span {
+  display: block;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--muted);
+  min-height: 34px;
+}
+.metric > strong {
+  display: block;
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1.3;
+  letter-spacing: -1px;
+  overflow-wrap: anywhere;
+}
+.metric strong small {
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 0;
+}
+.metric p {
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--muted);
+  margin: 8px 0 0;
+}
+.metric .duration-value {
+  font-size: 24px;
+}
+.recorded-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  text-align: center;
+}
+.recorded-summary strong {
+  display: block;
+  font-size: 23px;
+}
+.recorded-summary span {
+  display: block;
+  font-size: 11px;
+  line-height: 1.5;
+  margin-top: 6px;
+  color: var(--muted);
+}
+.metric-note,
+.empty-copy,
+.dashboard-footnote {
+  font-size: 12px;
+  line-height: 1.7;
+  color: var(--muted);
+  margin: 12px 0;
+}
+.dashboard-details > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 44px;
+  list-style: none;
+  cursor: pointer;
+  font-weight: 650;
+}
+.dashboard-details > summary::-webkit-details-marker {
+  display: none;
+}
+.dashboard-details > summary gt-icon {
+  width: 20px;
+  height: 20px;
+}
+.schedule-totals {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 12px 0;
+  font-size: 12px;
+  color: var(--muted);
+}
+.schedule-totals > span {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 6px 9px;
+}
+.exercise-result {
+  border-top: 1px solid var(--line);
+  padding: 12px 0;
+}
+.exercise-result summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  cursor: pointer;
+  list-style: none;
+  min-height: 48px;
+}
+.exercise-result summary::-webkit-details-marker {
+  display: none;
+}
+.exercise-result summary > span:first-child {
+  min-width: 0;
+  flex: 1;
+}
+.exercise-result strong {
+  display: block;
+  font-size: 14px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+.exercise-result small {
+  display: block;
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 3px;
+}
+.record-reps {
+  font-size: 12px;
+  white-space: nowrap;
+  color: var(--muted);
+}
+.exercise-values {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+.exercise-values span {
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--muted);
+}
+.exercise-values strong {
+  margin-top: 4px;
+}
+.session-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-top: 1px solid var(--line);
+  padding: 15px 0;
+}
+.session-row > div {
+  flex: 1;
+  min-width: 0;
+}
+.session-row small,
+.session-row strong {
+  display: block;
+  overflow-wrap: anywhere;
+}
+.session-row small {
+  font-size: 11px;
+  color: var(--muted);
+  line-height: 1.6;
+}
+.session-row strong {
+  font-size: 14px;
+  margin: 3px 0 5px;
+}
+.session-row .button {
+  min-height: 44px;
+  font-size: 12px;
+  padding: 9px 12px;
+  flex: none;
+}
+.session-row gt-icon {
+  width: 15px;
+  height: 15px;
+}
+.session-state {
+  font-size: 11px;
+  color: var(--muted);
+}
+.session-state.done {
+  color: var(--green, #70d4bd);
+}
+.finish-option {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+  line-height: 1.6;
+  margin: 15px 0;
+}
+.finish-option input {
+  width: 20px;
+  height: 20px;
+  flex: none;
+}
+.finish-plan .actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 16px;
+}
+.finish-plan button {
+  min-height: 46px;
+  white-space: normal;
+}
+.dashboard-footnote {
+  text-align: center;
+  margin-top: 20px;
+}
+@media (max-width: 380px) {
+  .dashboard-heading h1 {
+    font-size: 24px;
+  }
+  .plan-metrics {
+    gap: 9px;
+  }
+  .plan-metrics .metric {
+    padding: 13px;
+  }
+  .metric > strong {
+    font-size: 25px;
+  }
+  .metric .duration-value {
+    font-size: 22px;
+  }
+  .plan-summary h2 {
+    font-size: 21px;
+  }
+}
+@media (min-width: 650px) {
+  .plan-metrics {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+.exercise-metric {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 12px;
+  color: var(--muted);
+  margin: 12px 0;
+}
+.exercise-metric select {
+  max-width: 220px;
+  min-height: 44px;
+  min-width: 0;
+  font-size: 13px;
+}
+.exercise-result gt-data-chart {
+  margin-top: 14px;
+}
+.plan-identity select,
+.exercise-metric select {
+  font-size: 16px;
+}
 
-.session-row .button{max-width:48%;white-space:normal;text-align:center;line-height:1.4}
+.session-row .button {
+  max-width: 48%;
+  white-space: normal;
+  text-align: center;
+  line-height: 1.4;
+}
 
 /* The same compact metric cards and violet program identity as the preview. */
-:host .plan-dashboard{max-width:760px}
-:host .dashboard-heading{margin-bottom:16px;gap:10px}
-:host .dashboard-heading h1{font-size:25px;letter-spacing:-.65px}
-:host .dashboard-heading p{font-size:9px;letter-spacing:1.2px}
-:host .plan-identity{background:radial-gradient(ellipse at 5% 0,var(--accent-soft),transparent 75%),var(--card);border-color:color-mix(in srgb,var(--accent) 45%,var(--line));padding:18px!important}
-:host .plan-summary h2{font-size:23px;margin-bottom:7px}
-:host .plan-summary p{font-size:11px;line-height:1.7}
-:host .plan-identity label{font-size:10px;letter-spacing:.04em}
-.plan-completion{margin:16px 0}
-.plan-completion>div:first-child{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:11px;line-height:1.5;color:var(--muted)}
-.plan-completion strong{font-size:13px;color:var(--accent-text)}
-.plan-completion-track{height:6px;overflow:hidden;background:var(--bg);border-radius:6px;margin-top:10px}
-.plan-completion-track i{height:100%;display:block;border-radius:6px;background:linear-gradient(90deg,var(--accent),var(--cyan,#0dd9ff))}
-:host .plan-metrics{gap:9px;margin-top:13px}
-:host .plan-metrics .metric{padding:15px 12px!important}
-:host .metric>span{display:flex;align-items:center;gap:6px;font-size:10px;line-height:1.5;min-height:30px}
-.metric>span gt-icon{width:16px;height:16px;color:var(--accent-text);flex:none}
-:host .metric>strong{font-size:26px;line-height:1.3;margin-top:6px}
-:host .metric strong small{font-size:12px}
-:host .metric p{font-size:10px;line-height:1.6;margin-top:6px}
-:host .metric .duration-value{font-size:23px}
-:host .recorded-summary{padding:16px 8px!important;gap:7px}
-.recorded-summary>div+div{border-left:1px solid var(--line)}
-:host .recorded-summary strong{font-size:22px}
-:host .recorded-summary span{font-size:10px}
-:host .plan-dashboard>.card{margin-top:13px}
-:host .plan-dashboard h2{font-size:17px}
-:host .plan-summary h2{font-size:23px}
-@media(max-width:359px){:host .dashboard-heading h1{font-size:22px}:host .metric>strong{font-size:23px}:host .metric .duration-value{font-size:20px}:host .metric>span{font-size:9px}}
+:host .plan-dashboard {
+  max-width: 760px;
+}
+:host .dashboard-heading {
+  margin-bottom: 16px;
+  gap: 10px;
+}
+:host .dashboard-heading h1 {
+  font-size: 25px;
+  letter-spacing: -0.65px;
+}
+:host .dashboard-heading p {
+  font-size: 9px;
+  letter-spacing: 1.2px;
+}
+:host .plan-identity {
+  background:
+    radial-gradient(ellipse at 5% 0, var(--accent-soft), transparent 75%),
+    var(--card);
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--line));
+  padding: 18px !important;
+}
+:host .plan-summary h2 {
+  font-size: 23px;
+  margin-bottom: 7px;
+}
+:host .plan-summary p {
+  font-size: 11px;
+  line-height: 1.7;
+}
+:host .plan-identity label {
+  font-size: 10px;
+  letter-spacing: 0.04em;
+}
+.plan-completion {
+  margin: 16px 0;
+}
+.plan-completion > div:first-child {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--muted);
+}
+.plan-completion strong {
+  font-size: 13px;
+  color: var(--accent-text);
+}
+.plan-completion-track {
+  height: 6px;
+  overflow: hidden;
+  background: var(--bg);
+  border-radius: 6px;
+  margin-top: 10px;
+}
+.plan-completion-track i {
+  height: 100%;
+  display: block;
+  border-radius: 6px;
+  background: linear-gradient(90deg, var(--accent), var(--cyan, #0dd9ff));
+}
+:host .plan-metrics {
+  gap: 9px;
+  margin-top: 13px;
+}
+:host .plan-metrics .metric {
+  padding: 15px 12px !important;
+}
+:host .metric > span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  line-height: 1.5;
+  min-height: 30px;
+}
+.metric > span gt-icon {
+  width: 16px;
+  height: 16px;
+  color: var(--accent-text);
+  flex: none;
+}
+:host .metric > strong {
+  font-size: 26px;
+  line-height: 1.3;
+  margin-top: 6px;
+}
+:host .metric strong small {
+  font-size: 12px;
+}
+:host .metric p {
+  font-size: 10px;
+  line-height: 1.6;
+  margin-top: 6px;
+}
+:host .metric .duration-value {
+  font-size: 23px;
+}
+:host .recorded-summary {
+  padding: 16px 8px !important;
+  gap: 7px;
+}
+.recorded-summary > div + div {
+  border-left: 1px solid var(--line);
+}
+:host .recorded-summary strong {
+  font-size: 22px;
+}
+:host .recorded-summary span {
+  font-size: 10px;
+}
+:host .plan-dashboard > .card {
+  margin-top: 13px;
+}
+:host .plan-dashboard h2 {
+  font-size: 17px;
+}
+:host .plan-summary h2 {
+  font-size: 23px;
+}
+@media (max-width: 359px) {
+  :host .dashboard-heading h1 {
+    font-size: 22px;
+  }
+  :host .metric > strong {
+    font-size: 23px;
+  }
+  :host .metric .duration-value {
+    font-size: 20px;
+  }
+  :host .metric > span {
+    font-size: 9px;
+  }
+}

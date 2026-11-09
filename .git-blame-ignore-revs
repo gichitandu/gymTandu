@@ -1,0 +1,5 @@
+# Commit di sola formattazione, ignorati da git blame.
+# Uso locale: git config blame.ignoreRevsFile .git-blame-ignore-revs (GitHub li legge da solo).
+
+# Prettier su src, tests, tools, worker, shared e calendar-relay
+232ad6f8fa9b09d83d877bf85d43a3b4c2250e8b

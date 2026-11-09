@@ -22,10 +22,15 @@ export const BOTTOM_NAV_ITEMS: BottomNavItem[] = [
   { path: "/progressi", label: "Progressi", icon: "chart" },
   { path: "/profilo", label: "Profilo", icon: "user" },
 ];
-export const navigationDesignId = (path: string) => ({
-  "/": "navigation.home", "/piani": "navigation.training",
-  "/progressi": "navigation.progress", "/profilo": "navigation.profile",
-} as Record<string, string>)[path] || "";
+export const navigationDesignId = (path: string) =>
+  (
+    ({
+      "/": "navigation.home",
+      "/piani": "navigation.training",
+      "/progressi": "navigation.progress",
+      "/profilo": "navigation.profile",
+    }) as Record<string, string>
+  )[path] || "";
 @Component({
   selector: "gt-bottom-navigation",
   standalone: true,
@@ -81,7 +86,10 @@ export class BottomNavigationComponent {
   }
   navigationDesignId = navigationDesignId;
   label(item: BottomNavItem) {
-    return resolveDesignLabel(this.context?.config() || this.runtime.config(),
-      navigationDesignId(item.path), item.mobileLabel || item.label);
+    return resolveDesignLabel(
+      this.context?.config() || this.runtime.config(),
+      navigationDesignId(item.path),
+      item.mobileLabel || item.label,
+    );
   }
 }

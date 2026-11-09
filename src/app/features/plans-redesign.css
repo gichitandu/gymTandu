@@ -1,4 +1,13 @@
-@keyframes pgRise { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
+@keyframes pgRise {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
 :host .plans-heading > div::before {
   content: "ALLENAMENTI";
   display: block;
@@ -12,7 +21,7 @@
 :host .plans-heading h1 {
   font-size: clamp(34px, 9.5vw, 42px);
   font-weight: 750;
-  letter-spacing: -.055em;
+  letter-spacing: -0.055em;
   line-height: 1.02;
 }
 
@@ -39,12 +48,19 @@
   border: 0;
   border-radius: 14px;
   font-weight: 650;
-  transition: background .25s ease, color .25s ease, box-shadow .25s ease;
+  transition:
+    background 0.25s ease,
+    color 0.25s ease,
+    box-shadow 0.25s ease;
 }
 
 :host .plans-navigation > :is(button, a).active {
   color: var(--accent-ink);
-  background: linear-gradient(135deg, var(--accent-text), var(--theme-secondary, var(--accent)));
+  background: linear-gradient(
+    135deg,
+    var(--accent-text),
+    var(--theme-secondary, var(--accent))
+  );
   box-shadow: 0 8px 20px color-mix(in srgb, var(--accent) 30%, transparent);
 }
 
@@ -54,10 +70,22 @@
   border: 1px solid color-mix(in srgb, var(--accent-text) 48%, var(--line));
   border-radius: 28px;
   background:
-    radial-gradient(ellipse 80% 60% at 0 0, color-mix(in srgb, var(--accent) 16%, transparent), transparent 70%),
-    linear-gradient(160deg, color-mix(in srgb, var(--text) 6.5%, transparent), color-mix(in srgb, var(--text) 1.8%, transparent));
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--theme-secondary, var(--accent)) 14%, transparent), 0 20px 50px color-mix(in srgb, #000 26%, transparent), inset 0 1px color-mix(in srgb, var(--text) 8%, transparent);
-  animation: pgRise .55s cubic-bezier(.2, .8, .2, 1) both;
+    radial-gradient(
+      ellipse 80% 60% at 0 0,
+      color-mix(in srgb, var(--accent) 16%, transparent),
+      transparent 70%
+    ),
+    linear-gradient(
+      160deg,
+      color-mix(in srgb, var(--text) 6.5%, transparent),
+      color-mix(in srgb, var(--text) 1.8%, transparent)
+    );
+  box-shadow:
+    0 0 0 1px
+      color-mix(in srgb, var(--theme-secondary, var(--accent)) 14%, transparent),
+    0 20px 50px color-mix(in srgb, #000 26%, transparent),
+    inset 0 1px color-mix(in srgb, var(--text) 8%, transparent);
+  animation: pgRise 0.55s cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
 
 :host .training-program-label {
@@ -70,21 +98,29 @@
 :host .training-session-hero h1 {
   font-size: clamp(26px, 7.4vw, 32px);
   font-weight: 750;
-  letter-spacing: -.045em;
+  letter-spacing: -0.045em;
 }
 
 :host :is(.reference-wave-card, .simple-plan, .training-path) {
   border: 1px solid var(--line);
   border-radius: 22px;
-  background: linear-gradient(160deg, color-mix(in srgb, var(--text) 6.5%, transparent), color-mix(in srgb, var(--text) 1.8%, transparent));
-  box-shadow: 0 12px 30px color-mix(in srgb, #000 16%, transparent), inset 0 1px color-mix(in srgb, var(--text) 7%, transparent);
-  animation: pgRise .5s cubic-bezier(.2, .8, .2, 1) both;
-  transition: transform .18s ease, border-color .2s ease;
+  background: linear-gradient(
+    160deg,
+    color-mix(in srgb, var(--text) 6.5%, transparent),
+    color-mix(in srgb, var(--text) 1.8%, transparent)
+  );
+  box-shadow:
+    0 12px 30px color-mix(in srgb, #000 16%, transparent),
+    inset 0 1px color-mix(in srgb, var(--text) 7%, transparent);
+  animation: pgRise 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  transition:
+    transform 0.18s ease,
+    border-color 0.2s ease;
 }
 
 :host a.reference-wave-card:active,
 :host button.reference-wave-card:active {
-  transform: scale(.985);
+  transform: scale(0.985);
 }
 
 :host .training-path {
@@ -93,7 +129,7 @@
 
 :host .plans-list-heading h2 {
   font-weight: 750;
-  letter-spacing: -.04em;
+  letter-spacing: -0.04em;
 }
 
 :host .training-manager-controls .button {
@@ -101,7 +137,12 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  :host *, :host *::before, :host *::after { animation: none !important; transition: none !important; }
+  :host *,
+  :host *::before,
+  :host *::after {
+    animation: none !important;
+    transition: none !important;
+  }
 }
 
 /* Menu "⋯" del piano: pannello opaco, sopra le altre card, voci compatte */
@@ -119,7 +160,7 @@
   border: 1px solid color-mix(in srgb, var(--accent-text) 30%, var(--line));
   border-radius: 18px;
   background: color-mix(in srgb, var(--text) 9%, var(--bg));
-  box-shadow: 0 18px 44px rgba(0, 0, 0, .55);
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.55);
   -webkit-backdrop-filter: none;
   backdrop-filter: none;
   z-index: 50;
@@ -149,5 +190,5 @@
 :host .simple-plan-title strong {
   font-size: clamp(16px, 4.6vw, 19px);
   line-height: 1.2;
-  letter-spacing: -.02em;
+  letter-spacing: -0.02em;
 }

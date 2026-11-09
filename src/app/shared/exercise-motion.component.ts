@@ -1,13 +1,28 @@
-import {AfterViewInit,Component,ElementRef,computed,effect,inject,input,signal,viewChild} from '@angular/core';
-import {Exercise} from '../models/domain';
-import {movementKind} from '../services/exercise-visual';
-import {exerciseMotionFrames} from '../services/exercise-motion-frames';
-import {ExerciseThumbComponent} from './exercise-thumb.component';
+import {
+  AfterViewInit,
+  Component,
+  ElementRef,
+  computed,
+  effect,
+  inject,
+  input,
+  signal,
+  viewChild,
+} from "@angular/core";
+import { Exercise } from "../models/domain";
+import { movementKind } from "../services/exercise-visual";
+import { exerciseMotionFrames } from "../services/exercise-motion-frames";
+import { ExerciseThumbComponent } from "./exercise-thumb.component";
 
-let motionPanelCount=0;
-type MotionView='image'|'sequence'|'3d';
+let motionPanelCount = 0;
+type MotionView = "image" | "sequence" | "3d";
 
-@Component({selector:'gt-exercise-motion',standalone:true,imports:[ExerciseThumbComponent],styleUrl:'./exercise-motion.component.css',template:`
+@Component({
+  selector: "gt-exercise-motion",
+  standalone: true,
+  imports: [ExerciseThumbComponent],
+  styleUrl: "./exercise-motion.component.css",
+  template: `
 @if(frames();as animation){
  <button type="button" class="ghost motion-opener" (click)="toggleOpen()" [attr.aria-expanded]="open()" [attr.aria-controls]="panelId">{{open()?'Chiudi dimostrazione':'▷ Immagine e sequenza animata'}}</button>
  @if(open()){
@@ -56,68 +71,223 @@ type MotionView='image'|'sequence'|'3d';
   </section>
  }
 }
-`})
+`,
+})
 export class ExerciseMotionComponent implements AfterViewInit {
- exercise=input<Exercise>();showSequence=input(false);
- frames=computed(()=>exerciseMotionFrames(this.exercise()));
- kind=computed(()=>movementKind(this.exercise()));
- open=signal(false);view=signal<MotionView>('image');frame=signal(0);playing=signal(false);speed=signal(1);
- framesLoaded=signal(false);framesFailed=signal(false);issue=signal('');
- readonly panelId='exercise-motion-'+(++motionPanelCount);
- private host=inject(ElementRef<HTMLElement>);
- private inViewport=signal(true);
- private pageVisible=signal(typeof document==='undefined'||document.visibilityState!=='hidden');
- private observer?:IntersectionObserver;
- private media=typeof matchMedia==='function'?matchMedia('(prefers-reduced-motion: reduce)'):undefined;
- private retryVersion=signal(0);
- private animationKey=computed(()=>{const frames=this.frames();return frames?`${this.exercise()?.id||''}|${frames.source}`:'';});
- spatialStage=viewChild<ElementRef<HTMLElement>>('spatialStage');
- currentPhase=computed(()=>this.frames()?.phases[this.frame()]||{label:'Posizione iniziale',cue:''});
- frameBox=computed(()=>`${this.frame()%3*512} ${Math.floor(this.frame()/3)*512} 512 512`);
- speedLabel=computed(()=>String(this.speed()).replace('.',',')+'×');
- private visibilityChanged=()=>{this.pageVisible.set(document.visibilityState!=='hidden');if(!this.pageVisible())this.pause();};
- private motionPreferenceChanged=()=>{this.pause();this.retryVersion.update(version=>version+1);};
- constructor(){
-  effect(()=>{this.animationKey();this.pause();this.frame.set(0);this.framesLoaded.set(false);this.framesFailed.set(false);this.view.set('image');});
-  effect(()=>{if(this.showSequence()&&this.animationKey()){this.pause();this.open.set(true);this.view.set('sequence');}});
-  effect(()=>{if(!this.open()||!this.inViewport()||!this.pageVisible())this.pause();});
-  effect(cleanup=>{
-   const animation=this.frames(),playing=this.playing(),speed=this.speed();
-   if(!animation||!playing||!this.open()||this.view()!=='sequence'||!this.inViewport()||!this.pageVisible())return;
-   let handle=0,last:number|undefined,elapsed=0;
-   const interval=Math.max(1,animation.durationMs/animation.frames/speed);
-   const tick=(time:number)=>{if(last!==undefined)elapsed+=Math.min(1000,time-last);last=time;if(elapsed>=interval){const steps=Math.floor(elapsed/interval);elapsed%=interval;this.frame.update(frame=>(frame+steps)%animation.frames);}handle=requestAnimationFrame(tick);};
-   handle=requestAnimationFrame(tick);cleanup(()=>cancelAnimationFrame(handle));
+  exercise = input<Exercise>();
+  showSequence = input(false);
+  frames = computed(() => exerciseMotionFrames(this.exercise()));
+  kind = computed(() => movementKind(this.exercise()));
+  open = signal(false);
+  view = signal<MotionView>("image");
+  frame = signal(0);
+  playing = signal(false);
+  speed = signal(1);
+  framesLoaded = signal(false);
+  framesFailed = signal(false);
+  issue = signal("");
+  readonly panelId = "exercise-motion-" + ++motionPanelCount;
+  private host = inject(ElementRef<HTMLElement>);
+  private inViewport = signal(true);
+  private pageVisible = signal(
+    typeof document === "undefined" || document.visibilityState !== "hidden",
+  );
+  private observer?: IntersectionObserver;
+  private media =
+    typeof matchMedia === "function"
+      ? matchMedia("(prefers-reduced-motion: reduce)")
+      : undefined;
+  private retryVersion = signal(0);
+  private animationKey = computed(() => {
+    const frames = this.frames();
+    return frames ? `${this.exercise()?.id || ""}|${frames.source}` : "";
   });
-  effect(cleanup=>{
-   const element=this.spatialStage()?.nativeElement,type=this.kind();this.retryVersion();
-   if(!element||!type||this.view()!=='3d'||!this.open()||!this.inViewport()||!this.pageVisible())return;
-   let cancelled=false,dispose:(()=>void)|undefined;
-   cleanup(()=>{cancelled=true;dispose?.();});
-   const url='/training/movement.js';this.issue.set('');
-   void import(/* @vite-ignore */ url).then((module:{mountMovement:(stage:HTMLElement,type:string)=>(()=>void)})=>{
-    if(cancelled)return;dispose=module.mountMovement(element,type);element.dataset['view']='motion';
-   }).catch(()=>{if(!cancelled){this.issue.set('Modello non disponibile. Puoi consultare l’immagine e la sequenza.');element.dataset['failed']='true';}});
-  });
- }
- ngAfterViewInit(){
-  if(typeof document!=='undefined')document.addEventListener('visibilitychange',this.visibilityChanged);
-  this.media?.addEventListener?.('change',this.motionPreferenceChanged);
-  if(typeof IntersectionObserver!=='undefined'){
-   this.observer=new IntersectionObserver(entries=>{const visible=entries.some(entry=>entry.isIntersecting);this.inViewport.set(visible);if(!visible)this.pause();},{threshold:0});
-   this.observer.observe(this.host.nativeElement);
+  spatialStage = viewChild<ElementRef<HTMLElement>>("spatialStage");
+  currentPhase = computed(
+    () =>
+      this.frames()?.phases[this.frame()] || {
+        label: "Posizione iniziale",
+        cue: "",
+      },
+  );
+  frameBox = computed(
+    () =>
+      `${(this.frame() % 3) * 512} ${Math.floor(this.frame() / 3) * 512} 512 512`,
+  );
+  speedLabel = computed(() => String(this.speed()).replace(".", ",") + "×");
+  private visibilityChanged = () => {
+    this.pageVisible.set(document.visibilityState !== "hidden");
+    if (!this.pageVisible()) this.pause();
+  };
+  private motionPreferenceChanged = () => {
+    this.pause();
+    this.retryVersion.update((version) => version + 1);
+  };
+  constructor() {
+    effect(() => {
+      this.animationKey();
+      this.pause();
+      this.frame.set(0);
+      this.framesLoaded.set(false);
+      this.framesFailed.set(false);
+      this.view.set("image");
+    });
+    effect(() => {
+      if (this.showSequence() && this.animationKey()) {
+        this.pause();
+        this.open.set(true);
+        this.view.set("sequence");
+      }
+    });
+    effect(() => {
+      if (!this.open() || !this.inViewport() || !this.pageVisible())
+        this.pause();
+    });
+    effect((cleanup) => {
+      const animation = this.frames(),
+        playing = this.playing(),
+        speed = this.speed();
+      if (
+        !animation ||
+        !playing ||
+        !this.open() ||
+        this.view() !== "sequence" ||
+        !this.inViewport() ||
+        !this.pageVisible()
+      )
+        return;
+      let handle = 0,
+        last: number | undefined,
+        elapsed = 0;
+      const interval = Math.max(
+        1,
+        animation.durationMs / animation.frames / speed,
+      );
+      const tick = (time: number) => {
+        if (last !== undefined) elapsed += Math.min(1000, time - last);
+        last = time;
+        if (elapsed >= interval) {
+          const steps = Math.floor(elapsed / interval);
+          elapsed %= interval;
+          this.frame.update((frame) => (frame + steps) % animation.frames);
+        }
+        handle = requestAnimationFrame(tick);
+      };
+      handle = requestAnimationFrame(tick);
+      cleanup(() => cancelAnimationFrame(handle));
+    });
+    effect((cleanup) => {
+      const element = this.spatialStage()?.nativeElement,
+        type = this.kind();
+      this.retryVersion();
+      if (
+        !element ||
+        !type ||
+        this.view() !== "3d" ||
+        !this.open() ||
+        !this.inViewport() ||
+        !this.pageVisible()
+      )
+        return;
+      let cancelled = false,
+        dispose: (() => void) | undefined;
+      cleanup(() => {
+        cancelled = true;
+        dispose?.();
+      });
+      const url = "/training/movement.js";
+      this.issue.set("");
+      void import(/* @vite-ignore */ url)
+        .then(
+          (module: {
+            mountMovement: (stage: HTMLElement, type: string) => () => void;
+          }) => {
+            if (cancelled) return;
+            dispose = module.mountMovement(element, type);
+            element.dataset["view"] = "motion";
+          },
+        )
+        .catch(() => {
+          if (!cancelled) {
+            this.issue.set(
+              "Modello non disponibile. Puoi consultare l’immagine e la sequenza.",
+            );
+            element.dataset["failed"] = "true";
+          }
+        });
+    });
   }
- }
- toggleOpen(){this.pause();this.open.update(open=>!open);if(!this.open())this.view.set('image');}
- chooseView(view:MotionView){this.pause();this.view.set(view);}
- pause(){this.playing.set(false);}
- togglePlay(){if(!this.framesLoaded()||this.framesFailed()||!this.inViewport()||!this.pageVisible())return;this.playing.update(playing=>!playing);}
- seek(frame:number){this.pause();const max=(this.frames()?.frames||1)-1;this.frame.set(Math.max(0,Math.min(max,Math.round(frame))));}
- step(delta:number){const count=this.frames()?.frames||1;this.seek((this.frame()+delta+count)%count);}
- scrub(event:Event){this.seek(Number((event.target as HTMLInputElement).value));}
- cycleSpeed(){this.speed.update(speed=>speed===.5?1:speed===1?1.5:.5);}
- framesError(){this.pause();this.framesFailed.set(true);this.framesLoaded.set(false);}
- retryFrames(){this.pause();this.framesLoaded.set(false);this.framesFailed.set(false);}
- retry3d(){this.retryVersion.update(version=>version+1);}
- ngOnDestroy(){this.pause();this.observer?.disconnect();if(typeof document!=='undefined')document.removeEventListener('visibilitychange',this.visibilityChanged);this.media?.removeEventListener?.('change',this.motionPreferenceChanged);}
+  ngAfterViewInit() {
+    if (typeof document !== "undefined")
+      document.addEventListener("visibilitychange", this.visibilityChanged);
+    this.media?.addEventListener?.("change", this.motionPreferenceChanged);
+    if (typeof IntersectionObserver !== "undefined") {
+      this.observer = new IntersectionObserver(
+        (entries) => {
+          const visible = entries.some((entry) => entry.isIntersecting);
+          this.inViewport.set(visible);
+          if (!visible) this.pause();
+        },
+        { threshold: 0 },
+      );
+      this.observer.observe(this.host.nativeElement);
+    }
+  }
+  toggleOpen() {
+    this.pause();
+    this.open.update((open) => !open);
+    if (!this.open()) this.view.set("image");
+  }
+  chooseView(view: MotionView) {
+    this.pause();
+    this.view.set(view);
+  }
+  pause() {
+    this.playing.set(false);
+  }
+  togglePlay() {
+    if (
+      !this.framesLoaded() ||
+      this.framesFailed() ||
+      !this.inViewport() ||
+      !this.pageVisible()
+    )
+      return;
+    this.playing.update((playing) => !playing);
+  }
+  seek(frame: number) {
+    this.pause();
+    const max = (this.frames()?.frames || 1) - 1;
+    this.frame.set(Math.max(0, Math.min(max, Math.round(frame))));
+  }
+  step(delta: number) {
+    const count = this.frames()?.frames || 1;
+    this.seek((this.frame() + delta + count) % count);
+  }
+  scrub(event: Event) {
+    this.seek(Number((event.target as HTMLInputElement).value));
+  }
+  cycleSpeed() {
+    this.speed.update((speed) => (speed === 0.5 ? 1 : speed === 1 ? 1.5 : 0.5));
+  }
+  framesError() {
+    this.pause();
+    this.framesFailed.set(true);
+    this.framesLoaded.set(false);
+  }
+  retryFrames() {
+    this.pause();
+    this.framesLoaded.set(false);
+    this.framesFailed.set(false);
+  }
+  retry3d() {
+    this.retryVersion.update((version) => version + 1);
+  }
+  ngOnDestroy() {
+    this.pause();
+    this.observer?.disconnect();
+    if (typeof document !== "undefined")
+      document.removeEventListener("visibilitychange", this.visibilityChanged);
+    this.media?.removeEventListener?.("change", this.motionPreferenceChanged);
+  }
 }

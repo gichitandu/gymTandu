@@ -1,40 +1,74 @@
-import {setupKey} from "./training-flow";
-import { DataSet, LoadMode, WorkoutLog, WorkoutLogSet, localDate } from "../models/domain";
+import { setupKey } from "./training-flow";
+import {
+  DataSet,
+  LoadMode,
+  WorkoutLog,
+  WorkoutLogSet,
+  localDate,
+} from "../models/domain";
 export function epley(weight: number, reps: number): number {
   // Con una sola ripetizione il massimale stimato coincide con il carico sollevato.
-  return weight > 0 && reps > 0 ? (reps === 1 ? weight : weight * (1 + reps / 30)) : 0;
+  return weight > 0 && reps > 0
+    ? reps === 1
+      ? weight
+      : weight * (1 + reps / 30)
+    : 0;
 }
 export function volume(sets: WorkoutLogSet[], mode: LoadMode): number {
   return mode === "external"
-    ? sets.filter((s) => s.completed&&s.kind!=="warmup").reduce((v, s) => v + s.weight * s.reps, 0)
+    ? sets
+        .filter((s) => s.completed && s.kind !== "warmup")
+        .reduce((v, s) => v + s.weight * s.reps, 0)
     : 0;
 }
 export function sessionVolume(data: DataSet, w: WorkoutLog): number {
   // One pass over the sets rather than a full scan for every exercise.
   // Preserves the historical definition: completed working sets, external load only.
-  const ids=new Set(data.workoutExercises.filter(e=>e.workoutId===w.id&&e.loadMode==='external'&&!/da verificare|da confermare|sconosciut|unknown/i.test(e.loadUnit||'')).map(e=>e.id));
-  let total=0;
-  for(const set of data.sets)if(ids.has(set.workoutExerciseId)&&set.completed&&set.kind!=='warmup')total+=set.weight*set.reps;
+  const ids = new Set(
+    data.workoutExercises
+      .filter(
+        (e) =>
+          e.workoutId === w.id &&
+          e.loadMode === "external" &&
+          !/da verificare|da confermare|sconosciut|unknown/i.test(
+            e.loadUnit || "",
+          ),
+      )
+      .map((e) => e.id),
+  );
+  let total = 0;
+  for (const set of data.sets)
+    if (
+      ids.has(set.workoutExerciseId) &&
+      set.completed &&
+      set.kind !== "warmup"
+    )
+      total += set.weight * set.reps;
   return total;
 }
-export function exerciseRecords(data: DataSet, id: string,machine?:string) {
+export function exerciseRecords(data: DataSet, id: string, machine?: string) {
   const mode = data.exercises.find((e) => e.id === id)?.loadMode;
   const rows = data.workoutExercises.filter(
     (e) =>
       e.exerciseId === id &&
-      (machine===undefined||setupKey(e.machineSetup)===machine) &&
+      (machine === undefined || setupKey(e.machineSetup) === machine) &&
       (!mode || e.loadMode === mode) &&
       data.workouts.some(
         (w) => w.id === e.workoutId && w.status === "completed",
       ),
   );
   const sets = rows.flatMap((e) =>
-    data.sets.filter((s) => s.workoutExerciseId === e.id && s.completed&&s.kind!=="warmup"),
+    data.sets.filter(
+      (s) => s.workoutExerciseId === e.id && s.completed && s.kind !== "warmup",
+    ),
   );
   const external = rows
     .filter((e) => e.loadMode === "external")
     .flatMap((e) =>
-      data.sets.filter((s) => s.workoutExerciseId === e.id && s.completed&&s.kind!=="warmup"),
+      data.sets.filter(
+        (s) =>
+          s.workoutExerciseId === e.id && s.completed && s.kind !== "warmup",
+      ),
     );
   return {
     maxWeight: Math.max(0, ...sets.map((s) => s.weight)),
@@ -76,7 +110,7 @@ export function chartSeries(
   planId: string,
   months: number,
   metric: Metric,
-  machine?:string,
+  machine?: string,
   options: ChartPeriod = {},
 ) {
   const today = options.today ?? localDate();
@@ -113,13 +147,16 @@ export function chartSeries(
       (e) =>
         e.workoutId === w.id &&
         e.exerciseId === id &&
-      (machine===undefined||setupKey(e.machineSetup)===machine) &&
+        (machine === undefined || setupKey(e.machineSetup) === machine) &&
         e.loadMode ===
           (data.exercises.find((x) => x.id === id)?.loadMode ?? e.loadMode),
     );
     if (!entries.length) return [];
     const sets = entries.flatMap((e) =>
-      data.sets.filter((s) => s.workoutExerciseId === e.id && s.completed&&s.kind!=="warmup"),
+      data.sets.filter(
+        (s) =>
+          s.workoutExerciseId === e.id && s.completed && s.kind !== "warmup",
+      ),
     );
     if (!sets.length) return [];
     if (

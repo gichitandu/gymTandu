@@ -133,9 +133,7 @@ export function coachNextSet(input: CoachInput): CoachSuggestion | null {
 
   const weight = reference[0].weight;
   const allAtMax = reference.every((s) => s.reps >= repsMax);
-  const easyEnough = reference.every(
-    (s) => validRpe(s.rpe) && s.rpe <= 8,
-  );
+  const easyEnough = reference.every((s) => validRpe(s.rpe) && s.rpe <= 8);
   if (readiness === "low")
     return {
       action: "hold",
@@ -158,7 +156,8 @@ export function coachNextSet(input: CoachInput): CoachSuggestion | null {
     action: "hold",
     weight,
     reps: clamp(minReps + 1, repsMin, repsMax),
-    reason: "Stesso carico dell'ultima volta, puntando a una ripetizione in più.",
+    reason:
+      "Stesso carico dell'ultima volta, puntando a una ripetizione in più.",
     basis: "reference",
   };
 }

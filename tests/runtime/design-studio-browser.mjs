@@ -1,8 +1,8 @@
 // Run against the loopback fixture; never connects to the published Site.
 import assert from "node:assert/strict";
-import {mkdir} from "node:fs/promises";
-const outputDirectory=process.env.GYMTRACK_QA_OUTPUT||"docs/qa";
-await mkdir(outputDirectory,{recursive:true});
+import { mkdir } from "node:fs/promises";
+const outputDirectory = process.env.GYMTRACK_QA_OUTPUT || "docs/qa";
+await mkdir(outputDirectory, { recursive: true });
 const { chromium } = await import(
   process.env.GYMTRACK_PLAYWRIGHT_MODULE || "playwright"
 );
@@ -148,13 +148,11 @@ try {
     schemaVersion: 1,
     config: { ...draftBefore.draft.config, global: { onClick: "alert(1)" } },
   };
-  await page
-    .locator(".studio-import input")
-    .setInputFiles({
-      name: "invalid.json",
-      mimeType: "application/json",
-      buffer: Buffer.from(JSON.stringify(imported)),
-    });
+  await page.locator(".studio-import input").setInputFiles({
+    name: "invalid.json",
+    mimeType: "application/json",
+    buffer: Buffer.from(JSON.stringify(imported)),
+  });
   await page.getByRole("alert").filter({ hasText: "non valida" }).waitFor();
   assert.deepEqual(
     (await call("design/studio")).draft.config,
@@ -242,7 +240,7 @@ try {
       }[id],
     ).waitFor();
     await page.screenshot({
-      path: outputDirectory+"/gt-studio-" + id + "-desktop.png",
+      path: outputDirectory + "/gt-studio-" + id + "-desktop.png",
       fullPage: true,
     });
   }
@@ -273,7 +271,7 @@ try {
     .click();
   await page.locator(".studio-preview-panel").waitFor({ state: "visible" });
   await page.screenshot({
-    path: outputDirectory+"/gt-studio-mobile.png",
+    path: outputDirectory + "/gt-studio-mobile.png",
     fullPage: true,
   });
   mark("390px mobile layout without horizontal overflow");

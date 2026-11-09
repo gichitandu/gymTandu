@@ -1,6 +1,6 @@
 import "@angular/compiler";
 import { afterEach, expect, it, vi } from "vitest";
-import {signal} from '@angular/core';
+import { signal } from "@angular/core";
 import { readFileSync } from "node:fs";
 import {
   APPROVED_THEME_PALETTES,

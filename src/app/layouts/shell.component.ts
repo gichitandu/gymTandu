@@ -1,26 +1,54 @@
-import {BottomNavigationComponent, navigationDesignId} from '../shared/bottom-navigation.component';
-import {DataStatusComponent} from '../shared/data-status.component';
-import {DesignPageDirective, DESIGN_DIRECTIVES} from '../design/design-directives';
-import {AppFeaturesService} from '../services/app-features';
-import { WorkoutClockComponent } from '../shared/workout-clock.component';
-import {WorkoutResumeService} from "../services/workout-resume";
+import {
+  BottomNavigationComponent,
+  navigationDesignId,
+} from "../shared/bottom-navigation.component";
+import { DataStatusComponent } from "../shared/data-status.component";
+import {
+  DesignPageDirective,
+  DESIGN_DIRECTIVES,
+} from "../design/design-directives";
+import { AppFeaturesService } from "../services/app-features";
+import { WorkoutClockComponent } from "../shared/workout-clock.component";
+import { WorkoutResumeService } from "../services/workout-resume";
 import { AvatarComponent } from "../shared/avatar.component";
 import { AuthService } from "../services/auth";
 import { Store } from "../services/store";
 import { PwaService } from "../services/pwa";
 import { Component, effect, inject, ViewEncapsulation } from "@angular/core";
-import { Router, RouterLink, RouterLinkActive, RouterOutlet } from "@angular/router";
+import {
+  Router,
+  RouterLink,
+  RouterLinkActive,
+  RouterOutlet,
+} from "@angular/router";
 import { IconComponent } from "../shared/icon.component";
 import { ArchiveRecoveryComponent } from "../shared/archive-recovery.component";
 import { ArchiveSyncService } from "../services/archive-sync";
-import { canResumeAtHome, MobileNavigationService } from "../services/mobile-navigation";
+import {
+  canResumeAtHome,
+  MobileNavigationService,
+} from "../services/mobile-navigation";
 @Component({
   selector: "gt-shell",
-  host: {class: "design-v2 photo-controls", "[class.reference-pages]":"referencePage()"},
+  host: {
+    class: "design-v2 photo-controls",
+    "[class.reference-pages]": "referencePage()",
+  },
   standalone: true,
   hostDirectives: [DesignPageDirective],
-  imports: [...DESIGN_DIRECTIVES,BottomNavigationComponent,DataStatusComponent,WorkoutClockComponent,RouterLink, RouterLinkActive, RouterOutlet, IconComponent, AvatarComponent, ArchiveRecoveryComponent],
-  styleUrls: ['./experience.css'],
+  imports: [
+    ...DESIGN_DIRECTIVES,
+    BottomNavigationComponent,
+    DataStatusComponent,
+    WorkoutClockComponent,
+    RouterLink,
+    RouterLinkActive,
+    RouterOutlet,
+    IconComponent,
+    AvatarComponent,
+    ArchiveRecoveryComponent,
+  ],
+  styleUrls: ["./experience.css"],
   encapsulation: ViewEncapsulation.None,
   template: ` <gt-workout-clock/><aside class="sidebar">
       <a class="brand" routerLink="/"
@@ -51,24 +79,91 @@ import { canResumeAtHome, MobileNavigationService } from "../services/mobile-nav
 })
 export class ShellComponent {
   navigationDesignId = navigationDesignId;
-  private resume=inject(WorkoutResumeService);private firstOpen=true;
-  private navigation=inject(MobileNavigationService);
-  constructor(){effect(()=>{if(!this.s.ready()||!this.firstOpen||!this.navigation.resolved())return;this.firstOpen=false;const w=this.s.draft();if(w&&canResumeAtHome(this.navigation.url(),this.navigation.resolved())&&this.resume.read(this.s.archiveKey(),w.id,this.s.data().workoutUi.find(x=>x.id===w.id),this.s.archiveRevision()))void this.router.navigateByUrl('/sessione');});effect(()=>{if(this.features?.ready()&&!this.features.nutritionEnabled()&&this.router.url.split('?')[0]==='/alimentazione')void this.router.navigateByUrl('/');});}
-  router=inject(Router);
-  referencePage(){return ['/','/piani','/progressi'].includes(this.router.url.split('?')[0]);}
+  private resume = inject(WorkoutResumeService);
+  private firstOpen = true;
+  private navigation = inject(MobileNavigationService);
+  constructor() {
+    effect(() => {
+      if (!this.s.ready() || !this.firstOpen || !this.navigation.resolved())
+        return;
+      this.firstOpen = false;
+      const w = this.s.draft();
+      if (
+        w &&
+        canResumeAtHome(this.navigation.url(), this.navigation.resolved()) &&
+        this.resume.read(
+          this.s.archiveKey(),
+          w.id,
+          this.s.data().workoutUi.find((x) => x.id === w.id),
+          this.s.archiveRevision(),
+        )
+      )
+        void this.router.navigateByUrl("/sessione");
+    });
+    effect(() => {
+      if (
+        this.features?.ready() &&
+        !this.features.nutritionEnabled() &&
+        this.router.url.split("?")[0] === "/alimentazione"
+      )
+        void this.router.navigateByUrl("/");
+    });
+  }
+  router = inject(Router);
+  referencePage() {
+    return ["/", "/piani", "/progressi"].includes(
+      this.router.url.split("?")[0],
+    );
+  }
   auth = inject(AuthService);
-  features=inject(AppFeaturesService,{optional:true});
+  features = inject(AppFeaturesService, { optional: true });
   s = inject(Store);
   pwa = inject(PwaService);
   cloud = inject(ArchiveSyncService);
-  backupStatus(){return ({local:'Archivio sul dispositivo',syncing:'Copia server in corso',saved:'Copia server aggiornata',offline:'Copia server in attesa della rete',conflict:'Copie da verificare'})[this.cloud.status()];}
-  private navItems: {path:string;label:string;mobileLabel?:string;icon:string}[] = [
-    {path:'/',label:'Home',icon:'home'},
-    {path:'/piani',label:'Allenamenti',mobileLabel:'Allenati',icon:'weight'},
-    {path:'/alimentazione',label:'Alimentazione',mobileLabel:'Pasti',icon:'nutrition'},
-    {path:'/progressi',label:'Progressi',icon:'chart'},
-    {path:'/profilo',label:'Profilo',icon:'user'},
+  backupStatus() {
+    return {
+      local: "Archivio sul dispositivo",
+      syncing: "Copia server in corso",
+      saved: "Copia server aggiornata",
+      offline: "Copia server in attesa della rete",
+      conflict: "Copie da verificare",
+    }[this.cloud.status()];
+  }
+  private navItems: {
+    path: string;
+    label: string;
+    mobileLabel?: string;
+    icon: string;
+  }[] = [
+    { path: "/", label: "Home", icon: "home" },
+    {
+      path: "/piani",
+      label: "Allenamenti",
+      mobileLabel: "Allenati",
+      icon: "weight",
+    },
+    {
+      path: "/alimentazione",
+      label: "Alimentazione",
+      mobileLabel: "Pasti",
+      icon: "nutrition",
+    },
+    { path: "/progressi", label: "Progressi", icon: "chart" },
+    { path: "/profilo", label: "Profilo", icon: "user" },
   ];
-  get nav(){return this.navItems.filter(item=>item.path!=='/alimentazione');}
-  get desktopNav(){return [...this.navItems.filter(item=>item.path!=='/alimentazione'||this.features?.nutritionEnabled()),{path:'/calendario',label:'Calendario',icon:'calendar'},{path:'/allenamenti',label:'Storico',icon:'clock'},{path:'/recupero',label:'Recovery',icon:'moon'},{path:'/focus-muscolare',label:'Focus muscolare',icon:'activity'}];}
+  get nav() {
+    return this.navItems.filter((item) => item.path !== "/alimentazione");
+  }
+  get desktopNav() {
+    return [
+      ...this.navItems.filter(
+        (item) =>
+          item.path !== "/alimentazione" || this.features?.nutritionEnabled(),
+      ),
+      { path: "/calendario", label: "Calendario", icon: "calendar" },
+      { path: "/allenamenti", label: "Storico", icon: "clock" },
+      { path: "/recupero", label: "Recovery", icon: "moon" },
+      { path: "/focus-muscolare", label: "Focus muscolare", icon: "activity" },
+    ];
+  }
 }
