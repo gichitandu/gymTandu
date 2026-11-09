@@ -188,11 +188,13 @@
   margin: 12px 0 14px;
   align-items: stretch;
   justify-content: stretch;
+  overflow-x: auto;
+  scrollbar-width: none;
 }
 
 :host .recording-series button {
-  flex: 1 1 0;
-  min-width: 0;
+  flex: 1 0 64px;
+  min-width: 64px;
   width: auto;
   height: auto;
   min-height: 56px;

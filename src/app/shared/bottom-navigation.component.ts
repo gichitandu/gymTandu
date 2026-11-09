@@ -53,7 +53,10 @@ export const navigationDesignId = (path: string) => ({
         [class.training-selected]="
           item.path === '/piani' &&
           (activeUrl().startsWith('/sessione') ||
-            activeUrl().startsWith('/allenamenti'))
+            activeUrl().startsWith('/allenamenti') ||
+            activeUrl().startsWith('/piano/') ||
+            activeUrl().startsWith('/anteprima-allenamento') ||
+            activeUrl().startsWith('/importa-excel'))
         "
         [routerLinkActiveOptions]="{ exact: true }"
         [class.selected]="

@@ -86,7 +86,7 @@ i.rest{background:color-mix(in srgb,var(--hx-rest) 16%,transparent);color:var(--
 .hx-sec{margin-top:26px;animation:hxRise .6s .34s both}
 .hx-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin:0 4px 11px}
 .hx-head h2{margin:0;font-size:20px;line-height:1.25;letter-spacing:-.7px;font-weight:800}
-.hx-link{display:flex;align-items:center;gap:4px;min-height:28px;flex:none;font-size:12.5px;font-weight:650;color:var(--accent-text);text-decoration:none}
+.hx-link{display:flex;align-items:center;gap:4px;min-height:44px;flex:none;font-size:12.5px;font-weight:650;color:var(--accent-text);text-decoration:none}
 .hx-link gt-icon{width:14px;height:14px}
 .hx-subtle{margin:-6px 4px 11px;font-size:12px;color:var(--muted)}
 
