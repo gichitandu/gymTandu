@@ -35,11 +35,14 @@ function withWeeks(today: string, sessionsPerWeek: number[]) {
 
 describe("settimana di scarico", () => {
   const today = "2026-11-08";
+  it("non lo suggerisce a chi si allena solo 2 volte a settimana", () => {
+    expect(deloadInsight(withWeeks(today, [2, 2, 2, 2, 2]), today)).toBeNull();
+  });
   it("non suggerisce nulla con poche settimane consecutive", () => {
     expect(deloadInsight(withWeeks(today, [3, 3, 3]), today)).toBeNull();
   });
-  it("suggerisce lo scarico dopo 4 settimane con almeno 2 sedute", () => {
-    const insight = deloadInsight(withWeeks(today, [3, 2, 3, 2]), today);
+  it("suggerisce lo scarico dopo 4 settimane con almeno 3 sedute", () => {
+    const insight = deloadInsight(withWeeks(today, [3, 4, 3, 3]), today);
     expect(insight?.kind).toBe("recovery");
     expect(insight?.message).toContain("4 settimane");
   });

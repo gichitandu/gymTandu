@@ -16,6 +16,7 @@ export function validateIntegrity(d: DataSet) {
       fail("ID duplicati in " + name);
   }
   if(d.settings.some(s=>s.neonGlow!==undefined&&(!Number.isInteger(s.neonGlow)||s.neonGlow<0||s.neonGlow>100)||s.dynamicBackground!==undefined&&typeof s.dynamicBackground!=='boolean'))fail('aspetto non valido');
+  if (!d.profiles[0] || !d.settings[0]) fail("profilo locale mancante");
   if (d.profiles[0].id !== "local" || d.settings[0].id !== "local")
     fail("profilo locale non valido");
   if (

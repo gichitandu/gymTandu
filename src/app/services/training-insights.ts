@@ -10,14 +10,14 @@ const fromDays=(today:string,days:number)=>{const date=new Date(today+'T12:00:00
 const finished=(data:DataSet,from:string,to:string)=>data.workouts.filter(w=>w.status==='completed'&&w.date>=from&&w.date<=to);
 /**
  * Settimana di scarico: suggerisce una pausa più leggera dopo molte settimane consecutive
- * con almeno due sedute (finestre mobili di 7 giorni che terminano oggi). Solo osservazione:
+ * con almeno tre sedute (finestre mobili di 7 giorni che terminano oggi). Solo osservazione:
  * non modifica piani né carichi.
  */
-export function deloadInsight(data:DataSet,today=localDate(),minWeeks=4):TrainingInsight|null {
+export function deloadInsight(data:DataSet,today=localDate(),minWeeks=4,minSessions=3):TrainingInsight|null {
  let weeks=0;
  for(let i=0;i<8;i++){
   const to=i===0?today:fromDays(today,i*7+1);
-  if(finished(data,fromDays(to,7),to).length<2)break;
+  if(finished(data,fromDays(to,7),to).length<minSessions)break;
   weeks++;
  }
  if(weeks<minWeeks)return null;
@@ -25,7 +25,7 @@ export function deloadInsight(data:DataSet,today=localDate(),minWeeks=4):Trainin
  const rpe=data.sets.filter(x=>x.completed&&x.kind!=='warmup'&&x.rpe!==undefined&&ids.has(x.workoutExerciseId)).map(x=>x.rpe as number);
  const hard=rpe.length>=5&&rpe.reduce((n,v)=>n+v,0)/rpe.length>=8.5;
  return {kind:'recovery',title:'Valuta una settimana di scarico',
-  message:`Ti alleni con continuità da ${weeks} settimane, senza una settimana più leggera.${hard?' Nell’ultima settimana lo sforzo medio è stato alto (RPE 8,5 o più).':''} Puoi provare per una settimana a ridurre volume o carichi di circa il 30–40%, oppure confrontarti con un professionista. È solo un’indicazione: il piano non viene cambiato.`};
+  message:`Ti alleni con almeno 3 sedute a settimana da ${weeks} settimane, senza una settimana più leggera.${hard?' Nell’ultima settimana lo sforzo medio è stato alto (RPE 8,5 o più).':''} Puoi provare per una settimana a ridurre volume o carichi di circa il 30–40%, oppure confrontarti con un professionista. È solo un’indicazione: il piano non viene cambiato.`};
 }
 export function summarizeTraining(data:DataSet,days=28,today=localDate()):{current:TrainingPeriod;previous:TrainingPeriod;insights:TrainingInsight[]} {
  const from=fromDays(today,days),beforeDate=new Date(from+'T12:00:00');beforeDate.setDate(beforeDate.getDate()-1);
