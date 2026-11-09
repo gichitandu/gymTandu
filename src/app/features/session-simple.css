@@ -6,3 +6,23 @@
 
 /* Annulla allenamento: accanto a Termina, distinto ma non dominante */
 .simple-session-heading .session-cancel{flex:0 0 auto;min-height:44px;padding:0 12px;border-radius:12px;font-size:13px;font-weight:700;color:var(--danger,#ff6b81);border:1px solid color-mix(in srgb,var(--danger,#ff6b81) 40%,transparent);background:color-mix(in srgb,var(--danger,#ff6b81) 8%,transparent)}
+
+/* Intestazione sessione v3: fissa in alto, titolo su una riga, menu ⋯ per data e annullamento, barra di avanzamento. */
+:host .session-header.session-compact{position:sticky;top:var(--safe-top,0px);z-index:30;margin:0 0 12px;padding:6px 0 10px;background:linear-gradient(180deg,var(--bg) 78%,color-mix(in srgb,var(--bg) 0%,transparent))}
+:host .simple-session-heading{gap:8px;margin-bottom:10px}
+:host .simple-session-heading>a{width:44px;min-width:44px;height:44px;padding:10px;border-radius:14px;border:1px solid var(--line);background:color-mix(in srgb,var(--text) 4%,transparent)}
+:host .session-title{flex:1;min-width:0}
+:host .session-compact .session-title h1{font-size:18px;font-weight:800;letter-spacing:-.3px;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;overflow-wrap:normal}
+:host .session-title p{margin:2px 0 0;font-size:12px;line-height:1.35;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+:host .session-title p b{color:var(--text);font-weight:700;font-variant-numeric:tabular-nums}
+:host .session-menu{position:static;flex:none}
+:host .session-menu>summary{list-style:none;width:44px;min-width:44px;height:44px;padding:0;border-radius:14px;border:1px solid var(--line);background:color-mix(in srgb,var(--text) 4%,transparent);display:flex;align-items:center;justify-content:center;cursor:pointer}
+:host .session-menu>summary::-webkit-details-marker{display:none}
+:host .session-menu[open]>summary{border-color:var(--accent-text);color:var(--accent-text)}
+:host .session-menu-panel{position:absolute;right:0;top:calc(100% - 4px);z-index:40;display:grid;gap:10px;width:min(280px,calc(100vw - 32px));padding:14px;border:1px solid var(--line);border-radius:18px;background:var(--card);box-shadow:0 18px 40px color-mix(in srgb,#000 40%,transparent)}
+:host .session-menu-label{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+:host .session-menu-panel .session-cancel{width:100%;min-height:46px}
+:host .simple-session-heading .session-finish{flex:none;min-height:44px;min-width:0;padding:0 14px;border-radius:14px;font-size:14px;font-weight:800;color:var(--accent-text);border:1px solid color-mix(in srgb,var(--accent-text) 50%,transparent);background:color-mix(in srgb,var(--accent) 12%,transparent)}
+:host .session-progress{height:4px;border-radius:4px;background:color-mix(in srgb,var(--text) 12%,transparent);overflow:hidden}
+:host .session-progress>i{display:block;height:100%;border-radius:4px;background:linear-gradient(90deg,var(--accent),var(--accent-text));box-shadow:0 0 10px color-mix(in srgb,var(--accent-text) 55%,transparent);transition:width .35s ease}
+@media(max-width:360px){:host .session-compact .session-title h1{font-size:16px}:host .simple-session-heading .session-finish{padding:0 10px}}

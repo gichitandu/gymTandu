@@ -47,7 +47,7 @@ import { canResumeAtHome, MobileNavigationService } from "../services/mobile-nav
       </header>}
       <main [class.session-main]="router.url.startsWith('/sessione')">@if(s.ready()){@if(router.url.startsWith('/sessione')){<gt-data-status/>}@if(referencePage()&&(pwa.updateReady()||pwa.releases.updateReady())){<gt-data-status class="reference-update-status"/>}@if(auth.offlineMode()){<p class="local-mode-label">Archivio personale locale · funzioni condivise disabilitate</p>}<router-outlet />@if(referencePage()){<gt-data-status class="reference-page-status"/>}@if(router.url.split('?')[0]==='/profilo'&&auth.canManageBackups()){<gt-archive-recovery/>}}@else{<section class="card archive-opening" role="status" aria-live="polite"><h1>Apertura del tuo archivio</h1><p>Sto caricando i dati salvati su questo dispositivo…</p>@if(s.error()){<p class="notice">{{s.error()}}</p>}</section>}</main>
     </div>
-    <gt-bottom-navigation [items]="nav"/>`,
+    @if(!(router.url.startsWith('/sessione')&&s.draft())){<gt-bottom-navigation [items]="nav"/>}`,
 })
 export class ShellComponent {
   navigationDesignId = navigationDesignId;

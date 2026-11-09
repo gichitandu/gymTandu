@@ -2316,6 +2316,9 @@ gt-shell .archive-sync-indicator{display:flex;align-items:center;justify-content
 /* Focused recording uses its own compact header. */
 gt-shell main.session-main{padding-top:calc(16px + var(--safe-top));}
 gt-shell .app-main{padding-bottom:calc(100px + var(--safe-bottom));}
+/* Sessione: fascia fissa sotto la barra di stato, così il contenuto non scorre sotto l'orologio. */
+gt-shell main.session-main::before{content:"";position:fixed;top:0;left:0;right:0;height:var(--safe-top);background:var(--bg);z-index:60;pointer-events:none}
+gt-shell .app-main:has(> main.session-main){padding-bottom:calc(28px + var(--safe-bottom));}
 
 /* Theme tokens replace the original blue chrome without changing its layout. */
 body.theme-ready gt-shell {
