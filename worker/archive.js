@@ -116,9 +116,12 @@ function archiveCheckpointStatement(db, scope, row, id, reason, workout) {
 }
 async function completedCheckpointStatements(db, scope, row, text, known) {
  const data=JSON.parse(text).data, statements=[];
+ const exercisesByWorkout=new Map(),setsByExercise=new Map();
+ for(const item of data.workoutExercises){const list=exercisesByWorkout.get(item.workoutId);if(list)list.push(item);else exercisesByWorkout.set(item.workoutId,[item]);}
+ for(const item of data.sets){const list=setsByExercise.get(item.workoutExerciseId);if(list)list.push(item);else setsByExercise.set(item.workoutExerciseId,[item]);}
  for(const workout of data.workouts.filter(row=>row.status==='completed')) {
-  const exercises=data.workoutExercises.filter(row=>row.workoutId===workout.id).sort((a,b)=>a.id.localeCompare(b.id)),ids=new Set(exercises.map(row=>row.id));
-  const sets=data.sets.filter(row=>ids.has(row.workoutExerciseId)).sort((a,b)=>a.id.localeCompare(b.id));
+  const exercises=[...(exercisesByWorkout.get(workout.id)||[])].sort((a,b)=>a.id.localeCompare(b.id));
+  const sets=exercises.flatMap(item=>setsByExercise.get(item.id)||[]).sort((a,b)=>a.id.localeCompare(b.id));
   const fingerprint=await archiveDigest(JSON.stringify({workout,exercises,sets}));
   const id=await archiveDigest(scope+':completed:'+workout.id+':'+fingerprint);
   if(known.has(id))continue;known.add(id);
@@ -176,10 +179,11 @@ export async function archiveApi(request,env,me,onSaved) {
   if(!oldObject)archiveFail('La copia precedente non è leggibile: salvataggio server sospeso per conservarla.',503);
   const oldText=await oldObject.text();if(await archiveDigest(oldText)!==head.content_hash)archiveFail('La copia precedente non ha superato la verifica. Nessun dato server sostituito.',503);
   const oldData=JSON.parse(oldText).data,nextData=incoming.data;
-  const reducedWorkouts=oldData.workouts.filter(row=>row.status==='completed'&&!nextData.workouts.some(next=>next.id===row.id&&next.status==='completed'));
+  const nextDoneWorkouts=new Set(nextData.workouts.filter(next=>next.status==='completed').map(next=>next.id)),nextDoneSets=new Set(nextData.sets.filter(next=>next.completed).map(next=>next.id));
+  const reducedWorkouts=oldData.workouts.filter(row=>row.status==='completed'&&!nextDoneWorkouts.has(row.id));
   const oldExercises=new Map(oldData.workoutExercises.map(row=>[row.id,row.workoutId]));
   const allowedWorkouts=new Set(intent?.workouts||[]),allowedSets=new Set(intent?.sets||[]);
-  const reducedSets=oldData.sets.filter(row=>row.completed&&!nextData.sets.some(next=>next.id===row.id&&next.completed));
+  const reducedSets=oldData.sets.filter(row=>row.completed&&!nextDoneSets.has(row.id));
   if(reducedWorkouts.some(row=>!allowedWorkouts.has(row.id))||reducedSets.some(row=>!allowedSets.has(row.id)&&!allowedWorkouts.has(oldExercises.get(row.workoutExerciseId))))return archiveJson({error:'La copia inviata contiene meno progressi già salvati. Lo storico server è conservato: verifica e recupera la seduta prima di sincronizzare.',code:'workout_history_conflict',revision:head.revision},409);
   protection.push(...await completedCheckpointStatements(db,scope,head,oldText,knownPins));
   // Preserve the pre-fix recovery window before any ordinary rolling cleanup.

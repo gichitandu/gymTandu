@@ -53,7 +53,7 @@
 :host .plan-cover-thumb{--thumb-width:75px;--thumb-height:78px;max-width:23%;border-radius:12px}
 :host .simple-plan-title strong{font-size:17px;line-height:1.4}
 :host .simple-plan-title small{font-size:11px;line-height:1.5}
-:host .simple-plan-top>.pill{position:absolute;left:4px;top:4px;font-size:8px;padding:3px 5px;max-width:70px}
+:host .simple-plan-top>.pill{position:absolute;left:4px;top:4px;font-size:10px;padding:3px 5px;max-width:70px}
 :host .simple-plan-top>.simple-menu{align-self:center}
 :host .simple-day{padding:11px;background:linear-gradient(120deg,var(--accent-soft),transparent 80%),var(--card)}
 :host .simple-day-summary strong{font-size:14px}
@@ -61,6 +61,6 @@
 :host .simple-exercise-row{align-items:center;padding:10px 0}
 :host .simple-exercise-row gt-exercise-thumb{--thumb-width:76px;--thumb-height:63px;background:var(--bg);border:1px solid var(--line)}
 :host .simple-exercise-row strong{font-size:12px}
-:host .simple-exercise-row small{font-size:10px;line-height:1.55}
+:host .simple-exercise-row small{font-size:12px;line-height:1.55}
 @media(min-width:650px){:host .training-today-card{padding:22px!important}.training-today-cover{--thumb-height:200px!important;height:200px!important}:host .training-today-copy h2{font-size:30px!important}.training-tool-grid>a{padding:20px}.training-path-stats{font-size:12px}}
 @media(max-width:359px){.training-tool-grid>a{padding:13px 10px}.training-tool-grid strong{font-size:12px}.training-inline-metrics{gap:8px;font-size:10px}:host .simple-plan-top{gap:7px}:host .plan-cover-thumb{--thumb-width:58px;--thumb-height:68px}:host .simple-plan-title strong{font-size:15px}:host .simple-plan-top>.pill{max-width:54px}}

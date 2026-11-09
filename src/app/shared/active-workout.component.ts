@@ -18,6 +18,7 @@ import { validWorkoutUi,WorkoutResumeService } from '../services/workout-resume'
 import { IconComponent } from './icon.component';
 import { LoadProgressionComponent } from './load-progression.component';
 import { ExternalTimerService } from '../services/external-timer';
+import { TodayService } from '../services/today';
 import { coachNextSet, readinessFromWellness } from '../services/coach-shadow';
 import type { AppUpdateEvent } from '../services/pwa';
 import { FormDraftService } from '../services/form-drafts';
@@ -27,6 +28,7 @@ interface ActiveDraftSnapshot {entries:[string,ActiveSetDraft][];exerciseId:stri
 export class ActiveWorkoutComponent {
  private confirmation=confirmationForContext();
  externalTimer=inject(ExternalTimerService,{optional:true});
+ private clock=inject(TodayService);
  committing=signal(false);s=inject(Store);resume=inject(WorkoutResumeService,{optional:true})||new WorkoutResumeService();workoutId=input.required<string>();finish=output<void>();
  replacementOpen=signal(false);
  async openReplacement(){if(this.committing())return;this.committing.set(true);try{if(await this.flushForFinish())this.replacementOpen.set(true);}finally{this.committing.set(false);}}
@@ -39,7 +41,7 @@ export class ActiveWorkoutComponent {
  stepLabel(){return this.weightStep().toLocaleString('it-IT',{maximumFractionDigits:2});}
  async saveIncrement(value:number){const id=this.selected()?.exerciseId;if(id)await this.s.saveWeightStep(id,this.s.kg(Number(value)));}
  alternatives=computed(()=>{const current=this.selected(),base=current?this.s.exercise(current.exerciseId):undefined;return this.s.data().exercises.filter(e=>e.active&&e.id!==current?.exerciseId&&(!base||e.muscleGroupId===base.muscleGroupId)&&matchesExercise(e,this.swapQuery())).slice(0,80);});
- async swapExercise(){if(this.committing()||!this.selected()||!this.replacementId)return;this.committing.set(true);try{if(!await this.flushForFinish())return;if(await this.s.substituteWorkoutExercise(this.exerciseId(),this.replacementId)){for(const set of this.s.sets(this.exerciseId()))this.inputDrafts.delete(set.id);this.setId.set('');this.replacementId='';this.swapQuery.set('');this.restEnd.set(0);this.paused.set(false);this.nextRecord();}}finally{this.committing.set(false);}}
+ async swapExercise(){if(this.committing()||!this.selected()||!this.replacementId)return;this.committing.set(true);try{if(!await this.flushForFinish())return;if(await this.s.substituteWorkoutExercise(this.exerciseId(),this.replacementId)){for(const set of this.s.sets(this.exerciseId()))this.inputDrafts.delete(set.id);this.draftsChanged();this.setId.set('');this.replacementId='';this.swapQuery.set('');this.restEnd.set(0);this.paused.set(false);this.nextRecord();}}finally{this.committing.set(false);}}
  async undoLast(){if(this.committing())return;this.committing.set(true);try{if(!await this.flushPending(true))return;if(await this.s.undoGymAction()){this.externalTimer?.stop();this.restEnd.set(0);this.paused.set(false);this.inputDrafts.clear();this.setId.set('');const selected=this.selected();if(selected)this.nextRecord();else this.navigate('list');}}finally{this.committing.set(false);}}
  private inputDrafts=new Map<string,ActiveSetDraft>();
  private writes=new Map<string,Promise<boolean>>();
@@ -98,7 +100,7 @@ export class ActiveWorkoutComponent {
   const working=this.s.sets(e.id).filter(x=>x.kind!=='warmup');
   const done=working.filter(x=>x.completed&&x.number<set.number).map(x=>({weight:x.weight,reps:x.reps,rpe:x.rpe}));
   const reference=this.previous().filter(x=>x.completed&&x.kind!=='warmup').map(x=>({weight:x.weight,reps:x.reps,rpe:x.rpe}));
-  const today=this.s.data().wellnessLogs.find(w=>w.date===localDate());
+  const today=this.s.data().wellnessLogs.find(w=>w.date===this.clock.date());
   const suggestion=coachNextSet({repsMin:e.repsMin,repsMax:e.repsMax,incrementKg:this.s.kg(this.weightStep()),plannedWeight:set.weight,reference,done,readiness:readinessFromWellness(today)});
   return suggestion&&suggestion.basis!=='none'?suggestion:null;
  });
@@ -156,7 +158,7 @@ export class ActiveWorkoutComponent {
  recoveryElapsed(){return this.paused()?Math.max(0,this.restTotal()-this.pausedSeconds()):Math.max(0,Math.floor((this.clock()-this.restEnd())/1000)+this.restTotal());}
  formatSeconds=formatSeconds;
  advance(){this.externalTimer?.stop();this.restEnd.set(0);this.paused.set(false);const next=this.nextExercise();if(next){this.exerciseId.set(next.id);this.nextRecord();}else this.navigate('list');this.remember();}
- async usePrevious(id:string){if(this.count(id)&&!await this.confirmation.ask('Sostituire le serie allenanti di questo esercizio con gli ultimi valori? Le serie di riscaldamento restano conservate.'))return;const ids=this.s.sets(id).map(s=>s.id);if(await this.s.copyPrevious(id)){for(const key of ids)this.inputDrafts.delete(key);}this.setId.set('');this.remember();}
+ async usePrevious(id:string){if(this.count(id)&&!await this.confirmation.ask('Sostituire le serie allenanti di questo esercizio con gli ultimi valori? Le serie di riscaldamento restano conservate.'))return;const ids=this.s.sets(id).map(s=>s.id);if(await this.s.copyPrevious(id)){for(const key of ids)this.inputDrafts.delete(key);this.draftsChanged();}this.setId.set('');this.remember();}
  saveNotes(id:string,notes:string){void this.s.change(d=>{const e=d.workoutExercises.find(e=>e.id===id);if(e)e.notes=notes;},'',false);}
  async removeSet(set:WorkoutLogSet){
   if(this.committing())return;

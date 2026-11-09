@@ -1,9 +1,11 @@
-import {DataSet} from '../models/domain';
+import {DataSet,WorkoutLogSet} from '../models/domain';
 export interface HistoryIntent {workouts: string[]; sets: string[]}
 export function historyReductions(before: DataSet, after: DataSet): HistoryIntent {
+  const doneWorkouts = new Set(after.workouts.filter(next => next.status === 'completed').map(next => next.id));
+  const doneSets = new Set(after.sets.filter(next => next.completed).map(next => next.id));
   return {
-    workouts: before.workouts.filter(row => row.status === 'completed' && !after.workouts.some(next => next.id === row.id && next.status === 'completed')).map(row => row.id),
-    sets: before.sets.filter(row => row.completed && !after.sets.some(next => next.id === row.id && next.completed)).map(row => row.id),
+    workouts: before.workouts.filter(row => row.status === 'completed' && !doneWorkouts.has(row.id)).map(row => row.id),
+    sets: before.sets.filter(row => row.completed && !doneSets.has(row.id)).map(row => row.id),
   };
 }
 
@@ -21,10 +23,22 @@ export function workoutSignature(data: DataSet, id: string): string {
 
 /** A background restore may add history, but cannot silently undo recorded work. */
 export function losesRecordedWork(local: DataSet, remote: DataSet): boolean {
-  return local.workouts.some(workout => {
-    const before = workoutGraph(local, workout.id), after = workoutGraph(remote, workout.id);
-    if (workout.status === 'completed' && after.workout?.status !== 'completed') return true;
-    return before.sets.some(set => set.completed && !after.sets.some(row => row.id === set.id && row.completed && row.weight === set.weight && row.reps === set.reps));
+  // Indici costruiti una volta sola: il confronto resta lineare anche con migliaia di serie.
+  const group = <T>(rows: T[], key: (row: T) => string) => { const map = new Map<string, T[]>(); for (const row of rows) { const k = key(row), list = map.get(k); if (list) list.push(row); else map.set(k, [row]); } return map; };
+  const first = <T extends {id: string}>(rows: T[]) => { const map = new Map<string, T>(); for (const row of rows) if (!map.has(row.id)) map.set(row.id, row); return map; };
+  const localWorkouts = first(local.workouts), remoteWorkouts = first(remote.workouts);
+  const localExercises = group(local.workoutExercises, row => row.workoutId), remoteExercises = group(remote.workoutExercises, row => row.workoutId);
+  const localSets = group(local.sets, row => row.workoutExerciseId), remoteSets = group(remote.sets, row => row.workoutExerciseId);
+  return local.workouts.some(item => {
+    const workout = localWorkouts.get(item.id), after = remoteWorkouts.get(item.id);
+    if (workout?.status === 'completed' && after?.status !== 'completed') return true;
+    const remoteById = new Map<string, WorkoutLogSet>();
+    for (const exercise of remoteExercises.get(item.id) ?? []) for (const row of remoteSets.get(exercise.id) ?? []) if (!remoteById.has(row.id)) remoteById.set(row.id, row);
+    return (localExercises.get(item.id) ?? []).some(exercise => (localSets.get(exercise.id) ?? []).some(set => {
+      if (!set.completed) return false;
+      const row = remoteById.get(set.id);
+      return !(row && row.completed && row.weight === set.weight && row.reps === set.reps);
+    }));
   });
 }
 

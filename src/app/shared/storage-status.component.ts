@@ -4,7 +4,7 @@ import {IconComponent} from './icon.component';
 
 export interface StorageStatus {
  available:boolean;bytes:number;limitBytes:number;thresholds:number[];level:number;
- lastAlertLevel?:number;lastAlertAt?:string|null;categories:{id:string;label:string;bytes:number}[];
+ lastAlertLevel?:number;lastAlertAt?:string|null;categories:{id:string;label:string;bytes:number}[];partial?:boolean;
 }
 const GB=1_000_000_000;
 export const formatStorage=(bytes:number)=>bytes>=GB?(bytes/GB).toLocaleString('it-IT',{minimumFractionDigits:1,maximumFractionDigits:2})+' GB':(bytes/1_000_000).toLocaleString('it-IT',{maximumFractionDigits:1})+' MB';
@@ -35,6 +35,7 @@ const COLORS=['#4da3ff','#7a6bff','#2fd1a0','#f0d26b'];
      <div class="storage-bar" aria-hidden="true">@for(c of s.categories;track c.id;let i=$index){<span [style.flex]="c.bytes" [style.background]="color(i)"></span>}</div>
      <ul class="storage-list">@for(c of s.categories;track c.id;let i=$index){<li><i [style.background]="color(i)"></i><span>{{c.label}}</span><b>{{format(c.bytes)}}</b></li>}</ul>
     }
+    @if(s.partial){<p class="storage-note">Conteggio parziale: i file sono molti, il totale reale è almeno quello mostrato.</p>}
     @if(s.lastAlertAt){<p class="storage-note">Ultimo cambio di livello avvisi: {{date(s.lastAlertAt)}}.</p>}
    }
   }

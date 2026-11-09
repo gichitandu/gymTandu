@@ -32,13 +32,15 @@ const CATEGORY_LABELS = { archives: 'Backup e copie archivio', 'excel-imports': 
  * Stato dello spazio per la schermata dei Super Admin: totale, soglie, ultimo livello
  * avvisato e ripartizione per tipo di file (primo segmento della chiave). Sola lettura.
  */
+const MAX_STATUS_PAGES = 40;
 export async function storageStatus(env) {
   const limitBytes = LIMIT_GB * GB, thresholds = thresholdsFor(env);
   if (!env.BUCKET) return { available: false, bytes: 0, limitBytes, thresholds, level: 0, categories: [] };
   const sizes = new Map();
-  let total = 0, cursor;
+  let total = 0, cursor, pages = 0, partial = false;
   do {
     const page = await env.BUCKET.list({ cursor, limit: 1000 });
+    pages++;
     for (const object of page.objects) {
       const head = String(object.key ?? '').split('/')[0];
       const id = Object.hasOwn(CATEGORY_LABELS, head) ? head : 'other';
@@ -46,6 +48,7 @@ export async function storageStatus(env) {
       total += object.size;
     }
     cursor = page.truncated ? page.cursor : undefined;
+    if (cursor && pages >= MAX_STATUS_PAGES) { partial = true; cursor = undefined; }
   } while (cursor);
   let alert = { level: 0, updatedAt: null };
   try {
@@ -53,7 +56,7 @@ export async function storageStatus(env) {
     if (Number.isInteger(value?.level) && value.level >= 0 && value.level <= STORAGE_THRESHOLDS.length) alert = { level: value.level, updatedAt: typeof value.updatedAt === 'string' ? value.updatedAt : null };
   } catch { /* stato assente o non leggibile: nessun avviso registrato */ }
   const categories = [...sizes].map(([id, bytes]) => ({ id, label: CATEGORY_LABELS[id], bytes })).sort((a, b) => b.bytes - a.bytes);
-  return { available: true, bytes: total, limitBytes, thresholds, level: thresholds.filter(threshold => total >= threshold).length, lastAlertLevel: alert.level, lastAlertAt: alert.updatedAt, categories };
+  return { available: true, bytes: total, limitBytes, thresholds, level: thresholds.filter(threshold => total >= threshold).length, lastAlertLevel: alert.level, lastAlertAt: alert.updatedAt, categories, partial };
 }
 
 async function readState(bucket) {
