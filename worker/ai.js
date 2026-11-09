@@ -282,6 +282,35 @@ async function mealNotify(db, env, options, kind, percent, day, resetAt) {
 }
 
 /**
+ * Stato della quota AI per la schermata dei Super Admin (sotto lo spazio R2):
+ * neuroni stimati usati oggi, soglie di avviso e stop, analisi ancora possibili.
+ * Sola lettura; `remainingScans` conta il caso peggiore, quindi è una stima prudente.
+ */
+export async function mealUsageStatus(env, db) {
+  const model = mealModel(env);
+  const allowance = mealAllowance(env);
+  const reserve = mealReserveNeurons(model);
+  const { day, resetAt } = mealToday();
+  const available = !!env?.AI?.run;
+  const used = available ? await mealRead(db, `ai:global:${day}`) : 0;
+  const budget = mealBudgetState(used, allowance, reserve);
+  const stopAt = Math.round(allowance * MEAL_STOP_AT);
+  return {
+    available,
+    model,
+    allowance,
+    used,
+    percent: budget.percent,
+    state: budget.state,
+    warnAt: Math.round(allowance * MEAL_WARN_AT),
+    stopAt,
+    remainingScans: available ? Math.max(0, Math.floor((stopAt - used) / reserve)) : 0,
+    perAccountLimit: mealDailyLimit(env),
+    resetsAt: new Date(resetAt).toISOString(),
+  };
+}
+
+/**
  * GET /api/ai/budget: stato della quota AI di oggi (globale e dell'account), senza consumarla.
  * L'app lo usa per mostrare l'avviso al 90% e nascondere l'analisi quando è in pausa.
  */

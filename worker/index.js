@@ -2,7 +2,7 @@ import { defaultExercises, defaultGroups } from './default-catalog.js';
 import { pushReminderApi } from './push.js';
 import {excelImportsApi,appFeaturesApi} from './program-imports.js';
 import { archiveApi } from './archive.js';
-import { mealScanApi, mealBudgetApi } from './ai.js';
+import { mealScanApi, mealBudgetApi, mealUsageStatus } from './ai.js';
 import { designStudioApi } from './design-studio.js';
 import { storageAlert, storageStatus } from './storage-alert.js';
 import { APPROVED_THEME_IDS } from '../shared/approved-palettes.js';
@@ -134,7 +134,7 @@ export async function api(request,env,ctx) {
       if(!me)fail('Accedi al tuo account.',401);
       if(me.role!=='SuperAdmin')fail('Accesso riservato al Super Admin.',403);
       if(request.method!=='GET')fail('Metodo non supportato.',405);
-      return json(await storageStatus(env));
+      return json({...await storageStatus(env),ai:await mealUsageStatus(env,db).catch(()=>null)});
     }
     if(path.startsWith('/api/design/'))return await designStudioApi(request,env,me);
     if(path.startsWith('/api/excel-imports'))return await excelImportsApi(request,env,me);

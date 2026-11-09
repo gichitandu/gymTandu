@@ -163,6 +163,9 @@ Variabili facoltative (Impostazioni del Worker, Variables):
 - `ALERT_EMAIL`: destinatario degli avvisi (predefinito il proprietario). L'email
   usa `RESEND_API_KEY`, come gli avvisi dello spazio R2; senza chiave non parte.
 
+Il Super Admin vede lo stato della quota (neuroni usati, soglie, analisi ancora
+possibili) in Profilo, Amministrazione, sotto lo spazio archivio R2.
+
 Se il piano è "Workers Free" Cloudflare ferma da solo le richieste oltre la quota,
 senza addebiti; sul piano a pagamento il tetto del 95% resta comunque sotto la
 quota gratuita.

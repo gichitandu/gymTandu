@@ -189,3 +189,20 @@ it('emails the owner once per day at the warning and stop levels, without ever b
   expect((await call('ai/meal-scan',{image:photo},{cookie})).status).toBe(200);expect(sent).toEqual([]);
  }finally{globalThis.fetch=realFetch;}
 });
+
+it('adds the AI quota to the Super Admin storage status, updated after each analysis',async()=>{
+ const cookie=await activate();
+ const reserve=mealReserveNeurons();
+ const before=await (await call('storage-status',undefined,{cookie})).json();
+ expect(before.ai).toMatchObject({available:true,model:'@cf/google/gemma-3-12b-it',allowance:10000,used:0,percent:0,state:'ok',warnAt:9000,stopAt:9500,perAccountLimit:5});
+ expect(before.ai.remainingScans).toBe(Math.floor(9500/reserve));
+ expect(before.ai.resetsAt).toMatch(/T00:00:00\.000Z$/);
+ expect((await call('ai/meal-scan',{image:photo},{cookie})).status).toBe(200);
+ const after=(await (await call('storage-status',undefined,{cookie})).json()).ai;
+ expect(after.used).toBe(reserve);expect(after.remainingScans).toBe(Math.floor((9500-reserve)/reserve));
+ expect(after.percent).toBe(Math.round(reserve/100));
+ // La sezione R2 resta quella di sempre e senza collegamento AI il Super Admin lo vede.
+ expect(before).toMatchObject({available:false,bytes:0});
+ const withoutAi=await (await api(request('storage-status',undefined,{cookie}),{...env,AI:undefined})).json();
+ expect(withoutAi.ai).toMatchObject({available:false,used:0,remainingScans:0});
+});
