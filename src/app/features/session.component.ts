@@ -25,7 +25,7 @@ import { parseLocalDate } from '../services/calendar';
       @if(s.conflicted()){<p class="notice" role="alert">Archivio da verificare. @if(auth?.canManageBackups()){<a routerLink="/profilo" [queryParams]="{section:'backup'}">Apri backup e ripristino</a>}@else{Contatta un Super Admin.}</p>}
       @if(requestedDate){<p class="notice" role="status">Sessione aperta: <strong>{{w.dayName}} · {{formatDate(w.date)}}</strong>. Terminala prima di registrare il {{formatDate(requestedDate)}}.</p>}
       <header class="session-header session-compact">
-        <div class="simple-session-heading"><a class="button ghost" routerLink="/piani" aria-label="Torna ai piani"><gt-icon name="back"/></a><div><h1>{{w.dayName}}</h1><p>{{w.planName}}</p></div><button class="ghost session-finish" aria-label="Termina allenamento" (click)="finish()" [disabled]="s.busy()||finishing()">{{finishing()?'Salvataggio…':'Termina'}}</button></div>
+        <div class="simple-session-heading"><a class="button ghost" routerLink="/piani" aria-label="Torna ai piani"><gt-icon name="back"/></a><div><h1>{{w.dayName}}</h1><p>{{w.planName}}</p></div><button class="ghost danger session-cancel" aria-label="Annulla allenamento" (click)="cancel(w.id)" [disabled]="s.busy()||finishing()">Annulla</button><button class="ghost session-finish" aria-label="Termina allenamento" (click)="finish()" [disabled]="s.busy()||finishing()">{{finishing()?'Salvataggio…':'Termina'}}</button></div>
         <div class="simple-session-meta"><gt-date-field class="compact" aria-label="Data allenamento" [max]="today" [ngModel]="w.date" (ngModelChange)="update(w.id,'date',$event)"/><span>{{completedSets(w.id)}} / {{allSets(w.id).length}} serie</span></div>
       </header>
       <gt-active-workout [workoutId]="w.id" (finish)="finish()" />
@@ -85,6 +85,12 @@ export class SessionComponent {
         await this.router.navigateByUrl('/riepilogo/'+encodeURIComponent(workout.id));
       }
     } finally { this.finishing.set(false); }
+  }
+  async cancel(id: string) {
+    const sets=this.completedSets(id);
+    if(!await this.confirmation.ask({title:'Annullare l’allenamento?',confirmLabel:'Annulla allenamento',tone:'danger',detail:sets?sets+' serie registrate':'Nessuna serie registrata',message:'L’allenamento in corso viene eliminato insieme alle serie registrate. Se era programmato nel calendario o nel piano, la seduta torna in programma. Il piano e gli altri allenamenti restano conservati.'}))return;
+    this.finishing.set(true);
+    try{if(await this.s.cancelWorkout(id))await this.router.navigateByUrl('/piani');}finally{this.finishing.set(false);}
   }
   async discard(id: string) {
     if (

@@ -749,6 +749,25 @@ export class Store {
       if(plan?.completionReason==='automatic'){delete plan.completedAt;delete plan.completionReason;plan.archived=false;}
     },'Allenamento riaperto. Serie e data sono conservate.',false);
   }
+  /**
+   * Annulla un allenamento iniziato e non ancora terminato: elimina la seduta aperta e le sue serie,
+   * ma la seduta del calendario o del programma torna "in programma" invece di sparire.
+   */
+  async cancelWorkout(id: string) {
+    if(this.data().workouts.find(workout=>workout.id===id)?.status!=='draft'){this.error.set('Si può annullare solo un allenamento ancora in corso.');return false;}
+    const ok=await this.change(d=>{
+      const workout=d.workouts.find(w=>w.id===id);
+      if(workout?.status!=='draft')throw Error('Si può annullare solo un allenamento ancora in corso.');
+      const ids=new Set(d.workoutExercises.filter(e=>e.workoutId===id).map(e=>e.id));
+      d.sets=d.sets.filter(s=>!ids.has(s.workoutExerciseId));
+      d.workoutExercises=d.workoutExercises.filter(e=>e.workoutId!==id);
+      d.workouts=d.workouts.filter(w=>w.id!==id);
+      d.workoutUi=d.workoutUi.filter(x=>x.id!==id);
+      for(const event of d.scheduledWorkouts)if(event.workoutId===id)delete event.workoutId;
+    },'Allenamento annullato. La seduta resta in programma.');
+    if(ok)this.resume.clear(this.archiveKey());
+    return ok;
+  }
   async deleteWorkout(id: string, options?:{confirmedCompleted?:boolean}) {
     if(this.data().workouts.find(workout=>workout.id===id)?.status==='completed'&&(!this.settings().allowCompletedWorkoutDeletion||options?.confirmedCompleted!==true)){this.error.set('Per eliminare un allenamento terminato abilita l’opzione nelle impostazioni e conferma l’eliminazione.');return false;}
     return this.change((d) => {

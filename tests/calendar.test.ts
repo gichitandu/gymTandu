@@ -86,3 +86,12 @@ it('releases the calendar save lock after an unexpected failure and leaves the d
  await c.save();expect(c.saving()).toBe(false);expect(c.modal()).toBe(true);expect(c.notes).toBe('Da riprovare');expect(s.error()).toBe('Archivio occupato');
  await c.save();expect(s.data().scheduledWorkouts).toHaveLength(1);
 });
+it('annulla un allenamento iniziato: elimina serie e seduta aperta, ma l’appuntamento torna in programma',async()=>{
+ await plan();await s.scheduleWorkout('2026-10-22','day','','event');await s.startScheduled('event');
+ const w=s.draft()!,ex=s.workoutExercises(w.id)[0];await s.updateSet(s.sets(ex.id)[0].id,{completed:true,weight:80});
+ expect(await s.cancelWorkout(w.id)).toBe(true);
+ expect(s.draft()).toBeUndefined();expect(s.data().workouts).toEqual([]);expect(s.data().workoutExercises).toEqual([]);expect(s.data().sets).toEqual([]);
+ const event=s.data().scheduledWorkouts.find(e=>e.id==='event')!;expect(event).toBeDefined();expect(event.workoutId).toBeUndefined();
+ expect(await s.startScheduled('event')).toBe(true);await s.finish(true);
+ expect(await s.cancelWorkout(s.data().workouts[0].id)).toBe(false);expect(s.data().workouts).toHaveLength(1);
+});

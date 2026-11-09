@@ -126,3 +126,27 @@
 :host .settings-disclosure .button,
 :host .settings-disclosure button { white-space: normal; overflow-wrap: anywhere; line-height: 1.3; }
 
+
+/* Scheda profilo: riquadro stondato con margine interno (account-polish.css lo azzerava con !important) */
+:host .profile-dashboard.identity-card {
+  border-radius: 28px !important;
+  padding: 18px 16px 16px !important;
+  border: 1px solid color-mix(in srgb, var(--accent) 22%, var(--line));
+  overflow: hidden;
+}
+:host .profile-dashboard.identity-card .profile-key-stats { padding: 4px 0 0; }
+:host .profile-dashboard.identity-card .profile-key-stats > div { border-radius: 18px; }
+
+/* Avatar senza foto: il gradiente resta come anello, le iniziali bianche su disco scuro (prima azzurro su azzurro) */
+:host .identity-card .profile-avatar gt-avatar {
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 25%, color-mix(in srgb, var(--accent) 28%, #0b1626), #070d18 75%);
+}
+:host .identity-card .profile-avatar gt-avatar span {
+  color: #fff;
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -.5px;
+  line-height: 1;
+  text-shadow: 0 1px 8px color-mix(in srgb, var(--accent) 55%, transparent);
+}
