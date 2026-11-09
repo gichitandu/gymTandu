@@ -77,6 +77,7 @@ una per pagina (es. `docs/tasks/home.md`, `docs/tasks/sessione.md`). Formato in 
 | `/verifica [completa]` | `test:affected` + `typecheck` (o `quality`), esito in max 5 righe   |
 | agente `esplora`   | Ricerche nel codice in sola lettura con modello leggero: restituisce solo percorsi e conclusioni |
 | `settings.json`    | Blocca la lettura di log QA, vendor, asset generati, lockfile, segreti   |
+| hook `prettier-dopo-modifica` | Dopo ogni Edit/Write formatta il file toccato (solo codice in `src`, `tests`, `tools`, `worker`, `shared`, `calendar-relay`) |
 
 Decisioni già prese: `docs/DECISIONI.md`. Leggilo prima di proporre cambi di architettura o stack;
 aggiungi una riga quando l'utente conferma una nuova decisione.
@@ -87,5 +88,7 @@ aggiungi una riga quando l'utente conferma una nuova decisione.
 - Nessuna perdita di dati: migrazioni compatibili, archivi per account separati, bozze salvate prima
   di navigare/aggiornare.
 - Riusa componenti condivisi e logica già presente prima di scriverne di nuova; niente refactoring estranei al task.
+- Template Angular (`*.html` e `template:` inline) esclusi da Prettier: riformattarli cambia gli spazi
+  nei testi compilati. Non riformattarli a mano in blocco.
 - Commit, push e deploy solo su richiesta esplicita; mai push forzati.
 - Nessun segreto o dato reale in codice, fixture, log, documenti.
