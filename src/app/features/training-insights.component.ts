@@ -16,10 +16,10 @@ import {summarizeTraining,trainingTimeline,trainingReportCsv,workoutReminderIcs}
    @for(days of [7,28,90];track days){<button type="button" [class.insight-selected]="period()===days" [attr.aria-pressed]="period()===days" (click)="period.set(days)">{{days}} giorni</button>}
   </div>
   <div class="insights-stats">
-   <div class="card"><span>Sedute completate</span><strong>{{summary().current.workouts}}</strong><small>Precedenti: {{summary().previous.workouts}}</small></div>
-   <div class="card"><span>Giorni attivi</span><strong>{{summary().current.activeDays}}</strong><small>Nel periodo selezionato</small></div>
-   <div class="card"><span>Serie di lavoro</span><strong>{{summary().current.completedSets}}</strong><small>Riscaldamento escluso</small></div>
-   <div class="card"><span>Volume carico esterno</span><strong>{{volumeDisplay()}}</strong><small>{{s.settings().unit}} · non include corpo libero</small></div>
+   <div class="card"><span><i class="ins-ic ins-a"><gt-icon name="weight"/></i>Sedute completate</span><strong>{{summary().current.workouts}}</strong><small>Precedenti: {{summary().previous.workouts}}</small></div>
+   <div class="card"><span><i class="ins-ic ins-b"><gt-icon name="calendar"/></i>Giorni attivi</span><strong>{{summary().current.activeDays}}</strong><small>Nel periodo selezionato</small></div>
+   <div class="card"><span><i class="ins-ic ins-c"><gt-icon name="repeat"/></i>Serie di lavoro</span><strong>{{summary().current.completedSets}}</strong><small>Riscaldamento escluso</small></div>
+   <div class="card"><span><i class="ins-ic ins-d"><gt-icon name="chart"/></i>Volume carico esterno</span><strong>{{volumeDisplay()}}</strong><small>{{s.settings().unit}} · non include corpo libero</small></div>
   </div>
   <p class="insights-note">Le durate mancanti non vengono interpretate come zero. {{summary().current.unknownDurations}} sedute senza durata verificabile.</p>
   <div class="insights-charts"><div class="card"><h3>Sedute per settimana</h3><gt-data-chart [points]="sessionTimeline()" title="Sedute settimanali" unit="sedute"/></div><div class="card"><h3>Volume esterno per settimana</h3><gt-data-chart [points]="volumeTimeline()" title="Volume settimanale" [unit]="s.settings().unit"/></div></div>
@@ -28,7 +28,7 @@ import {summarizeTraining,trainingTimeline,trainingReportCsv,workoutReminderIcs}
   <h2 id="suggestions-heading">Indicazioni per il tuo percorso</h2>
   <p class="insights-note">Sono osservazioni basate sui dati registrati, non prescrizioni automatiche. Il piano e i carichi non vengono modificati.</p>
   <div class="insights-advice">
-   @for(item of summary().insights;track item.kind+item.title){<article class="card"><gt-icon [name]="item.kind==='recovery'?'heart':item.kind==='schedule'?'calendar':'chart'"/><div><h3>{{item.title}}</h3><p>{{item.message}}</p></div></article>}
+   @for(item of summary().insights;track item.kind+item.title){<article class="card" [attr.data-kind]="item.kind"><gt-icon [name]="item.kind==='recovery'?'heart':item.kind==='schedule'?'calendar':'chart'"/><div><h3>{{item.title}}</h3><p>{{item.message}}</p></div></article>}
    @if(!summary().insights.length){<p class="card">Registra le prime sedute per ricevere indicazioni contestuali.</p>}
   </div>
   @if(s.draft();as workout){<section class="card"><h3>Prossimi carichi · sessione in corso</h3>
@@ -70,7 +70,27 @@ import {summarizeTraining,trainingTimeline,trainingReportCsv,workoutReminderIcs}
  .insights-export-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:15px}
  button.primary{background:linear-gradient(115deg,var(--theme-button-start,var(--accent)),var(--theme-button-end,var(--accent)));color:var(--accent-ink);border-color:var(--accent)}
  @media(max-width:720px){.insights-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.insights-advice,.insights-charts{grid-template-columns:1fr}.insights-reminder{align-items:stretch;flex-direction:column}.insights-reminder button{width:100%}}
- @media print{.insights-heading>a,.insights-periods,.insights-export-actions,.insights-link,.insights-reminder button{display:none!important}:host{color:#111}.card{break-inside:avoid;box-shadow:none;border:1px solid #bbb}.insights-advice{grid-template-columns:1fr}}
+
+ /* Analisi v3 (anteprima 12) */
+ :host{max-width:640px}
+ .insights-heading{margin-bottom:14px}.insights-heading>a{min-height:40px;margin-bottom:14px;border-radius:13px;padding:0 12px 0 8px}.insights-heading .eyebrow{font-size:10px;font-weight:800;letter-spacing:.14em;color:var(--accent-text)}.insights-heading h1{font-size:26px;font-weight:900;letter-spacing:-.02em;margin:4px 0}
+ .insights-section{margin:18px 0}.insights-section>h2{font-size:11px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:0 4px 10px}
+ .card{border:1px solid color-mix(in srgb,var(--text) 12%,transparent);border-radius:20px;background:linear-gradient(180deg,color-mix(in srgb,var(--text) 6%,var(--card)),var(--card));box-shadow:inset 0 1px color-mix(in srgb,#fff 5%,transparent)}
+ .insights-periods{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;padding:4px;border-radius:16px;background:color-mix(in srgb,var(--bg) 60%,transparent);border:1px solid color-mix(in srgb,var(--text) 9%,transparent);margin-bottom:12px}
+ .insights-periods button{min-height:40px;border:0;border-radius:12px;background:transparent;color:var(--muted);font-size:14px;font-weight:700;padding:0}
+ .insights-periods .insight-selected{background:linear-gradient(180deg,color-mix(in srgb,var(--accent) 70%,#fff),var(--accent));color:var(--accent-ink);font-weight:800;box-shadow:0 6px 16px color-mix(in srgb,var(--accent) 30%,transparent)}
+ .insights-stats{gap:8px}.insights-stats .card{padding:12px 13px;gap:6px}
+ .insights-stats span{display:flex;align-items:center;gap:8px;font-size:12px}.insights-stats strong{font-size:24px;font-weight:900;font-variant-numeric:tabular-nums}
+ .ins-ic{display:grid;place-items:center;flex:none;width:28px;height:28px;border-radius:9px}.ins-ic gt-icon{width:15px;height:15px}
+ .ins-a{color:var(--accent-text);background:color-mix(in srgb,var(--accent) 16%,transparent)}.ins-b{color:#a78bfa;background:color-mix(in srgb,#a78bfa 16%,transparent)}.ins-c{color:var(--green);background:color-mix(in srgb,var(--green) 16%,transparent)}.ins-d{color:#fb923c;background:color-mix(in srgb,#fb923c 16%,transparent)}
+ .insights-charts{gap:8px;margin-top:8px}.insights-charts .card{padding:14px}.insights-charts h3{font-size:11px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+ .insights-advice{gap:8px}.insights-advice .card{padding:14px}
+ .insights-advice gt-icon{flex:none;width:38px;height:38px;padding:9px;box-sizing:border-box;border-radius:12px;color:var(--accent-text);background:color-mix(in srgb,var(--accent) 14%,transparent)}
+ .insights-advice [data-kind=recovery] gt-icon{color:#f472b6;background:color-mix(in srgb,#f472b6 14%,transparent)}.insights-advice [data-kind=schedule] gt-icon{color:#a78bfa;background:color-mix(in srgb,#a78bfa 14%,transparent)}
+ .insights-advice h3{font-size:14px;margin:0 0 4px}.insights-advice p{font-size:13px;color:color-mix(in srgb,var(--text) 80%,var(--muted));line-height:1.45}
+ .insights-reminder,.insights-section>.card{padding:14px}.insights-export-actions button{min-height:46px;border-radius:14px}
+ @media(max-width:720px){.insights-charts,.insights-advice{grid-template-columns:1fr}}
+  @media print{.insights-heading>a,.insights-periods,.insights-export-actions,.insights-link,.insights-reminder button{display:none!important}:host{color:#111}.card{break-inside:avoid;box-shadow:none;border:1px solid #bbb}.insights-advice{grid-template-columns:1fr}}
  `]
 })
 export class TrainingInsightsComponent {

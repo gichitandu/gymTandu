@@ -18,7 +18,7 @@
     @if(workout.available){<div class="preview-exercises">@for(row of workout.exercises;track row.id;let number=$index){
       @let item=row.prescription;
       <details class="card preview-exercise">
-        <summary class="preview-exercise-summary"><gt-exercise-thumb [exercise]="row.exercise"/><div class="exercise-title"><span class="exercise-number">ESERCIZIO {{number+1}}</span><h2>{{row.name}}</h2><p>{{item.sets}} serie · {{range(item.repsMin,item.repsMax)}} rip. · {{rest(item.rest)}}</p></div><gt-icon class="preview-exercise-arrow" name="back"/></summary>
+        <summary class="preview-exercise-summary"><span class="wp3-number" aria-hidden="true">{{number+1}}</span><gt-exercise-thumb [exercise]="row.exercise"/><div class="exercise-title"><span class="exercise-number wp3-sr">ESERCIZIO {{number+1}}</span><h2>{{row.name}}</h2><p>{{item.sets}} serie · {{range(item.repsMin,item.repsMax)}} rip. · {{rest(item.rest)}}</p></div><gt-icon class="preview-exercise-arrow" name="back"/></summary>
         <div class="preview-exercise-body"><p class="preview-muscle">{{row.muscle}}{{row.muscle&&row.exercise?.equipment?' · ':''}}{{row.exercise?.equipment}}</p>
         <gt-exercise-motion [exercise]="row.exercise"/>
         <dl class="prescription-grid"><div><dt>Serie</dt><dd>{{item.sets}}</dd></div><div><dt>Ripetizioni</dt><dd>{{range(item.repsMin,item.repsMax)}}</dd></div><div><dt>Recupero</dt><dd>{{rest(item.rest)}}</dd></div></dl>

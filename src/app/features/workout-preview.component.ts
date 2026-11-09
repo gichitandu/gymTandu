@@ -8,7 +8,7 @@ import {ExerciseThumbComponent} from '../shared/exercise-thumb.component';
 import {IconComponent} from '../shared/icon.component';
 import {TrainingPlanExercise} from '../models/domain';
 
-@Component({standalone:true,imports:[ExerciseMotionComponent,RouterLink,ExerciseThumbComponent,IconComponent],templateUrl:'./workout-preview.component.html',styleUrl:'./workout-preview.component.css'})
+@Component({standalone:true,imports:[ExerciseMotionComponent,RouterLink,ExerciseThumbComponent,IconComponent],templateUrl:'./workout-preview.component.html',styleUrls:['./workout-preview.component.css','./workout-preview-v3.css']})
 export class WorkoutPreviewComponent {
   readonly s=inject(Store);
   private route=inject(ActivatedRoute);

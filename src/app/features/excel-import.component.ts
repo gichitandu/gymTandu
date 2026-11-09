@@ -15,7 +15,7 @@ import {IconComponent} from '../shared/icon.component';
 
 interface MatchRow{key:string;name:string;sourceIds:string[];exact?:Exercise;}
 const normalize=(value:string)=>value.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
-@Component({standalone:true,imports:[FormsModule,RouterLink,DateFieldComponent,IconComponent],templateUrl:'./excel-import.component.html',styleUrl:'./excel-import.component.css'})
+@Component({standalone:true,imports:[FormsModule,RouterLink,DateFieldComponent,IconComponent],templateUrl:'./excel-import.component.html',styleUrls:['./excel-import.component.css','./excel-import-v3.css']})
 export class ExcelImportComponent{
  readonly auth=inject(AuthService);readonly s=inject(Store);readonly archive=inject(ExcelImportService);private router=inject(Router);private confirmation=confirmationForContext();private feedback=feedbackForContext();
  readonly mode=signal<'import'|'archive'>('import');readonly filter=signal<'all'|'active'|'completed'>('all');readonly date=signal('');readonly file=signal<File|null>(null);readonly draft=signal<ExcelProgramDraft|null>(null);readonly parsing=signal(false);readonly busy=signal(false);readonly error=signal('');readonly mappings=signal<Record<string,string>>({});readonly queries=signal<Record<string,string>>({});readonly downloading=signal('');

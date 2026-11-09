@@ -1,0 +1,70 @@
+/* Importa Excel v3 (anteprima 13). Solo token del tema. */
+.excel-page { max-width: 620px; }
+.excel-heading { gap: 10px; }
+.excel-heading > a { width: 44px; min-width: 44px; height: 44px; border-radius: 14px; border: 1px solid var(--line); background: color-mix(in srgb, var(--text) 4%, transparent); }
+.excel-heading h1 { font-size: 22px; font-weight: 900; letter-spacing: -.02em; }
+
+.excel-page > .segmented {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 4px; border-radius: 16px;
+  border: 1px solid color-mix(in srgb, var(--text) 9%, transparent); background: color-mix(in srgb, var(--bg) 60%, transparent);
+}
+.excel-page > .segmented button { min-height: 40px; border: 0; border-radius: 12px; background: transparent; color: var(--muted); font-size: 14px; font-weight: 700; box-shadow: none; }
+.excel-page > .segmented button.active {
+  background: linear-gradient(180deg, color-mix(in srgb, var(--accent) 70%, #fff), var(--accent)); color: var(--accent-ink); font-weight: 800;
+  box-shadow: 0 6px 16px color-mix(in srgb, var(--accent) 28%, transparent);
+}
+
+/* Passaggi */
+.xl3-steps { display: flex; align-items: flex-start; margin: 14px 0 12px; padding: 0; list-style: none; }
+.xl3-steps > li:not(.xl3-line) { display: flex; flex-direction: column; align-items: center; gap: 6px; flex: none; width: 74px; color: var(--muted); font-size: 11px; font-weight: 700; }
+.xl3-steps > li > span {
+  display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; box-sizing: border-box;
+  border: 1.5px solid color-mix(in srgb, var(--text) 28%, transparent); font-size: 13px; font-weight: 900;
+}
+.xl3-steps > li > span gt-icon { width: 14px; height: 14px; }
+.xl3-steps > li.current { color: var(--text); }
+.xl3-steps > li.current > span { border: 0; background: linear-gradient(180deg, color-mix(in srgb, var(--accent) 70%, #fff), var(--accent)); color: var(--accent-ink); box-shadow: 0 0 14px color-mix(in srgb, var(--accent) 45%, transparent); }
+.xl3-steps > li.done { color: var(--text); }
+.xl3-steps > li.done > span { border: 0; background: var(--green); color: color-mix(in srgb, var(--green) 15%, #000); }
+.xl3-steps > .xl3-line { flex: 1; height: 2px; margin-top: 15px; border-radius: 2px; background: color-mix(in srgb, var(--text) 18%, transparent); }
+.xl3-steps > .xl3-line.done { background: var(--green); }
+
+.card {
+  border: 1px solid color-mix(in srgb, var(--text) 12%, transparent); border-radius: 20px;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--text) 6%, var(--card)), var(--card));
+  box-shadow: inset 0 1px color-mix(in srgb, #fff 5%, transparent);
+}
+.choose-file { min-height: 52px; border-radius: 16px; font-weight: 800; }
+.filename {
+  display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-radius: 14px; font-weight: 700;
+  background: color-mix(in srgb, var(--green) 8%, transparent); border: 1px solid color-mix(in srgb, var(--green) 28%, transparent);
+}
+
+/* Piano trovato */
+.excel-preview {
+  border-color: color-mix(in srgb, var(--accent-text) 32%, transparent);
+  background: radial-gradient(110% 60% at 100% 0%, color-mix(in srgb, var(--accent) 18%, transparent), transparent 60%), linear-gradient(180deg, color-mix(in srgb, var(--accent) 7%, var(--card)), var(--card));
+}
+.xl3-eyebrow { display: block; color: var(--accent-text); font-size: 11px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; }
+.excel-preview > h2 { margin-top: 6px; font-size: 22px; font-weight: 900; letter-spacing: -.02em; }
+.import-metrics { gap: 6px; }
+.import-metrics > div { border-radius: 12px; background: color-mix(in srgb, var(--bg) 40%, transparent); }
+.import-metrics strong { font-weight: 900; font-variant-numeric: tabular-nums; }
+
+/* Righe di controllo */
+.xl3-row { border-top: 1px solid color-mix(in srgb, var(--text) 10%, transparent); }
+.xl3-row > summary { display: flex; align-items: center; gap: 12px; min-height: 52px; font-weight: 700; }
+.xl3-ic { display: grid; place-items: center; flex: none; width: 32px; height: 32px; border-radius: 10px; }
+.xl3-ic gt-icon { width: 16px; height: 16px; }
+.xl3-green { color: var(--green); background: color-mix(in srgb, var(--green) 15%, transparent); }
+.xl3-cyan { color: var(--accent-text); background: color-mix(in srgb, var(--accent) 15%, transparent); }
+.xl3-amber { color: var(--warning, #fbbf24); background: color-mix(in srgb, var(--warning, #fbbf24) 15%, transparent); }
+.xl3-violet { color: #a78bfa; background: color-mix(in srgb, #a78bfa 15%, transparent); }
+
+.import-confirm > button { min-height: 56px; border-radius: 18px; font-size: 16px; font-weight: 800; }
+
+/* Archivio */
+.archive-filters { gap: 4px; padding: 4px; border-radius: 16px; background: color-mix(in srgb, var(--bg) 60%, transparent); border: 1px solid color-mix(in srgb, var(--text) 9%, transparent); }
+.archive-filters button { border: 0; border-radius: 12px; background: transparent; color: var(--muted); font-weight: 700; }
+.archive-filters .active { background: color-mix(in srgb, var(--accent) 16%, transparent); color: var(--accent-text); }
+.excel-file .file-title > gt-icon { color: var(--accent-text); }

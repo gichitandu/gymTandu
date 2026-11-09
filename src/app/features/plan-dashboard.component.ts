@@ -10,7 +10,7 @@ import {DataChartComponent} from '../shared/data-chart.component';
 import {IconComponent} from '../shared/icon.component';
 import {StatusComponent} from '../shared/status.component';
 
-@Component({standalone:true,imports:[FormsModule,RouterLink,DataChartComponent,IconComponent,StatusComponent],templateUrl:'./plan-dashboard.component.html',styleUrl:'./plan-dashboard.component.css'})
+@Component({standalone:true,imports:[FormsModule,RouterLink,DataChartComponent,IconComponent,StatusComponent],templateUrl:'./plan-dashboard.component.html',styleUrls:['./plan-dashboard.component.css','./plan-dashboard-v3.css']})
 export class PlanDashboardComponent{
  s=inject(Store);private route=inject(ActivatedRoute);private router=inject(Router);private todayClock=inject(TodayService,{optional:true});
  id=signal('');finishOpen=signal(false);finishing=signal(false);cancelFuture=true;exerciseMetric:'weight'|'reps'='weight';

@@ -1,1 +1,86 @@
-.workout-summary{max-width:720px;margin:auto;min-width:0}.summary-symbol{display:grid;place-items:center;width:62px;height:62px;border:1px solid #6ed7bc66;border-radius:50%;color:var(--green,#6ed7bc);background:#6ed7bc12;margin:20px auto}.summary-symbol gt-icon{width:30px;height:30px}.summary-eyebrow{text-align:center;font-size:11px;letter-spacing:2px;color:var(--muted)}h1{text-align:center;font-size:28px;line-height:1.3;overflow-wrap:anywhere}.summary-caption{text-align:center;color:var(--muted);font-size:13px;line-height:1.6}.summary-metrics{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:24px 0}.summary-metrics .card{min-width:0;padding:18px}.summary-metrics strong{display:block;font-size:30px;overflow-wrap:anywhere;line-height:1.3}.summary-metrics small{font-size:14px}.summary-metrics span,.summary-note{font-size:12px;color:var(--muted);line-height:1.6}.summary-records,.summary-exercises{margin:18px 0}.summary-records h2,.summary-exercises h2{font-size:18px}.summary-records>div{display:flex;gap:12px;align-items:center;padding:12px 0;border-top:1px solid var(--line)}.summary-records gt-icon{color:#f5c76d;flex:none}.summary-records strong,.summary-records small{display:block}.summary-records small,.summary-records p{font-size:12px;color:var(--muted);line-height:1.6}.summary-exercises>div{padding:12px 0;border-top:1px solid var(--line)}.summary-exercises strong,.summary-exercises small,.summary-exercises span{display:block;overflow-wrap:anywhere}.summary-exercises small,.summary-exercises span{font-size:12px;color:var(--muted);line-height:1.6;margin-top:5px}.summary-actions{display:grid;gap:10px;margin:24px 0}.summary-actions a{min-height:48px;justify-content:center}
+/* Riepilogo di fine allenamento v3 (anteprima 7). Solo token del tema. */
+@keyframes wsPop { 0% { transform: scale(.6); opacity: 0; } 70% { transform: scale(1.08); } 100% { transform: scale(1); opacity: 1; } }
+@keyframes wsRise { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+
+:host { display: block; min-width: 0; }
+.workout-summary { max-width: 620px; margin: auto; min-width: 0; display: flex; flex-direction: column; gap: 12px; }
+
+.summary-top { display: flex; justify-content: flex-end; }
+.summary-close {
+  display: grid; place-items: center; width: 44px; height: 44px; border-radius: 14px;
+  border: 1px solid var(--line); background: color-mix(in srgb, var(--text) 4%, transparent); color: var(--text);
+}
+.summary-close gt-icon { width: 18px; height: 18px; }
+
+.summary-hero { text-align: center; margin-top: -8px; }
+.summary-symbol {
+  display: grid; place-items: center; width: 84px; height: 84px; margin: 0 auto; border-radius: 50%;
+  border: 2px solid var(--green); color: var(--green);
+  background: radial-gradient(circle, color-mix(in srgb, var(--green) 32%, transparent), color-mix(in srgb, var(--green) 5%, transparent) 70%);
+  box-shadow: 0 0 0 10px color-mix(in srgb, var(--green) 7%, transparent), 0 0 40px color-mix(in srgb, var(--green) 30%, transparent);
+  animation: wsPop .6s cubic-bezier(.2, .8, .2, 1) both;
+}
+.summary-symbol gt-icon { width: 38px; height: 38px; stroke-width: 2.6; }
+.summary-eyebrow { margin: 16px 0 0; color: var(--green); font-size: 11px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; }
+:host h1 { margin: 6px 0 0; font-size: 28px; font-weight: 900; letter-spacing: -.02em; line-height: 1.15; text-align: center; overflow-wrap: anywhere; }
+.summary-caption { margin: 4px 0 0; color: var(--muted); font-size: 13px; line-height: 1.5; text-align: center; }
+
+:host .card {
+  margin: 0; min-width: 0;
+  border: 1px solid color-mix(in srgb, var(--text) 12%, transparent); border-radius: 20px;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--text) 6%, var(--card)), var(--card));
+  box-shadow: inset 0 1px color-mix(in srgb, #fff 5%, transparent);
+  animation: wsRise .45s cubic-bezier(.2, .8, .2, 1) both;
+}
+
+.summary-metrics { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 4px 0 0; }
+.summary-metrics .card { display: flex; flex-direction: column; gap: 6px; padding: 12px 13px; }
+.metric-icon { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 9px; }
+.metric-icon gt-icon { width: 15px; height: 15px; }
+.m-sets { color: var(--accent-text); background: color-mix(in srgb, var(--accent) 16%, transparent); }
+.m-time { color: #a78bfa; background: color-mix(in srgb, #a78bfa 16%, transparent); }
+.m-volume { color: #fb923c; background: color-mix(in srgb, #fb923c 16%, transparent); }
+.m-reps { color: var(--green); background: color-mix(in srgb, var(--green) 16%, transparent); }
+.summary-metrics strong { display: block; font-size: 26px; font-weight: 900; line-height: 1.1; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.summary-metrics small { color: var(--muted); font-size: 13px; font-weight: 700; }
+.summary-metrics span:last-child { color: var(--muted); font-size: 12px; line-height: 1.4; }
+
+.summary-records { padding: 14px 14px 4px; }
+.summary-card-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: 8px; }
+.summary-card-head h2 { margin: 0; color: var(--warning, #f5c76d); font-size: 11px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; }
+.summary-compare .summary-card-head h2 { color: var(--muted); }
+.summary-card-head small { color: var(--muted); font-size: 12px; }
+.summary-row { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-top: 1px solid color-mix(in srgb, var(--text) 9%, transparent); }
+.summary-row > span:not(.record-medal):not(.compare-values) { flex: 1; min-width: 0; }
+.summary-row strong { display: block; font-size: 14px; overflow-wrap: anywhere; }
+.summary-row small { display: block; margin-top: 2px; color: var(--muted); font-size: 12px; line-height: 1.45; }
+.summary-row small b { color: var(--warning, #f5c76d); }
+.record-medal {
+  display: grid; place-items: center; flex: none; width: 36px; height: 36px; border-radius: 12px;
+  color: var(--warning, #f5c76d);
+  background: linear-gradient(145deg, color-mix(in srgb, var(--warning, #f5c76d) 30%, transparent), color-mix(in srgb, var(--warning, #f5c76d) 8%, transparent));
+}
+.record-medal gt-icon { width: 18px; height: 18px; }
+.compare-values { flex: none; color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.compare-values b { color: var(--green); }
+
+.summary-exercises { padding: 4px 14px; }
+.summary-exercise { display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 8px 0; }
+.summary-exercise + .summary-exercise { border-top: 1px solid color-mix(in srgb, var(--text) 9%, transparent); }
+.summary-exercise-name { flex: 1; min-width: 0; }
+.summary-exercise-name strong { display: block; font-size: 14px; font-weight: 600; overflow-wrap: anywhere; }
+.summary-exercise-name small { display: block; color: var(--muted); font-size: 12px; }
+.set-dots { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 3px; max-width: 96px; }
+.set-dots i { width: 8px; height: 8px; border-radius: 50%; background: color-mix(in srgb, var(--text) 25%, transparent); }
+.set-dots i.on { background: var(--green); }
+.set-count { width: 34px; color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; text-align: right; }
+
+.summary-note { margin: 0; color: var(--muted); font-size: 12px; line-height: 1.5; text-align: center; }
+
+.summary-actions { display: grid; gap: 8px; margin: 4px 0 8px; }
+.summary-actions .summary-main { min-height: 56px; border-radius: 18px; font-size: 16px; font-weight: 800; }
+.summary-secondary { display: flex; gap: 8px; }
+.summary-secondary a { flex: 1; min-height: 48px; gap: 7px; border-radius: 15px; justify-content: center; }
+.summary-secondary gt-icon { width: 16px; height: 16px; }
+
+@media (prefers-reduced-motion: reduce) { .summary-symbol, :host .card { animation: none; } }

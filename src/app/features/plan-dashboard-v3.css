@@ -1,0 +1,82 @@
+/* Statistiche del piano v3 (anteprima 11). Solo token del tema, sopra lo stile esistente. */
+:host .plan-dashboard { display: flex; flex-direction: column; gap: 12px; max-width: 640px; }
+:host .plan-dashboard > .card, :host .plan-dashboard > .pd3-hero, :host .plan-dashboard > .pd3-select { margin: 0; }
+:host .dashboard-heading { margin: 0; gap: 10px; }
+:host .dashboard-heading .icon-btn {
+  width: 44px; min-width: 44px; height: 44px; border-radius: 14px; border: 1px solid var(--line);
+  background: color-mix(in srgb, var(--text) 4%, transparent);
+}
+:host .dashboard-heading p { margin: 0 0 2px; font-size: 10px; font-weight: 800; letter-spacing: .14em; }
+:host .dashboard-heading h1 { font-size: 22px; font-weight: 900; letter-spacing: -.02em; }
+
+:host .card {
+  border: 1px solid color-mix(in srgb, var(--text) 12%, transparent); border-radius: 20px;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--text) 6%, var(--card)), var(--card));
+  box-shadow: inset 0 1px color-mix(in srgb, #fff 5%, transparent);
+}
+
+/* Selettore del piano */
+:host .pd3-select { position: relative; display: block; }
+:host .pd3-select > span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+:host .pd3-select select {
+  width: 100%; min-height: 46px; padding: 0 40px 0 14px; border-radius: 14px; appearance: none; -webkit-appearance: none;
+  border: 1px solid color-mix(in srgb, var(--text) 16%, transparent); background: color-mix(in srgb, var(--text) 5%, transparent);
+  color: var(--text); font-size: 15px; font-weight: 700;
+}
+:host .pd3-select gt-icon { position: absolute; right: 14px; top: 50%; width: 16px; height: 16px; transform: translateY(-50%); pointer-events: none; color: var(--muted); }
+
+/* Hero con anello */
+:host .pd3-hero {
+  display: flex; align-items: center; gap: 16px; padding: 16px; border-radius: 24px;
+  border: 1px solid color-mix(in srgb, var(--accent-text) 32%, transparent);
+  background: radial-gradient(110% 90% at 100% 0%, color-mix(in srgb, var(--accent) 20%, transparent), transparent 60%), linear-gradient(180deg, color-mix(in srgb, var(--accent) 8%, var(--card)), var(--card));
+}
+:host .pd3-ring { position: relative; display: grid; place-items: center; flex: none; width: 92px; height: 92px; }
+:host .pd3-ring svg { position: absolute; inset: 0; width: 100%; height: 100%; transform: rotate(-90deg); }
+:host .pd3-ring circle { fill: none; stroke-width: 8; }
+:host .pd3-ring .track { stroke: color-mix(in srgb, var(--text) 14%, transparent); }
+:host .pd3-ring .fill { stroke: var(--accent-text); stroke-linecap: round; filter: drop-shadow(0 0 6px color-mix(in srgb, var(--accent-text) 50%, transparent)); }
+:host .pd3-ring strong { position: relative; font-size: 20px; font-weight: 900; font-variant-numeric: tabular-nums; }
+:host .pd3-hero-text { flex: 1; min-width: 0; }
+:host .pd3-hero-text .pill { font-size: 11px; }
+:host .pd3-hero-text h2 { margin: 8px 0 0; font-size: 20px; font-weight: 900; letter-spacing: -.02em; line-height: 1.2; }
+:host .pd3-hero-text p { margin: 3px 0 0; color: color-mix(in srgb, var(--text) 80%, var(--muted)); font-size: 12px; line-height: 1.45; }
+:host .pd3-hero-text .pd3-count { color: var(--muted); }
+:host .pd3-hero-text .pd3-count b { color: var(--text); font-variant-numeric: tabular-nums; }
+:host .pd3-finish {
+  min-height: 34px; margin-top: 10px; padding: 0 12px; border-radius: 11px; font-size: 12px; font-weight: 700;
+  border: 1px solid color-mix(in srgb, var(--danger, #fb7185) 40%, transparent); color: color-mix(in srgb, var(--danger, #fb7185) 80%, var(--text));
+  background: color-mix(in srgb, var(--danger, #fb7185) 7%, transparent);
+}
+
+/* Metriche */
+:host .plan-metrics.pd3-metrics { gap: 8px; margin: 0; }
+:host .pd3-metrics .metric { padding: 12px 13px; }
+:host .pd3-metrics .metric > span { display: flex; align-items: center; gap: 8px; min-height: 0; font-size: 12px; }
+:host .pd3-metrics .metric > span gt-icon {
+  width: 28px; height: 28px; padding: 6px; border-radius: 9px; box-sizing: border-box; flex: none;
+  color: var(--accent-text); background: color-mix(in srgb, var(--accent) 16%, transparent);
+}
+:host .pd3-metrics .metric:nth-child(2) > span gt-icon { color: var(--green); background: color-mix(in srgb, var(--green) 16%, transparent); }
+:host .pd3-metrics .metric:nth-child(3) > span gt-icon { color: #fb923c; background: color-mix(in srgb, #fb923c 16%, transparent); }
+:host .pd3-metrics .metric:nth-child(4) > span gt-icon { color: #a78bfa; background: color-mix(in srgb, #a78bfa 16%, transparent); }
+:host .pd3-metrics .metric > strong { margin-top: 8px; font-size: 24px; font-weight: 900; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+:host .pd3-metrics .metric p { margin: 2px 0 0; }
+
+:host .recorded-summary { padding: 12px 4px; }
+:host .recorded-summary strong { font-weight: 900; font-variant-numeric: tabular-nums; }
+
+/* Grafici e liste */
+:host .plan-chart, :host .exercise-records, :host .sessions-list { padding: 14px; }
+:host .plan-chart h2, :host .exercise-records h2, :host .sessions-list h2 {
+  margin: 0 0 10px; color: var(--muted); font-size: 11px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase;
+}
+:host .dashboard-details { padding: 0 14px; }
+:host .dashboard-details > summary { min-height: 48px; font-weight: 700; }
+:host .schedule-totals > span { border-radius: 999px; font-weight: 700; }
+:host .exercise-result summary { min-height: 52px; }
+:host .exercise-result strong { font-size: 14px; }
+:host .record-reps { color: var(--green); font-weight: 800; font-variant-numeric: tabular-nums; }
+:host .session-row { align-items: center; }
+:host .session-state.done { color: var(--green); }
+:host .dashboard-footnote { margin: 0 4px; }

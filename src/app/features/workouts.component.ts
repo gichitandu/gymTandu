@@ -13,7 +13,7 @@ import { StatusComponent } from "../shared/status.component";
 import { ExerciseFilterComponent } from "../shared/exercise-filter.component";
 @Component({
   standalone: true,
-  styleUrl: "./account-polish.css",
+  styleUrls: ["./account-polish.css", "./history-v3.css"],
   imports: [...DESIGN_DIRECTIVES,DateFieldComponent,OpenWorkoutsComponent,SectionHeadingComponent,
     FormsModule,
     DatePipe,
@@ -26,39 +26,21 @@ import { ExerciseFilterComponent } from "../shared/exercise-filter.component";
     <gt-status />
     <gt-open-workouts />
     @if (selected(); as w) {
-      <button
-        class="ghost"
-        (click)="selectedId.set('')"
-        style="margin-bottom:20px"
-      >
-        <gt-icon name="back" /> Torna allo storico
-      </button>
-      <div class="card" style="margin-bottom:20px">
-        <div class="card-head">
-          <div>
-            <h2>{{ w.dayName }}</h2>
-            <p>{{ w.planName }} · {{ w.date | date: "dd/MM/yyyy" }}</p>
-          </div>
-          <span class="pill green">COMPLETATO</span>
-        </div>
-        <p class="subtle">Durata: {{w.duration>0?w.duration+' minuti':'non indicata'}}</p>@if(w.notes){<p>{{w.notes}}</p>}
-        <p class="subtle" style="margin-top:14px">
-          Inizio: {{ w.startedAt | date: "HH:mm" }} · Fine:
-          {{ w.endedAt | date: "HH:mm" }} · Volume:
-          {{ s.formatWeight(s.volume(w.id)) }} {{ s.settings().unit }}
-        </p>
-        <div class="actions">
-          <span class="pill">{{
-            s.busy() ? "Salvataggio…" : "Allenamento terminato · sola lettura"
-          }}</span
-          ><button class="primary" (click)="reopen(w.id)" [disabled]="s.busy()||reopening()||deleting()">{{reopening()?'Riapertura…':'Riapri allenamento'}}</button>
-          <a class="button ghost" routerLink="/profilo" [queryParams]="{section:'settings'}"><gt-icon name="settings"/>Configura eliminazione</a>
-          @if(s.settings().allowCompletedWorkoutDeletion){<button type="button" class="ghost danger" (click)="remove(w.id)" [disabled]="s.busy()||reopening()||deleting()">{{deleting()?'Eliminazione…':'Elimina allenamento'}}</button>}
-        </div>
-      </div>
-      <a class="button ghost" [routerLink]="['/riepilogo',w.id]">Riepilogo allenamento</a><p class="subtle">Per modificare la sessione, riaprila. Puoi configurare l’eliminazione dei terminati in Profilo → Impostazioni.</p>
-      @for(exercise of s.workoutExercises(w.id);track exercise.id){<section class="card" style="margin-top:12px"><h3>{{exercise.name}}</h3>@if(exercise.substitutedFrom){<p class="subtle">Al posto di {{exercise.substitutedFrom.name}} · solo questa seduta</p>}@for(set of s.sets(exercise.id);track set.id){<p>Serie {{set.number}} · {{s.formatWeight(set.weight)}} {{s.settings().unit}} × {{set.reps}} · {{set.completed?'Confermata':'Non eseguita'}}</p>}</section>}
+      <button type="button" class="history-back" (click)="selectedId.set('')"><gt-icon name="back" />Storico</button>
+      <section class="history-done-card">
+        <div class="history-done-top"><span class="history-done-pill"><gt-icon name="check"/>Completato</span><span class="history-readonly">{{ s.busy() ? "Salvataggio…" : "Sola lettura" }}</span></div>
+        <h2>{{ w.dayName }}</h2>
+        <p class="history-done-sub">{{ w.planName }} · {{ longDate(w.date) }}</p>
+        <p class="history-done-time">{{ w.startedAt | date: "HH:mm" }} – {{ w.endedAt | date: "HH:mm" }}</p>
+        <div class="history-done-stats"><div><b>{{w.duration>0?w.duration:'—'}}</b><small>min</small></div><div><b>{{ setCount(w.id) }}</b><small>serie</small></div><div><b>{{ s.formatWeight(s.volume(w.id)) }}</b><small>{{ s.settings().unit }}</small></div><div><b>{{ repCount(w.id) }}</b><small>rip</small></div></div>
+      </section>
+      <div class="history-detail-actions"><a class="button ghost" [routerLink]="['/riepilogo',w.id]"><gt-icon name="trophy"/>Riepilogo</a><button type="button" class="ghost" (click)="reopen(w.id)" [disabled]="s.busy()||reopening()||deleting()"><gt-icon name="repeat"/>{{reopening()?'Riapertura…':'Riapri'}}</button></div>
+      @if(w.notes){<section class="card history-notes"><gt-icon name="note"/><p>{{w.notes}}</p></section>}
+      <div class="history-section-title"><span>Esercizi · {{ s.workoutExercises(w.id).length }}</span><small>R = riscaldamento</small></div>
+      @for(exercise of s.workoutExercises(w.id);track exercise.id){<section class="card history-exercise"><h3>{{exercise.name}}</h3>@if(exercise.substitutedFrom){<p class="subtle">Al posto di {{exercise.substitutedFrom.name}} · solo questa seduta</p>}<div class="history-sets">@for(set of s.sets(exercise.id);track set.id){<span class="history-set" [class.done]="set.completed" [class.warm]="set.kind==='warmup'" [attr.aria-label]="'Serie '+set.number+': '+s.formatWeight(set.weight)+' '+s.settings().unit+' per '+set.reps+(set.completed?', confermata':', non eseguita')"><small>{{set.kind==='warmup'?'R':'S'+set.number}}</small><b>{{set.completed?s.formatWeight(set.weight)+'×'+set.reps:'—'}}</b></span>}</div></section>}
+      <details class="card history-more"><summary>Altre azioni<gt-icon name="chevron-down"/></summary><div class="history-more-body"><p class="subtle">Per modificare la sessione, riaprila. Puoi configurare l’eliminazione dei terminati in Profilo → Impostazioni.</p><a class="button ghost" routerLink="/profilo" [queryParams]="{section:'settings'}"><gt-icon name="settings"/>Configura eliminazione</a>@if(s.settings().allowCompletedWorkoutDeletion){<button type="button" class="ghost danger" (click)="remove(w.id)" [disabled]="s.busy()||reopening()||deleting()">{{deleting()?'Eliminazione…':'Elimina allenamento'}}</button>}</div></details>
     } @else {
+      <details class="history-filter-panel"><summary><gt-icon name="sliders"/>Filtri@if(activeFilters()){<span class="history-filter-count">{{activeFilters()}}</span>}<gt-icon name="chevron-down"/></summary>
       <div gtDesign="history.filters" class="history-filters" role="group" aria-label="Filtri dello storico allenamenti">
         <label class="history-plan-filter"
           >Piano<select gtDesign="history.plan"
@@ -87,39 +69,19 @@ import { ExerciseFilterComponent } from "../shared/exercise-filter.component";
             [ngModel]="to()"
             (ngModelChange)="to.set($event)"
         ></gt-date-field></label>
-      </div>
-      <p class="subtle" style="margin-bottom:16px">
-        {{ filtered().length }} allenamenti trovati
-      </p>
-      <div class="list workout-timeline">
-        @for (w of filtered(); track w.id) {
-          <article class="card history-session">
-            <div class="card-head">
-              <div class="exercise-info">
-                <span class="history-date"><strong>{{w.date | date: "dd"}}</strong><small>{{w.date | date: "MM / yyyy"}}</small></span>
-                <div>
-                  <h2>{{ w.dayName }}</h2>
-                  <p>{{ w.planName }} · {{ w.date | date: "dd/MM/yyyy" }}</p>
-                </div>
-              </div>
-              <button (click)="selectedId.set(w.id)">
-                Dettagli <gt-icon name="arrow" />
-              </button>
-            </div>
-            <div class="next-meta">
-              <span
-                ><gt-icon name="weight" />{{
-                  s.workoutExercises(w.id).length
-                }}
-                esercizi</span
-              ><span>{{ setCount(w.id) }} serie</span
-              ><span><gt-icon name="clock" />{{w.duration>0?w.duration+' min':'Durata non indicata'}}</span
-              ><span
-                >{{ s.formatWeight(s.volume(w.id)) }}
-                {{ s.settings().unit }}</span
-              >
-            </div>
-          </article>
+      </div></details>
+      <section class="history-overview" aria-label="Riepilogo degli allenamenti trovati"><div><small>Allenamenti</small><b>{{ filtered().length }}</b></div><div><small>Serie</small><b>{{ overview().sets }}</b></div><div><small>Volume</small><b>{{ s.formatWeight(overview().volume) }}<em>{{ s.settings().unit }}</em></b></div></section>
+      <div class="hx3-list">
+        @for (group of groups(); track group.key) {
+          <div class="history-month"><span>{{ group.label }}</span><small>{{ group.items.length }} {{ group.items.length===1?'seduta':'sedute' }}</small></div>
+          @for (w of group.items; track w.id) {
+          <button type="button" class="card hx3-session" (click)="selectedId.set(w.id)" [attr.aria-label]="'Dettagli di '+w.dayName+' del '+(w.date | date: 'dd/MM/yyyy')">
+            <span class="hx3-date"><strong>{{w.date | date: "dd"}}</strong><small>{{ weekday(w.date) }}</small></span>
+            <span class="hx3-text"><strong>{{ w.dayName }}</strong><small>{{ w.planName }}</small>
+              <span class="hx3-meta"><span>{{ s.workoutExercises(w.id).length }} es.</span><span>{{ setCount(w.id) }} serie</span><span>{{w.duration>0?w.duration+' min':'durata n.d.'}}</span><span>{{ s.formatWeight(s.volume(w.id)) }} {{ s.settings().unit }}</span></span></span>
+            <gt-icon name="chevron-right" />
+          </button>
+          }
         } @empty {
           <div class="card empty">
             <gt-icon name="calendar" />
@@ -178,6 +140,14 @@ export class WorkoutsComponent {
               .some((e) => e.exerciseId === this.exercise())),
       ),
   );
+  /* Storico v3: valori solo di presentazione. */
+  activeFilters(){return [this.plan(),this.day(),this.exercise(),this.from(),this.to()].filter(Boolean).length;}
+  overview=computed(()=>{const list=this.filtered();return {sets:list.reduce((n,w)=>n+this.setCount(w.id),0),volume:list.reduce((n,w)=>n+this.s.volume(w.id),0)};});
+  groups=computed(()=>{const out:{key:string;label:string;items:ReturnType<WorkoutsComponent['filtered']>}[]=[];for(const w of this.filtered()){const key=w.date.slice(0,7);let group=out.find(g=>g.key===key);if(!group){group={key,label:this.monthLabel(key),items:[]};out.push(group);}group.items.push(w);}return out;});
+  monthLabel(key:string){const [y,m]=key.split('-').map(Number);try{const text=new Date(y,(m||1)-1,1).toLocaleDateString('it-IT',{month:'long',year:'numeric'});return text.charAt(0).toUpperCase()+text.slice(1);}catch{return key;}}
+  weekday(date:string){try{return new Date(date+'T12:00:00').toLocaleDateString('it-IT',{weekday:'short'}).replace('.','').toUpperCase();}catch{return '';}}
+  longDate(date:string){try{return new Date(date+'T12:00:00').toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long',year:'numeric'});}catch{return date;}}
+  repCount(id:string){return this.s.workoutExercises(id).reduce((n,e)=>n+this.s.sets(e.id).filter(set=>set.completed&&set.kind!=='warmup').reduce((sum,set)=>sum+set.reps,0),0);}
   setCount(id: string) {
     return this.s
       .workoutExercises(id)
