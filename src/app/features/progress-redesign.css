@@ -1,4 +1,13 @@
-@keyframes pgRise { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
+@keyframes pgRise {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
 :host .progress-page-heading > div::before {
   content: "STATISTICHE";
   display: block;
@@ -12,7 +21,7 @@
 :host .progress-page-heading h1 {
   font-size: clamp(34px, 9.5vw, 42px);
   font-weight: 750;
-  letter-spacing: -.055em;
+  letter-spacing: -0.055em;
   line-height: 1.02;
 }
 
@@ -31,27 +40,47 @@
   border: 0;
   border-radius: 14px;
   font-weight: 650;
-  transition: background .25s ease, color .25s ease, box-shadow .25s ease;
+  transition:
+    background 0.25s ease,
+    color 0.25s ease,
+    box-shadow 0.25s ease;
 }
 
 :host .progress-tabs > :is(button, a).active {
   color: var(--accent-ink);
-  background: linear-gradient(135deg, var(--accent-text), var(--theme-secondary, var(--accent)));
+  background: linear-gradient(
+    135deg,
+    var(--accent-text),
+    var(--theme-secondary, var(--accent))
+  );
   box-shadow: 0 8px 20px color-mix(in srgb, var(--accent) 30%, transparent);
 }
 
-:host :is(.performance-chart-card, .ref-weekly-summary, .progress-summary-tile, .stat, .reference-progress > .card) {
+:host
+  :is(
+    .performance-chart-card,
+    .ref-weekly-summary,
+    .progress-summary-tile,
+    .stat,
+    .reference-progress > .card
+  ) {
   border: 1px solid var(--line);
   border-radius: 24px;
-  background: linear-gradient(160deg, color-mix(in srgb, var(--text) 6.5%, transparent), color-mix(in srgb, var(--text) 1.8%, transparent));
-  box-shadow: 0 12px 30px color-mix(in srgb, #000 16%, transparent), inset 0 1px color-mix(in srgb, var(--text) 7%, transparent);
-  animation: pgRise .5s cubic-bezier(.2, .8, .2, 1) both;
+  background: linear-gradient(
+    160deg,
+    color-mix(in srgb, var(--text) 6.5%, transparent),
+    color-mix(in srgb, var(--text) 1.8%, transparent)
+  );
+  box-shadow:
+    0 12px 30px color-mix(in srgb, #000 16%, transparent),
+    inset 0 1px color-mix(in srgb, var(--text) 7%, transparent);
+  animation: pgRise 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
 
 :host .ref-metric-value {
   font-size: clamp(28px, 8vw, 34px);
   font-weight: 750;
-  letter-spacing: -.05em;
+  letter-spacing: -0.05em;
   font-variant-numeric: tabular-nums;
 }
 
@@ -77,9 +106,14 @@
 
 :host .section-title h2 {
   font-weight: 750;
-  letter-spacing: -.04em;
+  letter-spacing: -0.04em;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  :host *, :host *::before, :host *::after { animation: none !important; transition: none !important; }
+  :host *,
+  :host *::before,
+  :host *::after {
+    animation: none !important;
+    transition: none !important;
+  }
 }

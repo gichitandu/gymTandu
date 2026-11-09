@@ -1,8 +1,17 @@
-@keyframes pgRise { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
+@keyframes pgRise {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
 :host .profile-page-heading h1 {
   font-size: clamp(34px, 9.5vw, 42px);
   font-weight: 750;
-  letter-spacing: -.055em;
+  letter-spacing: -0.055em;
   line-height: 1.02;
 }
 
@@ -11,26 +20,34 @@
 }
 
 :host .profile-avatar {
-  box-shadow: 0 16px 40px color-mix(in srgb, var(--accent) 34%, transparent), inset 0 1px color-mix(in srgb, #fff 40%, transparent);
-  animation: pgRise .5s cubic-bezier(.2, .8, .2, 1) both;
+  box-shadow:
+    0 16px 40px color-mix(in srgb, var(--accent) 34%, transparent),
+    inset 0 1px color-mix(in srgb, #fff 40%, transparent);
+  animation: pgRise 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
 
 :host .identity-name {
   font-weight: 750;
-  letter-spacing: -.05em;
+  letter-spacing: -0.05em;
 }
 
 :host .profile-key-stats > * {
   border: 1px solid var(--line);
   border-radius: 20px;
-  background: linear-gradient(160deg, color-mix(in srgb, var(--text) 6.5%, transparent), color-mix(in srgb, var(--text) 1.8%, transparent));
-  box-shadow: 0 12px 30px color-mix(in srgb, #000 16%, transparent), inset 0 1px color-mix(in srgb, var(--text) 7%, transparent);
-  animation: pgRise .5s .1s cubic-bezier(.2, .8, .2, 1) both;
+  background: linear-gradient(
+    160deg,
+    color-mix(in srgb, var(--text) 6.5%, transparent),
+    color-mix(in srgb, var(--text) 1.8%, transparent)
+  );
+  box-shadow:
+    0 12px 30px color-mix(in srgb, #000 16%, transparent),
+    inset 0 1px color-mix(in srgb, var(--text) 7%, transparent);
+  animation: pgRise 0.5s 0.1s cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
 
 :host .profile-key-stats strong {
   font-weight: 750;
-  letter-spacing: -.04em;
+  letter-spacing: -0.04em;
   font-variant-numeric: tabular-nums;
 }
 
@@ -42,14 +59,22 @@
 :host .profile-menu {
   border: 1px solid var(--line);
   border-radius: 20px;
-  background: linear-gradient(160deg, color-mix(in srgb, var(--text) 6.5%, transparent), color-mix(in srgb, var(--text) 1.8%, transparent));
-  box-shadow: 0 12px 30px color-mix(in srgb, #000 16%, transparent), inset 0 1px color-mix(in srgb, var(--text) 7%, transparent);
-  animation: pgRise .5s cubic-bezier(.2, .8, .2, 1) both;
-  transition: transform .18s ease, border-color .2s ease;
+  background: linear-gradient(
+    160deg,
+    color-mix(in srgb, var(--text) 6.5%, transparent),
+    color-mix(in srgb, var(--text) 1.8%, transparent)
+  );
+  box-shadow:
+    0 12px 30px color-mix(in srgb, #000 16%, transparent),
+    inset 0 1px color-mix(in srgb, var(--text) 7%, transparent);
+  animation: pgRise 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  transition:
+    transform 0.18s ease,
+    border-color 0.2s ease;
 }
 
 :host .profile-menu:active {
-  transform: scale(.985);
+  transform: scale(0.985);
 }
 
 :host .profile-menu gt-icon:first-child {
@@ -72,7 +97,12 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  :host *, :host *::before, :host *::after { animation: none !important; transition: none !important; }
+  :host *,
+  :host *::before,
+  :host *::after {
+    animation: none !important;
+    transition: none !important;
+  }
 }
 
 /* ---- Profilo v2: hero, azioni rapide, menu e impostazioni ---- */
@@ -80,7 +110,11 @@
   position: relative;
   overflow: hidden;
   border-radius: 30px;
-  background: linear-gradient(160deg, color-mix(in srgb, var(--accent) 16%, var(--card)), var(--card));
+  background: linear-gradient(
+    160deg,
+    color-mix(in srgb, var(--accent) 16%, var(--card)),
+    var(--card)
+  );
 }
 
 :host .identity-card::before {
@@ -89,16 +123,28 @@
   inset: -45% -20% auto;
   height: 190px;
   pointer-events: none;
-  background: radial-gradient(closest-side, color-mix(in srgb, var(--accent) 34%, transparent), transparent);
+  background: radial-gradient(
+    closest-side,
+    color-mix(in srgb, var(--accent) 34%, transparent),
+    transparent
+  );
 }
 
-:host .identity-card > * { position: relative; }
+:host .identity-card > * {
+  position: relative;
+}
 
 :host .avatar-orbit .profile-avatar,
 :host .identity-card .profile-avatar {
   padding: 4px;
   border: 0;
-  background: conic-gradient(from 200deg, var(--accent-text), var(--theme-secondary, #c49bff), #ff8da6, var(--accent-text));
+  background: conic-gradient(
+    from 200deg,
+    var(--accent-text),
+    var(--theme-secondary, #c49bff),
+    #ff8da6,
+    var(--accent-text)
+  );
   box-shadow: 0 0 36px color-mix(in srgb, var(--accent) 50%, transparent);
 }
 
@@ -126,10 +172,14 @@
   color: var(--text);
   font-size: 12.5px;
   font-weight: 750;
-  transition: transform .18s ease, border-color .2s ease;
+  transition:
+    transform 0.18s ease,
+    border-color 0.2s ease;
 }
 
-:host .profile-quick-actions button:active { transform: scale(.96); }
+:host .profile-quick-actions button:active {
+  transform: scale(0.96);
+}
 
 :host .qa-ico {
   display: grid;
@@ -141,10 +191,19 @@
   background: color-mix(in srgb, var(--accent) 16%, transparent);
 }
 
-:host .profile-quick-actions button:nth-child(2) .qa-ico { color: var(--green, #5df0b4); background: color-mix(in srgb, var(--green, #5df0b4) 16%, transparent); }
-:host .profile-quick-actions button:nth-child(3) .qa-ico { color: #c49bff; background: rgba(196, 155, 255, .17); }
+:host .profile-quick-actions button:nth-child(2) .qa-ico {
+  color: var(--green, #5df0b4);
+  background: color-mix(in srgb, var(--green, #5df0b4) 16%, transparent);
+}
+:host .profile-quick-actions button:nth-child(3) .qa-ico {
+  color: #c49bff;
+  background: rgba(196, 155, 255, 0.17);
+}
 
-:host .qa-ico gt-icon { width: 21px; height: 21px; }
+:host .qa-ico gt-icon {
+  width: 21px;
+  height: 21px;
+}
 
 /* righe di menu: icone colorate per voce, divisori, tocco comodo */
 :host .profile-menu {
@@ -157,20 +216,54 @@
   min-height: 62px;
   padding: 11px 14px;
   gap: 13px;
-  transition: background .18s ease;
+  transition: background 0.18s ease;
 }
 
-:host .profile-menu > * + * { border-top: 1px solid color-mix(in srgb, var(--text) 8%, transparent); }
+:host .profile-menu > * + * {
+  border-top: 1px solid color-mix(in srgb, var(--text) 8%, transparent);
+}
 :host .profile-menu > button:active,
-:host .profile-menu > a:active { background: color-mix(in srgb, var(--text) 7%, transparent); }
+:host .profile-menu > a:active {
+  background: color-mix(in srgb, var(--text) 7%, transparent);
+}
 
-:host .profile-menu > :nth-child(2) gt-icon:first-child { color: var(--green, #5df0b4); background: color-mix(in srgb, var(--green, #5df0b4) 16%, transparent); }
-:host .profile-menu > :nth-child(3) gt-icon:first-child { color: #7db8ff; background: rgba(125, 184, 255, .16); }
-:host .profile-menu > :nth-child(1) gt-icon:first-child { color: var(--warning, #f0b445); background: color-mix(in srgb, var(--warning, #f0b445) 16%, transparent); }
+:host .profile-menu > :nth-child(2) gt-icon:first-child {
+  color: var(--green, #5df0b4);
+  background: color-mix(in srgb, var(--green, #5df0b4) 16%, transparent);
+}
+:host .profile-menu > :nth-child(3) gt-icon:first-child {
+  color: #7db8ff;
+  background: rgba(125, 184, 255, 0.16);
+}
+:host .profile-menu > :nth-child(1) gt-icon:first-child {
+  color: var(--warning, #f0b445);
+  background: color-mix(in srgb, var(--warning, #f0b445) 16%, transparent);
+}
 
-:host .profile-menu-group:nth-of-type(2) .profile-menu > :nth-child(1) gt-icon:first-child { color: var(--accent-text); background: color-mix(in srgb, var(--accent) 16%, transparent); }
-:host .profile-menu-group:nth-of-type(2) .profile-menu > :nth-child(2) gt-icon:first-child { color: #c49bff; background: rgba(196, 155, 255, .17); }
-:host .profile-menu-group:nth-of-type(2) .profile-menu > :nth-child(3) gt-icon:first-child { color: #ff8da6; background: rgba(255, 141, 166, .16); }
+:host
+  .profile-menu-group:nth-of-type(2)
+  .profile-menu
+  > :nth-child(1)
+  gt-icon:first-child {
+  color: var(--accent-text);
+  background: color-mix(in srgb, var(--accent) 16%, transparent);
+}
+:host
+  .profile-menu-group:nth-of-type(2)
+  .profile-menu
+  > :nth-child(2)
+  gt-icon:first-child {
+  color: #c49bff;
+  background: rgba(196, 155, 255, 0.17);
+}
+:host
+  .profile-menu-group:nth-of-type(2)
+  .profile-menu
+  > :nth-child(3)
+  gt-icon:first-child {
+  color: #ff8da6;
+  background: rgba(255, 141, 166, 0.16);
+}
 
 /* impostazioni: righe con interruttori e selettori più grandi */
 :host .setting-row {
@@ -182,9 +275,18 @@
   border-top: 1px solid color-mix(in srgb, var(--text) 8%, transparent);
 }
 
-:host .setting-row:first-child { border-top: 0; }
-:host .setting-row b { font-size: 15px; }
-:host .setting-row p { margin: 3px 0 0; color: var(--muted); font-size: 12px; line-height: 1.4; }
+:host .setting-row:first-child {
+  border-top: 0;
+}
+:host .setting-row b {
+  font-size: 15px;
+}
+:host .setting-row p {
+  margin: 3px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.4;
+}
 
 :host .setting-row select {
   min-width: 84px;
@@ -200,7 +302,11 @@
 }
 
 /* tasti: pill primari, secondari morbidi, azione distruttiva evidente */
-:host .actions { display: flex; flex-wrap: wrap; gap: 10px; }
+:host .actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
 
 :host .actions > button,
 :host .actions > a,
@@ -209,15 +315,21 @@
   min-height: 50px;
   border-radius: 16px;
   font-weight: 750;
-  transition: transform .15s ease, box-shadow .2s ease;
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.2s ease;
 }
 
 :host .actions > button:active,
-:host form > button:active { transform: scale(.97); }
+:host form > button:active {
+  transform: scale(0.97);
+}
 
 :host button.primary,
 :host a.button.primary {
-  box-shadow: 0 12px 26px color-mix(in srgb, var(--accent) 38%, transparent), inset 0 1px color-mix(in srgb, #fff 55%, transparent);
+  box-shadow:
+    0 12px 26px color-mix(in srgb, var(--accent) 38%, transparent),
+    inset 0 1px color-mix(in srgb, #fff 55%, transparent);
 }
 
 :host .profile-photo-actions > button {
@@ -226,7 +338,9 @@
   font-size: 13.5px;
 }
 
-:host .profile-photo-actions > .ghost { flex-basis: 100%; }
+:host .profile-photo-actions > .ghost {
+  flex-basis: 100%;
+}
 
 :host .profile-logout-card {
   border-color: color-mix(in srgb, #ff8da6 35%, transparent);
@@ -254,7 +368,9 @@
 }
 
 :host .profile-menu-group .profile-menu,
-:host .profile-quick-actions { animation: pgRise .5s cubic-bezier(.2, .8, .2, 1) both; }
+:host .profile-quick-actions {
+  animation: pgRise 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
 
 :host .menu-badge {
   margin-left: auto;

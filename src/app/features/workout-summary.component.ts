@@ -1,10 +1,14 @@
-import {Component,computed,inject,signal} from '@angular/core';
-import {takeUntilDestroyed} from '@angular/core/rxjs-interop';
-import {ActivatedRoute,RouterLink} from '@angular/router';
-import {Store} from '../services/store';
-import {buildWorkoutSummary} from '../services/workout-summary';
-import {IconComponent} from '../shared/icon.component';
-@Component({standalone:true,imports:[RouterLink,IconComponent],styleUrl:'./workout-summary.component.css',template:`
+import { Component, computed, inject, signal } from "@angular/core";
+import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
+import { ActivatedRoute, RouterLink } from "@angular/router";
+import { Store } from "../services/store";
+import { buildWorkoutSummary } from "../services/workout-summary";
+import { IconComponent } from "../shared/icon.component";
+@Component({
+  standalone: true,
+  imports: [RouterLink, IconComponent],
+  styleUrl: "./workout-summary.component.css",
+  template: `
 <div class="workout-summary">
  @if(summary().workout;as workout){
  <div class="summary-symbol"><gt-icon name="check"/></div><p class="summary-eyebrow">ALLENAMENTO CONCLUSO</p><h1>{{workout.dayName}}</h1><p class="summary-caption">{{workout.planName}} · {{date(workout.date)}}</p>
@@ -16,10 +20,30 @@ import {IconComponent} from '../shared/icon.component';
  <section class="card summary-exercises"><h2>La tua seduta</h2>@for(row of summary().rows;track row.id){<div><strong>{{row.name}}</strong>@if(row.substitutedFrom){<small>Al posto di {{row.substitutedFrom.name}}</small>}<span>{{s.sets(row.id).filter(completed).length}} / {{s.sets(row.id).length}} serie</span></div>}</section>
  <div class="summary-actions"><a class="button primary" routerLink="/allenamenti" [queryParams]="{workout:workout.id}">Vedi dettagli</a><a class="button ghost" routerLink="/">Torna alla Home</a>@if(planId()){<a class="button ghost" [routerLink]="['/piano',planId()]">Statistiche del piano</a>}</div>
  }@else{<section class="card"><h1>Riepilogo non disponibile</h1><a class="button" routerLink="/allenamenti">Apri storico</a></section>}
-</div>`})
-export class WorkoutSummaryComponent{
- readonly s=inject(Store);private id=signal('');readonly summary=computed(()=>buildWorkoutSummary(this.s.data(),this.id()));readonly planId=computed(()=>this.s.data().plans.find(p=>p.id===this.summary().workout?.planId)?.id);
- completed=(set:{completed:boolean})=>set.completed;
- constructor(){inject(ActivatedRoute).paramMap.pipe(takeUntilDestroyed()).subscribe(params=>this.id.set(params.get('id')||''));}
- date(value:string){return new Date(value+'T12:00:00').toLocaleDateString('it-IT',{day:'numeric',month:'long',year:'numeric'});}
+</div>`,
+})
+export class WorkoutSummaryComponent {
+  readonly s = inject(Store);
+  private id = signal("");
+  readonly summary = computed(() =>
+    buildWorkoutSummary(this.s.data(), this.id()),
+  );
+  readonly planId = computed(
+    () =>
+      this.s.data().plans.find((p) => p.id === this.summary().workout?.planId)
+        ?.id,
+  );
+  completed = (set: { completed: boolean }) => set.completed;
+  constructor() {
+    inject(ActivatedRoute)
+      .paramMap.pipe(takeUntilDestroyed())
+      .subscribe((params) => this.id.set(params.get("id") || ""));
+  }
+  date(value: string) {
+    return new Date(value + "T12:00:00").toLocaleDateString("it-IT", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    });
+  }
 }

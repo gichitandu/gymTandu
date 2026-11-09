@@ -2,10 +2,49 @@
    Theme-aware (tokens only). Exercise images (gt-exercise-thumb) are never restyled:
    only the size variables the component already exposes are used. `:host .x` is used to
    out-rank the global gt-shell rules without !important. */
-@keyframes wrRise { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
-@keyframes wrPop { 0% { transform: scale(.6); opacity: 0; } 70% { transform: scale(1.12); } 100% { transform: scale(1); opacity: 1; } }
-@keyframes wrPulse { 0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 38%, transparent); } 50% { box-shadow: 0 0 0 7px transparent; } }
-@keyframes wrBreath { 0%, 100% { opacity: .55; transform: scale(1); } 50% { opacity: .9; transform: scale(1.04); } }
+@keyframes wrRise {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes wrPop {
+  0% {
+    transform: scale(0.6);
+    opacity: 0;
+  }
+  70% {
+    transform: scale(1.12);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+@keyframes wrPulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 38%, transparent);
+  }
+  50% {
+    box-shadow: 0 0 0 7px transparent;
+  }
+}
+@keyframes wrBreath {
+  0%,
+  100% {
+    opacity: 0.55;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.9;
+    transform: scale(1.04);
+  }
+}
 
 /* ---------- Toolbar ---------- */
 :host .gym-toolbar {
@@ -35,21 +74,40 @@
   overflow: hidden;
   border: 1px solid var(--line);
   border-radius: 22px;
-  background: linear-gradient(160deg, color-mix(in srgb, var(--text) 6%, transparent), color-mix(in srgb, var(--text) 1.5%, transparent));
-  box-shadow: 0 10px 26px color-mix(in srgb, #000 14%, transparent), inset 0 1px color-mix(in srgb, var(--text) 6%, transparent);
+  background: linear-gradient(
+    160deg,
+    color-mix(in srgb, var(--text) 6%, transparent),
+    color-mix(in srgb, var(--text) 1.5%, transparent)
+  );
+  box-shadow:
+    0 10px 26px color-mix(in srgb, #000 14%, transparent),
+    inset 0 1px color-mix(in srgb, var(--text) 6%, transparent);
   text-align: left;
-  animation: wrRise .5s cubic-bezier(.2, .8, .2, 1) both;
-  transition: transform .18s ease, border-color .2s ease, box-shadow .2s ease;
+  animation: wrRise 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  transition:
+    transform 0.18s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
-:host .training-list-row:nth-child(2) { animation-delay: .05s; }
-:host .training-list-row:nth-child(3) { animation-delay: .1s; }
-:host .training-list-row:nth-child(4) { animation-delay: .15s; }
-:host .training-list-row:nth-child(5) { animation-delay: .2s; }
-:host .training-list-row:nth-child(n+6) { animation-delay: .25s; }
+:host .training-list-row:nth-child(2) {
+  animation-delay: 0.05s;
+}
+:host .training-list-row:nth-child(3) {
+  animation-delay: 0.1s;
+}
+:host .training-list-row:nth-child(4) {
+  animation-delay: 0.15s;
+}
+:host .training-list-row:nth-child(5) {
+  animation-delay: 0.2s;
+}
+:host .training-list-row:nth-child(n + 6) {
+  animation-delay: 0.25s;
+}
 
 :host .training-list-row:active {
-  transform: scale(.985);
+  transform: scale(0.985);
 }
 
 :host .training-list-row gt-exercise-thumb {
@@ -68,7 +126,7 @@
   display: block;
   font-size: 16px;
   font-weight: 650;
-  letter-spacing: -.25px;
+  letter-spacing: -0.25px;
   line-height: 1.25;
 }
 
@@ -88,8 +146,12 @@
   bottom: 6px;
   height: 3px;
   border-radius: 3px;
-  background: linear-gradient(90deg, var(--accent-text) var(--done, 0%), color-mix(in srgb, var(--text) 9%, transparent) 0);
-  transition: background .4s ease;
+  background: linear-gradient(
+    90deg,
+    var(--accent-text) var(--done, 0%),
+    color-mix(in srgb, var(--text) 9%, transparent) 0
+  );
+  transition: background 0.4s ease;
 }
 
 :host .training-list-row .exercise-state {
@@ -112,13 +174,20 @@
   color: var(--accent-ink);
   background: var(--green, #5df0b4);
   font-size: 16px;
-  animation: wrPop .4s cubic-bezier(.2, .8, .2, 1) both;
+  animation: wrPop 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
 
 :host .training-list-row.in-progress {
   border-color: color-mix(in srgb, var(--accent-text) 55%, var(--line));
-  background: linear-gradient(90deg, color-mix(in srgb, var(--accent) 14%, transparent), color-mix(in srgb, var(--accent) 3%, transparent));
-  box-shadow: 0 0 0 3px var(--accent-soft), 0 12px 30px var(--entry-halo, color-mix(in srgb, var(--accent) 20%, transparent));
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--accent) 14%, transparent),
+    color-mix(in srgb, var(--accent) 3%, transparent)
+  );
+  box-shadow:
+    0 0 0 3px var(--accent-soft),
+    0 12px 30px
+      var(--entry-halo, color-mix(in srgb, var(--accent) 20%, transparent));
 }
 
 :host .training-list-row.in-progress .exercise-state {
@@ -126,7 +195,7 @@
 }
 
 :host .training-list-row.is-done {
-  opacity: .78;
+  opacity: 0.78;
 }
 
 :host .superset-tag {
@@ -162,14 +231,18 @@
 
 /* ---------- Recording ---------- */
 :host .recording-pad {
-  animation: wrRise .45s cubic-bezier(.2, .8, .2, 1) both;
+  animation: wrRise 0.45s cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
 
 :host .recording-top {
   padding: 12px;
   border: 1px solid var(--line);
   border-radius: 20px;
-  background: linear-gradient(160deg, color-mix(in srgb, var(--text) 6%, transparent), color-mix(in srgb, var(--text) 1.5%, transparent));
+  background: linear-gradient(
+    160deg,
+    color-mix(in srgb, var(--text) 6%, transparent),
+    color-mix(in srgb, var(--text) 1.5%, transparent)
+  );
 }
 
 :host .recording-top gt-exercise-thumb {
@@ -179,7 +252,7 @@
 
 :host .recording-top strong {
   font-size: 16px;
-  letter-spacing: -.2px;
+  letter-spacing: -0.2px;
 }
 
 :host .recording-series {
@@ -203,7 +276,11 @@
   border-radius: 18px;
   background: color-mix(in srgb, var(--text) 5%, transparent);
   font-weight: 700;
-  transition: transform .18s ease, background .2s ease, border-color .2s ease, box-shadow .2s ease;
+  transition:
+    transform 0.18s ease,
+    background 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 :host .recording-series button small {
@@ -211,14 +288,14 @@
   color: var(--muted);
   font-size: 11px;
   font-weight: 800;
-  letter-spacing: .8px;
+  letter-spacing: 0.8px;
 }
 
 :host .recording-series button b {
   display: block;
   margin-top: 3px;
   font-size: 14.5px;
-  letter-spacing: -.3px;
+  letter-spacing: -0.3px;
   white-space: nowrap;
 }
 
@@ -235,7 +312,11 @@
 :host .recording-series button.current-series {
   color: var(--text);
   border: 1.5px solid var(--accent-text);
-  background: linear-gradient(160deg, color-mix(in srgb, var(--accent) 24%, transparent), color-mix(in srgb, var(--accent) 6%, transparent));
+  background: linear-gradient(
+    160deg,
+    color-mix(in srgb, var(--accent) 24%, transparent),
+    color-mix(in srgb, var(--accent) 6%, transparent)
+  );
   box-shadow: 0 8px 24px color-mix(in srgb, var(--accent) 30%, transparent);
   outline: 0;
   transform: none;
@@ -246,7 +327,7 @@
 }
 
 :host .recording-series button:not(.complete):not(.current-series) {
-  opacity: .7;
+  opacity: 0.7;
 }
 
 /* Weight: delta tag, big number, ruler and quick buttons */
@@ -304,9 +385,25 @@
   height: 34px;
   margin: 4px -2px 0;
   background:
-    repeating-linear-gradient(90deg, color-mix(in srgb, var(--text) 30%, transparent) 0 2px, transparent 2px 16px) bottom / 100% 12px no-repeat,
-    repeating-linear-gradient(90deg, color-mix(in srgb, var(--text) 52%, transparent) 0 2px, transparent 2px 80px) bottom / 100% 24px no-repeat;
-  -webkit-mask: linear-gradient(90deg, transparent, #000 22%, #000 78%, transparent);
+    repeating-linear-gradient(
+        90deg,
+        color-mix(in srgb, var(--text) 30%, transparent) 0 2px,
+        transparent 2px 16px
+      )
+      bottom / 100% 12px no-repeat,
+    repeating-linear-gradient(
+        90deg,
+        color-mix(in srgb, var(--text) 52%, transparent) 0 2px,
+        transparent 2px 80px
+      )
+      bottom / 100% 24px no-repeat;
+  -webkit-mask: linear-gradient(
+    90deg,
+    transparent,
+    #000 22%,
+    #000 78%,
+    transparent
+  );
   mask: linear-gradient(90deg, transparent, #000 22%, #000 78%, transparent);
 }
 
@@ -344,8 +441,13 @@
   border-radius: 50%;
   background:
     radial-gradient(closest-side, var(--bg) 66%, transparent 68%),
-    conic-gradient(from 0deg, #c49bff, var(--theme-secondary, #8f7bff) var(--p, 0%), color-mix(in srgb, var(--text) 12%, transparent) 0);
-  transition: background .3s ease;
+    conic-gradient(
+      from 0deg,
+      #c49bff,
+      var(--theme-secondary, #8f7bff) var(--p, 0%),
+      color-mix(in srgb, var(--text) 12%, transparent) 0
+    );
+  transition: background 0.3s ease;
 }
 
 :host .recording-target {
@@ -381,8 +483,8 @@
 
 :host .recording-live span:first-child {
   color: #c49bff;
-  border-color: rgba(196, 155, 255, .35);
-  background: rgba(196, 155, 255, .1);
+  border-color: rgba(196, 155, 255, 0.35);
+  background: rgba(196, 155, 255, 0.1);
 }
 
 :host .recording-live b {
@@ -401,7 +503,11 @@
   padding: 12px 14px 14px;
   border: 1px solid var(--line);
   border-radius: 22px;
-  background: linear-gradient(160deg, color-mix(in srgb, var(--text) 6%, transparent), color-mix(in srgb, var(--text) 1.8%, transparent));
+  background: linear-gradient(
+    160deg,
+    color-mix(in srgb, var(--text) 6%, transparent),
+    color-mix(in srgb, var(--text) 1.8%, transparent)
+  );
 }
 
 :host .recording-effort-head {
@@ -441,20 +547,40 @@
   border-radius: 14px;
   font-size: 15px;
   font-weight: 800;
-  background: linear-gradient(0deg, color-mix(in srgb, var(--text) 6%, transparent), color-mix(in srgb, var(--text) 6%, transparent)) padding-box;
+  background: linear-gradient(
+      0deg,
+      color-mix(in srgb, var(--text) 6%, transparent),
+      color-mix(in srgb, var(--text) 6%, transparent)
+    )
+    padding-box;
   box-shadow: inset 0 -3px 0 transparent;
-  transition: background .2s ease, transform .15s ease, box-shadow .2s ease;
+  transition:
+    background 0.2s ease,
+    transform 0.15s ease,
+    box-shadow 0.2s ease;
 }
 
-:host .recording-effort-chips button:nth-child(-n+2) { box-shadow: inset 0 -3px 0 #4ff0b0; }
-:host .recording-effort-chips button:nth-child(3) { box-shadow: inset 0 -3px 0 #a7e36b; }
-:host .recording-effort-chips button:nth-child(4) { box-shadow: inset 0 -3px 0 #ffd166; }
-:host .recording-effort-chips button:nth-child(5) { box-shadow: inset 0 -3px 0 #ff6f7d; }
+:host .recording-effort-chips button:nth-child(-n + 2) {
+  box-shadow: inset 0 -3px 0 #4ff0b0;
+}
+:host .recording-effort-chips button:nth-child(3) {
+  box-shadow: inset 0 -3px 0 #a7e36b;
+}
+:host .recording-effort-chips button:nth-child(4) {
+  box-shadow: inset 0 -3px 0 #ffd166;
+}
+:host .recording-effort-chips button:nth-child(5) {
+  box-shadow: inset 0 -3px 0 #ff6f7d;
+}
 
 :host .recording-effort-chips button.active {
   color: var(--accent-ink);
   border-color: transparent;
-  background: linear-gradient(135deg, var(--accent-text), var(--theme-secondary, var(--accent)));
+  background: linear-gradient(
+    135deg,
+    var(--accent-text),
+    var(--theme-secondary, var(--accent))
+  );
   transform: translateY(-2px);
 }
 
@@ -477,7 +603,9 @@
   cursor: pointer;
 }
 
-:host .recording-tools > summary::-webkit-details-marker { display: none; }
+:host .recording-tools > summary::-webkit-details-marker {
+  display: none;
+}
 
 :host .recording-tools > summary strong {
   display: block;
@@ -498,7 +626,9 @@
   transform: rotate(90deg);
 }
 
-:host .recording-tools[open] > summary gt-icon { transform: rotate(-90deg); }
+:host .recording-tools[open] > summary gt-icon {
+  transform: rotate(-90deg);
+}
 
 :host .recording-tools-body {
   display: grid;
@@ -553,7 +683,9 @@
   background: #8a99ad;
 }
 
-:host .plate-row .bar.long { width: 90px; }
+:host .plate-row .bar.long {
+  width: 90px;
+}
 
 :host .plate-row .plate {
   min-width: 24px;
@@ -567,11 +699,23 @@
   font-weight: 850;
 }
 
-:host .plate-row .plate[data-w="25"], :host .plate-row .plate[data-w="45"] { background: #ff6f7d; }
-:host .plate-row .plate[data-w="20"], :host .plate-row .plate[data-w="35"] { background: #5b8cff; }
-:host .plate-row .plate[data-w="15"] { background: #ffd166; }
-:host .plate-row .plate[data-w="10"] { background: #4ff0b0; }
-:host .plate-row .plate[data-w="5"] { background: #ffd166; }
+:host .plate-row .plate[data-w="25"],
+:host .plate-row .plate[data-w="45"] {
+  background: #ff6f7d;
+}
+:host .plate-row .plate[data-w="20"],
+:host .plate-row .plate[data-w="35"] {
+  background: #5b8cff;
+}
+:host .plate-row .plate[data-w="15"] {
+  background: #ffd166;
+}
+:host .plate-row .plate[data-w="10"] {
+  background: #4ff0b0;
+}
+:host .plate-row .plate[data-w="5"] {
+  background: #ffd166;
+}
 
 :host .warmup-ideas {
   display: flex;
@@ -581,9 +725,9 @@
 :host .warmup-ideas span {
   flex: 1;
   padding: 9px 4px;
-  border: 1px solid rgba(255, 201, 92, .32);
+  border: 1px solid rgba(255, 201, 92, 0.32);
   border-radius: 14px;
-  background: rgba(255, 201, 92, .1);
+  background: rgba(255, 201, 92, 0.1);
   text-align: center;
   color: var(--muted);
   font-size: 12px;
@@ -654,20 +798,31 @@
 :host .recording-value {
   padding: 16px 12px 12px;
   border-radius: 22px;
-  background: linear-gradient(160deg, color-mix(in srgb, var(--text) 7%, transparent), color-mix(in srgb, var(--text) 2%, transparent));
-  box-shadow: 0 12px 30px color-mix(in srgb, #000 16%, transparent), inset 0 1px color-mix(in srgb, var(--text) 7%, transparent);
-  transition: border-color .2s ease, box-shadow .2s ease;
+  background: linear-gradient(
+    160deg,
+    color-mix(in srgb, var(--text) 7%, transparent),
+    color-mix(in srgb, var(--text) 2%, transparent)
+  );
+  box-shadow:
+    0 12px 30px color-mix(in srgb, #000 16%, transparent),
+    inset 0 1px color-mix(in srgb, var(--text) 7%, transparent);
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 :host .recording-value:focus-within {
   border-color: var(--accent-text);
-  box-shadow: 0 0 0 4px var(--accent-soft), 0 14px 34px var(--entry-halo, color-mix(in srgb, var(--accent) 20%, transparent));
+  box-shadow:
+    0 0 0 4px var(--accent-soft),
+    0 14px 34px
+      var(--entry-halo, color-mix(in srgb, var(--accent) 20%, transparent));
 }
 
 :host .recording-value label {
   font-size: 12.5px;
   font-weight: 650;
-  letter-spacing: .2px;
+  letter-spacing: 0.2px;
 }
 
 :host .recording-value input {
@@ -689,11 +844,13 @@
   min-width: 52px;
   border-radius: 99px;
   font-weight: 700;
-  transition: transform .15s ease, background .2s ease;
+  transition:
+    transform 0.15s ease,
+    background 0.2s ease;
 }
 
 :host .recording-adjust button:active {
-  transform: scale(.92);
+  transform: scale(0.92);
   background: color-mix(in srgb, var(--accent) 22%, var(--raised));
 }
 
@@ -718,26 +875,39 @@
   border: 1px solid color-mix(in srgb, var(--text) 24%, transparent);
   border-radius: 19px;
   color: var(--bg);
-  background: linear-gradient(180deg, var(--text), color-mix(in srgb, var(--text) 84%, var(--accent-text)));
-  box-shadow: 0 14px 34px var(--entry-halo, color-mix(in srgb, var(--accent) 24%, transparent)), inset 0 1px color-mix(in srgb, #fff 30%, transparent);
+  background: linear-gradient(
+    180deg,
+    var(--text),
+    color-mix(in srgb, var(--text) 84%, var(--accent-text))
+  );
+  box-shadow:
+    0 14px 34px
+      var(--entry-halo, color-mix(in srgb, var(--accent) 24%, transparent)),
+    inset 0 1px color-mix(in srgb, #fff 30%, transparent);
   font-size: 16.5px;
   font-weight: 700;
-  letter-spacing: -.2px;
-  transition: transform .15s ease, filter .2s ease;
+  letter-spacing: -0.2px;
+  transition:
+    transform 0.15s ease,
+    filter 0.2s ease;
 }
 
 :host .save-series:active {
-  transform: scale(.98);
+  transform: scale(0.98);
 }
 
 :host .save-series:disabled {
-  opacity: .6;
+  opacity: 0.6;
 }
 
 /* Inline recovery bar shown while recording. */
 :host .inline-recovery {
   border-radius: 20px;
-  background: linear-gradient(160deg, color-mix(in srgb, var(--accent) 12%, transparent), color-mix(in srgb, var(--text) 2%, transparent));
+  background: linear-gradient(
+    160deg,
+    color-mix(in srgb, var(--accent) 12%, transparent),
+    color-mix(in srgb, var(--text) 2%, transparent)
+  );
   border-color: color-mix(in srgb, var(--accent-text) 30%, var(--line));
 }
 
@@ -756,9 +926,15 @@
   padding: 22px 18px 18px;
   overflow: hidden;
   border-radius: 28px;
-  background: linear-gradient(160deg, color-mix(in srgb, var(--text) 7%, transparent), color-mix(in srgb, var(--text) 2%, transparent));
-  box-shadow: 0 20px 50px color-mix(in srgb, #000 24%, transparent), inset 0 1px color-mix(in srgb, var(--text) 8%, transparent);
-  animation: wrRise .5s cubic-bezier(.2, .8, .2, 1) both;
+  background: linear-gradient(
+    160deg,
+    color-mix(in srgb, var(--text) 7%, transparent),
+    color-mix(in srgb, var(--text) 2%, transparent)
+  );
+  box-shadow:
+    0 20px 50px color-mix(in srgb, #000 24%, transparent),
+    inset 0 1px color-mix(in srgb, var(--text) 8%, transparent);
+  animation: wrRise 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
 
 :host .recovery-clock {
@@ -772,8 +948,13 @@
   /* --rest (percentage of the pause still to go) is set from the template. */
   background:
     radial-gradient(closest-side, var(--bg) 82%, transparent 83%),
-    conic-gradient(from 0deg, var(--accent-text), var(--theme-secondary, var(--accent)) calc(var(--rest, 100%) * .85), color-mix(in srgb, var(--text) 9%, transparent) 0);
-  transition: background .4s linear;
+    conic-gradient(
+      from 0deg,
+      var(--accent-text),
+      var(--theme-secondary, var(--accent)) calc(var(--rest, 100%) * 0.85),
+      color-mix(in srgb, var(--text) 9%, transparent) 0
+    );
+  transition: background 0.4s linear;
 }
 
 :host .recovery-clock::before {
@@ -782,7 +963,11 @@
   inset: -14px;
   z-index: -1;
   border-radius: 50%;
-  background: radial-gradient(closest-side, color-mix(in srgb, var(--accent) 26%, transparent), transparent);
+  background: radial-gradient(
+    closest-side,
+    color-mix(in srgb, var(--accent) 26%, transparent),
+    transparent
+  );
   animation: wrBreath 3.4s ease-in-out infinite;
 }
 
@@ -820,7 +1005,11 @@
   min-width: 58px;
   color: var(--accent-ink);
   border-color: transparent;
-  background: linear-gradient(135deg, var(--accent-text), var(--theme-secondary, var(--accent)));
+  background: linear-gradient(
+    135deg,
+    var(--accent-text),
+    var(--theme-secondary, var(--accent))
+  );
 }
 
 :host .recovery-next {
@@ -835,7 +1024,11 @@
   border: 1px solid color-mix(in srgb, var(--text) 24%, transparent);
   border-radius: 19px;
   color: var(--bg);
-  background: linear-gradient(180deg, var(--text), color-mix(in srgb, var(--text) 84%, var(--accent-text)));
+  background: linear-gradient(
+    180deg,
+    var(--text),
+    color-mix(in srgb, var(--text) 84%, var(--accent-text))
+  );
   font-size: 16.5px;
   font-weight: 700;
 }
@@ -865,33 +1058,121 @@
   touch-action: pan-y;
   user-select: none;
   -webkit-user-select: none;
-  background-position: calc(50% + var(--ruler-shift, 0px)) bottom, calc(50% + var(--ruler-shift, 0px)) bottom;
-  background-size: calc(100% + 160px) 12px, calc(100% + 160px) 24px;
-  transition: background-position .12s ease-out;
+  background-position:
+    calc(50% + var(--ruler-shift, 0px)) bottom,
+    calc(50% + var(--ruler-shift, 0px)) bottom;
+  background-size:
+    calc(100% + 160px) 12px,
+    calc(100% + 160px) 24px;
+  transition: background-position 0.12s ease-out;
 }
-:host .recording-ruler.dragging { cursor: grabbing; transition: none; }
-:host .recording-ruler.dragging::after { box-shadow: 0 0 22px color-mix(in srgb, var(--accent) 95%, transparent); }
-:host .recording-ruler:focus-visible { outline: 2px solid var(--accent-text); outline-offset: 4px; border-radius: 8px; }
+:host .recording-ruler.dragging {
+  cursor: grabbing;
+  transition: none;
+}
+:host .recording-ruler.dragging::after {
+  box-shadow: 0 0 22px color-mix(in srgb, var(--accent) 95%, transparent);
+}
+:host .recording-ruler:focus-visible {
+  outline: 2px solid var(--accent-text);
+  outline-offset: 4px;
+  border-radius: 8px;
+}
 
 /* Serie: frecce per precedente/successiva e chip per aggiungerne una */
-:host .recording-series-nav { display: flex; align-items: center; gap: 6px; margin: 12px 0 14px; }
-:host .recording-series-nav > .recording-series { flex: 1; min-width: 0; margin: 0; }
+:host .recording-series-nav {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 12px 0 14px;
+}
+:host .recording-series-nav > .recording-series {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+}
 :host .recording-series-nav .series-step {
-  flex: 0 0 auto; width: 40px; min-width: 40px; height: 56px; min-height: 56px; padding: 0;
-  display: grid; place-items: center; border-radius: 14px;
-  border: 1px solid var(--line); background: color-mix(in srgb, var(--text) 5%, transparent); color: var(--text);
+  flex: 0 0 auto;
+  width: 40px;
+  min-width: 40px;
+  height: 56px;
+  min-height: 56px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border-radius: 14px;
+  border: 1px solid var(--line);
+  background: color-mix(in srgb, var(--text) 5%, transparent);
+  color: var(--text);
 }
-:host .recording-series-nav .series-step gt-icon { width: 20px; height: 20px; }
-:host .recording-series-nav .series-step:disabled { opacity: .3; }
+:host .recording-series-nav .series-step gt-icon {
+  width: 20px;
+  height: 20px;
+}
+:host .recording-series-nav .series-step:disabled {
+  opacity: 0.3;
+}
 :host .recording-series .series-add {
-  flex: 0 0 56px; min-width: 56px; border-style: dashed; opacity: 1 !important;
-  color: var(--accent-text); background: transparent;
+  flex: 0 0 56px;
+  min-width: 56px;
+  border-style: dashed;
+  opacity: 1 !important;
+  color: var(--accent-text);
+  background: transparent;
 }
-:host .recording-series .series-add small { color: var(--accent-text); font-size: 18px; letter-spacing: 0; line-height: 1; }
-:host .recording-series .series-add b { font-size: 12px; }
-:host .recording-series .series-add.open { border-style: solid; border-color: var(--accent-text); background: color-mix(in srgb, var(--accent) 14%, transparent); }
-:host .series-add-menu { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: -6px 0 14px; animation: seriesMenu .2s ease-out both; }
-:host .series-add-menu button { min-height: 48px; border-radius: 14px; display: flex; align-items: center; justify-content: center; gap: 6px; font-weight: 700; border: 1px solid color-mix(in srgb, var(--accent-text) 45%, var(--line)); background: color-mix(in srgb, var(--accent) 12%, transparent); color: var(--text); }
-:host .series-add-menu gt-icon { width: 16px; height: 16px; color: var(--accent-text); }
-@keyframes seriesMenu { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
-@media (prefers-reduced-motion: reduce) { :host .series-add-menu { animation: none; } :host .recording-ruler { transition: none; } }
+:host .recording-series .series-add small {
+  color: var(--accent-text);
+  font-size: 18px;
+  letter-spacing: 0;
+  line-height: 1;
+}
+:host .recording-series .series-add b {
+  font-size: 12px;
+}
+:host .recording-series .series-add.open {
+  border-style: solid;
+  border-color: var(--accent-text);
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+}
+:host .series-add-menu {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin: -6px 0 14px;
+  animation: seriesMenu 0.2s ease-out both;
+}
+:host .series-add-menu button {
+  min-height: 48px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-weight: 700;
+  border: 1px solid color-mix(in srgb, var(--accent-text) 45%, var(--line));
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  color: var(--text);
+}
+:host .series-add-menu gt-icon {
+  width: 16px;
+  height: 16px;
+  color: var(--accent-text);
+}
+@keyframes seriesMenu {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  :host .series-add-menu {
+    animation: none;
+  }
+  :host .recording-ruler {
+    transition: none;
+  }
+}

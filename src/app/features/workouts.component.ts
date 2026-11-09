@@ -1,7 +1,7 @@
-import { DESIGN_DIRECTIVES } from '../design/design-directives';
-import { DateFieldComponent } from '../shared/date-field.component';
-import { confirmationForContext } from '../services/confirmation';
-import { OpenWorkoutsComponent } from '../shared/open-workouts.component';
+import { DESIGN_DIRECTIVES } from "../design/design-directives";
+import { DateFieldComponent } from "../shared/date-field.component";
+import { confirmationForContext } from "../services/confirmation";
+import { OpenWorkoutsComponent } from "../shared/open-workouts.component";
 import { SectionHeadingComponent } from "../shared/section-heading.component";
 import { Component, computed, inject, signal } from "@angular/core";
 import { FormsModule } from "@angular/forms";
@@ -14,7 +14,11 @@ import { ExerciseFilterComponent } from "../shared/exercise-filter.component";
 @Component({
   standalone: true,
   styleUrl: "./account-polish.css",
-  imports: [...DESIGN_DIRECTIVES,DateFieldComponent,OpenWorkoutsComponent,SectionHeadingComponent,
+  imports: [
+    ...DESIGN_DIRECTIVES,
+    DateFieldComponent,
+    OpenWorkoutsComponent,
+    SectionHeadingComponent,
     FormsModule,
     DatePipe,
     RouterLink,
@@ -135,10 +139,21 @@ import { ExerciseFilterComponent } from "../shared/exercise-filter.component";
     }`,
 })
 export class WorkoutsComponent {
- private confirmation=confirmationForContext();
-  constructor(){const query=inject(ActivatedRoute).snapshot.queryParamMap;const workout=query.get("workout");if(workout)this.selectedId.set(workout);const date=query.get("date");if(date){this.from.set(date);this.to.set(date);}}
+  private confirmation = confirmationForContext();
+  constructor() {
+    const query = inject(ActivatedRoute).snapshot.queryParamMap;
+    const workout = query.get("workout");
+    if (workout) this.selectedId.set(workout);
+    const date = query.get("date");
+    if (date) {
+      this.from.set(date);
+      this.to.set(date);
+    }
+  }
   s = inject(Store);
-  router=inject(Router);reopening=signal(false);deleting=signal(false);
+  router = inject(Router);
+  reopening = signal(false);
+  deleting = signal(false);
   plan = signal("");
   day = signal("");
   exercise = signal("");
@@ -199,19 +214,48 @@ export class WorkoutsComponent {
       else w[key] = String(value);
     });
   }
-  async reopen(id:string){
-    if(this.reopening())return;
+  async reopen(id: string) {
+    if (this.reopening()) return;
     this.reopening.set(true);
-    try{if(await this.s.reopenWorkout(id)){this.selectedId.set('');await this.router.navigateByUrl('/sessione');}}finally{this.reopening.set(false);}
+    try {
+      if (await this.s.reopenWorkout(id)) {
+        this.selectedId.set("");
+        await this.router.navigateByUrl("/sessione");
+      }
+    } finally {
+      this.reopening.set(false);
+    }
   }
   async remove(id: string) {
-    if(this.deleting()||this.reopening()||this.s.busy())return;
-    const workout=this.s.data().workouts.find(w=>w.id===id);if(!workout)return;
-    if(workout.status==='completed'&&!this.s.settings().allowCompletedWorkoutDeletion)return;
-    const archive=this.s.archiveKey();this.deleting.set(true);
-    try{if(!await this.confirmation.ask({title:'Eliminare questo allenamento?',message:workout.dayName+' · '+workout.date.split('-').reverse().join('/')+'. La sessione, tutte le sue serie e la relativa voce nel calendario saranno eliminate definitivamente. Statistiche e record saranno ricalcolati. Il piano e gli altri allenamenti restano conservati.',confirmLabel:'Elimina allenamento',tone:'danger'}))return;
-      if(archive!==this.s.archiveKey())return;
-      if(await this.s.deleteWorkout(id,{confirmedCompleted:true}))this.selectedId.set('');
-    }finally{this.deleting.set(false);}
+    if (this.deleting() || this.reopening() || this.s.busy()) return;
+    const workout = this.s.data().workouts.find((w) => w.id === id);
+    if (!workout) return;
+    if (
+      workout.status === "completed" &&
+      !this.s.settings().allowCompletedWorkoutDeletion
+    )
+      return;
+    const archive = this.s.archiveKey();
+    this.deleting.set(true);
+    try {
+      if (
+        !(await this.confirmation.ask({
+          title: "Eliminare questo allenamento?",
+          message:
+            workout.dayName +
+            " · " +
+            workout.date.split("-").reverse().join("/") +
+            ". La sessione, tutte le sue serie e la relativa voce nel calendario saranno eliminate definitivamente. Statistiche e record saranno ricalcolati. Il piano e gli altri allenamenti restano conservati.",
+          confirmLabel: "Elimina allenamento",
+          tone: "danger",
+        }))
+      )
+        return;
+      if (archive !== this.s.archiveKey()) return;
+      if (await this.s.deleteWorkout(id, { confirmedCompleted: true }))
+        this.selectedId.set("");
+    } finally {
+      this.deleting.set(false);
+    }
   }
 }

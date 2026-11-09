@@ -33,7 +33,7 @@ export interface ExcelProgramDraft {
   startDate: string;
   endDate: string;
   sourceName: string;
-  sourceKind: 'original' | 'GT-1';
+  sourceKind: "original" | "GT-1";
   fileHash: string;
   sessions: ExcelSessionDraft[];
   warnings: string[];

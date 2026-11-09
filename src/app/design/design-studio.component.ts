@@ -167,9 +167,11 @@ export class DesignStudioComponent {
     ),
   );
   entry = computed(() => DESIGN_CONTROLS.find((c) => c.id === this.selected()));
-  originalLabel = computed(() => this.selected() === 'home.title'
-    ? 'Ciao ' + (this.store.profile().name.trim().split(/\s+/)[0] || 'atleta')
-    : this.entry()?.label || '');
+  originalLabel = computed(() =>
+    this.selected() === "home.title"
+      ? "Ciao " + (this.store.profile().name.trim().split(/\s+/)[0] || "atleta")
+      : this.entry()?.label || "",
+  );
   dirty = computed(() => JSON.stringify(this.draft()) !== this.saved());
   patch = computed<DesignStyle>(() =>
     this.scope() === "global"
@@ -292,8 +294,8 @@ export class DesignStudioComponent {
       this.tab() === "labels"
         ? DESIGN_CONTROLS.find((c) => c.page === value && c.label)?.id || ""
         : value === "home"
-        ? "home.stats.workouts"
-        : DESIGN_CONTROLS.find((c) => c.page === value)?.id || "",
+          ? "home.stats.workouts"
+          : DESIGN_CONTROLS.find((c) => c.page === value)?.id || "",
     );
     this.search.set("");
   }

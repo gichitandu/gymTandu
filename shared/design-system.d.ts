@@ -102,7 +102,11 @@ export const DESIGN_NUMBERS: Readonly<
 export const DEFAULT_DESIGN: DesignConfig;
 export function validDesign(value: unknown): value is DesignConfig;
 export function parseDesign(value: unknown): DesignConfig;
-export function resolveDesignLabel(config: DesignConfig, id: string, fallback?: string): string;
+export function resolveDesignLabel(
+  config: DesignConfig,
+  id: string,
+  fallback?: string,
+): string;
 export function validStyle(
   value: unknown,
   entry?: DesignControl,

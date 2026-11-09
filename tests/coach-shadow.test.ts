@@ -14,9 +14,9 @@ describe("Coach Ombra", () => {
 
   it("non inventa un riferimento senza storico né carico impostato", () => {
     expect(coachNextSet({ ...base, done: [] })).toBeNull();
-    expect(coachNextSet({ ...base, done: [], plannedWeight: 40 })).toMatchObject(
-      { action: "hold", weight: 40, basis: "none" },
-    );
+    expect(
+      coachNextSet({ ...base, done: [], plannedWeight: 40 }),
+    ).toMatchObject({ action: "hold", weight: 40, basis: "none" });
   });
 
   it("propone un aumento se l'ultima volta era tutto a 12 con RPE fino a 8", () => {

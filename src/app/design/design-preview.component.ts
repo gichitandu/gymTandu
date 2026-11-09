@@ -167,7 +167,8 @@ export class DesignPreviewComponent {
       if (instance?.hub) {
         const hub =
           selected.startsWith("training.tabs.") ||
-          (this.copyMode() && ["training.title", "training.subtitle"].includes(selected)) ||
+          (this.copyMode() &&
+            ["training.title", "training.subtitle"].includes(selected)) ||
           selected === "training.plans" ||
           selected === "training.newPlan"
             ? "plans"
@@ -184,10 +185,7 @@ export class DesignPreviewComponent {
         if (instance.panel() !== panel) instance.panel.set(panel);
       }
       for (const [selector, open] of [
-        [
-          ".home-health-disclosure",
-          selected.startsWith("home.health."),
-        ],
+        [".home-health-disclosure", selected.startsWith("home.health.")],
         [".progress-exercise-details", selected === "progress.exerciseChart"],
         [
           ".progress-overview-details",

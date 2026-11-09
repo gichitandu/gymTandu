@@ -2,7 +2,9 @@ import { defaultExercises, defaultGroups } from "./default-catalog";
 import { DataSet } from "../models/domain";
 export function seed(): DataSet {
   return {
-    wellnessLogs: [],exercisePreferences: [],workoutUi: [],
+    wellnessLogs: [],
+    exercisePreferences: [],
+    workoutUi: [],
     profiles: [{ id: "local", name: "Atleta", role: "SuperAdmin" }],
     roles: [
       { id: "superadmin", name: "SuperAdmin", permissions: ["*"] },

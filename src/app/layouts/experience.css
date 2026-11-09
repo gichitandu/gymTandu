@@ -2311,11 +2311,50 @@ gt-shell .training-journey .passed span {
 body.custom-light gt-shell .bottom-nav a.selected:before {
   background: #0057a8;
 }
-gt-shell .archive-sync-indicator{display:flex;align-items:center;justify-content:center;gap:7px;min-width:44px;min-height:44px;color:var(--muted);text-decoration:none;padding:4px;border-radius:10px}gt-shell .archive-sync-indicator>span{display:grid;place-items:center;width:22px;height:22px;border:1px solid currentColor;border-radius:50%;font-size:13px;font-weight:700}gt-shell .archive-sync-indicator small{font-size:10px}gt-shell .archive-sync-indicator.copy-confirmed{color:#49c99b}gt-shell .archive-sync-indicator.copy-warning{color:#edb85e}@media(max-width:800px),(pointer:coarse){gt-shell .archive-sync-indicator small{display:none}}
+gt-shell .archive-sync-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-width: 44px;
+  min-height: 44px;
+  color: var(--muted);
+  text-decoration: none;
+  padding: 4px;
+  border-radius: 10px;
+}
+gt-shell .archive-sync-indicator > span {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  font-size: 13px;
+  font-weight: 700;
+}
+gt-shell .archive-sync-indicator small {
+  font-size: 10px;
+}
+gt-shell .archive-sync-indicator.copy-confirmed {
+  color: #49c99b;
+}
+gt-shell .archive-sync-indicator.copy-warning {
+  color: #edb85e;
+}
+@media (max-width: 800px), (pointer: coarse) {
+  gt-shell .archive-sync-indicator small {
+    display: none;
+  }
+}
 
 /* Focused recording uses its own compact header. */
-gt-shell main.session-main{padding-top:calc(16px + var(--safe-top));}
-gt-shell .app-main{padding-bottom:calc(100px + var(--safe-bottom));}
+gt-shell main.session-main {
+  padding-top: calc(16px + var(--safe-top));
+}
+gt-shell .app-main {
+  padding-bottom: calc(100px + var(--safe-bottom));
+}
 
 /* Theme tokens replace the original blue chrome without changing its layout. */
 body.theme-ready gt-shell {
@@ -2325,14 +2364,30 @@ body.theme-ready gt-shell {
   --experience-surface: var(--card);
   color: var(--text);
 }
-body.theme-ready gt-shell::before { background: none; }
-body.theme-ready gt-shell :is(.card, .modal, .empty, .header-calendar, .training-list-row, .timer-controls button) {
+body.theme-ready gt-shell::before {
+  background: none;
+}
+body.theme-ready
+  gt-shell
+  :is(
+    .card,
+    .modal,
+    .empty,
+    .header-calendar,
+    .training-list-row,
+    .timer-controls button
+  ) {
   background: var(--card);
   border-color: var(--line);
   color: var(--text);
 }
-body.theme-ready gt-shell :is(.sidebar, .topbar, .app-main) { background: var(--bg); }
-body.theme-ready gt-shell .bottom-nav { background: var(--nav-bg); border-color: var(--line); }
+body.theme-ready gt-shell :is(.sidebar, .topbar, .app-main) {
+  background: var(--bg);
+}
+body.theme-ready gt-shell .bottom-nav {
+  background: var(--nav-bg);
+  border-color: var(--line);
+}
 body.theme-ready gt-shell :is(button.primary, .button.primary) {
   background: var(--accent);
   border-color: var(--accent);
@@ -2348,38 +2403,93 @@ body.theme-ready gt-shell :is(input, select, textarea):focus {
   border-color: var(--accent-text);
   box-shadow: 0 0 0 3px var(--accent-soft);
 }
-body.theme-ready gt-shell :is(.recording-value input, .nutrition-date-heading input, .cal-date-jump input) { background: transparent; }
-body.theme-ready gt-shell .segmented { background: var(--raised); border-color: var(--line); }
+body.theme-ready
+  gt-shell
+  :is(
+    .recording-value input,
+    .nutrition-date-heading input,
+    .cal-date-jump input
+  ) {
+  background: transparent;
+}
+body.theme-ready gt-shell .segmented {
+  background: var(--raised);
+  border-color: var(--line);
+}
 body.theme-ready gt-shell .segmented button.active {
   background: var(--accent);
   color: var(--accent-ink);
   box-shadow: none;
 }
-body.theme-ready gt-shell :is(.sidebar nav a.selected, .bottom-nav a.selected, .bottom-nav a.training-selected) {
+body.theme-ready
+  gt-shell
+  :is(
+    .sidebar nav a.selected,
+    .bottom-nav a.selected,
+    .bottom-nav a.training-selected
+  ) {
   background: var(--accent-soft);
   border-color: color-mix(in srgb, var(--accent-text) 25%, var(--line));
   color: var(--accent-text);
 }
-body.theme-ready gt-shell :is(.sidebar nav a.selected gt-icon, .bottom-nav a.selected gt-icon, .bottom-nav a.training-selected gt-icon) { color: var(--accent-text); }
-body.theme-ready gt-shell :is(.sidebar nav a.selected::after, .bottom-nav a.selected::before) {
+body.theme-ready
+  gt-shell
+  :is(
+    .sidebar nav a.selected gt-icon,
+    .bottom-nav a.selected gt-icon,
+    .bottom-nav a.training-selected gt-icon
+  ) {
+  color: var(--accent-text);
+}
+body.theme-ready
+  gt-shell
+  :is(.sidebar nav a.selected::after, .bottom-nav a.selected::before) {
   background: var(--accent-text);
   box-shadow: none;
 }
-body.theme-ready gt-shell .sidebar-signature i:nth-child(2) { border-color: color-mix(in srgb, var(--accent-text) 32%, transparent); }
+body.theme-ready gt-shell .sidebar-signature i:nth-child(2) {
+  border-color: color-mix(in srgb, var(--accent-text) 32%, transparent);
+}
 body.theme-ready gt-shell :is(.avatar, .profile-avatar) {
   border-color: color-mix(in srgb, var(--accent-text) 28%, var(--line));
   background: var(--accent-soft);
   color: var(--accent-text);
 }
-body.theme-ready gt-shell .brand-coordinate { border-color: var(--accent-text); }
-body.theme-ready gt-shell .brand-coordinate::after { background: var(--accent-text); }
-body.theme-ready gt-shell :is(.link, .empty > gt-icon, .home-date-link gt-icon, .experience-index, .home-paths > a > gt-icon, .home-paths > a > span:last-child gt-icon, .session-header .eyebrow, .training-journey .current, .last-session-inline > .ghost, .profile-menu gt-icon) { color: var(--accent-text); }
-body.theme-ready gt-shell :is(.training-journey .current, .training-journey .current span) { border-color: var(--accent-text); }
+body.theme-ready gt-shell .brand-coordinate {
+  border-color: var(--accent-text);
+}
+body.theme-ready gt-shell .brand-coordinate::after {
+  background: var(--accent-text);
+}
+body.theme-ready
+  gt-shell
+  :is(
+    .link,
+    .empty > gt-icon,
+    .home-date-link gt-icon,
+    .experience-index,
+    .home-paths > a > gt-icon,
+    .home-paths > a > span:last-child gt-icon,
+    .session-header .eyebrow,
+    .training-journey .current,
+    .last-session-inline > .ghost,
+    .profile-menu gt-icon
+  ) {
+  color: var(--accent-text);
+}
+body.theme-ready
+  gt-shell
+  :is(.training-journey .current, .training-journey .current span) {
+  border-color: var(--accent-text);
+}
 body.theme-ready gt-shell .training-journey .current span {
   background: var(--accent);
   color: var(--accent-ink);
 }
-body.theme-ready gt-shell .training-journey .passed span { border-color: var(--green); color: var(--green); }
+body.theme-ready gt-shell .training-journey .passed span {
+  border-color: var(--green);
+  color: var(--green);
+}
 body.theme-ready gt-shell .rhythm-day.planned > i {
   background: var(--accent-soft);
   border-color: var(--accent-text);
@@ -2389,28 +2499,65 @@ body.theme-ready gt-shell .rhythm-day.today > i {
   background: var(--accent);
   border-color: var(--accent);
   color: var(--accent-ink);
-  box-shadow: 0 0 0 5px var(--card), 0 0 0 6px var(--accent-soft);
+  box-shadow:
+    0 0 0 5px var(--card),
+    0 0 0 6px var(--accent-soft);
 }
-body.theme-ready gt-shell .rhythm-day.today > b { color: var(--accent-text); }
-body.theme-ready gt-shell .rhythm-day.done > i { background: var(--green); border-color: var(--green); color: var(--bg); }
-body.theme-ready gt-shell :is(.session-header .progress-bars i.done, .spotlight-state i, .spotlight-baseline i) { background: var(--green); }
-body.theme-ready gt-shell :is(.pill.green, .exercise-state.complete, .focus-set-row.is-complete, .series-dots button.complete) {
+body.theme-ready gt-shell .rhythm-day.today > b {
+  color: var(--accent-text);
+}
+body.theme-ready gt-shell .rhythm-day.done > i {
+  background: var(--green);
+  border-color: var(--green);
+  color: var(--bg);
+}
+body.theme-ready
+  gt-shell
+  :is(
+    .session-header .progress-bars i.done,
+    .spotlight-state i,
+    .spotlight-baseline i
+  ) {
+  background: var(--green);
+}
+body.theme-ready
+  gt-shell
+  :is(
+    .pill.green,
+    .exercise-state.complete,
+    .focus-set-row.is-complete,
+    .series-dots button.complete
+  ) {
   background: color-mix(in srgb, var(--green) 10%, var(--card));
   border-color: color-mix(in srgb, var(--green) 40%, var(--line));
   color: var(--green);
 }
-body.theme-ready gt-shell .series-dots button.current-series { outline-color: var(--accent-text); }
-body.theme-ready gt-shell .rest-orbit {
-  background: conic-gradient(var(--accent-text) var(--rest-progress), var(--line) 0);
-  box-shadow: 0 0 0 9px var(--accent-soft), 0 0 0 10px color-mix(in srgb, var(--accent-text) 18%, transparent);
+body.theme-ready gt-shell .series-dots button.current-series {
+  outline-color: var(--accent-text);
 }
-body.theme-ready gt-shell .rest-orbit > div { background: var(--card); border-color: var(--card); }
+body.theme-ready gt-shell .rest-orbit {
+  background: conic-gradient(
+    var(--accent-text) var(--rest-progress),
+    var(--line) 0
+  );
+  box-shadow:
+    0 0 0 9px var(--accent-soft),
+    0 0 0 10px color-mix(in srgb, var(--accent-text) 18%, transparent);
+}
+body.theme-ready gt-shell .rest-orbit > div {
+  background: var(--card);
+  border-color: var(--card);
+}
 body.theme-ready gt-shell .compact-rest-chip {
   background: var(--card);
   border-color: var(--accent-text);
   color: var(--accent-text);
 }
-body.theme-ready gt-shell :is(.notice, .recording-field-error) { background: var(--accent-soft); border-color: var(--line); color: var(--text); }
+body.theme-ready gt-shell :is(.notice, .recording-field-error) {
+  background: var(--accent-soft);
+  border-color: var(--line);
+  color: var(--text);
+}
 body.theme-ready gt-shell :is(.notice.error, .recording-field-error) {
   background: var(--danger-soft);
   border-color: color-mix(in srgb, var(--danger) 42%, var(--line));
@@ -2421,41 +2568,120 @@ body.theme-ready gt-shell .notice.success {
   border-color: color-mix(in srgb, var(--green) 35%, var(--line));
   color: var(--green);
 }
-body.theme-ready gt-shell .archive-sync-indicator.copy-confirmed { color: var(--green); }
-body.theme-ready gt-shell .archive-sync-indicator.copy-warning { color: var(--warning); }
-body.theme-ready gt-shell :is(.focus-heading, .session-header, .recording-pad, .recording-values, .recording-value, .training-list-row, .next-exercise-preview, .workout-preview, .page-heading, .form-grid, .profile-menu) { min-width: 0; }
+body.theme-ready gt-shell .archive-sync-indicator.copy-confirmed {
+  color: var(--green);
+}
+body.theme-ready gt-shell .archive-sync-indicator.copy-warning {
+  color: var(--warning);
+}
+body.theme-ready
+  gt-shell
+  :is(
+    .focus-heading,
+    .session-header,
+    .recording-pad,
+    .recording-values,
+    .recording-value,
+    .training-list-row,
+    .next-exercise-preview,
+    .workout-preview,
+    .page-heading,
+    .form-grid,
+    .profile-menu
+  ) {
+  min-width: 0;
+}
 body.theme-ready gt-shell .training-spotlight {
   background: var(--card);
   border-color: var(--line);
   color: var(--text);
 }
 body.theme-ready gt-shell .training-spotlight::before {
-  background: linear-gradient(90deg, var(--card) 4%, color-mix(in srgb, var(--card) 88%, transparent) 45%, color-mix(in srgb, var(--card) 42%, transparent)), url("/gym-hero.webp") 75% 36% / cover;
+  background:
+    linear-gradient(
+      90deg,
+      var(--card) 4%,
+      color-mix(in srgb, var(--card) 88%, transparent) 45%,
+      color-mix(in srgb, var(--card) 42%, transparent)
+    ),
+    url("/gym-hero.webp") 75% 36% / cover;
 }
-body.theme-ready gt-shell .training-spotlight::after { background: linear-gradient(0deg, var(--card), transparent 55%); }
-body.theme-ready gt-shell .training-spotlight h2 { color: var(--text); }
-body.theme-ready gt-shell :is(.spotlight-kicker, .spotlight-content > p, .spotlight-baseline) { color: var(--muted); }
-body.theme-ready gt-shell :is(.spotlight-kicker .experience-index, .spotlight-state, .training-spotlight h2 em) { color: var(--accent-text); }
-body.theme-ready gt-shell .spotlight-baseline { background: var(--raised); border-color: var(--line); }
-body.theme-ready gt-shell .spotlight-baseline > span { color: var(--muted); }
-body.theme-ready gt-shell :is(.spotlight-baseline a, .stepper) { color: var(--accent-text); }
-body.theme-ready gt-shell .rhythm-legend i { background: var(--green); }
-body.theme-ready gt-shell .rhythm-legend i.planned { background: var(--accent-text); }
+body.theme-ready gt-shell .training-spotlight::after {
+  background: linear-gradient(0deg, var(--card), transparent 55%);
+}
+body.theme-ready gt-shell .training-spotlight h2 {
+  color: var(--text);
+}
+body.theme-ready
+  gt-shell
+  :is(.spotlight-kicker, .spotlight-content > p, .spotlight-baseline) {
+  color: var(--muted);
+}
+body.theme-ready
+  gt-shell
+  :is(
+    .spotlight-kicker .experience-index,
+    .spotlight-state,
+    .training-spotlight h2 em
+  ) {
+  color: var(--accent-text);
+}
+body.theme-ready gt-shell .spotlight-baseline {
+  background: var(--raised);
+  border-color: var(--line);
+}
+body.theme-ready gt-shell .spotlight-baseline > span {
+  color: var(--muted);
+}
+body.theme-ready gt-shell :is(.spotlight-baseline a, .stepper) {
+  color: var(--accent-text);
+}
+body.theme-ready gt-shell .rhythm-legend i {
+  background: var(--green);
+}
+body.theme-ready gt-shell .rhythm-legend i.planned {
+  background: var(--accent-text);
+}
 body.theme-ready gt-shell .weight-orbit {
-  background: radial-gradient(circle at 50% 70%, var(--accent-soft), transparent 65%), var(--card);
+  background:
+    radial-gradient(circle at 50% 70%, var(--accent-soft), transparent 65%),
+    var(--card);
   border-color: color-mix(in srgb, var(--accent-text) 45%, var(--line));
-  box-shadow: 0 0 0 8px var(--accent-soft), 0 0 0 9px var(--line);
+  box-shadow:
+    0 0 0 8px var(--accent-soft),
+    0 0 0 9px var(--line);
 }
-body.theme-ready gt-shell .weight-orbit::before { border-color: var(--line); }
-body.theme-ready gt-shell :is(.weight-orbit input, .reps-entry input) { background: transparent; box-shadow: none; }
+body.theme-ready gt-shell .weight-orbit::before {
+  border-color: var(--line);
+}
+body.theme-ready gt-shell :is(.weight-orbit input, .reps-entry input) {
+  background: transparent;
+  box-shadow: none;
+}
 
 /* The calendar keeps its selected destination visible without changing other pages. */
-gt-shell .bottom-nav.calendar-navigation a { min-width: 0; padding-inline: 3px; }
-gt-shell .bottom-nav.calendar-navigation a > span { font-size: 10px; white-space: nowrap; }
+gt-shell .bottom-nav.calendar-navigation a {
+  min-width: 0;
+  padding-inline: 3px;
+}
+gt-shell .bottom-nav.calendar-navigation a > span {
+  font-size: 10px;
+  white-space: nowrap;
+}
 @media (max-width: 359px) {
-  gt-shell .bottom-nav.calendar-navigation a > span { font-size: 9px; }
+  gt-shell .bottom-nav.calendar-navigation a > span {
+    font-size: 9px;
+  }
 }
 
 /* Reserve content space for the persistent recovery controls. */
-gt-shell:has(gt-workout-clock .workout-clock) .app-main>main{padding-bottom:calc(var(--phone-nav-height,76px) + var(--safe-bottom,0px) + 150px)}
-@media(min-width:1000px){gt-shell:has(gt-workout-clock .workout-clock) .app-main>main{padding-bottom:160px}}
+gt-shell:has(gt-workout-clock .workout-clock) .app-main > main {
+  padding-bottom: calc(
+    var(--phone-nav-height, 76px) + var(--safe-bottom, 0px) + 150px
+  );
+}
+@media (min-width: 1000px) {
+  gt-shell:has(gt-workout-clock .workout-clock) .app-main > main {
+    padding-bottom: 160px;
+  }
+}

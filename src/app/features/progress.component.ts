@@ -1,8 +1,8 @@
-import { DESIGN_DIRECTIVES } from '../design/design-directives';
-import {sessionVolume,exerciseRecords} from '../services/statistics';
-import {TodayService} from '../services/today';
-import {AppFeaturesService} from '../services/app-features';
-import {setupKey} from "../services/training-flow";
+import { DESIGN_DIRECTIVES } from "../design/design-directives";
+import { sessionVolume, exerciseRecords } from "../services/statistics";
+import { TodayService } from "../services/today";
+import { AppFeaturesService } from "../services/app-features";
+import { setupKey } from "../services/training-flow";
 import { DataChartComponent, DataPoint } from "../shared/data-chart.component";
 import { Router, RouterLink } from "@angular/router";
 import { localDate } from "../models/domain";
@@ -12,12 +12,18 @@ import { Store } from "../services/store";
 import { ProgressChartComponent } from "../shared/progress-chart.component";
 import { IconComponent } from "../shared/icon.component";
 import { StatusComponent } from "../shared/status.component";
-import { ExerciseThumbComponent } from '../shared/exercise-thumb.component';
-import { matchesExercise } from '../services/exercise-search';
+import { ExerciseThumbComponent } from "../shared/exercise-thumb.component";
+import { matchesExercise } from "../services/exercise-search";
 @Component({
   standalone: true,
-  styleUrls: ["./feature-polish.css", "./progress-design.css", "./progress-reference.css", "./progress-redesign.css"],
-  imports: [...DESIGN_DIRECTIVES,
+  styleUrls: [
+    "./feature-polish.css",
+    "./progress-design.css",
+    "./progress-reference.css",
+    "./progress-redesign.css",
+  ],
+  imports: [
+    ...DESIGN_DIRECTIVES,
     FormsModule,
     DataChartComponent,
     RouterLink,
@@ -144,56 +150,223 @@ import { matchesExercise } from '../services/exercise-search';
     <p class="progress-archive-note"><gt-icon name="shield"/> Il tuo percorso è custodito nel tuo archivio personale.</p></div>`,
 })
 export class ProgressComponent {
-  private router=inject(Router);
-  openPlan(id:string){if(id)void this.router.navigate(['/piano',id]);}
-  features=inject(AppFeaturesService,{optional:true});
-  constructor(){effect(()=>{if(!this.features?.nutritionEnabled()&&this.category()==='nutrition')this.category.set('weight');});}
-  recordCards=computed(()=>[...new Set(this.s.completed().flatMap(w=>this.s.workoutExercises(w.id).map(e=>e.exerciseId)))].map(id=>({id,name:this.s.exercise(id)?.name||this.s.data().workoutExercises.find(e=>e.exerciseId===id)?.name||'Esercizio',weight:this.s.records(id).maxWeight,mode:this.s.exercise(id)?.loadMode})).filter(r=>r.weight>0&&(r.mode==='external'||r.mode==='weighted-bodyweight'||!r.mode)).slice(0,2));
-  category=signal<'weight'|'strength'|'body'|'nutrition'>('strength');period=signal(-28);
-  overviewPlan=signal('');
-  private clock=inject(TodayService,{optional:true});
-  get today(){return this.clock?.date()||localDate();}
-  cutoff(){if(!this.period())return '';const d=new Date(this.today+'T12:00:00');if(this.period()<0)d.setDate(d.getDate()+this.period()+1);else d.setMonth(d.getMonth()-this.period());return localDate(d);}
-  measurements=computed(()=>this.s.data().measurements.filter(m=>!this.cutoff()||m.date>=this.cutoff()).sort((a,b)=>a.date.localeCompare(b.date)));
-  dateLabel(date:string){return new Date(date+'T12:00:00').toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit'});}
-  weightPoints=computed(()=>this.measurements().map(m=>({label:this.dateLabel(m.date),value:this.s.weight(m.weight)})));
-  waistPoints=computed(()=>this.measurements().filter(m=>m.waist!==undefined).map(m=>({label:this.dateLabel(m.date),value:m.waist!})));
-  fatPoints=computed(()=>this.measurements().filter(m=>m.bodyFat!==undefined).map(m=>({label:this.dateLabel(m.date),value:m.bodyFat!})));
-  nutritionPoints=computed(()=>{const totals=new Map<string,number>();for(const m of this.s.data().meals)if(!this.cutoff()||m.date>=this.cutoff())totals.set(m.date,(totals.get(m.date)||0)+m.calories);return [...totals].sort(([a],[b])=>a.localeCompare(b)).map(([date,value])=>({label:this.dateLabel(date),value}));});
+  private router = inject(Router);
+  openPlan(id: string) {
+    if (id) void this.router.navigate(["/piano", id]);
+  }
+  features = inject(AppFeaturesService, { optional: true });
+  constructor() {
+    effect(() => {
+      if (!this.features?.nutritionEnabled() && this.category() === "nutrition")
+        this.category.set("weight");
+    });
+  }
+  recordCards = computed(() =>
+    [
+      ...new Set(
+        this.s
+          .completed()
+          .flatMap((w) =>
+            this.s.workoutExercises(w.id).map((e) => e.exerciseId),
+          ),
+      ),
+    ]
+      .map((id) => ({
+        id,
+        name:
+          this.s.exercise(id)?.name ||
+          this.s.data().workoutExercises.find((e) => e.exerciseId === id)
+            ?.name ||
+          "Esercizio",
+        weight: this.s.records(id).maxWeight,
+        mode: this.s.exercise(id)?.loadMode,
+      }))
+      .filter(
+        (r) =>
+          r.weight > 0 &&
+          (r.mode === "external" ||
+            r.mode === "weighted-bodyweight" ||
+            !r.mode),
+      )
+      .slice(0, 2),
+  );
+  category = signal<"weight" | "strength" | "body" | "nutrition">("strength");
+  period = signal(-28);
+  overviewPlan = signal("");
+  private clock = inject(TodayService, { optional: true });
+  get today() {
+    return this.clock?.date() || localDate();
+  }
+  cutoff() {
+    if (!this.period()) return "";
+    const d = new Date(this.today + "T12:00:00");
+    if (this.period() < 0) d.setDate(d.getDate() + this.period() + 1);
+    else d.setMonth(d.getMonth() - this.period());
+    return localDate(d);
+  }
+  measurements = computed(() =>
+    this.s
+      .data()
+      .measurements.filter((m) => !this.cutoff() || m.date >= this.cutoff())
+      .sort((a, b) => a.date.localeCompare(b.date)),
+  );
+  dateLabel(date: string) {
+    return new Date(date + "T12:00:00").toLocaleDateString("it-IT", {
+      day: "2-digit",
+      month: "2-digit",
+    });
+  }
+  weightPoints = computed(() =>
+    this.measurements().map((m) => ({
+      label: this.dateLabel(m.date),
+      value: this.s.weight(m.weight),
+    })),
+  );
+  waistPoints = computed(() =>
+    this.measurements()
+      .filter((m) => m.waist !== undefined)
+      .map((m) => ({ label: this.dateLabel(m.date), value: m.waist! })),
+  );
+  fatPoints = computed(() =>
+    this.measurements()
+      .filter((m) => m.bodyFat !== undefined)
+      .map((m) => ({ label: this.dateLabel(m.date), value: m.bodyFat! })),
+  );
+  nutritionPoints = computed(() => {
+    const totals = new Map<string, number>();
+    for (const m of this.s.data().meals)
+      if (!this.cutoff() || m.date >= this.cutoff())
+        totals.set(m.date, (totals.get(m.date) || 0) + m.calories);
+    return [...totals]
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([date, value]) => ({ label: this.dateLabel(date), value }));
+  });
   s = inject(Store);
-  overviewSessions=computed(()=>{const plan=this.category()==='strength'?this.overviewPlan():'';const cutoff=this.cutoff();return this.s.completed().filter(row=>(!plan||row.planId===plan)&&(!cutoff||row.date>=cutoff)&&row.date<=this.today);});
-  overviewVolume=computed(()=>this.overviewSessions().reduce((sum,row)=>sum+sessionVolume(this.s.data(),row),0));
-  overviewDuration=computed(()=>{const known=this.overviewSessions().filter(row=>!row.durationUnknown);if(!known.length)return null;const minutes=Math.round(known.reduce((sum,row)=>sum+row.duration,0));return minutes<60?{value:String(minutes),unit:'min',minutes:0}:{value:String(Math.floor(minutes/60)),unit:'h',minutes:minutes%60};});
-  overviewRecord=computed(()=>{
-    const exercise=this.selectedExercise();if(!exercise)return null;
-    const data={...this.s.data(),workouts:this.overviewSessions()};const records=exerciseRecords(data,exercise.id,this.machine()||undefined);
-    if(!records.maxReps)return null;
-    if(exercise.loadMode==='bodyweight')return {value:String(records.maxReps),unit:'rip',label:exercise.name,reference:false};
-    if(exercise.loadMode==='assisted')return null;
-    if(!records.maxWeight)return null;
-    return {value:this.s.formatWeight(records.maxWeight),unit:this.s.settings().unit,label:(exercise.loadMode==='weighted-bodyweight'?'Zavorra · ':'')+exercise.name,reference:false};
+  overviewSessions = computed(() => {
+    const plan = this.category() === "strength" ? this.overviewPlan() : "";
+    const cutoff = this.cutoff();
+    return this.s
+      .completed()
+      .filter(
+        (row) =>
+          (!plan || row.planId === plan) &&
+          (!cutoff || row.date >= cutoff) &&
+          row.date <= this.today,
+      );
   });
-  weeklyTrend=computed(()=>{
-    const current=new Date(this.today+'T12:00:00');current.setDate(current.getDate()-((current.getDay()+6)%7));
-    const end=localDate(current);current.setDate(current.getDate()-7);const middle=localDate(current);current.setDate(current.getDate()-7);const start=localDate(current);
-    const recent=this.overviewSessions().filter(row=>row.date>=middle&&row.date<end),previous=this.overviewSessions().filter(row=>row.date>=start&&row.date<middle);
-    if(!recent.length||!previous.length)return null;
-    const first=previous.reduce((sum,row)=>sum+sessionVolume(this.s.data(),row),0),last=recent.reduce((sum,row)=>sum+sessionVolume(this.s.data(),row),0);
-    if(first<=0)return null;
-    const change=(last-first)/first*100;
-    return {label:(change>0?'+':'')+change.toLocaleString('it-IT',{maximumFractionDigits:1})+'%',increased:change>0};
+  overviewVolume = computed(() =>
+    this.overviewSessions().reduce(
+      (sum, row) => sum + sessionVolume(this.s.data(), row),
+      0,
+    ),
+  );
+  overviewDuration = computed(() => {
+    const known = this.overviewSessions().filter((row) => !row.durationUnknown);
+    if (!known.length) return null;
+    const minutes = Math.round(
+      known.reduce((sum, row) => sum + row.duration, 0),
+    );
+    return minutes < 60
+      ? { value: String(minutes), unit: "min", minutes: 0 }
+      : {
+          value: String(Math.floor(minutes / 60)),
+          unit: "h",
+          minutes: minutes % 60,
+        };
   });
-  recordQuery=signal('');recordMode=signal('all');recordFilters=signal(false);
-  recordOptions=computed(()=>this.s.data().exercises.filter(exercise=>(this.recordMode()==='all'||exercise.loadMode===this.recordMode())&&matchesExercise(exercise,this.recordQuery())));
-  recordPinned=computed(()=>{const exercise=this.selectedExercise();return exercise&&!this.recordOptions().some(row=>row.id===exercise.id)?exercise:undefined;});
-  hasRecordData=computed(()=>this.records().maxReps>0);
-  exerciseId = signal("");machine=signal("");
+  overviewRecord = computed(() => {
+    const exercise = this.selectedExercise();
+    if (!exercise) return null;
+    const data = { ...this.s.data(), workouts: this.overviewSessions() };
+    const records = exerciseRecords(
+      data,
+      exercise.id,
+      this.machine() || undefined,
+    );
+    if (!records.maxReps) return null;
+    if (exercise.loadMode === "bodyweight")
+      return {
+        value: String(records.maxReps),
+        unit: "rip",
+        label: exercise.name,
+        reference: false,
+      };
+    if (exercise.loadMode === "assisted") return null;
+    if (!records.maxWeight) return null;
+    return {
+      value: this.s.formatWeight(records.maxWeight),
+      unit: this.s.settings().unit,
+      label:
+        (exercise.loadMode === "weighted-bodyweight" ? "Zavorra · " : "") +
+        exercise.name,
+      reference: false,
+    };
+  });
+  weeklyTrend = computed(() => {
+    const current = new Date(this.today + "T12:00:00");
+    current.setDate(current.getDate() - ((current.getDay() + 6) % 7));
+    const end = localDate(current);
+    current.setDate(current.getDate() - 7);
+    const middle = localDate(current);
+    current.setDate(current.getDate() - 7);
+    const start = localDate(current);
+    const recent = this.overviewSessions().filter(
+        (row) => row.date >= middle && row.date < end,
+      ),
+      previous = this.overviewSessions().filter(
+        (row) => row.date >= start && row.date < middle,
+      );
+    if (!recent.length || !previous.length) return null;
+    const first = previous.reduce(
+        (sum, row) => sum + sessionVolume(this.s.data(), row),
+        0,
+      ),
+      last = recent.reduce(
+        (sum, row) => sum + sessionVolume(this.s.data(), row),
+        0,
+      );
+    if (first <= 0) return null;
+    const change = ((last - first) / first) * 100;
+    return {
+      label:
+        (change > 0 ? "+" : "") +
+        change.toLocaleString("it-IT", { maximumFractionDigits: 1 }) +
+        "%",
+      increased: change > 0,
+    };
+  });
+  recordQuery = signal("");
+  recordMode = signal("all");
+  recordFilters = signal(false);
+  recordOptions = computed(() =>
+    this.s
+      .data()
+      .exercises.filter(
+        (exercise) =>
+          (this.recordMode() === "all" ||
+            exercise.loadMode === this.recordMode()) &&
+          matchesExercise(exercise, this.recordQuery()),
+      ),
+  );
+  recordPinned = computed(() => {
+    const exercise = this.selectedExercise();
+    return exercise &&
+      !this.recordOptions().some((row) => row.id === exercise.id)
+      ? exercise
+      : undefined;
+  });
+  hasRecordData = computed(() => this.records().maxReps > 0);
+  exerciseId = signal("");
+  machine = signal("");
   defaultId = computed(() => this.s.data().exercises[0]?.id || "");
   selectedExercise = computed(() =>
     this.s.exercise(this.exerciseId() || this.defaultId()),
   );
   records = computed(() =>
-    this.s.records(this.exerciseId() || this.defaultId(),this.machine()||undefined),
+    this.s.records(
+      this.exerciseId() || this.defaultId(),
+      this.machine() || undefined,
+    ),
   );
   weightRecords = computed(() =>
     Object.entries(this.records().repsByWeight).map(([weight, reps]) => ({
@@ -209,11 +382,11 @@ export class ProgressComponent {
         .filter(
           (e) =>
             e.exerciseId === id &&
-            (!this.machine()||setupKey(e.machineSetup)===this.machine()) &&
+            (!this.machine() || setupKey(e.machineSetup) === this.machine()) &&
             e.loadMode === this.selectedExercise()?.loadMode,
         );
       const sets = es.flatMap((e) =>
-        this.s.sets(e.id).filter((s) => s.completed&&s.kind!=="warmup"),
+        this.s.sets(e.id).filter((s) => s.completed && s.kind !== "warmup"),
       );
       if (!sets.length) return [];
       const weight = Math.max(...sets.map((s) => s.weight));

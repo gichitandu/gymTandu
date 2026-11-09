@@ -1,5 +1,8 @@
 /* Only registered presentation adapters may override a real control. */
-[gtDesignLabel] { min-width: 0; overflow-wrap: anywhere; }
+[gtDesignLabel] {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
 gt-shell .bottom-nav a[data-design-id] > span,
 gt-design-preview .bottom-nav a[data-design-id] > span,
 gt-shell .sidebar nav a[data-design-id] > span {

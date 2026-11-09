@@ -1,11 +1,11 @@
-import { Component, computed, input, output, signal } from '@angular/core';
-import { FormsModule } from '@angular/forms';
-import { Exercise } from '../models/domain';
-import { matchesExercise } from '../services/exercise-search';
-import { ExerciseThumbComponent } from './exercise-thumb.component';
+import { Component, computed, input, output, signal } from "@angular/core";
+import { FormsModule } from "@angular/forms";
+import { Exercise } from "../models/domain";
+import { matchesExercise } from "../services/exercise-search";
+import { ExerciseThumbComponent } from "./exercise-thumb.component";
 
 @Component({
-  selector: 'gt-exercise-filter',
+  selector: "gt-exercise-filter",
   standalone: true,
   imports: [FormsModule, ExerciseThumbComponent],
   template: `<label class="search-label">Cerca per nome
@@ -29,24 +29,34 @@ import { ExerciseThumbComponent } from './exercise-thumb.component';
     @if (query().trim()) {
       <span class="filter-result" role="status">{{filtered().length}} risultati per nome{{pinned() ? ' · Selezione attuale conservata' : ''}}</span>
     }`,
-  styles: [`
+  styles: [
+    `
     :host{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:7px 8px;flex:1;min-width:180px;align-content:start;max-width:100%;color:var(--muted);font-size:12px}
     label{min-width:0!important;margin:0;color:inherit;font-size:inherit;font-weight:inherit;line-height:1.4}.search-label{grid-column:1/-1}
     .exercise-label{grid-column:1}input,select{width:100%;min-width:0}
     gt-exercise-thumb{grid-column:2;align-self:end;--thumb-width:58px;--thumb-height:43px}
     .filter-result{grid-column:1/-1;color:var(--muted);font-size:11px;line-height:1.4}
-  `],
+  `,
+  ],
 })
 export class ExerciseFilterComponent {
   exercises = input.required<Exercise[]>();
-  value = input('');
+  value = input("");
   includeAll = input(false);
   choose = output<string>();
-  query = signal('');
-  selected = computed(() => this.exercises().find(exercise => exercise.id === this.value()));
-  filtered = computed(() => this.exercises().filter(exercise => matchesExercise(exercise, this.query(), true)));
+  query = signal("");
+  selected = computed(() =>
+    this.exercises().find((exercise) => exercise.id === this.value()),
+  );
+  filtered = computed(() =>
+    this.exercises().filter((exercise) =>
+      matchesExercise(exercise, this.query(), true),
+    ),
+  );
   pinned = computed(() => {
     const exercise = this.selected();
-    return exercise && !matchesExercise(exercise, this.query(), true) ? exercise : undefined;
+    return exercise && !matchesExercise(exercise, this.query(), true)
+      ? exercise
+      : undefined;
   });
 }

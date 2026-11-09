@@ -38,9 +38,14 @@ const DESIGN_STATIC_LABELS = Object.freeze({
 });
 // These identities describe existing controls, never routes, entity keys or handlers.
 const designControlEntry = (id, page, kind, name, extra = {}) =>
-  Object.freeze({ id, page, kind, name,
+  Object.freeze({
+    id,
+    page,
+    kind,
+    name,
     ...(DESIGN_STATIC_LABELS[id] ? { label: DESIGN_STATIC_LABELS[id] } : {}),
-    ...extra });
+    ...extra,
+  });
 export const DESIGN_CONTROLS = Object.freeze([
   designControlEntry("home.title", "home", "text", "Titolo Home"),
   designControlEntry(
@@ -256,24 +261,94 @@ export const DESIGN_CONTROLS = Object.freeze([
     "Intensità glow (in Tema)",
   ),
   ...[
-    ["home.subtitle", "home", "Sottotitolo Home", "Ogni giorno, un passo avanti."],
+    [
+      "home.subtitle",
+      "home",
+      "Sottotitolo Home",
+      "Ogni giorno, un passo avanti.",
+    ],
     ["home.week.title", "home", "Titolo settimana", "La tua settimana"],
-    ["home.week.calendarLink", "home", "Link calendario settimanale", "Calendario"],
+    [
+      "home.week.calendarLink",
+      "home",
+      "Link calendario settimanale",
+      "Calendario",
+    ],
     ["home.journey.title", "home", "Titolo riepilogo", "Il tuo percorso"],
-    ["home.goals.edit", "home", "Link obiettivo settimanale", "Modifica obiettivo"],
+    [
+      "home.goals.edit",
+      "home",
+      "Link obiettivo settimanale",
+      "Modifica obiettivo",
+    ],
     ["home.health.title", "home", "Titolo benessere", "Obiettivo e benessere"],
-    ["home.health.subtitle", "home", "Sottotitolo benessere", "Recovery, sonno e focus muscolare"],
-    ["home.clientView.label", "home", "Nome vista cliente", "Visualizza come cliente"],
-    ["training.subtitle", "training", "Sottotitolo Allenamenti", "I tuoi piani, in un solo posto."],
-    ["training.actions.viewSession", "training", "Link sessione in corso", "Vedi sessione"],
-    ["training.path.title", "training", "Titolo piano attivo", "Il tuo percorso"],
-    ["progress.subtitle", "progress", "Sottotitolo Progressi", "Analizza i tuoi risultati"],
+    [
+      "home.health.subtitle",
+      "home",
+      "Sottotitolo benessere",
+      "Recovery, sonno e focus muscolare",
+    ],
+    [
+      "home.clientView.label",
+      "home",
+      "Nome vista cliente",
+      "Visualizza come cliente",
+    ],
+    [
+      "training.subtitle",
+      "training",
+      "Sottotitolo Allenamenti",
+      "I tuoi piani, in un solo posto.",
+    ],
+    [
+      "training.actions.viewSession",
+      "training",
+      "Link sessione in corso",
+      "Vedi sessione",
+    ],
+    [
+      "training.path.title",
+      "training",
+      "Titolo piano attivo",
+      "Il tuo percorso",
+    ],
+    [
+      "progress.subtitle",
+      "progress",
+      "Sottotitolo Progressi",
+      "Analizza i tuoi risultati",
+    ],
     ["progress.records.title", "progress", "Titolo record", "Record personali"],
-    ["progress.exerciseChart.title", "progress", "Titolo progressi esercizio", "Progressi per esercizio"],
-    ["progress.overview.title", "progress", "Titolo riepilogo misure", "Riepilogo, peso e misure"],
-    ["progress.weeklyChart.title", "progress", "Titolo volume settimanale", "Volume settimanale"],
-    ["profile.sections.journey", "profile", "Titolo percorso personale", "IL TUO PERCORSO"],
-    ["profile.sections.space", "profile", "Titolo preferenze personali", "IL TUO SPAZIO"],
+    [
+      "progress.exerciseChart.title",
+      "progress",
+      "Titolo progressi esercizio",
+      "Progressi per esercizio",
+    ],
+    [
+      "progress.overview.title",
+      "progress",
+      "Titolo riepilogo misure",
+      "Riepilogo, peso e misure",
+    ],
+    [
+      "progress.weeklyChart.title",
+      "progress",
+      "Titolo volume settimanale",
+      "Volume settimanale",
+    ],
+    [
+      "profile.sections.journey",
+      "profile",
+      "Titolo percorso personale",
+      "IL TUO PERCORSO",
+    ],
+    [
+      "profile.sections.space",
+      "profile",
+      "Titolo preferenze personali",
+      "IL TUO SPAZIO",
+    ],
   ].map(([id, page, name, label]) =>
     designControlEntry(id, page, "text", name, { label }),
   ),
@@ -283,8 +358,10 @@ export const DESIGN_CONTROLS = Object.freeze([
       "navigation",
       "tab",
       ["Home", "Allenamenti", "Progressi", "Profilo"][index],
-      { label: ["Home", "Allenati", "Progressi", "Profilo"][index],
-        icon: ["home", "weight", "chart", "user"][index] },
+      {
+        label: ["Home", "Allenati", "Progressi", "Profilo"][index],
+        icon: ["home", "weight", "chart", "user"][index],
+      },
     ),
   ),
 ]);
@@ -677,7 +754,12 @@ export function designStyles(style, kind = "page") {
     "slider",
   ].includes(kind);
   if (kind === "progress") {
-    const surface = style.background || style.card || style.fill || style.primary || "#08101D";
+    const surface =
+      style.background ||
+      style.card ||
+      style.fill ||
+      style.primary ||
+      "#08101D";
     set("--design-progress-surface", surface);
     set("--design-progress-ink", readableDesignInk(style.text, [surface]));
   }

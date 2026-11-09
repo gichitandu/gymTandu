@@ -1,4 +1,21 @@
-import { Component, input, output } from '@angular/core';
-export const EXERCISE_FAMILIES=['Lat machine','Chest press','Croci ai cavi','Bicipiti','Tricipiti'];
-@Component({selector:'gt-exercise-families',standalone:true,template:`<nav aria-label="Filtri rapidi esercizi">@for(family of families;track family){<button type="button" [class.active]="query().toLocaleLowerCase('it')===family.toLocaleLowerCase('it')" [attr.aria-pressed]="query().toLocaleLowerCase('it')===family.toLocaleLowerCase('it')" (click)="choose.emit(family)">{{family}}</button>}@if(query()){<button type="button" class="clear" (click)="choose.emit('')">Tutti gli esercizi</button>}</nav>`,styles:[`:host{display:block;min-width:0;margin:12px 0}nav{display:flex;gap:8px;overflow-x:auto;padding:3px 0 8px;scrollbar-width:thin}button{flex-shrink:0;min-height:44px;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:9px 12px;font-size:12px;color:var(--muted)}button.active{background:var(--accent,var(--blue));border-color:var(--accent,var(--blue));color:var(--accent-ink,#fff)}.clear{background:transparent}`]})
-export class ExerciseFamiliesComponent{families=EXERCISE_FAMILIES;query=input('');choose=output<string>();}
+import { Component, input, output } from "@angular/core";
+export const EXERCISE_FAMILIES = [
+  "Lat machine",
+  "Chest press",
+  "Croci ai cavi",
+  "Bicipiti",
+  "Tricipiti",
+];
+@Component({
+  selector: "gt-exercise-families",
+  standalone: true,
+  template: `<nav aria-label="Filtri rapidi esercizi">@for(family of families;track family){<button type="button" [class.active]="query().toLocaleLowerCase('it')===family.toLocaleLowerCase('it')" [attr.aria-pressed]="query().toLocaleLowerCase('it')===family.toLocaleLowerCase('it')" (click)="choose.emit(family)">{{family}}</button>}@if(query()){<button type="button" class="clear" (click)="choose.emit('')">Tutti gli esercizi</button>}</nav>`,
+  styles: [
+    `:host{display:block;min-width:0;margin:12px 0}nav{display:flex;gap:8px;overflow-x:auto;padding:3px 0 8px;scrollbar-width:thin}button{flex-shrink:0;min-height:44px;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:9px 12px;font-size:12px;color:var(--muted)}button.active{background:var(--accent,var(--blue));border-color:var(--accent,var(--blue));color:var(--accent-ink,#fff)}.clear{background:transparent}`,
+  ],
+})
+export class ExerciseFamiliesComponent {
+  families = EXERCISE_FAMILIES;
+  query = input("");
+  choose = output<string>();
+}

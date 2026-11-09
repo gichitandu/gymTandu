@@ -487,7 +487,9 @@
     var(--cal-green) calc(var(--p, 0) * 1%),
     color-mix(in srgb, var(--text) 14%, transparent) 0
   );
-  filter: drop-shadow(0 0 6px color-mix(in srgb, var(--cal-green) 45%, transparent));
+  filter: drop-shadow(
+    0 0 6px color-mix(in srgb, var(--cal-green) 45%, transparent)
+  );
 }
 .cal-progress-ring::after {
   content: "";
@@ -840,7 +842,9 @@
     var(--cal-green) calc(var(--p, 0) * 1%),
     color-mix(in srgb, var(--text) 12%, transparent) 0
   );
-  filter: drop-shadow(0 0 10px color-mix(in srgb, var(--cal-green) 45%, transparent));
+  filter: drop-shadow(
+    0 0 10px color-mix(in srgb, var(--cal-green) 45%, transparent)
+  );
   animation: calRing 1s cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
 .cal-bigring::after {
@@ -900,11 +904,19 @@
   animation-delay: calc(var(--i, 0) * 70ms);
 }
 .cal-bar i[data-state="completed"] {
-  background: linear-gradient(180deg, color-mix(in srgb, var(--cal-green) 70%, #fff), var(--cal-green));
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--cal-green) 70%, #fff),
+    var(--cal-green)
+  );
   box-shadow: 0 0 10px color-mix(in srgb, var(--cal-green) 45%, transparent);
 }
 .cal-bar i[data-state="partial"] {
-  background: linear-gradient(180deg, color-mix(in srgb, var(--cal-amber) 70%, #fff), var(--cal-amber));
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--cal-amber) 70%, #fff),
+    var(--cal-amber)
+  );
 }
 .cal-bar i[data-state="planned"] {
   background: repeating-linear-gradient(
@@ -912,7 +924,8 @@
     color-mix(in srgb, var(--cal-accent) 55%, transparent) 0 4px,
     color-mix(in srgb, var(--cal-accent) 20%, transparent) 4px 8px
   );
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--cal-accent) 60%, transparent);
+  box-shadow: inset 0 0 0 1px
+    color-mix(in srgb, var(--cal-accent) 60%, transparent);
 }
 .cal-bar i[data-state="rest"] {
   background: color-mix(in srgb, var(--cal-rest) 35%, transparent);
@@ -1189,7 +1202,9 @@
   );
 }
 .cal-day[data-state="completed"] .cal-day-ring {
-  filter: drop-shadow(0 0 5px color-mix(in srgb, var(--cal-green) 85%, transparent));
+  filter: drop-shadow(
+    0 0 5px color-mix(in srgb, var(--cal-green) 85%, transparent)
+  );
 }
 .cal-day[data-state="partial"] {
   --st: var(--cal-amber);
@@ -2284,4 +2299,14 @@
 }
 
 /* Pulizia delle sedute rimaste da piani eliminati */
-.cal-orphan-cleanup{width:100%;min-height:44px;margin:10px 0 4px;border-radius:14px;font-size:13px;font-weight:700;color:var(--danger,#ff6b81);border:1px solid color-mix(in srgb,var(--danger,#ff6b81) 40%,transparent);background:color-mix(in srgb,var(--danger,#ff6b81) 8%,transparent)}
+.cal-orphan-cleanup {
+  width: 100%;
+  min-height: 44px;
+  margin: 10px 0 4px;
+  border-radius: 14px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--danger, #ff6b81);
+  border: 1px solid color-mix(in srgb, var(--danger, #ff6b81) 40%, transparent);
+  background: color-mix(in srgb, var(--danger, #ff6b81) 8%, transparent);
+}

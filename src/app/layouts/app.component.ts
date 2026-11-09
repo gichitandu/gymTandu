@@ -1,17 +1,32 @@
-import {AppFeaturesService} from '../services/app-features';
-import {WorkoutStartOptionsComponent} from '../shared/workout-start-options.component';
-import { ConfirmationDialogComponent } from '../shared/confirmation-dialog.component';
-import { Component, effect, inject, signal, untracked } from '@angular/core';
-import { FormsModule } from '@angular/forms';
-import { AuthService } from '../services/auth';
-import { ThemeService } from '../services/theme';
-import { ViewportService } from '../services/viewport';
-import { ShellComponent } from './shell.component';
-import { IconComponent } from '../shared/icon.component';
-import { FeedbackPopupsComponent } from '../shared/feedback-popups.component';
-import { feedbackForContext, feedbackSignal } from '../services/feedback';
-import { AppActivationUncertainError, AppReleaseService } from '../services/app-release';
-@Component({selector:'app-root',standalone:true,imports:[WorkoutStartOptionsComponent,ConfirmationDialogComponent,FormsModule,ShellComponent,IconComponent,FeedbackPopupsComponent],styleUrls:['./entry.css','./entry-redesign.css'],template:`
+import { AppFeaturesService } from "../services/app-features";
+import { WorkoutStartOptionsComponent } from "../shared/workout-start-options.component";
+import { ConfirmationDialogComponent } from "../shared/confirmation-dialog.component";
+import { Component, effect, inject, signal, untracked } from "@angular/core";
+import { FormsModule } from "@angular/forms";
+import { AuthService } from "../services/auth";
+import { ThemeService } from "../services/theme";
+import { ViewportService } from "../services/viewport";
+import { ShellComponent } from "./shell.component";
+import { IconComponent } from "../shared/icon.component";
+import { FeedbackPopupsComponent } from "../shared/feedback-popups.component";
+import { feedbackForContext, feedbackSignal } from "../services/feedback";
+import {
+  AppActivationUncertainError,
+  AppReleaseService,
+} from "../services/app-release";
+@Component({
+  selector: "app-root",
+  standalone: true,
+  imports: [
+    WorkoutStartOptionsComponent,
+    ConfirmationDialogComponent,
+    FormsModule,
+    ShellComponent,
+    IconComponent,
+    FeedbackPopupsComponent,
+  ],
+  styleUrls: ["./entry.css", "./entry-redesign.css"],
+  template: `
 <gt-feedback-popups/><gt-confirmation-dialog/>
 @if(auth.user()) { <gt-shell /><gt-workout-start-options/> } @else {
 @if(auth.loggingOut()){<p class="entry-status" role="status">Uscita e aggiornamento…</p>}
@@ -70,30 +85,116 @@ import { AppActivationUncertainError, AppReleaseService } from '../services/app-
 </section>
 </div>
 </main>}
-`})
+`,
+})
 export class AppComponent {
- features=inject(AppFeaturesService,{optional:true});
- private viewport=inject(ViewportService);
- private feedback=feedbackForContext();
- auth=inject(AuthService);private theme=inject(ThemeService);welcome=signal(false);tab=signal<'account'|'local'>('account');help=signal(false);remember=true;username='';setupCode='';email='';password='';confirm='';busy=signal(false);error=feedbackSignal('error',this.feedback);show=signal(false);
- private releases=inject(AppReleaseService);entryUpdating=signal(false);private attemptedEntryBuild='';
- constructor(){this.theme.restoreEntryTheme();effect(()=>{if(!this.auth.user())untracked(()=>this.theme.restoreEntryTheme());});effect(()=>{if(!this.auth.loading()&&!this.auth.loggingOut()&&!this.auth.user()&&!this.busy()&&this.releases.autoUpdateReady())queueMicrotask(()=>void this.updateSignedOut());});}
- private async updateSignedOut(){
-  const target=this.releases.downloadedBuild();
-  if(!target||this.attemptedEntryBuild===target||this.auth.user()||this.auth.loading()||this.auth.loggingOut()||this.busy()||this.email||this.username||this.password||this.confirm||!this.releases.autoUpdateReady())return;
-  this.attemptedEntryBuild=target;this.entryUpdating.set(true);
-  let reloading=false;
-  try{if(await this.releases.activateReady(this.releases.policy()?.requestedBuildId||undefined)){reloading=true;location.reload();}}
-  catch(error){if(error instanceof AppActivationUncertainError){reloading=true;location.reload();}else this.error.set('Aggiornamento rimandato. Puoi accedere e riprovare dalle impostazioni.');}
-  finally{if(!reloading)this.entryUpdating.set(false);}
- }
- async submit() {
-  if(this.busy()) return;this.error.set('');
-  if(this.auth.setup()&&this.password!==this.confirm) {this.error.set('Le password non coincidono.');return;}
-  if(this.auth.setup() && !/^[a-zA-Z0-9][a-zA-Z0-9._-]{2,29}$/.test(this.username.trim())) {this.error.set('Scegli un nome utente valido di 3–30 caratteri.');return;}
-  this.busy.set(true);
-  try {await this.auth.login(this.auth.setup()?this.auth.ownerEmail():this.email,this.password,this.auth.setup(),this.remember,this.username,this.setupCode.trim());this.password='';this.confirm='';this.setupCode='';}
-  catch(e) {this.error.set(e instanceof Error?e.message:'Accesso non riuscito.');}
-  finally {this.busy.set(false);}
- }
+  features = inject(AppFeaturesService, { optional: true });
+  private viewport = inject(ViewportService);
+  private feedback = feedbackForContext();
+  auth = inject(AuthService);
+  private theme = inject(ThemeService);
+  welcome = signal(false);
+  tab = signal<"account" | "local">("account");
+  help = signal(false);
+  remember = true;
+  username = "";
+  setupCode = "";
+  email = "";
+  password = "";
+  confirm = "";
+  busy = signal(false);
+  error = feedbackSignal("error", this.feedback);
+  show = signal(false);
+  private releases = inject(AppReleaseService);
+  entryUpdating = signal(false);
+  private attemptedEntryBuild = "";
+  constructor() {
+    this.theme.restoreEntryTheme();
+    effect(() => {
+      if (!this.auth.user()) untracked(() => this.theme.restoreEntryTheme());
+    });
+    effect(() => {
+      if (
+        !this.auth.loading() &&
+        !this.auth.loggingOut() &&
+        !this.auth.user() &&
+        !this.busy() &&
+        this.releases.autoUpdateReady()
+      )
+        queueMicrotask(() => void this.updateSignedOut());
+    });
+  }
+  private async updateSignedOut() {
+    const target = this.releases.downloadedBuild();
+    if (
+      !target ||
+      this.attemptedEntryBuild === target ||
+      this.auth.user() ||
+      this.auth.loading() ||
+      this.auth.loggingOut() ||
+      this.busy() ||
+      this.email ||
+      this.username ||
+      this.password ||
+      this.confirm ||
+      !this.releases.autoUpdateReady()
+    )
+      return;
+    this.attemptedEntryBuild = target;
+    this.entryUpdating.set(true);
+    let reloading = false;
+    try {
+      if (
+        await this.releases.activateReady(
+          this.releases.policy()?.requestedBuildId || undefined,
+        )
+      ) {
+        reloading = true;
+        location.reload();
+      }
+    } catch (error) {
+      if (error instanceof AppActivationUncertainError) {
+        reloading = true;
+        location.reload();
+      } else
+        this.error.set(
+          "Aggiornamento rimandato. Puoi accedere e riprovare dalle impostazioni.",
+        );
+    } finally {
+      if (!reloading) this.entryUpdating.set(false);
+    }
+  }
+  async submit() {
+    if (this.busy()) return;
+    this.error.set("");
+    if (this.auth.setup() && this.password !== this.confirm) {
+      this.error.set("Le password non coincidono.");
+      return;
+    }
+    if (
+      this.auth.setup() &&
+      !/^[a-zA-Z0-9][a-zA-Z0-9._-]{2,29}$/.test(this.username.trim())
+    ) {
+      this.error.set("Scegli un nome utente valido di 3–30 caratteri.");
+      return;
+    }
+    this.busy.set(true);
+    try {
+      await this.auth.login(
+        this.auth.setup() ? this.auth.ownerEmail() : this.email,
+        this.password,
+        this.auth.setup(),
+        this.remember,
+        this.username,
+        this.setupCode.trim(),
+      );
+      this.password = "";
+      this.confirm = "";
+      this.setupCode = "";
+    } catch (e) {
+      this.error.set(e instanceof Error ? e.message : "Accesso non riuscito.");
+    } finally {
+      this.busy.set(false);
+    }
+  }
 }

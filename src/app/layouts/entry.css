@@ -6,7 +6,11 @@
    This also supports custom HEX backgrounds/accents and the system light/dark mode. */
 .entry-page {
   --entry-wash: color-mix(in srgb, var(--accent) 13%, transparent);
-  --entry-shine: color-mix(in srgb, var(--theme-secondary, var(--accent)) 13%, transparent);
+  --entry-shine: color-mix(
+    in srgb,
+    var(--theme-secondary, var(--accent)) 13%,
+    transparent
+  );
   --entry-surface: color-mix(in srgb, var(--card) 85%, var(--bg));
   --entry-field: color-mix(in srgb, var(--raised) 64%, var(--card));
   --entry-outline: color-mix(in srgb, var(--accent) 27%, var(--line));
@@ -16,7 +20,8 @@
   min-height: 100vh;
   min-height: 100svh;
   margin: 0;
-  padding: 32px max(24px, env(safe-area-inset-right)) 32px max(24px, env(safe-area-inset-left));
+  padding: 32px max(24px, env(safe-area-inset-right)) 32px
+    max(24px, env(safe-area-inset-left));
   display: grid;
   place-items: center;
   position: relative;
@@ -24,8 +29,16 @@
   overflow: hidden;
   color: var(--text);
   background:
-    radial-gradient(ellipse 70% 65% at 6% 8%, var(--entry-wash), transparent 75%),
-    radial-gradient(ellipse 65% 75% at 97% 95%, var(--entry-shine), transparent 75%),
+    radial-gradient(
+      ellipse 70% 65% at 6% 8%,
+      var(--entry-wash),
+      transparent 75%
+    ),
+    radial-gradient(
+      ellipse 65% 75% at 97% 95%,
+      var(--entry-shine),
+      transparent 75%
+    ),
     var(--bg);
 }
 
@@ -34,7 +47,12 @@
   position: absolute;
   z-index: -1;
   inset: 0;
-  background: linear-gradient(120deg, transparent 10%, color-mix(in srgb, var(--accent) 4%, transparent) 50%, transparent 90%);
+  background: linear-gradient(
+    120deg,
+    transparent 10%,
+    color-mix(in srgb, var(--accent) 4%, transparent) 50%,
+    transparent 90%
+  );
   pointer-events: none;
 }
 
@@ -49,7 +67,11 @@
   height: 350px;
   border-radius: 55% 65% 0 0;
   transform: rotate(-7deg);
-  background: radial-gradient(ellipse at 55% 10%, color-mix(in srgb, var(--accent) 14%, transparent), transparent 70%);
+  background: radial-gradient(
+    ellipse at 55% 10%,
+    color-mix(in srgb, var(--accent) 14%, transparent),
+    transparent 70%
+  );
   pointer-events: none;
 }
 
@@ -98,7 +120,9 @@
   background:
     radial-gradient(circle at 18% 15%, var(--entry-wash), transparent 65%),
     linear-gradient(145deg, var(--entry-surface), var(--bg));
-  box-shadow: 0 28px 70px color-mix(in srgb, var(--bg) 55%, transparent), inset 0 1px color-mix(in srgb, var(--text) 12%, transparent);
+  box-shadow:
+    0 28px 70px color-mix(in srgb, var(--bg) 55%, transparent),
+    inset 0 1px color-mix(in srgb, var(--text) 12%, transparent);
 }
 
 .emblem-orbit::after {
@@ -219,9 +243,15 @@
   border: 1px solid var(--entry-outline);
   border-radius: 32px;
   background:
-    radial-gradient(ellipse 90% 55% at 50% 0, var(--entry-wash), transparent 74%),
+    radial-gradient(
+      ellipse 90% 55% at 50% 0,
+      var(--entry-wash),
+      transparent 74%
+    ),
     var(--entry-surface);
-  box-shadow: 0 24px 75px color-mix(in srgb, #000 25%, transparent), inset 0 1px color-mix(in srgb, var(--text) 9%, transparent);
+  box-shadow:
+    0 24px 75px color-mix(in srgb, #000 25%, transparent),
+    inset 0 1px color-mix(in srgb, var(--text) 9%, transparent);
 }
 
 .entry-topline {
@@ -361,7 +391,9 @@
   border: 1px solid var(--line);
   border-radius: 17px;
   background: var(--entry-field);
-  transition: border-color .18s ease, box-shadow .18s ease;
+  transition:
+    border-color 0.18s ease,
+    box-shadow 0.18s ease;
 }
 
 .entry-field:focus-within {
@@ -407,12 +439,12 @@
 
 .entry-field input::placeholder {
   color: var(--muted);
-  opacity: .75;
+  opacity: 0.75;
   font-size: 13px;
 }
 
 .entry-field input:read-only {
-  opacity: .72;
+  opacity: 0.72;
 }
 
 .entry-eye gt-icon {
@@ -480,8 +512,14 @@
 .entry-primary {
   color: var(--accent-ink);
   border: 1px solid var(--accent);
-  background: linear-gradient(115deg, var(--theme-button-start, var(--accent)), var(--theme-button-end, var(--accent)));
-  box-shadow: 0 10px 30px var(--entry-halo), inset 0 1px color-mix(in srgb, #fff 24%, transparent);
+  background: linear-gradient(
+    115deg,
+    var(--theme-button-start, var(--accent)),
+    var(--theme-button-end, var(--accent))
+  );
+  box-shadow:
+    0 10px 30px var(--entry-halo),
+    inset 0 1px color-mix(in srgb, #fff 24%, transparent);
 }
 
 .entry-primary:hover:not(:disabled) {
@@ -490,7 +528,7 @@
 }
 
 .entry-primary:disabled {
-  opacity: .52;
+  opacity: 0.52;
   filter: none;
 }
 
@@ -608,7 +646,7 @@
 .entry-local h2 {
   color: var(--text);
   font-size: 20px;
-  letter-spacing: -.5px;
+  letter-spacing: -0.5px;
 }
 
 .entry-local > p {
@@ -640,14 +678,21 @@
   .entry-page {
     display: block;
     overflow-x: clip;
-    padding:
-      max(12px, env(safe-area-inset-top))
+    padding: max(12px, env(safe-area-inset-top))
       max(20px, env(safe-area-inset-right))
       max(25px, env(safe-area-inset-bottom))
       max(20px, env(safe-area-inset-left));
     background:
-      radial-gradient(ellipse 115% 48% at 50% -9%, color-mix(in srgb, var(--accent) 20%, transparent), transparent 85%),
-      radial-gradient(ellipse 75% 55% at 104% 95%, var(--entry-shine), transparent 80%),
+      radial-gradient(
+        ellipse 115% 48% at 50% -9%,
+        color-mix(in srgb, var(--accent) 20%, transparent),
+        transparent 85%
+      ),
+      radial-gradient(
+        ellipse 75% 55% at 104% 95%,
+        var(--entry-shine),
+        transparent 80%
+      ),
       var(--bg);
   }
 
@@ -683,8 +728,14 @@
     margin-bottom: 10px;
     border: 1px solid var(--entry-outline);
     border-radius: 27px;
-    background: linear-gradient(150deg, var(--entry-field), var(--entry-surface));
-    box-shadow: 0 10px 38px var(--entry-halo), inset 0 1px color-mix(in srgb, var(--text) 12%, transparent);
+    background: linear-gradient(
+      150deg,
+      var(--entry-field),
+      var(--entry-surface)
+    );
+    box-shadow:
+      0 10px 38px var(--entry-halo),
+      inset 0 1px color-mix(in srgb, var(--text) 12%, transparent);
     padding: 10px;
   }
 
@@ -780,7 +831,8 @@
 
 @media (max-width: 360px) {
   .entry-page {
-    padding-inline: max(14px, env(safe-area-inset-left)) max(14px, env(safe-area-inset-right));
+    padding-inline: max(14px, env(safe-area-inset-left))
+      max(14px, env(safe-area-inset-right));
   }
 
   .entry-brand {

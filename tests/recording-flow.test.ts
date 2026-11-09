@@ -1,282 +1,612 @@
-import '@angular/compiler';
-import 'fake-indexeddb/auto';
-import { createEnvironmentInjector, EnvironmentInjector, runInInjectionContext } from '@angular/core';
-import { FormBuilder } from '@angular/forms';
-import { Router } from '@angular/router';
-import { afterEach, beforeEach, expect, it, vi } from 'vitest';
-import { GymDatabase } from '../src/app/core/database';
-import { GYM_REPOSITORY } from '../src/app/repositories/repository';
-import { Store } from '../src/app/services/store';
-import { PlansComponent } from '../src/app/features/plans.component';
-import { ActiveWorkoutComponent } from '../src/app/shared/active-workout.component';
-import { SessionComponent } from '../src/app/features/session.component';
-import { FormDraftService } from '../src/app/services/form-drafts';
-import Dexie from 'dexie';
+import "@angular/compiler";
+import "fake-indexeddb/auto";
+import {
+  createEnvironmentInjector,
+  EnvironmentInjector,
+  runInInjectionContext,
+} from "@angular/core";
+import { FormBuilder } from "@angular/forms";
+import { Router } from "@angular/router";
+import { afterEach, beforeEach, expect, it, vi } from "vitest";
+import { GymDatabase } from "../src/app/core/database";
+import { GYM_REPOSITORY } from "../src/app/repositories/repository";
+import { Store } from "../src/app/services/store";
+import { PlansComponent } from "../src/app/features/plans.component";
+import { ActiveWorkoutComponent } from "../src/app/shared/active-workout.component";
+import { SessionComponent } from "../src/app/features/session.component";
+import { FormDraftService } from "../src/app/services/form-drafts";
+import Dexie from "dexie";
 
 let db: GymDatabase, injector: EnvironmentInjector, s: Store;
 let active: ActiveWorkoutComponent | undefined;
-let formDrafts:FormDraftService,draftName:string;
+let formDrafts: FormDraftService, draftName: string;
 beforeEach(async () => {
-  vi.stubGlobal('document', { body: { classList: { toggle: () => {} } } });
-  db = new GymDatabase('recording-flow-' + crypto.randomUUID());
-  draftName='recording-form-drafts-'+crypto.randomUUID();formDrafts=new FormDraftService(draftName);
-  injector = createEnvironmentInjector([
-    { provide: GYM_REPOSITORY, useValue: { read: () => db.snapshot(), replace: (data: any) => db.replace(data) } },
-    { provide: Router, useValue: { navigateByUrl: vi.fn(async () => true) } },{provide:FormDraftService,useValue:formDrafts}, FormBuilder, Store,
-  ], null as unknown as EnvironmentInjector);
+  vi.stubGlobal("document", { body: { classList: { toggle: () => {} } } });
+  db = new GymDatabase("recording-flow-" + crypto.randomUUID());
+  draftName = "recording-form-drafts-" + crypto.randomUUID();
+  formDrafts = new FormDraftService(draftName);
+  injector = createEnvironmentInjector(
+    [
+      {
+        provide: GYM_REPOSITORY,
+        useValue: {
+          read: () => db.snapshot(),
+          replace: (data: any) => db.replace(data),
+        },
+      },
+      { provide: Router, useValue: { navigateByUrl: vi.fn(async () => true) } },
+      { provide: FormDraftService, useValue: formDrafts },
+      FormBuilder,
+      Store,
+    ],
+    null as unknown as EnvironmentInjector,
+  );
   s = injector.get(Store);
   await vi.waitFor(() => expect(s.ready()).toBe(true));
 });
 afterEach(async () => {
-  active?.ngOnDestroy(); active = undefined;
+  active?.ngOnDestroy();
+  active = undefined;
   await s.settled();
-  await formDrafts.flushAll();formDrafts.ngOnDestroy();await formDrafts.flushAll();(formDrafts as any).db.close();await Dexie.delete(draftName);
-  injector.destroy(); await db.delete(); vi.restoreAllMocks(); vi.unstubAllGlobals();
+  await formDrafts.flushAll();
+  formDrafts.ngOnDestroy();
+  await formDrafts.flushAll();
+  (formDrafts as any).db.close();
+  await Dexie.delete(draftName);
+  injector.destroy();
+  await db.delete();
+  vi.restoreAllMocks();
+  vi.unstubAllGlobals();
 });
 async function setup() {
-  await s.savePlan('p', 'Piano', ''); await s.saveDay('d', 'p', 'Giorno');
-  await s.savePlanExercise({ id: 'pe', dayId: 'd', exerciseId: 'exercise-0', sets: 3, repsMin: 8, repsMax: 10, rest: 90, notes: '', order: 0 });
-  await s.start('d');
+  await s.savePlan("p", "Piano", "");
+  await s.saveDay("d", "p", "Giorno");
+  await s.savePlanExercise({
+    id: "pe",
+    dayId: "d",
+    exerciseId: "exercise-0",
+    sets: 3,
+    repsMin: 8,
+    repsMax: 10,
+    rest: 90,
+    notes: "",
+    order: 0,
+  });
+  await s.start("d");
   active = runInInjectionContext(injector, () => new ActiveWorkoutComponent());
   const id = s.draft()!.id;
-  Object.defineProperty(active, 'workoutId', { value: () => id });
+  Object.defineProperty(active, "workoutId", { value: () => id });
   return active;
 }
-it('shows snapshotted weekly guidance during quick recording without changing the entered values or following later plan edits',async()=>{
- await s.savePlan('p','Piano','');await s.saveDay('d','p','Giorno');
- await s.change(data=>{data.days[0].week=2;data.days[0].phase='Rientro';data.days[0].notes='Note della settimana';},'',false);
- await s.savePlanExercise({id:'pe',dayId:'d',exerciseId:'exercise-0',sets:2,repsMin:6,repsMax:8,rest:180,notes:'Tecnica prima del carico',order:0,rirMin:3,rirMax:3,warmupNotes:'Barra × 12; 35 kg × 6',reference:'55 kg dalla prova',loadUnit:'Totale'});
- await s.start('d');active=runInInjectionContext(injector,()=>new ActiveWorkoutComponent());const id=s.draft()!.id;Object.defineProperty(active,'workoutId',{value:()=>id});active.quickRecord(active.exercises()[0]);
- await s.change(data=>{data.days[0].week=8;data.days[0].phase='Progressione';data.planExercises[0].repsMin=12;data.planExercises[0].repsMax=15;},'',false);
- expect(active.programContext()).toMatchObject({week:2,phase:'Rientro',notes:'Note della settimana'});expect(active.repTarget(active.selected()!)).toBe('6–8');expect(active.rirLabel(active.selected()!)).toBe('3');expect(active.warmupLines(active.selected()!)).toEqual(['Barra × 12','35 kg × 6']);
- active.weight=55;active.reps=7;await active.saveDraft();expect(active.weight).toBe(55);expect(active.reps).toBe(7);expect(active.selected()?.reference).toBe('55 kg dalla prova');expect(active.currentSet()).toMatchObject({weight:55,reps:7,completed:false});
+it("shows snapshotted weekly guidance during quick recording without changing the entered values or following later plan edits", async () => {
+  await s.savePlan("p", "Piano", "");
+  await s.saveDay("d", "p", "Giorno");
+  await s.change(
+    (data) => {
+      data.days[0].week = 2;
+      data.days[0].phase = "Rientro";
+      data.days[0].notes = "Note della settimana";
+    },
+    "",
+    false,
+  );
+  await s.savePlanExercise({
+    id: "pe",
+    dayId: "d",
+    exerciseId: "exercise-0",
+    sets: 2,
+    repsMin: 6,
+    repsMax: 8,
+    rest: 180,
+    notes: "Tecnica prima del carico",
+    order: 0,
+    rirMin: 3,
+    rirMax: 3,
+    warmupNotes: "Barra × 12; 35 kg × 6",
+    reference: "55 kg dalla prova",
+    loadUnit: "Totale",
+  });
+  await s.start("d");
+  active = runInInjectionContext(injector, () => new ActiveWorkoutComponent());
+  const id = s.draft()!.id;
+  Object.defineProperty(active, "workoutId", { value: () => id });
+  active.quickRecord(active.exercises()[0]);
+  await s.change(
+    (data) => {
+      data.days[0].week = 8;
+      data.days[0].phase = "Progressione";
+      data.planExercises[0].repsMin = 12;
+      data.planExercises[0].repsMax = 15;
+    },
+    "",
+    false,
+  );
+  expect(active.programContext()).toMatchObject({
+    week: 2,
+    phase: "Rientro",
+    notes: "Note della settimana",
+  });
+  expect(active.repTarget(active.selected()!)).toBe("6–8");
+  expect(active.rirLabel(active.selected()!)).toBe("3");
+  expect(active.warmupLines(active.selected()!)).toEqual([
+    "Barra × 12",
+    "35 kg × 6",
+  ]);
+  active.weight = 55;
+  active.reps = 7;
+  await active.saveDraft();
+  expect(active.weight).toBe(55);
+  expect(active.reps).toBe(7);
+  expect(active.selected()?.reference).toBe("55 kg dalla prova");
+  expect(active.currentSet()).toMatchObject({
+    weight: 55,
+    reps: 7,
+    completed: false,
+  });
 });
-it('preserves imported prescription details when its ordinary exercise form is edited',async()=>{
- await s.savePlan('p','Piano','');await s.saveDay('d','p','Giorno');const entry={id:'pe',dayId:'d',exerciseId:'exercise-0',sets:2,repsMin:6,repsMax:8,rest:5400,notes:'Originale',order:0,rirMin:1,rirMax:3,warmupNotes:'Barra × 12',reference:'Da confermare',loadUnit:'Da verificare'};await s.savePlanExercise(entry);
- const component=runInInjectionContext(injector,()=>new PlansComponent());component.openExercise('d',entry);component.exerciseForm.controls.notes.setValue('Nota aggiornata');await component.saveExercise();
- expect(s.planExercises('d')[0]).toMatchObject({...entry,notes:'Nota aggiornata'});component.ngOnDestroy();
-});
-it('salva un solo esercizio anche con invii concorrenti e un invio tardivo dello stesso modulo', async () => {
-  await s.savePlan('p', 'Piano', ''); await s.saveDay('d', 'p', 'Giorno');
+it("preserves imported prescription details when its ordinary exercise form is edited", async () => {
+  await s.savePlan("p", "Piano", "");
+  await s.saveDay("d", "p", "Giorno");
+  const entry = {
+    id: "pe",
+    dayId: "d",
+    exerciseId: "exercise-0",
+    sets: 2,
+    repsMin: 6,
+    repsMax: 8,
+    rest: 5400,
+    notes: "Originale",
+    order: 0,
+    rirMin: 1,
+    rirMax: 3,
+    warmupNotes: "Barra × 12",
+    reference: "Da confermare",
+    loadUnit: "Da verificare",
+  };
+  await s.savePlanExercise(entry);
   const component = runInInjectionContext(injector, () => new PlansComponent());
-  component.openExercise('d');
-  component.exerciseForm.patchValue({ exerciseId: 'exercise-0' });
-  await Promise.all([component.saveExercise(), component.saveExercise(), component.saveExercise()]);
+  component.openExercise("d", entry);
+  component.exerciseForm.controls.notes.setValue("Nota aggiornata");
+  await component.saveExercise();
+  expect(s.planExercises("d")[0]).toMatchObject({
+    ...entry,
+    notes: "Nota aggiornata",
+  });
+  component.ngOnDestroy();
+});
+it("salva un solo esercizio anche con invii concorrenti e un invio tardivo dello stesso modulo", async () => {
+  await s.savePlan("p", "Piano", "");
+  await s.saveDay("d", "p", "Giorno");
+  const component = runInInjectionContext(injector, () => new PlansComponent());
+  component.openExercise("d");
+  component.exerciseForm.patchValue({ exerciseId: "exercise-0" });
+  await Promise.all([
+    component.saveExercise(),
+    component.saveExercise(),
+    component.saveExercise(),
+  ]);
   await component.saveExercise();
   const entries = (await db.snapshot()).planExercises;
-  expect(entries).toHaveLength(1); expect(entries[0].order).toBe(0);
+  expect(entries).toHaveLength(1);
+  expect(entries[0].order).toBe(0);
   expect(component.saving()).toBe(false);
-  component.openExercise('d'); component.exerciseForm.patchValue({ exerciseId: 'exercise-4' });
+  component.openExercise("d");
+  component.exerciseForm.patchValue({ exerciseId: "exercise-4" });
   await component.saveExercise();
   expect((await db.snapshot()).planExercises).toHaveLength(2);
 });
-it('riabilita Salva dopo un errore e riutilizza lo stesso identificativo al nuovo tentativo', async () => {
-  await s.savePlan('p', 'Piano', ''); await s.saveDay('d', 'p', 'Giorno');
+it("riabilita Salva dopo un errore e riutilizza lo stesso identificativo al nuovo tentativo", async () => {
+  await s.savePlan("p", "Piano", "");
+  await s.saveDay("d", "p", "Giorno");
   const component = runInInjectionContext(injector, () => new PlansComponent());
-  component.openExercise('d'); component.exerciseForm.patchValue({ exerciseId: 'exercise-0' });
-  const save = vi.spyOn(s, 'savePlanExercise').mockRejectedValueOnce(new Error('Archivio occupato'));
-  await expect(component.saveExercise()).rejects.toThrow('Archivio occupato');
+  component.openExercise("d");
+  component.exerciseForm.patchValue({ exerciseId: "exercise-0" });
+  const save = vi
+    .spyOn(s, "savePlanExercise")
+    .mockRejectedValueOnce(new Error("Archivio occupato"));
+  await expect(component.saveExercise()).rejects.toThrow("Archivio occupato");
   expect(component.saving()).toBe(false);
   const attemptedId = save.mock.calls[0][0].id;
   await component.saveExercise();
-  expect(s.planExercises('d').map(x => x.id)).toEqual([attemptedId]);
+  expect(s.planExercises("d").map((x) => x.id)).toEqual([attemptedId]);
 });
-it('apre direttamente la prima serie da completare e conserva gli input passando a un’altra serie', async () => {
-  const c = await setup(), exercise = c.exercises()[0], sets = s.sets(exercise.id);
+it("apre direttamente la prima serie da completare e conserva gli input passando a un’altra serie", async () => {
+  const c = await setup(),
+    exercise = c.exercises()[0],
+    sets = s.sets(exercise.id);
   await s.updateSet(sets[0].id, { completed: true, weight: 50, reps: 10 });
   c.quickRecord(exercise);
-  expect(c.step()).toBe('record'); expect(c.setId()).toBe(sets[1].id);
-  c.useReference(); expect(c.weight).toBe(50); expect(c.reps).toBe(10);
-  c.weight = 52.5; c.reps = 9; c.inputChanged();
+  expect(c.step()).toBe("record");
+  expect(c.setId()).toBe(sets[1].id);
+  c.useReference();
+  expect(c.weight).toBe(50);
+  expect(c.reps).toBe(10);
+  c.weight = 52.5;
+  c.reps = 9;
+  c.inputChanged();
   c.record(sets[1]);
-  expect(c.weight).toBe(52.5); expect(c.reps).toBe(9);
+  expect(c.weight).toBe(52.5);
+  expect(c.reps).toBe(9);
   c.record(sets[2]);
   await s.settled();
-  expect(s.sets(exercise.id)[1]).toMatchObject({ weight: 52.5, reps: 9, completed: false });
+  expect(s.sets(exercise.id)[1]).toMatchObject({
+    weight: 52.5,
+    reps: 9,
+    completed: false,
+  });
 });
-it('ignora Completa ripetuto durante e dopo il salvataggio e raggruppa tocchi concorrenti su Aggiungi serie', async () => {
-  const c = await setup(), exercise = c.exercises()[0]; c.quickRecord(exercise);
+it("ignora Completa ripetuto durante e dopo il salvataggio e raggruppa tocchi concorrenti su Aggiungi serie", async () => {
+  const c = await setup(),
+    exercise = c.exercises()[0];
+  c.quickRecord(exercise);
   await Promise.all([c.complete(), c.complete(), c.complete()]);
-  const end = c.restEnd(); await c.complete();
-  expect(c.restEnd()).toBe(end); expect(c.completedSets()).toBe(1);
-  await Promise.all([s.addSet(exercise.id), s.addSet(exercise.id), s.addSet(exercise.id)]);
+  const end = c.restEnd();
+  await c.complete();
+  expect(c.restEnd()).toBe(end);
+  expect(c.completedSets()).toBe(1);
+  await Promise.all([
+    s.addSet(exercise.id),
+    s.addSet(exercise.id),
+    s.addSet(exercise.id),
+  ]);
   expect(s.sets(exercise.id)).toHaveLength(4);
-  await s.addSet(exercise.id); expect(s.sets(exercise.id)).toHaveLength(5);
+  await s.addSet(exercise.id);
+  expect(s.sets(exercise.id)).toHaveLength(5);
 });
-it('attende una nuova cifra durante la digitazione e mostra la validazione solo alla conferma esplicita', async () => {
-  const c = await setup();c.quickRecord(c.exercises()[0]);
+it("attende una nuova cifra durante la digitazione e mostra la validazione solo alla conferma esplicita", async () => {
+  const c = await setup();
+  c.quickRecord(c.exercises()[0]);
   const original = c.currentSet()!.weight;
   c.weight = null as unknown as number;
   expect(await c.saveDraft()).toBe(false);
-  expect(s.error()).toBe('');
+  expect(s.error()).toBe("");
   expect(c.currentSet()!.weight).toBe(original);
   await c.complete();
-  expect(s.error()).toBe('Controlla peso e ripetizioni.');
+  expect(s.error()).toBe("Controlla peso e ripetizioni.");
   expect(c.currentSet()!.completed).toBe(false);
   c.weight = 52.5;
   expect(await c.saveDraft()).toBe(true);
   expect(c.currentSet()!.weight).toBe(52.5);
 });
-it('conserva la navigazione scelta durante un salvataggio senza aprire il recupero della serie sbagliata', async () => {
-  const c = await setup(); c.quickRecord(c.exercises()[0]);
+it("conserva la navigazione scelta durante un salvataggio senza aprire il recupero della serie sbagliata", async () => {
+  const c = await setup();
+  c.quickRecord(c.exercises()[0]);
   let release!: () => void;
-  const delayed = new Promise<void>(resolve => { release = resolve; });
-  const update = s.updateSet.bind(s);
-  vi.spyOn(s, 'updateSet').mockImplementationOnce(async (id, patch) => {
-    await delayed; return update(id, patch);
+  const delayed = new Promise<void>((resolve) => {
+    release = resolve;
   });
-  const completing = c.complete(); c.navigate('list'); release();
-  await completing; await s.settled();
-  expect(c.step()).toBe('list'); expect(c.restEnd()).toBe(0);
+  const update = s.updateSet.bind(s);
+  vi.spyOn(s, "updateSet").mockImplementationOnce(async (id, patch) => {
+    await delayed;
+    return update(id, patch);
+  });
+  const completing = c.complete();
+  c.navigate("list");
+  release();
+  await completing;
+  await s.settled();
+  expect(c.step()).toBe("list");
+  expect(c.restEnd()).toBe(0);
   expect(c.completedSets()).toBe(1);
 });
-it('updates a completed series without changing the selected row or restarting recovery', async () => {
-  const c = await setup(), exercise = c.exercises()[0], row = s.sets(exercise.id)[0];
-  await s.updateSet(row.id, {completed: true, weight: 60});
-  c.open(exercise); c.record(s.sets(exercise.id)[0]);
-  const end = Date.now() + 45000; c.restEnd.set(end);
-  c.weight = 62.5; c.reps = 9;
+it("updates a completed series without changing the selected row or restarting recovery", async () => {
+  const c = await setup(),
+    exercise = c.exercises()[0],
+    row = s.sets(exercise.id)[0];
+  await s.updateSet(row.id, { completed: true, weight: 60 });
+  c.open(exercise);
+  c.record(s.sets(exercise.id)[0]);
+  const end = Date.now() + 45000;
+  c.restEnd.set(end);
+  c.weight = 62.5;
+  c.reps = 9;
   await c.complete();
-  expect(c.step()).toBe('record'); expect(c.setId()).toBe(row.id); expect(c.restEnd()).toBe(end);
-  expect(s.sets(exercise.id)[0]).toMatchObject({weight: 62.5, reps: 9, completed: true});
+  expect(c.step()).toBe("record");
+  expect(c.setId()).toBe(row.id);
+  expect(c.restEnd()).toBe(end);
+  expect(s.sets(exercise.id)[0]).toMatchObject({
+    weight: 62.5,
+    reps: 9,
+    completed: true,
+  });
 });
-it('does not move or overwrite a pending series selected during completion of another row', async () => {
-  const c = await setup(), exercise = c.exercises()[0], rows = s.sets(exercise.id);
-  c.quickRecord(exercise); c.weight = 60;
+it("does not move or overwrite a pending series selected during completion of another row", async () => {
+  const c = await setup(),
+    exercise = c.exercises()[0],
+    rows = s.sets(exercise.id);
+  c.quickRecord(exercise);
+  c.weight = 60;
   let release!: () => void;
-  const held = new Promise<void>(resolve => {release = resolve;});
+  const held = new Promise<void>((resolve) => {
+    release = resolve;
+  });
   const update = s.updateSet.bind(s);
-  vi.spyOn(s, 'updateSet').mockImplementationOnce(async (id, patch) => {await held; return update(id, patch);});
-  const completion = c.complete(); c.record(rows[1]); c.weight = 67.5; c.reps = 11; c.inputChanged();
-  release(); await completion; await c.flushPending(); await s.settled();
-  expect(c.step()).toBe('record'); expect(c.setId()).toBe(rows[1].id); expect(c.restEnd()).toBe(0);
-  expect(c.weight).toBe(67.5); expect(c.reps).toBe(11);
-  expect(s.sets(exercise.id)[0]).toMatchObject({weight: 60, completed: true});
-  expect(s.sets(exercise.id)[1]).toMatchObject({weight: 67.5, reps: 11, completed: false});
+  vi.spyOn(s, "updateSet").mockImplementationOnce(async (id, patch) => {
+    await held;
+    return update(id, patch);
+  });
+  const completion = c.complete();
+  c.record(rows[1]);
+  c.weight = 67.5;
+  c.reps = 11;
+  c.inputChanged();
+  release();
+  await completion;
+  await c.flushPending();
+  await s.settled();
+  expect(c.step()).toBe("record");
+  expect(c.setId()).toBe(rows[1].id);
+  expect(c.restEnd()).toBe(0);
+  expect(c.weight).toBe(67.5);
+  expect(c.reps).toBe(11);
+  expect(s.sets(exercise.id)[0]).toMatchObject({ weight: 60, completed: true });
+  expect(s.sets(exercise.id)[1]).toMatchObject({
+    weight: 67.5,
+    reps: 11,
+    completed: false,
+  });
 });
-it('removes a different completed series while preserving the selected series and its pending values', async () => {
-  const c = await setup(), exercise = c.exercises()[0], rows = s.sets(exercise.id);
-  await s.updateSet(rows[0].id, {completed: true});
-  c.open(exercise); c.record(rows[1]); c.weight = 72.5; c.reps = 9; c.inputChanged();
-  vi.stubGlobal('confirm', vi.fn(() => true));
-  await c.removeSet(s.sets(exercise.id)[0]); await s.settled();
-  expect(confirm).toHaveBeenCalledOnce(); expect(c.setId()).toBe(rows[1].id); expect(c.step()).toBe('record');
-  expect(s.sets(exercise.id).map(row => row.number)).toEqual([1, 2]);
-  expect(s.sets(exercise.id)[0]).toMatchObject({id: rows[1].id, weight: 72.5, reps: 9, completed: false});
+it("removes a different completed series while preserving the selected series and its pending values", async () => {
+  const c = await setup(),
+    exercise = c.exercises()[0],
+    rows = s.sets(exercise.id);
+  await s.updateSet(rows[0].id, { completed: true });
+  c.open(exercise);
+  c.record(rows[1]);
+  c.weight = 72.5;
+  c.reps = 9;
+  c.inputChanged();
+  vi.stubGlobal(
+    "confirm",
+    vi.fn(() => true),
+  );
+  await c.removeSet(s.sets(exercise.id)[0]);
+  await s.settled();
+  expect(confirm).toHaveBeenCalledOnce();
+  expect(c.setId()).toBe(rows[1].id);
+  expect(c.step()).toBe("record");
+  expect(s.sets(exercise.id).map((row) => row.number)).toEqual([1, 2]);
+  expect(s.sets(exercise.id)[0]).toMatchObject({
+    id: rows[1].id,
+    weight: 72.5,
+    reps: 9,
+    completed: false,
+  });
 });
-it('can delete the selected series with an incomplete numeric field without resurrecting its draft', async () => {
-  const c = await setup(), exercise = c.exercises()[0], row = s.sets(exercise.id)[0];
-  c.quickRecord(exercise); c.reps = null as unknown as number; c.inputChanged();
-  await c.removeSet(row); await c.flushPending(); await s.settled();
-  expect(s.sets(exercise.id)).toHaveLength(2); expect(s.sets(exercise.id).some(set => set.id === row.id)).toBe(false);
-  expect(c.currentSet()?.number).toBe(1); expect(c.reps).toBe(8); expect(s.error()).toBe('');
+it("can delete the selected series with an incomplete numeric field without resurrecting its draft", async () => {
+  const c = await setup(),
+    exercise = c.exercises()[0],
+    row = s.sets(exercise.id)[0];
+  c.quickRecord(exercise);
+  c.reps = null as unknown as number;
+  c.inputChanged();
+  await c.removeSet(row);
+  await c.flushPending();
+  await s.settled();
+  expect(s.sets(exercise.id)).toHaveLength(2);
+  expect(s.sets(exercise.id).some((set) => set.id === row.id)).toBe(false);
+  expect(c.currentSet()?.number).toBe(1);
+  expect(c.reps).toBe(8);
+  expect(s.error()).toBe("");
 });
-it('conserva i valori più recenti anche tornando subito alla serie precedente durante una scrittura lenta', async () => {
-  const c = await setup(), exercise = c.exercises()[0], sets = s.sets(exercise.id);
+it("conserva i valori più recenti anche tornando subito alla serie precedente durante una scrittura lenta", async () => {
+  const c = await setup(),
+    exercise = c.exercises()[0],
+    sets = s.sets(exercise.id);
   c.quickRecord(exercise);
   let release!: () => void;
-  const delayed = new Promise<void>(resolve => { release = resolve; });
-  const update = s.updateSet.bind(s);
-  vi.spyOn(s, 'updateSet').mockImplementationOnce(async (id, patch) => {
-    await delayed; return update(id, patch);
+  const delayed = new Promise<void>((resolve) => {
+    release = resolve;
   });
-  c.weight = 65; c.reps = 11; c.inputChanged();
-  c.record(sets[1]); c.record(sets[0]);
-  expect(c.weight).toBe(65); expect(c.reps).toBe(11);
-  release(); await delayed; await s.settled();
+  const update = s.updateSet.bind(s);
+  vi.spyOn(s, "updateSet").mockImplementationOnce(async (id, patch) => {
+    await delayed;
+    return update(id, patch);
+  });
+  c.weight = 65;
+  c.reps = 11;
+  c.inputChanged();
+  c.record(sets[1]);
+  c.record(sets[0]);
+  expect(c.weight).toBe(65);
+  expect(c.reps).toBe(11);
+  release();
+  await delayed;
+  await s.settled();
   expect(await c.flushForFinish()).toBe(true);
   expect(s.sets(exercise.id)[0]).toMatchObject({ weight: 65, reps: 11 });
 });
-it('non conclude la sessione quando gli ultimi input sono invalidi o non vengono salvati', async () => {
-  const c = await setup(), exercise = c.exercises()[0]; c.quickRecord(exercise);
+it("non conclude la sessione quando gli ultimi input sono invalidi o non vengono salvati", async () => {
+  const c = await setup(),
+    exercise = c.exercises()[0];
+  c.quickRecord(exercise);
   await s.updateSet(c.setId(), { completed: true });
   const session = runInInjectionContext(injector, () => new SessionComponent());
-  Object.defineProperty(session, 'activeWorkout', { value: () => c });
+  Object.defineProperty(session, "activeWorkout", { value: () => c });
   try {
-    c.weight = -5; c.inputChanged(); await session.finish();
-    expect(s.draft()).toBeDefined(); expect(session.finishing()).toBe(false);
-    c.weight = 55; c.inputChanged();
-    vi.spyOn(s, 'updateSet').mockResolvedValueOnce(false);
-    await session.finish(); expect(s.draft()).toBeDefined();
-    await session.finish(); expect(s.draft()).toBeUndefined();
+    c.weight = -5;
+    c.inputChanged();
+    await session.finish();
+    expect(s.draft()).toBeDefined();
+    expect(session.finishing()).toBe(false);
+    c.weight = 55;
+    c.inputChanged();
+    vi.spyOn(s, "updateSet").mockResolvedValueOnce(false);
+    await session.finish();
+    expect(s.draft()).toBeDefined();
+    await session.finish();
+    expect(s.draft()).toBeUndefined();
     expect(s.sets(exercise.id)[0].weight).toBe(55);
-  } finally { session.ngOnDestroy(); }
+  } finally {
+    session.ngOnDestroy();
+  }
 });
-it('blocca l’aggiornamento quando la validazione fallisce anche se un salvataggio successivo cancella l’errore globale', async () => {
-  const c = await setup(); c.quickRecord(c.exercises()[0]); c.reps = 0;
+it("blocca l’aggiornamento quando la validazione fallisce anche se un salvataggio successivo cancella l’errore globale", async () => {
+  const c = await setup();
+  c.quickRecord(c.exercises()[0]);
+  c.reps = 0;
   const pending: Promise<boolean | void>[] = [];
-  c.beforeUpdate({ waitUntil: (save: Promise<boolean | void>) => pending.push(save) } as any);
+  c.beforeUpdate({
+    waitUntil: (save: Promise<boolean | void>) => pending.push(save),
+  } as any);
   await s.change(() => {});
   expect(await Promise.all(pending)).toEqual([false]);
   expect(s.draft()).toBeDefined();
 });
-it('ignora un secondo tocco ravvicinato su Salva anche se è già visibile la serie successiva', async () => {
-  const c = await setup(); c.quickRecord(c.exercises()[0]);
-  await c.complete({ timeStamp: 1000 } as MouseEvent); c.advance();
+it("ignora un secondo tocco ravvicinato su Salva anche se è già visibile la serie successiva", async () => {
+  const c = await setup();
+  c.quickRecord(c.exercises()[0]);
+  await c.complete({ timeStamp: 1000 } as MouseEvent);
+  c.advance();
   await c.complete({ timeStamp: 1100 } as MouseEvent);
-  expect(c.completedSets()).toBe(1); expect(c.step()).toBe('record');
+  expect(c.completedSets()).toBe(1);
+  expect(c.step()).toBe("record");
   await c.complete({ timeStamp: 1700 } as MouseEvent);
   expect(c.completedSets()).toBe(2);
 });
 
-it('ritenta tutte le serie rimaste in bozza e riapre il campo non salvato prima di concludere',async()=>{
-  const c=await setup(),exercise=c.exercises()[0],sets=s.sets(exercise.id);c.quickRecord(exercise);
-  c.weight=72.5;c.reps=9;c.inputChanged();
-  const update=s.updateSet.bind(s),fault=vi.spyOn(s,'updateSet').mockImplementation(async(id,patch)=>id===sets[0].id?false:update(id,patch));
-  expect(await c.saveDraft()).toBe(false);c.record(sets[1]);c.weight=80;c.reps=8;c.inputChanged();
+it("ritenta tutte le serie rimaste in bozza e riapre il campo non salvato prima di concludere", async () => {
+  const c = await setup(),
+    exercise = c.exercises()[0],
+    sets = s.sets(exercise.id);
+  c.quickRecord(exercise);
+  c.weight = 72.5;
+  c.reps = 9;
+  c.inputChanged();
+  const update = s.updateSet.bind(s),
+    fault = vi
+      .spyOn(s, "updateSet")
+      .mockImplementation(async (id, patch) =>
+        id === sets[0].id ? false : update(id, patch),
+      );
+  expect(await c.saveDraft()).toBe(false);
+  c.record(sets[1]);
+  c.weight = 80;
+  c.reps = 8;
+  c.inputChanged();
   expect(await c.flushForFinish()).toBe(false);
-  expect(c.setId()).toBe(sets[0].id);expect(c.weight).toBe(72.5);
+  expect(c.setId()).toBe(sets[0].id);
+  expect(c.weight).toBe(72.5);
   expect(s.sets(exercise.id)[1].weight).toBe(80);
-  fault.mockRestore();expect(await c.flushForFinish()).toBe(true);
-  expect(s.sets(exercise.id)[0]).toMatchObject({weight:72.5,reps:9,completed:false});
+  fault.mockRestore();
+  expect(await c.flushForFinish()).toBe(true);
+  expect(s.sets(exercise.id)[0]).toMatchObject({
+    weight: 72.5,
+    reps: 9,
+    completed: false,
+  });
 });
 
-it('recupera una bozza invalida della serie dopo aver lasciato la schermata e la elimina dopo la correzione',async()=>{
-  const c=await setup();c.ngOnInit();await (c as any).draftSession.ready;c.quickRecord(c.exercises()[0]);
-  c.weight=null as unknown as number;c.reps=12;c.inputChanged();
-  await (c as any).draftSession.flush();const id=c.workoutId(),setId=c.setId();c.ngOnDestroy();await formDrafts.flushAll();
-  active=runInInjectionContext(injector,()=>new ActiveWorkoutComponent());Object.defineProperty(active,'workoutId',{value:()=>id});active.ngOnInit();await (active as any).draftSession.ready;
-  expect(active.step()).toBe('record');expect(active.setId()).toBe(setId);expect(active.weight).toBeNull();expect(active.reps).toBe(12);
-  active.weight=67.5;active.inputChanged();expect(await active.flushForFinish()).toBe(true);await formDrafts.flushAll();
-  expect(await formDrafts.read(s.archiveKey(),'active-sets:'+id)).toBeNull();
+it("recupera una bozza invalida della serie dopo aver lasciato la schermata e la elimina dopo la correzione", async () => {
+  const c = await setup();
+  c.ngOnInit();
+  await (c as any).draftSession.ready;
+  c.quickRecord(c.exercises()[0]);
+  c.weight = null as unknown as number;
+  c.reps = 12;
+  c.inputChanged();
+  await (c as any).draftSession.flush();
+  const id = c.workoutId(),
+    setId = c.setId();
+  c.ngOnDestroy();
+  await formDrafts.flushAll();
+  active = runInInjectionContext(injector, () => new ActiveWorkoutComponent());
+  Object.defineProperty(active, "workoutId", { value: () => id });
+  active.ngOnInit();
+  await (active as any).draftSession.ready;
+  expect(active.step()).toBe("record");
+  expect(active.setId()).toBe(setId);
+  expect(active.weight).toBeNull();
+  expect(active.reps).toBe(12);
+  active.weight = 67.5;
+  active.inputChanged();
+  expect(await active.flushForFinish()).toBe(true);
+  await formDrafts.flushAll();
+  expect(await formDrafts.read(s.archiveKey(), "active-sets:" + id)).toBeNull();
 });
 
-it('non perde il comando Completa se il salvataggio automatico della stessa serie era già in corso',async()=>{
-  const c=await setup();c.quickRecord(c.exercises()[0]);c.weight=70;c.reps=10;
-  let release!:()=>void;const held=new Promise<void>(resolve=>{release=resolve;}),update=s.updateSet.bind(s);
-  vi.spyOn(s,'updateSet').mockImplementationOnce(async(id,patch)=>{await held;return update(id,patch);});
-  const automatic=c.saveDraft();const completing=c.complete();release();await automatic;await completing;
-  expect(s.sets(c.selected()!.id)[0]).toMatchObject({weight:70,reps:10,completed:true});expect(c.step()).toBe('record');
+it("non perde il comando Completa se il salvataggio automatico della stessa serie era già in corso", async () => {
+  const c = await setup();
+  c.quickRecord(c.exercises()[0]);
+  c.weight = 70;
+  c.reps = 10;
+  let release!: () => void;
+  const held = new Promise<void>((resolve) => {
+      release = resolve;
+    }),
+    update = s.updateSet.bind(s);
+  vi.spyOn(s, "updateSet").mockImplementationOnce(async (id, patch) => {
+    await held;
+    return update(id, patch);
+  });
+  const automatic = c.saveDraft();
+  const completing = c.complete();
+  release();
+  await automatic;
+  await completing;
+  expect(s.sets(c.selected()!.id)[0]).toMatchObject({
+    weight: 70,
+    reps: 10,
+    completed: true,
+  });
+  expect(c.step()).toBe("record");
 });
-it('avvia il recupero anche quando aggiorna una serie già registrata e non c’è un timer in corso', async () => {
-  const c = await setup(), exercise = c.exercises()[0], row = s.sets(exercise.id)[0];
-  await s.updateSet(row.id, {completed: true, weight: 60});
-  c.open(exercise); c.record(s.sets(exercise.id)[0]); c.restEnd.set(0);
-  c.weight = 62.5; await c.complete();
-  expect(c.restEnd()).toBeGreaterThan(Date.now()); expect(c.restTotal()).toBe(90);
+it("avvia il recupero anche quando aggiorna una serie già registrata e non c’è un timer in corso", async () => {
+  const c = await setup(),
+    exercise = c.exercises()[0],
+    row = s.sets(exercise.id)[0];
+  await s.updateSet(row.id, { completed: true, weight: 60 });
+  c.open(exercise);
+  c.record(s.sets(exercise.id)[0]);
+  c.restEnd.set(0);
+  c.weight = 62.5;
+  await c.complete();
+  expect(c.restEnd()).toBeGreaterThan(Date.now());
+  expect(c.restTotal()).toBe(90);
 });
-it('passa alla serie precedente e successiva con le frecce', async () => {
-  const c = await setup(), exercise = c.exercises()[0], rows = s.sets(exercise.id);
-  c.open(exercise); c.record(rows[0]);
+it("passa alla serie precedente e successiva con le frecce", async () => {
+  const c = await setup(),
+    exercise = c.exercises()[0],
+    rows = s.sets(exercise.id);
+  c.open(exercise);
+  c.record(rows[0]);
   expect(c.neighborSet(-1)).toBeUndefined();
-  c.stepSet(1); expect(c.setId()).toBe(rows[1].id);
-  c.stepSet(1); expect(c.setId()).toBe(rows[2].id);
-  c.stepSet(-1); expect(c.setId()).toBe(rows[1].id);
+  c.stepSet(1);
+  expect(c.setId()).toBe(rows[1].id);
+  c.stepSet(1);
+  expect(c.setId()).toBe(rows[2].id);
+  c.stepSet(-1);
+  expect(c.setId()).toBe(rows[1].id);
 });
-it('aggiunge una serie di riscaldamento o allenante e la apre subito', async () => {
-  const c = await setup(), exercise = c.exercises()[0];
-  c.open(exercise); c.nextRecord();
-  await c.addExtra('warmup');
-  expect(s.sets(exercise.id)).toHaveLength(4); expect(c.currentSet()!.kind).toBe('warmup'); expect(c.kind).toBe('warmup');
-  await c.addExtra('work');
-  expect(s.sets(exercise.id)).toHaveLength(5); expect(c.currentSet()).toMatchObject({kind: 'work', number: 5});
+it("aggiunge una serie di riscaldamento o allenante e la apre subito", async () => {
+  const c = await setup(),
+    exercise = c.exercises()[0];
+  c.open(exercise);
+  c.nextRecord();
+  await c.addExtra("warmup");
+  expect(s.sets(exercise.id)).toHaveLength(4);
+  expect(c.currentSet()!.kind).toBe("warmup");
+  expect(c.kind).toBe("warmup");
+  await c.addExtra("work");
+  expect(s.sets(exercise.id)).toHaveLength(5);
+  expect(c.currentSet()).toMatchObject({ kind: "work", number: 5 });
 });
-it('regola il peso trascinando il righello: a sinistra sale, a destra scende, di un incremento per tacca', async () => {
-  const c = await setup(); c.quickRecord(c.exercises()[0]); c.weight = 50;
-  const target = {setPointerCapture: () => {}} as unknown as HTMLElement;
-  c.rulerStart({clientX: 200, pointerId: 1, currentTarget: target} as unknown as PointerEvent);
-  c.rulerMove({clientX: 200 - 16 * 3, pointerId: 1} as PointerEvent); expect(c.weight).toBe(57.5);
-  c.rulerMove({clientX: 200 + 16 * 2, pointerId: 1} as PointerEvent); expect(c.weight).toBe(45);
-  c.rulerEnd({pointerId: 1} as PointerEvent); expect(c.rulerDragging()).toBe(false);
-  c.rulerMove({clientX: 0, pointerId: 1} as PointerEvent); expect(c.weight).toBe(45);
+it("regola il peso trascinando il righello: a sinistra sale, a destra scende, di un incremento per tacca", async () => {
+  const c = await setup();
+  c.quickRecord(c.exercises()[0]);
+  c.weight = 50;
+  const target = { setPointerCapture: () => {} } as unknown as HTMLElement;
+  c.rulerStart({
+    clientX: 200,
+    pointerId: 1,
+    currentTarget: target,
+  } as unknown as PointerEvent);
+  c.rulerMove({ clientX: 200 - 16 * 3, pointerId: 1 } as PointerEvent);
+  expect(c.weight).toBe(57.5);
+  c.rulerMove({ clientX: 200 + 16 * 2, pointerId: 1 } as PointerEvent);
+  expect(c.weight).toBe(45);
+  c.rulerEnd({ pointerId: 1 } as PointerEvent);
+  expect(c.rulerDragging()).toBe(false);
+  c.rulerMove({ clientX: 0, pointerId: 1 } as PointerEvent);
+  expect(c.weight).toBe(45);
 });

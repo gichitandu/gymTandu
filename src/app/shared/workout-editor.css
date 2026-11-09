@@ -1,16 +1,88 @@
-:host{display:block;min-width:0}.desktop-set-number{display:block;margin-bottom:4px}
-@media(max-width:600px){
- .table-wrap{overflow:visible}
- .set-table{display:block;width:100%;min-width:0;table-layout:auto}
- .set-table thead{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap}
- .set-table tbody{display:grid;gap:12px}
- .set-table tr.set-entry{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;padding:14px;border:1px solid var(--line);border-radius:14px;background:var(--bg)}
- .set-table tr.set-entry td{display:flex;flex-direction:column;align-items:stretch;gap:6px;min-width:0;width:auto;padding:0;border:0;text-align:left}
- .set-table tr.set-entry td:before{content:attr(data-label);font-size:12px;line-height:1.4;color:var(--muted);font-weight:600}
- .set-table tr.set-entry .set-type{grid-column:1/-1}
- .set-table .desktop-set-number{display:none}
- .set-table td:first-child select,.set-table td input{width:100%;min-width:0;min-height:48px;font-size:16px;box-sizing:border-box}
- .set-table tr.set-entry td button{width:100%;min-width:44px;min-height:48px}
- .set-table tr.set-entry .set-remove{grid-column:1/-1;flex-direction:row;align-items:center;justify-content:flex-end}
- .set-table tr.set-entry .set-remove button{width:48px}
+:host {
+  display: block;
+  min-width: 0;
+}
+.desktop-set-number {
+  display: block;
+  margin-bottom: 4px;
+}
+@media (max-width: 600px) {
+  .table-wrap {
+    overflow: visible;
+  }
+  .set-table {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    table-layout: auto;
+  }
+  .set-table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+  }
+  .set-table tbody {
+    display: grid;
+    gap: 12px;
+  }
+  .set-table tr.set-entry {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 12px;
+    padding: 14px;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    background: var(--bg);
+  }
+  .set-table tr.set-entry td {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+    min-width: 0;
+    width: auto;
+    padding: 0;
+    border: 0;
+    text-align: left;
+  }
+  .set-table tr.set-entry td:before {
+    content: attr(data-label);
+    font-size: 12px;
+    line-height: 1.4;
+    color: var(--muted);
+    font-weight: 600;
+  }
+  .set-table tr.set-entry .set-type {
+    grid-column: 1/-1;
+  }
+  .set-table .desktop-set-number {
+    display: none;
+  }
+  .set-table td:first-child select,
+  .set-table td input {
+    width: 100%;
+    min-width: 0;
+    min-height: 48px;
+    font-size: 16px;
+    box-sizing: border-box;
+  }
+  .set-table tr.set-entry td button {
+    width: 100%;
+    min-width: 44px;
+    min-height: 48px;
+  }
+  .set-table tr.set-entry .set-remove {
+    grid-column: 1/-1;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-end;
+  }
+  .set-table tr.set-entry .set-remove button {
+    width: 48px;
+  }
 }

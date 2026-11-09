@@ -1,17 +1,26 @@
-import {AnimationLibraryComponent} from '../shared/animation-library.component';
-import {exerciseMotionFrames} from '../services/exercise-motion-frames';
-import {ExerciseMotionComponent} from '../shared/exercise-motion.component';
-import {RouterLink} from '@angular/router';
-import { confirmationForContext } from '../services/confirmation';
+import { AnimationLibraryComponent } from "../shared/animation-library.component";
+import { exerciseMotionFrames } from "../services/exercise-motion-frames";
+import { ExerciseMotionComponent } from "../shared/exercise-motion.component";
+import { RouterLink } from "@angular/router";
+import { confirmationForContext } from "../services/confirmation";
 import { ExerciseThumbComponent } from "../shared/exercise-thumb.component";
 import { matchesExercise } from "../services/exercise-search";
-import {ExerciseScope,ExerciseScopeComponent} from "../shared/exercise-scope.component";
-import {MachineSetupComponent} from "../shared/machine-setup.component";
+import {
+  ExerciseScope,
+  ExerciseScopeComponent,
+} from "../shared/exercise-scope.component";
+import { MachineSetupComponent } from "../shared/machine-setup.component";
 import { ExerciseFamiliesComponent } from "../shared/exercise-families.component";
 import { compressPhoto } from "../services/images";
 import { ExerciseVideoComponent } from "../shared/exercise-video.component";
 import { A11yModule } from "@angular/cdk/a11y";
-import { Component, computed, HostListener, inject, signal } from "@angular/core";
+import {
+  Component,
+  computed,
+  HostListener,
+  inject,
+  signal,
+} from "@angular/core";
 import {
   FormBuilder,
   ReactiveFormsModule,
@@ -24,14 +33,30 @@ import { IconComponent } from "../shared/icon.component";
 import { StatusComponent } from "../shared/status.component";
 import { DraftSession, FormDraftService } from "../services/form-drafts";
 type CatalogEditorDraft = {
-  kind:'exercise'|'group';editId:string;saveId:string;baseline:string;
-  value?:ReturnType<CatalogComponent['form']['getRawValue']>;image?:Blob;pendingImage?:Blob;groupName?:string;
+  kind: "exercise" | "group";
+  editId: string;
+  saveId: string;
+  baseline: string;
+  value?: ReturnType<CatalogComponent["form"]["getRawValue"]>;
+  image?: Blob;
+  pendingImage?: Blob;
+  groupName?: string;
 };
 @Component({
   standalone: true,
-  styleUrls: ["./account-polish.css", "./catalog-design.css", "./catalog-redesign.css"],
-  imports: [AnimationLibraryComponent,RouterLink,ExerciseMotionComponent, ExerciseThumbComponent,
-    A11yModule,ExerciseScopeComponent,MachineSetupComponent,
+  styleUrls: [
+    "./account-polish.css",
+    "./catalog-design.css",
+    "./catalog-redesign.css",
+  ],
+  imports: [
+    AnimationLibraryComponent,
+    RouterLink,
+    ExerciseMotionComponent,
+    ExerciseThumbComponent,
+    A11yModule,
+    ExerciseScopeComponent,
+    MachineSetupComponent,
     ExerciseFamiliesComponent,
     ExerciseVideoComponent,
     FormsModule,
@@ -182,27 +207,28 @@ type CatalogEditorDraft = {
     }`,
 })
 export class CatalogComponent {
-  motionFrames=exerciseMotionFrames;
- private confirmation=confirmationForContext();
+  motionFrames = exerciseMotionFrames;
+  private confirmation = confirmationForContext();
   s = inject(Store);
   fb = inject(FormBuilder);
-  query = signal("");scope=signal<ExerciseScope>("all");
+  query = signal("");
+  scope = signal<ExerciseScope>("all");
   group = signal("");
   active = signal("active");
   editing = signal(false);
   groupEditing = signal(false);
-  groupName = '';
-  draftNotice = signal('');
-  private drafts = inject(FormDraftService,{optional:true});
+  groupName = "";
+  draftNotice = signal("");
+  private drafts = inject(FormDraftService, { optional: true });
   private draftSession?: DraftSession<CatalogEditorDraft>;
-  private draftSubscription?: {unsubscribe():void};
-  private formBaseline='';
-  private imageBaseline?:Blob;
-  private pendingImage?:Blob;
-  private restoringDraft=false;
-  private destroyed=false;
-  private editorRequest=0;
-  private restoreTimer?:ReturnType<typeof setTimeout>;
+  private draftSubscription?: { unsubscribe(): void };
+  private formBaseline = "";
+  private imageBaseline?: Blob;
+  private pendingImage?: Blob;
+  private restoringDraft = false;
+  private destroyed = false;
+  private editorRequest = 0;
+  private restoreTimer?: ReturnType<typeof setTimeout>;
   saving = signal(false);
   imageLoading = signal(false);
   private imageRequest = 0;
@@ -220,68 +246,247 @@ export class CatalogComponent {
     videoUrl: [""],
     active: [false],
   });
-  ngOnInit(){
-    if(!this.drafts)return;
-    this.draftSession=this.drafts.bind(this.s.archiveKey(),'catalog-editor',()=>this.captureDraft(),value=>{void this.restoreDraft(value).catch(()=>this.draftNotice.set('La bozza non è stata riaperta. I dati già salvati sono conservati.'));});
-    this.draftSubscription=this.form.valueChanges.subscribe(()=>{if(!this.restoringDraft)this.draftSession?.changed();});
+  ngOnInit() {
+    if (!this.drafts) return;
+    this.draftSession = this.drafts.bind(
+      this.s.archiveKey(),
+      "catalog-editor",
+      () => this.captureDraft(),
+      (value) => {
+        void this.restoreDraft(value).catch(() =>
+          this.draftNotice.set(
+            "La bozza non è stata riaperta. I dati già salvati sono conservati.",
+          ),
+        );
+      },
+    );
+    this.draftSubscription = this.form.valueChanges.subscribe(() => {
+      if (!this.restoringDraft) this.draftSession?.changed();
+    });
   }
-  @HostListener('input') @HostListener('change') draftChanged(){if(!this.restoringDraft)this.draftSession?.changed();}
-  private hasChanges(){return this.groupEditing()?this.groupName!==this.formBaseline:this.editing()&&(JSON.stringify(this.form.getRawValue())!==this.formBaseline||this.imageBlob!==this.imageBaseline||!!this.pendingImage);}
-  private captureDraft():CatalogEditorDraft|null{
-    if(!this.hasChanges())return null;
-    return this.groupEditing()?{kind:'group',editId:this.editId,saveId:this.formSaveId,baseline:this.formBaseline,groupName:this.groupName}:{kind:'exercise',editId:this.editId,saveId:this.formSaveId,baseline:this.formBaseline,value:this.form.getRawValue(),image:this.imageBlob,pendingImage:this.pendingImage};
+  @HostListener("input") @HostListener("change") draftChanged() {
+    if (!this.restoringDraft) this.draftSession?.changed();
   }
-  private async samePhoto(first?:Blob,second?:Blob){
-    if(first===second)return true;
-    if(!first||!second||first.type!==second.type||first.size!==second.size)return false;
-    const [a,b]=await Promise.all([first.arrayBuffer(),second.arrayBuffer()]);
-    const other=new Uint8Array(b);return new Uint8Array(a).every((byte,index)=>byte===other[index]);
+  private hasChanges() {
+    return this.groupEditing()
+      ? this.groupName !== this.formBaseline
+      : this.editing() &&
+          (JSON.stringify(this.form.getRawValue()) !== this.formBaseline ||
+            this.imageBlob !== this.imageBaseline ||
+            !!this.pendingImage);
   }
-  private async appliedDraft(value:CatalogEditorDraft){
-    if(value.kind==='group')return this.s.data().muscleGroups.some(group=>group.id===value.saveId&&group.name===(value.groupName||'').trim());
-    const item=this.s.exercise(value.saveId),form=value.value;if(!item||!form||value.pendingImage)return false;
-    const tags=[...new Set(form.tags.split(',').map(tag=>tag.trim()).filter(Boolean))];
-    return item.name===form.name.trim()&&item.muscleGroupId===form.muscleGroupId&&JSON.stringify(item.secondaryMuscleIds)===JSON.stringify(form.secondaryMuscleIds.filter(id=>id!==form.muscleGroupId))&&item.equipment===form.equipment.trim()&&item.loadMode===form.loadMode&&item.description===form.description.trim()&&JSON.stringify(item.tags)===JSON.stringify(tags)&&item.active===form.active&&(item.videoUrl||'')===form.videoUrl.trim()&&await this.samePhoto(item.image,value.image);
+  private captureDraft(): CatalogEditorDraft | null {
+    if (!this.hasChanges()) return null;
+    return this.groupEditing()
+      ? {
+          kind: "group",
+          editId: this.editId,
+          saveId: this.formSaveId,
+          baseline: this.formBaseline,
+          groupName: this.groupName,
+        }
+      : {
+          kind: "exercise",
+          editId: this.editId,
+          saveId: this.formSaveId,
+          baseline: this.formBaseline,
+          value: this.form.getRawValue(),
+          image: this.imageBlob,
+          pendingImage: this.pendingImage,
+        };
   }
-  private async restoreDraft(value:CatalogEditorDraft){
-    if(this.destroyed||this.editing()||this.groupEditing())return;
-    if(typeof this.s.ready==='function'&&!this.s.ready()){this.restoreTimer=setTimeout(()=>void this.restoreDraft(value),100);return;}
-    if(!this.s.canEditCatalog())return;
-    const items=value?.kind==='group'?this.s.data().muscleGroups:this.s.data().exercises;
-    if(!value||!['exercise','group'].includes(value.kind)||!value.saveId||value.kind==='exercise'&&!value.value||typeof value.baseline!=='string'||value.editId&&!items.some(item=>item.id===value.editId)){
-      this.draftNotice.set('La bozza precedente è già stata salvata o si riferiva a un elemento non più disponibile.');this.clearStoredDraft();return;
+  private async samePhoto(first?: Blob, second?: Blob) {
+    if (first === second) return true;
+    if (
+      !first ||
+      !second ||
+      first.type !== second.type ||
+      first.size !== second.size
+    )
+      return false;
+    const [a, b] = await Promise.all([
+      first.arrayBuffer(),
+      second.arrayBuffer(),
+    ]);
+    const other = new Uint8Array(b);
+    return new Uint8Array(a).every((byte, index) => byte === other[index]);
+  }
+  private async appliedDraft(value: CatalogEditorDraft) {
+    if (value.kind === "group")
+      return this.s
+        .data()
+        .muscleGroups.some(
+          (group) =>
+            group.id === value.saveId &&
+            group.name === (value.groupName || "").trim(),
+        );
+    const item = this.s.exercise(value.saveId),
+      form = value.value;
+    if (!item || !form || value.pendingImage) return false;
+    const tags = [
+      ...new Set(
+        form.tags
+          .split(",")
+          .map((tag) => tag.trim())
+          .filter(Boolean),
+      ),
+    ];
+    return (
+      item.name === form.name.trim() &&
+      item.muscleGroupId === form.muscleGroupId &&
+      JSON.stringify(item.secondaryMuscleIds) ===
+        JSON.stringify(
+          form.secondaryMuscleIds.filter((id) => id !== form.muscleGroupId),
+        ) &&
+      item.equipment === form.equipment.trim() &&
+      item.loadMode === form.loadMode &&
+      item.description === form.description.trim() &&
+      JSON.stringify(item.tags) === JSON.stringify(tags) &&
+      item.active === form.active &&
+      (item.videoUrl || "") === form.videoUrl.trim() &&
+      (await this.samePhoto(item.image, value.image))
+    );
+  }
+  private async restoreDraft(value: CatalogEditorDraft) {
+    if (this.destroyed || this.editing() || this.groupEditing()) return;
+    if (typeof this.s.ready === "function" && !this.s.ready()) {
+      this.restoreTimer = setTimeout(() => void this.restoreDraft(value), 100);
+      return;
     }
-    const request=this.editorRequest,applied=await this.appliedDraft(value);
-    if(this.destroyed||request!==this.editorRequest||this.editing()||this.groupEditing())return;
-    if(applied){this.clearStoredDraft();return;}
-    this.restoringDraft=true;
-    try{
-      this.editId=items.some(item=>item.id===value.saveId)?value.saveId:value.editId;this.formSaveId=value.saveId;this.formBaseline=value.baseline;
-      if(value.kind==='group'){this.groupName=value.groupName||'';this.groupEditing.set(true);}
-      else if(value.value){this.form.reset(value.value);this.imageBlob=value.image;this.imageBaseline=this.s.exercise(value.editId)?.image;this.pendingImage=value.pendingImage;this.editing.set(true);if(value.pendingImage)void this.image({target:{files:[value.pendingImage],value:''}} as unknown as Event);}
-      this.draftNotice.set('Bozza recuperata. Controlla i valori e salva quando sei pronto.');
-    }finally{this.restoringDraft=false;}
+    if (!this.s.canEditCatalog()) return;
+    const items =
+      value?.kind === "group"
+        ? this.s.data().muscleGroups
+        : this.s.data().exercises;
+    if (
+      !value ||
+      !["exercise", "group"].includes(value.kind) ||
+      !value.saveId ||
+      (value.kind === "exercise" && !value.value) ||
+      typeof value.baseline !== "string" ||
+      (value.editId && !items.some((item) => item.id === value.editId))
+    ) {
+      this.draftNotice.set(
+        "La bozza precedente è già stata salvata o si riferiva a un elemento non più disponibile.",
+      );
+      this.clearStoredDraft();
+      return;
+    }
+    const request = this.editorRequest,
+      applied = await this.appliedDraft(value);
+    if (
+      this.destroyed ||
+      request !== this.editorRequest ||
+      this.editing() ||
+      this.groupEditing()
+    )
+      return;
+    if (applied) {
+      this.clearStoredDraft();
+      return;
+    }
+    this.restoringDraft = true;
+    try {
+      this.editId = items.some((item) => item.id === value.saveId)
+        ? value.saveId
+        : value.editId;
+      this.formSaveId = value.saveId;
+      this.formBaseline = value.baseline;
+      if (value.kind === "group") {
+        this.groupName = value.groupName || "";
+        this.groupEditing.set(true);
+      } else if (value.value) {
+        this.form.reset(value.value);
+        this.imageBlob = value.image;
+        this.imageBaseline = this.s.exercise(value.editId)?.image;
+        this.pendingImage = value.pendingImage;
+        this.editing.set(true);
+        if (value.pendingImage)
+          void this.image({
+            target: { files: [value.pendingImage], value: "" },
+          } as unknown as Event);
+      }
+      this.draftNotice.set(
+        "Bozza recuperata. Controlla i valori e salva quando sei pronto.",
+      );
+    } finally {
+      this.restoringDraft = false;
+    }
   }
-  private beginEditor(retry:()=>void){
-    if(this.saving()||!this.s.canEditCatalog())return false;
-    if(this.hasChanges()){void this.confirmation.ask('Scartare le modifiche non salvate prima di aprire un altro modulo?').then(ok=>{if(ok&&!this.destroyed&&!this.saving()){this.editorSaved();retry();}});return false;}
-    if(this.editing()||this.groupEditing())this.clearStoredDraft();
-    clearTimeout(this.restoreTimer);this.editorRequest++;this.imageRequest++;this.imageLoading.set(false);this.pendingImage=undefined;this.editing.set(false);this.groupEditing.set(false);this.draftNotice.set('');return true;
+  private beginEditor(retry: () => void) {
+    if (this.saving() || !this.s.canEditCatalog()) return false;
+    if (this.hasChanges()) {
+      void this.confirmation
+        .ask(
+          "Scartare le modifiche non salvate prima di aprire un altro modulo?",
+        )
+        .then((ok) => {
+          if (ok && !this.destroyed && !this.saving()) {
+            this.editorSaved();
+            retry();
+          }
+        });
+      return false;
+    }
+    if (this.editing() || this.groupEditing()) this.clearStoredDraft();
+    clearTimeout(this.restoreTimer);
+    this.editorRequest++;
+    this.imageRequest++;
+    this.imageLoading.set(false);
+    this.pendingImage = undefined;
+    this.editing.set(false);
+    this.groupEditing.set(false);
+    this.draftNotice.set("");
+    return true;
   }
-  private clearStoredDraft(){void this.draftSession?.clear().catch(()=>{/* Pending cleanup is retried by the draft service before exit. */});}
-  private editorSaved(){this.editorRequest++;this.imageRequest++;this.imageLoading.set(false);this.pendingImage=undefined;this.editing.set(false);this.groupEditing.set(false);this.draftNotice.set('');this.clearStoredDraft();}
-  ngOnDestroy(){clearTimeout(this.restoreTimer);void this.draftSession?.destroy();this.destroyed=true;this.editorRequest++;this.imageRequest++;this.draftSubscription?.unsubscribe();}
+  private clearStoredDraft() {
+    void this.draftSession?.clear().catch(() => {
+      /* Pending cleanup is retried by the draft service before exit. */
+    });
+  }
+  private editorSaved() {
+    this.editorRequest++;
+    this.imageRequest++;
+    this.imageLoading.set(false);
+    this.pendingImage = undefined;
+    this.editing.set(false);
+    this.groupEditing.set(false);
+    this.draftNotice.set("");
+    this.clearStoredDraft();
+  }
+  ngOnDestroy() {
+    clearTimeout(this.restoreTimer);
+    void this.draftSession?.destroy();
+    this.destroyed = true;
+    this.editorRequest++;
+    this.imageRequest++;
+    this.draftSubscription?.unsubscribe();
+  }
   filtered = computed(() =>
     this.s
       .data()
       .exercises.filter(
         (e) =>
-          (this.scope()==='all'||(this.scope()==='favorites'?this.s.isFavorite(e.id):this.s.recentExerciseIds().includes(e.id))) &&
-          (this.s.canEditCatalog() ? this.active() === "all" || (this.active() === "inactive" ? !e.active : e.active) : e.active) &&
+          (this.scope() === "all" ||
+            (this.scope() === "favorites"
+              ? this.s.isFavorite(e.id)
+              : this.s.recentExerciseIds().includes(e.id))) &&
+          (this.s.canEditCatalog()
+            ? this.active() === "all" ||
+              (this.active() === "inactive" ? !e.active : e.active)
+            : e.active) &&
           (!this.group() || e.muscleGroupId === this.group()) &&
-          matchesExercise(e,this.query()),
+          matchesExercise(e, this.query()),
       )
-      .sort((a, b) => this.scope()==='recent'?this.s.recentExerciseIds().indexOf(a.id)-this.s.recentExerciseIds().indexOf(b.id):this.s.muscle(a.muscleGroupId).localeCompare(this.s.muscle(b.muscleGroupId)) || a.name.localeCompare(b.name)),
+      .sort((a, b) =>
+        this.scope() === "recent"
+          ? this.s.recentExerciseIds().indexOf(a.id) -
+            this.s.recentExerciseIds().indexOf(b.id)
+          : this.s
+              .muscle(a.muscleGroupId)
+              .localeCompare(this.s.muscle(b.muscleGroupId)) ||
+            a.name.localeCompare(b.name),
+      ),
   );
   modeLabel(m: LoadMode) {
     return {
@@ -292,7 +497,7 @@ export class CatalogComponent {
     }[m];
   }
   open(e?: Exercise) {
-    if(!this.beginEditor(()=>this.open(e)))return;
+    if (!this.beginEditor(() => this.open(e))) return;
     this.editId = e?.id || "";
     this.formSaveId = e?.id || uid();
     this.imageBlob = e?.image;
@@ -309,72 +514,148 @@ export class CatalogComponent {
       active: e?.active ?? !this.s.sharedCatalog(),
     });
     this.editing.set(true);
-    this.formBaseline=JSON.stringify(this.form.getRawValue());this.imageBaseline=this.imageBlob;this.draftSession?.changed();
+    this.formBaseline = JSON.stringify(this.form.getRawValue());
+    this.imageBaseline = this.imageBlob;
+    this.draftSession?.changed();
   }
   close(e: MouseEvent) {
     if (e.target === e.currentTarget) this.dismiss();
   }
-  async dismiss(){if(this.saving())return;if(this.hasChanges()&&!await this.confirmation.ask('Scartare le modifiche non salvate?'))return;this.editorSaved();}
-  removeImage(){if(this.saving())return;this.imageRequest++;this.imageLoading.set(false);this.imageBlob=undefined;this.pendingImage=undefined;this.draftSession?.changed();}
+  async dismiss() {
+    if (this.saving()) return;
+    if (
+      this.hasChanges() &&
+      !(await this.confirmation.ask("Scartare le modifiche non salvate?"))
+    )
+      return;
+    this.editorSaved();
+  }
+  removeImage() {
+    if (this.saving()) return;
+    this.imageRequest++;
+    this.imageLoading.set(false);
+    this.imageBlob = undefined;
+    this.pendingImage = undefined;
+    this.draftSession?.changed();
+  }
   async image(event: Event) {
-    const input=event.target as HTMLInputElement;
+    const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
     if (!file) return;
-    input.value='';
-    if(this.saving())return;
-    const request=++this.imageRequest;this.imageLoading.set(true);this.pendingImage=file;this.draftSession?.changed();
-    try {const photo=await compressPhoto(file);if(request===this.imageRequest)this.imageBlob=photo;}
-    catch(e){if(request===this.imageRequest)this.s.error.set((e as Error).message);}
-    finally{if(request===this.imageRequest){this.imageLoading.set(false);this.pendingImage=undefined;this.draftSession?.changed();}}
+    input.value = "";
+    if (this.saving()) return;
+    const request = ++this.imageRequest;
+    this.imageLoading.set(true);
+    this.pendingImage = file;
+    this.draftSession?.changed();
+    try {
+      const photo = await compressPhoto(file);
+      if (request === this.imageRequest) this.imageBlob = photo;
+    } catch (e) {
+      if (request === this.imageRequest) this.s.error.set((e as Error).message);
+    } finally {
+      if (request === this.imageRequest) {
+        this.imageLoading.set(false);
+        this.pendingImage = undefined;
+        this.draftSession?.changed();
+      }
+    }
   }
   async save() {
-    if (this.form.invalid || this.saving() || this.imageLoading() || !this.s.canEditCatalog()) return;
-    this.saving.set(true);
-    this.form.disable({emitEvent:false});
-    try {
-    const v = this.form.getRawValue();
-    const id = this.formSaveId ||= this.editId || uid();
-    const old = this.s.exercise(id);
     if (
-      await this.s.saveExercise({
-        id,
-        name: v.name.trim(),
-        muscleGroupId: v.muscleGroupId,
-        secondaryMuscleIds: v.secondaryMuscleIds.filter(
-          (id) => id !== v.muscleGroupId,
-        ),
-        equipment: v.equipment.trim(),
-        description: v.description.trim(),
-        loadMode: v.loadMode,
-        tags: [
-          ...new Set(
-            v.tags
-              .split(",")
-              .map((t) => t.trim())
-              .filter(Boolean),
-          ),
-        ],
-        active: v.active,
-        videoUrl: v.videoUrl.trim(),
-        thumbnailUrl: old?.thumbnailUrl,
-        videoTitle: old?.videoTitle,
-        videoChannel: old?.videoChannel,
-        createdAt: old?.createdAt || now(),
-        image: this.imageBlob,
-      })
+      this.form.invalid ||
+      this.saving() ||
+      this.imageLoading() ||
+      !this.s.canEditCatalog()
     )
-      this.editorSaved();
-    } finally { this.form.enable({emitEvent:false});this.saving.set(false); }
+      return;
+    this.saving.set(true);
+    this.form.disable({ emitEvent: false });
+    try {
+      const v = this.form.getRawValue();
+      const id = (this.formSaveId ||= this.editId || uid());
+      const old = this.s.exercise(id);
+      if (
+        await this.s.saveExercise({
+          id,
+          name: v.name.trim(),
+          muscleGroupId: v.muscleGroupId,
+          secondaryMuscleIds: v.secondaryMuscleIds.filter(
+            (id) => id !== v.muscleGroupId,
+          ),
+          equipment: v.equipment.trim(),
+          description: v.description.trim(),
+          loadMode: v.loadMode,
+          tags: [
+            ...new Set(
+              v.tags
+                .split(",")
+                .map((t) => t.trim())
+                .filter(Boolean),
+            ),
+          ],
+          active: v.active,
+          videoUrl: v.videoUrl.trim(),
+          thumbnailUrl: old?.thumbnailUrl,
+          videoTitle: old?.videoTitle,
+          videoChannel: old?.videoChannel,
+          createdAt: old?.createdAt || now(),
+          image: this.imageBlob,
+        })
+      )
+        this.editorSaved();
+    } finally {
+      this.form.enable({ emitEvent: false });
+      this.saving.set(false);
+    }
   }
   async toggle(e: Exercise) {
-    if(this.saving() || !this.s.canEditCatalog())return;
-    this.saving.set(true);try{await this.s.saveExercise({...e,active:!e.active});}finally{this.saving.set(false);}
+    if (this.saving() || !this.s.canEditCatalog()) return;
+    this.saving.set(true);
+    try {
+      await this.s.saveExercise({ ...e, active: !e.active });
+    } finally {
+      this.saving.set(false);
+    }
   }
   newGroup() {
-    if(!this.beginEditor(()=>this.newGroup()))return;this.editId='';this.formSaveId=uid();this.groupName='';this.formBaseline='';this.groupEditing.set(true);this.draftSession?.changed();
+    if (!this.beginEditor(() => this.newGroup())) return;
+    this.editId = "";
+    this.formSaveId = uid();
+    this.groupName = "";
+    this.formBaseline = "";
+    this.groupEditing.set(true);
+    this.draftSession?.changed();
   }
-  renameGroup(id:string,current:string) {
-    if(!this.beginEditor(()=>this.renameGroup(id,current)))return;this.editId=id;this.formSaveId=id;this.groupName=current;this.formBaseline=current;this.groupEditing.set(true);this.draftSession?.changed();
+  renameGroup(id: string, current: string) {
+    if (!this.beginEditor(() => this.renameGroup(id, current))) return;
+    this.editId = id;
+    this.formSaveId = id;
+    this.groupName = current;
+    this.formBaseline = current;
+    this.groupEditing.set(true);
+    this.draftSession?.changed();
   }
-  async saveGroup(){if(this.saving()||!this.groupEditing()||!this.groupName.trim()||this.groupName.length>80||!this.s.canEditCatalog())return;this.saving.set(true);try{if(await this.s.saveMuscleGroup(this.formSaveId||=this.editId||uid(),this.groupName.trim()))this.editorSaved();}finally{this.saving.set(false);}}
+  async saveGroup() {
+    if (
+      this.saving() ||
+      !this.groupEditing() ||
+      !this.groupName.trim() ||
+      this.groupName.length > 80 ||
+      !this.s.canEditCatalog()
+    )
+      return;
+    this.saving.set(true);
+    try {
+      if (
+        await this.s.saveMuscleGroup(
+          (this.formSaveId ||= this.editId || uid()),
+          this.groupName.trim(),
+        )
+      )
+        this.editorSaved();
+    } finally {
+      this.saving.set(false);
+    }
+  }
 }

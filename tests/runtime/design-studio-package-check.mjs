@@ -118,7 +118,10 @@ try {
   const read = await (await call("design/published", undefined, cookie)).json();
   assert.equal(read.config.instances["home.stats.workouts"].radius, 24);
   assert.equal(read.config.instances["home.title"].label, "Il mio spazio");
-  assert.equal(read.config.instances["home.subtitle"].label, "Una seduta alla volta");
+  assert.equal(
+    read.config.instances["home.subtitle"].label,
+    "Una seduta alla volta",
+  );
   assert.equal(read.config.instances["navigation.home"].label, "Inizio");
   assert.equal(read.config.instances["profile.title"].label, "Il mio profilo");
   assert.equal(read.studioEnabled, true);
