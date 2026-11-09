@@ -7,14 +7,20 @@ const root='dist/gymtrack/browser';
 await embedInstallIcons(root);
 // Calendar relay is a separate public Worker; use the public HTTP front door.
 const runtimeFlags=['nodejs_compat','global_fetch_strictly_public'];
+// Riconosce un import nominato a prescindere da spazi, a capo, virgolette e virgola finale,
+// così la composizione non dipende dalla formattazione dei sorgenti del Worker.
+const escapeRegExp=text=>text.replace(/[.*+?^${}()|[\]\\/]/g,'\\$&');
+const importPattern=(names,from)=>new RegExp('import\\s*\\{\\s*'+names.join('\\s*,\\s*')+'\\s*,?\\s*\\}\\s*from\\s*[\'"]'+escapeRegExp(from)+'[\'"];?');
+const replaceOnce=(source,pattern,replacement,label)=>{if(!pattern.test(source))throw Error('Packaging Worker: '+label+' non trovato nei sorgenti');return source.replace(pattern,replacement);};
+const inlineImport=(source,names,from,replacement)=>replaceOnce(source,importPattern(names,from),replacement,'import { '+names.join(', ')+' } da '+from);
 const workerSource=await readFile('worker/index.js','utf8');
 const approvedPaletteSource=await readFile('shared/approved-palettes.js','utf8');
 const designPresetsSource=await readFile('shared/design-presets.js','utf8');
 const designSystemSource=(await readFile('shared/design-system.js','utf8')).replace(/import\s*\{\s*FACTORY_PRESETS\s*\}\s*from\s*['"]\.\/design-presets\.js['"];?/,'').replace(/export\s*\{\s*FACTORY_PRESETS\s*\};?/,'').replace(/import\s*\{[^}]+\}\s*from\s*['"]\.\/approved-palettes\.js['"];?/,'').replace(/export\s*\{\s*APPROVED_DESIGN_PRESETS\s*\};?/,'');
 const designApiSource=(await readFile('worker/design-studio.js','utf8')).replace(/import\s*\{[^}]+\}\s*from\s*['"]\.\.\/shared\/design-system\.js['"];?/,'');
-const pushSource=(await readFile('worker/push.js','utf8')).replace("import {calendarRuntimeEnv,calendarRelay,calendarProjection} from './calendar.js';",'');
+const pushSource=inlineImport(await readFile('worker/push.js','utf8'),['calendarRuntimeEnv','calendarRelay','calendarProjection'],'./calendar.js','');
 const calendarSource=await readFile('worker/calendar.js','utf8');
-const archiveSource=(await readFile('worker/archive.js','utf8')).replace("import {validateImportedProgramOverlaps} from './program-imports.js';",'').replace(/import\s*\{[^}]+\}\s*from\s*['"]\.\.\/shared\/approved-palettes\.js['"];?/,'');
+const archiveSource=(await readFile('worker/archive.js','utf8')).replace(importPattern(['validateImportedProgramOverlaps'],'./program-imports.js'),'').replace(/import\s*\{[^}]+\}\s*from\s*['"]\.\.\/shared\/approved-palettes\.js['"];?/,'');
 const programSource=await readFile('worker/program-imports.js','utf8');
 const serverCatalogSource=await readFile('worker/default-catalog.js','utf8');
 const storageAlertSource=await readFile('worker/storage-alert.js','utf8');
@@ -63,8 +69,16 @@ async function scan(dir){for(const e of await readdir(dir,{withFileTypes:true}))
 }}}
 await scan(root);
 await rm('dist/server',{recursive:true,force:true});await mkdir('dist/server',{recursive:true});await mkdir('dist/.openai',{recursive:true});
-const composedWorker=approvedPaletteSource.replaceAll('export ','')+'\n'+workerSource.replace("/* __APP_BUILD_ID__ */ 'development'",JSON.stringify(buildId)).replace("import { APPROVED_THEME_IDS } from '../shared/approved-palettes.js';",'').replace("import { designStudioApi } from './design-studio.js';",[designPresetsSource,designSystemSource,designApiSource].map(source=>source.replaceAll('export ','')).join('\n')).replace("import { defaultExercises, defaultGroups } from './default-catalog.js';",serverCatalogSource.replaceAll('export const','const')).replace("import { archiveApi } from './archive.js';",archiveSource.replaceAll('export ',''))
-.replace("import { storageAlert, storageStatus } from './storage-alert.js';",storageAlertSource.replaceAll('export ','')).replace("import { calendarApi, calendarPublish, calendarConfigure } from './calendar.js';",calendarSource.replaceAll('export ','')).replace("import { pushReminderApi } from './push.js';",pushSource.replaceAll('export ','')).replace("import {excelImportsApi,appFeaturesApi} from './program-imports.js';",programSource.replaceAll('export ',''));
+let composedWorker=replaceOnce(workerSource,/\/\* __APP_BUILD_ID__ \*\/ ['"]development['"]/,JSON.stringify(buildId),'segnaposto __APP_BUILD_ID__');
+composedWorker=inlineImport(composedWorker,['APPROVED_THEME_IDS'],'../shared/approved-palettes.js','');
+composedWorker=inlineImport(composedWorker,['designStudioApi'],'./design-studio.js',[designPresetsSource,designSystemSource,designApiSource].map(source=>source.replaceAll('export ','')).join('\n'));
+composedWorker=inlineImport(composedWorker,['defaultExercises','defaultGroups'],'./default-catalog.js',serverCatalogSource.replaceAll('export const','const'));
+composedWorker=inlineImport(composedWorker,['archiveApi'],'./archive.js',archiveSource.replaceAll('export ',''));
+composedWorker=inlineImport(composedWorker,['storageAlert','storageStatus'],'./storage-alert.js',storageAlertSource.replaceAll('export ',''));
+composedWorker=inlineImport(composedWorker,['calendarApi','calendarPublish','calendarConfigure'],'./calendar.js',calendarSource.replaceAll('export ',''));
+composedWorker=inlineImport(composedWorker,['pushReminderApi'],'./push.js',pushSource.replaceAll('export ',''));
+composedWorker=inlineImport(composedWorker,['excelImportsApi','appFeaturesApi'],'./program-imports.js',programSource.replaceAll('export ',''));
+composedWorker=approvedPaletteSource.replaceAll('export ','')+'\n'+composedWorker;
 await writeFile('dist/server/index.js',composedWorker.replace('/* __ASSETS__ */ {}',JSON.stringify(assets)));
 // Variante Cloudflare: i file statici non vengono incorporati (49 MB superano il limite dei Worker)
 // ma serviti da Workers Static Assets, configurati in wrangler.jsonc.

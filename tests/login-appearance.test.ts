@@ -31,7 +31,9 @@ it('retains the existing online, local, offline and account-setup controls', () 
     '(click)="help.set(!help())"',
     'this.auth.login(',
   ];
-  for (const marker of existingControls) expect(component).toContain(marker);
+  // Confronto senza spazi: i marcatori non devono dipendere dalla formattazione del template.
+  const compactComponent = component.replace(/\s+/g, '');
+  for (const marker of existingControls) expect(compactComponent).toContain(marker.replace(/\s+/g, ''));
 });
 
 it('styles the login with actual resolved palette tokens and mobile-safe controls', () => {
