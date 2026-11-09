@@ -14,6 +14,7 @@ const designSystemSource=(await readFile('shared/design-system.js','utf8')).repl
 const designApiSource=(await readFile('worker/design-studio.js','utf8')).replace(/import\s*\{[^}]+\}\s*from\s*['"]\.\.\/shared\/design-system\.js['"];?/,'');
 const pushSource=(await readFile('worker/push.js','utf8')).replace("import {calendarRuntimeEnv,calendarRelay,calendarProjection} from './calendar.js';",'');
 const calendarSource=await readFile('worker/calendar.js','utf8');
+const aiSource=await readFile('worker/ai.js','utf8');
 const archiveSource=(await readFile('worker/archive.js','utf8')).replace("import {validateImportedProgramOverlaps} from './program-imports.js';",'').replace(/import\s*\{[^}]+\}\s*from\s*['"]\.\.\/shared\/approved-palettes\.js['"];?/,'');
 const programSource=await readFile('worker/program-imports.js','utf8');
 const serverCatalogSource=await readFile('worker/default-catalog.js','utf8');
@@ -63,7 +64,7 @@ async function scan(dir){for(const e of await readdir(dir,{withFileTypes:true}))
 }}}
 await scan(root);
 await rm('dist/server',{recursive:true,force:true});await mkdir('dist/server',{recursive:true});await mkdir('dist/.openai',{recursive:true});
-const composedWorker=approvedPaletteSource.replaceAll('export ','')+'\n'+workerSource.replace("/* __APP_BUILD_ID__ */ 'development'",JSON.stringify(buildId)).replace("import { APPROVED_THEME_IDS } from '../shared/approved-palettes.js';",'').replace("import { designStudioApi } from './design-studio.js';",[designPresetsSource,designSystemSource,designApiSource].map(source=>source.replaceAll('export ','')).join('\n')).replace("import { defaultExercises, defaultGroups } from './default-catalog.js';",serverCatalogSource.replaceAll('export const','const')).replace("import { archiveApi } from './archive.js';",archiveSource.replaceAll('export ',''))
+const composedWorker=approvedPaletteSource.replaceAll('export ','')+'\n'+workerSource.replace("/* __APP_BUILD_ID__ */ 'development'",JSON.stringify(buildId)).replace("import { APPROVED_THEME_IDS } from '../shared/approved-palettes.js';",'').replace("import { designStudioApi } from './design-studio.js';",[designPresetsSource,designSystemSource,designApiSource].map(source=>source.replaceAll('export ','')).join('\n')).replace("import { defaultExercises, defaultGroups } from './default-catalog.js';",serverCatalogSource.replaceAll('export const','const')).replace("import { mealScanApi, mealBudgetApi } from './ai.js';",aiSource.replaceAll('export ','')).replace("import { archiveApi } from './archive.js';",archiveSource.replaceAll('export ',''))
 .replace("import { storageAlert, storageStatus } from './storage-alert.js';",storageAlertSource.replaceAll('export ','')).replace("import { calendarApi, calendarPublish, calendarConfigure } from './calendar.js';",calendarSource.replaceAll('export ','')).replace("import { pushReminderApi } from './push.js';",pushSource.replaceAll('export ','')).replace("import {excelImportsApi,appFeaturesApi} from './program-imports.js';",programSource.replaceAll('export ',''));
 await writeFile('dist/server/index.js',composedWorker.replace('/* __ASSETS__ */ {}',JSON.stringify(assets)));
 // Variante Cloudflare: i file statici non vengono incorporati (49 MB superano il limite dei Worker)

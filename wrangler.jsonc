@@ -24,6 +24,10 @@
       "bucket_name": "gymtrack-archives"
     }
   ],
+  // Analisi foto dei pasti: usa la quota gratuita giornaliera di Workers AI (vedi worker/ai.js).
+  "ai": {
+    "binding": "AI"
+  },
   "vars": {
     "SELF_HOSTED": "1"
   },

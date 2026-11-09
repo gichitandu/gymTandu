@@ -2,6 +2,7 @@ import { defaultExercises, defaultGroups } from './default-catalog.js';
 import { pushReminderApi } from './push.js';
 import {excelImportsApi,appFeaturesApi} from './program-imports.js';
 import { archiveApi } from './archive.js';
+import { mealScanApi, mealBudgetApi } from './ai.js';
 import { designStudioApi } from './design-studio.js';
 import { storageAlert, storageStatus } from './storage-alert.js';
 import { APPROVED_THEME_IDS } from '../shared/approved-palettes.js';
@@ -184,9 +185,11 @@ export async function api(request,env,ctx) {
       const rows=await db.prepare('SELECT * FROM users ORDER BY created_at').all();
       return json({users:rows.results.map(publicUser)});
     }
+    if(request.method==='GET'&&path==='/api/ai/budget')return json(await mealBudgetApi(env,me,db));
     if(request.method==='GET') fail('Pagina non trovata.',404);
-    const bodyLimit=path==='/api/catalog/exercise'?3000000:8192;
+    const bodyLimit=path==='/api/catalog/exercise'?3000000:path==='/api/ai/meal-scan'?900000:8192;
     const b=await readLimitedJsonBody(request,bodyLimit);if(!b||typeof b!=="object"||Array.isArray(b))return json({error:"Richiesta non valida."},400);
+    if(path==='/api/ai/meal-scan'&&request.method==='POST')return json(await mealScanApi(b,env,me,db,{ownerEmail:OWNER,waitUntil:ctx?.waitUntil?ctx.waitUntil.bind(ctx):undefined}));
     if(path==='/api/auth/setup'&&request.method==='POST') {
       if(standalone(env)) {
         // Il codice di setup è un segreto del deploy: senza di esso nessuno può reclamare l'account proprietario.

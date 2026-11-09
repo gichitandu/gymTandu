@@ -129,6 +129,44 @@ l'invio passa da Resend (gratuito):
 Senza la chiave il controllo gira ma non invia nulla (solo una riga nel registro
 del Worker). L'indirizzo si può cambiare con la variabile `ALERT_EMAIL`.
 
+## Analisi foto dei pasti (Workers AI, a costo zero)
+
+Il Worker ha il collegamento `AI` (in `wrangler.jsonc`) e l'endpoint
+`/api/ai/meal-scan`, che stima alimenti e valori di una foto con Gemma 3 12B
+(`@cf/google/gemma-3-12b-it`). Non serve nessuna chiave: usa la quota gratuita di
+Cloudflare, **10.000 neuroni al giorno**, azzerata a mezzanotte UTC. La foto non
+viene salvata sul server.
+
+Non usare i modelli Llama 3.2 con visione: la licenza di Meta non concede i diritti
+a chi è domiciliato nell'Unione Europea. Per Gemma leggi i
+[termini di Google](https://ai.google.dev/gemma/terms).
+
+Limiti, pensati per non superare mai la quota gratuita:
+
+- **Tetto globale:** il Worker stima i neuroni consumati. Al **90%** segnala un
+  avviso (nella risposta dell'API e con una email al proprietario, una volta al
+  giorno); prima di superare il **95%** si ferma per tutti fino al giorno dopo.
+  Ogni richiesta riserva il caso peggiore prima di partire, quindi la soglia non
+  viene scavalcata nemmeno con più richieste insieme. La stima è prudente: la
+  misura ufficiale è nel pannello Workers AI di Cloudflare.
+- **Limite per account:** 5 analisi al giorno per utente, così una sola persona non
+  consuma la quota di tutti.
+- Un'analisi fallita per un errore del servizio non conta nel limite dell'utente.
+
+Variabili facoltative (Impostazioni del Worker, Variables):
+
+- `AI_DAILY_LIMIT`: analisi al giorno per account (1-100, predefinito 5).
+- `AI_DAILY_NEURONS`: quota giornaliera da considerare (100-1.000.000, predefinito
+  10.000). Riducila se l'account usa Workers AI anche per altro.
+- `AI_VISION_MODEL`: altro modello `@cf/…` con visione. Se non è nella tabella di
+  `worker/ai.js` si usano tariffe prudenti.
+- `ALERT_EMAIL`: destinatario degli avvisi (predefinito il proprietario). L'email
+  usa `RESEND_API_KEY`, come gli avvisi dello spazio R2; senza chiave non parte.
+
+Se il piano è "Workers Free" Cloudflare ferma da solo le richieste oltre la quota,
+senza addebiti; sul piano a pagamento il tetto del 95% resta comunque sotto la
+quota gratuita.
+
 ## Aggiornamenti
 
 Dopo ogni modifica al codice: `npm run build`, poi `npx wrangler deploy`. Le
