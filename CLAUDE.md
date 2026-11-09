@@ -39,10 +39,11 @@ Logica e stato: `src/app/services/` (parti da `store.ts`, poi dal servizio speci
 
 1. **Leggi solo ciò che serve.** Per una pagina: il suo componente, i servizi che importa, il test
    corrispondente in `tests/`. Usa ricerca mirata (grep per simbolo) invece di aprire interi file grandi
-   (`services/store.ts` ha ~900 righe: leggi solo la sezione interessata).
+   (`services/store.ts` ha ~2200 righe: leggi solo la sezione interessata).
 2. **Non aprire mai, salvo richiesta esplicita:** `docs/qa/**` (log di verifiche passate, ~40 MB),
    `drizzle/meta/*`, `package-lock.json`, `public/vendor/**`, `public/training/vendor/**`,
-   `public/*.js` di worker/service worker generati, immagini e asset binari.
+   `public/*.js` di worker/service worker generati, immagini e asset binari, i cataloghi dati
+   `src/app/services/exercise-artwork-catalog.json` e `worker/default-catalog.json` (cerca la voce con grep).
    Gran parte di questi percorsi è già bloccata in lettura da `.claude/settings.json`; se un task
    li richiede davvero, chiedi all'utente invece di aggirare il blocco.
 3. **Docs tematici solo quando pertinenti:** i file in `docs/` (`GT_*`, `CODEX_*`) si leggono solo se il

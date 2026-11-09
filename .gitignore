@@ -62,3 +62,7 @@ id_ed25519
 *.swo
 *~
 *.tsbuildinfo
+
+# Prove QA (log e schermate dei runner in tests/runtime/): i nuovi file restano locali.
+# I file già versionati restano nella cronologia e tracciati finché non si decide altrimenti.
+/docs/qa/
