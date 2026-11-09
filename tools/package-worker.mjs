@@ -70,7 +70,16 @@ const archiveSource = (await readFile("worker/archive.js", "utf8"))
     "",
   );
 const programSource = await readFile("worker/program-imports.js", "utf8");
-const serverCatalogSource = await readFile("worker/default-catalog.js", "utf8");
+// Il catalogo predefinito vive in default-catalog.json: nel bundle diventa due costanti.
+const serverCatalog = JSON.parse(
+  await readFile("worker/default-catalog.json", "utf8"),
+);
+const serverCatalogSource =
+  "const defaultGroups = " +
+  JSON.stringify(serverCatalog.defaultGroups) +
+  ";\nconst defaultExercises = " +
+  JSON.stringify(serverCatalog.defaultExercises) +
+  ";\n";
 const storageAlertSource = await readFile("worker/storage-alert.js", "utf8");
 const manifest = JSON.parse(await readFile(root + "/ngsw.json", "utf8"));
 for (const url of ["/index.html", "/manifest.webmanifest"])
@@ -222,7 +231,7 @@ composedWorker = inlineImport(
   composedWorker,
   ["defaultExercises", "defaultGroups"],
   "./default-catalog.js",
-  serverCatalogSource.replaceAll("export const", "const"),
+  serverCatalogSource,
 );
 composedWorker = inlineImport(
   composedWorker,

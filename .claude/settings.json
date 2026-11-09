@@ -14,7 +14,9 @@
       "Read(./.angular/**)",
       "Read(./.cache/**)",
       "Read(./.dev.vars)",
-      "Read(./**/.env*)"
+      "Read(./**/.env*)",
+      "Read(./src/app/services/exercise-artwork-catalog.json)",
+      "Read(./worker/default-catalog.json)"
     ]
   },
   "hooks": {
