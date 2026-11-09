@@ -40,9 +40,11 @@ Logica e stato: `src/app/services/` (parti da `store.ts`, poi dal servizio speci
 1. **Leggi solo ciò che serve.** Per una pagina: il suo componente, i servizi che importa, il test
    corrispondente in `tests/`. Usa ricerca mirata (grep per simbolo) invece di aprire interi file grandi
    (`services/store.ts` ha ~900 righe: leggi solo la sezione interessata).
-2. **Non aprire mai, salvo richiesta esplicita:** `docs/qa/**` (log di verifiche passate),
+2. **Non aprire mai, salvo richiesta esplicita:** `docs/qa/**` (log di verifiche passate, ~40 MB),
    `drizzle/meta/*`, `package-lock.json`, `public/vendor/**`, `public/training/vendor/**`,
    `public/*.js` di worker/service worker generati, immagini e asset binari.
+   Gran parte di questi percorsi è già bloccata in lettura da `.claude/settings.json`; se un task
+   li richiede davvero, chiedi all'utente invece di aggirare il blocco.
 3. **Docs tematici solo quando pertinenti:** i file in `docs/` (`GT_*`, `CODEX_*`) si leggono solo se il
    task tocca quell'area (Design Studio, protezione allenamenti, ecc.), non all'inizio di ogni sessione.
 4. **Task grandi → prima un piano** di 5-8 righe (file da toccare, rischio, verifiche), poi attendi OK.
@@ -65,6 +67,19 @@ una per pagina (es. `docs/tasks/home.md`, `docs/tasks/sessione.md`). Formato in 
 - Screenshot in `docs/tasks/img/` con nome `<pagina>-<id-voce>.png`; aprili solo se la voce lo richiede
   (costano molti token). Se la descrizione testuale basta, non aprirli.
 - Se una voce è ambigua, fai al massimo una domanda; non indovinare su dati o sicurezza.
+
+## Strumenti del progetto (`.claude/`)
+
+| Strumento          | Uso                                                                      |
+| ------------------ | ------------------------------------------------------------------------ |
+| `/pagina <nome> [Tn]` | Lavora sulle task aperte di una pagina leggendo solo il necessario    |
+| `/task <nome> <descrizione>` | Registra un bug/richiesta nella task list della pagina, senza implementare |
+| `/verifica [completa]` | `test:affected` + `typecheck` (o `quality`), esito in max 5 righe   |
+| agente `esplora`   | Ricerche nel codice in sola lettura con modello leggero: restituisce solo percorsi e conclusioni |
+| `settings.json`    | Blocca la lettura di log QA, vendor, asset generati, lockfile, segreti   |
+
+Decisioni già prese: `docs/DECISIONI.md`. Leggilo prima di proporre cambi di architettura o stack;
+aggiungi una riga quando l'utente conferma una nuova decisione.
 
 ## Convenzioni da non rompere (promemoria rapido)
 

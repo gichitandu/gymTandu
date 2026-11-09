@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "deny": [
+      "Read(./docs/qa/**)",
+      "Read(./public/vendor/**)",
+      "Read(./public/training/vendor/**)",
+      "Read(./public/training/figures/**)",
+      "Read(./public/training/motion/**)",
+      "Read(./drizzle/meta/**)",
+      "Read(./package-lock.json)",
+      "Read(./node_modules/**)",
+      "Read(./dist/**)",
+      "Read(./.angular/**)",
+      "Read(./.cache/**)",
+      "Read(./.dev.vars)",
+      "Read(./**/.env*)"
+    ]
+  }
+}
