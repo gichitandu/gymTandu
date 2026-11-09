@@ -28,7 +28,7 @@ interface ActiveDraftSnapshot {entries:[string,ActiveSetDraft][];exerciseId:stri
 export class ActiveWorkoutComponent {
  private confirmation=confirmationForContext();
  externalTimer=inject(ExternalTimerService,{optional:true});
- private clock=inject(TodayService);
+ private todayClock=inject(TodayService);
  committing=signal(false);s=inject(Store);resume=inject(WorkoutResumeService,{optional:true})||new WorkoutResumeService();workoutId=input.required<string>();finish=output<void>();
  replacementOpen=signal(false);
  async openReplacement(){if(this.committing())return;this.committing.set(true);try{if(await this.flushForFinish())this.replacementOpen.set(true);}finally{this.committing.set(false);}}
@@ -100,7 +100,7 @@ export class ActiveWorkoutComponent {
   const working=this.s.sets(e.id).filter(x=>x.kind!=='warmup');
   const done=working.filter(x=>x.completed&&x.number<set.number).map(x=>({weight:x.weight,reps:x.reps,rpe:x.rpe}));
   const reference=this.previous().filter(x=>x.completed&&x.kind!=='warmup').map(x=>({weight:x.weight,reps:x.reps,rpe:x.rpe}));
-  const today=this.s.data().wellnessLogs.find(w=>w.date===this.clock.date());
+  const today=this.s.data().wellnessLogs.find(w=>w.date===this.todayClock.date());
   const suggestion=coachNextSet({repsMin:e.repsMin,repsMax:e.repsMax,incrementKg:this.s.kg(this.weightStep()),plannedWeight:set.weight,reference,done,readiness:readinessFromWellness(today)});
   return suggestion&&suggestion.basis!=='none'?suggestion:null;
  });

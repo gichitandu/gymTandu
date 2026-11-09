@@ -186,7 +186,7 @@ export async function api(request,env,ctx) {
     }
     if(request.method==='GET') fail('Pagina non trovata.',404);
     const bodyLimit=path==='/api/catalog/exercise'?3000000:8192;
-    const b=await readLimitedJsonBody(request,bodyLimit);
+    const b=await readLimitedJsonBody(request,bodyLimit);if(!b||typeof b!=="object"||Array.isArray(b))return json({error:"Richiesta non valida."},400);
     if(path==='/api/auth/setup'&&request.method==='POST') {
       if(standalone(env)) {
         // Il codice di setup è un segreto del deploy: senza di esso nessuno può reclamare l'account proprietario.
