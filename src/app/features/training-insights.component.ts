@@ -43,7 +43,7 @@ import {summarizeTraining,trainingTimeline,trainingReportCsv,workoutReminderIcs}
  </section>
  `,
  styles:[`
- :host{display:block;max-width:1060px;margin:0 auto;padding-bottom:36px;color:var(--text)}
+ :host{display:block;max-width:none;margin:0 auto;padding-bottom:36px;color:var(--text)}
  .insights-heading{margin-bottom:26px}.insights-heading>a{margin-bottom:22px}.insights-heading h1{font-size:clamp(29px,6vw,42px);font-weight:800;letter-spacing:-1.1px;margin:6px 0}.insights-heading p,.insights-note{color:var(--muted);font-size:13px;line-height:1.65}
  .insights-section{margin:26px 0}.insights-section h2{font-size:20px;margin:0 0 14px}
  .insights-periods{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}
@@ -62,7 +62,7 @@ import {summarizeTraining,trainingTimeline,trainingReportCsv,workoutReminderIcs}
  @media(max-width:720px){.insights-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.insights-advice,.insights-charts{grid-template-columns:1fr}.insights-reminder{align-items:stretch;flex-direction:column}.insights-reminder button{width:100%}}
 
  /* Analisi v3 (anteprima 12) */
- :host{max-width:640px}
+ :host{max-width:none}
  .insights-heading{margin-bottom:14px}.insights-heading>a{min-height:40px;margin-bottom:14px;border-radius:13px;padding:0 12px 0 8px}.insights-heading .eyebrow{font-size:10px;font-weight:800;letter-spacing:.14em;color:var(--accent-text)}.insights-heading h1{font-size:26px;font-weight:900;letter-spacing:-.02em;margin:4px 0}
  .insights-section{margin:18px 0}.insights-section>h2{font-size:11px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:0 4px 10px}
  .card{border:1px solid color-mix(in srgb,var(--text) 12%,transparent);border-radius:20px;background:linear-gradient(180deg,color-mix(in srgb,var(--text) 6%,var(--card)),var(--card));box-shadow:inset 0 1px color-mix(in srgb,#fff 5%,transparent)}

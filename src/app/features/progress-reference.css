@@ -1,4 +1,4 @@
-:host{display:block;max-width:960px;margin:0 auto;min-width:0}
+:host{display:block;max-width:none;margin:0 auto;min-width:0}
 .reference-progress{min-width:0}
 .reference-progress .progress-page-heading{align-items:center;gap:12px;margin:0 0 17px}
 .reference-progress .progress-page-heading>div{min-width:0;flex:1}

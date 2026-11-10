@@ -3,7 +3,7 @@
 @keyframes wsRise { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
 
 :host { display: block; min-width: 0; }
-.workout-summary { max-width: 620px; margin: auto; min-width: 0; display: flex; flex-direction: column; gap: 12px; }
+.workout-summary { max-width: none; margin: auto; min-width: 0; display: flex; flex-direction: column; gap: 12px; }
 
 .summary-top { display: flex; justify-content: flex-end; }
 .summary-close {
@@ -107,3 +107,9 @@
 .ws-set.off{opacity:.45;text-decoration:line-through}
 .ws-set.warm{color:var(--muted)}
 .summary-actions .su-btn{margin-top:6px}
+
+/* ===== Layout responsive: su tablet e desktop il riepilogo usa tutta la larghezza,
+   con i quattro numeri chiave affiancati. */
+@media (min-width:700px){
+ .summary-metrics{grid-template-columns:repeat(4,minmax(0,1fr))}
+}

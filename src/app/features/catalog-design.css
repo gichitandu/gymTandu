@@ -1,6 +1,6 @@
 /* Illustrated rows, search and filters shared with the design gallery. */
 :host{display:block;min-width:0}
-.catalog-design-page{max-width:760px;margin:0 auto;min-width:0}
+.catalog-design-page{max-width:none;margin:0 auto;min-width:0}
 .catalog-heading{display:flex;align-items:center;gap:10px;margin:0 0 19px}
 .catalog-heading>div{flex:1;min-width:0}
 :host .catalog-heading h1{font-size:26px;line-height:1.2;letter-spacing:-.8px;margin:0;overflow-wrap:anywhere}

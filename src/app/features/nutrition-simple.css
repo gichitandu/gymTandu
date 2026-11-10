@@ -43,4 +43,4 @@
 :host .meal-editor .form-grid>.meal-form-details{margin:0}
 :host .ai-details{margin-top:24px}
 :host .ai-details>summary{font-size:12px;min-height:44px;align-content:center;cursor:pointer;color:var(--muted)}
-@media(min-width:801px){:host .meal-summary,:host .meal-list-heading,:host .meal-diary-list,:host .meal-add,:host .meal-editor,:host .ai-details{max-width:760px}}
+@media(min-width:801px){:host .meal-summary,:host .meal-list-heading,:host .meal-diary-list,:host .meal-add,:host .meal-editor,:host .ai-details{max-width:none}}

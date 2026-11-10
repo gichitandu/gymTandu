@@ -245,7 +245,7 @@
   border-radius: 16px;
   background: var(--card);
   margin-bottom: 20px;
-  max-width: 840px;
+  max-width: none;
 }
 .nutrition-day-selector > .icon-btn {
   border-radius: 50%;
@@ -268,7 +268,7 @@
 }
 .nutrition-dashboard.nutrition-observatory {
   padding: 0;
-  max-width: 840px;
+  max-width: none;
   text-align: left;
 }
 .energy-panel {
@@ -456,7 +456,7 @@
   align-items: center;
   justify-content: space-between;
   margin: 26px 0 16px;
-  max-width: 840px;
+  max-width: none;
 }
 .diary-section-heading h2 {
   font-size: 21px;
@@ -472,7 +472,7 @@
   opacity: 0.5;
 }
 .meal-diary-list {
-  max-width: 840px;
+  max-width: none;
   gap: 10px;
 }
 .meal-diary-row {
@@ -567,7 +567,7 @@
   letter-spacing: -0.035em;
 }
 .nutrition-capture {
-  max-width: 840px;
+  max-width: none;
   padding-top: 17px;
 }
 .nutrition-capture .scan-meal-button {
@@ -599,7 +599,7 @@
 }
 .meal-editor,
 .ai-details {
-  max-width: 840px;
+  max-width: none;
   border-radius: 20px;
 }
 .ai-details {

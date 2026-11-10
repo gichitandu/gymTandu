@@ -182,3 +182,10 @@ gt-icon.pl-down{transform:rotate(-90deg)}
 .simple-day-start .su-btn{margin-top:10px}
 @media (max-width:380px){.pl-tools.small{flex-wrap:wrap;justify-content:flex-end}}
 .pl-editing .simple-exercise-row .pl-tools.small{flex-basis:100%;justify-content:flex-end;flex-wrap:wrap;margin:6px 0 2px}
+
+/* ===== Layout responsive: su tablet e desktop giorni e schede si dispongono in colonne
+   che seguono la larghezza dello schermo; su telefono resta l'elenco singolo. */
+@media (min-width:700px){
+ .simple-days{grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));align-items:start}
+ .simple-plan-list{grid-template-columns:repeat(auto-fill,minmax(min(100%,380px),1fr));align-items:start}
+}

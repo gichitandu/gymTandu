@@ -1,6 +1,6 @@
 /* The training hub mirrors the compact violet and blue reference. */
 :host{display:block;min-width:0}
-:host .compact-plans{max-width:760px;min-width:0}
+:host .compact-plans{max-width:none;min-width:0}
 :host .plans-heading{align-items:center;gap:12px;margin:0 0 15px}
 :host .plans-heading h1{font-size:28px;line-height:1.15;letter-spacing:-.8px;margin:0}
 :host .plans-heading p{font-size:12px;line-height:1.5;color:var(--muted);margin:6px 0 0}

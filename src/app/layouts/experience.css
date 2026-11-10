@@ -24,9 +24,14 @@ gt-shell::before {
 gt-shell .app-main {
   margin-left: 248px;
 }
+/* Layout fluido: il contenuto occupa tutta la larghezza disponibile del display;
+   le pagine dispongono le card in griglie adattive invece di una colonna fissa. */
 gt-shell main {
-  max-width: 1280px;
+  max-width: none;
   padding: 38px clamp(24px, 3.8vw, 60px) 24px;
+}
+gt-shell .topbar-right {
+  margin-left: auto;
 }
 gt-shell main > router-outlet + * {
   display: block;
@@ -1593,7 +1598,7 @@ body.custom-light gt-shell .compact-rest-chip {
     margin-left: 0;
   }
   gt-shell main {
-    max-width: 680px;
+    max-width: none;
     padding: 22px max(18px, var(--safe-right)) 12px max(18px, var(--safe-left));
   }
   gt-shell .topbar {

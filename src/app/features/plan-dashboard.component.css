@@ -5,7 +5,7 @@
 .session-row .button{max-width:48%;white-space:normal;text-align:center;line-height:1.4}
 
 /* The same compact metric cards and violet program identity as the preview. */
-:host .plan-dashboard{max-width:760px}
+:host .plan-dashboard{max-width:none}
 :host .dashboard-heading{margin-bottom:16px;gap:10px}
 :host .dashboard-heading h1{font-size:25px;letter-spacing:-.65px}
 :host .dashboard-heading p{font-size:9px;letter-spacing:1.2px}

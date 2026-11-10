@@ -160,3 +160,9 @@
 :host .meals-heading.su-head{display:flex;align-items:center;justify-content:space-between;margin:2px 2px 14px}
 :host .meals-heading.su-head::before{display:none}
 :host .meals-heading.su-head h1{margin:0;text-align:left;font-size:clamp(27px,8vw,32px);font-weight:850;letter-spacing:-1.1px}
+
+/* ===== Layout responsive: su tablet e desktop i pasti di ogni gruppo si affiancano
+   in colonne che si adattano alla larghezza dello schermo. */
+@media (min-width:700px){
+ :host .meal-diary-list{grid-template-columns:repeat(auto-fill,minmax(min(100%,340px),1fr))}
+}

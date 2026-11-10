@@ -125,3 +125,10 @@
 .history-more-body .subtle { margin: 0; font-size: 12px; line-height: 1.5; }
 .history-more-body > a, .history-more-body > button { min-height: 46px; gap: 7px; justify-content: center; }
 :host a.hx3-session{text-decoration:none;color:var(--text)}
+
+/* ===== Layout responsive: su tablet e desktop le sedute si dispongono in colonne
+   che riempiono la larghezza disponibile; i titoli dei mesi restano a tutta riga. */
+@media (min-width:700px){
+ .hx3-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,340px),1fr));gap:10px}
+ .hx3-list>:not(.hx3-session){grid-column:1/-1}
+}

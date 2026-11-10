@@ -1,4 +1,4 @@
-:host{display:block;max-width:820px;margin:0 auto;min-width:0}
+:host{display:block;max-width:none;margin:0 auto;min-width:0}
 :host .neon-page-heading{margin-bottom:16px}
 :host .neon-page-heading .eyebrow{font-size:11px;letter-spacing:1.4px;color:var(--muted)}
 :host .wellness-dashboard{display:flex;flex-direction:column;gap:0;margin:0 0 18px}

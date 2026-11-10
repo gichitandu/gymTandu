@@ -1,7 +1,7 @@
 /* Home: aurora, anello obiettivo protagonista, card della prossima seduta, settimana a barre e bento.
    Tutti i colori derivano dalle variabili del tema (palette e modalità scelte nell'app). */
 @property --hx-sweep{syntax:'<percentage>';inherits:false;initial-value:0%}
-:host{display:block;max-width:680px;margin:0 auto;min-width:0;--hx-violet:color-mix(in srgb,#c49bff 72%,var(--accent));--hx-rest:#7db8ff;--hx-green:var(--green,#4ff0b0);--hx-amber:var(--warning,#ffc95c);--hx-red:var(--danger,#ff8da6);--hx-line:color-mix(in srgb,var(--accent) 22%,var(--line));--hx-glass:linear-gradient(160deg,color-mix(in srgb,var(--accent) 12%,var(--card)),color-mix(in srgb,var(--card) 94%,var(--bg)))}
+:host{display:block;max-width:none;margin:0 auto;min-width:0;--hx-violet:color-mix(in srgb,#c49bff 72%,var(--accent));--hx-rest:#7db8ff;--hx-green:var(--green,#4ff0b0);--hx-amber:var(--warning,#ffc95c);--hx-red:var(--danger,#ff8da6);--hx-line:color-mix(in srgb,var(--accent) 22%,var(--line));--hx-glass:linear-gradient(160deg,color-mix(in srgb,var(--accent) 12%,var(--card)),color-mix(in srgb,var(--card) 94%,var(--bg)))}
 .hx-page{position:relative;isolation:isolate;min-width:0;animation:hxFade .5s ease both}
 .hx-page>*{min-width:0}
 .hx-aurora{position:absolute;z-index:-1;left:0;right:0;top:-24px;height:720px;pointer-events:none;background:radial-gradient(420px 360px at 88% 6%,color-mix(in srgb,var(--accent) 45%,transparent),transparent 66%),radial-gradient(380px 380px at 0% 30%,color-mix(in srgb,var(--hx-violet) 38%,transparent),transparent 66%),radial-gradient(300px 260px at 62% 56%,color-mix(in srgb,var(--hx-red) 14%,transparent),transparent 70%);-webkit-mask:radial-gradient(ellipse 80% 72% at 50% 38%,#000 45%,transparent 100%);mask:radial-gradient(ellipse 80% 72% at 50% 38%,#000 45%,transparent 100%)}
@@ -211,3 +211,13 @@ a:focus-visible,input:focus-visible{outline:2px solid var(--accent-text);outline
 .hx-simple .hx-nut-txt strong{font-size:22px}
 .hx-photo{margin-top:14px}
 .hx-simple gt-backup-reminder{display:block}
+
+/* ===== Layout responsive: su tablet e desktop le card si affiancano in una griglia
+   che si adatta alla larghezza disponibile (1 colonna su telefono, 2-4 sugli schermi ampi). */
+@media (min-width:700px){
+ .hx-simple{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,330px),1fr));gap:16px;align-items:stretch}
+ .hx-simple>:is(.hx-hello,gt-status,gt-backup-reminder){grid-column:1/-1}
+ .hx-simple>:is(gt-status,gt-backup-reminder):empty{display:none}
+ .hx-simple>.hx-hello{margin-bottom:2px}
+ .hx-simple>:is(.su-card,.hx-next,gt-backup-reminder){margin:0}
+}

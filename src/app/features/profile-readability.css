@@ -150,3 +150,14 @@
   line-height: 1;
   text-shadow: 0 1px 8px color-mix(in srgb, var(--accent) 55%, transparent);
 }
+
+/* ===== Layout responsive: nella panoramica del Profilo, su tablet e desktop i gruppi di
+   impostazioni si distribuiscono in colonne che riempiono la larghezza disponibile. */
+@media (min-width:700px){
+ :host:has(> .pf-identity){columns:340px 3;column-gap:22px}
+ :host:has(> .pf-identity)>:is(header,gt-status,.notice,.pf-identity){column-span:all}
+ :host:has(> .pf-identity)>.su-list{break-inside:avoid;-webkit-column-break-inside:avoid}
+ :host:has(> .pf-identity)>.su-group{margin-top:0;break-after:avoid;-webkit-column-break-after:avoid}
+ :host:has(> .pf-identity)>.su-list{margin-bottom:22px}
+ :host:has(> .pf-identity)>.pf-identity{margin-bottom:22px}
+}

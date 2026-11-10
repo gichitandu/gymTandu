@@ -1,5 +1,5 @@
 /* Statistiche del piano v3 (anteprima 11). Solo token del tema, sopra lo stile esistente. */
-:host .plan-dashboard { display: flex; flex-direction: column; gap: 12px; max-width: 640px; }
+:host .plan-dashboard { display: flex; flex-direction: column; gap: 12px; max-width: none; }
 :host .plan-dashboard > .card, :host .plan-dashboard > .pd3-hero, :host .plan-dashboard > .pd3-select { margin: 0; }
 :host .dashboard-heading { margin: 0; gap: 10px; }
 :host .dashboard-heading .icon-btn {

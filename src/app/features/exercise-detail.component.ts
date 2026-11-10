@@ -10,7 +10,7 @@ import {MachineSetupComponent} from '../shared/machine-setup.component';
 import {MuscleMapComponent} from '../shared/muscle-map.component';
 import {StatusComponent} from '../shared/status.component';
 @Component({standalone:true,imports:[RouterLink,IconComponent,ExerciseThumbComponent,ExerciseMotionComponent,ExerciseVideoComponent,MachineSetupComponent,MuscleMapComponent,StatusComponent],styles:[`
- :host{display:block;max-width:620px;margin:0 auto}
+ :host{display:block;max-width:none;margin:0 auto}
  .ex3-head{gap:10px}.ex3-head .icon-btn{flex:none;width:44px;min-width:44px;height:44px;border-radius:14px;border:1px solid var(--line);background:color-mix(in srgb,var(--text) 4%,transparent)}
  .ex3-head .eyebrow{font-size:10px;font-weight:800;letter-spacing:.14em;color:var(--accent-text)}.ex3-head h1{font-size:24px;font-weight:900;letter-spacing:-.02em;line-height:1.15;overflow-wrap:anywhere}
  .ex3-fav{font-size:20px;color:var(--muted)}.ex3-fav.on{color:var(--warning,#fcd34d);border-color:color-mix(in srgb,var(--warning,#fcd34d) 45%,transparent)}

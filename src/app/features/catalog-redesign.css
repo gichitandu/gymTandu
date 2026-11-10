@@ -183,3 +183,13 @@
 :host .catalog-compact .favorite-button.favorite-on{color:var(--warning,#f5c765)}
 :host .catalog-compact .catalog-edit gt-icon{width:18px;height:18px}
 :host .catalog-design-list>.catalog-empty{margin:0;border:0}
+
+/* ===== Layout responsive: le righe occupano tutta la larghezza (azioni allineate a destra);
+   su tablet e desktop l'elenco si divide in più colonne in base allo spazio disponibile. */
+:host .catalog-grid.catalog-design-list{align-items:stretch!important}
+@media (min-width:700px){
+ :host .catalog-grid.catalog-design-list{display:grid!important;grid-template-columns:repeat(auto-fill,minmax(min(100%,340px),1fr));align-content:start}
+ :host .catalog-design-list>.catalog-design-row.catalog-compact{margin-top:-1px!important}
+ :host .catalog-design-list>.catalog-design-row.catalog-compact:first-child{border-top:1px solid color-mix(in srgb,var(--text) 7%,transparent)!important}
+ :host .catalog-design-list>.catalog-empty{grid-column:1/-1}
+}
