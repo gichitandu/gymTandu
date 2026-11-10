@@ -1,10 +1,9 @@
+import {backupReminder} from '../services/backup-reminder';
 import { DESIGN_DIRECTIVES } from '../design/design-directives';
 import {DesignRuntime} from '../design/design-runtime';
 import {ThemePickerComponent} from '../shared/theme-picker.component';
 import {InstallHelpComponent} from '../shared/install-help.component';
 import {AppFeaturesService} from '../services/app-features';
-import {AppFeaturesComponent} from '../shared/app-features.component';
-import {StorageStatusComponent} from '../shared/storage-status.component';
 import {PushReminderComponent} from '../shared/push-reminder.component';
 import {CalendarSubscriptionComponent} from '../shared/calendar-subscription.component';
 import { DateFieldComponent } from '../shared/date-field.component';
@@ -20,7 +19,7 @@ import { ThemeService, DEFAULT_BACKGROUND } from "../services/theme";
 import { feedbackForContext, feedbackSignal } from "../services/feedback";
 import { AuthService } from "../services/auth";
 import { A11yModule } from "@angular/cdk/a11y";
-import { Component, effect, HostListener, inject, signal } from "@angular/core";
+import { computed, Component, effect, HostListener, inject, signal } from "@angular/core";
 import { FormDraftService, DraftSession } from '../services/form-drafts';
 import { TodayService } from '../services/today';
 import { AppUpdatesComponent } from '../shared/app-updates.component';
@@ -50,7 +49,7 @@ interface ProfileFormDraft {
 @Component({
   standalone: true,
   styleUrls: ["./account-polish.css", "./profile-redesign.css", "./profile-readability.css"],
-  imports: [InstallHelpComponent,...DESIGN_DIRECTIVES,ThemePickerComponent,AppFeaturesComponent,StorageStatusComponent,PushReminderComponent,CalendarSubscriptionComponent,DateFieldComponent,BackupReminderComponent,ArchiveSyncComponent,AppUpdatesComponent,
+  imports: [InstallHelpComponent,...DESIGN_DIRECTIVES,ThemePickerComponent,PushReminderComponent,CalendarSubscriptionComponent,DateFieldComponent,BackupReminderComponent,ArchiveSyncComponent,AppUpdatesComponent,
     A11yModule,
     AvatarComponent,
     IosStatusComponent,
@@ -64,21 +63,46 @@ interface ProfileFormDraft {
   template: `<header class="profile-page-heading">
  @if(panel()!=='overview'){<button class="icon-btn ghost" aria-label="Torna al profilo" (click)="panel.set('overview')"><gt-icon name="back"/></button>}
  <h1 gtDesign="profile.title">@if(panel()==='overview'){<span gtDesignLabel="profile.title">Profilo</span>}@else{ {{panelLabel()}} }</h1>
- @if(panel()==='overview'){<button type="button" class="icon-btn profile-settings-button" aria-label="Apri impostazioni" (click)="panel.set('settings')"><gt-icon name="settings"/></button>}
 </header><gt-status/>
 @if(draftRestored()){<div class="notice" role="status">Bozza recuperata: controlla i valori e salva per confermarli.<button type="button" class="ghost" (click)="discardDraft()">Elimina bozza</button></div>}
-@if((panel()==='overview'||panel()==='theme')&&design?.canManage()){
+@if(panel()==='theme'&&design?.canManage()){
 <a class="button studio-profile-entry" routerLink="/design-studio"><gt-icon name="palette"/><span><strong>GT Design Studio</strong><small>Super Admin · pagine, controlli, palette e preset</small></span><gt-icon name="arrow"/></a>
 }
 @if(panel()==='overview'){
-<section gtDesign="profile.identity" class="profile-dashboard identity-card" aria-label="Il tuo profilo">
- <div class="profile-head"><div class="avatar-orbit"><div class="profile-avatar"><gt-avatar [photo]="s.profile().photo" [name]="s.profile().name"/></div></div><div class="identity-name"><h2>{{s.profile().name}}</h2><div class="identity-meta"><span class="pill">{{auth.uiRole()==='SuperAdmin'?'Super Admin':auth.uiRole()==='Admin'?'Admin':'Personale'}}</span>@if(auth.user()?.username){<span class="subtle">@{{auth.user()?.username}}</span>}</div></div></div>
- <div class="profile-key-stats"><div><strong>{{s.profile().bodyWeight!==undefined?s.formatWeight(s.profile().bodyWeight!):'—'}} <small>{{s.settings().unit}}</small></strong><span>Peso</span></div><div><strong>{{s.profile().height??'—'}} <small>cm</small></strong><span>Altezza</span></div><div><strong>{{age()??'—'}}</strong><span>Età</span></div></div>
- @if(s.profile().goal){<p class="profile-goal-note">{{s.profile().goal}}</p>}
-</section>
-<div class="profile-quick-actions" role="group" aria-label="Azioni rapide"><button type="button" (click)="panel.set('settings')"><span class="qa-ico"><gt-icon name="edit"/></span>Modifica</button><button type="button" (click)="panel.set('measurements')"><span class="qa-ico"><gt-icon name="activity"/></span>Misura</button><button type="button" (click)="panel.set('theme')"><span class="qa-ico"><gt-icon name="palette"/></span>Tema</button></div>
-<div class="profile-menu-group"><div class="account-section-label"><span gtDesign="profile.sections.journey" gtDesignLabel="profile.sections.journey">IL TUO PERCORSO</span></div><nav class="profile-menu" aria-label="Percorso personale"><button gtDesign="profile.goals" (click)="panel.set('goals')"><gt-icon name="trophy" gtDesignIcon="profile.goals"/><span><strong gtDesignLabel="profile.goals">Obiettivi</strong><small>Allenamenti e riferimenti personali</small></span>›</button><button gtDesign="profile.measurements" (click)="panel.set('measurements')"><gt-icon name="activity" gtDesignIcon="profile.measurements"/><span><strong gtDesignLabel="profile.measurements">Misurazioni corporee</strong><small>{{measurementHistory()[0]?('Ultima: '+s.formatWeight(measurementHistory()[0].weight)+' '+s.settings().unit+' · '+measurementHistory()[0].date):'Peso, girovita e storico'}}</small></span>›</button><a class="profile-recovery-link" routerLink="/recupero"><gt-icon name="moon"/><span><strong>Recovery e riposo</strong><small>Sonno, energia e focus muscolare</small></span>›</a></nav></div>
-<div class="profile-menu-group"><div class="account-section-label"><span gtDesign="profile.sections.space" gtDesignLabel="profile.sections.space">IL TUO SPAZIO</span></div><nav class="profile-menu" aria-label="Preferenze e dati"><button gtDesign="profile.settings" (click)="panel.set('settings')"><gt-icon name="settings" gtDesignIcon="profile.settings"/><span><strong gtDesignLabel="profile.settings">Impostazioni</strong><small>Aspetto, allenamento e dispositivo</small></span>›</button>@if(auth.canManageBackups()){<button (click)="panel.set('backup')"><gt-icon name="download"/><span><strong>Dati e backup</strong><small>Sincronizzazione, esportazione e ripristino</small></span>@if(s.settings().lastBackup){<em class="menu-badge">Backup fatto</em>}›</button>}<button gtDesign="profile.security" (click)="panel.set('security')"><gt-icon name="shield" gtDesignIcon="profile.security"/><span><strong gtDesignLabel="profile.security">Account e accessi</strong><small>Credenziali e gestione utenti</small></span>›</button></nav></div>
+<button type="button" gtDesign="profile.identity" class="su-card pf-identity" (click)="panel.set('settings')" aria-label="Dati personali">
+ <span class="pf-avatar"><gt-avatar [photo]="s.profile().photo" [name]="s.profile().name"/></span>
+ <span class="pf-who"><strong>{{s.profile().name}}</strong><small>{{s.profile().bodyWeight!==undefined?s.formatWeight(s.profile().bodyWeight!)+' '+s.settings().unit:''}}{{s.profile().bodyWeight!==undefined&&s.profile().height?' · ':''}}{{s.profile().height?s.profile().height+' cm':''}}@if(auth.user()?.username){ · @{{auth.user()?.username}}}</small><span class="su-badge violet">{{auth.uiRole()==='SuperAdmin'?'Super Admin':auth.uiRole()==='Admin'?'Admin':'Personale'}}</span></span>
+ <gt-icon name="chevron-right"/>
+</button>
+<div class="su-group">Obiettivi</div>
+<div class="su-list">
+ <button type="button" class="su-row" gtDesign="profile.goals" (click)="panel.set('goals')"><span class="su-bubble pink"><gt-icon name="trophy"/></span><span class="su-tx"><strong>Allenamenti a settimana</strong></span><span class="su-val">{{s.settings().goals?.workoutsPerWeek||'Imposta'}}</span><gt-icon class="su-chev" name="chevron-right"/></button>
+ @if(appFeatures?.nutritionEnabled()){<button type="button" class="su-row" (click)="panel.set('goals')"><span class="su-bubble green"><gt-icon name="nutrition"/></span><span class="su-tx"><strong>Calorie e macro</strong></span><span class="su-val">{{s.settings().goals?.calories?(s.settings().goals!.calories!.toLocaleString('it-IT')+' kcal'):'Imposta'}}</span><gt-icon class="su-chev" name="chevron-right"/></button>}
+</div>
+<div class="su-group">App</div>
+<div class="su-list">
+ <button type="button" class="su-row" gtDesign="profile.theme" (click)="panel.set('theme')"><span class="su-bubble violet"><gt-icon name="palette"/></span><span class="su-tx"><strong>Aspetto</strong><small>Tema, colori e animazioni</small></span><gt-icon class="su-chev" name="chevron-right"/></button>
+ <button type="button" class="su-row" gtDesign="profile.settings" (click)="panel.set('settings')"><span class="su-bubble blue"><gt-icon name="settings"/></span><span class="su-tx"><strong>Allenamento e notifiche</strong><small>Unità, precompilazione, promemoria e suoni</small></span><gt-icon class="su-chev" name="chevron-right"/></button>
+ <button type="button" class="su-row" (click)="panel.set('calendar')"><span class="su-bubble pink"><gt-icon name="calendar"/></span><span class="su-tx"><strong>Calendario iPhone</strong><small>Collega le sedute programmate</small></span><gt-icon class="su-chev" name="chevron-right"/></button>
+ <button type="button" class="su-row" (click)="panel.set('info')"><span class="su-bubble amber"><gt-icon name="info"/></span><span class="su-tx"><strong>Installa e uso offline</strong><small>App sull’iPhone, archiviazione e verifiche</small></span><gt-icon class="su-chev" name="chevron-right"/></button>
+</div>
+<div class="su-group">Dati</div>
+<div class="su-list">
+ @if(auth.canManageBackups()){<button type="button" class="su-row" (click)="panel.set('backup')"><span class="su-bubble amber"><gt-icon name="download"/></span><span class="su-tx"><strong>Backup e ripristino</strong><small>{{s.settings().backupConfirmedAt?'Ultima copia in File: '+shortDate(s.settings().backupConfirmedAt!):'Nessuna copia in File confermata'}}</small></span>@if(backupDue()){<span class="su-badge amber">Da fare</span>}@else{<gt-icon class="su-chev" name="chevron-right"/>}</button>
+ <a class="su-row" routerLink="/recupera-allenamenti"><span class="su-bubble blue"><gt-icon name="repeat"/></span><span class="su-tx"><strong>Recupera un allenamento</strong></span><gt-icon class="su-chev" name="chevron-right"/></a>}
+ <a class="su-row" routerLink="/importa-excel" [queryParams]="{tab:'archive'}"><span class="su-bubble green"><gt-icon name="note"/></span><span class="su-tx"><strong>Excel importati</strong><small>File originali delle schede importate</small></span><gt-icon class="su-chev" name="chevron-right"/></a>
+</div>
+@if(auth.uiRole()==='SuperAdmin'||auth.uiRole()==='Admin'||(auth.user()?.role==='SuperAdmin'&&!auth.offlineMode())){<div class="su-group">Amministrazione</div>
+<div class="su-list">
+ @if(auth.uiRole()==='SuperAdmin'||auth.uiRole()==='Admin'){<a class="su-row" routerLink="/utenti"><span class="su-bubble violet"><gt-icon name="user"/></span><span class="su-tx"><strong>{{auth.uiRole()==='SuperAdmin'?'Utenti, spazio e quota AI':'Utenti'}}</strong><small>Account, sezioni dell’app{{auth.uiRole()==='SuperAdmin'?', spazio R2 e riconoscimento foto':''}}</small></span><gt-icon class="su-chev" name="chevron-right"/></a>}
+ @if(design?.canManage()){<a class="su-row" routerLink="/design-studio"><span class="su-bubble blue"><gt-icon name="palette"/></span><span class="su-tx"><strong>GT Design Studio</strong><small>Pagine, controlli, palette e preset</small></span><gt-icon class="su-chev" name="chevron-right"/></a>}
+ @if(auth.user()?.role==='SuperAdmin'&&!auth.offlineMode()){<label class="su-row pf-toggle"><span class="su-bubble green"><gt-icon name="eye"/></span><span class="su-tx"><strong>Vedi come cliente</strong><small>{{auth.viewAsClient()?'Vista cliente attiva · usi i tuoi dati':'Anteprima del ruolo con i tuoi dati'}}</small></span><input type="checkbox" role="switch" aria-label="Visualizza come cliente" [checked]="auth.viewAsClient()" (change)="auth.setClientView($any($event.target).checked)"/></label>}
+</div>}
+<div class="su-group">Account</div>
+<div class="su-list">
+ <button type="button" class="su-row" gtDesign="profile.security" (click)="panel.set('security')"><span class="su-bubble blue"><gt-icon name="shield"/></span><span class="su-tx"><strong>Account e sicurezza</strong><small>Nome utente, password, accesso offline</small></span><gt-icon class="su-chev" name="chevron-right"/></button>
+ <button type="button" class="su-row danger" gtDesign="profile.logout" [disabled]="loggingOut()" (click)="logout()"><span class="su-bubble red"><gt-icon name="back"/></span><span class="su-tx"><strong>{{loggingOut()?'Uscita…':'Esci dall’app'}}</strong><small>Puoi uscire senza backup: i dati salvati restano nel tuo archivio.</small></span></button>
+</div>
 }
 @if(panel()==='goals'){<section class="card"><h2>I tuoi obiettivi</h2><p class="subtle" style="margin:12px 0 20px">Inserisci i tuoi riferimenti personali. Non vengono calcolati da una fotografia e non sono prescrizioni automatiche.</p><form [formGroup]="goalsForm" (ngSubmit)="saveGoals()" class="form-grid">@if(appFeatures?.nutritionEnabled()){<label>Calorie giornaliere (kcal)<input type="number" inputmode="numeric" formControlName="calories" min="1" max="20000"/></label><label>Proteine giornaliere (g)<input type="number" inputmode="decimal" formControlName="protein" min="1" max="2000"/></label><label>Carboidrati giornalieri (g)<input type="number" inputmode="decimal" formControlName="carbs" min="1" max="3000"/></label><label>Grassi giornalieri (g)<input type="number" inputmode="decimal" formControlName="fat" min="1" max="2000"/></label>}<label class="wide">Allenamenti per settimana<input type="number" inputmode="numeric" formControlName="workoutsPerWeek" min="1" max="14"/></label><button class="primary wide" [disabled]="goalsForm.invalid||goalsSaving()||s.busy()||!s.ready()">Salva obiettivi</button></form><p class="subtle" style="margin-top:14px">Lascia vuoto un campo per rimuovere quel riferimento.</p></section>}
 @if(panel()==='measurements'){<section class="card"><h2>Registra misurazione</h2><form #measurementForm="ngForm" (ngSubmit)="saveMeasurement()" class="form-grid" style="margin-top:18px"><label>Data<gt-date-field name="date" [ngModel]="measurementDate" (ngModelChange)="chooseMeasurementDate($event)" required [max]="today"></gt-date-field></label><label>Peso ({{s.settings().unit}})<input name="weight" type="number" inputmode="decimal" [(ngModel)]="measurementWeight" min="1" max="1500" step="0.1" required/></label><label>Girovita (cm, facoltativo)<input name="waist" type="number" inputmode="decimal" [(ngModel)]="measurementWaist" min="1" max="300" step="0.1"/></label><label>Massa grassa (%, facoltativa)<input name="bodyfat" type="number" inputmode="decimal" [(ngModel)]="measurementBodyFat" min="1" max="80" step="0.1"/></label><button class="primary wide" [disabled]="measurementForm.invalid||s.busy()">Salva misurazione</button></form></section><section class="card" style="margin-top:18px"><h2>Storico misurazioni</h2><div class="list" style="margin-top:18px">@for(m of measurementHistory();track m.id){<div class="measurement-row"><div><strong>{{s.formatWeight(m.weight)}} {{s.settings().unit}}</strong><p class="subtle">{{m.date}}{{m.waist?' · Vita '+m.waist+' cm':''}}{{m.bodyFat?' · Massa grassa '+m.bodyFat+'%':''}}</p></div><button class="ghost danger" (click)="removeMeasurement(m.id)" aria-label="Rimuovi misurazione">×</button></div>}@empty{<p class="subtle">Nessuna misurazione registrata.</p>}</div></section>}
@@ -218,13 +242,10 @@ interface ProfileFormDraft {
     </div>
     }
     @if(panel()==='settings'){
- <div class="profile-menu-group settings-shortcuts"><div class="account-section-label"><span>DISPOSITIVO</span></div><nav class="profile-menu" aria-label="Dispositivo"><button (click)="panel.set('calendar')"><gt-icon name="calendar"/><span><strong>Calendario iPhone</strong><small>Collega le sedute programmate</small></span>›</button><button (click)="panel.set('info')"><gt-icon name="info"/><span><strong>App e iPhone</strong><small>Installazione, offline e verifiche</small></span>›</button></nav></div>
  <details class="settings-disclosure settings-component"><summary><gt-icon name="clock"/><span><strong>Notifiche e promemoria</strong><small>Avvisi e suoni del recupero</small></span><span class="disclosure-chevron">›</span></summary><div class="settings-disclosure-body"><gt-push-reminder/></div></details>
  <details class="settings-disclosure settings-component"><summary><gt-icon name="download"/><span><strong>Aggiornamenti dell’app</strong><small>Versione installata e disponibilità</small></span><span class="disclosure-chevron">›</span></summary><div class="settings-disclosure-body"><gt-app-updates/></div></details>
  <details class="settings-disclosure settings-component"><summary><gt-icon name="home"/><span><strong>Icona e collegamento Home</strong><small>Logo GT e link diretto dell’app</small></span><span class="disclosure-chevron">›</span></summary><div class="settings-disclosure-body"><gt-install-help/></div></details>
- <div class="profile-menu-group settings-shortcuts"><div class="account-section-label"><span>GESTIONE</span></div><nav class="profile-menu" aria-label="Gestione">@if(auth.canManageBackups()){<button (click)="panel.set('backup')"><gt-icon name="download"/><span><strong>Dati e backup</strong><small>Copia, esporta o ripristina</small></span>›</button>}<button (click)="panel.set('security')"><gt-icon name="shield"/><span><strong>Account e sicurezza</strong><small>Accesso e credenziali</small></span>›</button><a routerLink="/catalogo"><gt-icon name="weight"/><span><strong>{{s.canEditCatalog()?'Gestione esercizi':'Catalogo esercizi'}}</strong><small>Varianti, preferiti e configurazioni</small></span>›</a><a routerLink="/calendario"><gt-icon name="calendar"/><span><strong>Calendario allenamenti</strong><small>Il tuo ritmo, giorno per giorno</small></span>›</a></nav></div>
- @if(auth.uiRole()==='SuperAdmin'){<details class="settings-disclosure settings-component"><summary><gt-icon name="shield"/><span><strong>Amministrazione</strong><small>Utenti e sezioni dell’app</small></span><span class="disclosure-chevron">›</span></summary><div class="settings-disclosure-body"><gt-app-features/><gt-storage-status/><a class="button full-width" routerLink="/utenti">Gestione utenti <gt-icon name="arrow"/></a></div></details>}
- <section class="card profile-logout-card" style="margin-top:20px"><h2>Accesso all’app</h2><p class="subtle" style="margin:12px 0">Puoi uscire senza fare un backup. Piani, esercizi e allenamenti salvati restano nel tuo archivio.</p><button type="button" class="full-width" gtDesign="profile.logout" [disabled]="loggingOut()" (click)="logout()">{{loggingOut()?'Uscita…':'Esci dall’app'}}</button></section>}
+}
     @if(panel()==='backup'&&auth.canManageBackups()){<a class="button primary full-width" routerLink="/recupera-allenamenti">Recupera una singola seduta · progressi e serie</a><gt-archive-sync (recover)="recoverCloud($event)"/><gt-backup-reminder mode="settings"/><section class="card" style="margin-top:20px">
       <div class="card-head">
         <div>
@@ -416,6 +437,8 @@ export class ProfileComponent {
     goal: [""],
   });
   panel=signal('overview');
+  backupDue=computed(()=>backupReminder(this.s.settings()).due);
+  shortDate(value:string){return new Date(value).toLocaleDateString('it-IT',{day:'numeric',month:'short'});}
   panelLabel(){return ({overview:'Profilo',goals:'Obiettivi',measurements:'Misurazioni corporee',settings:'Impostazioni',calendar:'Calendario iPhone',theme:'Tema e personalizzazione',backup:'Backup e ripristino',security:'Account e sicurezza',info:'Informazioni app'} as Record<string,string>)[this.panel()]||'Profilo';}
   age(){const birth=this.s.profile().birthDate;if(!birth)return null;const d=new Date(birth+'T12:00:00'),now=new Date();return now.getFullYear()-d.getFullYear()-((now.getMonth()<d.getMonth()||now.getMonth()===d.getMonth()&&now.getDate()<d.getDate())?1:0);}
   measurementDate=this.today;measurementWeight:number|null=null;measurementWaist:number|null=null;measurementBodyFat:number|null=null;private measurementDateChosen=false;

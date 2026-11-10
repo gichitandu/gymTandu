@@ -19,7 +19,7 @@ const ignored = file => /^(?:docs\/|public\/|\.github\/ISSUE_TEMPLATE\/)/.test(f
   || /^(?:README|AGENTS|QA_CHECKLIST|DEVELOPMENT_PLAN|IPHONE_QA|AUTHENTICATION|STANDALONE)\.md$/.test(file);
 const critical = file => /^(?:package(?:-lock)?\.json|angular\.json|tsconfig[^/]*\.json|vitest\.config\.ts|\.nvmrc|\.npmrc|ngsw-config\.json)$/.test(file)
   || /^(?:\.github\/workflows\/|tools\/|worker\/|calendar-relay\/|db\/|drizzle\/|shared\/)/.test(file)
-  || /^(?:src\/(?:main\.ts|styles\.css|design-runtime\.css|neon\.css|form-polish\.css|theme-finishes\.css|photo-controls\.css|preview-match\.css|screens-redesign\.css))$/.test(file)
+  || /^(?:src\/(?:main\.ts|styles\.css|design-runtime\.css|neon\.css|form-polish\.css|theme-finishes\.css|photo-controls\.css|preview-match\.css|screens-redesign\.css|simple-ui\.css))$/.test(file)
   || /^(?:src\/app\/(?:core\/(?:database|seed|routes)\.ts|models\/domain\.ts|repositories\/|services\/(?:store|auth|archive-sync|backup|integrity|pwa|feedback)\.ts|layouts\/|design\/))/.test(file)
   || /^(?:tests\/runtime\/|tests\/fixtures\/)/.test(file);
 

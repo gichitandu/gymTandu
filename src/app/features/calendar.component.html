@@ -29,6 +29,7 @@
           <span class="cal-filter-dot" aria-label="Filtri attivi"></span>
         }
       </button>
+      <gt-profile-link />
     </div>
   </header>
   <gt-status />
@@ -37,24 +38,12 @@
     <span
       class="cal-view-glider"
       aria-hidden="true"
-      [style.transform]="
-        'translateX(' +
-        (view() === 'day' ? 0 : view() === 'week' ? 100 : 200) +
-        '%)'
-      "
+      [style.transform]="'translateX(' + (view() === 'month' ? 100 : 0) + '%)'"
     ></span>
     <button
       type="button"
-      [class.active]="view() === 'day'"
-      [attr.aria-pressed]="view() === 'day'"
-      (click)="view.set('day')"
-    >
-      <gt-icon name="clock" />Giorno
-    </button>
-    <button
-      type="button"
-      [class.active]="view() === 'week'"
-      [attr.aria-pressed]="view() === 'week'"
+      [class.active]="view() === 'week' || view() === 'day'"
+      [attr.aria-pressed]="view() === 'week' || view() === 'day'"
       (click)="view.set('week')"
     >
       <gt-icon name="plans" />Settimana
@@ -67,6 +56,7 @@
     >
       <gt-icon name="calendar" />Mese
     </button>
+    <a routerLink="/allenamenti" class="cal-view-link"><gt-icon name="clock" />Elenco</a>
   </div>
 
   <ng-template #periodNav>
@@ -663,7 +653,6 @@
       }
     </section>
   }
-  <gt-calendar-subscription class="cal-sync" />
 
   @if (addOpen()) {
     <div
@@ -875,13 +864,6 @@
       >
         Mostra {{ visibleCount() }} {{ visibleCount() === 1 ? "voce" : "voci" }}
       </button>
-      <a
-        class="cal-filter-link"
-        routerLink="/profilo"
-        [queryParams]="{ section: 'calendar' }"
-        (click)="closeSheets()"
-        ><gt-icon name="calendar" />Calendario iPhone</a
-      >
     </section>
   </div>
 }

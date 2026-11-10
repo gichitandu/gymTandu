@@ -9,13 +9,14 @@ import {DataSet,WorkoutUiState} from '../models/domain';
 import {formatSeconds,remainingSeconds} from '../services/rest-clock';
 import {recordingTimerState,toggleWorkoutTimer} from '../services/workout-timer';
 import {IconComponent} from './icon.component';
-@Component({selector:'gt-workout-clock',standalone:true,imports:[IconComponent],template:`
+import {RouterLink} from '@angular/router';
+@Component({selector:'gt-workout-clock',standalone:true,imports:[IconComponent,RouterLink],template:`
 @if(visible();as timer){<section class="workout-clock" aria-label="Recupero dell’allenamento in corso">
  @if(context()){<span class="timer-context">{{context()}}</span>}
  <div class="timer-row"><gt-icon name="clock"/><div class="timer-value"><span>{{remaining()===0&&!timer.paused?'Recupero terminato':timer.paused?'Recupero in pausa':'Recupero'}}</span><strong role="timer" aria-live="off">{{format(remaining())}}</strong><small>{{format(elapsed())}} trascorsi</small></div>
  <button type="button" class="timer-toggle" (click)="toggle()" [disabled]="busy()||(!remaining()&&!timer.paused)" [attr.aria-label]="timer.paused?'Riprendi recupero':'Metti recupero in pausa'" [title]="timer.paused?'Riprendi recupero':'Metti recupero in pausa'">@if(timer.paused){<gt-icon name="play"/>}@else{<span aria-hidden="true">Ⅱ</span>}</button>
  <button type="button" class="timer-return" (click)="returnToRecording()" [disabled]="busy()">Torna alla serie<gt-icon name="arrow"/></button></div>
- </section>}`,styleUrl:'./workout-clock.component.css'})
+ </section>}@else if(live();as w){<a class="workout-live" routerLink="/sessione" aria-label="Riprendi l’allenamento in corso"><span class="live-icon"><gt-icon name="weight"/></span><span class="live-text"><strong>{{w.dayName}}</strong><small>In corso · {{liveProgress()}}</small></span><span class="live-go">Riprendi</span></a>}`,styleUrl:'./workout-clock.component.css'})
 export class WorkoutClockComponent {
  readonly router=inject(Router);readonly s=inject(Store);private resume=inject(WorkoutResumeService,{optional:true})||new WorkoutResumeService();
  // Router.url is not reactive: when the dock is hidden, no clock signal is read
@@ -26,6 +27,9 @@ export class WorkoutClockComponent {
  private destroyed=false;
  state=computed(()=>{this.clock();const draft=this.s.draft();if(!draft)return undefined;const state=this.read(draft.id);return state&&(state.restEnd>0||state.paused)&&state.restTotal>0?state:undefined;});
  visible=computed(()=>this.outsideSession()?this.state():undefined);
+ /** Allenamento aperto ma senza recupero attivo: barra compatta «In corso» sopra il menu, su ogni pagina tranne la seduta. */
+ live=computed(()=>{const draft=this.s.draft();if(!draft||!this.outsideSession()||this.state())return undefined;const path=routePath(this.routeUrl());return ['/piani','/calendario','/progressi','/alimentazione','/catalogo','/allenamenti','/profilo'].includes(path)?draft:undefined;});
+ liveProgress=computed(()=>{const draft=this.s.draft();if(!draft)return '';const data=this.s.data(),ids=new Set(data.workoutExercises.filter(e=>e.workoutId===draft.id).map(e=>e.id));const sets=data.sets.filter(s=>ids.has(s.workoutExerciseId)&&s.kind!=='warmup');return sets.filter(s=>s.completed).length+' di '+sets.length+' serie';});
  remaining=computed(()=>{const state=this.state();return state?state.paused?state.pausedSeconds:remainingSeconds(state.restEnd,this.clock()):0;});
  elapsed=computed(()=>{const state=this.state();return state?state.paused?Math.max(0,state.restTotal-state.pausedSeconds):Math.max(0,Math.floor((this.clock()-state.restEnd)/1000)+state.restTotal):0;});
  context=computed(()=>{const state=this.state();if(!state)return '';const exercise=this.s.data().workoutExercises.find(e=>e.id===state.exerciseId&&e.workoutId===state.id);const set=this.s.data().sets.find(s=>s.id===state.setId&&s.workoutExerciseId===exercise?.id);return exercise?(set?'Serie '+set.number+' · ':'')+exercise.name:this.s.draft()?.dayName||'';});

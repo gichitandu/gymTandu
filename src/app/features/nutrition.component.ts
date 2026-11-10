@@ -1,3 +1,5 @@
+import { ProfileLinkComponent } from '../shared/profile-link.component';
+import {AuthService} from '../services/auth';
 import { DateFieldComponent } from '../shared/date-field.component';
 import { confirmationForContext } from '../services/confirmation';
 import { RouterLink } from "@angular/router";
@@ -21,8 +23,8 @@ interface MealFormDraft {
  grams:number;calories:number;protein:number;carbs:number;fat:number;notes:string;foodId:string;source:Meal['source'];
  photo?:Blob;pendingPhoto?:Blob;ingredients:MealIngredient[];composedName:string;followDay:boolean;followMealDate:boolean;
 }
-@Component({standalone:true,styleUrls:["./feature-polish.css","./nutrition-simple.css", "./nutrition-redesign.css"],imports: [DateFieldComponent,RouterLink,FormsModule,StatusComponent,IconComponent],template:`
-<header class="meals-heading"><h1>Pasti</h1></header>
+@Component({standalone:true,styleUrls:["./feature-polish.css","./nutrition-simple.css", "./nutrition-redesign.css"],imports: [ProfileLinkComponent,DateFieldComponent,RouterLink,FormsModule,StatusComponent,IconComponent],template:`
+<header class="meals-heading su-head"><h1>Pasti</h1><div class="su-actions"><gt-profile-link/></div></header>
 <div class="nutrition-day-selector"><button class="icon-btn ghost" aria-label="Giorno precedente" (click)="moveDay(-1)"><gt-icon name="back"/></button><label class="nutrition-date-heading"><strong>{{day===today?'Oggi · ':''}}{{dayLabel()}}</strong><gt-date-field aria-label="Data alimentazione" [ngModel]="day" (ngModelChange)="selectDay($event)"></gt-date-field></label><button class="icon-btn ghost" aria-label="Giorno successivo" (click)="moveDay(1)">›</button></div><gt-status/>
 <input #camera hidden type="file" accept="image/*" capture="environment" (change)="takePhoto($event)"/><input #gallery hidden type="file" accept="image/*" (change)="takePhoto($event)"/>
 @if(!showForm()){
@@ -34,9 +36,8 @@ interface MealFormDraft {
  <a class="meal-goal-link" routerLink="/profilo" [queryParams]="{section:'goals'}">{{s.settings().goals?.calories?'Modifica obiettivo':'Imposta obiettivo'}}</a>
 </section>
 <div class="meal-list-heading"><h2>Diario</h2><span>{{meals().length}} {{meals().length===1?'pasto':'pasti'}}</span></div>
-<div class="meal-diary-list">@for(m of meals();track m.id){<article class="card meal-diary-row">@if(m.photo){<img [src]="url(m.photo)" alt="" loading="lazy"/>}@else{<span class="meal-fallback"><gt-icon name="nutrition"/></span>}<button class="meal-diary-main" (click)="edit(m)"><strong>{{mealTypeLabel(m.mealType)||m.name}}</strong><span>{{m.mealType?m.name+' · ':''}}{{m.calories.toLocaleString('it-IT',{maximumFractionDigits:0})}} kcal</span></button><span class="meal-chevron" aria-hidden="true">›</span></article>}@empty{<div class="card empty meal-empty"><h3>Nessun pasto per questa data</h3><p>Tocca + Pasto per aggiungerne uno.</p></div>}</div>
-<div class="meal-add"><button type="button" class="primary full-width" aria-controls="meal-capture-choices" [attr.aria-expanded]="captureMenu()" (click)="captureMenu.set(!captureMenu())" [disabled]="saving()||photoBusy()||!draftReady()">{{captureMenu()?'Chiudi':'+ Pasto'}}</button>
-@if(captureMenu()){<div id="meal-capture-choices" class="meal-capture-choices" aria-label="Come aggiungere il pasto"><button type="button" (click)="captureMenu.set(false);camera.click()"><gt-icon name="camera"/> Scatta foto</button><button type="button" (click)="captureMenu.set(false);gallery.click()">Scegli da Foto</button><button type="button" (click)="openNew()">Inserisci manualmente</button></div>}</div>
+@for(group of mealGroups();track group.key){<p class="meal-group-title">{{group.label}}</p><div class="meal-diary-list">@for(m of group.meals;track m.id){<article class="card meal-diary-row">@if(m.photo){<img [src]="url(m.photo)" alt="" loading="lazy"/>}@else{<span class="meal-fallback"><gt-icon name="nutrition"/></span>}<button class="meal-diary-main" (click)="edit(m)"><strong>{{m.name||mealTypeLabel(m.mealType)}}</strong><span>P {{m.protein.toLocaleString('it-IT',{maximumFractionDigits:0})}} · C {{m.carbs.toLocaleString('it-IT',{maximumFractionDigits:0})}} · G {{m.fat.toLocaleString('it-IT',{maximumFractionDigits:0})}}@if(m.source==='photo-suggestion'){ · <em class="meal-ai">da foto</em>}</span></button><span class="meal-kcal">{{m.calories.toLocaleString('it-IT',{maximumFractionDigits:0})}}</span></article>}</div>}@empty{<div class="card empty meal-empty"><h3>Nessun pasto per questa data</h3><p>Fotografa il piatto o scrivilo a mano: i valori si calcolano da soli.</p></div>}
+<div class="meal-add su-sticky"><div class="su-btns"><button type="button" class="su-btn su-primary" (click)="captureMenu.set(false);camera.click()" [disabled]="saving()||photoBusy()||!draftReady()"><gt-icon name="camera"/>Fotografa</button><button type="button" class="su-btn meal-write" (click)="openNew()" [disabled]="saving()||photoBusy()||!draftReady()"><gt-icon name="edit"/>Scrivi</button><button type="button" class="su-iconbtn meal-gallery" (click)="gallery.click()" [disabled]="saving()||photoBusy()||!draftReady()" aria-label="Scegli una foto dalla galleria"><gt-icon name="plus"/></button></div></div>
 } @else {
 <section class="card meal-editor" [attr.aria-busy]="saving()" [attr.inert]="saving()?'':null">@if(photo){<ol class="scan-steps" aria-label="Scansione pasto"><li class="done">1 · Foto acquisita</li><li class="active" aria-current="step">{{analysisState()==='running'?'2 · Analisi in corso':'2 · Controlla alimenti'}}</li></ol>}<div class="card-head"><h2>{{editing?'Modifica pasto':photo?'Controlla e conferma':'Registra un pasto'}}</h2><button class="icon-btn ghost" aria-label="Torna al diario" (click)="closeForm()" [disabled]="saving()">×</button></div>
 <details class="meal-photo-options"><summary>{{photo?'Cambia foto':'Aggiungi foto'}}</summary><div class="actions"><button type="button" (click)="camera.click()" [disabled]="photoBusy()">Scatta foto</button><button type="button" (click)="gallery.click()" [disabled]="photoBusy()">Scegli da Foto</button></div></details>
@@ -68,10 +69,10 @@ interface MealFormDraft {
 <div class="actions"><button class="primary" [disabled]="saving()||s.busy()||photoBusy()||!s.ready()">{{saving()?'Salvataggio…':'Salva pasto'}}</button><button type="button" (click)="closeForm()" [disabled]="saving()">{{editing?'Annulla modifica':'Annulla'}}</button></div></form>
 @if(editing){<button class="ghost danger full-width" (click)="removeCurrent()">Elimina questo pasto</button>}
 </section>}
-<details class="card ai-details"><summary>Riconoscimento foto</summary><p class="subtle" style="margin-top:12px">L’analisi parte quando scegli la foto. Il primo utilizzo scarica automaticamente il modello gratuito (circa 2 MB); con il modello disponibile sul dispositivo puoi usarlo anche offline. Riconosce alcuni alimenti singoli e può non riconoscere piatti misti: scegli o correggi sempre i risultati prima di salvare.</p><p class="subtle" style="margin-top:12px">{{ai.status()}}</p>
+@if(isAdmin()){<details class="card ai-details" [open]="aiOpen"><summary>Riconoscimento foto · solo admin</summary><p class="subtle" style="margin-top:12px">L’analisi parte quando scegli la foto. Il primo utilizzo scarica automaticamente il modello gratuito (circa 2 MB); con il modello disponibile sul dispositivo puoi usarlo anche offline. Riconosce alcuni alimenti singoli e può non riconoscere piatti misti: scegli o correggi sempre i risultati prima di salvare.</p><p class="subtle" style="margin-top:12px">{{ai.status()}}</p>
 @if(ai.report();as r){<dl class="device-report"><dt>Motore</dt><dd>{{r.backend}} · {{r.model}}</dd><dt>Ultima prova sul dispositivo</dt><dd>{{r.milliseconds}} ms per inferenza, {{r.loadMs}} ms caricamento</dd><dt>Memoria tensori</dt><dd>{{(r.tensorBytes/1048576).toFixed(1)}} MB (non è la RAM totale)</dd><dt>Modello all’avvio della prova</dt><dd>{{r.cached?'Letto dal dispositivo':'Caricato dal sito'}}</dd></dl>}
 <div class="actions"><button (click)="prepareAI()" [disabled]="ai.busy()||!ai.supported">Verifica modello</button>@if(ai.busy()&&(preparingAI()||analysisState()==='running')){<button (click)="analysisState()==='running'?cancelAnalysis():ai.cancel()">Interrompi</button>}<button (click)="ai.remove()" [disabled]="ai.busy()">Reimposta riconoscimento</button></div>
-<p class="subtle" style="margin-top:14px">WebGPU non è richiesta. Su un dispositivo lento, con memoria ridotta o non supportato, puoi registrare tutto manualmente. Nessuna stima viene salvata automaticamente.</p></details>
+<p class="subtle" style="margin-top:14px">WebGPU non è richiesta. Su un dispositivo lento, con memoria ridotta o non supportato, puoi registrare tutto manualmente. Nessuna stima viene salvata automaticamente.</p></details>}
 `})
 export class NutritionComponent {
  private confirmation=confirmationForContext();
@@ -123,6 +124,10 @@ export class NutritionComponent {
  resumePhoto(){if(!this.pendingPhoto||this.photoBusy())return;void this.takePhoto({target:{files:[this.pendingPhoto],value:''}} as unknown as Event);}
  // Date changes through ngModel are read inside these getters, not cached signals.
  meals(){return this.s.data().meals.filter(m=>m.date===this.day).sort((a,b)=>b.createdAt.localeCompare(a.createdAt));}
+ /** Pasti raggruppati per momento della giornata (chi non ha un momento va in «Altri pasti»). */
+ mealGroups(){const order:[Meal['mealType']|'',string][]=[['breakfast','Colazione'],['lunch','Pranzo'],['snack','Spuntino'],['dinner','Cena'],['','Altri pasti']];const all=this.meals();return order.map(([key,label])=>({key:key||'other',label,meals:all.filter(m=>(m.mealType||'')===key).reverse()})).filter(group=>group.meals.length);}
+ private auth=inject(AuthService,{optional:true});isAdmin(){return this.auth?.uiRole()==='SuperAdmin'||this.auth?.uiRole()==='Admin';}
+ aiOpen=inject(ActivatedRoute).snapshot.queryParamMap.get('ai')==='1';
  totals(){return this.meals().reduce((a,m)=>({calories:a.calories+m.calories,protein:a.protein+m.protein,carbs:a.carbs+m.carbs,fat:a.fat+m.fat}),{calories:0,protein:0,carbs:0,fat:0});}
  url(b:Blob){if(!this.urls.has(b))this.urls.set(b,URL.createObjectURL(b));return this.urls.get(b)!;}
  async takePhoto(event:Event){

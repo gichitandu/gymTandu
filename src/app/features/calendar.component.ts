@@ -1,5 +1,5 @@
+import { ProfileLinkComponent } from '../shared/profile-link.component';
 import {AppFeaturesService} from '../services/app-features';
-import {CalendarSubscriptionComponent} from '../shared/calendar-subscription.component';
 import {DateFieldComponent} from '../shared/date-field.component';
 import {ExerciseThumbComponent} from '../shared/exercise-thumb.component';
 import {confirmationForContext} from '../services/confirmation';
@@ -20,7 +20,7 @@ import {StatusComponent} from '../shared/status.component';
 
 type AgendaFilter='all'|'planned'|'completed'|'partial'|'rest'|'other';
 type FormMode='create'|'edit'|'move'|'duplicate';
-@Component({standalone:true,imports:[CalendarSubscriptionComponent,DateFieldComponent,ExerciseThumbComponent,FormsModule,NgTemplateOutlet,RouterLink,A11yModule,IconComponent,StatusComponent],templateUrl:'./calendar.component.html',styleUrl:'./calendar.component.css'})
+@Component({standalone:true,imports:[ProfileLinkComponent,DateFieldComponent,ExerciseThumbComponent,FormsModule,NgTemplateOutlet,RouterLink,A11yModule,IconComponent,StatusComponent],templateUrl:'./calendar.component.html',styleUrl:'./calendar.component.css'})
 export class CalendarComponent {
  private confirmation=confirmationForContext();
  readonly s=inject(Store);readonly router=inject(Router);readonly features=inject(AppFeaturesService,{optional:true});
@@ -119,7 +119,9 @@ export class CalendarComponent {
  readonly scoreProgress=computed(()=>{const goal=this.target()||this.summary().total;return goal?Math.min(100,this.summary().completed/goal*100):0;});
  readonly upcoming=computed(()=>this.view()==='day'?[]:this.s.data().scheduledWorkouts.filter(event=>this.periodDates().includes(event.date)&&event.date!==this.selected()&&!this.ended(event)&&!event.done&&this.linked(event)?.status!=='completed').sort((a,b)=>a.date.localeCompare(b.date)||(a.time||'99:99').localeCompare(b.time||'99:99')).slice(0,4));
  constructor(){
-  const date=inject(ActivatedRoute).snapshot.queryParamMap.get('date');if(date)this.choose(date);
+  const query=inject(ActivatedRoute).snapshot.queryParamMap,date=query.get('date');if(date)this.choose(date);if(query.get('view')==='month')this.view.set('month');
+  // Un solo modo per programmare: altre pagine aprono qui il pannello «Aggiungi» (es. riposo).
+  const add=query.get('add');if(add==='rest'||add==='workout'||add==='cardio'||add==='mobility'||add==='other')queueMicrotask(()=>this.openAdd(add as CalendarEventKind));else if(add)queueMicrotask(()=>this.addOpen.set(true));
   if(this.todayClock)effect(()=>{const today=this.today,previous=this.lastToday;this.lastToday=today;if(today!==previous&&this.followsToday&&!this.modal())this.choose(today);});
  }
  ngOnInit(){this.timer=setInterval(()=>this.clock.set(Date.now()),1000);}
@@ -241,7 +243,7 @@ export class CalendarComponent {
  }
  async startItem(item:CalendarAgendaItem){if(!this.itemCanStart(item))return;if(item.event)await this.start(item.event);else if(item.workout?.status==='draft')await this.router.navigateByUrl('/sessione');}
  async viewItem(item:CalendarAgendaItem){
-  if(item.workout?.status==='completed')await this.router.navigateByUrl('/allenamenti?workout='+encodeURIComponent(item.workout.id));
+  if(item.workout?.status==='completed')await this.router.navigateByUrl('/riepilogo/'+encodeURIComponent(item.workout.id)+'?from=calendario');
   else if(item.event&&item.kind==='workout')await this.router.navigateByUrl('/anteprima-allenamento?scheduled='+encodeURIComponent(item.event.id)+'&return=calendario');
   else if(item.workout)await this.router.navigateByUrl('/sessione');
   else{this.selectItem(item);this.view.set('day');}

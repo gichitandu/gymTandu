@@ -36,16 +36,6 @@ import {summarizeTraining,trainingTimeline,trainingReportCsv,workoutReminderIcs}
    @for(row of progression();track row.id){<div class="insights-progression"><strong>{{row.name}}</strong><p>{{row.title}} · {{row.reason}}</p>@if(row.eligible&&row.nextWeight!==undefined){<small>Proposta da confermare in sessione: {{s.formatWeight(row.nextWeight)}} {{s.settings().unit}}</small>}</div>}
    <a class="button primary" routerLink="/sessione">Valuta le proposte nella sessione <gt-icon name="arrow"/></a></section>}
  </section>
- <section class="insights-section" aria-labelledby="reminder-heading">
-  <h2 id="reminder-heading">Prossimo allenamento e promemoria</h2>
-  @if(nextWorkout();as event){
-   <div class="card insights-reminder"><div><strong>{{event.dayName}}</strong><p>{{event.date}}{{event.time?' · '+event.time:''}}</p></div>
-    <button type="button" class="primary" (click)="saveReminder(event)">Aggiungi al calendario <gt-icon name="calendar"/></button>
-   </div>
-   <p class="insights-note">La voce viene creata solo quando la importi nel calendario del dispositivo. Per gli orari specificati include un avviso 60 minuti prima, modificabile nell'app Calendario.</p>
-  }@else{<p class="card">Non risultano allenamenti futuri programmati. <a routerLink="/calendario">Apri calendario</a> per aggiungerne uno.</p>}
-  <a routerLink="/profilo" [queryParams]="{section:'settings'}" class="insights-link">Gestisci notifiche push e promemoria già disponibili <gt-icon name="arrow"/></a>
- </section>
  <section class="insights-section insights-export" aria-labelledby="export-heading">
   <h2 id="export-heading">Report dei tuoi allenamenti</h2><p class="insights-note">Il report include soltanto le sedute completate nel periodo selezionato. Rimane sul dispositivo finché non decidi di condividerlo.</p>
   <div class="insights-export-actions"><button type="button" class="primary" (click)="downloadReport()"><gt-icon name="download"/> Esporta CSV</button><button type="button" (click)="printReport()"><gt-icon name="note"/> Stampa / salva in PDF</button></div>

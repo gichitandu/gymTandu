@@ -1,5 +1,5 @@
 <div class="plan-dashboard">
- <header class="dashboard-heading"><a class="icon-btn ghost" routerLink="/piani" aria-label="Torna ai piani"><gt-icon name="back"/></a><div><p>IL TUO PROGRAMMA</p><h1>Statistiche del piano</h1></div></header>
+ <header class="dashboard-heading"><a class="icon-btn ghost" routerLink="/piani" aria-label="Torna alle schede"><gt-icon name="back"/></a><div><p>LA TUA SCHEDA</p><h1>Andamento della scheda</h1></div></header>
  <gt-status/>
  @if(plan()||stats().workouts.length){
   <label class="pd3-select"><span>Piano</span><select [ngModel]="id()" (ngModelChange)="choosePlan($event)">@for(p of s.data().plans;track p.id){<option [value]="p.id">{{p.name}}{{p.program?' · '+date(p.program.startDate):''}}</option>}@if(!plan()){<option [value]="id()">{{title()}} · storico</option>}</select><gt-icon name="chevron-down"/></label>

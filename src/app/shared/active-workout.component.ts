@@ -86,6 +86,11 @@ export class ActiveWorkoutComponent {
  setupLabel= (e:WorkoutLogExercise)=>setupSummary(e.machineSetup);
  hasPair(e:WorkoutLogExercise){return !!e.superset&&this.exercises().filter(x=>x.superset===e.superset).length===2;}
  count(id:string){return this.s.sets(id).filter(s=>s.completed).length;}
+ /** Esercizio da fare adesso nell'elenco: quello iniziato, altrimenti il primo con serie mancanti. */
+ currentListId=computed(()=>{const list=this.exercises(),started=list.find(e=>{const n=this.count(e.id),total=this.s.sets(e.id).length;return n>0&&n<total;});return (started||list.find(e=>this.count(e.id)<this.s.sets(e.id).length))?.id||'';});
+ listCurrent=computed(()=>this.exercises().find(e=>e.id===this.currentListId()));
+ workSets(id:string){return this.s.sets(id).filter(set=>set.kind!=='warmup');}
+ listDetail(e:WorkoutLogExercise){const done=this.count(e.id),total=this.s.sets(e.id).length;if(total&&done===total)return 'Completato · '+total+' serie';const last=[...this.s.previous(e.exerciseId,e.workoutId,e.machineSetup)].sort((a,b)=>b.weight-a.weight||b.reps-a.reps)[0];const target=e.repsMin!==undefined?this.repTarget(e)+' rip.':'';const parts=[done?'Serie '+(done+1)+' di '+total:total+' serie'+(target?' × '+target:'')];if(last)parts.push('ultima '+(e.loadMode==='bodyweight'||!last.weight?last.reps+' rip.':this.s.formatWeight(last.weight)+' '+this.s.settings().unit+' × '+last.reps));return parts.join(' · ');}
  open(e:WorkoutLogExercise){this.exerciseId.set(e.id);this.tab.set('sets');this.step.set('detail');this.remember();}
  quickRecord(e:WorkoutLogExercise){if(this.step()==='record')void this.saveDraft();this.open(e);this.nextRecord();}
  record(set:WorkoutLogSet){if(this.step()==='record'&&this.setId()===set.id)return;if(this.step()==='record'&&this.setId()!==set.id)void this.saveDraft();clearTimeout(this.inputTimer);this.setId.set(set.id);const inputs=this.inputDrafts.get(set.id);this.weight=inputs?inputs.weight:this.s.weightInput(set.weight);this.reps=inputs?inputs.reps:set.reps;this.rpe=inputs?inputs.rpe:set.rpe;this.setNotes=inputs?inputs.setNotes:set.notes||'';this.kind=inputs?inputs.kind:set.kind||'work';this.step.set('record');this.remember();this.revealCurrentSet();}

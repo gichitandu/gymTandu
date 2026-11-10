@@ -1,5 +1,7 @@
 import { Component, inject, input } from "@angular/core";
-import { Router, RouterLink, RouterLinkActive } from "@angular/router";
+import { NavigationEnd, Router, RouterLink } from "@angular/router";
+import { toSignal } from "@angular/core/rxjs-interop";
+import { filter, map } from "rxjs";
 import { IconComponent } from "./icon.component";
 import { DesignControlDirective } from "../design/design-directives";
 import { DesignIconDirective } from "../design/design-directives";
@@ -12,16 +14,23 @@ export interface BottomNavItem {
   icon: string;
 }
 export const BOTTOM_NAV_ITEMS: BottomNavItem[] = [
-  { path: "/", label: "Home", icon: "home" },
-  {
-    path: "/piani",
-    label: "Allenamenti",
-    mobileLabel: "Allenati",
-    icon: "weight",
-  },
+  { path: "/", label: "Oggi", icon: "home" },
+  { path: "/piani", label: "Schede", icon: "weight" },
+  { path: "/calendario", label: "Calendario", icon: "calendar" },
   { path: "/progressi", label: "Progressi", icon: "chart" },
-  { path: "/profilo", label: "Profilo", icon: "user" },
 ];
+/** Voce opzionale: compare solo se la sezione Pasti è attiva. */
+export const NUTRITION_NAV_ITEM: BottomNavItem = { path: "/alimentazione", label: "Pasti", icon: "nutrition" };
+/** Sezione della barra a cui appartiene una pagina: le pagine interne evidenziano la loro sezione. */
+export function navigationSection(url: string): string {
+  const path = (url || "/").split(/[?#]/, 1)[0] || "/";
+  if (/^\/(piani|piano\/|anteprima-allenamento|importa-excel|catalogo|esercizio\/|sessione)/.test(path)) return "/piani";
+  if (/^\/(calendario|allenamenti|riepilogo\/|recupera-allenamenti)/.test(path)) return "/calendario";
+  if (/^\/(progressi|analisi|focus-muscolare|recupero|sonno|riposo)/.test(path)) return "/progressi";
+  if (/^\/alimentazione/.test(path)) return "/alimentazione";
+  if (/^\/(profilo|utenti|design-studio)/.test(path)) return "/profilo";
+  return path === "/" ? "/" : "";
+}
 export const navigationDesignId = (path: string) => ({
   "/": "navigation.home", "/piani": "navigation.training",
   "/progressi": "navigation.progress", "/profilo": "navigation.profile",
@@ -31,7 +40,6 @@ export const navigationDesignId = (path: string) => ({
   standalone: true,
   imports: [
     RouterLink,
-    RouterLinkActive,
     IconComponent,
     DesignControlDirective,
     DesignIconDirective,
@@ -49,21 +57,8 @@ export const navigationDesignId = (path: string) => ({
       <a
         [gtDesign]="navigationDesignId(item.path)"
         [routerLink]="item.path"
-        routerLinkActive="selected"
-        [class.training-selected]="
-          item.path === '/piani' &&
-          (activeUrl().startsWith('/sessione') ||
-            activeUrl().startsWith('/allenamenti') ||
-            activeUrl().startsWith('/piano/') ||
-            activeUrl().startsWith('/anteprima-allenamento') ||
-            activeUrl().startsWith('/importa-excel'))
-        "
-        [routerLinkActiveOptions]="{ exact: true }"
-        [class.selected]="
-          previewPath()
-            ? previewPath() === item.path
-            : activeUrl().split('?')[0] === item.path
-        "
+        [class.selected]="isActive(item)"
+        [attr.aria-current]="isActive(item) ? 'page' : null"
         [attr.aria-label]="label(item)"
         ><gt-icon [name]="item.icon" [gtDesignIcon]="navigationDesignId(item.path)" /><span>{{ label(item) }}</span></a
       >
@@ -76,10 +71,15 @@ export class BottomNavigationComponent {
   private context = inject(DESIGN_CONTEXT, { optional: true });
   items = input<BottomNavItem[]>(BOTTOM_NAV_ITEMS);
   previewPath = input("");
+  /** URL corrente come signal: la barra si aggiorna a ogni navigazione anche senza zone.js. */
+  private routeUrl = toSignal(this.router.events.pipe(filter((event): event is NavigationEnd => event instanceof NavigationEnd), map(event => event.urlAfterRedirects)), { initialValue: this.router.url || "/" });
   activeUrl() {
-    return this.previewPath() || this.router.url;
+    return this.previewPath() || this.routeUrl();
   }
   navigationDesignId = navigationDesignId;
+  isActive(item: BottomNavItem) {
+    return navigationSection(this.activeUrl()) === item.path;
+  }
   label(item: BottomNavItem) {
     return resolveDesignLabel(this.context?.config() || this.runtime.config(),
       navigationDesignId(item.path), item.mobileLabel || item.label);

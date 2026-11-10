@@ -3,8 +3,12 @@ import {sleepLabel} from '../services/wellness';
 import {AppFeaturesService} from '../services/app-features';
 import { AuthService } from '../services/auth';
 import { BackupReminderComponent } from "../shared/backup-reminder.component";
-import { Component, computed, inject } from "@angular/core";
-import { Router, RouterLink } from "@angular/router";
+import { Component, computed, inject, signal } from "@angular/core";
+import { ActivatedRoute, Router, RouterLink } from "@angular/router";
+import { ExerciseThumbComponent } from "../shared/exercise-thumb.component";
+import { CheckinSheetComponent } from "../shared/checkin-sheet.component";
+import { ProfileLinkComponent } from "../shared/profile-link.component";
+import { Exercise } from "../models/domain";
 import { Store } from "../services/store";
 import { localDate } from "../models/domain";
 import { IconComponent } from "../shared/icon.component";
@@ -23,6 +27,9 @@ interface HomeUpcomingSession {
     RouterLink,
     IconComponent,
     StatusComponent,
+    ExerciseThumbComponent,
+    CheckinSheetComponent,
+    ProfileLinkComponent,
   ],
   templateUrl: "./home.component.html",
   styleUrls: ["./home-redesign.css"],
@@ -221,6 +228,45 @@ export class HomeComponent {
       month: "short",
     });
   }
+  /** Pannello «Come stai oggi?» (energia, sonno, muscoli). */
+  checkinOpen = signal(inject(ActivatedRoute, { optional: true })?.snapshot?.queryParamMap?.get('checkin') === '1');
+  checkinEnergy = signal<number | null>(null);
+  openCheckin(energy: number | null = null) { this.checkinEnergy.set(energy); this.checkinOpen.set(true); }
+  soreLabel = computed(() => {
+    const sore = this.wellness()?.soreness || {}, groups = this.s.data().muscleGroups;
+    const names = Object.keys(sore).filter(id => sore[id] > 0).map(id => groups.find(group => group.id === id)?.name).filter((name): name is string => !!name);
+    return names.length ? names.slice(0, 2).join(', ') + (names.length > 2 ? ' +' + (names.length - 2) : '') : 'Nessuno';
+  });
+  /** Miniature degli esercizi della prossima seduta (immagini reali del catalogo). */
+  upcomingExercises = computed(() => {
+    const session = this.upcoming();
+    if (!session) return [] as Exercise[];
+    const draft = this.s.draft();
+    const rows = session.kind === 'draft' && draft ? this.s.workoutExercises(draft.id) : this.s.planExercises(session.dayId);
+    return rows.map(row => this.s.data().exercises.find(exercise => exercise.id === row.exerciseId)).filter((exercise): exercise is Exercise => !!exercise).slice(0, 6);
+  });
+  tagLabel(session: HomeUpcomingSession) {
+    if (session.kind === 'draft') return 'In corso';
+    if (!session.date || session.date === this.today) return 'Allenamento di oggi';
+    return 'Prossimo · ' + this.dateLabel(session.date);
+  }
+  subLine(session: HomeUpcomingSession) {
+    return [session.planName, session.exerciseCount + ' esercizi', session.setCount ? session.setCount + ' serie' : '', session.durationMinutes ? 'circa ' + session.durationMinutes + ' min' : '', session.time && session.date === this.today ? 'alle ' + session.time : ''].filter(Boolean).join(' · ');
+  }
+  /** Si può partire subito: seduta di oggi in calendario oppure prossimo giorno della scheda senza data. */
+  canStartNow(session: HomeUpcomingSession) {
+    return session.kind === 'plan' || (session.kind === 'scheduled' && session.date === this.today);
+  }
+  async startSession(session: HomeUpcomingSession) {
+    if (session.kind === 'scheduled' && session.eventId) await this.startEvent(session.eventId);
+    else await this.start(session.dayId);
+  }
+  weekNote = computed(() => {
+    const goal = this.goals()?.workoutsPerWeek, done = this.weekCount(), streak = this.streak();
+    const parts = [goal ? (done >= goal ? 'Obiettivo raggiunto' : 'Ancora ' + (goal - done) + (goal - done === 1 ? ' allenamento' : ' allenamenti') + ' per l’obiettivo') : done + (done === 1 ? ' allenamento' : ' allenamenti') + ' questa settimana'];
+    if (streak > 1) parts.push(streak + ' giorni di fila');
+    return parts.join(' · ');
+  });
   async start(id: string) {
     const day=this.s.data().days.find(day=>day.id===id);if(day&&this.concluded(day.planId)){await this.router.navigateByUrl('/piano/'+encodeURIComponent(day.planId));return;}
     if (await this.s.start(id)) await this.router.navigateByUrl("/sessione");

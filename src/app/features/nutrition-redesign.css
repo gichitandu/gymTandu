@@ -148,3 +148,15 @@
 @media (prefers-reduced-motion: reduce) {
   :host *, :host *::before, :host *::after { animation: none !important; transition: none !important; }
 }
+
+/* ===== Pasti semplificati: gruppi per momento, Fotografa/Scrivi fissi ===== */
+.meal-group-title{margin:16px 4px 8px;font-size:11px;font-weight:800;letter-spacing:1.4px;text-transform:uppercase;color:var(--muted)}
+.meal-kcal{flex:none;font-size:14px;font-weight:800;font-variant-numeric:tabular-nums;padding-right:4px}
+.meal-ai{font-style:normal;color:var(--su-violet)}
+.meal-add.su-sticky{margin-top:18px}
+.meal-add .su-btns{align-items:center}
+.meal-add .meal-write{flex:.7}
+.meal-add .meal-gallery{flex:none;width:54px;height:54px;border-radius:18px}
+:host .meals-heading.su-head{display:flex;align-items:center;justify-content:space-between;margin:2px 2px 14px}
+:host .meals-heading.su-head::before{display:none}
+:host .meals-heading.su-head h1{margin:0;text-align:left;font-size:clamp(27px,8vw,32px);font-weight:850;letter-spacing:-1.1px}

@@ -871,3 +871,24 @@
 }
 :host .det3-dock > .save-series { width: 100%; }
 :host-context(.form-input-focused) .det3-dock { position: static; }
+
+/* ===== Elenco esercizi semplificato: pallini serie, «Ora», pulsante Continua ===== */
+:host .aw-notes{margin:4px 0 10px;border-radius:16px;border:1px solid color-mix(in srgb,var(--text) 9%,transparent);background:color-mix(in srgb,var(--text) 4%,transparent)}
+:host .aw-notes summary{display:flex;align-items:center;gap:9px;min-height:46px;padding:0 14px;list-style:none;cursor:pointer;font-size:14px;font-weight:700}
+:host .aw-notes summary::-webkit-details-marker{display:none}
+:host .aw-notes summary gt-icon{width:18px;height:18px;color:var(--accent-text)}
+:host .aw-notes summary gt-icon:last-child{margin-left:auto;color:var(--muted);width:16px}
+:host .aw-notes p{margin:0;padding:0 14px 14px;font-size:13px;line-height:1.5;color:var(--muted);white-space:pre-line}
+:host .aw-list .training-list-row.is-done{opacity:.72}
+:host .aw-list .training-list-row.is-now{border-color:color-mix(in srgb,var(--accent) 55%,transparent);background:linear-gradient(150deg,color-mix(in srgb,var(--accent) 17%,var(--card)),var(--card) 70%);box-shadow:0 10px 26px color-mix(in srgb,var(--accent) 14%,transparent)}
+:host .aw-dots{display:flex;gap:4px;margin-top:6px;font-style:normal}
+:host .aw-dots b{width:16px;height:5px;border-radius:3px;background:color-mix(in srgb,var(--text) 13%,transparent)}
+:host .aw-dots b.f{background:var(--green,#4ff0b0)}
+:host .aw-list .exercise-state.complete{display:grid;place-items:center;width:30px;min-width:30px;height:30px;padding:0;border-radius:50%;background:color-mix(in srgb,var(--green,#4ff0b0) 18%,transparent);color:var(--green,#4ff0b0)}
+:host .aw-list .exercise-state.complete gt-icon{width:16px;height:16px}
+:host .aw-list .exercise-state.aw-now{min-width:auto;padding:4px 9px;border-radius:8px;background:color-mix(in srgb,var(--accent) 18%,transparent);color:var(--accent-text);font-size:11px;font-weight:800}
+:host .aw-chev{width:16px;height:16px;color:var(--muted);flex:none}
+:host .aw-continue{position:sticky;bottom:calc(var(--safe-bottom,0px) + 12px);z-index:5;margin-top:14px;padding-top:10px;background:linear-gradient(180deg,transparent,var(--bg) 40%)}
+:host .aw-continue .su-btn{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+:host .aw-alldone{display:flex;align-items:center;gap:8px;margin:14px 2px 0;font-size:13px;color:var(--muted)}
+:host .aw-alldone gt-icon{width:18px;height:18px;color:var(--green,#4ff0b0)}

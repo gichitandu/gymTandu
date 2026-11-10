@@ -1,5 +1,5 @@
 <div class="workout-preview">
-  <header class="preview-heading"><a class="icon-btn ghost" [routerLink]="backPath()" [queryParams]="backParams()" aria-label="Torna alla schermata precedente"><gt-icon name="back"/></a><span class="preview-page-label">La tua seduta</span><span class="preview-readonly"><gt-icon name="eye"/>Anteprima</span></header>
+  <header class="preview-heading"><a class="icon-btn ghost" [routerLink]="backPath()" [queryParams]="backParams()" aria-label="Torna alla schermata precedente"><gt-icon name="back"/></a><span class="preview-page-label">Allenamento</span></header>
   @if(!s.ready()){
     <section class="card preview-empty" role="status"><p>Caricamento allenamento…</p></section>
   }@else{
@@ -18,7 +18,7 @@
     @if(workout.available){<div class="preview-exercises">@for(row of workout.exercises;track row.id;let number=$index){
       @let item=row.prescription;
       <details class="card preview-exercise">
-        <summary class="preview-exercise-summary"><span class="wp3-number" aria-hidden="true">{{number+1}}</span><gt-exercise-thumb [exercise]="row.exercise"/><div class="exercise-title"><span class="exercise-number wp3-sr">ESERCIZIO {{number+1}}</span><h2>{{row.name}}</h2><p>{{item.sets}} serie · {{range(item.repsMin,item.repsMax)}} rip. · {{rest(item.rest)}}</p></div><gt-icon class="preview-exercise-arrow" name="back"/></summary>
+        <summary class="preview-exercise-summary"><span class="wp3-number" aria-hidden="true">{{number+1}}</span><gt-exercise-thumb [exercise]="row.exercise"/><div class="exercise-title"><span class="exercise-number wp3-sr">ESERCIZIO {{number+1}}</span><h2>{{row.name}}</h2><p>{{item.sets}} serie · {{range(item.repsMin,item.repsMax)}} rip. · {{rest(item.rest)}}</p>@if(lastTime(row.exercise?.id);as last){<p class="wp-last">Ultima: <b>{{last}}</b></p>}</div><gt-icon class="preview-exercise-arrow" name="back"/></summary>
         <div class="preview-exercise-body"><p class="preview-muscle">{{row.muscle}}{{row.muscle&&row.exercise?.equipment?' · ':''}}{{row.exercise?.equipment}}</p>
         <gt-exercise-motion [exercise]="row.exercise"/>
         <dl class="prescription-grid"><div><dt>Serie</dt><dd>{{item.sets}}</dd></div><div><dt>Ripetizioni</dt><dd>{{range(item.repsMin,item.repsMax)}}</dd></div><div><dt>Recupero</dt><dd>{{rest(item.rest)}}</dd></div></dl>
@@ -29,6 +29,10 @@
         </div>
       </details>
     }@empty{<section class="card preview-empty"><p>Non sono ancora presenti esercizi in questo allenamento.</p></section>}</div>}
-    <div class="preview-bottom"><p class="preview-footnote"><gt-icon name="eye"/>Consultazione della scheda · nessuna serie registrata</p><a class="button primary" [routerLink]="backPath()" [queryParams]="backParams()">Torna indietro<gt-icon name="arrow"/></a></div>
+    <div class="preview-bottom su-sticky">
+      @if(openElsewhere()){<a class="su-btn" routerLink="/sessione"><gt-icon name="play"/>Riprendi l’allenamento aperto</a><p class="preview-footnote">Hai già un altro allenamento in corso: concludilo prima di iniziarne uno nuovo.</p>}
+      @else if(canStart()){<button type="button" class="su-btn su-primary" (click)="startNow()" [disabled]="starting()||s.busy()"><gt-icon name="play"/>{{starting()?'Apertura…':startLabel()}}</button>}
+      @else{<a class="su-btn" [routerLink]="backPath()" [queryParams]="backParams()">Torna indietro<gt-icon name="arrow"/></a>}
+    </div>
   }
 </div>

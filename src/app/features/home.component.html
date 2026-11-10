@@ -1,115 +1,81 @@
-<div class="hx-page">
+<div class="hx-page hx-simple">
 <div class="hx-aurora" aria-hidden="true"></div>
-<header class="hx-top">
-  <div class="hx-who">
-    <span class="hx-avatar" aria-hidden="true">{{initial()}}</span>
-    <p class="hx-date"><time [attr.datetime]="today">{{todayLabel}}</time></p>
-  </div>
-  <a class="hx-bell" routerLink="/profilo" [queryParams]="{section:'settings'}" aria-label="Apri notifiche e promemoria nelle impostazioni"><gt-icon name="bell"/></a>
+<header class="hx-hello">
+  <div class="hx-hello-row"><p class="hx-date"><time [attr.datetime]="today">{{todayLabel}}</time></p><gt-profile-link/></div>
+  <h1 class="hx-title" gtDesign="home.title"><span class="hx-name" gtDesignLabel="home.title" [gtDesignLabelDefault]="greeting()">{{greeting()}}</span><span class="hx-grad">{{headline()}}</span></h1>
 </header>
-<h1 class="hx-title" gtDesign="home.title"><span class="hx-name" gtDesignLabel="home.title" [gtDesignLabelDefault]="greeting()">{{greeting()}}</span><span class="hx-grad">{{headline()}}</span></h1>
-<p class="hx-motto" gtDesign="home.subtitle" gtDesignLabel="home.subtitle">Ogni giorno, un passo avanti.</p>
-
-<section class="hx-orbit" aria-label="Il tuo obiettivo settimanale">
-  <img gtDesign="home.dumbbell" class="hx-dumbbell" src="/training/dumbbell.png" alt="" width="1672" height="941" loading="eager" decoding="async" fetchpriority="high"/>
-  <a class="hx-ringlink" gtDesign="home.goals" routerLink="/profilo" [queryParams]="{section:'goals'}">
-    <div class="hx-ring" [style.--progress]="weeklyProgress()+'%'" [attr.role]="goals()?.workoutsPerWeek?'progressbar':'img'" [attr.aria-valuenow]="goals()?.workoutsPerWeek?weeklyProgress():null" [attr.aria-valuemin]="goals()?.workoutsPerWeek?0:null" [attr.aria-valuemax]="goals()?.workoutsPerWeek?100:null" [attr.aria-label]="goals()?.workoutsPerWeek?'Percentuale di allenamenti completati nella settimana':'Imposta un obiettivo per visualizzare la percentuale settimanale'">
-      <span class="hx-ticks" aria-hidden="true"></span><span class="hx-arc" aria-hidden="true"></span>
-      <div class="hx-core">
-        <strong>{{goals()?.workoutsPerWeek?weeklyProgress():'—'}}@if(goals()?.workoutsPerWeek){<small>%</small>}</strong>
-        <span class="hx-goal-label" gtDesignLabel="home.goals">Obiettivo settimanale</span>
-        <span class="hx-goal-count">{{goals()?.workoutsPerWeek?weekCount()+' di '+goals()!.workoutsPerWeek:weekCount()+' questa settimana'}}</span>
-        <em class="hx-goal-edit"><gt-icon name="edit"/><span gtDesign="home.goals.edit" gtDesignLabel="home.goals.edit">Modifica obiettivo</span></em>
-      </div>
-    </div>
-  </a>
-  @if(streak()>1){<span class="hx-float hx-f1"><i class="amber"><gt-icon name="fire"/></i>{{streak()}} giorni di fila</span>}
-  <span class="hx-float hx-f2"><i class="green"><gt-icon name="check"/></i>{{weekCount()}} {{weekCount()===1?'completato':'completati'}}</span>
-  @if(weekMinutes()>0){<span class="hx-float hx-f3"><i class="violet"><gt-icon name="clock"/></i>{{weekMinutes()}} min in settimana</span>}
-</section>
 <gt-status />
 
-<section class="hx-next" aria-label="La tua scheda e la programmazione">
-  <div class="hx-next-in">
+<section class="hx-next su-hero" aria-label="Il tuo allenamento">
   @if(upcoming();as session){
-    <div class="hx-next-row"><span class="hx-tag"><i></i>{{session.kind==='draft'?'In corso':'Prossimo allenamento'}}</span><span class="hx-when">{{sessionWhen(session)}}</span></div>
+    <div class="hx-next-row"><span class="su-badge pink"><gt-icon name="fire"/>{{tagLabel(session)}}</span>@if(session.periodLabel){<span class="hx-when">{{session.periodLabel}}</span>}</div>
     <h2>{{session.title}}</h2>
-    <p class="hx-sub">{{[session.planName,session.periodLabel,session.exerciseCount+' esercizi',session.durationMinutes?'~'+session.durationMinutes+' min':''].filter(item=>item).join(' · ')}}</p>
-    <div class="hx-chips">@for(name of upcomingMuscles();track name){<span>{{name}}</span>}@if(session.setCount){<span class="plain">{{session.setCount}} serie</span>}</div>
-    <div class="hx-cta">
+    <p class="hx-sub">{{subLine(session)}}</p>
+    @if(upcomingExercises().length){<div class="hx-strip" aria-hidden="true">@for(exercise of upcomingExercises();track $index){<gt-exercise-thumb [exercise]="exercise"/>}</div>}
     @if(session.kind==='draft'){
-      <a class="hx-go" routerLink="/sessione" gtDesign="home.actions.resume"><gt-icon name="play"/><span gtDesignLabel="home.actions.resume">Riprendi allenamento</span></a>
-      <a class="hx-eye" routerLink="/sessione" gtDesign="home.actions.viewSession" aria-label="Vedi sessione"><gt-icon name="eye"/><span class="hx-sr" gtDesignLabel="home.actions.viewSession">Vedi sessione</span></a>
+      <a class="su-btn su-primary hx-main" routerLink="/sessione" gtDesign="home.actions.resume"><gt-icon name="play"/><span gtDesignLabel="home.actions.resume">Riprendi allenamento</span></a>
+    }@else if(canStartNow(session)){
+      <button type="button" class="su-btn su-primary hx-main" (click)="startSession(session)" [disabled]="s.busy()||!session.exerciseCount"><gt-icon name="play"/>Inizia allenamento</button>
     }@else{
-      <a class="hx-go" routerLink="/calendario" gtDesign="home.actions.schedule" [queryParams]="{date:session.date||today}"><gt-icon name="calendar"/><span gtDesignLabel="home.actions.schedule">Apri programmazione</span></a>
-      <a class="hx-eye" routerLink="/anteprima-allenamento" gtDesign="home.actions.preview" [queryParams]="sessionPreview(session)" aria-label="Vedi scheda"><gt-icon name="eye"/><span class="hx-sr" gtDesignLabel="home.actions.preview">Vedi scheda</span></a>
+      <a class="su-btn su-primary hx-main" routerLink="/anteprima-allenamento" [queryParams]="sessionPreview(session)"><gt-icon name="eye"/>Vedi allenamento</a>
     }
+    <div class="su-btns hx-secondary">
+      @if(session.kind==='draft'){
+        <a class="su-btn sm" routerLink="/sessione" gtDesign="home.actions.viewSession"><gt-icon name="eye"/><span gtDesignLabel="home.actions.viewSession" gtDesignLabelDefault="Vedi esercizi">Vedi esercizi</span></a>
+      }@else if(canStartNow(session)){
+        <a class="su-btn sm" routerLink="/anteprima-allenamento" [queryParams]="sessionPreview(session)" gtDesign="home.actions.preview"><gt-icon name="eye"/><span gtDesignLabel="home.actions.preview" gtDesignLabelDefault="Vedi esercizi">Vedi esercizi</span></a>
+      }
+      <a class="su-btn sm" routerLink="/calendario" [queryParams]="{date:session.date||today}" gtDesign="home.actions.schedule"><gt-icon name="calendar"/><span gtDesignLabel="home.actions.schedule" gtDesignLabelDefault="Sposta">Sposta</span></a>
     </div>
   }@else{
-    <div class="hx-next-row"><span class="hx-tag"><i></i>Nessuna seduta in programma</span></div>
-    <h2>Pianifica il prossimo allenamento</h2>
-    <p class="hx-sub">Scegli una scheda e metti la seduta in calendario.</p>
-    <div class="hx-cta hx-cta-empty">
-      <a class="hx-go" routerLink="/calendario" gtDesign="home.actions.schedule" [queryParams]="{date:today}"><gt-icon name="calendar"/><span gtDesignLabel="home.actions.schedule">Apri programmazione</span></a>
-      <a class="hx-eye wide" routerLink="/piani" gtDesign="home.actions.create"><gt-icon name="plus" gtDesignIcon="home.actions.create"/><span gtDesignLabel="home.actions.create">Crea la tua scheda</span></a>
-    </div>
+    <div class="hx-next-row"><span class="su-badge muted">Nessun allenamento in programma</span></div>
+    <h2>Prepara la tua scheda</h2>
+    <p class="hx-sub">Crea una scheda o importala da Excel: qui troverai ogni giorno cosa allenare.</p>
+    <a class="su-btn su-primary hx-main" routerLink="/piani" gtDesign="home.actions.create"><gt-icon name="plus"/><span gtDesignLabel="home.actions.create" gtDesignLabelDefault="Crea la tua scheda">Crea la tua scheda</span></a>
+    <div class="su-btns hx-secondary"><a class="su-btn sm" routerLink="/calendario" [queryParams]="{date:today}"><gt-icon name="calendar"/>Apri il calendario</a></div>
   }
-  </div>
 </section>
 
-<nav class="hx-pills" aria-label="Accessi rapidi">
-  <a routerLink="/calendario" gtDesign="home.shortcuts.calendar"><i class="accent"><gt-icon name="calendar" gtDesignIcon="home.shortcuts.calendar"/></i><span gtDesignLabel="home.shortcuts.calendar">Calendario</span></a>
-  <a routerLink="/riposo" gtDesign="home.shortcuts.rest"><i class="rest"><gt-icon name="moon" gtDesignIcon="home.shortcuts.rest"/></i><span gtDesignLabel="home.shortcuts.rest">Riposo</span></a>
-  <a routerLink="/catalogo" gtDesign="home.shortcuts.exercises"><i class="violet"><gt-icon name="weight" gtDesignIcon="home.shortcuts.exercises"/></i><span gtDesignLabel="home.shortcuts.exercises">Esercizi</span></a>
-</nav>
-
-<section class="hx-sec" gtDesign="home.week" aria-label="Allenamenti della settimana">
-  <div class="hx-head"><h2 gtDesign="home.week.title" gtDesignLabel="home.week.title">La tua settimana</h2><a class="hx-link" routerLink="/calendario"><span gtDesign="home.week.calendarLink" gtDesignLabel="home.week.calendarLink">Calendario</span> <gt-icon name="arrow"/></a></div>
-  <div class="hx-week" gtDesign="home.week.days">
-    @for(day of week;track day.date){
-      @let info=dayInfo(day.date);
-      <a routerLink="/calendario" [queryParams]="{date:day.date}" [attr.data-state]="info.state" [class.today]="day.date===today" [attr.aria-current]="day.date===today?'date':null" [attr.aria-label]="dayAria(day.date)"><span class="hx-bar"><i [style.height.%]="info.height"></i></span><strong>{{day.date.slice(8)}}</strong><span class="hx-dl">{{day.label.slice(0,1)}}</span></a>
-    }
+<section class="su-card hx-weekcard" gtDesign="home.week" aria-label="Questa settimana">
+  <div class="hx-head"><h2 gtDesign="home.week.title" gtDesignLabel="home.week.title" gtDesignLabelDefault="Questa settimana">Questa settimana</h2><a class="hx-link" routerLink="/calendario"><span gtDesign="home.week.calendarLink" gtDesignLabel="home.week.calendarLink">Calendario</span><gt-icon name="chevron-right"/></a></div>
+  <div class="hx-weekrow">
+    <a class="hx-ring" gtDesign="home.goals" routerLink="/profilo" [queryParams]="{section:'goals'}" [style.--progress]="weeklyProgress()+'%'" [attr.role]="goals()?.workoutsPerWeek?'progressbar':null" [attr.aria-valuenow]="goals()?.workoutsPerWeek?weeklyProgress():null" [attr.aria-valuemin]="goals()?.workoutsPerWeek?0:null" [attr.aria-valuemax]="goals()?.workoutsPerWeek?100:null" [attr.aria-label]="goals()?.workoutsPerWeek?'Allenamenti della settimana: '+weekCount()+' di '+goals()!.workoutsPerWeek:'Imposta un obiettivo settimanale'"><b>{{weekCount()}}@if(goals()?.workoutsPerWeek){<small>/{{goals()!.workoutsPerWeek}}</small>}</b></a>
+    <div class="hx-days" gtDesign="home.week.days">
+      @for(day of week;track day.date){
+        @let info=dayInfo(day.date);
+        <a routerLink="/calendario" [queryParams]="{date:day.date}" [attr.data-state]="info.state" [class.today]="day.date===today" [attr.aria-current]="day.date===today?'date':null" [attr.aria-label]="dayAria(day.date)"><i>@if(info.state==='done'){<gt-icon name="check"/>}@else if(info.state==='rest'){<gt-icon name="moon"/>}@else if(info.state==='cardio'){<gt-icon name="activity"/>}</i><span>{{day.label.slice(0,1)}}</span></a>
+      }
+    </div>
   </div>
+  <p class="hx-weeknote">{{weekNote()}}</p>
 </section>
 
-<section class="hx-sec hx-journey" aria-label="Il tuo percorso">
-  <div class="hx-head"><h2 gtDesign="home.journey.title" gtDesignLabel="home.journey.title">Il tuo percorso</h2><a class="hx-link" routerLink="/analisi">Analisi e report <gt-icon name="arrow"/></a></div>
-  <div class="hx-bento">
-    <a class="hx-tile wide" routerLink="/allenamenti" gtDesign="home.stats.workouts">
-      <i class="green"><gt-icon name="weight" gtDesignIcon="home.stats.workouts"/></i>
-      <span class="hx-tile-txt"><strong>{{s.completed().length}}</strong><span gtDesignLabel="home.stats.workouts">Allenamenti</span></span>
-      <svg class="hx-spark" viewBox="0 0 132 54" aria-hidden="true"><defs><linearGradient id="hxg" x1="0" x2="1"><stop offset="0" stop-color="var(--accent-text)"/><stop offset="1" stop-color="var(--hx-violet)"/></linearGradient><linearGradient id="hxf" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--accent)" stop-opacity=".35"/><stop offset="1" stop-color="var(--accent)" stop-opacity="0"/></linearGradient></defs><path [attr.d]="trend().area" fill="url(#hxf)"/><path [attr.d]="trend().line" fill="none" stroke="url(#hxg)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><circle [attr.cx]="trend().x" [attr.cy]="trend().y" r="4" fill="var(--text)"/></svg>
-    </a>
-    <a class="hx-tile" routerLink="/allenamenti" gtDesign="home.stats.time"><i class="violet"><gt-icon name="clock" gtDesignIcon="home.stats.time"/></i><strong>{{trainingMinutes()}} <small>min</small></strong><span gtDesignLabel="home.stats.time">Tempo totale</span></a>
-    <a class="hx-tile" routerLink="/progressi" gtDesign="home.stats.volume"><i class="amber"><gt-icon name="chart" gtDesignIcon="home.stats.volume"/></i><strong>{{s.formatWeight(s.totalVolume())}} <small>{{s.settings().unit}}</small></strong><span gtDesignLabel="home.stats.volume">Volume</span></a>
-  </div>
-</section>
-
-@if(auth?.user()?.role==='SuperAdmin'&&!auth!.offlineMode()){
-  <label class="hx-client" gtDesign="home.clientView"><gt-icon name="eye"/><span><strong gtDesign="home.clientView.label" gtDesignLabel="home.clientView.label">Visualizza come cliente</strong><small>{{auth!.viewAsClient()?'Vista cliente attiva · usi i tuoi dati':'Anteprima del ruolo con i tuoi dati'}}</small></span><input type="checkbox" role="switch" aria-label="Visualizza come cliente" [checked]="auth!.viewAsClient()" (change)="auth!.setClientView($any($event.target).checked)"/></label>
-}
-@if(auth?.canManageBackups()){<gt-backup-reminder />}
-
-<section class="hx-sec" gtDesign="home.health" aria-label="Obiettivo e benessere">
-  <div class="hx-head"><h2 gtDesign="home.health.title" gtDesignLabel="home.health.title">Obiettivo e benessere</h2><a class="hx-link" routerLink="/recupero">Recovery <gt-icon name="arrow"/></a></div>
-  <p class="hx-subtle" gtDesign="home.health.subtitle" gtDesignLabel="home.health.subtitle">Recovery, sonno e focus muscolare</p>
-  <div class="hx-trio" aria-label="Il tuo benessere">
-    <a routerLink="/recupero" style="--c:var(--hx-green)"><span class="hx-mini" [style.--p]="energyPct()"><gt-icon name="heart"/></span><strong>{{wellness()?.energy?wellness()!.energy+' / 5':'Check-in'}}</strong><small>Recovery</small></a>
-    <a routerLink="/sonno" style="--c:var(--hx-rest)"><span class="hx-mini" [style.--p]="sleepPct()"><gt-icon name="moon"/></span><strong>{{sleepLabel(wellness()?.sleepMinutes)}}</strong><small>Sonno</small></a>
-    <a routerLink="/focus-muscolare" style="--c:var(--hx-violet)"><span class="hx-mini" style="--p:100"><gt-icon name="muscle"/></span><strong>{{focusLabel()}}</strong><small>Focus di oggi</small></a>
-  </div>
+<section class="su-card hx-feel" gtDesign="home.health" aria-labelledby="hx-feel-title">
+  <div class="hx-head"><h2 id="hx-feel-title">Come stai oggi?</h2>@if(wellness()){<button type="button" class="hx-link" (click)="openCheckin()">Modifica<gt-icon name="chevron-right"/></button>}@else{<small>10 secondi</small>}</div>
+  @if(wellness();as log){
+    <button type="button" class="hx-feel-done" (click)="openCheckin()">
+      <span><b>{{log.energy?log.energy+'/5':'—'}}</b><small>Energia</small></span>
+      <span><b>{{sleepLabel(log.sleepMinutes)}}</b><small>Sonno</small></span>
+      <span><b>{{soreLabel()}}</b><small>Indolenziti</small></span>
+    </button>
+  }@else{
+    <p class="hx-subtle">Energia, sonno e muscoli indolenziti in un solo posto.</p>
+    <div class="hx-levels">@for(level of [1,2,3,4,5];track level){<button type="button" (click)="openCheckin(level)" [attr.aria-label]="'Energia '+level+' su 5'">{{level}}</button>}</div>
+    <div class="hx-levels-legend"><span>Scarico</span><span>Al top</span></div>
+  }
 </section>
 
 @if(features?.nutritionEnabled()){
-<section class="hx-sec" aria-label="Alimentazione di oggi">
-  <div class="hx-head"><h2>Alimentazione di oggi</h2><a class="hx-link" routerLink="/alimentazione">Diario <gt-icon name="arrow"/></a></div>
+<section class="su-card hx-meals" aria-label="Pasti di oggi">
+  <div class="hx-head"><h2>Pasti di oggi</h2><a class="hx-link" routerLink="/alimentazione">Diario<gt-icon name="chevron-right"/></a></div>
   <a class="hx-nut" routerLink="/alimentazione">
-    @if(goals()?.calories){<span class="hx-nm" [style.--p]="caloriePct()"><b>{{caloriePct()}}%</b></span>}
-    <span class="hx-nut-txt"><strong>{{ totals().calories.toLocaleString('it-IT',{maximumFractionDigits:0}) }} <small>kcal</small></strong>
-    @if(goals()?.calories){<span>su {{ goals()!.calories!.toLocaleString('it-IT') }} kcal</span>}
+    <span class="hx-nm" [style.--p]="caloriePct()"><b>{{goals()?.calories?caloriePct()+'%':'—'}}</b></span>
+    <span class="hx-nut-txt"><strong>{{ totals().calories.toLocaleString('it-IT',{maximumFractionDigits:0}) }} <small>@if(goals()?.calories){di {{ goals()!.calories!.toLocaleString('it-IT') }} }kcal</small></strong>
     <span class="hx-mac"><em class="g">P {{ totals().protein.toLocaleString('it-IT',{maximumFractionDigits:0}) }} g</em><em class="a">C {{ totals().carbs.toLocaleString('it-IT',{maximumFractionDigits:0}) }} g</em><em class="r">G {{ totals().fat.toLocaleString('it-IT',{maximumFractionDigits:0}) }} g</em></span></span>
   </a>
+  <a class="su-btn sm hx-photo" routerLink="/alimentazione" [queryParams]="{add:'photo'}"><gt-icon name="camera"/>Fotografa un pasto</a>
 </section>
 }
+@if(auth?.canManageBackups()){<gt-backup-reminder />}
 </div>
+<gt-checkin-sheet [open]="checkinOpen()" [presetEnergy]="checkinEnergy()" (closed)="checkinOpen.set(false)"/>

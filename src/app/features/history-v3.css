@@ -124,3 +124,4 @@
 .history-more-body { display: grid; gap: 8px; padding: 0 0 14px; }
 .history-more-body .subtle { margin: 0; font-size: 12px; line-height: 1.5; }
 .history-more-body > a, .history-more-body > button { min-height: 46px; gap: 7px; justify-content: center; }
+:host a.hx3-session{text-decoration:none;color:var(--text)}

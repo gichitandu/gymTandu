@@ -42,3 +42,10 @@
   border: 1px solid color-mix(in srgb, var(--accent-text) 28%, transparent); background: color-mix(in srgb, var(--accent) 8%, transparent);
 }
 :host .preview-bottom .button { min-height: 50px; border-radius: 16px; }
+
+/* Semplificazione: ultima volta e pulsante fisso per iniziare */
+.wp-last{margin:3px 0 0;font-size:12px;color:var(--muted)}
+.wp-last b{color:var(--green,#4ff0b0);font-weight:750}
+.preview-bottom.su-sticky{display:block;padding-bottom:2px}
+.preview-bottom.su-sticky .su-btn{width:100%}
+.preview-bottom .preview-footnote{margin:8px 2px 0;font-size:12px;color:var(--muted);text-align:center}

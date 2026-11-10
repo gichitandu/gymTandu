@@ -1,9 +1,9 @@
+import { ProfileLinkComponent } from '../shared/profile-link.component';
+import { NgTemplateOutlet } from '@angular/common';
 import { DESIGN_DIRECTIVES } from '../design/design-directives';
 import {ExerciseReplacementComponent} from '../shared/exercise-replacement.component';
-import {AnimationLibraryComponent} from '../shared/animation-library.component';
 import { DateFieldComponent } from '../shared/date-field.component';
 import { confirmationForContext } from '../services/confirmation';
-import { OpenWorkoutsComponent } from '../shared/open-workouts.component';
 import {ExerciseScope,ExerciseScopeComponent} from "../shared/exercise-scope.component";
 import { ExerciseFamiliesComponent } from "../shared/exercise-families.component";
 import { ExerciseThumbComponent } from "../shared/exercise-thumb.component";
@@ -42,7 +42,7 @@ type PlanEditorDraft = {
 @Component({
   standalone: true,
   styleUrls: ["./feature-polish.css", "./plans-simple.css", "./plans-reference.css", "./plans-redesign.css"],
-  imports: [ExerciseReplacementComponent,...DESIGN_DIRECTIVES,AnimationLibraryComponent,DateFieldComponent,OpenWorkoutsComponent,
+  imports: [ProfileLinkComponent,NgTemplateOutlet,ExerciseReplacementComponent,...DESIGN_DIRECTIVES,DateFieldComponent,
     A11yModule,ExerciseScopeComponent,
     ExerciseFamiliesComponent,
     ExerciseThumbComponent,
@@ -53,34 +53,11 @@ type PlanEditorDraft = {
     StatusComponent,
   ],
   template: `<div class="compact-plans">
-    @if(hub()==='plans'){
-      <header class="plans-heading"><div><h1 gtDesign="training.title" gtDesignLabel="training.title">Allenati</h1><p gtDesign="training.subtitle" gtDesignLabel="training.subtitle">I tuoi piani, in un solo posto.</p></div><div class="plan-heading-actions"><button type="button" class="primary new-plan ref-icon-button" gtDesign="training.newPlan" (click)="openPlan()" [disabled]="!s.ready()" aria-label="Nuovo piano"><gt-icon name="plus"/></button></div></header>
-      <nav class="neon-segments plans-navigation ref-tabs" aria-label="Allenamenti"><button type="button" gtDesign="training.tabs.today" [class.active]="hub()==='today'" [attr.aria-pressed]="hub()==='today'" (click)="hub.set('today')"><gt-icon name="calendar" gtDesignIcon="training.tabs.today"/><span gtDesignLabel="training.tabs.today">Oggi</span></button><button type="button" gtDesign="training.tabs.plans" [class.active]="hub()==='plans'&&!archived()" [attr.aria-pressed]="hub()==='plans'&&!archived()" (click)="hub.set('plans');archived.set(false)"><gt-icon name="layers" gtDesignIcon="training.tabs.plans"/><span gtDesignLabel="training.tabs.plans">Piani</span></button><a routerLink="/allenamenti" gtDesign="training.tabs.history"><gt-icon name="clock" gtDesignIcon="training.tabs.history"/><span gtDesignLabel="training.tabs.history">Storico</span></a></nav>
-    }
+    <header class="su-head"><h1 gtDesign="training.title" gtDesignLabel="training.title" gtDesignLabelDefault="Schede">Schede</h1><div class="su-actions"><button type="button" class="su-iconbtn" gtDesign="training.newPlan" (click)="newPlanStep.set('choose')" [disabled]="!s.ready()" aria-label="Nuova scheda"><gt-icon name="plus"/></button><gt-profile-link/></div></header>
+    <nav class="su-seg" aria-label="Schede ed esercizi"><a class="on" aria-current="page" routerLink="/piani">Le mie schede</a><a routerLink="/catalogo">Esercizi</a></nav>
     <gt-status />
-    <gt-open-workouts />
     @if(draftNotice()){<p class="notice" role="status">{{draftNotice()}}</p>}
-    @if(hub()==='today'){
-      <section gtDesign="training.today" class="training-session-hero" aria-labelledby="training-session-title">
-        @if(s.draft();as draft){
-          <header><p class="training-program-label">{{todayProgramLabel()}}</p><h1 id="training-session-title" gtDesign="training.title">{{todayTitle()}}</h1></header>
-          <div class="training-inline-metrics"><span><gt-icon name="weight"/>{{todayExerciseCount()}} esercizi</span><span><gt-icon name="layers"/>{{todaySetCount()}} serie</span><span class="training-session-state"><gt-icon name="clock"/>Da riprendere</span></div>
-          <div class="training-today-actions"><a class="button primary ref-action" routerLink="/sessione" gtDesign="training.actions.resume"><gt-icon name="play"/><span gtDesignLabel="training.actions.resume">Riprendi allenamento</span><gt-icon name="chevron-right"/></a><a class="button secondary ref-action" routerLink="/sessione" gtDesign="training.actions.viewSession"><gt-icon name="eye"/><span gtDesignLabel="training.actions.viewSession">Vedi sessione</span></a></div>
-        }@else if(todayDay();as day){
-          <header><p class="training-program-label">{{todayProgramLabel()}}</p><h1 id="training-session-title" gtDesign="training.title">{{todayTitle()}}</h1></header>
-          <div class="training-inline-metrics"><span><gt-icon name="weight"/>{{todayExerciseCount()}} esercizi</span><span><gt-icon name="layers"/>{{todaySetCount()}} serie</span>@if(todayWeekday();as weekday){<span><gt-icon name="calendar"/>{{weekday}}</span>}@else if(todayDuration();as minutes){<span [attr.aria-label]="'Durata programmata: '+minutes+' minuti'"><gt-icon name="clock"/>{{minutes}} min</span>}</div>
-          <div class="training-today-actions"><a class="button primary ref-action" gtDesign="training.actions.open" routerLink="/anteprima-allenamento" [queryParams]="{day:day.id,return:'piani'}"><gt-icon name="play"/><span gtDesignLabel="training.actions.open">Apri la seduta</span><gt-icon name="chevron-right"/></a><a class="button secondary ref-action" gtDesign="training.actions.calendar" routerLink="/calendario" [queryParams]="{date:todaySessionDate()||today}"><gt-icon name="calendar"/><span gtDesignLabel="training.actions.calendar">Cambia programmazione</span></a></div>
-        }@else{
-          <header><p class="training-program-label">IL TUO ALLENAMENTO</p><h1 id="training-session-title" gtDesign="training.title">Allenati</h1></header><p class="training-empty-description">Crea o attiva un piano per trovare qui la prossima seduta.</p><button type="button" class="primary full-width ref-action" (click)="hub.set('plans');openPlan()"><gt-icon name="plus"/>Crea piano</button>
-        }
-      </section>
-      @if(s.activePlan();as plan){<a class="card training-path ref-card reference-wave-card" [routerLink]="['/piano',plan.id]"><div class="card-head"><h2 gtDesign="training.path.title" gtDesignLabel="training.path.title">Il tuo percorso</h2><span class="ref-badge green"><i aria-hidden="true"></i>Piano attivo</span></div><strong>{{programLabel(plan)}}</strong><div class="training-path-stats"><span><gt-icon name="calendar"/>{{completedForPlan(plan.id)}} sedute registrate</span><span><gt-icon name="layers"/>{{s.days(plan.id).length}} allenamenti nel piano<gt-icon name="chevron-right"/></span></div></a>}
-      <div class="training-tool-grid"><a class="reference-wave-card" routerLink="/catalogo"><gt-icon name="weight"/><strong>Catalogo esercizi</strong><small>Tecnica e movimenti</small><gt-icon class="training-tool-chevron" name="chevron-right"/></a><a class="reference-wave-card" routerLink="/importa-excel"><gt-icon name="download"/><strong>Importa un piano</strong><small>Dal tuo file Excel</small><gt-icon class="training-tool-chevron" name="chevron-right"/></a></div>
-      <div class="training-hub-links">@if(todayDay();as day){@if(!s.draft()){<button type="button" class="card training-direct-start reference-wave-card" (click)="start(day.id)" [disabled]="s.busy()||!s.planExercises(day.id).length"><gt-icon name="play"/><span><strong>Inizia allenamento</strong><small>Apri direttamente la registrazione delle serie</small></span><gt-icon name="chevron-right"/></button>}}<a class="card reference-wave-card" routerLink="/calendario"><gt-icon name="calendar"/><span><strong>Programmazione</strong><small>Allenamenti, attività e riposo</small></span><gt-icon name="chevron-right"/></a><a class="card reference-wave-card" routerLink="/recupero"><gt-icon name="moon"/><span><strong>Come ti senti oggi?</strong><small>Apri il check-in recovery</small></span><gt-icon name="chevron-right"/></a></div>
-      <section class="training-animation-access" aria-label="Tecnica degli esercizi"><gt-animation-library/></section>
-      <div class="training-manager-controls" aria-label="Gestisci gli allenamenti"><button type="button" class="button secondary" (click)="hub.set('plans');archived.set(false)"><gt-icon name="layers"/>I miei piani</button><a class="button secondary" routerLink="/allenamenti"><gt-icon name="clock"/>Storico</a><button type="button" class="button secondary" (click)="openPlan()" [disabled]="!s.ready()" aria-label="Nuovo piano"><gt-icon name="plus"/><span>Nuovo piano</span></button></div>
-    }
-    <div [hidden]="hub()==='today'">
+    <div class="pl-body">
     @if(!archived()&&overlaps().length){<section class="card plan-overlap" role="status" aria-label="Piani con date sovrapposte">
      <h3>Piani sovrapposti</h3>
      @for(o of overlaps();track o.keep.plan.id+o.drop.plan.id){<div class="plan-overlap-row">
@@ -89,51 +66,67 @@ type PlanEditorDraft = {
      </div>}
      <small>Il piano concluso va in archivio: sedute, serie e statistiche restano consultabili.</small>
     </section>}
-    <div class="plans-list-heading"><h2>{{archived()?'Piani archiviati':'I miei piani'}}</h2><button type="button" class="ghost archive-toggle" [class.selected]="archived()" (click)="archived.set(!archived())">{{archived()?'Piani attivi':'Archivio'}}<gt-icon name="clock"/></button></div>
-    <a class="excel-archive-link" routerLink="/importa-excel" [queryParams]="{tab:'archive'}"><gt-icon name="download"/>Excel importati<gt-icon name="arrow"/></a>
-    <div class="list simple-plan-list" gtDesign="training.plans">
-      @for(p of plans();track p.id){
-        <section class="card simple-plan">
+    @if(!archived()){
+      @for(p of activePlans();track p.id){<ng-container *ngTemplateOutlet="planCard;context:{$implicit:p}"/>}
+      <div class="plans-list-heading pl-others"><h2>{{activePlans().length?'Altre schede':'Le tue schede'}}</h2>@if(archivedCount()){<button type="button" class="su-chip" (click)="archived.set(true)">Archiviate · {{archivedCount()}}</button>}</div>
+      <div class="list simple-plan-list" gtDesign="training.plans">@for(p of otherPlans();track p.id){<ng-container *ngTemplateOutlet="planCard;context:{$implicit:p}"/>}@empty{@if(!activePlans().length){<div class="card empty"><h2>Nessuna scheda</h2><p class="subtle">Crea la tua prima scheda o importala da Excel.</p><button type="button" class="primary" (click)="newPlanStep.set('choose')">Nuova scheda</button></div>}}</div>
+      <button type="button" class="su-btn ghost sm pl-new" (click)="newPlanStep.set('choose')" [disabled]="!s.ready()"><gt-icon name="plus"/>Nuova scheda</button>
+    }@else{
+      <div class="plans-list-heading"><h2>Schede archiviate</h2><button type="button" class="su-chip on" (click)="archived.set(false)">Torna alle schede</button></div>
+      <div class="list simple-plan-list">@for(p of plans();track p.id){<ng-container *ngTemplateOutlet="planCard;context:{$implicit:p}"/>}@empty{<div class="card empty"><h2>Nessuna scheda archiviata</h2></div>}</div>
+    }
+    <ng-template #planCard let-p>
+        <section class="card simple-plan" [class.pl-active]="p.active&&!p.completedAt&&!p.archived" [class.pl-editing]="editing()===p.id">
           <div class="simple-plan-top"><gt-exercise-thumb class="plan-cover-thumb" [exercise]="thumbnailExercise(p.id)"/>
             <button type="button" class="simple-plan-title" [attr.aria-expanded]="expanded()===p.id" (click)="expanded.set(expanded()===p.id?'':p.id)"><span><strong>{{p.name}}</strong><small>{{p.program?p.program.weeks+' settimane · ':''}}{{s.days(p.id).length}} allenamenti</small></span><span class="plan-chevron" aria-hidden="true">{{expanded()===p.id?'⌃':'›'}}</span></button>
-            @if(p.completedAt){<span class="pill green">Concluso</span>}@else if(p.active){<span class="pill green">Attivo</span>}
-            <details class="simple-menu" #planMenu><summary [attr.aria-label]="'Gestisci '+p.name">⋯</summary><div class="simple-menu-panel">
-              @if(!p.archived&&!p.completedAt){@if(!p.active){<button type="button" (click)="planMenu.open=false;activate(p.id)">Attiva piano</button>}<button type="button" (click)="planMenu.open=false;openPlan(p)">Modifica piano</button>}
-              @if(!p.program){<button type="button" (click)="planMenu.open=false;s.duplicatePlan(p.id)">Duplica piano</button>}<button type="button" (click)="planMenu.open=false;showDashboard(p.id)">Statistiche del piano</button>@if(!p.completedAt){<button type="button" (click)="planMenu.open=false;showDashboard(p.id,true)">Termina piano</button>}@if(!p.completedAt){<button type="button" (click)="planMenu.open=false;archive(p)">{{p.archived?'Ripristina':'Archivia'}}</button>}
-              <button type="button" class="danger" (click)="planMenu.open=false;removePlan(p)" [disabled]="s.busy()||!!deletingPlan()">Elimina piano</button>
-            </div></details>
+            @if(p.completedAt){<span class="su-badge muted">Conclusa</span>}@else if(p.active){<span class="su-badge green"><gt-icon name="check"/>Attiva</span>}
           </div>
+          @if(p.active&&!p.completedAt&&!p.archived&&s.days(p.id).length){<div class="pl-progress"><div class="pl-progress-row">@if(p.program){<span><b>Settimana {{currentWeek(p)}}</b> di {{p.program.weeks}}</span>}@else{<span><b>{{completedForPlan(p.id)}}</b> allenamenti fatti</span>}<small>{{completedForPlan(p.id)}} di {{s.days(p.id).length}}</small></div><div class="su-bar"><i [style.width.%]="planProgress(p)"></i></div></div>}
           @if(expanded()===p.id){
             @if(p.description){@if(p.program){<details class="program-description"><summary>Note del programma</summary><p class="simple-plan-description">{{p.description}}</p></details>}@else{<p class="simple-plan-description">{{p.description}}</p>}}
-            @if(p.program){<div class="program-week-picker"><label>Settimana<select [ngModel]="weekFor(p)" (ngModelChange)="selectWeek(p.id,$event)">@for(week of weeksFor(p);track week){<option [ngValue]="week">Settimana {{week}} / {{p.program.weeks}}</option>}</select></label><a class="button ghost" [routerLink]="['/piano',p.id]">Statistiche</a></div>}
+            @if(p.program){<div class="program-week-picker"><label>Settimana<select [ngModel]="weekFor(p)" (ngModelChange)="selectWeek(p.id,$event)">@for(week of weeksFor(p);track week){<option [ngValue]="week">Settimana {{week}} / {{p.program.weeks}}</option>}</select></label></div>}
             <div class="simple-days">
               @for(day of visibleDays(p);track day.id){
-                <details class="simple-day">
-                  <summary class="simple-day-summary"><span><strong>{{day.name}}</strong><small>{{day.sessionDate?dateLabel(dayDate(day))+' · ':day.weekday===undefined?'':weekdays[day.weekday]+' · '}}{{s.planExercises(day.id).length}} esercizi</small></span><span class="day-chevron" aria-hidden="true">›</span></summary>
-                  <div class="simple-day-body">@if(day.phase||day.notes){<div class="day-guidance">@if(day.phase){<span class="pill">{{day.phase}}</span>}@if(day.notes){<details><summary>Indicazioni della seduta</summary><p>{{day.notes}}</p></details>}</div>}<div class="simple-day-tools"><a class="button ghost plan-preview-link" routerLink="/anteprima-allenamento" [queryParams]="{day:day.id,return:'piani'}">Vedi allenamento<gt-icon name="arrow"/></a>
-                    @if(!p.archived&&!p.completedAt){<details class="simple-menu" #dayMenu><summary [attr.aria-label]="'Gestisci '+day.name">⋯</summary><div class="simple-menu-panel"><button type="button" (click)="dayMenu.open=false;openDay(p.id,day)">Modifica allenamento</button><button type="button" (click)="dayMenu.open=false;s.duplicateDay(day.id)">Duplica</button><button type="button" (click)="dayMenu.open=false;moveDay(day,-1)" [disabled]="day.order===0">Sposta prima</button><button type="button" (click)="dayMenu.open=false;moveDay(day,1)" [disabled]="day.order===s.days(p.id).length-1">Sposta dopo</button><button type="button" class="danger" (click)="dayMenu.open=false;removeDay(day)">Elimina allenamento</button></div></details>}
-                  </div>
+                <details class="simple-day" [class.pl-today]="dayDate(day)===today" [open]="editing()===p.id&&openDayId()===day.id">
+                  <summary class="simple-day-summary"><span><strong>{{day.name}}</strong><small>{{day.sessionDate?dateLabel(dayDate(day))+' · ':day.weekday===undefined?'':weekdays[day.weekday]+' · '}}{{s.planExercises(day.id).length}} esercizi</small></span>@if(completedDayWorkout(day)){<span class="pl-done" aria-label="Fatto"><gt-icon name="check"/></span>}@else if(dayDate(day)===today){<span class="su-badge pink">Oggi</span>}@else{<span class="day-chevron" aria-hidden="true">›</span>}</summary>
+                  <div class="simple-day-body">@if(day.phase||day.notes){<div class="day-guidance">@if(day.phase){<span class="pill">{{day.phase}}</span>}@if(day.notes){<details><summary>Indicazioni della seduta</summary><p>{{day.notes}}</p></details>}</div>}
+                    @if(editing()===p.id&&!p.archived&&!p.completedAt){<div class="pl-tools" role="group" [attr.aria-label]="'Modifica '+day.name"><button type="button" class="su-iconbtn" (click)="openDay(p.id,day)" aria-label="Modifica allenamento"><gt-icon name="edit"/></button><button type="button" class="su-iconbtn" (click)="s.duplicateDay(day.id)" aria-label="Duplica allenamento"><gt-icon name="copy"/></button><button type="button" class="su-iconbtn" (click)="moveDay(day,-1)" [disabled]="day.order===0" aria-label="Sposta prima"><gt-icon name="back" class="pl-up"/></button><button type="button" class="su-iconbtn" (click)="moveDay(day,1)" [disabled]="day.order===s.days(p.id).length-1" aria-label="Sposta dopo"><gt-icon name="back" class="pl-down"/></button><button type="button" class="su-iconbtn pl-remove" (click)="removeDay(day)" aria-label="Elimina allenamento"><gt-icon name="trash"/></button></div>}
                   <div class="simple-exercises"><div>
                     @for(pe of s.planExercises(day.id);track pe.id){<div class="simple-exercise-row"><gt-exercise-thumb [exercise]="s.exercise(pe.exerciseId)"/><div><strong>{{s.exercise(pe.exerciseId)?.name}}</strong><small>{{pe.sets}} × {{pe.repsMin}}–{{pe.repsMax}} rip · {{pe.rest}} s</small>@if(pe.targetWeight!==undefined){<small>{{s.formatWeight(pe.targetWeight)}} {{s.settings().unit}}</small>}@if(pe.superset){<small>Superset {{pe.superset}}</small>}@if(pe.warmupSets){<small>{{pe.warmupSets}} serie di riscaldamento</small>}@if(pe.rirMin!==undefined){<small>RIR {{pe.rirMin}}{{pe.rirMax!==undefined&&pe.rirMax!==pe.rirMin?'–'+pe.rirMax:''}}</small>}@if(pe.rpe){<small>RPE {{pe.rpe}}</small>}@if(pe.warmupNotes||pe.reference||pe.notes){<details class="exercise-guidance"><summary>Riscaldamento e note</summary>@if(pe.warmupNotes){<small><b>Riscaldamento:</b> {{pe.warmupNotes}}</small>}@if(pe.reference){<small><b>Riferimento:</b> {{pe.reference}}{{pe.loadUnit?' · '+pe.loadUnit:''}}</small>}@if(pe.notes){<small>{{pe.notes}}</small>}</details>}</div>
-                      @if(!p.archived&&!p.completedAt){<details class="simple-menu" #exerciseMenu><summary [attr.aria-label]="'Gestisci '+s.exercise(pe.exerciseId)?.name">⋯</summary><div class="simple-menu-panel"><button type="button" (click)="exerciseMenu.open=false;openExercise(day.id,pe)">Modifica esercizio</button><button type="button" (click)="exerciseMenu.open=false;replacementTarget.set(pe.id)">Sostituisci esercizio</button><button type="button" (click)="exerciseMenu.open=false;moveExercise(pe,-1)" [disabled]="pe.order===0">Sposta prima</button><button type="button" (click)="exerciseMenu.open=false;moveExercise(pe,1)" [disabled]="pe.order===s.planExercises(day.id).length-1">Sposta dopo</button><button type="button" class="danger" (click)="exerciseMenu.open=false;removeExercise(pe)">Rimuovi esercizio</button></div></details>}
+                      @if(editing()===p.id&&!p.archived&&!p.completedAt){<div class="pl-tools small" role="group" [attr.aria-label]="'Modifica '+s.exercise(pe.exerciseId)?.name"><button type="button" class="su-iconbtn" (click)="openExercise(day.id,pe)" aria-label="Modifica esercizio"><gt-icon name="edit"/></button><button type="button" class="su-iconbtn" (click)="replacementTarget.set(pe.id)" aria-label="Sostituisci esercizio"><gt-icon name="repeat"/></button><button type="button" class="su-iconbtn" (click)="moveExercise(pe,-1)" [disabled]="pe.order===0" aria-label="Sposta prima"><gt-icon name="back" class="pl-up"/></button><button type="button" class="su-iconbtn" (click)="moveExercise(pe,1)" [disabled]="pe.order===s.planExercises(day.id).length-1" aria-label="Sposta dopo"><gt-icon name="back" class="pl-down"/></button><button type="button" class="su-iconbtn pl-remove" (click)="removeExercise(pe)" aria-label="Rimuovi esercizio"><gt-icon name="minus"/></button></div>}
                     </div>}@empty{<p class="subtle">Nessun esercizio.</p>}
-                    @if(!p.archived&&!p.completedAt){<button type="button" class="ghost full-width" (click)="openExercise(day.id)">+ Esercizio</button>}
+                    @if(editing()===p.id&&!p.archived&&!p.completedAt){<button type="button" class="su-btn ghost sm pl-add" (click)="openExercise(day.id)"><gt-icon name="plus"/>Aggiungi esercizio</button>}
                   </div></div>
-                  @if(!p.archived&&!p.completedAt){<div class="simple-day-start">@if(s.planExercises(day.id).length){@if(completedDayWorkout(day);as workout){<a class="button ghost full-width" routerLink="/allenamenti" [queryParams]="{workout:workout.id}">Vedi allenamento concluso</a>}@else{<button type="button" class="primary full-width" (click)="start(day.id)" [disabled]="s.busy()">{{s.draft()?'Riprendi sessione':'Inizia'}}</button>}}</div>}
-                  @if(!p.archived&&!p.completedAt){<details class="past-workout-entry"><summary>Registra per un’altra data</summary><div class="form-grid"><label>Data<gt-date-field [max]="today" [ngModel]="pastDates[day.id]||''" (ngModelChange)="pastDates[day.id]=$event" [aria-label]="'Data allenamento passato · '+day.name"></gt-date-field></label><button type="button" class="primary" (click)="startPast(day.id)" [disabled]="!pastDates[day.id]||!s.planExercises(day.id).length||s.busy()||startingPast()">{{startingPast()?'Apertura…':'Registra'}}</button></div>@if(s.draft()){<p class="subtle"><a routerLink="/sessione">Riprendi la sessione aperta</a> prima di registrarne un’altra.</p>}</details>}
+                  @if(editing()!==p.id){<div class="simple-day-start">@if(completedDayWorkout(day);as workout){<a class="button ghost full-width" [routerLink]="['/riepilogo',workout.id]" [queryParams]="{from:'elenco'}">Vedi allenamento fatto</a>}@else if(s.planExercises(day.id).length){<a class="su-btn su-primary sm" routerLink="/anteprima-allenamento" [queryParams]="{day:day.id,return:'piani'}"><gt-icon name="play"/>Apri allenamento</a>}</div>}
+                  @if(editing()!==p.id&&!p.archived&&!p.completedAt){<details class="past-workout-entry"><summary>Registra per un’altra data</summary><div class="form-grid"><label>Data<gt-date-field [max]="today" [ngModel]="pastDates[day.id]||''" (ngModelChange)="pastDates[day.id]=$event" [aria-label]="'Data allenamento passato · '+day.name"></gt-date-field></label><button type="button" class="primary" (click)="startPast(day.id)" [disabled]="!pastDates[day.id]||!s.planExercises(day.id).length||s.busy()||startingPast()">{{startingPast()?'Apertura…':'Registra'}}</button></div>@if(s.draft()){<p class="subtle"><a routerLink="/sessione">Riprendi la sessione aperta</a> prima di registrarne un’altra.</p>}</details>}
                   </div>
                 </details>
-              }@empty{<p class="subtle plan-empty">Nessun allenamento nel piano.</p>}
+              }@empty{<p class="subtle plan-empty">Nessun allenamento nella scheda.</p>}
             </div>
+            @if(editing()===p.id&&!p.archived&&!p.program){<button type="button" class="su-btn ghost sm pl-add" (click)="openDay(p.id)" [disabled]="s.busy()"><gt-icon name="plus"/>Aggiungi allenamento</button>}
+            @if(editing()===p.id){<div class="su-group">Altro</div><div class="su-list pl-more">
+              @if(!p.archived&&!p.completedAt){@if(!p.active){<button type="button" class="su-row" (click)="activate(p.id)"><span class="su-bubble green"><gt-icon name="check"/></span><span class="su-tx"><strong>Rendi attiva</strong></span></button>}<button type="button" class="su-row" (click)="openPlan(p)"><span class="su-bubble pink"><gt-icon name="edit"/></span><span class="su-tx"><strong>Nome e descrizione</strong></span></button>}
+              @if(!p.program){<button type="button" class="su-row" (click)="s.duplicatePlan(p.id)"><span class="su-bubble violet"><gt-icon name="copy"/></span><span class="su-tx"><strong>Duplica scheda</strong></span></button>}
+              @if(!p.completedAt){<button type="button" class="su-row" (click)="archive(p)"><span class="su-bubble blue"><gt-icon name="download"/></span><span class="su-tx"><strong>{{p.archived?'Ripristina':'Archivia'}}</strong></span></button><button type="button" class="su-row" (click)="showDashboard(p.id,true)"><span class="su-bubble amber"><gt-icon name="clock"/></span><span class="su-tx"><strong>Termina scheda</strong><small>Le sedute future possono essere tolte dal calendario</small></span></button>}
+              <button type="button" class="su-row danger" (click)="removePlan(p)" [disabled]="s.busy()||!!deletingPlan()"><span class="su-bubble red"><gt-icon name="trash"/></span><span class="su-tx"><strong>Elimina scheda</strong></span></button>
+            </div>}
           }
-          @if(!p.archived&&!p.program){<button type="button" class="ghost add-plan-workout" (click)="openDay(p.id)" [disabled]="s.busy()">+ Allenamento</button>}
-          <a class="plan-statistics-link" [routerLink]="['/piano',p.id]"><gt-icon name="chart"/>Statistiche del piano<gt-icon name="arrow"/></a>
+          <div class="su-btns pl-actions">@if(!p.archived&&!p.completedAt){<button type="button" class="su-btn sm" [class.su-primary]="editing()===p.id" (click)="toggleEditing(p.id)"><gt-icon [name]="editing()===p.id?'check':'edit'"/>{{editing()===p.id?'Fine':'Modifica'}}</button>}@else{<button type="button" class="su-btn sm" (click)="toggleEditing(p.id)"><gt-icon name="more"/>{{editing()===p.id?'Chiudi':'Gestisci'}}</button>}<a class="su-btn sm" [routerLink]="['/piano',p.id]"><gt-icon name="chart"/>Andamento</a></div>
         </section>
-      }@empty{<div class="card empty"><h2>{{archived()?'Nessun piano archiviato':'Nessun piano'}}</h2>@if(!archived()){<button type="button" class="primary" (click)="openPlan()">Crea piano</button>}</div>}
-    </div>
-    <a class="button ghost catalog-entry" routerLink="/catalogo"><gt-icon name="weight"/>Catalogo esercizi<gt-icon name="arrow"/></a>
+    </ng-template>
     </div></div>
     @if(replacementTarget()){<gt-exercise-replacement [planExerciseId]="replacementTarget()" (closed)="replacementTarget.set('')"/>}
+    @if(newPlanStep()){<div class="su-sheet-backdrop" (click)="newPlanStep.set('')"></div><section class="su-sheet" role="dialog" aria-modal="true" aria-labelledby="new-plan-title"><div class="su-grab"></div>
+      <header class="su-sheet-head"><div><h2 id="new-plan-title">{{newPlanStep()==='copy'?'Copia una scheda':'Nuova scheda'}}</h2><p>{{newPlanStep()==='copy'?'Scegli la scheda da cui partire':'Come vuoi iniziare?'}}</p></div><button type="button" class="su-iconbtn" (click)="newPlanStep.set('')" aria-label="Chiudi"><gt-icon name="close"/></button></header>
+      @if(newPlanStep()==='choose'){
+        <button type="button" class="su-option main" (click)="newPlanStep.set('');openPlan()"><span class="su-bubble pink"><gt-icon name="edit"/></span><span class="su-tx"><strong>Crea da zero</strong><small>Dai un nome, aggiungi gli allenamenti e gli esercizi dal catalogo.</small></span><gt-icon name="chevron-right"/></button>
+        <a class="su-option" routerLink="/importa-excel" (click)="newPlanStep.set('')"><span class="su-bubble green"><gt-icon name="download"/></span><span class="su-tx"><strong>Importa da Excel</strong><small>Il modello GymTrack o la scheda del tuo allenatore. Controlli tutto prima di salvare.</small></span><gt-icon name="chevron-right"/></a>
+        <button type="button" class="su-option" (click)="newPlanStep.set('copy')" [disabled]="!copyablePlans().length"><span class="su-bubble violet"><gt-icon name="copy"/></span><span class="su-tx"><strong>Copia una scheda</strong><small>{{copyablePlans().length?'Parti da una scheda che hai già e cambia solo quello che serve.':'Nessuna scheda da copiare per ora.'}}</small></span><gt-icon name="chevron-right"/></button>
+      }@else{
+        <div class="su-list" style="margin-top:12px">@for(plan of copyablePlans();track plan.id){<button type="button" class="su-row" (click)="copyPlan(plan.id)" [disabled]="s.busy()"><span class="su-bubble violet"><gt-icon name="layers"/></span><span class="su-tx"><strong>{{plan.name}}</strong><small>{{s.days(plan.id).length}} allenamenti</small></span><gt-icon class="su-chev" name="chevron-right"/></button>}</div>
+        <button type="button" class="su-btn sm" style="margin-top:12px" (click)="newPlanStep.set('choose')"><gt-icon name="back"/>Indietro</button>
+      }
+    </section>}
     @if (modal()) {
       <div class="modal-backdrop">
         <section
@@ -161,7 +154,7 @@ type PlanEditorDraft = {
             <form [formGroup]="planForm" (ngSubmit)="savePlan()">
               <div class="form-grid">
                 <label class="wide"
-                  >Nome del piano<input
+                  >Nome della scheda<input
                     formControlName="name"
                     maxlength="100"
                     placeholder="Es. Upper / Lower" /></label
@@ -177,7 +170,7 @@ type PlanEditorDraft = {
                   class="primary"
                   [disabled]="planForm.invalid || saving() || s.busy()"
                 >
-                  Salva piano
+                  Salva scheda
                 </button>
               </div>
             </form>
@@ -306,7 +299,19 @@ export class PlansComponent {
   private route = inject(ActivatedRoute,{optional:true});
   selectedWeeks=signal<Record<string,number>>({});
   fb = inject(FormBuilder);
-  hub=signal<'today'|'plans'>('today');
+  hub=signal<'today'|'plans'>('plans');
+  /** Modalità «Modifica» di una scheda: le azioni compaiono sulle righe invece che nei menu ⋯. */
+  editing=signal('');
+  openDayId=signal('');
+  newPlanStep=signal<''|'choose'|'copy'>('');
+  activePlans=computed(()=>this.plans().filter(plan=>plan.active&&!plan.completedAt));
+  otherPlans=computed(()=>this.plans().filter(plan=>!(plan.active&&!plan.completedAt)));
+  archivedCount=computed(()=>this.s.data().plans.filter(plan=>plan.archived).length);
+  copyablePlans=computed(()=>this.s.data().plans.filter(plan=>!plan.program&&!plan.archived));
+  toggleEditing(id:string){const next=this.editing()===id?'':id;this.editing.set(next);if(next)this.expanded.set(id);}
+  async copyPlan(id:string){await this.s.duplicatePlan(id);this.newPlanStep.set('');}
+  currentWeek(plan:TrainingPlan){const next=this.s.days(plan.id).find(day=>day.sessionDate&&this.dayDate(day)>=this.today&&!this.completedDayWorkout(day));return next?.week||(plan.program&&plan.program.endDate<this.today?plan.program.weeks:1);}
+  planProgress(plan:TrainingPlan){const total=this.s.days(plan.id).length;return total?Math.min(100,Math.round(this.completedForPlan(plan.id)/total*100)):0;}
   overlaps=computed(()=>planOverlaps(this.s.data()));
   async resolveOverlap(keepId:string,dropId:string){
    const keep=this.s.data().plans.find(p=>p.id===keepId),drop=this.s.data().plans.find(p=>p.id===dropId);

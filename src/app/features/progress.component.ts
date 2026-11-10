@@ -1,3 +1,4 @@
+import { ProfileLinkComponent } from '../shared/profile-link.component';
 import { DESIGN_DIRECTIVES } from '../design/design-directives';
 import {sessionVolume,exerciseRecords} from '../services/statistics';
 import {TodayService} from '../services/today';
@@ -14,10 +15,14 @@ import { IconComponent } from "../shared/icon.component";
 import { StatusComponent } from "../shared/status.component";
 import { ExerciseThumbComponent } from '../shared/exercise-thumb.component';
 import { matchesExercise } from '../services/exercise-search';
+import { MeasurementSheetComponent } from '../shared/measurement-sheet.component';
+import { summarizeTraining } from '../services/training-insights';
+import { muscleWork } from '../services/wellness';
+import { ActivatedRoute } from '@angular/router';
 @Component({
   standalone: true,
   styleUrls: ["./feature-polish.css", "./progress-design.css", "./progress-reference.css", "./progress-redesign.css"],
-  imports: [...DESIGN_DIRECTIVES,
+  imports: [ProfileLinkComponent,...DESIGN_DIRECTIVES,
     FormsModule,
     DataChartComponent,
     RouterLink,
@@ -25,127 +30,100 @@ import { matchesExercise } from '../services/exercise-search';
     IconComponent,
     StatusComponent,
     ExerciseThumbComponent,
+    MeasurementSheetComponent,
   ],
-  template: `<div class="reference-progress">
-    <header class="progress-page-heading ref-page-header"><div><h1 gtDesign="progress.title" gtDesignLabel="progress.title">Progressi</h1><p class="ref-progress-subtitle" gtDesign="progress.subtitle" gtDesignLabel="progress.subtitle">Analizza i tuoi risultati</p></div><span class="progress-header-bars" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span></header>
+  template: `<div class="reference-progress pg-simple">
+    <header class="su-head"><h1 gtDesign="progress.title" gtDesignLabel="progress.title">Progressi</h1><div class="su-actions"><gt-profile-link/></div></header>
     <gt-status />
-    <div class="actions" style="margin:0 0 18px"><a class="button primary" routerLink="/analisi"><gt-icon name="chart"/> Analisi avanzate, promemoria e report <gt-icon name="arrow"/></a></div>
-    <details class="card progress-exercise-details" gtDesign="progress.exerciseChart">
-     <summary><gt-icon name="chart"/><span><strong gtDesign="progress.exerciseChart.title" gtDesignLabel="progress.exerciseChart.title">Progressi per esercizio</strong><small>Peso, volume, ripetizioni e 1RM stimato</small></span><span class="progress-detail-chevron">›</span></summary>
-     <div class="progress-details-body"><gt-progress-chart /></div>
-    </details>
-    <section class="card personal-records-panel reference-records" gtDesign="progress.records">
-      <div class="card-head"><h2 gtDesign="progress.records.title" gtDesignLabel="progress.records.title">Record personali</h2><gt-icon name="trophy"/></div>
-      <label class="record-search"><span class="sr-only">Cerca esercizio per nome o parola chiave</span><gt-icon name="search"/><input type="search" gtDesign="progress.search" placeholder="Cerca per nome o parola chiave…" autocomplete="off" [ngModel]="recordQuery()" (ngModelChange)="recordQuery.set($event)"/></label>
-      <div class="record-selection-row">
-        <label class="record-exercise-select"><span>Esercizio</span><select [ngModel]="exerciseId()||defaultId()" gtDesign="progress.exercise" (ngModelChange)="exerciseId.set($event);machine.set('')" aria-label="Esercizio dei record"><option value="" disabled>Seleziona un esercizio</option>@if(recordPinned();as exercise){<option [value]="exercise.id">{{exercise.name}} (selezionato)</option>}@for(exercise of recordOptions();track exercise.id){<option [value]="exercise.id">{{exercise.name}}</option>}</select></label>
-        @if(selectedExercise();as exercise){<gt-exercise-thumb class="record-exercise-thumb" [exercise]="exercise"/>}
-        <button type="button" class="record-filter-button ref-icon-button" gtDesign="progress.filters" (click)="recordFilters.set(!recordFilters())" [attr.aria-expanded]="recordFilters()" aria-controls="record-filters" aria-label="Filtra gli esercizi e le configurazioni dei record"><gt-icon name="sliders"/></button>
+    <nav class="su-seg" aria-label="Sezione dei progressi"><button type="button" [class.on]="tab()==='training'" [attr.aria-pressed]="tab()==='training'" (click)="tab.set('training')">Allenamento</button><button type="button" [class.on]="tab()==='body'" [attr.aria-pressed]="tab()==='body'" (click)="tab.set('body')">Corpo</button></nav>
+    <div class="su-chips pg-period" role="group" aria-label="Periodo">@for(option of periods;track option.value){<button type="button" class="su-chip" [class.on]="period()===option.value" [attr.aria-pressed]="period()===option.value" (click)="period.set(option.value)">{{option.label}}</button>}</div>
+    @if(tab()==='training'){
+      @if(insight();as item){<section class="pg-insight" aria-label="In evidenza"><div class="pg-insight-top"><span class="su-bubble violet"><gt-icon name="bolt"/></span><span>In evidenza</span></div><h2>{{item.title}}</h2><p>{{item.message}}</p></section>}
+      <div class="su-stats pg-kpi">
+        <div class="su-stat"><strong>{{overviewSessions().length}}</strong><span>allenamenti @if(sessionDelta()!==null){<b [class.su-up]="sessionDelta()!>0" [class.su-down]="sessionDelta()!<0">{{sessionDelta()!>0?'+':''}}{{sessionDelta()}}</b>}</span></div>
+        <div class="su-stat"><strong>@if(overviewDuration();as duration){ {{duration.value}}<small>{{duration.unit}}</small>@if(duration.minutes){ {{duration.minutes}}<small>m</small>} }@else{—}</strong><span>in palestra</span></div>
+        <div class="su-stat"><strong>{{overviewSessions().length?compactWeight(overviewVolume()):'—'}}<small>{{overviewSessions().length?compactUnit(overviewVolume()):''}}</small></strong><span>volume @if(weeklyTrend();as trend){<b [class.su-up]="trend.increased">{{trend.label}}</b>}</span></div>
       </div>
-      @if(recordQuery().trim()||recordMode()!=='all'){<p class="record-result" role="status">{{recordOptions().length}} risultati@if(recordPinned()){ · Selezione attuale conservata}</p>}
-      @if(recordFilters()){
-        <div class="record-filters" id="record-filters">
-          <label>Modalità di carico<select [ngModel]="recordMode()" (ngModelChange)="recordMode.set($event)"><option value="all">Tutte le modalità</option><option value="external">Carico esterno</option><option value="bodyweight">Corpo libero</option><option value="weighted-bodyweight">Zavorra</option><option value="assisted">Assistito</option></select></label>
-          @if(s.configurations(exerciseId()||defaultId()).length){<label>Configurazione dei record<select [ngModel]="machine()" (ngModelChange)="machine.set($event)"><option value="">Tutte le configurazioni</option>@for(config of s.configurations(exerciseId()||defaultId());track config.key){<option [value]="config.key">{{config.label}}</option>}</select></label>}
-          <p>Le configurazioni di macchine diverse possono non essere confrontabili.</p>
-        </div>
-      }
-      <div class="stats-grid performance-record-grid reference-record-grid">
-        <div class="card stat"><span class="stat-label"><gt-icon name="weight"/><span>{{selectedExercise()?.loadMode==='assisted'?'Assistenza massima registrata':selectedExercise()?.loadMode==='weighted-bodyweight'?'Zavorra massima':'Peso massimo effettivo'}}</span></span><div class="record-value">{{hasRecordData()&&selectedExercise()?.loadMode!=='bodyweight'?s.formatWeight(records().maxWeight):'—'}} @if(hasRecordData()&&selectedExercise()?.loadMode!=='bodyweight'){<small>{{s.settings().unit}}</small>}</div><small class="record-data-state">{{!hasRecordData()?'Nessun dato':selectedExercise()?.loadMode==='bodyweight'?'Non applicabile':'Carico registrato'}}</small></div>
-        <div class="card stat"><span class="stat-label"><gt-icon name="bolt"/><span>1RM stimato · Epley</span></span><div class="record-value">{{selectedExercise()?.loadMode==='external'&&records().estimated1RM>0?s.formatWeight(records().estimated1RM):'—'}} @if(selectedExercise()?.loadMode==='external'&&records().estimated1RM>0){<small>{{s.settings().unit}}</small>}</div><small class="record-data-state">{{!hasRecordData()?'Nessun dato':selectedExercise()?.loadMode!=='external'?'Non applicabile':records().estimated1RM>0?'Stima dal carico registrato':'Nessuna stima'}}</small></div>
-        <div class="card stat"><span class="stat-label"><gt-icon name="repeat"/><span>Ripetizioni massime</span></span><div class="record-value">{{hasRecordData()?records().maxReps:'—'}} @if(hasRecordData()){<small>rip</small>}</div><small class="record-data-state">{{hasRecordData()?'Serie allenanti completate':'Nessun dato'}}</small></div>
-        <div class="card stat"><span class="stat-label"><gt-icon name="layers"/><span>Volume massimo / sessione</span></span><div class="record-value">{{hasRecordData()&&selectedExercise()?.loadMode==='external'?s.formatWeight(records().maxVolume):'—'}} @if(hasRecordData()&&selectedExercise()?.loadMode==='external'){<small>{{s.settings().unit}}</small>}</div><small class="record-data-state">{{!hasRecordData()?'Nessun dato':selectedExercise()?.loadMode!=='external'?'Non applicabile':'Carichi × ripetizioni'}}</small></div>
+      <section class="su-card pg-chart" gtDesign="progress.weeklyChart"><div class="pg-card-head"><h2 gtDesign="progress.weeklyChart.title" gtDesignLabel="progress.weeklyChart.title" gtDesignLabelDefault="Volume per settimana">Volume per settimana</h2><small>{{s.settings().unit}}</small></div>
+        <gt-progress-chart initialMetric="weekly" [showFilters]="false" [monthsFilter]="period()>0?period():0" [daysFilter]="period()<0?-period():undefined" [compact]="true" /></section>
+      <div class="su-sec"><h2>Record recenti</h2>@if(recentRecords().length){<small>nel periodo</small>}</div>
+      @if(recentRecords().length){<div class="su-list">@for(record of recentRecords();track record.exerciseId+record.date){<a class="su-row" [routerLink]="['/esercizio',record.exerciseId]"><gt-exercise-thumb class="su-thumb" [exercise]="s.exercise(record.exerciseId)"/><span class="su-tx"><strong>{{record.name}}</strong><small>{{s.formatWeight(record.weight)}} {{s.settings().unit}} × {{record.reps}} · {{shortDate(record.date)}}</small></span>@if(record.delta>0){<span class="su-badge amber">+{{s.formatWeight(record.delta)}} {{s.settings().unit}}</span>}@else{<span class="su-badge amber"><gt-icon name="trophy"/>Primo</span>}</a>}</div>}
+      @else{<p class="pg-empty">Qui compariranno i nuovi record quando superi un tuo carico.</p>}
+      <div class="su-sec"><h2>Muscoli allenati</h2><a routerLink="/focus-muscolare">Mappa<gt-icon name="chevron-right"/></a></div>
+      <a class="su-card pg-muscles" routerLink="/focus-muscolare" aria-label="Apri la mappa muscolare">
+        <span class="pg-figure" aria-hidden="true"><img src="/training/figures/muscle-front-v2.png" alt="" loading="lazy"/></span>
+        <span class="pg-bars">@for(group of muscleTop();track group.id){<span class="pg-bar-row"><span>{{group.name}}</span><span class="su-bar"><i [style.width.%]="group.sets/muscleMax()*100"></i></span><b>{{group.sets}}</b></span>}@empty{<span class="pg-empty">Completa un allenamento per vedere i gruppi allenati.</span>}@if(muscleTop().length){<small>serie nel periodo</small>}</span>
+      </a>
+      <details class="su-card pg-exercise-chart" gtDesign="progress.exerciseChart"><summary><span class="su-bubble pink"><gt-icon name="chart"/></span><span><strong gtDesign="progress.exerciseChart.title" gtDesignLabel="progress.exerciseChart.title" gtDesignLabelDefault="Grafico di un esercizio">Grafico di un esercizio</strong><small>Peso, volume, ripetizioni e 1RM stimato</small></span><gt-icon name="chevron-down"/></summary><div class="progress-details-body"><gt-progress-chart /></div></details>
+      <div class="su-list pg-links">
+        @if(s.activePlan();as plan){<a class="su-row" [routerLink]="['/piano',plan.id]"><span class="su-bubble pink"><gt-icon name="layers"/></span><span class="su-tx"><strong>Andamento della scheda</strong><small>{{plan.name}} · {{planDone(plan.id)}} di {{s.days(plan.id).length}} allenamenti</small></span><gt-icon class="su-chev" name="chevron-right"/></a>}
+        <a class="su-row" routerLink="/analisi"><span class="su-bubble blue"><gt-icon name="download"/></span><span class="su-tx"><strong>Analisi ed esporta report</strong><small>Andamento dettagliato, PDF o CSV</small></span><gt-icon class="su-chev" name="chevron-right"/></a>
       </div>
-      @if(weightRecords().length){<details class="record-weight-details"><summary>Record di ripetizioni per carico</summary><div class="actions">@for(r of weightRecords();track r.weight){<span class="pill">{{s.formatWeight(r.weight)}} {{s.settings().unit}} × {{r.reps}} rip</span>}</div></details>}
-    </section>
-    <aside class="card record-information" gtDesign="progress.info"><gt-icon name="info"/><p>{{comparison()?'L’1RM è una stima, non un massimale testato. Per corpo libero, zavorra e assistenza non si calcolano volume e 1RM.':'Registra almeno due sessioni con questo esercizio per confrontare i tuoi progressi.'}}</p></aside>
-    <details class="card progress-overview-details"><summary><gt-icon name="chart"/><span gtDesign="progress.overview.title" gtDesignLabel="progress.overview.title">Riepilogo, peso e misure</span><gt-icon name="chevron-down"/></summary><div class="progress-overview-body">
-    <div class="segmented progress-tabs ref-tabs" role="group" aria-label="Categoria dei progressi"><button type="button" [class.active]="category()==='strength'" [attr.aria-pressed]="category()==='strength'" (click)="category.set('strength')"><gt-icon name="strength"/>Forza</button><button type="button" [class.active]="category()==='weight'" [attr.aria-pressed]="category()==='weight'" (click)="category.set('weight')"><gt-icon name="scale"/>Peso</button><button type="button" [class.active]="category()==='body'" [attr.aria-pressed]="category()==='body'" (click)="category.set('body')"><gt-icon name="body"/>Corpo</button>@if(features?.nutritionEnabled()){<button type="button" [class.active]="category()==='nutrition'" [attr.aria-pressed]="category()==='nutrition'" (click)="category.set('nutrition')"><gt-icon name="nutrition"/>Pasti</button>}</div>
-    @if(category()==='strength'){
-     <div class="ref-progress-filters">
-      <label class="ref-field"><span>Piano</span><span class="ref-field-control"><select [ngModel]="overviewPlan()" (ngModelChange)="overviewPlan.set($event)" aria-label="Piano dei progressi"><option value="">Tutti i piani</option>@for(plan of s.data().plans;track plan.id){<option [value]="plan.id">{{plan.name}}</option>}</select></span></label>
-      <label class="ref-field"><span>Periodo</span><span class="ref-field-control ref-has-icon"><gt-icon name="calendar"/><select [ngModel]="period()" (ngModelChange)="period.set(+$event)" aria-label="Periodo dei progressi"><option [ngValue]="-28">4 settimane</option><option [ngValue]="1">1 mese</option><option [ngValue]="3">3 mesi</option><option [ngValue]="6">6 mesi</option><option [ngValue]="12">1 anno</option><option [ngValue]="0">Tutto</option></select></span></label>
-     </div>
     }@else{
-     <div class="filters progress-period-filter"><label class="ref-field"><span>Periodo</span><span class="ref-field-control ref-has-icon"><gt-icon name="calendar"/><select [ngModel]="period()" (ngModelChange)="period.set(+$event)"><option [ngValue]="-28">4 settimane</option><option [ngValue]="1">1 mese</option><option [ngValue]="3">3 mesi</option><option [ngValue]="6">6 mesi</option><option [ngValue]="12">1 anno</option><option [ngValue]="0">Tutto</option></select></span></label><a class="button secondary" routerLink="/profilo" [queryParams]="{section:category()==='nutrition'?'goals':'measurements'}">{{category()==='nutrition'?'Obiettivi':'Registra misurazione'}}</a></div>
-    }
-    <section class="progress-summary-grid ref-progress-summary" aria-label="Statistiche degli allenamenti nel periodo selezionato">
-     <div class="progress-summary-tile ref-progress-metric"><div class="ref-progress-metric-top"><gt-icon name="weight"/><span class="ref-badge neutral" gtDesign="progress.sessionsBadge">Nel periodo</span></div><strong class="ref-metric-value">{{overviewSessions().length}}</strong><small>Sedute completate</small></div>
-     <div class="progress-summary-tile ref-progress-metric"><div class="ref-progress-metric-top"><gt-icon name="chart"/>@if(weeklyTrend();as trend){<span class="ref-badge" [class.green]="trend.increased" [class.neutral]="!trend.increased" title="Confronto tra le ultime due settimane complete">{{trend.label}}</span>}@else{<span class="ref-badge neutral">Nel periodo</span>}</div><strong class="ref-metric-value">{{overviewSessions().length?s.formatWeight(overviewVolume()):'—'}} <span>{{s.settings().unit}}</span></strong><small>Volume registrato</small></div>
-     <div class="progress-summary-tile ref-progress-metric"><div class="ref-progress-metric-top"><gt-icon name="trophy"/><span class="ref-badge violet">{{overviewRecord()?.reference?'Riferimento':'Record'}}</span></div><strong class="ref-metric-value">{{overviewRecord()?overviewRecord()!.value:'—'}} @if(overviewRecord();as record){<span>{{record.unit}}</span>}</strong><small>{{overviewRecord()?.label||selectedExercise()?.name||'Nessun record registrato'}}</small></div>
-     <div class="progress-summary-tile ref-progress-metric"><div class="ref-progress-metric-top"><gt-icon name="clock"/><span class="ref-badge neutral">Totale</span></div><strong class="ref-metric-value">@if(overviewDuration();as duration){ {{duration.value}} <span>{{duration.unit}}</span>@if(duration.minutes){<b class="ref-duration-minutes">{{duration.minutes}} <span>m</span></b>}}@else{—}</strong><small>Tempo di allenamento</small></div>
-    </section>
-    @if(category()==='weight'){<section class="card performance-chart-card"><h2>Peso corporeo ({{s.settings().unit}})</h2><gt-data-chart [points]="weightPoints()" [unit]="s.settings().unit" title="Andamento del peso corporeo"/></section><div class="overview-primary" style="margin-top:16px"><div class="card"><p class="subtle">Peso attuale</p><strong class="record-value">{{s.profile().bodyWeight!==undefined?s.formatWeight(s.profile().bodyWeight!):'—'}} {{s.settings().unit}}</strong></div><div class="card"><p class="subtle">Rilevazioni nel periodo</p><strong class="record-value">{{measurements().length}}</strong></div></div>}
-    @if(category()==='weight'&&recordCards().length){<div class="section-title"><h2 gtDesign="progress.records.title" gtDesignLabel="progress.records.title">Record personali</h2><button class="ghost" (click)="category.set('strength')">Vedi tutti ›</button></div><div class="overview-primary">@for(record of recordCards();track record.id){<div class="card"><p class="subtle">{{record.name}}</p><strong class="record-value">{{s.formatWeight(record.weight)}} <small>{{s.settings().unit}}</small></strong></div>}</div>}
-    @if(category()==='body'){<section class="card performance-chart-card"><h2>Girovita</h2><gt-data-chart [points]="waistPoints()" unit="cm" title="Misurazioni del girovita"/></section><section class="card" style="margin-top:16px"><h2>Massa grassa registrata</h2><gt-data-chart [points]="fatPoints()" unit="%" title="Percentuale di massa grassa inserita manualmente"/><p class="subtle">Valori inseriti da te, non dedotti da fotografie.</p></section>}
-    @if(features?.nutritionEnabled()&&category()==='nutrition'){<section class="card performance-chart-card"><h2>Calorie registrate</h2><gt-data-chart [points]="nutritionPoints()" unit="kcal" title="Calorie dei giorni registrati"/><p class="subtle">Solo i giorni con pasti registrati. Un giorno senza dati non è considerato un giorno a zero calorie.</p></section><a class="button primary full-width" style="margin-top:18px" routerLink="/alimentazione">Apri diario alimentare</a>}
-    @if(category()==='strength'){
-    <section class="card performance-chart-card weekly-volume-card ref-weekly-card" gtDesign="progress.weeklyChart">
-     <div class="card-head"><div><p class="ref-eyebrow">LA TUA COSTANZA</p><h2 gtDesign="progress.weeklyChart.title" gtDesignLabel="progress.weeklyChart.title">Volume settimanale</h2></div><span class="ref-badge neutral">{{s.settings().unit}}</span></div>
-     <div class="ref-weekly-summary"><strong>{{overviewSessions().length?s.formatWeight(overviewVolume()):'—'}} <span>{{s.settings().unit}}</span></strong>@if(weeklyTrend();as trend){<span class="ref-badge" [class.green]="trend.increased" [class.neutral]="!trend.increased" title="Confronto tra le ultime due settimane complete">{{trend.label}} ultima settimana</span>}</div>
-     <p class="ref-weekly-description">Somma dei carichi esterni registrati nel periodo.</p>
-     <gt-progress-chart initialMetric="weekly" [showFilters]="false" [planFilter]="overviewPlan()" [monthsFilter]="period()>0?period():0" [daysFilter]="period()<0?-period():undefined" [compact]="true" />
-    </section>
-    <div class="progress-comparison" style="margin-top:20px">
-      <section class="card">
-        <div class="card-head">
-          <div>
-            <h2>Una sessione alla volta</h2>
-            <p>
-              Ultima sessione vs precedente · carico massimo e ripetizioni a
-              quel carico
-            </p>
-          </div>
-          <gt-icon name="activity" />
-        </div>
-        @if (comparison(); as c) {
-          <div class="split">
-            <div>
-              <p class="subtle">Precedente · {{ c.before.date }}</p>
-              <div class="record-value">
-                {{
-                  selectedExercise()?.loadMode === "bodyweight"
-                    ? ""
-                    : s.formatWeight(c.before.weight) +
-                      " " +
-                      s.settings().unit +
-                      " × "
-                }}{{ c.before.reps }} <small>rip</small>
-              </div>
-            </div>
-            <div>
-              <p class="subtle">Ultima · {{ c.after.date }}</p>
-              <div class="record-value">
-                {{
-                  selectedExercise()?.loadMode === "bodyweight"
-                    ? ""
-                    : s.formatWeight(c.after.weight) +
-                      " " +
-                      s.settings().unit +
-                      " × "
-                }}{{ c.after.reps }} <small>rip</small>
-              </div>
-            </div>
-          </div>
-          <p class="pill" style="margin-top:20px" [class.green]="c.improved">
-            {{ c.text }}
-          </p>
-        } @else {
-          <div class="empty">
-            <h3>Il confronto arriverà presto</h3>
-            <p>Completa almeno due sessioni con questo esercizio.</p>
-          </div>
-        }
+      <section class="su-card pg-weight">
+        <div class="pg-card-head"><h2>Peso</h2><button type="button" class="su-btn sm pg-add" (click)="measureOpen.set(true)"><gt-icon name="plus"/>Registra</button></div>
+        <div class="pg-big"><strong>{{s.profile().bodyWeight!==undefined?s.formatWeight(s.profile().bodyWeight!):'—'}}<small>{{s.profile().bodyWeight!==undefined?s.settings().unit:''}}</small></strong>@if(weightDelta();as delta){<span [class.su-up]="delta<0" [class.su-down]="delta>0">{{delta>0?'+':''}}{{s.formatWeight(delta)}} {{s.settings().unit}} nel periodo</span>}</div>
+        @if(weightPoints().length>1){<gt-data-chart [points]="weightPoints()" [unit]="s.settings().unit" title="Andamento del peso corporeo"/>}@else{<p class="pg-empty">Registra il peso almeno due volte per vedere l’andamento.</p>}
       </section>
-    </div>}
-    </div></details>
-    <section class="card progress-plan-card"><div class="card-head"><h2>Statistiche del piano</h2><gt-icon name="plans"/></div><label>Scegli un programma<select [ngModel]="''" (ngModelChange)="openPlan($event)"><option value="">Scegli un piano</option>@for(plan of s.data().plans;track plan.id){<option [value]="plan.id">{{plan.name}}{{plan.program?' · '+plan.program.startDate:''}}{{plan.completedAt?' · Concluso':''}}</option>}</select></label></section>
-    <nav class="progress-destinations" aria-label="Esplora il tuo percorso"><a routerLink="/focus-muscolare"><gt-icon name="weight"/><span><strong>Focus muscolare</strong><small>Volume e recupero per gruppo</small></span>›</a><a routerLink="/recupero"><gt-icon name="moon"/><span><strong>Recovery</strong><small>Sonno, energia e riposo</small></span>›</a><a routerLink="/sonno"><gt-icon name="moon"/><span><strong>Diario del sonno</strong><small>Durata e qualità del riposo</small></span>›</a></nav>
-    <p class="progress-archive-note"><gt-icon name="shield"/> Il tuo percorso è custodito nel tuo archivio personale.</p></div>`,
+      <div class="su-stats two pg-measures">
+        <div class="su-stat"><strong>{{lastWaist()??'—'}}<small>{{lastWaist()?'cm':''}}</small></strong><span>girovita @if(waistDelta();as d){<b [class.su-up]="d<0" [class.su-down]="d>0">{{d>0?'+':''}}{{d}} cm</b>}</span></div>
+        <div class="su-stat"><strong>{{lastFat()??'—'}}<small>{{lastFat()?'%':''}}</small></strong><span>massa grassa @if(fatDelta();as d){<b [class.su-up]="d<0" [class.su-down]="d>0">{{d>0?'+':''}}{{d}}%</b>}</span></div>
+      </div>
+      @if(waistPoints().length>1||fatPoints().length>1){<details class="su-card pg-exercise-chart"><summary><span class="su-bubble violet"><gt-icon name="ruler"/></span><span><strong>Grafici delle misure</strong><small>Girovita e massa grassa inseriti da te</small></span><gt-icon name="chevron-down"/></summary><div class="progress-details-body">@if(waistPoints().length>1){<h3>Girovita</h3><gt-data-chart [points]="waistPoints()" unit="cm" title="Misurazioni del girovita"/>}@if(fatPoints().length>1){<h3>Massa grassa</h3><gt-data-chart [points]="fatPoints()" unit="%" title="Percentuale di massa grassa inserita manualmente"/>}</div></details>}
+      <div class="su-sec"><h2>Benessere</h2><a routerLink="/recupero">Diario<gt-icon name="chevron-right"/></a></div>
+      <section class="su-card pg-wellness">
+        <div class="su-stats two"><div class="su-stat"><strong class="pg-green">{{wellnessWeek().energy??'—'}}<small>{{wellnessWeek().energy?'/5':''}}</small></strong><span>energia media</span></div><div class="su-stat"><strong class="pg-blue">{{wellnessWeek().sleep}}</strong><span>sonno medio</span></div></div>
+        <div class="pg-week" aria-label="Ore di sonno degli ultimi 7 giorni">@for(day of wellnessWeek().days;track day.date){<span class="pg-day" [class.today]="day.date===today"><i [style.height.%]="day.sleepPct"></i><small>{{day.letter}}</small></span>}</div>
+        <p class="pg-note">Ore di sonno degli ultimi 7 giorni, dai check-in «Come stai oggi?».</p>
+        <a class="su-btn sm" routerLink="/" [queryParams]="{checkin:1}"><gt-icon name="heart"/>{{wellnessToday()?'Aggiorna il check-in di oggi':'Fai il check-in di oggi'}}</a>
+      </section>
+      @if(soreToday().length){<div class="su-card pg-sore"><span class="su-bubble amber"><gt-icon name="muscle"/></span><span><strong>Indolenziti oggi</strong><small>{{soreToday().join(' · ')}}</small></span></div>}
+    }
+    <gt-measurement-sheet [open]="measureOpen()" (closed)="measureOpen.set(false)"/>
+</div>`,
 })
 export class ProgressComponent {
   private router=inject(Router);
   openPlan(id:string){if(id)void this.router.navigate(['/piano',id]);}
+  /** Due viste: Allenamento (record, volume, muscoli) e Corpo (peso, misure, benessere). */
+  tab=signal<'training'|'body'>(inject(ActivatedRoute,{optional:true})?.snapshot?.queryParamMap?.get('tab')==='corpo'?'body':'training');
+  measureOpen=signal(false);
+  readonly periods=[{value:-28,label:'4 settimane'},{value:3,label:'3 mesi'},{value:12,label:'1 anno'},{value:0,label:'Tutto'}];
+  private periodDays=computed(()=>{const p=this.period();if(p<0)return -p;if(p===0)return 3650;const from=this.cutoff();return Math.max(1,Math.round((new Date(this.today+'T12:00:00').getTime()-new Date(from+'T12:00:00').getTime())/86400000)+1);});
+  private training=computed(()=>summarizeTraining(this.s.data(),this.periodDays(),this.today));
+  insight=computed(()=>this.training().insights[0]);
+  sessionDelta=computed(()=>{if(!this.period())return null;const t=this.training();return t.previous.workouts?t.current.workouts-t.previous.workouts:null;});
+  compactWeight(value:number){return value>=10000?(value/1000).toLocaleString('it-IT',{maximumFractionDigits:1}):this.s.formatWeight(value);}
+  compactUnit(value:number){return value>=10000?(this.s.settings().unit==='kg'?'t':'k'+this.s.settings().unit):this.s.settings().unit;}
+  shortDate(date:string){return new Date(date+'T12:00:00').toLocaleDateString('it-IT',{day:'numeric',month:'short'});}
+  planDone(planId:string){return this.s.completed().filter(w=>w.planId===planId).length;}
+  /** Nuovi record nel periodo: serie con il carico più alto mai registrato per quell'esercizio (stessa modalità di carico). */
+  recentRecords=computed(()=>{
+    const data=this.s.data(),done=data.workouts.filter(w=>w.status==='completed').sort((a,b)=>a.date.localeCompare(b.date)||(a.endedAt||'').localeCompare(b.endedAt||''));
+    const best=new Map<string,number>(),out:{exerciseId:string;name:string;weight:number;reps:number;delta:number;date:string}[]=[],from=this.cutoff();
+    for(const w of done){for(const row of data.workoutExercises.filter(r=>r.workoutId===w.id&&r.loadMode==='external')){
+      const sets=data.sets.filter(set=>set.workoutExerciseId===row.id&&set.completed&&set.kind!=='warmup'&&set.weight>0);if(!sets.length)continue;
+      const top=[...sets].sort((a,b)=>b.weight-a.weight||b.reps-a.reps)[0],previous=best.get(row.exerciseId);
+      if(previous===undefined||top.weight>previous){if((!from||w.date>=from)&&previous!==undefined)out.push({exerciseId:row.exerciseId,name:row.name,weight:top.weight,reps:top.reps,delta:top.weight-previous,date:w.date});best.set(row.exerciseId,top.weight);}
+    }}
+    return out.sort((a,b)=>b.date.localeCompare(a.date)).slice(0,4);
+  });
+  muscleTop=computed(()=>muscleWork(this.s.data(),this.cutoff()||'0000-01-01',this.today).filter(group=>group.sets>0&&group.id!=='unmapped').slice(0,5));
+  muscleMax=computed(()=>Math.max(1,...this.muscleTop().map(group=>group.sets)));
+  private measureDelta(key:'weight'|'waist'|'bodyFat'){const rows=this.measurements().filter(m=>m[key]!==undefined&&m[key]!==null);if(rows.length<2)return null;const d=(rows[rows.length-1][key] as number)-(rows[0][key] as number);return Math.round(d*10)/10||null;}
+  weightDelta=computed(()=>{const d=this.measureDelta('weight');return d===null?null:this.s.weight(d);});
+  waistDelta=computed(()=>this.measureDelta('waist'));
+  fatDelta=computed(()=>this.measureDelta('bodyFat'));
+  lastWaist=computed(()=>[...this.s.data().measurements].sort((a,b)=>b.date.localeCompare(a.date)).find(m=>m.waist)?.waist);
+  lastFat=computed(()=>[...this.s.data().measurements].sort((a,b)=>b.date.localeCompare(a.date)).find(m=>m.bodyFat)?.bodyFat);
+  wellnessToday=computed(()=>this.s.data().wellnessLogs.find(log=>log.date===this.today));
+  wellnessWeek=computed(()=>{
+    const logs=this.s.data().wellnessLogs,days=Array.from({length:7},(_,i)=>{const d=new Date(this.today+'T12:00:00');d.setDate(d.getDate()-6+i);const date=localDate(d),log=logs.find(l=>l.date===date);return {date,letter:['D','L','M','M','G','V','S'][d.getDay()],sleepPct:log?.sleepMinutes?Math.min(100,Math.round(log.sleepMinutes/600*100)):0,log};});
+    const energies=days.map(d=>d.log?.energy).filter((v):v is number=>!!v),sleeps=days.map(d=>d.log?.sleepMinutes).filter((v):v is number=>v!==undefined);
+    const sleepAvg=sleeps.length?Math.round(sleeps.reduce((a,b)=>a+b,0)/sleeps.length):undefined;
+    return {days,energy:energies.length?Math.round(energies.reduce((a,b)=>a+b,0)/energies.length*10)/10:undefined,sleep:sleepAvg===undefined?'—':Math.floor(sleepAvg/60)+' h '+String(sleepAvg%60).padStart(2,'0')};
+  });
+  soreToday=computed(()=>{const sore=this.wellnessToday()?.soreness||{},groups=this.s.data().muscleGroups;return Object.keys(sore).filter(id=>sore[id]>0).map(id=>groups.find(g=>g.id===id)?.name).filter((name):name is string=>!!name);});
   features=inject(AppFeaturesService,{optional:true});
   constructor(){effect(()=>{if(!this.features?.nutritionEnabled()&&this.category()==='nutrition')this.category.set('weight');});}
   recordCards=computed(()=>[...new Set(this.s.completed().flatMap(w=>this.s.workoutExercises(w.id).map(e=>e.exerciseId)))].map(id=>({id,name:this.s.exercise(id)?.name||this.s.data().workoutExercises.find(e=>e.exerciseId===id)?.name||'Esercizio',weight:this.s.records(id).maxWeight,mode:this.s.exercise(id)?.loadMode})).filter(r=>r.weight>0&&(r.mode==='external'||r.mode==='weighted-bodyweight'||!r.mode)).slice(0,2));

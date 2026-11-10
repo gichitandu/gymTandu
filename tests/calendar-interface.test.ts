@@ -56,7 +56,7 @@ it('protects completed sessions in quick actions and opens their saved history',
  const item=c.selectedItem()!,before=structuredClone(s.data());
  expect(item.status).toBe('completed');expect(c.canMove(item)).toBe(false);expect(c.canRemove(item)).toBe(false);expect(c.itemCanStart(item)).toBe(false);
  await c.quickRemove();expect(confirm).not.toHaveBeenCalled();await c.viewItem(item);
- expect(navigate).toHaveBeenCalledWith('/allenamenti?workout='+encodeURIComponent(log.id));expect(s.data()).toEqual(before);
+ expect(navigate).toHaveBeenCalledWith('/riepilogo/'+encodeURIComponent(log.id)+'?from=calendario');expect(s.data()).toEqual(before);
 });
 
 it('uses the selected row for quick actions and keeps filters and statistics separate from meal calories',async()=>{

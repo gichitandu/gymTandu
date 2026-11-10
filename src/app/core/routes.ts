@@ -7,8 +7,9 @@ const pages: Routes = [
  {path:'design-studio',canActivate:[designStudioGuard],loadComponent:()=>import('../design/design-studio.component').then(m=>m.DesignStudioComponent)},
  {path:'esercizio/:id',loadComponent:()=>import('../features/exercise-detail.component').then(m=>m.ExerciseDetailComponent)},
  {path:'recupero',data:{mode:'recovery'},loadComponent:()=>import('../features/recovery.component').then(m=>m.RecoveryComponent)},
- {path:'sonno',data:{mode:'sleep'},loadComponent:()=>import('../features/recovery.component').then(m=>m.RecoveryComponent)},
- {path:'riposo',data:{mode:'rest'},loadComponent:()=>import('../features/recovery.component').then(m=>m.RecoveryComponent)},
+ // Sonno e riposo confluiscono nel check-in «Come stai oggi?» e nel Calendario.
+ {path:'sonno',redirectTo:'recupero'},
+ {path:'riposo',redirectTo:'/calendario?add=rest'},
  {path:'focus-muscolare',loadComponent:()=>import('../features/muscle-focus.component').then(m=>m.MuscleFocusComponent)},
  {path:'analisi',loadComponent:()=>import('../features/training-insights.component').then(m=>m.TrainingInsightsComponent)},
   {

@@ -1,15 +1,12 @@
-import {AnimationLibraryComponent} from '../shared/animation-library.component';
+import { ProfileLinkComponent } from '../shared/profile-link.component';
 import {exerciseMotionFrames} from '../services/exercise-motion-frames';
-import {ExerciseMotionComponent} from '../shared/exercise-motion.component';
 import {RouterLink} from '@angular/router';
 import { confirmationForContext } from '../services/confirmation';
 import { ExerciseThumbComponent } from "../shared/exercise-thumb.component";
 import { matchesExercise } from "../services/exercise-search";
 import {ExerciseScope,ExerciseScopeComponent} from "../shared/exercise-scope.component";
-import {MachineSetupComponent} from "../shared/machine-setup.component";
 import { ExerciseFamiliesComponent } from "../shared/exercise-families.component";
 import { compressPhoto } from "../services/images";
-import { ExerciseVideoComponent } from "../shared/exercise-video.component";
 import { A11yModule } from "@angular/cdk/a11y";
 import { Component, computed, HostListener, inject, signal } from "@angular/core";
 import {
@@ -30,37 +27,32 @@ type CatalogEditorDraft = {
 @Component({
   standalone: true,
   styleUrls: ["./account-polish.css", "./catalog-design.css", "./catalog-redesign.css"],
-  imports: [AnimationLibraryComponent,RouterLink,ExerciseMotionComponent, ExerciseThumbComponent,
-    A11yModule,ExerciseScopeComponent,MachineSetupComponent,
-    ExerciseFamiliesComponent,
-    ExerciseVideoComponent,
+  imports: [ProfileLinkComponent,RouterLink,ExerciseThumbComponent,
+    A11yModule,ExerciseScopeComponent,ExerciseFamiliesComponent,
     FormsModule,
     ReactiveFormsModule,
     IconComponent,
     StatusComponent,
   ],
   template: `<div class="catalog-design-page">
-    <header class="catalog-heading"><a class="icon-btn ghost" routerLink="/piani" aria-label="Torna agli allenamenti"><gt-icon name="back"/></a><div><h1>Catalogo esercizi</h1><p>Tecnica, attrezzi e movimenti.</p></div>@if(s.canEditCatalog()){<button type="button" class="primary catalog-add" (click)="open()" [disabled]="!s.ready()" aria-label="Nuovo esercizio"><gt-icon name="plus"/></button>}</header>
+    <header class="su-head"><h1>Schede</h1><div class="su-actions">@if(s.canEditCatalog()){<button type="button" class="su-iconbtn" (click)="open()" [disabled]="!s.ready()" aria-label="Nuovo esercizio"><gt-icon name="plus"/></button>}<gt-profile-link/></div></header>
+    <nav class="su-seg" aria-label="Schede ed esercizi"><a routerLink="/piani">Le mie schede</a><a class="on" aria-current="page" routerLink="/catalogo">Esercizi</a></nav>
     <gt-status />
     @if(draftNotice()){<p class="notice" role="status">{{draftNotice()}}</p>}
-    <gt-animation-library/>
     <label class="catalog-search"><gt-icon name="search"/><input type="search" aria-label="Cerca un esercizio" placeholder="Esercizio o attrezzo…" [ngModel]="query()" (ngModelChange)="query.set($event)"/>@if(query()){<button type="button" class="ghost" (click)="query.set('')" aria-label="Cancella ricerca"><gt-icon name="close"/></button>}</label>
     <nav class="catalog-muscle-tabs" aria-label="Zone muscolari"><button type="button" [class.selected]="!group()" [attr.aria-pressed]="!group()" (click)="group.set('')">Tutti</button>@for(g of s.data().muscleGroups;track g.id){<button type="button" [class.selected]="group()===g.id" [attr.aria-pressed]="group()===g.id" (click)="group.set(g.id)">{{g.name}}</button>}</nav>
-    <gt-exercise-scope class="catalog-scope" [value]="scope()" (choose)="scope.set($event)"/>
+    <div class="catalog-scope-row"><gt-exercise-scope class="catalog-scope" [value]="scope()" (choose)="scope.set($event)"/><button type="button" class="su-chip" [class.on]="animated()" [attr.aria-pressed]="animated()" (click)="animated.set(!animated())"><gt-icon name="play"/>Animati</button></div>
     @if(scope()==='recent'){<p class="catalog-helper">Esercizi delle ultime sessioni, incluse quelle in corso.</p>}
     <details class="catalog-filter-options"><summary><gt-icon name="settings"/><span>Altri filtri</span><gt-icon name="back"/></summary><div class="catalog-filter-fields"><label>Gruppo muscolare<select [ngModel]="group()" (ngModelChange)="group.set($event)"><option value="">Tutti i gruppi</option>@for(g of s.data().muscleGroups;track g.id){<option [value]="g.id">{{g.name}}</option>}</select></label>@if(s.canEditCatalog()){<label>Stato<select [ngModel]="active()" (ngModelChange)="active.set($event)"><option value="active">Attivi</option><option value="all">Tutti, anche disattivati</option><option value="inactive">Solo disattivati</option></select></label>}</div><gt-exercise-families [query]="query()" (choose)="query.set($event);group.set('')"/></details>
-    <div class="catalog-count"><span role="status" aria-live="polite">{{filtered().length}} esercizi · {{s.sharedCatalog()?'Catalogo condiviso':'Il tuo catalogo'}}</span>@if(query()||group()||scope()!=='all'||active()!=='active'){<button type="button" class="ghost" (click)="query.set('');group.set('');scope.set('all');active.set('active')">Azzera filtri</button>}</div>
+    <div class="catalog-count"><span role="status" aria-live="polite">{{filtered().length}} esercizi · {{s.sharedCatalog()?'Catalogo condiviso':'Il tuo catalogo'}}</span>@if(query()||group()||scope()!=='all'||active()!=='active'||animated()){<button type="button" class="ghost" (click)="query.set('');group.set('');scope.set('all');active.set('active');animated.set(false)">Azzera filtri</button>}</div>
     <div class="catalog-grid catalog-design-list">
       @for(e of filtered();track e.id){
-        <article class="card catalog-exercise-card catalog-design-row" [class.catalog-inactive]="!e.active">
-          <div class="catalog-row-head"><a class="catalog-exercise-link" [routerLink]="['/esercizio',e.id]"><gt-exercise-thumb [exercise]="e"/><span class="catalog-row-copy"><h3>{{e.name}}</h3><small>{{e.equipment}}</small><span class="catalog-row-tags"><span class="pill">{{s.muscle(e.muscleGroupId)}}</span>@if(!e.active){<span class="catalog-state">Disattivato</span>}</span></span><gt-icon class="catalog-play" [name]="motionFrames(e)?'play':'arrow'"/></a><button type="button" class="ghost favorite-button" [class.favorite-on]="s.isFavorite(e.id)" [attr.aria-pressed]="s.isFavorite(e.id)" [attr.aria-label]="(s.isFavorite(e.id)?'Rimuovi dai preferiti: ':'Aggiungi ai preferiti: ')+e.name" (click)="s.toggleFavorite(e.id)" [disabled]="s.busy()">{{s.isFavorite(e.id)?'★':'☆'}}</button></div>
-          @if(motionFrames(e)){<a class="catalog-motion-link" [routerLink]="['/esercizio',e.id]" [queryParams]="{motion:1}"><gt-icon name="play"/>Animazione guidata</a>}
-          <details class="catalog-row-options"><summary><span>Dettagli e opzioni</span><gt-icon name="back"/></summary><div class="catalog-row-details"><div class="catalog-detail-heading"><span>{{modeLabel(e.loadMode)}}</span>@if(s.canEditCatalog()){<button type="button" class="ghost" (click)="open(e)"><gt-icon name="edit"/>Modifica</button>}</div>@if(e.description){<p class="catalog-description">{{e.description}}</p>}<gt-exercise-motion [exercise]="e"/><gt-machine-setup [exerciseId]="e.id"/><div class="actions"><gt-exercise-video [exercise]="e"/>@if(s.canEditCatalog()){<label class="active-check"><input type="checkbox" [checked]="e.active" [disabled]="saving()" (change)="toggle(e)"/>Attivo</label>}</div>@if(e.tags.length){<div class="catalog-detail-tags">@for(t of e.tags;track t){<span class="pill">{{t}}</span>}</div>}<a class="button ghost catalog-open-detail" [routerLink]="['/esercizio',e.id]">Apri esercizio<gt-icon name="arrow"/></a></div></details>
+        <article class="card catalog-exercise-card catalog-design-row catalog-compact" [class.catalog-inactive]="!e.active">
+          <div class="catalog-row-head"><a class="catalog-exercise-link" [routerLink]="['/esercizio',e.id]"><gt-exercise-thumb [exercise]="e"/><span class="catalog-row-copy"><h3>{{e.name}}</h3><small>{{e.equipment}}{{e.equipment?' · ':''}}{{s.muscle(e.muscleGroupId)}}</small>@if(!e.active||motionFrames(e)){<span class="catalog-row-tags">@if(motionFrames(e)){<span class="su-badge violet"><gt-icon name="play"/>Animato</span>}@if(!e.active){<span class="catalog-state">Disattivato</span>}</span>}</span></a>@if(s.canEditCatalog()){<button type="button" class="ghost catalog-edit" (click)="open(e)" [attr.aria-label]="'Modifica '+e.name"><gt-icon name="edit"/></button>}<button type="button" class="ghost favorite-button" [class.favorite-on]="s.isFavorite(e.id)" [attr.aria-pressed]="s.isFavorite(e.id)" [attr.aria-label]="(s.isFavorite(e.id)?'Rimuovi dai preferiti: ':'Aggiungi ai preferiti: ')+e.name" (click)="s.toggleFavorite(e.id)" [disabled]="s.busy()">{{s.isFavorite(e.id)?'★':'☆'}}</button></div>
         </article>
       }@empty{<div class="card empty catalog-empty"><gt-icon name="search"/><h3>Nessun esercizio trovato</h3><p>{{scope()==='favorites'?'Tocca la stella accanto agli esercizi per ritrovarli qui.':scope()==='recent'?'Qui compariranno gli esercizi delle tue sessioni.':'Prova un altro nome, attrezzo o gruppo muscolare.'}}</p>@if(query()||group()){<button type="button" class="ghost" (click)="query.set('');group.set('')">Rimuovi ricerca e filtri</button>}</div>}
     </div>
     @if(s.canEditCatalog()){<details class="card catalog-group-management"><summary><gt-icon name="settings"/><span>Gestisci gruppi muscolari</span><gt-icon name="back"/></summary><div class="actions">@for(g of s.data().muscleGroups;track g.id){<button type="button" class="ghost" (click)="renameGroup(g.id,g.name)">{{g.name}}<gt-icon name="edit"/></button>}<button type="button" (click)="newGroup()"><gt-icon name="plus"/>Aggiungi gruppo</button></div></details>}
-    <p class="catalog-helper catalog-footer">Apri un esercizio per consultarne tecnica e dettagli.</p>
     </div>
     @if (editing() && s.canEditCatalog()) {
       <div class="modal-backdrop" (click)="close($event)">
@@ -186,7 +178,7 @@ export class CatalogComponent {
  private confirmation=confirmationForContext();
   s = inject(Store);
   fb = inject(FormBuilder);
-  query = signal("");scope=signal<ExerciseScope>("all");
+  query = signal("");scope=signal<ExerciseScope>("all");animated=signal(false);
   group = signal("");
   active = signal("active");
   editing = signal(false);
@@ -279,6 +271,7 @@ export class CatalogComponent {
           (this.scope()==='all'||(this.scope()==='favorites'?this.s.isFavorite(e.id):this.s.recentExerciseIds().includes(e.id))) &&
           (this.s.canEditCatalog() ? this.active() === "all" || (this.active() === "inactive" ? !e.active : e.active) : e.active) &&
           (!this.group() || e.muscleGroupId === this.group()) &&
+          (!this.animated() || !!this.motionFrames(e)) &&
           matchesExercise(e,this.query()),
       )
       .sort((a, b) => this.scope()==='recent'?this.s.recentExerciseIds().indexOf(a.id)-this.s.recentExerciseIds().indexOf(b.id):this.s.muscle(a.muscleGroupId).localeCompare(this.s.muscle(b.muscleGroupId)) || a.name.localeCompare(b.name)),

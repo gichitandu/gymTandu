@@ -1,4 +1,4 @@
-import {BottomNavigationComponent, navigationDesignId} from '../shared/bottom-navigation.component';
+import {BOTTOM_NAV_ITEMS, BottomNavigationComponent, NUTRITION_NAV_ITEM, navigationDesignId, navigationSection} from '../shared/bottom-navigation.component';
 import {DataStatusComponent} from '../shared/data-status.component';
 import {DesignPageDirective, DESIGN_DIRECTIVES} from '../design/design-directives';
 import {AppFeaturesService} from '../services/app-features';
@@ -8,8 +8,8 @@ import { AvatarComponent } from "../shared/avatar.component";
 import { AuthService } from "../services/auth";
 import { Store } from "../services/store";
 import { PwaService } from "../services/pwa";
-import { Component, effect, inject, ViewEncapsulation } from "@angular/core";
-import { Router, RouterLink, RouterLinkActive, RouterOutlet } from "@angular/router";
+import { Component, computed, effect, inject, ViewEncapsulation } from "@angular/core";
+import { Router, RouterLink, RouterOutlet } from "@angular/router";
 import { IconComponent } from "../shared/icon.component";
 import { ArchiveRecoveryComponent } from "../shared/archive-recovery.component";
 import { ArchiveSyncService } from "../services/archive-sync";
@@ -19,7 +19,7 @@ import { canResumeAtHome, MobileNavigationService } from "../services/mobile-nav
   host: {class: "design-v2 photo-controls", "[class.reference-pages]":"referencePage()"},
   standalone: true,
   hostDirectives: [DesignPageDirective],
-  imports: [...DESIGN_DIRECTIVES,BottomNavigationComponent,DataStatusComponent,WorkoutClockComponent,RouterLink, RouterLinkActive, RouterOutlet, IconComponent, AvatarComponent, ArchiveRecoveryComponent],
+  imports: [...DESIGN_DIRECTIVES,BottomNavigationComponent,DataStatusComponent,WorkoutClockComponent,RouterLink, RouterOutlet, IconComponent, AvatarComponent, ArchiveRecoveryComponent],
   styleUrls: ['./experience.css'],
   encapsulation: ViewEncapsulation.None,
   template: ` <gt-workout-clock/><aside class="sidebar">
@@ -27,12 +27,11 @@ import { canResumeAtHome, MobileNavigationService } from "../services/mobile-nav
         ><img class="app-brand-mark" src="/brand/gt-header-mark.svg" alt="" width="36" height="36"/>Gym<span>Track</span></a
       >
       <nav>
-        @for (item of desktopNav; track item.path) {
+        @for (item of desktopNav(); track item.path) {
           <a
             [gtDesign]="navigationDesignId(item.path)"
             [routerLink]="item.path"
-            routerLinkActive="selected"
-            [routerLinkActiveOptions]="{ exact: true }"
+            [class.selected]="isSection(item.path)"
             ><gt-icon [name]="item.icon" [gtDesignIcon]="navigationDesignId(item.path)" /><span [gtDesignLabel]="navigationDesignId(item.path)" [gtDesignLabelDefault]="item.label">{{ item.label }}</span></a
           >
         }
@@ -47,7 +46,7 @@ import { canResumeAtHome, MobileNavigationService } from "../services/mobile-nav
       </header>}
       <main [class.session-main]="router.url.startsWith('/sessione')">@if(s.ready()){@if(router.url.startsWith('/sessione')){<gt-data-status/>}@if(referencePage()&&(pwa.updateReady()||pwa.releases.updateReady())){<gt-data-status class="reference-update-status"/>}@if(auth.offlineMode()){<p class="local-mode-label">Archivio personale locale · funzioni condivise disabilitate</p>}<router-outlet />@if(referencePage()){<gt-data-status class="reference-page-status"/>}@if(router.url.split('?')[0]==='/profilo'&&auth.canManageBackups()){<gt-archive-recovery/>}}@else{<section class="card archive-opening" role="status" aria-live="polite"><h1>Apertura del tuo archivio</h1><p>Sto caricando i dati salvati su questo dispositivo…</p>@if(s.error()){<p class="notice">{{s.error()}}</p>}</section>}</main>
     </div>
-    @if(!(router.url.startsWith('/sessione')&&s.draft())){<gt-bottom-navigation [items]="nav"/>}`,
+    @if(!(router.url.startsWith('/sessione')&&s.draft())){<gt-bottom-navigation [items]="nav()"/>}`,
 })
 export class ShellComponent {
   navigationDesignId = navigationDesignId;
@@ -55,20 +54,15 @@ export class ShellComponent {
   private navigation=inject(MobileNavigationService);
   constructor(){effect(()=>{if(!this.s.ready()||!this.firstOpen||!this.navigation.resolved())return;this.firstOpen=false;const w=this.s.draft();if(w&&canResumeAtHome(this.navigation.url(),this.navigation.resolved())&&this.resume.read(this.s.archiveKey(),w.id,this.s.data().workoutUi.find(x=>x.id===w.id),this.s.archiveRevision()))void this.router.navigateByUrl('/sessione');});effect(()=>{if(this.features?.ready()&&!this.features.nutritionEnabled()&&this.router.url.split('?')[0]==='/alimentazione')void this.router.navigateByUrl('/');});}
   router=inject(Router);
-  referencePage(){return ['/','/piani','/progressi'].includes(this.router.url.split('?')[0]);}
+  referencePage(){return ['/','/piani','/progressi','/catalogo','/calendario','/allenamenti','/alimentazione'].includes(this.navigation.url().split('?')[0]);}
   auth = inject(AuthService);
   features=inject(AppFeaturesService,{optional:true});
   s = inject(Store);
   pwa = inject(PwaService);
   cloud = inject(ArchiveSyncService);
   backupStatus(){return ({local:'Archivio sul dispositivo',syncing:'Copia server in corso',saved:'Copia server aggiornata',offline:'Copia server in attesa della rete',conflict:'Copie da verificare'})[this.cloud.status()];}
-  private navItems: {path:string;label:string;mobileLabel?:string;icon:string}[] = [
-    {path:'/',label:'Home',icon:'home'},
-    {path:'/piani',label:'Allenamenti',mobileLabel:'Allenati',icon:'weight'},
-    {path:'/alimentazione',label:'Alimentazione',mobileLabel:'Pasti',icon:'nutrition'},
-    {path:'/progressi',label:'Progressi',icon:'chart'},
-    {path:'/profilo',label:'Profilo',icon:'user'},
-  ];
-  get nav(){return this.navItems.filter(item=>item.path!=='/alimentazione');}
-  get desktopNav(){return [...this.navItems.filter(item=>item.path!=='/alimentazione'||this.features?.nutritionEnabled()),{path:'/calendario',label:'Calendario',icon:'calendar'},{path:'/allenamenti',label:'Storico',icon:'clock'},{path:'/recupero',label:'Recovery',icon:'moon'},{path:'/focus-muscolare',label:'Focus muscolare',icon:'activity'}];}
+  /** Barra in basso: Oggi · Schede · Calendario · Progressi (+ Pasti se attiva). Il Profilo si apre dalla foto in alto. */
+  readonly nav=computed(()=>this.features?.nutritionEnabled()?[...BOTTOM_NAV_ITEMS,NUTRITION_NAV_ITEM]:BOTTOM_NAV_ITEMS);
+  readonly desktopNav=computed(()=>[...this.nav(),{path:'/profilo',label:'Profilo',icon:'user'}]);
+  isSection(path:string){return navigationSection(this.navigation.url())===path;}
 }

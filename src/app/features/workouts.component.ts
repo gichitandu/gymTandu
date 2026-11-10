@@ -1,8 +1,8 @@
+import { ProfileLinkComponent } from '../shared/profile-link.component';
 import { DESIGN_DIRECTIVES } from '../design/design-directives';
 import { DateFieldComponent } from '../shared/date-field.component';
 import { confirmationForContext } from '../services/confirmation';
 import { OpenWorkoutsComponent } from '../shared/open-workouts.component';
-import { SectionHeadingComponent } from "../shared/section-heading.component";
 import { Component, computed, inject, signal } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import { DatePipe } from "@angular/common";
@@ -14,7 +14,7 @@ import { ExerciseFilterComponent } from "../shared/exercise-filter.component";
 @Component({
   standalone: true,
   styleUrls: ["./account-polish.css", "./history-v3.css"],
-  imports: [...DESIGN_DIRECTIVES,DateFieldComponent,OpenWorkoutsComponent,SectionHeadingComponent,
+  imports: [ProfileLinkComponent,...DESIGN_DIRECTIVES,DateFieldComponent,OpenWorkoutsComponent,
     FormsModule,
     DatePipe,
     RouterLink,
@@ -22,7 +22,8 @@ import { ExerciseFilterComponent } from "../shared/exercise-filter.component";
     StatusComponent,
     ExerciseFilterComponent,
   ],
-  template: `<gt-section-heading index="07" title="Storico"><a class="button primary" routerLink="/piani" gtDesign="history.train"><gt-icon name="plus" gtDesignIcon="history.train"/><span gtDesignLabel="history.train">Allenati</span></a></gt-section-heading>
+  template: `<header class="su-head"><h1>Calendario</h1><div class="su-actions"><a class="su-iconbtn" routerLink="/calendario" [queryParams]="{add:1}" aria-label="Aggiungi al calendario"><gt-icon name="plus"/></a><gt-profile-link/></div></header>
+    <nav class="su-seg" aria-label="Vista del calendario"><a routerLink="/calendario">Settimana</a><a routerLink="/calendario" [queryParams]="{view:'month'}">Mese</a><a class="on" aria-current="page" routerLink="/allenamenti">Elenco</a></nav>
     <gt-status />
     <gt-open-workouts />
     @if (selected(); as w) {
@@ -75,12 +76,12 @@ import { ExerciseFilterComponent } from "../shared/exercise-filter.component";
         @for (group of groups(); track group.key) {
           <div class="history-month"><span>{{ group.label }}</span><small>{{ group.items.length }} {{ group.items.length===1?'seduta':'sedute' }}</small></div>
           @for (w of group.items; track w.id) {
-          <button type="button" class="card hx3-session" (click)="selectedId.set(w.id)" [attr.aria-label]="'Dettagli di '+w.dayName+' del '+(w.date | date: 'dd/MM/yyyy')">
+          <a class="card hx3-session" [routerLink]="['/riepilogo',w.id]" [queryParams]="{from:'elenco'}" [attr.aria-label]="'Riepilogo di '+w.dayName+' del '+(w.date | date: 'dd/MM/yyyy')">
             <span class="hx3-date"><strong>{{w.date | date: "dd"}}</strong><small>{{ weekday(w.date) }}</small></span>
             <span class="hx3-text"><strong>{{ w.dayName }}</strong><small>{{ w.planName }}</small>
               <span class="hx3-meta"><span>{{ s.workoutExercises(w.id).length }} es.</span><span>{{ setCount(w.id) }} serie</span><span>{{w.duration>0?w.duration+' min':'durata n.d.'}}</span><span>{{ s.formatWeight(s.volume(w.id)) }} {{ s.settings().unit }}</span></span></span>
             <gt-icon name="chevron-right" />
-          </button>
+          </a>
           }
         } @empty {
           <div class="card empty">
@@ -90,7 +91,7 @@ import { ExerciseFilterComponent } from "../shared/exercise-filter.component";
               Completa un allenamento o modifica i filtri per consultare lo
               storico.
             </p>
-            <a class="button primary" routerLink="/piani">Scegli un piano</a>
+            <a class="button primary" routerLink="/piani">Vai alle schede</a>
           </div>
         }
       </div>
@@ -98,7 +99,7 @@ import { ExerciseFilterComponent } from "../shared/exercise-filter.component";
 })
 export class WorkoutsComponent {
  private confirmation=confirmationForContext();
-  constructor(){const query=inject(ActivatedRoute).snapshot.queryParamMap;const workout=query.get("workout");if(workout)this.selectedId.set(workout);const date=query.get("date");if(date){this.from.set(date);this.to.set(date);}}
+  constructor(){const query=inject(ActivatedRoute).snapshot.queryParamMap;const workout=query.get("workout");if(workout){this.selectedId.set(workout);queueMicrotask(()=>void this.router.navigate(['/riepilogo',workout],{queryParams:{from:'elenco'},replaceUrl:true}));}const date=query.get("date");if(date){this.from.set(date);this.to.set(date);}}
   s = inject(Store);
   router=inject(Router);reopening=signal(false);deleting=signal(false);
   plan = signal("");

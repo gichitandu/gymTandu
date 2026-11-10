@@ -84,3 +84,8 @@
 .us3-form .actions button { flex: 1; min-height: 52px; border-radius: 16px; font-weight: 800; }
 @media (prefers-reduced-motion: reduce) { .us3-sheet { animation: none; } }
 .us3-form .password-toggle input { margin: 0; }
+
+/* Amministrazione: spazio R2, quota AI, sezioni e utenti nella stessa pagina */
+.us-admin-tools{display:grid;gap:12px}
+.us-admin-tools>gt-storage-status,.us-admin-tools>gt-app-features{display:block}
+.us-ai-link{display:block;text-decoration:none;color:var(--text)}

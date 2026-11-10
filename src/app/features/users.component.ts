@@ -1,11 +1,15 @@
-import { SectionHeadingComponent } from "../shared/section-heading.component";
+import { RouterLink } from "@angular/router";
+import { StorageStatusComponent } from "../shared/storage-status.component";
+import { AppFeaturesComponent } from "../shared/app-features.component";
 import { Component, computed, inject, signal } from '@angular/core';
 import { IconComponent } from '../shared/icon.component';
 import { FormsModule } from '@angular/forms';
 import { AuthService, Account } from '../services/auth';
 import { feedbackForContext, feedbackSignal } from '../services/feedback';
-@Component({standalone:true,imports:[FormsModule,SectionHeadingComponent,IconComponent],styleUrls:["./account-polish.css","./users-v3.css"],template:`
-<gt-section-heading index="09" eyebrow="GESTIONE UTENTI / SUPER ADMIN" title="Persone. Potenziale." description="Gestisci gli account e assegna a ciascuno il proprio spazio."/>
+@Component({standalone:true,imports:[FormsModule,RouterLink,IconComponent,StorageStatusComponent,AppFeaturesComponent],styleUrls:["./account-polish.css","./users-v3.css"],template:`
+<header class="su-back"><a class="su-iconbtn" routerLink="/profilo" aria-label="Torna al profilo"><gt-icon name="back"/></a><strong>Amministrazione</strong></header>
+@if(auth.uiRole()==='SuperAdmin'){<div class="us-admin-tools"><gt-storage-status/><gt-app-features/><a class="su-list us-ai-link" routerLink="/alimentazione" [queryParams]="{ai:1}"><span class="su-row"><span class="su-bubble pink"><gt-icon name="camera"/></span><span class="su-tx"><strong>Riconoscimento foto dei pasti</strong><small>Verifica o reimposta il modello sul dispositivo</small></span><gt-icon class="su-chev" name="chevron-right"/></span></a></div>}
+<div class="su-sec"><h2>Utenti</h2>@if(canManage()){<small>{{users().length}} di 20 posti</small>}</div>
 @if(canManage()) {
 <section class="us3-summary"><span class="us3-ic" aria-hidden="true"><gt-icon name="user"/></span><div><strong>{{users().length}} <small>account</small></strong><p>{{roleCount('SuperAdmin')}} Super Admin · {{roleCount('Admin')}} Admin · {{roleCount('User')}} clienti</p></div><button type="button" class="primary us3-new" (click)="openNew()"><gt-icon name="plus"/>Nuovo</button></section>
 <label class="us3-search"><gt-icon name="search"/><input type="search" name="user-search" aria-label="Cerca un account" placeholder="Cerca per nome, utente o email" [ngModel]="query()" (ngModelChange)="query.set($event)" autocomplete="off"/></label>

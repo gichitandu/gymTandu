@@ -15,7 +15,7 @@ type RecoveryDraft=WellnessLog&{restTitle?:string;restNotes?:string};
 export class RecoveryComponent {
  private confirmation=confirmationForContext();
  s=inject(Store);clock=inject(TodayService);route=inject(ActivatedRoute);drafts=inject(FormDraftService);
- mode=this.route.snapshot.data['mode']||'recovery';title=this.mode==='sleep'?'Sonno':this.mode==='rest'?'Il tuo riposo':'Recovery';
+ mode=this.route.snapshot.data['mode']||'recovery';title=this.mode==='sleep'?'Sonno':this.mode==='rest'?'Il tuo riposo':'Diario benessere';
  editorOpen=signal(false);
  editorDateLabel(){return this.date===this.clock.date()?'oggi':this.date.split('-').reverse().join('/');}
  editorActionLabel(){return this.editorOpen()?'Chiudi check-in'+(this.date===this.clock.date()?'':' del '+this.editorDateLabel()):this.date!==this.clock.date()?'Apri check-in del '+this.editorDateLabel():this.mode==='sleep'?'Registra il sonno':'Registra come ti senti';}

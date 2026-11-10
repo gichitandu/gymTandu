@@ -26,6 +26,7 @@
               "src/photo-controls.css",
               "src/theme-finishes.css",
               "src/screens-redesign.css",
+              "src/simple-ui.css",
               "src/design-runtime.css"
             ],
             "outputPath": "dist/gymtrack"
