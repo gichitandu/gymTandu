@@ -124,3 +124,5 @@ textarea.su-field{min-height:76px;resize:vertical}
 /* Con un pannello aperto la barra in basso (che sta sopra il contenuto) si nasconde */
 body:has(.su-sheet) gt-shell .bottom-nav,body:has(.su-sheet) gt-workout-clock{visibility:hidden;pointer-events:none}
 body:has(.su-sheet) gt-shell gt-data-status{visibility:hidden}
+.su-settings{color:var(--text)}
+.su-settings gt-icon{width:21px;height:21px}

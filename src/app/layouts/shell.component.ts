@@ -61,7 +61,7 @@ export class ShellComponent {
   pwa = inject(PwaService);
   cloud = inject(ArchiveSyncService);
   backupStatus(){return ({local:'Archivio sul dispositivo',syncing:'Copia server in corso',saved:'Copia server aggiornata',offline:'Copia server in attesa della rete',conflict:'Copie da verificare'})[this.cloud.status()];}
-  /** Barra in basso: Oggi · Schede · Calendario · Progressi (+ Pasti se attiva). Il Profilo si apre dalla foto in alto. */
+  /** Barra in basso: Oggi · Schede · Calendario · Progressi (+ Pasti se attiva). Profilo e impostazioni si aprono dall’ingranaggio in alto. */
   readonly nav=computed(()=>this.features?.nutritionEnabled()?[...BOTTOM_NAV_ITEMS,NUTRITION_NAV_ITEM]:BOTTOM_NAV_ITEMS);
   readonly desktopNav=computed(()=>[...this.nav(),{path:'/profilo',label:'Profilo',icon:'user'}]);
   isSection(path:string){return navigationSection(this.navigation.url())===path;}

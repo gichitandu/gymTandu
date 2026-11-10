@@ -1,8 +1,7 @@
-import {Component,inject} from '@angular/core';
+import {Component} from '@angular/core';
 import {RouterLink} from '@angular/router';
-import {Store} from '../services/store';
-import {AvatarComponent} from './avatar.component';
+import {IconComponent} from './icon.component';
 
-/** La tua foto in alto a destra: apre il Profilo (non è più una voce della barra in basso). */
-@Component({selector:'gt-profile-link',standalone:true,imports:[RouterLink,AvatarComponent],template:`<a class="su-avatar" routerLink="/profilo" aria-label="Apri il profilo e le impostazioni"><gt-avatar [photo]="s.profile().photo" [name]="s.profile().name"/></a>`,styles:[`:host{display:contents}`]})
-export class ProfileLinkComponent { s=inject(Store); }
+/** Ingranaggio in alto a destra in ogni sezione: apre Profilo e impostazioni (non sono una voce della barra in basso). */
+@Component({selector:'gt-profile-link',standalone:true,imports:[RouterLink,IconComponent],template:`<a class="su-iconbtn su-settings" routerLink="/profilo" aria-label="Profilo e impostazioni" title="Profilo e impostazioni"><gt-icon name="settings"/></a>`,styles:[`:host{display:contents}`]})
+export class ProfileLinkComponent {}
