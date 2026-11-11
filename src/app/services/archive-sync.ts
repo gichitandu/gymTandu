@@ -67,6 +67,7 @@ export class ArchiveSyncService {
   private running?: Promise<boolean>;
   private uploading = false;
   private pinOnNextSave = false;
+  private autoResolves = 0;
   private intents = new Map<string, number>();
   private intentSequence = 0;
   private pendingJob(data: DataSet, generation = this.generation): PendingArchive {return {data: structuredClone(data), generation, intents: new Map(this.intents)};}
@@ -231,6 +232,7 @@ export class ArchiveSyncService {
       const cleanBaseline = previous && !previous.pending && (fingerprint === previous.fingerprint || !personalChanged && initialFingerprint === previous.fingerprint);
       if ((!archiveHasContent(local) && !previous?.pending && !personalChanged) || cleanBaseline) {
         if (losesRecordedWork(local, remote)) {
+          if (await this.adoptDeviceIfSafe(head, remote, generation, previous?.fingerprint)) { this.resumeAfterAdopt(); return local; }
           this.meta = {revision: head.revision, fingerprint: remoteFingerprint, pending: true, blocked: true}; this.pending = this.pendingJob(local, generation);
           this.conflict(); this.message.set('La copia server contiene meno progressi registrati. Le serie sul dispositivo sono conservate: verifica le copie prima di ripristinare.'); return local;
         }
@@ -254,6 +256,7 @@ export class ArchiveSyncService {
       if (previous && !previous.blocked && previous.revision === head.revision && previous.fingerprint === remoteFingerprint) {
         this.meta = { ...previous, pending: true };this.changed(local);return local;
       }
+      if (await this.adoptDeviceIfSafe(head, remote, generation, previous?.fingerprint)) { this.resumeAfterAdopt(); return local; }
       this.meta = { revision: head.revision, fingerprint: remoteFingerprint, pending: true, blocked: true };
       this.pending = this.pendingJob(local, generation);this.conflict();return local;
     } catch (error) {
@@ -265,8 +268,43 @@ export class ArchiveSyncService {
       return local;
     }
   }
+  /**
+   * Risoluzione automatica solo quando è sicura, cioè quando il server è "indietro" e non "diverso":
+   *  - il server non è cambiato dall'ultima sincronizzazione confermata di questo dispositivo, oppure
+   *  - ogni record del server è presente identico sul dispositivo (il dispositivo ha solo in più).
+   * Se lo stesso dato è stato modificato su entrambi i lati o il server ha qualcosa che qui manca,
+   * il conflitto resta e decide l'utente. La copia server precedente viene fissata come copia protetta.
+   */
+  private deviceSupersedes(remote: DataSet | undefined, local: DataSet, serverUnchanged: boolean): boolean {
+    if (!remote) return true;
+    const resetId = remote.settings[0]?.archiveResetId;
+    if (resetId && resetId !== local.settings[0]?.archiveResetId) return false;
+    if (losesRecordedWork(remote, local)) return false;
+    if (serverUnchanged) return true;
+    const canonical = (value: unknown): string => JSON.stringify(value, (_key, item) => item && typeof item === 'object' && !Array.isArray(item) ? Object.fromEntries(Object.entries(item).sort(([a], [b]) => a.localeCompare(b))) : item);
+    const tables: (keyof DataSet)[] = ['plans','days','planExercises','exercises','muscleGroups','workouts','workoutExercises','sets','meals','scheduledWorkouts','measurements','wellnessLogs'];
+    return tables.every(table => {
+      const rows = new Map<string, string>(((local as any)[table] || []).map((row: {id: string}) => [row.id, canonical(row)] as [string, string]));
+      return ((remote as any)[table] || []).every((row: {id: string}) => rows.get(row.id) === canonical(row));
+    });
+  }
+  /** Prepara l'invio della copia del dispositivo sopra quella del server; il chiamante avvia il flush. */
+  private async adoptDeviceIfSafe(head: ArchiveHead, remote: DataSet | undefined, generation: number, baseline?: string): Promise<boolean> {
+    const local = this.latest;
+    if (!local || this.autoResolves >= 2) return false;
+    const fingerprint = head.backup ? await archiveFingerprint(head.backup) : '';
+    if (!this.deviceSupersedes(remote, local, !!baseline && fingerprint === baseline)) return false;
+    if (generation !== this.generation) return false;
+    this.autoResolves++;
+    this.revision.set(head.revision); this.knownHead = true;
+    this.meta = {revision: head.revision, fingerprint, pending: true};
+    this.pinOnNextSave = !!head.backup; this.pending = this.pendingJob(local, generation); this.saveMeta();
+    this.status.set('syncing'); this.message.set('Aggiornamento della copia server con i dati di questo dispositivo…');
+    return true;
+  }
+  private resumeAfterAdopt() { clearTimeout(this.timer); this.timer = setTimeout(() => { void this.flush(); }, 0); }
   private saved(updatedAt?: number | null) {
-    clearTimeout(this.retryTimer);this.retryTimer=undefined;this.retryAttempt=0;
+    clearTimeout(this.retryTimer);this.retryTimer=undefined;this.retryAttempt=0;this.autoResolves=0;
     this.status.set('saved');this.lastSaved.set(updatedAt ?? Date.now());
     this.message.set('Copia server aggiornata.');
   }
@@ -325,6 +363,7 @@ export class ArchiveSyncService {
         if (job.generation !== this.generation) return false;
         if(!response.ok){const failure=await response.json() as {code?:string;error?:string};this.lastErrorCode.set(failure?.code||'');this.lastErrorMessage.set(failure?.error||'Copia server non salvata.');}
         if (response.status === 409) {
+          const baseline = this.meta?.fingerprint;
           // An acknowledgement can be lost after a successful server commit.
           // Reconcile only an identical snapshot; never retry over a different head.
           this.pending ||= job;this.conflict();
@@ -340,6 +379,9 @@ export class ArchiveSyncService {
               if(!this.pending)this.saved(head.updatedAt);
               continue;
             }
+            // Il server è solo "indietro" rispetto a questo dispositivo: lo si aggiorna, conservando la sua copia.
+            const behind = head.backup ? await importBackup(head.backup) : undefined;
+            if (await this.adoptDeviceIfSafe(head, behind, job.generation, baseline)) { this.pending = this.pendingJob(this.latest!, job.generation); continue; }
           }
           return false;
         }
@@ -358,9 +400,23 @@ export class ArchiveSyncService {
     return true;
   }
   currentScope(){return this.scope;}
+  /** Se il conflitto è solo un server "indietro" rispetto al dispositivo, lo risolve (copia server conservata). */
+  async resolveConflictIfSafe(): Promise<boolean> {
+    if (!this.scope || !this.latest || this.status() !== 'conflict' || typeof navigator !== 'undefined' && !navigator.onLine) return false;
+    if (this.running) await this.running.catch(() => false);
+    const generation = this.generation, response = await this.request();
+    if (!response.ok || generation !== this.generation || !this.latest) return false;
+    const head = await response.json() as ArchiveHead;
+    if (!Number.isSafeInteger(head.revision) || head.revision < 0 || !(head.backup === null || typeof head.backup === 'string')) return false;
+    const remote = head.backup ? await importBackup(head.backup) : undefined;
+    const baseline = this.meta?.fingerprint;this.autoResolves = 0;
+    if (!await this.adoptDeviceIfSafe(head, remote, generation, baseline)) return false;
+    return this.flush();
+  }
   async checkpointForUpdate(): Promise<boolean> {
     if (!this.scope) return true;
     if (!this.latest || typeof navigator !== 'undefined' && !navigator.onLine) return false;
+    if (this.status() === 'conflict') { try { await this.resolveConflictIfSafe(); } catch { /* il conflitto resta e blocca l'aggiornamento */ } }
     // Un'apertura o un salvataggio concorrente può azzerare la copia in attesa prima che
     // la copia protetta venga inviata: si ritenta, ma mai oltre un conflitto reale.
     for (let attempt = 0; attempt < 3; attempt++) {

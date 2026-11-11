@@ -254,3 +254,31 @@ it('does not create a seed-only server copy when an update flush waits for the f
  t.service.changed(initial);expect(await flushing).toBe(true);expect(await t.service.flush()).toBe(true);
  expect(t.posts).toHaveLength(0);expect(t.head.revision).toBe(0);
 });
+
+it('automatically updates a server copy that is only behind this device, keeping the old server copy as a protected checkpoint',async()=>{
+  const t=await setup(plans('Piano')),local=plans('Piano'),at='2026-10-22T12:00:00.000Z';
+  local.plans.push({id:'q',userId:'local',name:'Piano nuovo',description:'',createdAt:at,updatedAt:at,active:false,archived:false});
+  await t.service.open(t.key,local);
+  await vi.waitFor(()=>expect(t.service.status()).toBe('saved'));
+  expect(t.posts).toHaveLength(1);
+  expect(t.fetch.mock.calls.some(([url,options]:any)=>options?.method==='POST'&&String(url).includes('checkpoint=before-update'))).toBe(true);
+  expect((await importBackup(t.head.backup!)).plans.map(plan=>plan.id).sort()).toEqual(['p','q']);
+});
+
+it('clears a stuck conflict flag when the server has not changed since the last confirmed copy',async()=>{
+  const t=await setup(),first=plans('Primo');
+  await t.service.open(t.key,first);expect(await t.service.flush()).toBe(true);
+  const metaKey='gymtrack-server-copy-v1:'+t.key,meta=JSON.parse(t.storage.get(metaKey)!);
+  t.storage.set(metaKey,JSON.stringify({...meta,pending:true,blocked:true}));
+  const second=await setup();second.head.revision=t.head.revision;second.head.backup=t.head.backup;second.storage.set(metaKey,JSON.stringify({...meta,pending:true,blocked:true}));
+  const edited=plans('Primo modificato');
+  await second.service.open(second.key,edited);
+  await vi.waitFor(()=>expect(second.service.status()).toBe('saved'));
+  expect((await importBackup(second.head.backup!)).plans[0].name).toBe('Primo modificato');
+});
+
+it('keeps a real conflict when the same record was edited on both sides',async()=>{
+  const t=await setup(plans('Copia server'));
+  await t.service.open(t.key,plans('Copia dispositivo'));
+  expect(t.service.status()).toBe('conflict');expect(t.posts).toHaveLength(0);
+});

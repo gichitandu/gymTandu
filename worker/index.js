@@ -1,7 +1,7 @@
 import { defaultExercises, defaultGroups } from './default-catalog.js';
 import { pushReminderApi } from './push.js';
 import {excelImportsApi,appFeaturesApi} from './program-imports.js';
-import { archiveApi } from './archive.js';
+import { archiveApi, archiveRetention } from './archive.js';
 import { designStudioApi } from './design-studio.js';
 import { storageAlert, storageStatus } from './storage-alert.js';
 import { APPROVED_THEME_IDS } from '../shared/approved-palettes.js';
@@ -297,7 +297,8 @@ const freshAssets=new Set(['/', '/index.html', '/ngsw.json', '/app-build.json', 
 export default {
 // Controllo giornaliero dello spazio R2 (cron in wrangler.jsonc): email a 8, 9 e 9,5 GB.
 async scheduled(event,env,ctx) {
-  ctx.waitUntil(storageAlert(env,OWNER).catch(error=>console.error('Controllo spazio R2 non riuscito:',error?.message||error)));
+  // Prima la pulizia delle copie oltre i 3 giorni, poi il controllo dello spazio R2.
+  ctx.waitUntil(archiveRetention(env).catch(error=>console.error('Pulizia copie server non riuscita:',error?.message||error)).then(()=>storageAlert(env,OWNER)).catch(error=>console.error('Controllo spazio R2 non riuscito:',error?.message||error)));
 },
 async fetch(request,env,ctx) {
   const path=new URL(request.url).pathname;

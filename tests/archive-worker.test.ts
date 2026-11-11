@@ -92,14 +92,32 @@ it('keeps the previous archive after object write or database failures and prese
  const recovered=await get();expect(recovered.data.revision).toBe(2);expect(recovered.data.backup).toBe(backup);
 });
 
-it('keeps ten rolling versions plus protected recovery copies without changing the current head on reads',async()=>{
+it('keeps only the last three days of server copies and never touches the current head',async()=>{
  for(let revision=0;revision<13;revision++)expect((await put(backup,revision)).response.status).toBe(200);
  const history=await get('device',{query:'&history=1'});
- expect(history.data.revision).toBe(13);expect(history.data.versions.map((version:any)=>version.revision)).toEqual([13,12,11,10,9,8,7,6,5,4,1]);
- expect(objects.size).toBe(11);
- const previous=await get('device',{query:'&version=4'});expect(previous.data.revision).toBe(4);expect(previous.data.headRevision).toBe(13);expect(previous.data.backup).toBe(backup);
+ expect(history.data.revision).toBe(13);
+ // Tutte le copie sono recenti: nulla viene eliminato, né in carico né dal job giornaliero.
+ expect(history.data.versions.map((version:any)=>version.revision)).toContain(4);
+ const day=86400000,old=Date.now()-4*day,recent=Date.now()-2*day;
+ sql.prepare('UPDATE archive_versions SET updated_at=? WHERE revision<=8').run(old);
+ sql.prepare('UPDATE archive_checkpoints SET updated_at=? WHERE revision<=8').run(old);
+ sql.prepare('UPDATE archive_versions SET updated_at=? WHERE revision>8 AND revision<13').run(recent);
+ // La copia corrente è la più vecchia di tutte, ma resta comunque conservata.
+ sql.prepare('UPDATE archive_versions SET updated_at=? WHERE revision=13').run(old);
+ sql.prepare('UPDATE archive_heads SET updated_at=?').run(old);
+ const { archiveRetention } = await import('../worker/archive.js');
+ expect(await archiveRetention(env)).toBeGreaterThan(0);
+ const after=await get('device',{query:'&history=1'});
+ const revisions=after.data.versions.map((version:any)=>version.revision);
+ expect(revisions).not.toContain(8);expect(revisions).not.toContain(1);
+ expect(revisions).toEqual(expect.arrayContaining([13,12,11,10,9]));
  expect((await get('device',{query:'&version=3'})).response.status).toBe(404);
- expect((await get()).data.revision).toBe(13);
+ expect((await get('device',{query:'&version=9'})).data.revision).toBe(9);
+ expect((await get()).data.revision).toBe(13);expect((await get()).data.backup).toBe(backup);
+ // Ogni oggetto R2 rimasto è ancora referenziato da testata, versioni o copie protette.
+ const referenced=new Set([...sql.prepare('SELECT object_key FROM archive_versions').all(),...sql.prepare('SELECT object_key FROM archive_checkpoints').all(),...sql.prepare('SELECT object_key FROM archive_heads').all()].map((row:any)=>row.object_key));
+ expect([...objects.keys()].every(key=>referenced.has(key))).toBe(true);
+ expect(await archiveRetention(env)).toBe(0);
 });
 
 function recordedArchive() {

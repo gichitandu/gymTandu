@@ -95,20 +95,52 @@ function archiveValidate(text) {
  // Le sovrapposizioni tra piani si controllano solo nell'importazione Excel (program-imports.js):
  // la copia completa del proprio dispositivo non viene rifiutata, l'app le segnala e propone come risolverle.
 }
+// Le copie server (versioni e copie protette) si conservano solo per gli ultimi 3 giorni.
+// La copia corrente (head) non viene mai toccata, qualunque sia la sua età.
+export const ARCHIVE_RETENTION_MS = 3 * 24 * 60 * 60 * 1000;
+const ARCHIVE_PRUNE_BATCH = 500;
+async function archivePruneScope(db,bucket,scope,now=Date.now()) {
+ const cutoff=now-ARCHIVE_RETENTION_MS;
+ const head=await db.prepare('SELECT object_key FROM archive_heads WHERE scope=?').bind(scope).first();
+ const headKey=head?.object_key||'';
+ const versions=await db.prepare('SELECT id,object_key FROM archive_versions WHERE scope=? AND updated_at<? AND object_key<>? ORDER BY updated_at LIMIT ?').bind(scope,cutoff,headKey,ARCHIVE_PRUNE_BATCH).all();
+ const pins=await db.prepare('SELECT id,object_key FROM archive_checkpoints WHERE scope=? AND updated_at<? AND object_key<>? ORDER BY updated_at LIMIT ?').bind(scope,cutoff,headKey,ARCHIVE_PRUNE_BATCH).all();
+ const oldVersions=versions.results||[],oldPins=pins.results||[];
+ if(!oldVersions.length&&!oldPins.length)return 0;
+ // Prima si eliminano i riferimenti in D1, poi gli oggetti R2 rimasti senza alcun riferimento.
+ await db.batch([
+  ...oldVersions.map(row=>db.prepare('DELETE FROM archive_versions WHERE id=? AND scope=?').bind(row.id,scope)),
+  ...oldPins.map(row=>db.prepare('DELETE FROM archive_checkpoints WHERE id=? AND scope=?').bind(row.id,scope))
+ ]);
+ const candidates=[...new Set([...oldVersions,...oldPins].map(row=>row.object_key))];
+ const removable=[];
+ for(let i=0;i<candidates.length;i+=500){
+  const chunk=candidates.slice(i,i+500),json=JSON.stringify(chunk);
+  const kept=await db.prepare('SELECT object_key AS k FROM archive_versions WHERE object_key IN (SELECT value FROM json_each(?)) UNION SELECT object_key FROM archive_checkpoints WHERE object_key IN (SELECT value FROM json_each(?)) UNION SELECT object_key FROM archive_heads WHERE object_key IN (SELECT value FROM json_each(?)) UNION SELECT recovery_key FROM account_archive_resets WHERE recovery_key IN (SELECT value FROM json_each(?))').bind(json,json,json,json).all();
+  const inUse=new Set((kept.results||[]).map(row=>row.k));
+  for(const key of chunk)if(!inUse.has(key))removable.push(key);
+ }
+ for(let i=0;i<removable.length;i+=1000)await bucket.delete(removable.slice(i,i+1000));
+ return oldVersions.length+oldPins.length;
+}
 async function archiveCleanup(db,bucket,scope) {
  // Cleanup is outside the successful head transaction. A cleanup failure leaves
- // extra recovery copies, never a missing current or previous snapshot.
+ // extra recovery copies, never a missing current snapshot.
  try {
   const expired=await db.prepare('SELECT id,recovery_key FROM account_archive_resets WHERE scope=? AND recovery_key IS NOT NULL AND completed_at IS NOT NULL AND retain_until<?').bind(scope,Date.now()).all();
   for(const row of expired.results||[]){await bucket.delete(row.recovery_key);await db.prepare('UPDATE account_archive_resets SET recovery_key=NULL WHERE id=?').bind(row.id).run();}
-  const old=await db.prepare('SELECT id,object_key FROM archive_versions WHERE scope=? ORDER BY revision DESC LIMIT 100 OFFSET ?').bind(scope,ARCHIVE_RETAINED_VERSIONS).all();
-  if(!old.results?.length)return;
-  await db.batch(old.results.map(row=>db.prepare('DELETE FROM archive_versions WHERE id=? AND scope=?').bind(row.id,scope)));
-  const pinned=await db.prepare('SELECT DISTINCT object_key FROM archive_checkpoints WHERE scope=?').bind(scope).all();
-  const protectedKeys=new Set((pinned.results||[]).map(row=>row.object_key));
-  const removable=old.results.map(row=>row.object_key).filter(key=>!protectedKeys.has(key));
-  if(removable.length)await bucket.delete(removable);
- }catch{/* A later successful upload can retry best-effort retention cleanup. */}
+  await archivePruneScope(db,bucket,scope);
+ }catch{/* A later successful upload or the daily job can retry best-effort retention cleanup. */}
+}
+/** Pulizia giornaliera (cron): elimina le copie server più vecchie di 3 giorni in ogni archivio. */
+export async function archiveRetention(env,now=Date.now()) {
+ if(!env.DB||!env.BUCKET)return 0;
+ const scopes=await env.DB.prepare('SELECT scope FROM archive_heads').all();
+ let removed=0;
+ for(const row of scopes.results||[]){
+  try{removed+=await archivePruneScope(env.DB,env.BUCKET,row.scope,now);}catch(error){console.error('Pulizia copie server non riuscita:',error?.message||error);}
+ }
+ return removed;
 }
 
 function archiveCheckpointStatement(db, scope, row, id, reason, workout) {
