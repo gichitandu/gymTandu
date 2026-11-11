@@ -1,5 +1,5 @@
 /* Importa Excel v3 (anteprima 13). Solo token del tema. */
-.excel-page { max-width: 620px; }
+.excel-page { max-width: none; }
 .excel-heading { gap: 10px; }
 .excel-heading > a { width: 44px; min-width: 44px; height: 44px; border-radius: 14px; border: 1px solid var(--line); background: color-mix(in srgb, var(--text) 4%, transparent); }
 .excel-heading h1 { font-size: 22px; font-weight: 900; letter-spacing: -.02em; }

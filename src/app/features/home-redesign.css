@@ -212,11 +212,12 @@ a:focus-visible,input:focus-visible{outline:2px solid var(--accent-text);outline
 .hx-photo{margin-top:14px}
 .hx-simple gt-backup-reminder{display:block}
 
-/* ===== Layout responsive: su tablet e desktop le card si affiancano in una griglia
-   che si adatta alla larghezza disponibile (1 colonna su telefono, 2-4 sugli schermi ampi). */
+/* ===== Layout responsive: su tablet e desktop le card si affiancano e si allargano per
+   riempire ogni riga (1 colonna su telefono, 2-4 sugli schermi ampi, senza spazi vuoti). */
 @media (min-width:700px){
- .hx-simple{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,330px),1fr));gap:16px;align-items:stretch}
- .hx-simple>:is(.hx-hello,gt-status,gt-backup-reminder){grid-column:1/-1}
+ .hx-simple{display:flex;flex-wrap:wrap;gap:16px;align-items:stretch}
+ .hx-simple>*{flex:1 1 330px}
+ .hx-simple>:is(.hx-hello,gt-status,gt-backup-reminder){flex-basis:100%}
  .hx-simple>:is(gt-status,gt-backup-reminder):empty{display:none}
  .hx-simple>.hx-hello{margin-bottom:2px}
  .hx-simple>:is(.su-card,.hx-next,gt-backup-reminder){margin:0}

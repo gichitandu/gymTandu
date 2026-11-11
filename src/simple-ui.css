@@ -126,3 +126,23 @@ body:has(.su-sheet) gt-shell .bottom-nav,body:has(.su-sheet) gt-workout-clock{vi
 body:has(.su-sheet) gt-shell gt-data-status{visibility:hidden}
 .su-settings{color:var(--text)}
 .su-settings gt-icon{width:21px;height:21px}
+
+/* ===== Schermo intero: il contenuto arriva ai bordi del display su ogni dispositivo.
+   Resta solo un filo di respiro (--page-gutter) e il rispetto delle aree sicure
+   (notch, angoli arrotondati, barra Home), altrimenti il contenuto verrebbe tagliato. */
+gt-shell{--page-gutter:6px}
+@media (min-width:700px){gt-shell{--page-gutter:10px}}
+body.theme-ready gt-shell.design-v2.photo-controls main,
+body.theme-ready gt-shell.design-v2.photo-controls.reference-pages main{
+  max-width:none;
+  padding-left:max(var(--page-gutter),var(--safe-left,0px));
+  padding-right:max(var(--page-gutter),var(--safe-right,0px));
+}
+body.theme-ready gt-shell.design-v2.photo-controls main:not(.session-main){padding-top:10px}
+body.theme-ready gt-shell.design-v2.photo-controls.reference-pages main:not(.session-main){padding-top:calc(8px + var(--safe-top,0px))}
+body.theme-ready gt-shell.design-v2.photo-controls main.session-main{padding-top:calc(8px + var(--safe-top,0px))}
+body.theme-ready gt-shell.design-v2.photo-controls .topbar{
+  max-width:none;
+  padding-left:max(var(--page-gutter),var(--safe-left,0px));
+  padding-right:max(var(--page-gutter),var(--safe-right,0px));
+}

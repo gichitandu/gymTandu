@@ -9,7 +9,7 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
-  max-width: 620px;
+  max-width: none;
   padding: 0;
   border: 0;
   border-radius: 0;
@@ -586,8 +586,8 @@
   position: sticky;
   bottom: 0;
   z-index: 20;
-  margin: 0 -16px;
-  padding: 18px 16px calc(12px + var(--safe-bottom, 0px));
+  margin: 0 calc(-1 * var(--page-gutter, 16px));
+  padding: 18px var(--page-gutter, 16px) calc(12px + var(--safe-bottom, 0px));
   border-radius: 0;
   background: linear-gradient(180deg, color-mix(in srgb, var(--bg) 0%, transparent), var(--bg) 30%);
 }
@@ -866,7 +866,7 @@
 :host .det3-more .exercise-technical:last-child { border-bottom: 0; margin-bottom: 0; }
 
 :host .det3-dock {
-  position: sticky; bottom: 0; z-index: 20; margin: 0 -16px; padding: 18px 16px calc(12px + var(--safe-bottom, 0px));
+  position: sticky; bottom: 0; z-index: 20; margin: 0 calc(-1 * var(--page-gutter, 16px)); padding: 18px var(--page-gutter, 16px) calc(12px + var(--safe-bottom, 0px));
   background: linear-gradient(180deg, color-mix(in srgb, var(--bg) 0%, transparent), var(--bg) 32%);
 }
 :host .det3-dock > .save-series { width: 100%; }
@@ -892,3 +892,17 @@
 :host .aw-continue .su-btn{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 :host .aw-alldone{display:flex;align-items:center;gap:8px;margin:14px 2px 0;font-size:13px;color:var(--muted)}
 :host .aw-alldone gt-icon{width:18px;height:18px;color:var(--green,#4ff0b0)}
+
+/* ===== Layout responsive (tablet e computer) =====
+   Elenco esercizi della seduta su più colonne; nella registrazione della serie, sugli schermi
+   ampi l'esercizio e gli strumenti stanno a sinistra, peso/ripetizioni e «Salva serie» a destra.
+   Su telefono resta la colonna unica approvata. */
+@media (min-width:700px){
+ :host .training-list.aw-list{grid-template-columns:repeat(auto-fill,minmax(min(100%,380px),1fr));align-items:stretch}
+}
+@media (min-width:1000px){
+ :host .recording-pad.rec3{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);grid-template-rows:auto auto auto 1fr;grid-auto-flow:row dense;align-items:start;gap:14px 18px}
+ :host .recording-pad.rec3>*{grid-column:1}
+ :host .recording-pad.rec3>.rec3-form{grid-column:2;grid-row:1/span 4}
+ :host .recording-pad.rec3>.recording-save.rec3-dock{grid-column:2;margin:0;padding-inline:0}
+}

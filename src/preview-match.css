@@ -47,6 +47,7 @@ body.theme-ready gt-shell.design-v2 .app-main main>gt-data-status{margin-bottom:
  body.theme-ready gt-shell.design-v2 .bottom-nav a gt-icon{padding:4px}
  body.theme-ready gt-shell.design-v2 .bottom-nav a.selected gt-icon,body.theme-ready gt-shell.design-v2 .bottom-nav a.training-selected gt-icon{padding:3px}
  body.theme-ready gt-shell.design-v2 .app-main{padding-bottom:calc(62px + var(--safe-bottom))}
+ body.theme-ready gt-shell.design-v2 .topbar{height:calc(48px + var(--safe-top))}
 }
 @media(prefers-reduced-motion:reduce){body.theme-ready gt-shell.design-v2 *{transition:none;animation:none}}
 /* The archive indicator keeps its complete, accessible details in the app bar. */

@@ -135,3 +135,12 @@
 .pg-sore{display:flex;align-items:center;gap:12px;margin-top:10px;padding:12px 14px}
 .pg-sore strong{display:block;font-size:14px}
 .pg-sore small{display:block;font-size:12px;color:var(--muted);margin-top:2px}
+
+/* ===== Layout responsive: sugli schermi ampi «Record recenti» e «Muscoli allenati»
+   si affiancano sotto il grafico, per usare tutta la larghezza. */
+@media (min-width:1000px){
+ .pg-simple{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-auto-flow:row dense;column-gap:18px;align-items:start}
+ .pg-simple>*{grid-column:1/-1}
+ .pg-simple>:is(.pg-records-head,.pg-records){grid-column:1}
+ .pg-simple>:is(.pg-muscles-head,.pg-muscles){grid-column:2}
+}

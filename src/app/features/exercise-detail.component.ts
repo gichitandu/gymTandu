@@ -27,6 +27,8 @@ import {StatusComponent} from '../shared/status.component';
  .ex-chart-head,.ex-chart-foot{display:flex;justify-content:space-between;gap:8px;font-size:12.5px;font-weight:700}.ex-chart-foot{font-size:11px;font-weight:600;color:var(--muted)}
  .ex-chart svg{display:block;width:100%;height:90px;margin:8px 0 4px;overflow:visible}
  .ex-line{fill:none;stroke:var(--accent);stroke-width:3;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke}.ex-area{fill:color-mix(in srgb,var(--accent) 18%,transparent)}.ex-dot{fill:var(--text)}
+ /* Layout responsive: sugli schermi ampi l'immagine resta a sinistra (fissa), i dettagli a destra. */
+ @media(min-width:1000px){:host{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);grid-auto-flow:row dense;column-gap:18px;align-items:start}:host>*{grid-column:2}:host>:is(header,gt-status){grid-column:1/-1}:host>.exercise-detail-hero{grid-column:1;grid-row:span 12;position:sticky;top:16px}}
  `],template:`
 <header class="neon-page-heading ex3-head"><a class="icon-btn ghost" routerLink="/catalogo" aria-label="Torna al catalogo"><gt-icon name="back"/></a><div><p class="eyebrow">ESERCIZIO</p><h1>{{exercise()?.name||'Esercizio'}}</h1></div>@if(exercise();as e){<button [attr.aria-label]="s.isFavorite(e.id)?'Rimuovi dai preferiti':'Aggiungi ai preferiti'" [attr.aria-pressed]="s.isFavorite(e.id)" (click)="s.toggleFavorite(e.id)" [disabled]="s.busy()" class="icon-btn ghost ex3-fav" [class.on]="s.isFavorite(e.id)">{{s.isFavorite(e.id)?'★':'☆'}}</button>}</header>
 <gt-status/>

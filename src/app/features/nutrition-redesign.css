@@ -166,3 +166,11 @@
 @media (min-width:700px){
  :host .meal-diary-list{grid-template-columns:repeat(auto-fill,minmax(min(100%,340px),1fr))}
 }
+/* Schermi ampi: riepilogo calorie fisso a sinistra, diario dei pasti a destra. */
+@media (min-width:1000px){
+ :host{display:grid;grid-template-columns:minmax(300px,.8fr) minmax(0,1.6fr);grid-auto-flow:row dense;column-gap:22px;align-items:start}
+ :host>*{grid-column:2}
+ :host>:is(.meals-heading,.nutrition-day-selector,gt-status){grid-column:1/-1}
+ :host>.meal-summary{grid-column:1;grid-row:span 30;position:sticky;top:16px}
+ :host .meal-diary-list{grid-template-columns:minmax(0,1fr)}
+}

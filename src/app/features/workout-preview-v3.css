@@ -1,5 +1,5 @@
 /* Anteprima allenamento v3 (anteprima 18). Solo token del tema; le immagini restano invariate. */
-:host .workout-preview { max-width: 620px; }
+:host .workout-preview { max-width: none; }
 :host .preview-heading > a { width: 44px; min-width: 44px; height: 44px; border-radius: 14px; border: 1px solid var(--line); background: color-mix(in srgb, var(--text) 4%, transparent); }
 :host .preview-readonly { border-radius: 999px; background: color-mix(in srgb, var(--text) 9%, transparent); font-weight: 700; }
 
@@ -49,3 +49,12 @@
 .preview-bottom.su-sticky{display:block;padding-bottom:2px}
 .preview-bottom.su-sticky .su-btn{width:100%}
 .preview-bottom .preview-footnote{margin:8px 2px 0;font-size:12px;color:var(--muted);text-align:center}
+
+/* ===== Layout responsive: sugli schermi ampi il riepilogo con l'immagine resta a sinistra
+   (fisso durante lo scorrimento) e l'elenco degli esercizi occupa la colonna di destra. */
+@media (min-width:1000px){
+ :host .workout-preview{grid-template-columns:minmax(0,1fr) minmax(0,1.25fr);grid-auto-flow:row dense;align-items:start;column-gap:20px}
+ :host .workout-preview>*{grid-column:2}
+ :host .workout-preview>.preview-heading{grid-column:1/-1}
+ :host .workout-preview>.preview-summary{grid-column:1;grid-row:2/span 4;position:sticky;top:16px}
+}
