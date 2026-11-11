@@ -19,10 +19,13 @@ export class HubLaunchService {
   private auth = inject(AuthService);
   readonly version = signal(0);
   private opened = new Set<string>();
-  constructor() { effect(() => { if (!this.auth.user()) this.opened.clear(); }); }
+  /** Account che in questa apertura hanno già scelto l'app (scelta, Hub o selettore). */
+  private chosen = new Set<string>();
+  constructor() { effect(() => { if (!this.auth.user()) { this.opened.clear(); this.chosen.clear(); } }); }
   /** La prima apertura dopo l'accesso va gestita una sola volta, anche se la cornice di GymTrack viene ricreata. */
   claimFirstOpen(account: string) { if (this.opened.has(account)) return false; this.opened.add(account); return true; }
-  private key() { return KEY + (this.auth.user()?.id ?? ''); }
+  private account() { return this.auth.user()?.id ?? ''; }
+  private key() { return KEY + this.account(); }
   read(): HubLaunch {
     this.version();
     try {
@@ -33,10 +36,12 @@ export class HubLaunchService {
   }
   private write(value: HubLaunch) { try { localStorage.setItem(this.key(), JSON.stringify(value)); } catch { /* best effort */ } this.version.update(v => v + 1); }
   setMode(mode: HubLaunchMode) { this.write({ ...this.read(), mode }); }
-  remember(app: HubApp) { const current = this.read(); if (current.last !== app) this.write({ ...current, last: app }); }
+  remember(app: HubApp) { this.chosen.add(this.account()); const current = this.read(); if (current.last !== app) this.write({ ...current, last: app }); }
   /** Dove andare all'apertura dell'app: null = resta in GymTrack. */
   startTarget(): string | null {
-    if (!hubAllowed(this.auth)) return null;
+    // Se l'app si è riaperta già sulla scelta o nel Hub (ricarica, aggiornamento),
+    // la scelta è già stata fatta: GymTrack non deve rimandare alla schermata di scelta.
+    if (!hubAllowed(this.auth) || this.chosen.has(this.account())) return null;
     const pref = this.read();
     if (pref.mode === 'ask') return '/scegli-app';
     if (pref.mode === 'last' && pref.last === 'hub') return '/hub';
