@@ -6,6 +6,7 @@ import { designStudioApi } from './design-studio.js';
 import { storageAlert, storageStatus } from './storage-alert.js';
 import { APPROVED_THEME_IDS } from '../shared/approved-palettes.js';
 import { calendarApi, calendarPublish, calendarConfigure } from './calendar.js';
+import { hubApi } from './hub.js';
 // The platform's ChatGPT access boundary remains in place. App sessions are
 // additionally bound to that authenticated visitor, and never stored in JS.
 const OWNER = 'giacomotanduo004@gmail.com';
@@ -135,6 +136,7 @@ export async function api(request,env,ctx) {
       if(request.method!=='GET')fail('Metodo non supportato.',405);
       return json(await storageStatus(env));
     }
+    if(path==='/api/hub'||path==='/api/hub/due')return await hubApi(request,env,me,ctx);
     if(path.startsWith('/api/design/'))return await designStudioApi(request,env,me);
     if(path.startsWith('/api/excel-imports'))return await excelImportsApi(request,env,me);
     if(path==='/api/app-features')return await appFeaturesApi(request,env,me);

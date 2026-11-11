@@ -1,0 +1,36 @@
+name: Aggiorna calendario e notifiche
+# Aggiorna il Worker separato calendar-relay (notifiche push, promemoria GT Hub, calendario iPhone).
+# Solo avvio manuale. Non crea il servizio e non genera chiavi: aggiorna schema (senza cancellare dati) e codice.
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: calendar-relay-deploy
+  cancel-in-progress: false
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      WRANGLER_SEND_METRICS: "false"
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+      - name: Controlla i segreti
+        run: |
+          for name in CLOUDFLARE_API_TOKEN CLOUDFLARE_ACCOUNT_ID; do
+            eval "value=\${$name}"
+            if [ -z "$value" ]; then echo "Manca il segreto $name nelle impostazioni del repository."; exit 1; fi
+          done
+      - name: Trova database e chiavi esistenti
+        run: node tools/calendar-relay-ci.mjs
+      - name: Aggiorna lo schema (solo tabelle nuove, nessun dato cancellato)
+        working-directory: calendar-relay
+        run: npx --yes wrangler@4 d1 execute gymtrack-calendar --remote --file=schema.sql --yes --config wrangler.ci.jsonc
+      - name: Pubblica il servizio
+        working-directory: calendar-relay
+        run: npx --yes wrangler@4 deploy --config wrangler.ci.jsonc

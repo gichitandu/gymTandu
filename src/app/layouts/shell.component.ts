@@ -14,6 +14,7 @@ import { IconComponent } from "../shared/icon.component";
 import { ArchiveRecoveryComponent } from "../shared/archive-recovery.component";
 import { ArchiveSyncService } from "../services/archive-sync";
 import { canResumeAtHome, MobileNavigationService } from "../services/mobile-navigation";
+import { HubLaunchService } from '../hub/hub-access';
 @Component({
   selector: "gt-shell",
   host: {class: "design-v2 photo-controls", "[class.reference-pages]":"referencePage()"},
@@ -50,9 +51,12 @@ import { canResumeAtHome, MobileNavigationService } from "../services/mobile-nav
 })
 export class ShellComponent {
   navigationDesignId = navigationDesignId;
-  private resume=inject(WorkoutResumeService);private firstOpen=true;
+  private resume=inject(WorkoutResumeService);
   private navigation=inject(MobileNavigationService);
-  constructor(){effect(()=>{if(!this.s.ready()||!this.firstOpen||!this.navigation.resolved())return;this.firstOpen=false;const w=this.s.draft();if(w&&canResumeAtHome(this.navigation.url(),this.navigation.resolved())&&this.resume.read(this.s.archiveKey(),w.id,this.s.data().workoutUi.find(x=>x.id===w.id),this.s.archiveRevision()))void this.router.navigateByUrl('/sessione');});effect(()=>{if(this.features?.ready()&&!this.features.nutritionEnabled()&&this.router.url.split('?')[0]==='/alimentazione')void this.router.navigateByUrl('/');});}
+  private launch=inject(HubLaunchService);
+  constructor(){effect(()=>{if(!this.s.ready()||!this.navigation.resolved()||!this.launch.claimFirstOpen(this.s.archiveKey()))return;const w=this.s.draft();if(w&&canResumeAtHome(this.navigation.url(),this.navigation.resolved())&&this.resume.read(this.s.archiveKey(),w.id,this.s.data().workoutUi.find(x=>x.id===w.id),this.s.archiveRevision())){void this.router.navigateByUrl('/sessione');return;}
+    // Super Admin: dopo l'accesso scelta tra GymTrack e GT Hub (o l'ultima app usata).
+    const target=canResumeAtHome(this.navigation.url(),this.navigation.resolved())&&!w?this.launch.startTarget():null;if(target)void this.router.navigateByUrl(target);});effect(()=>{if(this.features?.ready()&&!this.features.nutritionEnabled()&&this.router.url.split('?')[0]==='/alimentazione')void this.router.navigateByUrl('/');});}
   router=inject(Router);
   referencePage(){return ['/','/piani','/progressi','/catalogo','/calendario','/allenamenti','/alimentazione'].includes(this.navigation.url().split('?')[0]);}
   auth = inject(AuthService);

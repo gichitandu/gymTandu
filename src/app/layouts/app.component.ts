@@ -1,7 +1,7 @@
 import {AppFeaturesService} from '../services/app-features';
 import {WorkoutStartOptionsComponent} from '../shared/workout-start-options.component';
 import { ConfirmationDialogComponent } from '../shared/confirmation-dialog.component';
-import { Component, effect, inject, signal, untracked } from '@angular/core';
+import { Component, computed, effect, inject, signal, untracked } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../services/auth';
 import { ThemeService } from '../services/theme';
@@ -11,9 +11,12 @@ import { IconComponent } from '../shared/icon.component';
 import { FeedbackPopupsComponent } from '../shared/feedback-popups.component';
 import { feedbackForContext, feedbackSignal } from '../services/feedback';
 import { AppActivationUncertainError, AppReleaseService } from '../services/app-release';
-@Component({selector:'app-root',standalone:true,imports:[WorkoutStartOptionsComponent,ConfirmationDialogComponent,FormsModule,ShellComponent,IconComponent,FeedbackPopupsComponent],styleUrls:['./entry.css','./entry-redesign.css'],template:`
+import { MobileNavigationService } from '../services/mobile-navigation';
+import { HubHostComponent } from '../hub/hub-host.component';
+import { isHubUrl } from '../hub/hub-access';
+@Component({selector:'app-root',standalone:true,imports:[WorkoutStartOptionsComponent,ConfirmationDialogComponent,FormsModule,ShellComponent,IconComponent,FeedbackPopupsComponent,HubHostComponent],styleUrls:['./entry.css','./entry-redesign.css'],template:`
 <gt-feedback-popups/><gt-confirmation-dialog/>
-@if(auth.user()) { <gt-shell /><gt-workout-start-options/> } @else {
+@if(auth.user()) { @if(hubMode()){@defer(on immediate){<gt-hub-host/>}@placeholder{<p class="entry-status" role="status">Apertura…</p>}}@else{<gt-shell /><gt-workout-start-options/>} } @else {
 @if(auth.loggingOut()){<p class="entry-status" role="status">Uscita e aggiornamento…</p>}
 <main class="entry-page" [class.welcome-state]="welcome() && !auth.setup()" [attr.inert]="entryUpdating()||auth.loggingOut()?'':null">
 <div class="entry-layout">
@@ -74,6 +77,9 @@ import { AppActivationUncertainError, AppReleaseService } from '../services/app-
 export class AppComponent {
  features=inject(AppFeaturesService,{optional:true});
  private viewport=inject(ViewportService);
+ private navigation=inject(MobileNavigationService);
+ /** GT Hub (solo Super Admin) usa una cornice propria al posto di quella di GymTrack. */
+ readonly hubMode=computed(()=>isHubUrl(this.navigation.url()));
  private feedback=feedbackForContext();
  auth=inject(AuthService);private theme=inject(ThemeService);welcome=signal(false);tab=signal<'account'|'local'>('account');help=signal(false);remember=true;username='';setupCode='';email='';password='';confirm='';busy=signal(false);error=feedbackSignal('error',this.feedback);show=signal(false);
  private releases=inject(AppReleaseService);entryUpdating=signal(false);private attemptedEntryBuild='';

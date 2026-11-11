@@ -37,6 +37,7 @@ id_ed25519
 
 # Local Worker state and private archive exports.
 .wrangler/
+calendar-relay/wrangler.ci.jsonc
 *.sqlite
 *.sqlite-*
 *.db

@@ -18,6 +18,7 @@ const archiveSource=(await readFile('worker/archive.js','utf8')).replace("import
 const programSource=await readFile('worker/program-imports.js','utf8');
 const serverCatalogSource=await readFile('worker/default-catalog.js','utf8');
 const storageAlertSource=await readFile('worker/storage-alert.js','utf8');
+const hubSource=(await readFile('worker/hub.js','utf8')).replace("import {calendarRuntimeEnv,calendarRelay,calendarConfigured} from './calendar.js';",'');
 const manifest=JSON.parse(await readFile(root+'/ngsw.json','utf8'));
 for(const url of ['/index.html','/manifest.webmanifest'])manifest.hashTable[url]=createHash('sha1').update(await readFile(root+url)).digest('hex');
 // The legacy URLs become a storage-preserving migration worker. A fresh app
@@ -67,7 +68,7 @@ async function scan(dir){for(const e of await readdir(dir,{withFileTypes:true}))
 await scan(root);
 await rm('dist/server',{recursive:true,force:true});await mkdir('dist/server',{recursive:true});await mkdir('dist/.openai',{recursive:true});
 const composedWorker=approvedPaletteSource.replaceAll('export ','')+'\n'+workerSource.replace("/* __APP_BUILD_ID__ */ 'development'",JSON.stringify(buildId)).replace("import { APPROVED_THEME_IDS } from '../shared/approved-palettes.js';",'').replace("import { designStudioApi } from './design-studio.js';",[designPresetsSource,designSystemSource,designApiSource].map(source=>source.replaceAll('export ','')).join('\n')).replace("import { defaultExercises, defaultGroups } from './default-catalog.js';",serverCatalogSource.replaceAll('export const','const')).replace("import { archiveApi, archiveRetention } from './archive.js';",archiveSource.replaceAll('export ',''))
-.replace("import { storageAlert, storageStatus } from './storage-alert.js';",storageAlertSource.replaceAll('export ','')).replace("import { calendarApi, calendarPublish, calendarConfigure } from './calendar.js';",calendarSource.replaceAll('export ','')).replace("import { pushReminderApi } from './push.js';",pushSource.replaceAll('export ','')).replace("import {excelImportsApi,appFeaturesApi} from './program-imports.js';",programSource.replaceAll('export ',''));
+.replace("import { storageAlert, storageStatus } from './storage-alert.js';",storageAlertSource.replaceAll('export ','')).replace("import { calendarApi, calendarPublish, calendarConfigure } from './calendar.js';",calendarSource.replaceAll('export ','')).replace("import { pushReminderApi } from './push.js';",pushSource.replaceAll('export ','')).replace("import {excelImportsApi,appFeaturesApi} from './program-imports.js';",programSource.replaceAll('export ','')).replace("import { hubApi } from './hub.js';",hubSource.replaceAll('export ',''));
 await writeFile('dist/server/index.js',composedWorker.replace('/* __ASSETS__ */ {}',JSON.stringify(assets)));
 // Variante Cloudflare: i file statici non vengono incorporati (49 MB superano il limite dei Worker)
 // ma serviti da Workers Static Assets, configurati in wrangler.jsonc.

@@ -1814,7 +1814,7 @@ body.theme-ready {
   --warning: #f5c765;
 }
 body.theme-ready.custom-light { --warning: #946100; }
-body.theme-ready :is(main, .app-main, .topbar, .sidebar) {
+body.theme-ready:where(:not(.hub-mode)) :is(main, .app-main, .topbar, .sidebar) {
   background: var(--bg);
   color: var(--text);
 }
@@ -1828,8 +1828,8 @@ body.theme-ready :is(.bottom-nav, .simple-menu-panel, .cal-event-menu > div) {
   border-color: var(--line);
   color: var(--text);
 }
-body.theme-ready :is(button, .button) { border-color: var(--line); }
-body.theme-ready :is(button, .button):hover { border-color: color-mix(in srgb, var(--accent-text) 48%, var(--line)); }
+body.theme-ready:where(:not(.hub-mode)) :is(button, .button) { border-color: var(--line); }
+body.theme-ready:where(:not(.hub-mode)) :is(button, .button):hover { border-color: color-mix(in srgb, var(--accent-text) 48%, var(--line)); }
 body.theme-ready :is(button.primary, .button.primary) {
   background: var(--accent);
   border-color: var(--accent);
@@ -1839,7 +1839,7 @@ body.theme-ready :is(button.primary, .button.primary) {
 body.theme-ready :is(button.primary, .button.primary) :is(gt-icon, span) { color: inherit; }
 body.theme-ready :is(button.ghost, .button.ghost) { background: transparent; }
 body.theme-ready :is(button.danger, .danger-text) { color: var(--danger); }
-body.theme-ready :is(input, select, textarea) {
+body.theme-ready:where(:not(.hub-mode)) :is(input, select, textarea) {
   min-width: 0;
   max-width: 100%;
   background: var(--raised);
@@ -1847,13 +1847,13 @@ body.theme-ready :is(input, select, textarea) {
   color: var(--text);
   caret-color: var(--accent-text);
 }
-body.theme-ready :is(input, textarea)::placeholder { color: var(--muted); opacity: 1; }
-body.theme-ready :is(input, select, textarea):focus {
+body.theme-ready:where(:not(.hub-mode)) :is(input, textarea)::placeholder { color: var(--muted); opacity: 1; }
+body.theme-ready:where(:not(.hub-mode)) :is(input, select, textarea):focus {
   border-color: var(--accent-text);
   box-shadow: 0 0 0 3px var(--accent-soft);
 }
 body.theme-ready :is(input[type="checkbox"], input[type="radio"]) { accent-color: var(--accent-text); }
-body.theme-ready :is(input, select, textarea)[aria-invalid="true"] { border-color: var(--danger); outline-color: var(--danger); }
+body.theme-ready:where(:not(.hub-mode)) :is(input, select, textarea)[aria-invalid="true"] { border-color: var(--danger); outline-color: var(--danger); }
 body.theme-ready :is(.segmented, .banner, .calendar-legend, .ingredient-item, .meal-diary-row) { background: var(--card); border-color: var(--line); }
 body.theme-ready :is(.segmented > button.active, .calendar-cell.selected, .week-day i.done) {
   background: var(--accent);

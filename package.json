@@ -14,7 +14,7 @@
     "format:check": "prettier --check src tests tools *.json *.md .github/workflows/*.yml",
     "format:setup": "prettier --check AGENTS.md README.md AUTHENTICATION.md package.json package-lock.json docs/CODEX_*.md .github/workflows/*.yml",
     "verify:build": "node tools/verify-build.mjs",
-    "test:package": "node tests/runtime/design-studio-package-check.mjs && node tests/runtime/packaged-training-upgrades.mjs && node tests/runtime/packaged-assets.mjs",
+    "test:package": "node tests/runtime/design-studio-package-check.mjs && node tests/runtime/packaged-training-upgrades.mjs && node tests/runtime/packaged-assets.mjs && node tests/runtime/packaged-hub.mjs",
     "quality": "npm run typecheck && npm test && npm run build && npm run verify:build && npm run test:package",
     "postbuild": "node tools/package-worker.mjs",
     "package:deploy": "node tools/package-deploy.mjs",

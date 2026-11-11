@@ -1,4 +1,5 @@
 import {pushApi,pushNeedsEvents,updatePushEvents,dispatchPushReminders} from './push.js';
+import {hubRelayApi,dispatchHubReminders,hubFeedEvents,hubCalendarLines,validHubEvents} from './hub.js';
 // Separate public Worker. No GymTrack account cookies or platform credentials.
 const calEncoder=new TextEncoder();
 export async function tokenHash(value){return [...new Uint8Array(await crypto.subtle.digest('SHA-256',calEncoder.encode(value)))].map(n=>n.toString(16).padStart(2,'0')).join('');}
@@ -14,13 +15,14 @@ export function validEvents(events){
 }
 function calEscape(text){return text.replaceAll('\\','\\\\').replaceAll('\r\n','\n').replaceAll('\r','\n').replaceAll('\n','\\n').replaceAll(';','\\;').replaceAll(',','\\,');}
 function calFold(text){let out='',line='',bytes=0;for(const char of text){const length=calEncoder.encode(char).length;if(bytes+length>75){out+=line+'\r\n';line=' ';bytes=1;}line+=char;bytes+=length;}return out+line;}
-export function renderCalendar(events,revision,updatedAt,feedId){
+export function renderCalendar(events,revision,updatedAt,feedId,hubEvents=[]){
  const stamp=new Date(updatedAt).toISOString().replace(/[-:]/g,'').replace(/\.\d{3}/,'');
  const lines=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//GymTrack//Calendario//IT','CALSCALE:GREGORIAN','METHOD:PUBLISH','X-WR-CALNAME:GymTrack','REFRESH-INTERVAL;VALUE=DURATION:PT1H','X-PUBLISHED-TTL:PT1H'];
  for(const e of validEvents(events)){
   const end=new Date(e.date+'T12:00:00Z');end.setUTCDate(end.getUTCDate()+1);
   lines.push('BEGIN:VEVENT',`UID:${e.id}.${feedId}@gymtrack`, `DTSTAMP:${stamp}`,`LAST-MODIFIED:${stamp}`,`SEQUENCE:${revision}`,`DTSTART;VALUE=DATE:${e.date.replaceAll('-','')}`,`DTEND;VALUE=DATE:${end.toISOString().slice(0,10).replaceAll('-','')}`,`SUMMARY:${calEscape(e.title)}`,'TRANSP:TRANSPARENT','END:VEVENT');
  }
+ if(hubEvents.length)lines.push(...hubCalendarLines(validHubEvents(hubEvents),stamp,feedId));
  lines.push('END:VCALENDAR');return lines.map(calFold).join('\r\n')+'\r\n';
 }
 export default {async fetch(request,env){
@@ -30,14 +32,15 @@ export default {async fetch(request,env){
   if(feed&&['GET','HEAD'].includes(request.method)){
    const row=await env.DB.prepare('SELECT * FROM feeds WHERE token_hash=? AND enabled=1').bind(await tokenHash(feed[1])).first();
    if(!row)return calReply({error:'Calendar unavailable'},404);
-   return new Response(request.method==='HEAD'?null:renderCalendar(JSON.parse(row.events),row.revision,row.updated_at,row.account_key),{headers:{'Content-Type':'text/calendar; charset=utf-8','Cache-Control':'private, no-store','Content-Disposition':'inline; filename="gymtrack.ics"','X-Content-Type-Options':'nosniff','Referrer-Policy':'no-referrer','X-Robots-Tag':'noindex, nofollow'}});
+   return new Response(request.method==='HEAD'?null:renderCalendar(JSON.parse(row.events),row.revision,row.updated_at,row.account_key,request.method==='HEAD'?[]:await hubFeedEvents(env,row.account_key)),{headers:{'Content-Type':'text/calendar; charset=utf-8','Cache-Control':'private, no-store','Content-Disposition':'inline; filename="gymtrack.ics"','X-Content-Type-Options':'nosniff','Referrer-Policy':'no-referrer','X-Robots-Tag':'noindex, nofollow'}});
   }
-  const manage=/^\/manage\/([a-f0-9]{64})(\/push)?$/.exec(path);
+  const manage=/^\/manage\/([a-f0-9]{64})(\/push|\/hub|\/hub\/sent)?$/.exec(path);
   if(!manage)return calReply({error:'Not found'},404);
   const secret=env.CALENDAR_RELAY_SECRET;
   if(!secret||secret.length<32||!calEqual(request.headers.get('Authorization')||'','Bearer '+secret))return calReply({error:'Unauthorized'},401);
   const key=manage[1];
-  if(manage[2])return await pushApi(request,env,key);
+  if(manage[2]==='/push')return await pushApi(request,env,key);
+  if(manage[2])return await hubRelayApi(request,env,key,manage[2]);
   if(request.method==='GET'){
    const row=await env.DB.prepare('SELECT token,enabled,revision,updated_at FROM feeds WHERE account_key=?').bind(key).first();
    return calReply({enabled:!!row?.enabled,token:row?.enabled?row.token:null,revision:row?.revision||0,updatedAt:row?.updated_at||null,needsEvents:await pushNeedsEvents(env,key)});
@@ -65,4 +68,4 @@ export default {async fetch(request,env){
   await updatePushEvents(env,key,events,body.revision);
   return calReply({ok:true});
  }catch(error){return calReply({error:error.status?error.message:'Calendar request failed'},error.status||400);}
-},async scheduled(_event,env,ctx){ctx.waitUntil(dispatchPushReminders(env));}};
+},async scheduled(_event,env,ctx){ctx.waitUntil(Promise.all([dispatchPushReminders(env),dispatchHubReminders(env).catch(()=>{})]));}};

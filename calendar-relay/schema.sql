@@ -28,3 +28,16 @@ CREATE TABLE IF NOT EXISTS push_devices (
 );
 CREATE INDEX IF NOT EXISTS push_devices_due ON push_devices(next_due,lease_until);
 CREATE INDEX IF NOT EXISTS push_devices_account ON push_devices(account_key);
+CREATE TABLE IF NOT EXISTS hub_reminders (
+ account_key TEXT NOT NULL,
+ id TEXT NOT NULL,
+ due_at INTEGER NOT NULL,
+ sent_at INTEGER,
+ acked INTEGER NOT NULL DEFAULT 0,
+ PRIMARY KEY(account_key,id)
+);
+CREATE INDEX IF NOT EXISTS hub_reminders_due ON hub_reminders(sent_at,due_at);
+CREATE TABLE IF NOT EXISTS hub_feed (
+ account_key TEXT PRIMARY KEY,
+ events TEXT NOT NULL DEFAULT '[]'
+);

@@ -2,6 +2,7 @@ import { Routes } from "@angular/router";
 import { preserveFormDrafts } from '../services/draft-navigation';
 import { nutritionEnabledGuard } from '../services/nutrition-guard';
 import { designStudioGuard } from '../design/design-guard';
+import { hubGuard } from '../hub/hub-access';
 const pages: Routes = [
  {path:'recupera-allenamenti',loadComponent:()=>import('../features/workout-recovery.component').then(m=>m.WorkoutRecoveryComponent)},
  {path:'design-studio',canActivate:[designStudioGuard],loadComponent:()=>import('../design/design-studio.component').then(m=>m.DesignStudioComponent)},
@@ -12,6 +13,15 @@ const pages: Routes = [
  {path:'riposo',redirectTo:'/calendario?add=rest'},
  {path:'focus-muscolare',loadComponent:()=>import('../features/muscle-focus.component').then(m=>m.MuscleFocusComponent)},
  {path:'analisi',loadComponent:()=>import('../features/training-insights.component').then(m=>m.TrainingInsightsComponent)},
+ // GT Hub: app separata (agenda, spese, Dividi), solo Super Admin; il Worker lo verifica di nuovo.
+ {path:'scegli-app',canActivate:[hubGuard],loadComponent:()=>import('../hub/app-chooser.component').then(m=>m.AppChooserComponent)},
+ {path:'hub',canActivate:[hubGuard],loadComponent:()=>import('../hub/hub-today.component').then(m=>m.HubTodayComponent)},
+ {path:'hub/calendario',canActivate:[hubGuard],loadComponent:()=>import('../hub/hub-calendar.component').then(m=>m.HubCalendarComponent)},
+ {path:'hub/spese',canActivate:[hubGuard],loadComponent:()=>import('../hub/hub-expenses.component').then(m=>m.HubExpensesComponent)},
+ {path:'hub/spese/importa',canActivate:[hubGuard],loadComponent:()=>import('../hub/hub-import.component').then(m=>m.HubImportComponent)},
+ {path:'hub/dividi',canActivate:[hubGuard],loadComponent:()=>import('../hub/hub-split.component').then(m=>m.HubSplitComponent)},
+ {path:'hub/dividi/:id',canActivate:[hubGuard],loadComponent:()=>import('../hub/hub-group.component').then(m=>m.HubGroupComponent)},
+ {path:'hub/note',canActivate:[hubGuard],loadComponent:()=>import('../hub/hub-notes.component').then(m=>m.HubNotesComponent)},
   {
     path: "",
     loadComponent: () =>
