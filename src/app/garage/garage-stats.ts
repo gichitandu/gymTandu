@@ -101,6 +101,9 @@ export interface CarStatus {
   fuelLiters: number | null; fuelPct: number | null; rangeKm: number | null;
   kmPerDay: number | null; refuelInDays: number | null;
   kmMonth: number | null;
+  /** Carburante e autonomia letti dall'auto (portale Volkswagen) invece che stimati. */
+  live?: boolean;
+  consumptionFrom?: 'fills' | 'car' | 'declared' | null;
 }
 const RESERVE_KM = 60;
 
@@ -148,7 +151,7 @@ export function carStatus(car: HubCar | undefined, fuelups: readonly HubFuelup[]
       kmMonth = Math.round(odometer - start);
     } else if (inMonth.length > 1) kmMonth = odometer - inMonth[0].km;
   }
-  return { odometer, consumption, measured, costPer100, fuelLiters, fuelPct, rangeKm, kmPerDay, refuelInDays, kmMonth };
+  return { odometer, consumption, measured, costPer100, fuelLiters, fuelPct, rangeKm, kmPerDay, refuelInDays, kmMonth, live: false, consumptionFrom: measured ? 'fills' : consumption ? 'declared' : null };
 }
 
 export interface CarDeadline { key: keyof HubCar['deadlines']; label: string; date: string; days: number; tone: 'ok' | 'soon' | 'late' }
@@ -168,3 +171,21 @@ export function carDeadlines(car: HubCar | undefined, today: string): CarDeadlin
 export function unlinkedFuelCosts(costs: readonly CarCost[]) { return costs.filter(c => c.type === 'fuel' && !c.fuelup); }
 
 export function carCostsFromDoc(doc: HubDoc, spend: readonly SpendItem[]) { return carCosts(spend, doc.fuelups.filter(f => !f.deleted)); }
+
+/** Valori letti dall'auto tramite il portale Volkswagen (vedi worker/vw.js). */
+export interface CarLive { fuelPct?: number | null; rangeKm?: number | null; odometerKm?: number | null; consumption?: number | null; capturedAt?: number | null }
+const LIVE_MAX_AGE_MS = 3 * 86400000;
+
+/** Sostituisce le stime con i valori dell'auto, se recenti (al massimo 3 giorni). */
+export function applyLive(status: CarStatus, live: CarLive | null | undefined, tankLiters: number | undefined, now: number): CarStatus {
+  if (!live?.capturedAt || now - live.capturedAt > LIVE_MAX_AGE_MS || (live.fuelPct == null && live.rangeKm == null)) return status;
+  const tank = tankLiters && tankLiters > 0 ? tankLiters : null;
+  const useCar = !status.measured && !!live.consumption;
+  const consumption = useCar ? live.consumption! : status.consumption;
+  const fuelPct = live.fuelPct ?? status.fuelPct;
+  const fuelLiters = live.fuelPct != null && tank ? tank * live.fuelPct / 100 : status.fuelLiters;
+  const rangeKm = live.rangeKm ?? (fuelLiters !== null && consumption ? Math.round(fuelLiters / consumption * 100) : status.rangeKm);
+  const odometer = Math.max(status.odometer ?? 0, live.odometerKm ?? 0) || null;
+  const refuelInDays = rangeKm !== null && status.kmPerDay && status.kmPerDay > 0 ? Math.max(0, Math.floor((rangeKm - RESERVE_KM) / status.kmPerDay)) : status.refuelInDays;
+  return { ...status, consumption, fuelPct, fuelLiters, rangeKm, odometer, refuelInDays, live: true, consumptionFrom: useCar ? 'car' : status.consumptionFrom };
+}

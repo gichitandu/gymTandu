@@ -7,6 +7,7 @@ import { storageAlert, storageStatus } from './storage-alert.js';
 import { APPROVED_THEME_IDS } from '../shared/approved-palettes.js';
 import { calendarApi, calendarPublish, calendarConfigure } from './calendar.js';
 import { hubApi } from './hub.js';
+import { vwApi, vwScheduled } from './vw.js';
 // The platform's ChatGPT access boundary remains in place. App sessions are
 // additionally bound to that authenticated visitor, and never stored in JS.
 const OWNER = 'giacomotanduo004@gmail.com';
@@ -137,6 +138,7 @@ export async function api(request,env,ctx) {
       return json(await storageStatus(env));
     }
     if(path==='/api/hub'||path==='/api/hub/due')return await hubApi(request,env,me,ctx);
+    if(path==='/api/hub/vw'||path==='/api/hub/vw/sync')return await vwApi(request,env,me);
     if(path.startsWith('/api/design/'))return await designStudioApi(request,env,me);
     if(path.startsWith('/api/excel-imports'))return await excelImportsApi(request,env,me);
     if(path==='/api/app-features')return await appFeaturesApi(request,env,me);
@@ -299,6 +301,8 @@ const freshAssets=new Set(['/', '/index.html', '/ngsw.json', '/app-build.json', 
 export default {
 // Controllo giornaliero dello spazio R2 (cron in wrangler.jsonc): email a 8, 9 e 9,5 GB.
 async scheduled(event,env,ctx) {
+  // GT Garage: ogni 30 minuti i dati dell'auto dal portale Volkswagen (solo se configurato).
+  if(event?.cron==='*/30 * * * *'){ctx.waitUntil(vwScheduled(env).catch(error=>console.error('Dati Volkswagen non aggiornati:',error?.message||error)));return;}
   // Prima la pulizia delle copie oltre i 3 giorni, poi il controllo dello spazio R2.
   ctx.waitUntil(archiveRetention(env).catch(error=>console.error('Pulizia copie server non riuscita:',error?.message||error)).then(()=>storageAlert(env,OWNER)).catch(error=>console.error('Controllo spazio R2 non riuscito:',error?.message||error)));
 },

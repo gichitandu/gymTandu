@@ -129,6 +129,24 @@ l'invio passa da Resend (gratuito):
 Senza la chiave il controllo gira ma non invia nulla (solo una riga nel registro
 del Worker). L'indirizzo si può cambiare con la variabile `ALERT_EMAIL`.
 
+## GT Garage: dati automatici della Golf (facoltativo, gratuito)
+
+Il Worker legge ogni 30 minuti (cron `*/30 * * * *`) il pacchetto di dati più recente dal
+portale ufficiale Volkswagen EU Data Act (`worker/vw.js`): livello carburante, autonomia,
+chilometri, consumo medio, tagliando e cambio olio. Senza i segreti qui sotto non fa nulla.
+
+1. Sul portale `https://eu-data-act.drivesomethinggreater.com/` accedi con il Volkswagen ID
+   (l'auto deve risultare tua come utente principale) e in *Data clusters → Vehicle overview*
+   crea una richiesta continua ogni 15 minuti con *All Data*.
+2. Su GitHub crea i segreti `VW_ID_EMAIL` e `VW_ID_PASSWORD`.
+3. Avvia di nuovo **Pubblica su Cloudflare**: il workflow li copia come segreti del Worker.
+
+Dettagli: la sessione del portale è conservata in R2 (`garage/vw-session.json`) per non rifare
+l'accesso a ogni controllo; con credenziali rifiutate il collegamento si ferma per 6 ore; lo
+stato (senza cookie né telaio completo) è in `GET /api/hub/vw`, solo per il Super Admin, e
+`POST /api/hub/vw/sync` chiede un controllo subito (al massimo uno ogni 3 minuti). I dati
+non sono in tempo reale: arrivano quando l'auto li trasmette.
+
 ## Aggiornamenti
 
 Dopo ogni modifica al codice: `npm run build`, poi `npx wrangler deploy`. Le

@@ -10,7 +10,7 @@ import { GarageCarSheetComponent } from './garage-car-sheet.component';
 import { GarageFuelSheetComponent } from './garage-fuel-sheet.component';
 import { CAR_DEFAULT_COLOR, CarArtComponent } from './car-art.component';
 import { odometerReadings } from './garage-stats';
-import { addDays } from '../hub/hub-model';
+import { addDays, isoDay } from '../hub/hub-model';
 
 /** GT Garage: la scheda dell'auto con carburante e autonomia stimati, costi dal Planner e scadenze. */
 @Component({
@@ -27,8 +27,8 @@ import { addDays } from '../hub/hub-model';
     </section>
     <section class="hb-c lv">
       @if(st().fuelPct!==null){
-        <div><small><gt-icon name="fuel"/>Carburante stimato</small><b>{{st().fuelPct}}<u>%</u></b><span class="hb-bar"><i [style.width.%]="st().fuelPct" [class.low]="st().fuelPct!<=15"></i></span></div>
-        <div><small><gt-icon name="road"/>Autonomia stimata</small><b>{{n(st().rangeKm!)}}<u>km</u></b><em>{{n(st().fuelLiters!,0)}} L su {{n(car.tankLiters)}} nel serbatoio</em></div>
+        <div><small><gt-icon name="fuel"/>{{st().live?'Carburante':'Carburante stimato'}}</small><b>{{st().fuelPct}}<u>%</u></b><span class="hb-bar"><i [style.width.%]="st().fuelPct" [class.low]="st().fuelPct!<=15"></i></span></div>
+        <div><small><gt-icon name="road"/>{{st().live?'Autonomia':'Autonomia stimata'}}</small><b>{{n(st().rangeKm!)}}<u>km</u></b><em>@if(st().live){Dalla Golf · {{when(g.vw()?.capturedAt)}}}@else{{{n(st().fuelLiters!,0)}} L su {{n(car.tankLiters)}} nel serbatoio}</em></div>
       }@else{<p class="hint"><gt-icon name="info"/>{{levelHint()}}</p>}
     </section>
     <div class="hb-grid2 act"><button type="button" class="hb-btn pri" (click)="sheet.set('fuel')"><gt-icon name="fuel"/>Rifornimento</button><button type="button" class="hb-btn" (click)="openKm()"><gt-icon name="gauge"/>Aggiorna km</button></div>
@@ -37,7 +37,7 @@ import { addDays } from '../hub/hub-model';
     @if(g.unlinked().length){<a class="todo" routerLink="/auto/movimenti" [queryParams]="{tipo:'fuel'}"><span class="hb-sq sm g"><gt-icon name="fuel"/></span><span><strong>{{g.unlinked().length}} {{g.unlinked().length===1?'rifornimento':'rifornimenti'}} dal Planner</strong><small>Aggiungi litri e chilometri per calcolare il consumo</small></span><gt-icon name="chevron-right"/></a>}
     <div class="tiles">
       <a class="hb-c tile" routerLink="/auto/movimenti" [queryParams]="{tipo:'fuel'}"><gt-icon name="fuel"/><span><small>Ultimo pieno@if(lastFuel();as f){ · {{day(f.date)}}}</small><b>@if(lastFuel();as f){{{euro(f.amount)}} €}@else{—}</b></span></a>
-      <div class="hb-c tile"><gt-icon name="gauge"/><span><small>Consumo medio</small><b>{{st().consumption?n(st().consumption!,1)+' L/100 km':'—'}}</b></span></div>
+      <div class="hb-c tile"><gt-icon name="gauge"/><span><small>{{st().consumptionFrom==='car'?'Consumo dall’auto':'Consumo medio'}}</small><b>{{st().consumption?n(st().consumption!,1)+' L/100 km':'—'}}</b></span></div>
       <a class="hb-c tile" routerLink="/auto/statistiche"><gt-icon name="wallet"/><span><small>Spesa del mese</small><b>{{euro(g.totals().total)}} €</b></span></a>
       <div class="hb-c tile"><gt-icon name="calendar"/><span><small>Prossimo pieno</small><b [class.hb-pos]="st().refuelInDays!==null&&st().refuelInDays!>3" [class.hb-neg]="st().refuelInDays!==null&&st().refuelInDays!<=1">{{refuelLabel()}}</b></span></div>
     </div>
@@ -46,13 +46,18 @@ import { addDays } from '../hub/hub-model';
       <a class="hb-li" routerLink="/auto/statistiche"><gt-icon name="chart"/><span class="bd"><strong>Costo per 100 km</strong></span><span class="amt">{{st().costPer100!==null?euro(st().costPer100!)+' €':'—'}}</span></a>
       <button type="button" class="hb-li" (click)="openKm()"><gt-icon name="car"/><span class="bd"><strong>Contachilometri</strong></span><span class="amt">{{st().odometer!==null?n(st().odometer!)+' km':'Da inserire'}}</span></button>
     </section>
+    <button type="button" class="hb-c vwc" [class.ok]="vwTone()==='ok'" [class.warn]="vwTone()==='warn'" [class.bad]="vwTone()==='bad'" (click)="sheet.set('vw')">
+      <span class="vwm"><gt-icon name="bolt"/></span>
+      <span class="bd"><strong>{{vwTitle()}}</strong><small>{{vwText()}}</small></span><gt-icon name="chevron-right"/>
+    </button>
     <button type="button" class="hb-c state" (click)="sheet.set('car')">
       <span class="hb-sq" [class.g]="stateTone()==='ok'" [class.y]="stateTone()==='soon'" [class.r]="stateTone()==='late'" [class.n]="stateTone()==='none'"><gt-icon name="shield"/></span>
       <span class="bd"><strong>Stato veicolo</strong><small>{{stateText()}}</small></span>
       @if(stateTone()==='ok'){<span class="okk"><gt-icon name="check"/></span>}<gt-icon name="chevron-right"/>
     </button>
-    @if(g.deadlines().length){<section class="hb-c hb-list rows dl">@for(d of g.deadlines();track d.key){<div class="hb-li"><span [class]="'dot '+d.tone"></span><span class="bd"><strong>{{d.label}}</strong><small>{{day(d.date)}} {{d.date.slice(0,4)}}</small></span><span class="amt" [class.hb-neg]="d.tone==='late'" [class.warn]="d.tone==='soon'">{{d.days<0?'scaduta da '+(-d.days)+' g':d.days===0?'oggi':'tra '+d.days+' g'}}</span></div>}</section>}
-    <p class="hb-note"><gt-icon name="info"/><span>Carburante, autonomia e prossimo pieno sono <b>stime calcolate dall'app</b> su pieni e chilometri che registri: Volkswagen non permette più alle app esterne di leggere i dati dell'auto.</span></p>
+    @if(g.deadlines().length||service().length){<section class="hb-c hb-list rows dl">@for(d of g.deadlines();track d.key){<div class="hb-li"><span [class]="'dot '+d.tone"></span><span class="bd"><strong>{{d.label}}</strong><small>{{day(d.date)}} {{d.date.slice(0,4)}}</small></span><span class="amt" [class.hb-neg]="d.tone==='late'" [class.warn]="d.tone==='soon'">{{d.days<0?'scaduta da '+(-d.days)+' g':d.days===0?'oggi':'tra '+d.days+' g'}}</span></div>}
+      @for(r of service();track r.label){<div class="hb-li"><span [class]="'dot '+r.tone"></span><span class="bd"><strong>{{r.label}}</strong><small>Dalla Golf</small></span><span class="amt" [class.hb-neg]="r.tone==='late'" [class.warn]="r.tone==='soon'">{{r.text}}</span></div>}</section>}
+    <p class="hb-note"><gt-icon name="info"/>@if(st().live){<span>Carburante, autonomia e chilometri arrivano <b>dalla Golf</b> tramite il portale Volkswagen, ogni 15–30 minuti quando l'auto trasmette. Costi e consumo dei pieni restano calcolati dall'app.</span>}@else{<span>Carburante, autonomia e prossimo pieno sono <b>stime calcolate dall'app</b> su pieni e chilometri che registri, finché non colleghi il portale Volkswagen.</span>}</p>
   </div>
 </div>
 }@else{
@@ -65,6 +70,27 @@ import { addDays } from '../hub/hub-model';
 </section>}
 @if(sheet()==='car'){<gt-garage-car-sheet (closed)="sheet.set('')"/>}
 @if(sheet()==='fuel'){<gt-garage-fuel-sheet (closed)="sheet.set('')"/>}
+@if(sheet()==='vw'){<div class="hb-dim" (click)="sheet.set('')"></div>
+<section class="hb-sheet vws" role="dialog" aria-label="Dati automatici dalla Golf">
+  <div class="hb-hdl"></div>
+  <div class="hb-shh"><h2>Dati automatici</h2><button type="button" class="hb-ib" (click)="sheet.set('')" aria-label="Chiudi"><gt-icon name="close"/></button></div>
+  <div class="vwc big" [class.ok]="vwTone()==='ok'" [class.warn]="vwTone()==='warn'" [class.bad]="vwTone()==='bad'"><span class="vwm"><gt-icon name="bolt"/></span><span class="bd"><strong>{{vwTitle()}}</strong><small>{{vwText()}}</small></span></div>
+  @if(g.vw()?.values;as v){<div class="vwv">
+    <span><small>Carburante</small><b>{{v.fuelPct!=null?v.fuelPct+' %':'—'}}</b></span><span><small>Autonomia</small><b>{{v.rangeKm!=null?n(v.rangeKm)+' km':'—'}}</b></span>
+    <span><small>Chilometri</small><b>{{v.odometerKm!=null?n(v.odometerKm):'—'}}</b></span><span><small>Consumo medio</small><b>{{v.consumption!=null?n(v.consumption,1)+' L':'—'}}</b></span>
+  </div>}
+  @if(g.vw()?.configured){<button type="button" class="hb-btn pri" style="margin-top:12px" (click)="g.syncVw()" [disabled]="g.vwBusy()"><gt-icon name="repeat"/>{{g.vwBusy()?'Controllo in corso…':'Aggiorna ora'}}</button>}
+  @if(g.vwError()){<p class="hb-err" role="alert">{{g.vwError()}}</p>}
+  <details class="steps" [open]="vwTone()!=='ok'"><summary>Come collegare la Golf</summary>
+    <ol>
+      <li>Apri il <a href="https://eu-data-act.drivesomethinggreater.com/" target="_blank" rel="noopener">portale EU Data Act di Volkswagen</a> e accedi con il tuo <b>Volkswagen ID</b> (lo stesso dell'app Volkswagen). La Golf deve risultare tua come utente principale.</li>
+      <li>In <b>Data clusters → Vehicle overview</b> crea una richiesta <b>continua ogni 15 minuti</b> con <b>All Data</b>.</li>
+      <li>Su GitHub, nel repository dell'app: <b>Settings → Secrets and variables → Actions</b>, aggiungi <b>VW_ID_EMAIL</b> e <b>VW_ID_PASSWORD</b>.</li>
+      <li>Avvia di nuovo <b>Pubblica su Cloudflare</b> (scheda Actions). I primi dati possono arrivare dopo qualche ora: l'auto li invia quando la usi.</li>
+    </ol>
+    <p>È gratuito: il portale è il canale ufficiale previsto dalla legge europea sui dati (EU Data Act). La password resta un segreto di Cloudflare e non arriva mai nell'app. Se Volkswagen cambia l'accesso, restano i dati che inserisci tu.</p>
+  </details>
+</section>}
 @if(sheet()==='km'){<div class="hb-dim" (click)="sheet.set('')"></div>
 <form class="hb-sheet" role="dialog" aria-label="Aggiorna chilometri" (ngSubmit)="saveKm()">
   <div class="hb-hdl"></div>
@@ -101,6 +127,14 @@ import { addDays } from '../hub/hub-model';
 .rows{margin-top:10px}.rows .hb-li{cursor:default}.rows a.hb-li,.rows button.hb-li{cursor:pointer}.rows .hb-li>gt-icon{width:20px;height:20px;flex:none;color:var(--hb-m)}.rows .bd strong{font-weight:550;white-space:normal}.rows .amt.warn{color:var(--hb-y)}
 .state{display:flex;align-items:center;gap:12px;width:100%;margin-top:10px;padding:13px 14px;text-align:left;cursor:pointer;color:inherit}.state .bd{flex:1;min-width:0}.state strong{display:block;font-size:14.5px;font-weight:650}.state small{display:block;margin-top:2px;font-size:12.5px;color:var(--hb-m)}.state>gt-icon{width:17px;height:17px;color:var(--hb-m)}
 .okk{display:grid;place-items:center;flex:none;width:22px;height:22px;border-radius:50%;background:#4fd1a5;color:#06281c}.okk gt-icon{width:13px;height:13px}
+.vwc{display:flex;align-items:center;gap:12px;width:100%;margin-top:10px;padding:13px 14px;text-align:left;cursor:pointer;color:inherit}.vwc .bd{flex:1;min-width:0}.vwc strong{display:block;font-size:14.5px;font-weight:650}.vwc small{display:block;margin-top:2px;font-size:12.5px;color:var(--hb-m);line-height:1.35}.vwc>gt-icon{width:17px;height:17px;color:var(--hb-m)}
+.vwm{display:grid;place-items:center;flex:none;width:40px;height:40px;border-radius:13px;background:rgba(255,255,255,.07);color:var(--hb-m);box-shadow:inset 0 0 0 1px rgba(255,255,255,.08)}.vwm gt-icon{width:20px;height:20px}
+.vwc.ok .vwm{background:rgba(79,209,165,.15);color:var(--hb-g);box-shadow:inset 0 0 0 1px rgba(79,209,165,.3)}.vwc.warn .vwm{background:rgba(255,200,87,.13);color:var(--hb-y)}.vwc.bad .vwm{background:rgba(255,107,129,.14);color:var(--hb-r)}
+.vwc.big{margin-top:0;padding:12px 14px;border-radius:18px;background:rgba(255,255,255,.045);border:1px solid var(--hb-ln);cursor:default}
+.vwv{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}.vwv span{padding:11px 12px;border-radius:16px;background:rgba(255,255,255,.04);border:1px solid var(--hb-ln)}.vwv small{display:block;font-size:11.5px;color:var(--hb-m)}.vwv b{display:block;margin-top:3px;font-size:17px;font-weight:700;font-variant-numeric:tabular-nums}
+.steps{margin-top:14px;border-radius:18px;border:1px solid var(--hb-ln);background:rgba(255,255,255,.03)}.steps summary{padding:13px 14px;font-size:14px;font-weight:650;cursor:pointer}
+.steps ol{margin:0;padding:0 16px 0 34px;display:grid;gap:9px;font-size:13px;line-height:1.5;color:var(--hb-m)}.steps b{color:var(--hb-t);font-weight:650}.steps a{color:var(--hb-g);text-decoration:underline}
+.steps p{margin:12px 14px 14px;font-size:12px;line-height:1.5;color:var(--hb-m)}
 .dot{flex:none;width:9px;height:9px;border-radius:50%;background:var(--hb-g)}.dot.soon{background:var(--hb-y)}.dot.late{background:var(--hb-r)}
 .first{position:relative;isolation:isolate;padding:22px 14px 8px;text-align:center}.first gt-car-art{max-width:440px;margin:0 auto}.first h1{margin:14px 0 6px;font-size:28px;font-weight:750;letter-spacing:-1px}.first p{margin:0 auto 18px;max-width:420px;font-size:14px;line-height:1.5;color:var(--hb-m)}.first .hb-btn{max-width:420px;margin:0 auto}
 .first .spot{inset:0 -16px 46% -16px}
@@ -113,17 +147,49 @@ export class GarageComponent {
   private feedback = feedbackForContext();
   readonly error = feedbackSignal('error', this.feedback);
   readonly euro = euro; readonly day = shortDay;
-  readonly sheet = signal<'' | 'car' | 'fuel' | 'km'>('');
+  readonly sheet = signal<'' | 'car' | 'fuel' | 'km' | 'vw'>('');
   readonly st = this.g.status;
   readonly defaultColor = CAR_DEFAULT_COLOR;
   readonly lastFuel = computed(() => this.g.costs().find(c => c.type === 'fuel'));
   /** Le stime valgono finché le letture dei chilometri sono recenti. */
   readonly chip = computed(() => {
+    if (this.st().live) return { tone: 'ok', text: 'Dalla Golf · ' + this.when(this.g.vw()?.capturedAt) };
     if (this.st().fuelPct === null) return { tone: 'warn', text: 'Da completare' };
     const readings = odometerReadings(this.g.car(), this.g.fuelups()), last = readings[readings.length - 1]?.date ?? '';
     return last >= addDays(this.g.view.today(), -10) ? { tone: 'ok', text: 'Stime aggiornate' } : { tone: 'warn', text: 'Aggiorna i km' };
   });
+  readonly vwTone = computed(() => { const v = this.g.vw(); if (!v || !v.configured) return 'off'; return v.state === 'ok' ? 'ok' : v.state === 'auth' || v.state === 'error' ? 'bad' : 'warn'; });
+  readonly vwTitle = computed(() => {
+    const v = this.g.vw();
+    if (!v || !v.configured) return 'Collega la Golf';
+    return ({ ok: 'Collegata al portale Volkswagen', pending: 'Collegamento in preparazione', waiting: 'In attesa dei dati', norequest: 'Richiesta dati da attivare', novehicle: 'Auto non trovata', auth: 'Accesso Volkswagen da controllare', error: 'Collegamento non riuscito', off: 'Collega la Golf' } as Record<string, string>)[v.state] ?? 'Collegamento Volkswagen';
+  });
+  readonly vwText = computed(() => {
+    const v = this.g.vw();
+    if (!v || !v.configured) return 'Carburante, autonomia e km in automatico: tocca per sapere come';
+    if (v.state === 'ok') return v.capturedAt ? 'Dati rilevati ' + this.when(v.capturedAt) + (v.vehicle ? ' · telaio ' + v.vehicle : '') : 'Collegata';
+    if (v.state === 'pending') return 'Il primo controllo parte entro 30 minuti';
+    return v.message || 'Riprovo al prossimo controllo';
+  });
+  /** Tagliando e cambio olio come li segnala l'auto (giorni e km mancanti; negativi = scaduti). */
+  readonly service = computed(() => {
+    const v = this.g.vw()?.values; if (!v || !this.st().live) return [];
+    const row = (label: string, days?: number | null, km?: number | null) => {
+      if (days == null && km == null) return null;
+      const late = (days ?? 1) < 0 || (km ?? 1) < 0, soon = !late && ((days ?? 999) <= 30 || (km ?? 99999) <= 1000);
+      const parts = [days != null ? (days < 0 ? 'scaduto da ' + (-days) + ' g' : 'tra ' + days + ' g') : '', km != null ? (km < 0 ? num(-km) + ' km oltre' : num(km) + ' km') : ''].filter(Boolean);
+      return { label, text: parts.join(' · '), tone: late ? 'late' : soon ? 'soon' : 'ok' };
+    };
+    return [row('Tagliando', v.inspectionDays, v.inspectionKm), row('Cambio olio', v.oilDays, v.oilKm)].filter(r => !!r) as { label: string; text: string; tone: string }[];
+  });
+  /** "oggi 21:40", "ieri 18:05" oppure "9 nov 18:05". */
+  when(at: number | null | undefined) {
+    if (!at) return '';
+    const d = new Date(at), time = d.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' }), today = this.g.view.today(), day = isoDay(d);
+    return day === today ? 'oggi ' + time : day === addDays(today, -1) ? 'ieri ' + time : shortDay(day) + ' ' + time;
+  }
   km = '';
+  constructor() { void this.g.loadVw(true); }
 
   readonly levelHint = computed(() => {
     const s = this.st();

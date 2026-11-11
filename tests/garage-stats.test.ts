@@ -1,5 +1,5 @@
 import { expect, it } from 'vitest';
-import { carCosts, carDeadlines, carStatus, classifyCarCost, fuelSegments, monthSeries, monthTotals, odometerReadings, suggestedBudget } from '../src/app/garage/garage-stats';
+import { applyLive, carCosts, carDeadlines, carStatus, classifyCarCost, fuelSegments, monthSeries, monthTotals, odometerReadings, suggestedBudget } from '../src/app/garage/garage-stats';
 import { HubCar, HubFuelup } from '../src/app/hub/hub-model';
 import { SpendItem } from '../src/app/hub/hub-finance';
 
@@ -69,4 +69,15 @@ it('keeps odometer readings increasing and sorts deadlines by urgency', () => {
   expect(odometerReadings(car({ readings: [{ date: '2026-11-02', km: 900 }, { date: '2026-11-01', km: 1000 }, { date: '2026-11-05', km: 1100 }] }), [])).toEqual([{ date: '2026-11-01', km: 1000 }, { date: '2026-11-05', km: 1100 }]);
   const list = carDeadlines(car({ deadlines: { insurance: '2027-03-01', tax: '2026-11-20', inspection: '2026-11-01' } }), '2026-11-11');
   expect(list.map(d => [d.key, d.days, d.tone])).toEqual([['inspection', -10, 'late'], ['tax', 9, 'soon'], ['insurance', 110, 'ok']]);
+});
+
+it('uses fuel level, range and consumption read from the car when they are recent', () => {
+  const base = carStatus(car({ declaredConsumption: 5, readings: [{ date: '2026-11-01', km: 10000 }, { date: '2026-11-11', km: 10400 }] }), [], () => 0, '2026-11-11');
+  const now = Date.parse('2026-11-11T20:00:00Z');
+  const live = applyLive(base, { fuelPct: 62, rangeKm: 410, odometerKm: 10450, consumption: 5.8, capturedAt: now - 3600000 }, 50, now);
+  expect(live).toMatchObject({ live: true, fuelPct: 62, fuelLiters: 31, rangeKm: 410, odometer: 10450, consumption: 5.8, consumptionFrom: 'car', refuelInDays: 8 });
+  // Valori di più di 3 giorni fa: restano le stime.
+  expect(applyLive(base, { fuelPct: 62, capturedAt: now - 4 * 86400000 }, 50, now)).toBe(base);
+  // Senza autonomia dall'auto la si ricava da litri e consumo.
+  expect(applyLive(base, { fuelPct: 50, capturedAt: now }, 50, now).rangeKm).toBe(500);
 });

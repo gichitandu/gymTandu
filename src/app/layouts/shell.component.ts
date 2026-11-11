@@ -16,12 +16,13 @@ import { ArchiveSyncService } from "../services/archive-sync";
 import { canResumeAtHome, MobileNavigationService } from "../services/mobile-navigation";
 import { AppSwitcherService, HubLaunchService } from '../hub/hub-access';
 import { AppSwitcherComponent } from '../hub/app-switcher.component';
+import { AppsMarkComponent } from '../shared/profile-link.component';
 @Component({
   selector: "gt-shell",
   host: {class: "design-v2 photo-controls", "[class.reference-pages]":"referencePage()"},
   standalone: true,
   hostDirectives: [DesignPageDirective],
-  imports: [...DESIGN_DIRECTIVES,BottomNavigationComponent,DataStatusComponent,WorkoutClockComponent,RouterLink, RouterOutlet, IconComponent, AvatarComponent, ArchiveRecoveryComponent, AppSwitcherComponent],
+  imports: [...DESIGN_DIRECTIVES,BottomNavigationComponent,DataStatusComponent,WorkoutClockComponent,RouterLink, RouterOutlet, IconComponent, AvatarComponent, ArchiveRecoveryComponent, AppSwitcherComponent, AppsMarkComponent],
   styleUrls: ['./experience.css'],
   encapsulation: ViewEncapsulation.None,
   template: ` <gt-workout-clock/><aside class="sidebar">
@@ -43,7 +44,7 @@ import { AppSwitcherComponent } from '../hub/app-switcher.component';
       @if(!router.url.startsWith('/sessione')){<header class="topbar">
         <a class="mobile-brand brand" routerLink="/"><img class="app-brand-mark" src="/brand/gt-header-mark.svg" alt="" width="36" height="36"/>Gym<span>Track</span></a
         >        <div class="topbar-right"><gt-data-status class="header-data-status"/>
-          @if(switcher.available()){<button type="button" class="avatar avatar-apps" (click)="switcher.open.set(true)" aria-haspopup="dialog" aria-label="Cambia app o apri il profilo"><gt-avatar [photo]="s.profile().photo" [name]="s.profile().name" /></button>}@else{<a class="avatar" routerLink="/profilo" aria-label="Apri profilo"><gt-avatar [photo]="s.profile().photo" [name]="s.profile().name" /></a>}
+          @if(switcher.available()){<button type="button" class="su-iconbtn su-apps topbar-apps" (click)="switcher.open.set(true)" aria-haspopup="dialog" aria-label="Le tue app" title="Le tue app"><gt-apps-mark/></button>}<a class="avatar" routerLink="/profilo" aria-label="Apri profilo"><gt-avatar [photo]="s.profile().photo" [name]="s.profile().name" /></a>
         </div>
       </header>}
       <main [class.session-main]="router.url.startsWith('/sessione')">@if(s.ready()){@if(router.url.startsWith('/sessione')){<gt-data-status/>}@if(referencePage()&&(pwa.updateReady()||pwa.releases.updateReady())){<gt-data-status class="reference-update-status"/>}@if(auth.offlineMode()){<p class="local-mode-label">Archivio personale locale · funzioni condivise disabilitate</p>}<router-outlet />@if(referencePage()){<gt-data-status class="reference-page-status"/>}@if(router.url.split('?')[0]==='/profilo'&&auth.canManageBackups()){<gt-archive-recovery/>}}@else{<section class="card archive-opening" role="status" aria-live="polite"><h1>Apertura del tuo archivio</h1><p>Sto caricando i dati salvati su questo dispositivo…</p>@if(s.error()){<p class="notice">{{s.error()}}</p>}</section>}</main>

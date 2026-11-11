@@ -19,6 +19,8 @@ jobs:
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
       RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+      VW_ID_EMAIL: ${{ secrets.VW_ID_EMAIL }}
+      VW_ID_PASSWORD: ${{ secrets.VW_ID_PASSWORD }}
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
@@ -49,6 +51,11 @@ jobs:
       - name: Imposta la chiave per le email di avviso (facoltativa)
         if: ${{ env.RESEND_API_KEY != '' }}
         run: printf '%s' "$RESEND_API_KEY" | npx --yes wrangler@4 secret put RESEND_API_KEY
+      - name: Imposta l'accesso Volkswagen per GT Garage (facoltativo)
+        if: ${{ env.VW_ID_EMAIL != '' && env.VW_ID_PASSWORD != '' }}
+        run: |
+          printf '%s' "$VW_ID_EMAIL" | npx --yes wrangler@4 secret put VW_ID_EMAIL
+          printf '%s' "$VW_ID_PASSWORD" | npx --yes wrangler@4 secret put VW_ID_PASSWORD
       - name: Imposta il codice di setup
         run: printf '%s' "$SETUP_CODE" | npx --yes wrangler@4 secret put SETUP_CODE
         env:

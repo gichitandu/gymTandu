@@ -96,6 +96,7 @@ export class AppChooserComponent {
   readonly launch = inject(HubLaunchService);
   readonly view = inject(HubView);
   readonly garage = inject(GarageView);
+  constructor() { void this.garage.loadVw(); }
   private hub = inject(HubStore);
   private gym = inject(Store);
   private auth = inject(AuthService);

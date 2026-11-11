@@ -36,8 +36,11 @@ try {
   read = await (await call('/api/hub')).json(); assert.equal(read.revision, 1); assert.equal(read.data.events[0].title, 'Dentista');
   assert.equal((await call('/api/hub', 'PUT', {baseRevision: 1, data: {...doc('x'), events: [{id: 'bad'}]}})).status, 400);
   assert.equal((await call('/api/hub/due')).status, 200);
-  console.log('PASS packaged Worker: GT Hub revisions, stale-copy conflict and record validation');
+  const vw = await call('/api/hub/vw'); assert.equal(vw.status, 200); assert.deepEqual(await vw.json(), {configured: false, state: 'off', message: '', checkedAt: null, updatedAt: null, capturedAt: null, values: null, vehicle: null});
+  assert.equal((await call('/api/hub/vw/sync', 'POST', {})).status, 200);
+  console.log('PASS packaged Worker: GT Hub revisions, stale-copy conflict and record validation, GT Garage Volkswagen status');
   sql.prepare("UPDATE users SET role = 'Admin'").run();
   const denied = await call('/api/hub'); assert.equal(denied.status, 403);
+  assert.equal((await call('/api/hub/vw')).status, 403);
   console.log('PASS packaged Worker: GT Hub reserved to Super Admin on the server');
 } finally {sql.close();}

@@ -2468,3 +2468,5 @@ gt-shell .bottom-nav.calendar-navigation a > span { font-size: 10px; white-space
 /* Reserve content space for the persistent recovery controls. */
 gt-shell:has(gt-workout-clock .workout-clock) .app-main>main{padding-bottom:calc(var(--phone-nav-height,76px) + var(--safe-bottom,0px) + 150px)}
 @media(min-width:1000px){gt-shell:has(gt-workout-clock .workout-clock) .app-main>main{padding-bottom:160px}}
+/* «Le tue app» accanto alla foto profilo nella barra in alto (solo Super Admin). */
+gt-shell .topbar-right .topbar-apps { margin-right: -8px; width: 44px; height: 44px; border-radius: 14px; }

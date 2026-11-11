@@ -29,9 +29,10 @@
     // Indirizzo pubblico (non segreto) del servizio calendario/notifiche: vedi calendar-relay/README.md
     "CALENDAR_RELAY_URL": "https://gymtrack-calendar.tandu-gymtrack.workers.dev"
   },
-  // Controllo giornaliero dello spazio R2 (alle 06:00 UTC): vedi docs/CLOUDFLARE_DEPLOY.md
+  // Controllo giornaliero dello spazio R2 (alle 06:00 UTC) e, ogni 30 minuti, i dati dell'auto
+  // dal portale Volkswagen (solo con i segreti VW_ID_EMAIL e VW_ID_PASSWORD): vedi docs/CLOUDFLARE_DEPLOY.md
   "triggers": {
-    "crons": ["0 6 * * *"]
+    "crons": ["0 6 * * *", "*/30 * * * *"]
   },
   "observability": {
     "enabled": false
