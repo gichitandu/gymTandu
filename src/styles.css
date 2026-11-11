@@ -1775,7 +1775,10 @@ input,select,textarea {min-width:0;max-width:100%;}
 body.form-input-focused::after {content:'';display:block;height:calc(var(--keyboard-scroll-space,var(--keyboard-inset,0px)) + 24px);pointer-events:none;}
 body.form-input-focused {overflow-anchor:none;}
 body.form-input-focused input,body.form-input-focused select,body.form-input-focused textarea {scroll-margin-block:20px;}
-body.keyboard-open .entry-page {overflow:visible;}
+/* Con la tastiera aperta il login scorre in verticale, ma gli aloni animati dello sfondo non devono
+   allargare la pagina: su iPhone la larghezza che cambia di continuo faceva sfarfallare i campi. */
+body.keyboard-open .entry-page {overflow:visible;overflow-x:clip;}
+body.form-input-focused .entry-page::before,body.form-input-focused .entry-page::after {animation-play-state:paused;}
 body.keyboard-open .modal-backdrop {align-items:flex-start;}
 @media (max-width:800px), (pointer:coarse) {
   gt-shell .session-header {position:relative;}
