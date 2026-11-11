@@ -55,7 +55,10 @@ await writeFile(root+'/ngsw.json',JSON.stringify(manifest,null,2));
 const types={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.json':'application/json','.webmanifest':'application/manifest+json','.svg':'image/svg+xml','.png':'image/png','.webp':'image/webp','.ico':'image/x-icon','.txt':'text/plain','.xlsx':'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'};
 const assets={};
 let compressedAssets=0;
-async function scan(dir){for(const e of await readdir(dir,{withFileTypes:true})){const file=path.join(dir,e.name);if(e.isDirectory())await scan(file);else if(!file.endsWith('.map')){
+// I video tecnici (circa 9 MB) non entrano nel bundle incorporato per l'hosting Sites, che ha un limite di 63 MiB:
+// su Cloudflare sono serviti da Workers Static Assets (dist/gymtrack/browser).
+const embeddedExcluded=file=>path.relative(root,file).replaceAll('\\','/').startsWith('training/videos/');
+async function scan(dir){for(const e of await readdir(dir,{withFileTypes:true})){const file=path.join(dir,e.name);if(e.isDirectory())await scan(file);else if(!file.endsWith('.map')&&!embeddedExcluded(file)){
  const original=await readFile(file),compressed=original.length>1024?gzipSync(original,{level:9}):original;
  const gzip=compressed.length<original.length*.9;
  assets['/'+path.relative(root,file).replaceAll('\\','/')]={type:types[path.extname(file)]||'application/octet-stream',body:(gzip?compressed:original).toString('base64'),...(gzip?{compression:'gzip'}:{})};

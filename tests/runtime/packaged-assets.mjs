@@ -5,7 +5,7 @@ import path from 'node:path';
 import worker from '../../dist/server/index.js';
 const root='dist/gymtrack/browser',files=[];
 async function scan(dir){for(const entry of await readdir(dir,{withFileTypes:true})){
- const file=path.join(dir,entry.name);if(entry.isDirectory())await scan(file);else if(!file.endsWith('.map'))files.push(file);
+ const file=path.join(dir,entry.name);if(entry.isDirectory())await scan(file);else if(!file.endsWith('.map')&&!file.replaceAll('\\','/').includes('/training/videos/'))files.push(file); // video tecnici: solo Workers Static Assets, non nel bundle Sites
 }}
 await scan(root);
 const call=(url,method='GET')=>worker.fetch(new Request('https://packaged-assets.test'+url,{method,headers:{'Accept-Encoding':'identity'}}),{},{});

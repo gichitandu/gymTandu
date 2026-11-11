@@ -40,7 +40,8 @@
       "updateMode": "lazy",
       "resources": {
         "files": [
-          "/training/**"
+          "/training/**",
+          "!/training/videos/**"
         ]
       }
     }
