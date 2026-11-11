@@ -2,7 +2,7 @@ import { computed, effect, inject, Injectable, signal, untracked } from '@angula
 import Dexie, { Table } from 'dexie';
 import { AuthService } from '../services/auth';
 import {
-  emptyHubDoc, HubCollection, HubDoc, HubPerson, HubPlan, HubRecord, HUB_COLLECTIONS, HUB_DOC_VERSION, HubPrefs,
+  emptyHubDoc, HubCar, HubCollection, HubDoc, HubPerson, HubPlan, HubRecord, HUB_COLLECTIONS, HUB_DOC_VERSION, HubPrefs,
 } from './hub-model';
 
 /** Identità fissa dell'utente nei gruppi di Dividi. */
@@ -78,6 +78,8 @@ export class HubStore {
   readonly groups = computed(() => this.doc().groups.filter(r => !r.deleted));
   readonly expenses = computed(() => this.doc().expenses.filter(r => !r.deleted).sort((a, b) => b.date.localeCompare(a.date) || b.updatedAt - a.updatedAt));
   readonly settlements = computed(() => this.doc().settlements.filter(r => !r.deleted));
+  readonly car = computed<HubCar | undefined>(() => this.doc().cars.filter(r => !r.deleted).sort((a, b) => a.id.localeCompare(b.id))[0]);
+  readonly fuelups = computed(() => this.doc().fuelups.filter(r => !r.deleted));
   readonly plan = computed<HubPlan | undefined>(() => this.doc().plans.filter(r => !r.deleted).sort((a, b) => b.updatedAt - a.updatedAt)[0]);
   readonly prefs = computed<HubPrefs>(() => this.doc().prefs.find(p => !p.deleted) ?? { id: 'prefs', updatedAt: 0, timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'Europe/Rome' });
 

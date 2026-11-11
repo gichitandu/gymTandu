@@ -3,7 +3,13 @@ import { CanActivateFn, Router } from '@angular/router';
 import { AuthService } from '../services/auth';
 
 export type HubLaunchMode = 'ask' | 'last' | 'gymtrack';
-export type HubApp = 'gymtrack' | 'hub';
+export type HubApp = 'gymtrack' | 'hub' | 'auto';
+/** Le app raggiungibili dal selettore (GymTrack per tutti, le altre solo Super Admin). */
+export const HUB_APPS: { id: HubApp; path: string; name: string; text: string }[] = [
+  { id: 'gymtrack', path: '/', name: 'GymTrack', text: 'Allenamenti, pasti e progressi' },
+  { id: 'hub', path: '/hub', name: 'GT Hub', text: 'Agenda, spese, Dividi e note' },
+  { id: 'auto', path: '/auto', name: 'GT Garage', text: 'La tua auto, carburante e costi' },
+];
 interface HubLaunch { mode: HubLaunchMode; last: HubApp }
 const KEY = 'gymtrack-app-launch-v1:';
 
@@ -30,7 +36,7 @@ export class HubLaunchService {
     this.version();
     try {
       const value = JSON.parse(localStorage.getItem(this.key()) || 'null');
-      if (value && ['ask', 'last', 'gymtrack'].includes(value.mode) && ['gymtrack', 'hub'].includes(value.last)) return value;
+      if (value && ['ask', 'last', 'gymtrack'].includes(value.mode) && ['gymtrack', 'hub', 'auto'].includes(value.last)) return value;
     } catch { /* preferenza assente o illeggibile */ }
     return { mode: 'ask', last: 'gymtrack' };
   }
@@ -44,7 +50,7 @@ export class HubLaunchService {
     if (!hubAllowed(this.auth) || this.chosen.has(this.account())) return null;
     const pref = this.read();
     if (pref.mode === 'ask') return '/scegli-app';
-    if (pref.mode === 'last' && pref.last === 'hub') return '/hub';
+    if (pref.mode === 'last' && pref.last !== 'gymtrack') return pref.last === 'auto' ? '/auto' : '/hub';
     return null;
   }
 }
@@ -56,5 +62,14 @@ export const hubGuard: CanActivateFn = async () => {
   return hubAllowed(auth) ? true : router.parseUrl('/');
 };
 
-/** Pagine mostrate fuori dalla cornice di GymTrack (Hub e scelta dell'app). */
-export function isHubUrl(url: string) { return /^\/(hub|scegli-app)(?=$|[/?#])/.test(url); }
+/** Pagine mostrate fuori dalla cornice di GymTrack (Hub, Garage e scelta dell'app). */
+export function isHubUrl(url: string) { return /^\/(hub|auto|scegli-app)(?=$|[/?#])/.test(url); }
+
+/** Selettore delle app aperto dall'icona del profilo dentro GymTrack. */
+@Injectable({ providedIn: 'root' })
+export class AppSwitcherService {
+  private auth = inject(AuthService);
+  readonly open = signal(false);
+  /** Solo chi può aprire le altre app vede il selettore. */
+  available() { return hubAllowed(this.auth); }
+}

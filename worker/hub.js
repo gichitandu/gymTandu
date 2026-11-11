@@ -2,8 +2,10 @@ import {calendarRuntimeEnv,calendarRelay,calendarConfigured} from './calendar.js
 // GT Hub: archivio separato da GymTrack (R2 hub/<utente>.json), riservato al Super Admin.
 // Promemoria e impegni vengono proiettati verso il servizio calendario/notifiche.
 export const HUB_LIMIT_BYTES=8*1024*1024;
-const HUB_COLLECTIONS=['events','notes','transactions','imports','rules','plans','people','groups','expenses','settlements','prefs'];
-const HUB_ROW_LIMITS={events:5000,notes:5000,transactions:60000,imports:3000,rules:3000,plans:300,people:500,groups:300,expenses:30000,settlements:30000,prefs:5};
+const HUB_COLLECTIONS=['events','notes','transactions','imports','rules','plans','people','groups','expenses','settlements','prefs','cars','fuelups'];
+// Raccolte aggiunte dopo: una copia dell'app non ancora aggiornata non le invia e non deve cancellarle.
+const HUB_LATER_COLLECTIONS=['cars','fuelups'];
+const HUB_ROW_LIMITS={events:5000,notes:5000,transactions:60000,imports:3000,rules:3000,plans:300,people:500,groups:300,expenses:30000,settlements:30000,prefs:5,cars:20,fuelups:20000};
 const HUB_HISTORY_DAYS=3;
 function hubReply(data,status=200){return Response.json(data,{status,headers:{'Cache-Control':'private, no-store','X-Content-Type-Options':'nosniff'}});}
 function hubFail(message,status=400){throw Object.assign(new Error(message),{status});}
@@ -64,6 +66,8 @@ export async function hubApi(request,env,user,ctx){
   const body=await hubBody(request),data=hubValidate(body),key=hubObjectKey(user);
   const head=await env.BUCKET.head(key),current=head?Number(head.customMetadata?.revision||0):0;
   if(body.baseRevision!==current)return hubReply({error:'Il Hub è cambiato su un altro dispositivo. Unisco le modifiche e riprovo.',revision:current},409);
+  const absent=HUB_LATER_COLLECTIONS.filter(name=>body.data[name]===undefined);
+  if(head&&absent.length){const kept=(await hubRead(env,user)).data||{};for(const name of absent)if(Array.isArray(kept[name]))data[name]=kept[name];}
   const now=Date.now(),revision=current+1;
   if(head)await hubKeepHistory(env,user,head,now).catch(()=>{});
   const saved=await env.BUCKET.put(key,JSON.stringify(data),{httpMetadata:{contentType:'application/json'},customMetadata:{revision:String(revision),updatedAt:String(now)},...(head?{onlyIf:{etagMatches:head.etag}}:{})});

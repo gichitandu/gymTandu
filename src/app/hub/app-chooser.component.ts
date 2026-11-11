@@ -10,8 +10,9 @@ import { HubView } from './hub-view';
 import { HubStore } from './hub-store';
 import { dayItems, gymItems, upcoming } from './hub-calendar';
 import { euro, shortDay } from './hub-model';
+import { GarageView, num } from '../garage/garage-view';
 
-/** Dopo l'accesso (solo Super Admin): scegli tra GymTrack e GT Hub. */
+/** Dopo l'accesso (solo Super Admin): scegli tra GymTrack, GT Hub e GT Garage. */
 @Component({
   selector: 'gt-app-chooser', standalone: true, imports: [IconComponent, ExerciseThumbComponent],
   template: `<div class="glow" aria-hidden="true"></div>
@@ -33,6 +34,14 @@ import { euro, shortDay } from './hub-model';
         <span><small><gt-icon name="clock"/>Prossimo</small><b>{{next()?.time||'—'}}</b><em>{{next()?.title||'Nessun impegno'}}</em></span>
         <span><small><gt-icon name="wallet"/>Oggi</small><b>{{budgetLabel()}}</b><em>{{budgetNote()}}</em></span>
         <span><small><gt-icon name="users"/>Dividi</small><b [class.pos]="view.position().net>0" [class.neg]="view.position().net<0">{{short(view.position().net,true)}} €</b><em>{{view.position().net>0?'ti devono':view.position().net<0?'devi':'in pari'}}</em></span>
+      </span>
+    </button>
+    <button type="button" class="app a-car" (click)="go('auto')">
+      <span class="ah"><span class="mk car"><gt-icon name="car"/></span><span class="t"><b>GT Garage <i class="adm"><gt-icon name="lock"/>admin</i></b><small>{{garage.car()?.name||'La tua auto, carburante e costi'}}</small></span><span class="open"><gt-icon name="arrow"/></span></span>
+      <span class="stats">
+        <span><small><gt-icon name="fuel"/>Livello</small><b>{{garage.status().fuelPct!==null?garage.status().fuelPct+' %':'—'}}</b><em>stimato</em></span>
+        <span><small><gt-icon name="road"/>Residui</small><b>{{garage.status().rangeKm!==null?n(garage.status().rangeKm!)+' km':'—'}}</b><em>stimati</em></span>
+        <span><small><gt-icon name="wallet"/>Mese</small><b>{{short(garage.totals().byType.fuel)}} €</b><em>carburante</em></span>
       </span>
     </button>
   </div>
@@ -68,6 +77,9 @@ h1.x span.g{animation-delay:.16s;color:transparent;background:linear-gradient(95
 .strip{display:flex;gap:5px}.strip gt-exercise-thumb{--thumb-width:40px;--thumb-height:34px;border-radius:8px}
 .a-hub{color:#fff;background:radial-gradient(120% 100% at 0% 0%,rgba(124,107,255,.55),transparent 60%),radial-gradient(90% 90% at 100% 100%,rgba(58,123,255,.35),transparent 60%),#15132e;border:1px solid rgba(143,124,255,.4);box-shadow:0 24px 50px rgba(110,107,255,.22),inset 0 1px rgba(255,255,255,.2)}
 .a-hub .open{background:#fff;color:#17142b}
+.a-car{color:#fff;background:radial-gradient(120% 100% at 0% 0%,rgba(55,201,139,.4),transparent 60%),radial-gradient(90% 90% at 100% 100%,rgba(120,140,160,.28),transparent 60%),#121a18;border:1px solid rgba(79,209,165,.36);box-shadow:0 24px 50px rgba(55,201,139,.16),inset 0 1px rgba(255,255,255,.18)}
+.a-car .open{background:#fff;color:#06281c}.mk.car{color:#06281c;background:linear-gradient(140deg,#8ff0c0,#37c98b 60%,#1f9d7a);box-shadow:inset 0 1px rgba(255,255,255,.45),0 8px 20px rgba(55,201,139,.35)}
+.app:nth-child(3){animation-delay:.36s}
 .stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:14px}
 .stats>span{padding:11px 11px 10px;border-radius:18px;background:rgba(10,8,22,.4);border:1px solid rgba(255,255,255,.1);min-width:0}
 .stats small{display:flex;align-items:center;gap:5px;font-size:10.5px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;opacity:.65}.stats small gt-icon{width:12px;height:12px}
@@ -83,6 +95,7 @@ h1.x span.g{animation-delay:.16s;color:transparent;background:linear-gradient(95
 export class AppChooserComponent {
   readonly launch = inject(HubLaunchService);
   readonly view = inject(HubView);
+  readonly garage = inject(GarageView);
   private hub = inject(HubStore);
   private gym = inject(Store);
   private auth = inject(AuthService);
@@ -115,6 +128,7 @@ export class AppChooserComponent {
   /** Importi compatti per le mini schede: senza centesimi da 100 € in su. */
   short(cents: number, sign = false) { return euro(cents, { sign, decimals: Math.abs(cents) < 10000 }); }
 
-  go(app: 'gymtrack' | 'hub') { this.launch.remember(app); void this.router.navigateByUrl(app === 'hub' ? '/hub' : '/'); }
+  n(value: number) { return num(value); }
+  go(app: 'gymtrack' | 'hub' | 'auto') { this.launch.remember(app); void this.router.navigateByUrl(app === 'hub' ? '/hub' : app === 'auto' ? '/auto' : '/'); }
   toggleLast() { this.launch.setMode(this.launch.read().mode === 'last' ? 'ask' : 'last'); }
 }

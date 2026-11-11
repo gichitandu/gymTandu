@@ -21,6 +21,10 @@ const pages: Routes = [
  {path:'hub/spese/importa',canActivate:[hubGuard],loadComponent:()=>import('../hub/hub-import.component').then(m=>m.HubImportComponent)},
  {path:'hub/dividi',canActivate:[hubGuard],loadComponent:()=>import('../hub/hub-split.component').then(m=>m.HubSplitComponent)},
  {path:'hub/dividi/:id',canActivate:[hubGuard],loadComponent:()=>import('../hub/hub-group.component').then(m=>m.HubGroupComponent)},
+ // GT Garage: la scheda dell'auto, sullo stesso archivio e con gli stessi permessi del Hub.
+ {path:'auto',canActivate:[hubGuard],loadComponent:()=>import('../garage/garage.component').then(m=>m.GarageComponent)},
+ {path:'auto/movimenti',canActivate:[hubGuard],loadComponent:()=>import('../garage/garage-moves.component').then(m=>m.GarageMovesComponent)},
+ {path:'auto/statistiche',canActivate:[hubGuard],loadComponent:()=>import('../garage/garage-insights.component').then(m=>m.GarageInsightsComponent)},
  {path:'hub/note',canActivate:[hubGuard],loadComponent:()=>import('../hub/hub-notes.component').then(m=>m.HubNotesComponent)},
   {
     path: "",

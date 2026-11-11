@@ -188,3 +188,23 @@ body.hub-mode { background: #09090d; }
 .hb-stagger > *:nth-child(2) { animation-delay: .04s; } .hb-stagger > *:nth-child(3) { animation-delay: .08s; } .hb-stagger > *:nth-child(4) { animation-delay: .12s; } .hb-stagger > *:nth-child(5) { animation-delay: .16s; } .hb-stagger > *:nth-child(n+6) { animation-delay: .2s; }
 @media (prefers-reduced-motion: reduce) { .hb *, .hb *::before, .hb *::after { animation: none !important; transition: none !important; } }
 .hb :focus-visible { outline: 2px solid #b3a6ff; outline-offset: 2px; }
+
+/* GT Garage: stessa cornice, grafite neutra e accento verde */
+.hb.hb-auto { --hb-bg: #0c0d0f; --hb-s1: #141518; --hb-s2: #1b1c20; --hb-s3: #24262b; --hb-m: #9a9da6; --hb-f: #6c6f78; background: var(--hb-bg); }
+body.hub-mode:has(.hb-auto) { background: #0c0d0f; }
+.hb-auto .hb-c { background: linear-gradient(180deg, #1c1d21, #151619); border-color: rgba(255,255,255,.075); box-shadow: inset 0 1px rgba(255,255,255,.055), 0 14px 34px rgba(0,0,0,.42); }
+.hb-auto .hb-tabbar { background: rgba(24,25,28,.86); }
+.hb-auto .hb-sheet { background: linear-gradient(180deg, #1d1e22, #131417 40%); }
+.hb-auto .hb-me { box-shadow: 0 0 0 2px var(--hb-bg), 0 0 0 3px rgba(255,255,255,.12); }
+.hb-mk.auto { background: linear-gradient(140deg, #8ff0c0, #37c98b 60%, #1f9d7a); box-shadow: inset 0 1px rgba(255,255,255,.45), 0 6px 16px rgba(55,201,139,.3); color: #06281c; }
+.hb-auto .hb-mesh { background: radial-gradient(340px 240px at 8% -6%, rgba(79,209,165,.13), transparent 70%), radial-gradient(300px 220px at 100% 0%, rgba(150,160,175,.10), transparent 70%); }
+.hb-auto .hb-tabbar a.on { background: rgba(79,209,165,.14); box-shadow: inset 0 0 0 1px rgba(79,209,165,.28); }
+.hb-auto .hb-tabbar a.on gt-icon { color: var(--hb-g); }
+.hb-auto .hb-sec a, .hb-auto .hb-sec button.hb-link { color: var(--hb-g); }
+.hb-auto .hb-field:focus-within { border-color: rgba(79,209,165,.6); box-shadow: 0 0 0 3px rgba(79,209,165,.15); }
+.hb-auto .hb-ch.on { background: rgba(79,209,165,.16); border-color: rgba(79,209,165,.5); }
+.hb-auto .hb-tog[aria-checked=true] { background: linear-gradient(90deg, #37c98b, #4fd1a5); }
+.hb-auto .hb-btn.pri { background: linear-gradient(180deg, #eafff5, #bff2d9); color: #06281c; box-shadow: 0 12px 26px rgba(79,209,165,.25), inset 0 1px #fff; }
+.hb-auto .hb-app.cur { background: rgba(79,209,165,.1); box-shadow: inset 0 0 0 1px rgba(79,209,165,.3); }
+.hb-auto .hb-chev.on { color: var(--hb-g); }
+.hb-auto :focus-visible { outline-color: var(--hb-g); }

@@ -45,18 +45,38 @@ export interface HubSettlement extends HubRecord { groupId: string; from: string
 export interface HubBudgetAlert { category: string; label: string; month: string; pct: number; spent: number; cap: number }
 export interface HubPrefs extends HubRecord { timezone: string; budgetAlerts?: HubBudgetAlert[] }
 
+/** GT Garage: l'auto e i rifornimenti. I costi restano movimenti del Planner (un'unica fonte). */
+export type HubCarFuel = 'benzina' | 'diesel' | 'gpl' | 'metano' | 'ibrida';
+export interface HubCarReading { date: string; km: number }
+export interface HubCarDeadlines { insurance?: string; tax?: string; inspection?: string; service?: string }
+export interface HubCar extends HubRecord {
+  name: string; plate?: string; fuel: HubCarFuel; tankLiters: number;
+  /** Consumo dichiarato (L/100 km), usato finché non ci sono abbastanza pieni. */
+  declaredConsumption?: number;
+  readings: HubCarReading[]; deadlines: HubCarDeadlines; photo?: string;
+  /** Colore dell'illustrazione quando non c'è una foto. */
+  color?: string;
+}
+export interface HubFuelup extends HubRecord {
+  carId: string; date: string; transactionId: string;
+  liters?: number; odometer?: number; full: boolean; station?: string;
+  /** Il movimento è stato creato dal Garage (spesa in contanti): si elimina insieme al rifornimento. */
+  ownTransaction?: boolean;
+}
+
 export interface HubDoc {
   version: number;
   events: HubEvent[]; notes: HubNote[];
   transactions: HubTransaction[]; imports: HubImport[]; rules: HubRule[]; plans: HubPlan[];
   people: HubPerson[]; groups: HubGroup[]; expenses: HubExpense[]; settlements: HubSettlement[];
   prefs: HubPrefs[];
+  cars: HubCar[]; fuelups: HubFuelup[];
 }
-export const HUB_COLLECTIONS = ['events', 'notes', 'transactions', 'imports', 'rules', 'plans', 'people', 'groups', 'expenses', 'settlements', 'prefs'] as const;
+export const HUB_COLLECTIONS = ['events', 'notes', 'transactions', 'imports', 'rules', 'plans', 'people', 'groups', 'expenses', 'settlements', 'prefs', 'cars', 'fuelups'] as const;
 export type HubCollection = typeof HUB_COLLECTIONS[number];
 
 export function emptyHubDoc(): HubDoc {
-  return { version: HUB_DOC_VERSION, events: [], notes: [], transactions: [], imports: [], rules: [], plans: [], people: [], groups: [], expenses: [], settlements: [], prefs: [] };
+  return { version: HUB_DOC_VERSION, events: [], notes: [], transactions: [], imports: [], rules: [], plans: [], people: [], groups: [], expenses: [], settlements: [], prefs: [], cars: [], fuelups: [] };
 }
 
 export type HubCategoryType = 'fisso' | 'essenziale' | 'flessibile' | 'ricorrente' | 'entrata' | 'giroconto';

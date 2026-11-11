@@ -48,6 +48,19 @@ it('riserva il Hub al Super Admin e salva con controllo di revisione', async () 
   expect((await hubApi(put({ baseRevision: 1, data: { events: [{ id: '' }] } }), main(), superAdmin)).status).toBe(400);
 });
 
+it('conserva auto e rifornimenti se una copia non aggiornata dell’app non li invia', async () => {
+  const car = { id: 'car', updatedAt: 1, name: 'Golf 8', fuel: 'benzina', tankLiters: 50, readings: [], deadlines: {} };
+  expect((await hubApi(put({ baseRevision: 0, data: { events: [], cars: [car], fuelups: [] } }), main(), superAdmin)).status).toBe(200);
+  expect((await hubApi(put({ baseRevision: 1, data: { events: [event()] } }), main(), superAdmin)).status).toBe(200);
+  let stored = await (await hubApi(get(), main(), superAdmin)).json() as any;
+  expect(stored.data.cars).toEqual([car]);
+  expect(stored.data.events).toHaveLength(1);
+  // Una copia aggiornata che invia l'elenco vuoto lo sostituisce davvero.
+  expect((await hubApi(put({ baseRevision: 2, data: { events: [], cars: [{ ...car, deleted: true, updatedAt: 2 }], fuelups: [] } }), main(), superAdmin)).status).toBe(200);
+  stored = await (await hubApi(get(), main(), superAdmin)).json() as any;
+  expect(stored.data.cars[0].deleted).toBe(true);
+});
+
 it('calcola promemoria con anticipi e ora legale nel fuso dell’utente', () => {
   expect(new Date(hubZonedUtc('2026-11-11', '17:30', 'Europe/Rome')).toISOString()).toBe('2026-11-11T16:30:00.000Z');
   expect(new Date(hubZonedUtc('2026-07-11', '17:30', 'Europe/Rome')).toISOString()).toBe('2026-07-11T15:30:00.000Z');

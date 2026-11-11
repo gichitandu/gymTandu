@@ -8,30 +8,35 @@ import { HubStore } from './hub-store';
 import { HubView } from './hub-view';
 import { gymItems } from './hub-calendar';
 
-const TABS = [
+const HUB_TABS = [
   { path: '/hub', label: 'Oggi', icon: 'home' },
   { path: '/hub/calendario', label: 'Calendario', icon: 'calendar' },
   { path: '/hub/spese', label: 'Spese', icon: 'wallet' },
   { path: '/hub/dividi', label: 'Dividi', icon: 'users' },
   { path: '/hub/note', label: 'Note', icon: 'note' },
 ];
+const AUTO_TABS = [
+  { path: '/auto', label: 'Garage', icon: 'car' },
+  { path: '/auto/movimenti', label: 'Movimenti', icon: 'fuel' },
+  { path: '/auto/statistiche', label: 'Statistiche', icon: 'chart' },
+];
 
-/** Cornice di GT Hub: un'app a sé dentro GymTrack, con barra e selettore app propri. */
+/** Cornice di GT Hub e GT Garage: app a sé dentro GymTrack, con barra e selettore app propri. */
 @Component({
   selector: 'gt-hub-shell', standalone: true, imports: [RouterLink, IconComponent, AvatarComponent],
   styleUrls: ['./hub.css'], encapsulation: ViewEncapsulation.None,
-  template: `<div class="hb" [class.hb-bare]="bare()">
+  template: `<div class="hb" [class.hb-bare]="bare()" [class.hb-auto]="app()==='auto'">
   <div class="hb-mesh" aria-hidden="true"></div>
   <main class="hb-main">
     @if(showTop()){<header class="hb-top">
-      <button type="button" class="hb-switch" (click)="switcher.set(true)" aria-haspopup="dialog" aria-label="Cambia app"><span class="hb-mk"><gt-icon name="grid"/></span>GT Hub<gt-icon name="chevron-down"/></button>
+      <button type="button" class="hb-switch" (click)="switcher.set(true)" aria-haspopup="dialog" aria-label="Cambia app"><span class="hb-mk" [class.auto]="app()==='auto'"><gt-icon [name]="app()==='auto'?'car':'grid'"/></span>{{app()==='auto'?'GT Garage':'GT Hub'}}<gt-icon name="chevron-down"/></button>
       <span class="hb-right"><span class="hb-sync" [attr.data-s]="hub.status()" [attr.title]="hub.syncLabel()" role="status" [attr.aria-label]="hub.syncLabel()"></span>
       <button type="button" class="hb-me" (click)="switcher.set(true)" aria-label="Account e app"><gt-avatar [photo]="gym.profile().photo" [name]="gym.profile().name"/></button></span>
     </header>}
     <ng-content/>
   </main>
-  @if(showTabs()){<nav class="hb-tabbar" aria-label="Navigazione GT Hub">
-    @for(tab of tabs;track tab.path){<a [routerLink]="tab.path" [class.on]="section()===tab.path" [attr.aria-current]="section()===tab.path?'page':null"><gt-icon [name]="tab.icon"/>{{tab.label}}</a>}
+  @if(showTabs()){<nav class="hb-tabbar" [attr.aria-label]="app()==='auto'?'Navigazione GT Garage':'Navigazione GT Hub'" [style.grid-template-columns]="'repeat('+tabs().length+',1fr)'">
+    @for(tab of tabs();track tab.path){<a [routerLink]="tab.path" [class.on]="section()===tab.path" [attr.aria-current]="section()===tab.path?'page':null"><gt-icon [name]="tab.icon"/>{{tab.label}}</a>}
   </nav>}
   @if(switcher()){<div class="hb-dim" (click)="switcher.set(false)"></div>
   <section class="hb-sheet hb-switcher" role="dialog" aria-label="Le tue app">
@@ -39,7 +44,8 @@ const TABS = [
     <span class="hb-lab" style="margin-top:4px">Le tue app</span>
     <button type="button" class="hb-li hb-app" (click)="open('/')"><img src="/brand/gt-modern-mark.png" alt=""/><span class="bd"><strong>GymTrack</strong><small>Allenamenti, pasti e progressi</small>
       @if(nextWorkout();as w){<span class="hb-tag p" style="margin-top:6px"><gt-icon name="fire"/>{{w.title}}{{w.time?' alle '+w.time:' oggi'}}</span>}</span><gt-icon name="chevron-right" class="hb-chev"/></button>
-    <button type="button" class="hb-li hb-app cur" (click)="switcher.set(false)"><span class="hb-mk lg"><gt-icon name="grid"/></span><span class="bd"><strong>GT Hub</strong><small>Agenda, spese, Dividi e note</small></span><gt-icon name="check" class="hb-chev on"/></button>
+    <button type="button" class="hb-li hb-app" [class.cur]="app()==='hub'" (click)="app()==='hub'?switcher.set(false):open('/hub')"><span class="hb-mk lg"><gt-icon name="grid"/></span><span class="bd"><strong>GT Hub</strong><small>Agenda, spese, Dividi e note</small></span><gt-icon [name]="app()==='hub'?'check':'chevron-right'" class="hb-chev" [class.on]="app()==='hub'"/></button>
+    <button type="button" class="hb-li hb-app" [class.cur]="app()==='auto'" (click)="app()==='auto'?switcher.set(false):open('/auto')"><span class="hb-mk lg auto"><gt-icon name="car"/></span><span class="bd"><strong>GT Garage</strong><small>La tua auto, carburante e costi</small></span><gt-icon [name]="app()==='auto'?'check':'chevron-right'" class="hb-chev" [class.on]="app()==='auto'"/></button>
     <span class="hb-lab">Dopo l'accesso apri</span>
     <div class="hb-seg" role="radiogroup" aria-label="Dopo l'accesso apri">
       @for(m of modes;track m.id){<button type="button" role="radio" [class.on]="mode()===m.id" [attr.aria-checked]="mode()===m.id" (click)="setMode(m.id)">{{m.label}}</button>}
@@ -57,23 +63,24 @@ export class HubShellComponent {
   readonly gym = inject(Store);
   private launch = inject(HubLaunchService);
   private router = inject(Router);
-  readonly tabs = TABS;
   readonly switcher = signal(false);
   readonly path = computed(() => this.url().split(/[?#]/)[0]);
   readonly bare = computed(() => this.path().startsWith('/scegli-app'));
-  readonly section = computed(() => { const p = this.path(); return [...TABS].reverse().find(t => p === t.path || p.startsWith(t.path + '/'))?.path ?? '/hub'; });
-  readonly showTop = computed(() => !this.bare() && TABS.some(t => t.path === this.path()));
+  readonly app = computed<'hub' | 'auto'>(() => /^\/auto(?=$|\/)/.test(this.path()) ? 'auto' : 'hub');
+  readonly tabs = computed(() => this.app() === 'auto' ? AUTO_TABS : HUB_TABS);
+  readonly section = computed(() => { const p = this.path(), tabs = this.tabs(); return [...tabs].reverse().find(t => p === t.path || p.startsWith(t.path + '/'))?.path ?? tabs[0].path; });
+  readonly showTop = computed(() => !this.bare() && this.tabs().some(t => t.path === this.path()));
   readonly showTabs = computed(() => !this.bare() && !/^\/hub\/(dividi\/.+|spese\/importa)/.test(this.path()));
   readonly modes: { id: HubLaunchMode; label: string }[] = [{ id: 'ask', label: 'Chiedi' }, { id: 'last', label: 'Ultima usata' }, { id: 'gymtrack', label: 'GymTrack' }];
   readonly mode = computed(() => this.launch.read().mode);
-  readonly modeHelp = computed(() => ({ ask: 'Dopo l’accesso scegli ogni volta tra GymTrack e GT Hub.', last: 'Si apre direttamente l’ultima app che hai usato.', gymtrack: 'Si apre sempre GymTrack; il Hub resta qui nel menu.' })[this.mode()]);
+  readonly modeHelp = computed(() => ({ ask: 'Dopo l’accesso scegli ogni volta quale app aprire.', last: 'Si apre direttamente l’ultima app che hai usato.', gymtrack: 'Si apre sempre GymTrack; le altre app restano qui nel menu.' })[this.mode()]);
   readonly nextWorkout = computed(() => gymItems(this.view.gymData(), this.view.today()).find(i => !i.done));
 
   constructor() {
-    effect(() => { if (!this.bare()) this.launch.remember('hub'); });
+    effect(() => { if (!this.bare()) this.launch.remember(this.app()); });
     // Il menu delle app si chiude quando cambia pagina (anche con il tasto indietro).
     effect(() => { this.url(); untracked(() => this.switcher.set(false)); });
   }
   setMode(mode: HubLaunchMode) { this.launch.setMode(mode); }
-  open(path: string) { this.switcher.set(false); this.launch.remember('gymtrack'); void this.router.navigateByUrl(path); }
+  open(path: string) { this.switcher.set(false); if (path === '/') this.launch.remember('gymtrack'); void this.router.navigateByUrl(path); }
 }
