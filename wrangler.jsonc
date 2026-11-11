@@ -25,7 +25,9 @@
     }
   ],
   "vars": {
-    "SELF_HOSTED": "1"
+    "SELF_HOSTED": "1",
+    // Indirizzo pubblico (non segreto) del servizio calendario/notifiche: vedi calendar-relay/README.md
+    "CALENDAR_RELAY_URL": "https://gymtrack-calendar.tandu-gymtrack.workers.dev"
   },
   // Controllo giornaliero dello spazio R2 (alle 06:00 UTC): vedi docs/CLOUDFLARE_DEPLOY.md
   "triggers": {
