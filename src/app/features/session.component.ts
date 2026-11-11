@@ -10,6 +10,7 @@ import { IconComponent } from "../shared/icon.component";
 import { ActiveWorkoutComponent } from "../shared/active-workout.component";
 import { localDate } from '../models/domain';
 import { parseLocalDate } from '../services/calendar';
+import { ScreenWakeLock } from '../services/screen-wake-lock';
 @Component({
   standalone: true,
   imports: [DateFieldComponent,
@@ -51,8 +52,11 @@ export class SessionComponent {
   clock = signal(Date.now());
   get today(){return localDate(new Date(this.clock()));}
   timer = setInterval(() => this.clock.set(Date.now()), 1000);
+  private wakeLock = new ScreenWakeLock();
+  constructor() {this.wakeLock.start();}
   ngOnDestroy() {
     clearInterval(this.timer);
+    this.wakeLock.stop();
   }
   durationText(w:{duration:number;date:string;startedAt:string;durationUnknown?:boolean}){return w.duration>0?w.duration+' min registrati':w.durationUnknown||w.date<localDate(new Date(w.startedAt))?'Durata non indicata':this.elapsed(w.startedAt);}
   elapsed(date:string){const seconds=Math.max(0,Math.floor((this.clock()-new Date(date).getTime())/1000));return `${Math.floor(seconds/3600).toString().padStart(2,'0')}:${Math.floor(seconds%3600/60).toString().padStart(2,'0')}:${(seconds%60).toString().padStart(2,'0')}`;}
