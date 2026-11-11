@@ -4,6 +4,7 @@
   initial-value: 0;
 }
 :host {
+  overflow-x: clip;
   display: block;
   --cal-accent: var(--accent, #57beff);
   --cal-accent-text: var(--accent-text, #8cc8ff);
@@ -212,7 +213,7 @@
 @keyframes calView {
   from {
     opacity: 0;
-    transform: translateX(22px);
+    transform: translateY(10px);
   }
   to {
     opacity: 1;
@@ -987,6 +988,7 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
+  justify-content: flex-start;
   gap: 6px;
   width: 100%;
   min-height: 44px;
@@ -1394,6 +1396,9 @@
   flex-direction: column;
   align-items: flex-end;
   gap: 10px;
+}
+.cal-float-inner {
+  padding-right: max(10px, var(--safe-right, 0px));
 }
 .cal-float-inner > * {
   pointer-events: auto;
