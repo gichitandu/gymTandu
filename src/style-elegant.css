@@ -213,7 +213,7 @@ body.theme-ready.style-elegant gt-active-workout .rec3-step:last-child{justify-s
 body.theme-ready.style-elegant gt-active-workout .rec3-step.rec3-step-sign{font-size:24px;font-weight:400}
 /* Peso e ripetizioni affiancati, come nell'anteprima: la scala di trascinamento lascia posto ai numeri grandi. */
 body.theme-ready.style-elegant gt-active-workout .rec3-form:not(.bodyweight){display:grid;grid-template-columns:minmax(0,1fr) 1px minmax(0,1fr);column-gap:10px}
-body.theme-ready.style-elegant gt-active-workout .rec3-form:not(.bodyweight)>:is(.rec3-form-head,.rec3-rpe,.rec3-divider~.rec3-divider){grid-column:1/-1}
+body.theme-ready.style-elegant gt-active-workout .rec3-form:not(.bodyweight)>:is(.rec3-form-head,.rec3-lastbox,.rec3-rpe,.rec3-divider~.rec3-divider){grid-column:1/-1}
 body.theme-ready.style-elegant gt-active-workout .rec3-form:not(.bodyweight)>.rec3-weight+.rec3-divider{width:1px;height:auto;margin:8px 0}
 body.theme-ready.style-elegant gt-active-workout .rec3-form:not(.bodyweight) :is(.rec3-ruler,.rec3-range){display:none}
 body.theme-ready.style-elegant gt-active-workout .rec3-form:not(.bodyweight) .rec3-field-head{flex-direction:column;align-items:center;gap:4px;min-height:44px;text-align:center}

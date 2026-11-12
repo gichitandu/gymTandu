@@ -959,3 +959,4 @@
 :host .rec3 .rec3-lastbox { display: flex; flex-direction: column; gap: 6px; margin: 10px 0 4px; }
 :host .rec3 .rec3-lastbox .rec3-last { margin: 0; }
 :host .rec3 .rec3-lastbox .rec3-prev { min-height: 44px; padding-block: 7px; background: transparent; }
+:host .rec3 .rec3-lastbox:empty { display: none; }
