@@ -25,6 +25,8 @@ export class ThemeService{
  private accountId(){return this.auth.user()?.id||'device-local';}
  private legacy(color:string):ThemeConfig{return color.toUpperCase()===DEFAULT_BACKGROUND?{...DEFAULT_THEME}:{palette:'carbonio',mode:contrastRatio(color,'#000000')>=contrastRatio(color,'#FFFFFF')?'light':'dark',background:color};}
  private cacheConfig(value:ThemePreference){return validThemeConfig(value.config)?value.config:this.legacy(value.color);}
+ /** True when the «Elegante» look is active for every app of the suite. */
+ elegant(){return this.config().style==='elegant';}
  isLight(){return resolveTheme(this.config(),this.systemLight()).light;}
  /** Reuse the last confirmed palette before authentication, without loading account archives. */
  restoreEntryTheme(){
@@ -67,6 +69,7 @@ export class ThemeService{
   document.body.classList.toggle('theme-preset',THEME_PRESETS.some(p=>p.id===this.config().palette)&&!ORIGINAL_THEME_IDS.includes(this.config().palette));
   document.body.classList.toggle('theme-satin',tokens.satin);
   document.body.classList.toggle('theme-mono',tokens.mono);
+  document.body.classList.toggle('style-elegant',this.config().style==='elegant');
   document.body.classList.toggle('theme-multicolor',tokens.multicolor);
   document.body.classList.toggle('theme-metallic',['oro','argento'].includes(this.config().palette)&&!this.config().accent);
   document.body.classList.toggle('palette-violet',this.config().palette==='viola-neon'&&!this.config().accent);

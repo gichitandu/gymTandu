@@ -14,6 +14,7 @@ import { localDate } from "../models/domain";
 import { IconComponent } from "../shared/icon.component";
 import { StatusComponent } from "../shared/status.component";
 import { TodayService } from '../services/today';
+import { ThemeService } from '../services/theme';
 interface HomeUpcomingSession {
   kind:'draft'|'scheduled'|'plan';title:string;planName:string;planId:string;dayId:string;
   eventId?:string;date?:string;time?:string;durationMinutes?:number;periodLabel:string;
@@ -40,6 +41,39 @@ export class HomeComponent {
   auth=inject(AuthService,{optional:true});
   router = inject(Router);
   private todayClock = inject(TodayService,{optional:true});
+  private theme = inject(ThemeService,{optional:true});
+  /** Stile «Elegante»: striscia della settimana in alto e riquadri Volume/Settimana al posto dell'anello. */
+  elegant = computed(() => this.theme?.config().style === 'elegant');
+  dayNumber(date: string) { return +date.slice(8, 10); }
+  private volumeOf(workoutId: string) {
+    return this.s.workoutExercises(workoutId).reduce((sum, row) => sum + this.s.sets(row.id).reduce((total, set) => total + (set.completed && set.kind !== 'warmup' ? (set.weight || 0) * (set.reps || 0) : 0), 0), 0);
+  }
+  /** Volume sollevato (kg × ripetizioni) nelle ultime 8 settimane; l'ultima è quella in corso. */
+  volumeWeeks = computed(() => {
+    const start = new Date(this.today + 'T12:00:00');
+    start.setDate(start.getDate() - ((start.getDay() + 6) % 7) - 49);
+    return Array.from({ length: 8 }, (_, i) => {
+      const from = new Date(start); from.setDate(from.getDate() + i * 7);
+      const to = new Date(from); to.setDate(to.getDate() + 6);
+      const a = localDate(from), b = localDate(to);
+      return this.s.completed().filter((w) => w.date >= a && w.date <= b).reduce((sum, w) => sum + this.volumeOf(w.id), 0);
+    });
+  });
+  weekVolume = computed(() => this.volumeWeeks()[7]);
+  weekVolumeLabel = computed(() => {
+    const kg = this.weekVolume();
+    return kg >= 1000 ? { value: (kg / 1000).toLocaleString('it-IT', { maximumFractionDigits: 1 }), unit: 't' } : { value: Math.round(kg).toLocaleString('it-IT'), unit: 'kg' };
+  });
+  volumeLine = computed(() => {
+    const weeks = this.volumeWeeks(), max = Math.max(1, ...weeks);
+    const points = weeks.map((kg, i) => ({ x: 3 + i * (114 / 7), y: 32 - (kg / max) * 26 }));
+    return { d: points.map((p, i) => (i ? 'L' : 'M') + p.x.toFixed(1) + ' ' + p.y.toFixed(1)).join(' '), x: points[7].x, y: points[7].y };
+  });
+  /** Tacche del riquadro «Settimana»: una per allenamento dell'obiettivo (o per quelli svolti, se non c'è obiettivo). */
+  weekBars = computed(() => {
+    const goal = this.goals()?.workoutsPerWeek, done = this.weekCount(), total = Math.min(7, Math.max(goal || 0, done, goal ? 0 : 4));
+    return Array.from({ length: total }, (_, i) => i < done);
+  });
   get today() { return this.todayClock?.date() || localDate(); }
   wellness=computed(()=>this.s.data().wellnessLogs.find(row=>row.date===this.today));
   sleepLabel=sleepLabel;

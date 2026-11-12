@@ -163,7 +163,7 @@ const schemas = {
     lastBackup: time.optional(),backupConfirmedAt:time.optional(),backupSnoozedUntil:time.optional(),backupReminderDays:z.union([z.literal(0),z.literal(7),z.literal(14),z.literal(30)]).optional(),
     iphoneChecklist:z.object({device:z.string().max(120),ios:z.string().max(80),checks:z.record(z.string().max(80),z.object({state:z.enum(['todo','pass','fail']),note:z.string().max(500).optional(),checkedAt:time.optional()}))}).optional(),
     backgroundColor: z.string().regex(/^#[0-9a-fA-F]{6}$/).optional(),
-    themeConfig:z.object({palette:z.enum([...APPROVED_THEME_IDS,'oro','argento','multicolore','bianco-elegante','scuro','nero','bianco','rosso','verde','viola-neon','blu-azzurro','carbonio','artico','prugna','petrolio','sabbia','ghiaccio']),mode:z.enum(['dark','light','system']),background:z.string().regex(/^#[0-9a-fA-F]{6}$/).optional(),accent:z.string().regex(/^#[0-9a-fA-F]{6}$/).optional()}).strict().optional(),
+    themeConfig:z.object({palette:z.enum([...APPROVED_THEME_IDS,'oro','argento','multicolore','bianco-elegante','scuro','nero','bianco','rosso','verde','viola-neon','blu-azzurro','carbonio','artico','prugna','petrolio','sabbia','ghiaccio']),mode:z.enum(['dark','light','system']),background:z.string().regex(/^#[0-9a-fA-F]{6}$/).optional(),accent:z.string().regex(/^#[0-9a-fA-F]{6}$/).optional(),style:z.enum(['classic','elegant']).optional()}).strict().optional(),
     goals:z.object({calories:z.number().positive().max(20000).optional(),protein:z.number().positive().max(2000).optional(),carbs:z.number().positive().max(3000).optional(),fat:z.number().positive().max(2000).optional(),workoutsPerWeek:z.number().int().min(1).max(14).optional()}).optional(),
   }),
 };

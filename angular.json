@@ -27,7 +27,8 @@
               "src/theme-finishes.css",
               "src/screens-redesign.css",
               "src/simple-ui.css",
-              "src/design-runtime.css"
+              "src/design-runtime.css",
+              "src/style-elegant.css"
             ],
             "outputPath": "dist/gymtrack"
           },

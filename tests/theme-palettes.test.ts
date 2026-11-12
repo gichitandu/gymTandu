@@ -82,3 +82,14 @@ it('offers Nero and Bianco as readable monochrome themes next to the original bl
  }
  expect(resolveTheme({palette:'blu-azzurro',mode:'dark'},false).mono).toBe(false);
 });
+
+it('keeps the «Elegante» style as an optional part of the theme, independent from the palette',()=>{
+ for(const palette of SELECTABLE_THEME_PRESETS){
+  const classic={palette:palette.id,mode:palette.tone} as const,elegant={...classic,style:'elegant'} as const;
+  expect(validThemeConfig(elegant)).toBe(true);
+  expect(validThemeConfig({...classic,style:'classic'})).toBe(true);
+  // The style never changes colours: tokens are identical with and without it.
+  expect(resolveTheme(elegant,false)).toEqual(resolveTheme(classic,false));
+ }
+ for(const style of ['', 'fancy', 1, null, true])expect(validThemeConfig({palette:'nero',mode:'dark',style})).toBe(false);
+});

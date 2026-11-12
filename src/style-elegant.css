@@ -1,0 +1,359 @@
+/* Stile «Elegante»: aspetto essenziale per GymTrack, GT Hub e GT Garage.
+   Attivo solo con body.style-elegant; i colori restano quelli della palette scelta.
+   Lo stile «Classico» non è toccato da nessuna regola di questo file. */
+
+/* ---------- 1. Valori di base ---------- */
+body.theme-ready.style-elegant{
+ --neon-glow:0;
+ --el-line:color-mix(in srgb,var(--text) 11%,transparent);
+ --el-hi:inset 0 1px 0 color-mix(in srgb,var(--text) 7%,transparent);
+ --el-surface:linear-gradient(180deg,color-mix(in srgb,var(--text) 5%,var(--card)),var(--card));
+ --el-raised:color-mix(in srgb,var(--text) 9%,var(--card));
+ --el-grad:linear-gradient(160deg,color-mix(in srgb,#fff 32%,var(--accent)),var(--accent) 46%,color-mix(in srgb,#000 12%,var(--accent)));
+ --el-shadow:0 14px 34px color-mix(in srgb,var(--accent) 22%,transparent);
+ --el-ink:var(--accent-ink);
+ --el-ink-muted:color-mix(in srgb,var(--accent-ink) 64%,transparent);
+ --el-ink-line:color-mix(in srgb,var(--accent-ink) 22%,transparent);
+ --cta-start:var(--accent);--cta-end:var(--accent);--cta-ink:var(--accent-ink);
+ --su-grad:var(--el-grad);--su-glass:var(--el-surface);--su-stroke:1px solid var(--el-line);
+ --su-violet:var(--accent-text,var(--accent));--su-blue:var(--muted);
+ --radius:24px;
+}
+body.theme-ready.style-elegant.custom-light{
+ --el-surface:var(--card);
+ --el-hi:0 1px 2px #1e1c140a,0 10px 28px #1e1c140d;
+ --el-raised:color-mix(in srgb,var(--text) 7%,var(--card));
+}
+body.theme-ready.style-elegant.theme-mono{
+ --el-grad:linear-gradient(160deg,color-mix(in srgb,var(--bg) 6%,var(--accent)),var(--accent) 60%,color-mix(in srgb,var(--bg) 9%,var(--accent)));
+ --el-shadow:0 14px 30px color-mix(in srgb,#000 22%,transparent);
+}
+body.theme-ready.style-elegant gt-shell.photo-controls{
+ --ref-blue:var(--accent-text,var(--accent));
+ --ref-line:var(--el-line);
+ --ref-surface:var(--el-surface);
+ --ref-surface-soft:var(--el-raised);
+ --ref-violet-surface:var(--el-surface);
+ --ref-gloss:var(--el-hi);
+ --ref-primary-top:var(--accent);--ref-primary-bottom:var(--accent);--ref-primary-ink:var(--accent-ink);
+ --ref-tab-top:var(--accent);--ref-tab-bottom:var(--accent);
+}
+body.theme-ready.style-elegant gt-shell main>*{
+ --hx-violet:var(--accent-text,var(--accent));--hx-rest:var(--muted);--hx-line:var(--el-line);
+ --cal-violet:var(--accent-text,var(--accent));--cal-rest:var(--muted);--cal-aur:var(--accent);--cal-line:var(--el-line);
+}
+/* Sfondo: un solo alone morbido in alto, niente vortici. */
+body.theme-ready.style-elegant.dynamic-background gt-shell::before{background:radial-gradient(110% 38% at 50% -6%,color-mix(in srgb,var(--accent) 15%,transparent),transparent 64%);opacity:1}
+body.theme-ready.style-elegant.custom-light.dynamic-background gt-shell::before{background:none}
+body.theme-ready.style-elegant gt-shell.photo-controls.reference-pages .app-main::before{opacity:.25}
+body.theme-ready.style-elegant gt-shell .hx-aurora{background:none}
+
+/* ---------- 2. Tipografia ---------- */
+body.theme-ready.style-elegant gt-shell main :is(h1,.hx-title){font-weight:550!important;letter-spacing:-.045em!important;line-height:1.04}
+body.theme-ready.style-elegant gt-shell main :is(h2,h3){font-weight:600;letter-spacing:-.03em}
+body.theme-ready.style-elegant gt-shell main{font-variant-numeric:tabular-nums}
+body.theme-ready.style-elegant gt-shell main h1{overflow-wrap:anywhere}
+
+/* ---------- 3. Superfici ---------- */
+body.theme-ready.style-elegant gt-shell main :is(.card,.ref-card,.su-card,.rc3-card,.rec3-card){
+ border-radius:26px;border:1px solid var(--el-line);background:var(--el-surface);box-shadow:var(--el-hi);
+}
+body.theme-ready.style-elegant gt-shell main :is(.ref-card.violet,.card.violet,.ref-violet-card){border-color:var(--el-line);box-shadow:var(--el-hi)}
+body.theme-ready.style-elegant gt-shell main :is(input:not([type=checkbox],[type=radio],[type=range],[type=color]),select,textarea){border-radius:16px}
+
+/* ---------- 4. Pulsanti ---------- */
+body.theme-ready.style-elegant gt-shell :is(button.primary,.button.primary,.ref-action.primary,.su-btn.su-primary,.save-theme){
+ background:var(--el-grad)!important;color:var(--el-ink)!important;border-color:transparent!important;border-radius:999px!important;
+ box-shadow:var(--el-shadow)!important;font-weight:650;letter-spacing:-.01em;
+}
+body.theme-ready.style-elegant gt-shell :is(button.primary,.button.primary,.ref-action.primary,.su-btn.su-primary) gt-icon{color:inherit}
+body.theme-ready.style-elegant gt-shell main :is(.su-btn:not(.su-primary),button.secondary,.button.secondary,.ref-action.secondary,button.ghost,.button.ghost){
+ border-radius:999px;border-color:var(--el-line);box-shadow:none;font-weight:600;
+}
+body.theme-ready.style-elegant gt-shell main :is(.ref-icon-button,.icon-btn,.rc3-back){border-radius:50%;border-color:var(--el-line);background:var(--el-surface);box-shadow:var(--el-hi)}
+body.theme-ready.style-elegant gt-shell main :is(.ref-icon-button.primary,.icon-btn.primary){background:var(--el-grad);color:var(--el-ink);border-color:transparent}
+body.theme-ready.style-elegant gt-shell :is(.ref-tabs,.segmented,.neon-segments){border-radius:999px;border-color:var(--el-line);background:var(--el-raised);box-shadow:none}
+body.theme-ready.style-elegant gt-shell :is(.ref-tabs,.segmented,.neon-segments)>:is(button,a){border-radius:999px}
+body.theme-ready.style-elegant gt-shell :is(.ref-tabs,.segmented,.neon-segments)>:is(button,a).active{background:var(--el-grad);color:var(--el-ink);border-color:transparent;box-shadow:none}
+body.theme-ready.style-elegant gt-shell :is(.ref-badge,.pill,.su-badge){border-radius:999px;box-shadow:none}
+body.theme-ready.style-elegant gt-shell :is(.ref-badge,.pill):not(.green,.warning,.danger){border-color:var(--el-line)}
+
+/* ---------- 5. Barra di navigazione a pillola (telefono) ---------- */
+@media(max-width:800px),(max-width:1100px) and (pointer:coarse){
+ body.theme-ready.style-elegant gt-shell .bottom-nav{
+  display:flex!important;align-items:center;justify-content:space-between;gap:4px;
+  left:max(18px,var(--safe-left,0px))!important;right:max(18px,var(--safe-right,0px))!important;
+  bottom:calc(12px + var(--safe-bottom,0px))!important;width:auto;max-width:520px;margin-inline:auto;
+  min-height:0!important;height:64px;padding:7px!important;border-radius:32px;
+  border:0!important;background:none!important;box-shadow:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;isolation:isolate;
+ }
+ /* La pillola è disegnata su ::after, così la sfumatura (::before) resta sotto di lei e sopra il contenuto. */
+ body.theme-ready.style-elegant gt-shell .bottom-nav::after{
+  content:"";position:absolute;z-index:-1;inset:0;border-radius:inherit;pointer-events:none;
+  border:1px solid var(--el-line);background:color-mix(in srgb,var(--card) 92%,transparent);
+  backdrop-filter:blur(22px) saturate(1.2);-webkit-backdrop-filter:blur(22px) saturate(1.2);
+  box-shadow:var(--el-hi),0 18px 40px #00000059;
+ }
+ body.theme-ready.style-elegant.custom-light gt-shell .bottom-nav::after{box-shadow:0 14px 34px #1e1c1424}
+ body.theme-ready.style-elegant gt-shell .bottom-nav a{
+  flex:1 1 0;min-width:0;min-height:0!important;height:50px;flex-direction:row!important;justify-content:center;gap:9px!important;
+  padding:0 6px!important;border-radius:25px!important;font-size:14.5px!important;font-weight:650;letter-spacing:-.01em;
+  color:var(--muted)!important;background:none!important;transition:background .3s ease,color .3s ease,flex-grow .3s ease;
+ }
+ body.theme-ready.style-elegant gt-shell .bottom-nav a::before{display:none!important}
+ body.theme-ready.style-elegant gt-shell .bottom-nav a>span{display:none}
+ body.theme-ready.style-elegant gt-shell .bottom-nav a gt-icon{
+  width:23px!important;height:23px!important;padding:0!important;background:none!important;border:0!important;box-shadow:none!important;color:inherit!important;border-radius:0!important;
+ }
+ body.theme-ready.style-elegant gt-shell .bottom-nav a:is(.selected,.training-selected){
+  flex-grow:2.1;background:var(--el-grad)!important;color:var(--el-ink)!important;box-shadow:var(--el-shadow);
+ }
+ body.theme-ready.style-elegant gt-shell .bottom-nav a:is(.selected,.training-selected)>span{display:inline;font-size:14.5px!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+ body.theme-ready.style-elegant gt-shell main{padding-bottom:calc(112px + var(--safe-bottom,0px))}
+}
+
+/* ---------- 6. Home ---------- */
+body.theme-ready.style-elegant gt-shell .hx-date{color:var(--muted);font-weight:550;letter-spacing:.2em}
+body.theme-ready.style-elegant gt-shell .hx-title{font-size:clamp(36px,10.6vw,44px)!important;margin-top:16px!important}
+body.theme-ready.style-elegant gt-shell .hx-grad{background:none;-webkit-background-clip:border-box;background-clip:border-box;color:var(--muted)}
+body.theme-ready.style-elegant gt-shell .el-week{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px;margin:22px 0 0;text-align:center}
+body.theme-ready.style-elegant gt-shell .el-week a{display:grid;justify-items:center;gap:7px;padding:11px 0 8px;border-radius:22px;color:var(--text);text-decoration:none;min-height:44px;transition:background .3s ease,color .3s ease}
+body.theme-ready.style-elegant gt-shell .el-week small{font-size:11px;font-weight:550;letter-spacing:.1em;color:var(--muted)}
+body.theme-ready.style-elegant gt-shell .el-week b{font-size:17px;font-weight:650;line-height:1}
+body.theme-ready.style-elegant gt-shell .el-week i{width:4px;height:4px;border-radius:50%;background:transparent}
+body.theme-ready.style-elegant gt-shell .el-week a[data-state=done] i{background:currentColor}
+body.theme-ready.style-elegant gt-shell .el-week a[data-state=plan] i{box-shadow:0 0 0 1px currentColor;opacity:.6}
+body.theme-ready.style-elegant gt-shell .el-week a:is([data-state=rest],[data-state=cardio]) i{background:var(--muted);opacity:.6}
+body.theme-ready.style-elegant gt-shell .el-week a.today{background:var(--el-grad);color:var(--el-ink);box-shadow:var(--el-shadow)}
+body.theme-ready.style-elegant gt-shell .el-week a.today small{color:var(--el-ink-muted)}
+
+body.theme-ready.style-elegant gt-shell .hx-simple .hx-next{
+ position:relative;margin-top:22px;padding:22px 22px 20px;border-radius:30px;border:0;
+ background:var(--el-grad);color:var(--el-ink);box-shadow:var(--el-shadow);
+}
+body.theme-ready.style-elegant gt-shell .hx-next .su-badge{background:none;color:var(--el-ink-muted);padding:0;font-size:11px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;min-height:0}
+body.theme-ready.style-elegant gt-shell .hx-next .su-badge gt-icon{display:none}
+body.theme-ready.style-elegant gt-shell .hx-next .hx-when{border:1px solid var(--el-ink-line);border-radius:999px;padding:5px 12px;font-size:12.5px;font-weight:650;color:var(--el-ink);background:none}
+body.theme-ready.style-elegant gt-shell .hx-next h2{margin:34px 76px 0 0;font-size:30px;line-height:1.08;font-weight:650;letter-spacing:-.045em;color:var(--el-ink)}
+body.theme-ready.style-elegant gt-shell .hx-next .hx-sub{margin:8px 76px 0 0;color:var(--el-ink-muted);font-size:13.5px}
+body.theme-ready.style-elegant gt-shell .hx-next .hx-strip{display:none}
+body.theme-ready.style-elegant gt-shell .hx-next .hx-main{
+ position:absolute;right:22px;top:50%;transform:translateY(-50%);margin:0;width:58px!important;min-width:58px;height:58px;min-height:58px;padding:0;gap:0;
+ border-radius:50%!important;background:var(--el-ink)!important;color:var(--accent)!important;box-shadow:none!important;
+ font-size:0!important;overflow:hidden;
+}
+body.theme-ready.style-elegant gt-shell .hx-next .hx-main>span{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
+body.theme-ready.style-elegant gt-shell .hx-next .hx-main gt-icon{width:22px;height:22px}
+body.theme-ready.style-elegant gt-shell .hx-next .hx-secondary{margin-top:18px;gap:8px}
+body.theme-ready.style-elegant gt-shell .hx-next .hx-secondary .su-btn{
+ flex:0 1 auto;width:auto;min-height:44px;padding:0 16px;background:none;border:1px solid var(--el-ink-line);color:var(--el-ink);font-size:13.5px;
+}
+body.theme-ready.style-elegant gt-shell .el-stats{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}
+body.theme-ready.style-elegant gt-shell .el-stat{display:flex;flex-direction:column;min-height:140px;padding:18px;border-radius:26px;color:var(--text);text-decoration:none}
+body.theme-ready.style-elegant gt-shell .el-eyebrow{font-size:10.5px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--muted)}
+body.theme-ready.style-elegant gt-shell .el-num{margin-top:8px;font-size:32px;font-weight:650;letter-spacing:-.04em;line-height:1}
+body.theme-ready.style-elegant gt-shell .el-num small{margin-left:4px;font-size:13px;font-weight:500;letter-spacing:0;color:var(--muted)}
+body.theme-ready.style-elegant gt-shell .el-spark{width:100%;height:36px;margin-top:auto;overflow:visible}
+body.theme-ready.style-elegant gt-shell .el-spark path{fill:none;stroke:var(--accent-text,var(--accent));stroke-width:2;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke}
+body.theme-ready.style-elegant gt-shell .el-spark circle{fill:var(--accent-text,var(--accent))}
+body.theme-ready.style-elegant gt-shell .el-bars{display:flex;gap:6px;margin-top:auto;padding-bottom:10px}
+body.theme-ready.style-elegant gt-shell .el-bars i{flex:1;height:6px;border-radius:3px;background:var(--el-raised)}
+body.theme-ready.style-elegant gt-shell .el-bars i.on{background:var(--accent-text,var(--accent))}
+body.theme-ready.style-elegant gt-shell .el-stats .hx-weeknote{grid-column:1/-1;margin:2px 4px 0;font-size:12.5px;color:var(--muted)}
+body.theme-ready.style-elegant gt-shell .hx-levels button{border-radius:50%;aspect-ratio:1;border-color:var(--el-line);background:var(--el-raised)}
+body.theme-ready.style-elegant gt-shell .hx-ring{background:conic-gradient(from 200deg,var(--accent) var(--progress),var(--el-raised) 0)}
+
+/* ---------- 7. Seduta: registrazione delle serie ---------- */
+body.theme-ready.style-elegant gt-shell .session-header .session-title h1{font-size:19px!important;font-weight:600!important;letter-spacing:-.03em!important}
+body.theme-ready.style-elegant gt-shell .session-header :is(a.button.ghost,summary.button.ghost){border-radius:50%;background:var(--el-surface);border:1px solid var(--el-line);box-shadow:var(--el-hi)}
+body.theme-ready.style-elegant gt-shell .session-header .session-finish{border-radius:999px;border:1px solid var(--el-line);background:var(--el-surface);color:var(--text);box-shadow:var(--el-hi);font-weight:650}
+body.theme-ready.style-elegant gt-shell .session-progress{height:3px;border-radius:2px;background:var(--el-raised)}
+body.theme-ready.style-elegant gt-shell .session-progress i{background:var(--accent-text,var(--accent));border-radius:2px;box-shadow:none}
+
+body.theme-ready.style-elegant gt-active-workout .rec3-exercise{background:none!important;border:0!important;box-shadow:none!important;padding:6px 0 0!important}
+body.theme-ready.style-elegant gt-active-workout .rec3-ex-row{align-items:flex-start}
+body.theme-ready.style-elegant gt-active-workout .rec3-ex-text h2{font-size:23px!important;line-height:1.1!important;font-weight:600!important;letter-spacing:-.04em!important}
+body.theme-ready.style-elegant gt-active-workout .rec3-kicker{font-size:11px;font-weight:550;letter-spacing:.2em;color:var(--muted)}
+body.theme-ready.style-elegant gt-active-workout .rec3-meta{color:var(--muted);font-size:14px}
+body.theme-ready.style-elegant gt-active-workout .rec3-rest-chip{border-radius:999px;border:1px solid var(--el-line);background:var(--el-surface);box-shadow:var(--el-hi);color:var(--text)}
+body.theme-ready.style-elegant gt-active-workout .rec3-nav{border-radius:50%;border:1px solid var(--el-line);background:var(--el-surface);box-shadow:var(--el-hi)}
+body.theme-ready.style-elegant gt-active-workout .rec3-thumb{border-radius:16px;overflow:hidden}
+body.theme-ready.style-elegant gt-active-workout .rec3-sets{gap:8px;margin-top:16px;padding-inline:0}
+body.theme-ready.style-elegant gt-active-workout .rec3-set{
+ border-radius:18px!important;border:1px solid var(--el-line)!important;background:var(--el-surface)!important;box-shadow:var(--el-hi)!important;color:var(--text)!important;outline:0;
+}
+body.theme-ready.style-elegant gt-active-workout .rec3-set small{font-size:10px;letter-spacing:.14em;font-weight:550;color:var(--muted)}
+body.theme-ready.style-elegant gt-active-workout .rec3-set b{font-size:13px;font-weight:650;color:inherit}
+body.theme-ready.style-elegant gt-active-workout .rec3-set:not(.done,.current,.selected){background:none!important;border-style:dashed!important;box-shadow:none!important;color:var(--muted)!important}
+body.theme-ready.style-elegant gt-active-workout .rec3-set:is(.current,.selected){background:var(--el-grad)!important;border-color:transparent!important;color:var(--el-ink)!important;box-shadow:var(--el-shadow)!important}
+body.theme-ready.style-elegant gt-active-workout .rec3-set:is(.current,.selected) :is(small,b){color:inherit!important}
+body.theme-ready.style-elegant gt-active-workout .rec3-set:is(.current,.selected) small{opacity:.66}
+body.theme-ready.style-elegant gt-active-workout .rec3-set.rec3-add{border-style:solid!important;border-radius:50%!important;color:var(--text)!important}
+
+body.theme-ready.style-elegant gt-active-workout .rec3-form{border-radius:28px!important;padding:18px 16px 16px!important}
+body.theme-ready.style-elegant gt-active-workout .rec3-badge{background:none;color:var(--muted);padding:0;font-size:11px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;box-shadow:none}
+body.theme-ready.style-elegant gt-active-workout .rec3-kind{font-size:12.5px}
+body.theme-ready.style-elegant gt-active-workout .rec3-ref{border-radius:999px;border:1px solid var(--el-line);background:none;color:var(--text)}
+body.theme-ready.style-elegant gt-active-workout .rec3-field-head :is(label,.rec3-label){font-size:10.5px;font-weight:600;letter-spacing:.18em;color:var(--muted)}
+body.theme-ready.style-elegant gt-active-workout .rec3-divider{background:var(--el-line)}
+body.theme-ready.style-elegant gt-active-workout .rec3-stepper{display:grid!important;grid-template-columns:1fr 1fr!important;justify-items:center;gap:10px 12px!important}
+body.theme-ready.style-elegant gt-active-workout .rec3-input{grid-column:1/-1;order:-1;width:100%;background:none!important;border:0!important;box-shadow:none!important;min-height:0;height:auto;padding:0}
+body.theme-ready.style-elegant gt-active-workout .rec3-input input{
+ font-size:clamp(54px,17vw,68px)!important;font-weight:550!important;letter-spacing:-.05em;line-height:1;height:auto;min-height:0;padding:4px 0!important;
+ text-align:center;background:none!important;border:0!important;box-shadow:none!important;color:var(--text);
+}
+body.theme-ready.style-elegant gt-active-workout .rec3-input.rec3-long input{font-size:clamp(44px,13vw,54px)!important}
+body.theme-ready.style-elegant gt-active-workout .rec3-input.rec3-xlong input{font-size:clamp(36px,10.5vw,44px)!important}
+body.theme-ready.style-elegant gt-active-workout .rec3-input>span{position:static!important;display:block;text-align:center;inset:auto;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);transform:none;margin-top:-2px}
+body.theme-ready.style-elegant gt-active-workout .rec3-step{
+ width:52px!important;min-width:52px!important;height:52px!important;min-height:52px!important;max-height:52px;padding:0!important;border-radius:50%!important;border:0!important;
+ background:var(--el-raised)!important;color:var(--text)!important;box-shadow:none!important;font-size:13px;font-weight:650;
+}
+body.theme-ready.style-elegant gt-active-workout .rec3-step:first-child{justify-self:end}
+body.theme-ready.style-elegant gt-active-workout .rec3-step:last-child{justify-self:start}
+body.theme-ready.style-elegant gt-active-workout .rec3-step.rec3-step-sign{font-size:24px;font-weight:400}
+/* Peso e ripetizioni affiancati, come nell'anteprima: la scala di trascinamento lascia posto ai numeri grandi. */
+body.theme-ready.style-elegant gt-active-workout .rec3-form:not(.bodyweight){display:grid;grid-template-columns:minmax(0,1fr) 1px minmax(0,1fr);column-gap:10px}
+body.theme-ready.style-elegant gt-active-workout .rec3-form:not(.bodyweight)>:is(.rec3-form-head,.rec3-rpe,.rec3-divider~.rec3-divider){grid-column:1/-1}
+body.theme-ready.style-elegant gt-active-workout .rec3-form:not(.bodyweight)>.rec3-weight+.rec3-divider{width:1px;height:auto;margin:8px 0}
+body.theme-ready.style-elegant gt-active-workout .rec3-form:not(.bodyweight) :is(.rec3-ruler,.rec3-range){display:none}
+body.theme-ready.style-elegant gt-active-workout .rec3-form:not(.bodyweight) .rec3-field-head{flex-direction:column;align-items:center;gap:4px;min-height:44px;text-align:center}
+body.theme-ready.style-elegant gt-active-workout .rec3-form:not(.bodyweight) .rec3-field{min-width:0}
+body.theme-ready.style-elegant gt-active-workout .rec3-tag{border-radius:999px}
+body.theme-ready.style-elegant gt-active-workout .rec3-rpe-track{background:none!important;border:0!important;padding:0!important;gap:8px;box-shadow:none!important}
+body.theme-ready.style-elegant gt-active-workout .rec3-rpe-track button{border-radius:16px;border:1px solid var(--el-line);background:var(--el-surface);box-shadow:none;font-weight:600}
+body.theme-ready.style-elegant gt-active-workout .rec3-rpe-track button.active{background:var(--el-grad);color:var(--el-ink);border-color:transparent}
+body.theme-ready.style-elegant gt-active-workout .rec3-more{border-radius:24px;border:1px solid var(--el-line);background:var(--el-surface);box-shadow:var(--el-hi)}
+body.theme-ready.style-elegant gt-active-workout .save-series{min-height:60px;font-size:17px}
+
+/* ---------- 8. Profilo: selettore del tema ---------- */
+body.theme-ready.style-elegant gt-theme-picker .save-theme{box-shadow:none!important}
+
+/* ---------- 9. GT Hub e GT Garage: stessa palette, stesso stile ---------- */
+body.theme-ready.style-elegant.hub-mode{background:var(--bg)}
+body.theme-ready.style-elegant .hb{
+ --hb-bg:var(--bg);--hb-s1:var(--card);--hb-s2:var(--el-raised);--hb-s3:color-mix(in srgb,var(--text) 14%,var(--card));--hb-ln:var(--el-line);
+ --hb-t:var(--text);--hb-m:var(--muted);--hb-f:color-mix(in srgb,var(--muted) 72%,var(--bg));
+ --hb-v:var(--accent-text,var(--accent));--hb-l:var(--accent-text,var(--accent));
+ font-variant-numeric:tabular-nums;
+}
+body.theme-ready.style-elegant .hb-mesh{background:radial-gradient(110% 60% at 50% -10%,color-mix(in srgb,var(--accent) 15%,transparent),transparent 66%)}
+body.theme-ready.style-elegant.custom-light .hb-mesh{background:none}
+body.theme-ready.style-elegant .hb :is(.hb-h1,h1){font-weight:550;letter-spacing:-.045em;font-size:34px}
+body.theme-ready.style-elegant .hb .hb-sec h2{font-weight:600;letter-spacing:-.03em}
+body.theme-ready.style-elegant .hb .hb-eb{font-weight:550;letter-spacing:.2em}
+body.theme-ready.style-elegant .hb :is(.hb-switch,.hb-ib,.hb-back){border-radius:999px;background:var(--el-surface);border-color:var(--el-line);box-shadow:var(--el-hi)}
+body.theme-ready.style-elegant .hb .hb-me{background:var(--el-surface);color:var(--text);box-shadow:0 0 0 1px var(--el-line)}
+body.theme-ready.style-elegant .hb .hb-c{border-radius:26px;border-color:var(--el-line);background:var(--el-surface);box-shadow:var(--el-hi)}
+body.theme-ready.style-elegant .hb .hb-hero{border-radius:30px;color:var(--el-ink);box-shadow:var(--el-shadow)}
+body.theme-ready.style-elegant .hb .hb-hero::before{background:var(--el-grad)}
+body.theme-ready.style-elegant .hb .hb-hero::after{display:none}
+body.theme-ready.style-elegant .hb .hb-hero :is(.hb-chip,.hb-btn.glass){background:none;border-color:var(--el-ink-line);color:var(--el-ink)}
+body.theme-ready.style-elegant .hb .hb-hero .hb-btn.white{background:var(--el-ink);color:var(--accent)}
+body.theme-ready.style-elegant .hb .hb-btn{border-radius:999px;font-weight:650}
+body.theme-ready.style-elegant .hb :is(.hb-btn.pri,.hb-fab){background:var(--el-grad);color:var(--el-ink);border:0;box-shadow:var(--el-shadow)}
+body.theme-ready.style-elegant .hb .hb-fab{border-radius:999px}
+body.theme-ready.style-elegant .hb .hb-fab.round{border-radius:50%}
+body.theme-ready.style-elegant .hb .hb-ch{border-radius:999px}
+body.theme-ready.style-elegant .hb .hb-ch.on{background:var(--el-grad);border-color:transparent;color:var(--el-ink)}
+body.theme-ready.style-elegant .hb .hb-seg{border-radius:999px;background:var(--el-raised)}
+body.theme-ready.style-elegant .hb .hb-seg :is(button,a){border-radius:999px}
+body.theme-ready.style-elegant .hb .hb-seg .on{background:var(--el-grad);color:var(--el-ink);box-shadow:none}
+body.theme-ready.style-elegant .hb .hb-sq{border-radius:50%}
+body.theme-ready.style-elegant .hb .hb-sheet{background:var(--card);border-color:var(--el-line)}
+body.theme-ready.style-elegant .hb .hb-tabbar{
+ height:64px;padding:7px;border-radius:32px;gap:4px;display:flex;border:1px solid var(--el-line);
+ background:color-mix(in srgb,var(--card) 88%,transparent);box-shadow:var(--el-hi),0 18px 40px #00000059;
+}
+body.theme-ready.style-elegant.custom-light .hb .hb-tabbar{box-shadow:0 14px 34px #1e1c1424}
+body.theme-ready.style-elegant .hb .hb-tabbar a{flex:1 1 0;min-width:0;flex-direction:row;gap:8px;border-radius:25px;font-size:0;font-weight:650;color:var(--muted);transition:background .3s ease,color .3s ease,flex-grow .3s ease}
+body.theme-ready.style-elegant .hb .hb-tabbar a gt-icon{width:22px;height:22px;color:inherit}
+body.theme-ready.style-elegant .hb .hb-tabbar a.on{flex-grow:2.3;font-size:14px;white-space:nowrap;background:var(--el-grad);color:var(--el-ink);box-shadow:var(--el-shadow)}
+body.theme-ready.style-elegant .hb .hb-tabbar a.on gt-icon{color:inherit}
+
+@media(prefers-reduced-motion:reduce){
+ body.theme-ready.style-elegant gt-shell .bottom-nav a,body.theme-ready.style-elegant .hb .hb-tabbar a,body.theme-ready.style-elegant gt-shell .el-week a{transition:none}
+}
+
+/* GT Hub e GT Garage nascono con colori scuri fissi: in stile Elegante seguono la palette, anche chiara. */
+body.theme-ready.style-elegant .hb :is(.hb-btn:not(.pri,.white,.glass),.hb-ch:not(.on),.hb-field,.hb-switch,.hb-ib,.hb-back){background:color-mix(in srgb,var(--text) 5%,var(--card))}
+body.theme-ready.style-elegant .hb .hb-field select option{background:var(--card);color:var(--text)}
+body.theme-ready.style-elegant .hb .hb-sq.n{background:color-mix(in srgb,var(--text) 7%,transparent);box-shadow:inset 0 0 0 1px var(--el-line)}
+body.theme-ready.style-elegant .hb .hb-sheet{background:var(--card)!important;border-color:var(--el-line);box-shadow:0 -24px 60px #00000059}
+body.theme-ready.style-elegant .hb .hb-c.nx{background:var(--el-surface)!important}
+body.theme-ready.style-elegant .hb .nx .k{color:var(--muted)}
+body.theme-ready.style-elegant .hb .peek{background:var(--el-surface);border-color:var(--el-line);box-shadow:var(--el-hi),0 -10px 34px #00000033}
+body.theme-ready.style-elegant .hb h1.title,body.theme-ready.style-elegant .hb .title{background:none;-webkit-background-clip:border-box;background-clip:border-box;color:var(--text);font-weight:550;letter-spacing:-.045em}
+body.theme-ready.style-elegant .hb :is(.tile.td,.bigd,.week .sel,.go){background:var(--el-grad);color:var(--el-ink);box-shadow:var(--el-shadow)}
+body.theme-ready.style-elegant .hb .tile.td>b{color:var(--el-ink)}
+body.theme-ready.style-elegant .hb .ev{background-color:var(--card)!important;color:var(--text)}
+body.theme-ready.style-elegant .hb .fun{background:var(--el-surface);border-color:var(--el-line)}
+body.theme-ready.style-elegant .hb .donut>span{background:var(--card)}
+body.theme-ready.style-elegant .hb .ring::before{background:var(--card)}
+body.theme-ready.style-elegant.custom-light .hb :is(.hb-chip,.hb-btn.glass){color:inherit}
+body.theme-ready.style-elegant.custom-light gt-shell .hx-levels button{color:var(--text)!important}
+
+/* ---------- 10. Rifiniture: controlli tondi, pesi dei caratteri, sfumatura sotto la barra ---------- */
+body.theme-ready.style-elegant gt-shell main :is(b,strong,.su-btn,.su-chip,.su-seg :is(a,button),.su-badge){font-weight:650}
+body.theme-ready.style-elegant gt-shell main :is(.su-stat b,.su-stat strong,.el-num,.history-overview b){font-weight:600;letter-spacing:-.035em}
+body.theme-ready.style-elegant gt-shell :is(.su-iconbtn,.cal-round,.cal-arrow,.cal-item-action,.catalog-edit,.favorite-button,.rec3-add){border-radius:50%!important;border-color:var(--el-line);box-shadow:var(--el-hi)}
+body.theme-ready.style-elegant gt-shell :is(.su-iconbtn,.cal-round,.cal-arrow){background:var(--el-surface)}
+body.theme-ready.style-elegant gt-shell .cal-item-action.is-done{background:color-mix(in srgb,var(--green) 22%,var(--card));box-shadow:none}
+body.theme-ready.style-elegant gt-shell .cal-fab{border-radius:50%!important;background:var(--el-grad)!important;color:var(--el-ink)!important;border:0!important;box-shadow:var(--el-shadow)!important}
+body.theme-ready.style-elegant gt-shell :is(.su-seg,.cal-view-switch){border-radius:999px;border-color:var(--el-line);background:var(--el-raised);box-shadow:none;padding:4px}
+body.theme-ready.style-elegant gt-shell .su-seg :is(a,button),body.theme-ready.style-elegant gt-shell .cal-view-switch :is(a,button,.cal-view-glider){border-radius:999px!important}
+body.theme-ready.style-elegant gt-shell .su-seg :is(a,button).on,body.theme-ready.style-elegant gt-shell .cal-view-glider{background:var(--el-grad)!important;color:var(--el-ink)!important;box-shadow:none!important;border-color:transparent!important}
+body.theme-ready.style-elegant gt-shell .su-chip{border-radius:999px;border-color:var(--el-line);box-shadow:none}
+body.theme-ready.style-elegant gt-shell .su-chip.on{background:var(--el-grad);color:var(--el-ink);border-color:transparent}
+body.theme-ready.style-elegant gt-shell :is(.su-stat,.cal-week-row,.cal-row-item,.history-overview){border-radius:22px;border-color:var(--el-line)}
+body.theme-ready.style-elegant gt-shell :is(.su-bubble,.hx3-date){border-radius:50%}
+body.theme-ready.style-elegant gt-shell :is(.date-field,.cal-date-jump,.catalog-search){border-radius:999px}
+body.theme-ready.style-elegant gt-shell .coach-shadow{border-radius:24px;border:1px solid var(--el-line);background:var(--el-surface);box-shadow:var(--el-hi)}
+body.theme-ready.style-elegant gt-shell .coach-shadow-actions button{border-radius:999px}
+body.theme-ready.style-elegant :is(.workout-clock,.workout-live){border-radius:30px!important;border:1px solid var(--el-line)!important;background:color-mix(in srgb,var(--card) 94%,transparent)!important;box-shadow:var(--el-hi),0 14px 34px #00000047!important}
+body.theme-ready.style-elegant :is(.workout-clock,.workout-live) :is(button,a,.live-go,.live-icon){border-radius:999px!important}
+body.theme-ready.style-elegant .workout-live .live-go{background:var(--el-grad)!important;color:var(--el-ink)!important;border:0!important}
+@media(max-width:800px),(max-width:1100px) and (pointer:coarse){
+ body.theme-ready.style-elegant gt-shell .bottom-nav::before{
+  content:"";position:absolute;z-index:-1;pointer-events:none;left:-40px;right:-40px;top:-34px;bottom:calc(-12px - var(--safe-bottom,0px));
+  background:linear-gradient(180deg,transparent,color-mix(in srgb,var(--bg) 88%,transparent) 46%,var(--bg));
+ }
+}
+
+/* ---------- 11. Movimento: leggero, mai d'intralcio ---------- */
+@keyframes elRise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+@keyframes elPop{0%{transform:scale(.86);opacity:.4}60%{transform:scale(1.05)}100%{transform:scale(1);opacity:1}}
+@keyframes elDraw{from{clip-path:inset(-6px 100% -6px -6px)}to{clip-path:inset(-6px)}}
+@keyframes elGrow{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+@keyframes elSheen{0%,62%{transform:translateX(-180%) skewX(-18deg)}86%,100%{transform:translateX(460%) skewX(-18deg)}}
+@keyframes elNudge{0%,100%{transform:translateX(0)}50%{transform:translateX(3px)}}
+@media(prefers-reduced-motion:no-preference){
+ body.theme-ready.style-elegant gt-shell :is(button,a.su-btn,a.button,.su-chip,.el-stat,.el-week a,.bottom-nav a),
+ body.theme-ready.style-elegant .hb :is(.hb-btn,.hb-ch,.hb-fab,.hb-tabbar a){transition:transform .18s cubic-bezier(.2,.8,.2,1),background-color .3s ease,color .3s ease,border-color .3s ease,flex-grow .3s ease}
+ body.theme-ready.style-elegant gt-shell :is(button,a.su-btn,a.button,.su-chip,.el-stat,.el-week a):active,
+ body.theme-ready.style-elegant .hb :is(.hb-btn,.hb-ch,.hb-fab):active{transform:scale(.96)}
+ body.theme-ready.style-elegant gt-shell .el-week{animation:elRise .6s cubic-bezier(.2,.8,.2,1) .06s both}
+ body.theme-ready.style-elegant gt-shell .el-week a.today{animation:elPop .5s cubic-bezier(.2,.8,.2,1) .3s both}
+ body.theme-ready.style-elegant gt-shell .el-stats{animation:elRise .6s cubic-bezier(.2,.8,.2,1) .2s both}
+ body.theme-ready.style-elegant gt-shell .el-spark{animation:elDraw 1.2s cubic-bezier(.4,0,.2,1) .45s both}
+ body.theme-ready.style-elegant gt-shell  body.theme-ready.style-elegant gt-shell .el-bars i{transform-origin:left;animation:elGrow .5s cubic-bezier(.2,.8,.2,1) both}
+ body.theme-ready.style-elegant gt-shell .el-bars i:nth-child(1){animation-delay:.45s}
+ body.theme-ready.style-elegant gt-shell .el-bars i:nth-child(2){animation-delay:.53s}
+ body.theme-ready.style-elegant gt-shell .el-bars i:nth-child(3){animation-delay:.61s}
+ body.theme-ready.style-elegant gt-shell .el-bars i:nth-child(4){animation-delay:.69s}
+ body.theme-ready.style-elegant gt-shell .el-bars i:nth-child(n+5){animation-delay:.77s}
+ body.theme-ready.style-elegant gt-shell .hx-next .hx-main gt-icon{animation:elNudge 2.6s ease-in-out 1.2s infinite}
+ body.theme-ready.style-elegant gt-shell .hx-next .hx-main:active{transform:translateY(-50%) scale(.94)}
+ /* Riflesso che attraversa l'azione principale della schermata. */
+ body.theme-ready.style-elegant gt-shell :is(.hx-simple .hx-next,.save-series){overflow:hidden}
+ body.theme-ready.style-elegant gt-shell :is(.hx-simple .hx-next,.save-series)::after{
+  content:"";position:absolute;top:0;bottom:0;left:0;width:28%;pointer-events:none;
+  background:linear-gradient(90deg,transparent,color-mix(in srgb,#fff 26%,transparent),transparent);animation:elSheen 6.5s ease-in-out 1s infinite;
+ }
+ body.theme-ready.style-elegant gt-active-workout .save-series{position:relative}
+ body.theme-ready.style-elegant gt-active-workout .rec3-form{animation:elRise .5s cubic-bezier(.2,.8,.2,1) both}
+ body.theme-ready.style-elegant gt-active-workout .rec3-set:is(.current,.selected){animation:elPop .4s cubic-bezier(.2,.8,.2,1) both}
+ body.theme-ready.style-elegant gt-active-workout .rec3-set.done b{animation:elPop .4s cubic-bezier(.2,.8,.2,1) both}
+ body.theme-ready.style-elegant gt-shell .session-progress i{transition:width .6s cubic-bezier(.2,.8,.2,1)}
+ body.theme-ready.style-elegant gt-active-workout .rec3-step:active{transform:scale(.88)}
+}

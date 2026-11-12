@@ -11,6 +11,7 @@ import { AuthService } from "../services/auth";
 import {
   ThemeConfig,
   ThemeMode,
+  ThemeStyle,
   THEME_PALETTES,
   SELECTABLE_THEME_PRESETS,
   resolveTheme,
@@ -36,6 +37,10 @@ export class ThemePickerComponent {
     { value: "dark", label: "Scuro" },
     { value: "light", label: "Chiaro" },
     { value: "system", label: "Sistema" },
+  ];
+  readonly styles: { value: ThemeStyle; label: string; hint: string }[] = [
+    { value: "classic", label: "Classico", hint: "L’aspetto di sempre" },
+    { value: "elegant", label: "Elegante", hint: "Essenziale, titoli grandi" },
   ];
   readonly draft = signal<ThemeConfig>(structuredClone(this.theme.config()));
   private baseline = signal(JSON.stringify(this.theme.config()));
@@ -90,7 +95,19 @@ export class ThemePickerComponent {
     this.draft.set({
       palette: id,
       mode: this.draft().mode === "system" ? "system" : palette.tone,
+      ...this.styleOf(),
     });
+  }
+  private styleOf() {
+    const style = this.draft().style;
+    return style ? { style } : {};
+  }
+  /** «Classico» is stored as no value, so existing saved themes stay identical. */
+  chooseStyle(style: ThemeStyle) {
+    this.issue.set("");
+    this.draft.update(({ style: _previous, ...config }) =>
+      style === "elegant" ? { ...config, style } : config,
+    );
   }
   chooseMode(mode: ThemeMode) {
     this.issue.set("");
@@ -108,7 +125,11 @@ export class ThemePickerComponent {
   }
   resetColors() {
     this.issue.set("");
-    this.draft.set({ palette: this.draft().palette, mode: this.draft().mode });
+    this.draft.set({
+      palette: this.draft().palette,
+      mode: this.draft().mode,
+      ...this.styleOf(),
+    });
   }
   cancel() {
     if (!this.saving()) this.reset(this.theme.config());

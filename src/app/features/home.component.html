@@ -6,6 +6,15 @@
 </header>
 <gt-status />
 
+@if(elegant()){
+<nav class="el-week" aria-label="Questa settimana">
+  @for(day of week;track day.date){
+    @let info=dayInfo(day.date);
+    <a routerLink="/calendario" [queryParams]="{date:day.date}" [attr.data-state]="info.state" [class.today]="day.date===today" [attr.aria-current]="day.date===today?'date':null" [attr.aria-label]="dayAria(day.date)"><small aria-hidden="true">{{day.label.slice(0,1)}}</small><b>{{dayNumber(day.date)}}</b><i aria-hidden="true"></i></a>
+  }
+</nav>
+}
+
 <section class="hx-next su-hero" aria-label="Il tuo allenamento">
   @if(upcoming();as session){
     <div class="hx-next-row"><span class="su-badge pink"><gt-icon name="fire"/>{{tagLabel(session)}}</span>@if(session.periodLabel){<span class="hx-when">{{session.periodLabel}}</span>}</div>
@@ -36,6 +45,21 @@
   }
 </section>
 
+@if(elegant()){
+<section class="el-stats" aria-label="Questa settimana">
+  <a class="su-card el-stat" routerLink="/progressi" [attr.aria-label]="'Volume della settimana: '+weekVolumeLabel().value+' '+weekVolumeLabel().unit">
+    <span class="el-eyebrow">Volume</span>
+    <b class="el-num">{{weekVolumeLabel().value}}<small>{{weekVolumeLabel().unit}}</small></b>
+    <svg class="el-spark" viewBox="0 0 120 36" preserveAspectRatio="none" aria-hidden="true"><path pathLength="1" [attr.d]="volumeLine().d"/><circle [attr.cx]="volumeLine().x" [attr.cy]="volumeLine().y" r="2.6"/></svg>
+  </a>
+  <a class="su-card el-stat" gtDesign="home.goals" routerLink="/profilo" [queryParams]="{section:'goals'}" [attr.aria-label]="goals()?.workoutsPerWeek?'Allenamenti della settimana: '+weekCount()+' di '+goals()!.workoutsPerWeek:'Imposta un obiettivo settimanale'">
+    <span class="el-eyebrow">Settimana</span>
+    <b class="el-num">{{weekCount()}}@if(goals()?.workoutsPerWeek){<small>/ {{goals()!.workoutsPerWeek}}</small>}</b>
+    <span class="el-bars" aria-hidden="true">@for(done of weekBars();track $index){<i [class.on]="done"></i>}</span>
+  </a>
+  <p class="hx-weeknote">{{weekNote()}}</p>
+</section>
+}@else{
 <section class="su-card hx-weekcard" gtDesign="home.week" aria-label="Questa settimana">
   <div class="hx-head"><h2 gtDesign="home.week.title" gtDesignLabel="home.week.title" gtDesignLabelDefault="Questa settimana">Questa settimana</h2><a class="hx-link" routerLink="/calendario"><span gtDesign="home.week.calendarLink" gtDesignLabel="home.week.calendarLink">Calendario</span><gt-icon name="chevron-right"/></a></div>
   <div class="hx-weekrow">
@@ -49,6 +73,7 @@
   </div>
   <p class="hx-weeknote">{{weekNote()}}</p>
 </section>
+}
 
 <section class="su-card hx-feel" gtDesign="home.health" aria-labelledby="hx-feel-title">
   <div class="hx-head"><h2 id="hx-feel-title">Come stai oggi?</h2>@if(wellness()){<button type="button" class="hx-link" (click)="openCheckin()">Modifica<gt-icon name="chevron-right"/></button>}@else{<small>10 secondi</small>}</div>

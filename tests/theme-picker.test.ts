@@ -234,3 +234,17 @@ it('previews every selectable palette without saving, then restores its original
  }
  expect(theme.saveConfig).not.toHaveBeenCalled();
 });
+
+it("keeps the chosen style while palette, mode and colours change, and stores Classico as no value", () => {
+  const { component } = setup();
+  component.chooseStyle("elegant");
+  expect(component.draft().style).toBe("elegant");
+  expect(component.dirty()).toBe(true);
+  component.choosePalette("viola-neon");
+  component.chooseMode("light");
+  component.setColor("accent", "#00AACC");
+  component.resetColors();
+  expect(component.draft()).toEqual({ palette: "viola-neon", mode: "light", style: "elegant" });
+  component.chooseStyle("classic");
+  expect(component.draft()).toEqual({ palette: "viola-neon", mode: "light" });
+});

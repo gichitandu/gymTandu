@@ -42,6 +42,29 @@
       </button>
     }
   </div>
+  <fieldset class="style-picker">
+    <legend>Stile</legend>
+    <p class="palette-intro">
+      Vale per GymTrack, GT Hub e GT Garage. I colori restano quelli del tema
+      scelto.
+    </p>
+    <div class="style-options" role="group" aria-label="Stile dell’app">
+      @for (style of styles; track style.value) {
+        <button
+          type="button"
+          class="style-option"
+          [class.chosen]="(draft().style || 'classic') === style.value"
+          [attr.aria-pressed]="(draft().style || 'classic') === style.value"
+          [attr.data-style]="style.value"
+          (click)="chooseStyle(style.value)"
+        >
+          <span class="style-sample" aria-hidden="true"><i></i><b></b></span>
+          <strong>{{ style.label }}</strong>
+          <small>{{ style.hint }}</small>
+        </button>
+      }
+    </div>
+  </fieldset>
   <fieldset class="palette-picker">
     <legend>Temi predefiniti</legend>
     <p class="palette-intro">
