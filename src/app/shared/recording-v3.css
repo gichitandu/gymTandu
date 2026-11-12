@@ -228,7 +228,7 @@
   white-space: nowrap;
 }
 
-:host .rec3 .rec3-kind { flex: 1; min-width: 0; color: var(--muted); font-size: 13px; font-weight: 600; }
+:host .rec3 .rec3-kind { flex: 1 1 auto; min-width: 0; color: var(--muted); font-size: 13px; font-weight: 600; overflow-wrap: break-word; }
 
 :host .rec3 .rec3-ref {
   gap: 6px;
@@ -243,9 +243,15 @@
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  max-width: 100%;
+  margin-left: auto;
 }
 
-:host .rec3 .rec3-ref gt-icon { width: 15px; height: 15px; }
+:host .rec3 .rec3-ref gt-icon { width: 15px; height: 15px; flex: none; position: static; }
 
 :host .rec3 .rec3-field-head {
   display: flex;
@@ -932,3 +938,19 @@
 :host .rec3 .rec3-superset.on > button { flex: none; min-height: 38px; padding: 0 12px; border-radius: 12px; font-size: 13px; font-weight: 700; }
 :host .rec3 .rec3-ss-menu { display: flex; flex-wrap: wrap; gap: 6px; }
 :host .rec3 .rec3-ss-menu button { min-height: 40px; padding: 6px 14px; border-radius: 14px; font-size: 13.5px; font-weight: 700; text-align: left; white-space: normal; overflow-wrap: break-word; }
+
+/* ===== Serie a scalare (drop set) ===== */
+:host .rec3 .rec3-drop { display: flex; flex-direction: column; gap: 10px; margin: 4px 0; }
+:host .rec3 .rec3-drop:not(.on) { flex-direction: row; align-items: center; flex-wrap: wrap; }
+:host .rec3 .rec3-drop small { color: var(--muted); font-size: 12px; flex: 1 1 140px; min-width: 0; }
+:host .rec3 .rec3-drop-add { display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 0 14px; border-radius: 999px; font-size: 13px; font-weight: 800; }
+:host .rec3 .rec3-drop-add gt-icon { width: 16px; height: 16px; flex: none; }
+:host .rec3 .rec3-drop.on { padding: 12px; border-radius: 16px; border: 1px solid color-mix(in srgb, var(--accent-text) 40%, transparent); background: color-mix(in srgb, var(--accent) 10%, transparent); }
+:host .rec3 .rec3-drop-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 14px; font-weight: 700; }
+:host .rec3 .rec3-drop-head > span { min-width: 0; overflow-wrap: break-word; }
+:host .rec3 .rec3-drop-head small { display: block; flex: none; margin-top: 2px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+:host .rec3 .rec3-drop-head button { flex: none; min-height: 38px; padding: 0 12px; border-radius: 12px; font-size: 13px; font-weight: 700; }
+:host .rec3 .rec3-drop-fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; }
+:host .rec3 .rec3-drop-fields label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 700; color: var(--muted); }
+:host .rec3 .rec3-drop-fields input { min-height: 46px; font-size: 20px; font-weight: 800; font-variant-numeric: tabular-nums; text-align: center; }
+:host .rec3 .rec3-last .rec3-last-drop { color: var(--muted); font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums; }

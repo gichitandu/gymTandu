@@ -148,6 +148,7 @@ const schemas = {
     rpe,
     rest: num.max(7200).optional(),
     notes: text.optional(),
+    drop: z.object({weight:num,reps:z.number().int().min(1).max(999)}).optional(),
     completed: z.boolean(),
   }),
   settings: z.object({

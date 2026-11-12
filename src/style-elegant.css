@@ -718,3 +718,6 @@ body.theme-ready.style-elegant gt-active-workout .rec3-last small{font-weight:60
 body.theme-ready.style-elegant gt-active-workout .rec3-last em{color:var(--accent-text,var(--accent))}
 body.theme-ready.style-elegant gt-active-workout :is(.rec3-ss-toggle,.rec3-ss-menu button,.rec3-superset.on>button){border-radius:999px!important;border:1px solid var(--el-line)!important;background:var(--el-surface)!important;box-shadow:var(--el-hi)}
 body.theme-ready.style-elegant gt-active-workout .rec3-superset.on{border-radius:22px;border-color:var(--el-line);background:var(--el-surface);box-shadow:var(--el-hi)}
+body.theme-ready.style-elegant gt-active-workout :is(.rec3-drop-add,.rec3-drop-head button){border-radius:999px!important;border:1px solid var(--el-line)!important;background:var(--el-surface)!important;box-shadow:var(--el-hi)}
+body.theme-ready.style-elegant gt-active-workout .rec3-drop.on{border-radius:22px;border-color:var(--el-line);background:var(--el-surface);box-shadow:var(--el-hi)}
+body.theme-ready.style-elegant gt-active-workout .rec3-drop-fields input{border-radius:16px}

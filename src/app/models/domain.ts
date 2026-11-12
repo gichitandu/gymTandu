@@ -133,6 +133,8 @@ export interface WorkoutLogSet extends Entity {
   rest?: number;
   notes?: string;
   completed: boolean;
+  /** Serie a scalare: subito dopo questa serie, meno carico per altre ripetizioni. */
+  drop?: {weight:number;reps:number};
 }
 export interface MealIngredient {id:string;name:string;grams:number;calories:number;protein:number;carbs:number;fat:number;}
 export interface Meal extends Entity {

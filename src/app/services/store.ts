@@ -650,7 +650,8 @@ export class Store {
         s.reps < 1 ||
         !Number.isInteger(s.reps) ||
         !Number.isFinite(s.weight) ||
-        (s.rpe !== undefined && (s.rpe < 1 || s.rpe > 10))
+        (s.rpe !== undefined && (s.rpe < 1 || s.rpe > 10)) ||
+        (s.drop!==undefined&&(!Number.isFinite(s.drop.weight)||s.drop.weight<0||!Number.isInteger(s.drop.reps)||s.drop.reps<1||s.drop.reps>999))
       )
         throw Error(
           "Inserisci peso positivo, ripetizioni intere e RPE tra 1 e 10.",

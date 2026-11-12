@@ -100,6 +100,16 @@ export class ActiveWorkoutComponent {
  lastTimeDate=computed(()=>{const last=this.lastTimeSet();if(!last)return '';const data=this.s.data(),row=data.workoutExercises.find(x=>x.id===last.workoutExerciseId),date=data.workouts.find(w=>w.id===row?.workoutId)?.date;if(!date)return '';const d=new Date(date.slice(0,10)+'T12:00:00');return isNaN(d.getTime())?'':d.toLocaleDateString('it-IT',{day:'numeric',month:'short'});});
  sessionReference=computed(()=>{const ref=this.referenceSet();return ref&&ref!==this.lastTimeSet()?ref:undefined;});
  useLastTime(){const ref=this.lastTimeSet();if(!ref)return;this.weight=this.s.weightInput(ref.weight);this.reps=ref.reps;this.inputChanged();}
+ /** Serie a scalare: subito dopo la serie principale, meno carico per altre ripetizioni. Salvata sulla serie stessa. */
+ dropOpen=signal(false);private dropTimer:ReturnType<typeof setTimeout>|undefined;
+ currentDrop=computed(()=>this.currentSet()?.drop);
+ dropAllowed(){const set=this.currentSet();return !!set&&set.kind!=='warmup';}
+ dropWeightShown(){const d=this.currentDrop();return d?this.s.weightInput(d.weight):0;}
+ dropSuggestion(){const e=this.selected();if(!e||e.loadMode==='bodyweight')return 0;const step=this.weightStep()||2.5;return Math.max(0,Math.round((this.weight||0)*.8/step)*step);}
+ async openDrop(){const set=this.currentSet(),e=this.selected();if(!set||!e||this.committing())return;this.dropOpen.set(true);if(set.drop)return;const w=this.dropSuggestion(),reps=Math.max(1,Math.round(this.reps||8));await this.s.updateSet(set.id,{drop:{weight:e.loadMode==='bodyweight'?0:this.s.kg(w),reps}});}
+ changeDrop(field:'weight'|'reps',value:number|string|null){const set=this.currentSet(),e=this.selected(),cur=set?.drop;if(!set||!e||!cur)return;const num=Number(value);clearTimeout(this.dropTimer);this.dropTimer=setTimeout(()=>{if(!Number.isFinite(num))return;const next=field==='weight'?{weight:this.s.kg(Math.max(0,num)),reps:cur.reps}:{weight:cur.weight,reps:Math.max(1,Math.min(999,Math.round(num)))};void this.s.updateSet(set.id,{drop:next});},350);}
+ async removeDrop(){const set=this.currentSet();clearTimeout(this.dropTimer);this.dropOpen.set(false);if(!set?.drop)return;await this.s.updateSet(set.id,{drop:undefined});}
+ dropText(d:{weight:number;reps:number}){return this.selected()?.loadMode==='bodyweight'?d.reps+' rip.':this.s.formatWeight(d.weight)+' '+this.s.settings().unit+' × '+d.reps;}
  supersetMenu=signal(false);
  supersetPartner(e:WorkoutLogExercise){return e.superset?this.exercises().find(x=>x.id!==e.id&&x.superset===e.superset):undefined;}
  supersetChoices(e:WorkoutLogExercise){return this.exercises().filter(x=>x.id!==e.id&&!this.hasPair(x));}
@@ -129,7 +139,7 @@ export class ActiveWorkoutComponent {
  restShown(){return this.restPick()??this.restDefault();}
  pickRest(value:number){this.restPick.set(this.restPick()===value?undefined:value);}
  fmt(value:number){return value.toLocaleString('it-IT',{maximumFractionDigits:1});}
- setSummary(set:{completed:boolean;weight:number;reps:number}){if(!set.completed)return '—';return this.selected()?.loadMode==='bodyweight'?String(set.reps):this.s.formatWeight(set.weight)+'×'+set.reps;}
+ setSummary(set:{completed:boolean;weight:number;reps:number;drop?:unknown}){if(!set.completed)return '—';return (this.selected()?.loadMode==='bodyweight'?String(set.reps):this.s.formatWeight(set.weight)+'×'+set.reps)+(set.drop?'↓':'');}
  setRpe(value:number){this.rpe=this.rpe===value?undefined:value;this.inputChanged();}
  rirHint(){return this.rpe===undefined?'':Math.max(0,Math.round(10-this.rpe))+' rip. in riserva';}
  lastWorkSet(){return this.previous().find(x=>x.completed&&x.kind!=='warmup');}
