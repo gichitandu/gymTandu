@@ -8,7 +8,7 @@ import {
   categorize, cellText, detectStatement, detectTransfers, kindForCategory, normalizeStatement, parseCsv, ParseResult, rulePattern,
   StatementLayout, withHashes,
 } from './hub-finance';
-import { dayLabel, euro, HubBank, hubBankLabel, hubBankShort, HUB_BANKS, hubCategory, hubId, HubTransaction, shortDay } from './hub-model';
+import { dayLabel, euro, HubBank, hubBankLabel, hubBankShort, HUB_BANKS, hubCategory, hubId, HubImport, HubTransaction, shortDay } from './hub-model';
 import { HubStore } from './hub-store';
 
 const GUIDE: Record<HubBank, { how: string; formats: string[] }> = {
@@ -50,6 +50,12 @@ interface Preview { tx: HubTransaction; duplicate: boolean }
       @for(b of banks.slice(0,3);track b.id){<div class="hb-li" style="cursor:default"><span [class]="'hb-bank md '+b.id">{{b.short}}</span><span class="bd"><strong>{{b.label}}</strong><small>{{lastImport(b.id)?.label||'mai importato'}}</small></span>
         @if(lastImport(b.id);as l){<span class="amt">{{l.count}}<small>movimenti</small></span>}@else{<span class="hb-tag v">da fare</span>}</div>}
     </section>
+    @if(hub.imports().length){
+    <div class="hb-sec" style="margin-top:18px"><h2>Estratti importati</h2></div>
+    <section class="hb-c hb-list">
+      @for(i of hub.imports();track i.id){<div class="hb-li" style="cursor:default"><span [class]="'hb-bank md '+i.bank">{{short(i.bank)}}</span><span class="bd"><strong class="imp-name">{{i.fileName}}</strong><small>{{shortDay(i.from)}}–{{shortDay(i.to)}} · {{i.count}} movimenti</small></span>
+        <button type="button" class="hb-btn sm danger" (click)="askDelete(i)" aria-label="Elimina estratto importato"><gt-icon name="trash"/>Elimina</button></div>}
+    </section>}
   </div>
   </div>
 }@else{
@@ -79,8 +85,13 @@ interface Preview { tx: HubTransaction; duplicate: boolean }
   <p class="hb-note"><gt-icon name="shield"/><span>Il file viene letto <b>sul telefono</b>. Salvo solo data, descrizione, importo e categoria: niente IBAN, numeri di carta o saldo.</span></p>
   <div class="hb-actions two"><button type="button" class="hb-btn sm" (click)="reset()">Annulla</button><button type="button" class="hb-btn pri sm" (click)="commit()" [disabled]="!fresh().length"><gt-icon name="download"/>Importa {{fresh().length}} movimenti</button></div>
   }
-}`,
-  styles: [`.bl .hb-li{align-items:flex-start;padding:14px;cursor:pointer}.bl .bd strong{white-space:normal}.bl p{margin:4px 0 0;font-size:12px;line-height:1.45;color:var(--hb-m)}.bl p b{color:var(--hb-t);font-weight:600}
+}
+@if(toDelete();as d){<div class="imp-back" (click)="toDelete.set(null)"><div class="imp-dlg hb-c" role="alertdialog" aria-modal="true" aria-label="Conferma eliminazione" (click)="$event.stopPropagation()">
+  <strong>Eliminare questo estratto conto?</strong>
+  <p>Verranno eliminati <b>{{deleteCount(d)}} movimenti</b> importati da <b>{{d.fileName}}</b> ({{shortDay(d.from)}}–{{shortDay(d.to)}}). L'operazione non si può annullare.</p>
+  <div class="hb-actions two"><button type="button" class="hb-btn sm" (click)="toDelete.set(null)">Annulla</button><button type="button" class="hb-btn sm danger" (click)="confirmDelete()"><gt-icon name="trash"/>Elimina</button></div></div></div>}`,
+  styles: [`.imp-name{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.imp-back{position:fixed;inset:0;z-index:50;display:grid;place-items:center;padding:20px;background:rgba(0,0,0,.6)}.imp-dlg{max-width:380px;width:100%;padding:18px}.imp-dlg strong{display:block;font-size:16px}.imp-dlg p{margin:8px 0 14px;font-size:13px;line-height:1.5;color:var(--hb-m)}.imp-dlg p b{color:var(--hb-t)}
+.bl .hb-li{align-items:flex-start;padding:14px;cursor:pointer}.bl .bd strong{white-space:normal}.bl p{margin:4px 0 0;font-size:12px;line-height:1.45;color:var(--hb-m)}.bl p b{color:var(--hb-t);font-weight:600}
 .bl .fmt{display:flex;gap:5px;margin-top:8px}.bl .sel{background:linear-gradient(160deg,rgba(143,124,255,.13),rgba(143,124,255,.02));box-shadow:inset 0 0 0 1.5px rgba(143,124,255,.55);border-radius:22px}
 .rad{display:grid;place-items:center;flex:none;width:24px;height:24px;margin-top:8px;border-radius:50%;border:2px solid rgba(255,255,255,.18)}.rad.on{border:0;background:linear-gradient(140deg,#8f7cff,#5b8cff);color:#fff}.rad gt-icon{width:13px;height:13px}
 .drop{position:relative;display:block;padding:22px 16px;border-radius:24px;border:1.5px dashed rgba(143,124,255,.45);background:radial-gradient(120% 100% at 50% 0%,rgba(143,124,255,.12),transparent 70%);text-align:center;cursor:pointer}
@@ -96,7 +107,8 @@ interface Preview { tx: HubTransaction; duplicate: boolean }
 .xfer{display:flex;gap:12px;align-items:flex-start;margin-top:12px;padding:14px;border-radius:20px;background:linear-gradient(160deg,rgba(91,140,255,.14),rgba(91,140,255,.02));border:1px solid rgba(91,140,255,.3)}.xfer strong{display:block;font-size:14px}.xfer p{margin:4px 0 0;font-size:12.5px;line-height:1.45;color:var(--hb-m)}`],
 })
 export class HubImportComponent {
-  private hub = inject(HubStore);
+  readonly hub = inject(HubStore);
+  readonly toDelete = signal<HubImport | null>(null);
   private router = inject(Router);
   private feedback = feedbackForContext();
   readonly error = feedbackSignal('error', this.feedback);
@@ -194,6 +206,16 @@ export class HubImportComponent {
   }
   skipText(p: ParseResult) {
     return [p.pending ? `${p.pending} in sospeso (li importi quando sono contabilizzati)` : '', p.foreign ? `${p.foreign} in altra valuta` : '', p.skipped ? `${p.skipped} righe senza data o importo` : ''].filter(Boolean).join(' · ') + ' non importati.';
+  }
+  askDelete(i: HubImport) { this.toDelete.set(i); }
+  deleteCount(i: HubImport) { return this.hub.transactions().filter(t => t.importId === i.id).length; }
+  confirmDelete() {
+    const i = this.toDelete(); if (!i) return;
+    const ids = this.hub.transactions().filter(t => t.importId === i.id).map(t => t.id);
+    if (ids.length) this.hub.remove('transactions', ...ids);
+    this.hub.remove('imports', i.id);
+    this.toDelete.set(null);
+    this.feedback.show('success', `Estratto eliminato (${ids.length} movimenti).`);
   }
   reset() { this.preview.set(null); this.error.set(''); }
   commit() {
