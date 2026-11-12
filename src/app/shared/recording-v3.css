@@ -954,3 +954,8 @@
 :host .rec3 .rec3-drop-fields label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 700; color: var(--muted); }
 :host .rec3 .rec3-drop-fields input { min-height: 46px; font-size: 20px; font-weight: 800; font-variant-numeric: tabular-nums; text-align: center; }
 :host .rec3 .rec3-last .rec3-last-drop { color: var(--muted); font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums; }
+
+/* Riquadro unico «Volta scorsa» (+ serie precedente di oggi, se serve) */
+:host .rec3 .rec3-lastbox { display: flex; flex-direction: column; gap: 6px; margin: 10px 0 4px; }
+:host .rec3 .rec3-lastbox .rec3-last { margin: 0; }
+:host .rec3 .rec3-lastbox .rec3-prev { min-height: 44px; padding-block: 7px; background: transparent; }

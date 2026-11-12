@@ -26,3 +26,8 @@
 :host .session-progress{height:4px;border-radius:4px;background:color-mix(in srgb,var(--text) 12%,transparent);overflow:hidden}
 :host .session-progress>i{display:block;height:100%;border-radius:4px;background:linear-gradient(90deg,var(--accent),var(--accent-text));box-shadow:0 0 10px color-mix(in srgb,var(--accent-text) 55%,transparent);transition:width .35s ease}
 @media(max-width:360px){:host .session-compact .session-title h1{font-size:16px}:host .simple-session-heading .session-finish{padding:0 10px}}
+
+/* Intestazione compatta: su telefono la seduta occupa poco spazio; il nome del piano sta nel menu «⋯». */
+:host .session-plan-label{display:block;margin-bottom:8px;font-weight:700;color:var(--text);overflow-wrap:break-word}
+@media(max-width:700px){:host .session-title .session-plan{display:none}:host .session-compact .session-title h1{font-size:16px;line-height:1.2}}
+@media(min-width:701px){:host .session-plan-label{display:none}}
