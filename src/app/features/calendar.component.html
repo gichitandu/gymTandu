@@ -390,6 +390,21 @@
     </div>
   } @else if (view() === "week") {
     <div class="cal-view cal-view-week">
+      <nav class="el-only el-week" aria-label="Giorni della settimana">
+        @for (date of dates(); track date) {
+          <button
+            type="button"
+            [class.today]="date === today"
+            [attr.data-state]="dayState(date) === 'completed' ? 'done' : dayState(date) === 'rest' ? 'rest' : dayState(date) ? 'plan' : 'empty'"
+            [attr.aria-label]="dayAria(date)"
+            (click)="choose(date)"
+          >
+            <small aria-hidden="true">{{ weekday(date).slice(0, 1) }}</small
+            ><b>{{ +date.slice(8) }}</b
+            ><i aria-hidden="true"></i>
+          </button>
+        }
+      </nav>
       <section class="cal-overview" aria-label="Riepilogo della settimana">
         <div class="cal-bigring" [style.--p]="scoreProgress()">
           <strong

@@ -85,16 +85,13 @@ body.theme-ready.style-elegant gt-shell :is(.ref-badge,.pill):not(.green,.warnin
   left:max(18px,var(--safe-left,0px))!important;right:max(18px,var(--safe-right,0px))!important;
   bottom:calc(12px + var(--safe-bottom,0px))!important;width:auto;max-width:520px;margin-inline:auto;
   min-height:0!important;height:64px;padding:7px!important;border-radius:32px;
-  border:0!important;background:none!important;box-shadow:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;isolation:isolate;
+  border:1px solid var(--el-line)!important;background:color-mix(in srgb,var(--text) 4%,var(--card))!important;
+  /* Niente sfocatura né livelli annidati: su iPhone facevano scorrere la barra insieme alla pagina. */
+  backdrop-filter:none!important;-webkit-backdrop-filter:none!important;
+  box-shadow:var(--el-hi),0 14px 34px #00000059!important;
+  position:fixed!important;transform:translate3d(0,0,0);-webkit-transform:translate3d(0,0,0);
  }
- /* La pillola è disegnata su ::after, così la sfumatura (::before) resta sotto di lei e sopra il contenuto. */
- body.theme-ready.style-elegant gt-shell .bottom-nav::after{
-  content:"";position:absolute;z-index:-1;inset:0;border-radius:inherit;pointer-events:none;
-  border:1px solid var(--el-line);background:color-mix(in srgb,var(--card) 92%,transparent);
-  backdrop-filter:blur(22px) saturate(1.2);-webkit-backdrop-filter:blur(22px) saturate(1.2);
-  box-shadow:var(--el-hi),0 18px 40px #00000059;
- }
- body.theme-ready.style-elegant.custom-light gt-shell .bottom-nav::after{box-shadow:0 14px 34px #1e1c1424}
+ body.theme-ready.style-elegant.custom-light gt-shell .bottom-nav{box-shadow:0 12px 30px #1e1c1424!important}
  body.theme-ready.style-elegant gt-shell .bottom-nav a{
   flex:1 1 0;min-width:0;min-height:0!important;height:50px;flex-direction:row!important;justify-content:center;gap:9px!important;
   padding:0 6px!important;border-radius:25px!important;font-size:14.5px!important;font-weight:650;letter-spacing:-.01em;
@@ -117,15 +114,15 @@ body.theme-ready.style-elegant gt-shell .hx-date{color:var(--muted);font-weight:
 body.theme-ready.style-elegant gt-shell .hx-title{font-size:clamp(36px,10.6vw,44px)!important;margin-top:16px!important}
 body.theme-ready.style-elegant gt-shell .hx-grad{background:none;-webkit-background-clip:border-box;background-clip:border-box;color:var(--muted)}
 body.theme-ready.style-elegant gt-shell .el-week{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px;margin:22px 0 0;text-align:center}
-body.theme-ready.style-elegant gt-shell .el-week a{display:grid;justify-items:center;gap:7px;padding:11px 0 8px;border-radius:22px;color:var(--text);text-decoration:none;min-height:44px;transition:background .3s ease,color .3s ease}
+body.theme-ready.style-elegant gt-shell .el-week :is(a,button){display:grid;justify-items:center;gap:7px;padding:11px 0 8px;border-radius:22px;color:var(--text);text-decoration:none;min-height:44px;transition:background .3s ease,color .3s ease}
 body.theme-ready.style-elegant gt-shell .el-week small{font-size:11px;font-weight:550;letter-spacing:.1em;color:var(--muted)}
 body.theme-ready.style-elegant gt-shell .el-week b{font-size:17px;font-weight:650;line-height:1}
 body.theme-ready.style-elegant gt-shell .el-week i{width:4px;height:4px;border-radius:50%;background:transparent}
-body.theme-ready.style-elegant gt-shell .el-week a[data-state=done] i{background:currentColor}
-body.theme-ready.style-elegant gt-shell .el-week a[data-state=plan] i{box-shadow:0 0 0 1px currentColor;opacity:.6}
-body.theme-ready.style-elegant gt-shell .el-week a:is([data-state=rest],[data-state=cardio]) i{background:var(--muted);opacity:.6}
-body.theme-ready.style-elegant gt-shell .el-week a.today{background:var(--el-grad);color:var(--el-ink);box-shadow:var(--el-shadow)}
-body.theme-ready.style-elegant gt-shell .el-week a.today small{color:var(--el-ink-muted)}
+body.theme-ready.style-elegant gt-shell .el-week :is(a,button)[data-state=done] i{background:currentColor}
+body.theme-ready.style-elegant gt-shell .el-week :is(a,button)[data-state=plan] i{box-shadow:0 0 0 1px currentColor;opacity:.6}
+body.theme-ready.style-elegant gt-shell .el-week :is(a,button):is([data-state=rest],[data-state=cardio]) i{background:var(--muted);opacity:.6}
+body.theme-ready.style-elegant gt-shell .el-week :is(a,button).today{background:var(--el-grad);color:var(--el-ink);box-shadow:var(--el-shadow)}
+body.theme-ready.style-elegant gt-shell .el-week :is(a,button).today small{color:var(--el-ink-muted)}
 
 body.theme-ready.style-elegant gt-shell .hx-simple .hx-next{
  position:relative;margin-top:22px;padding:22px 22px 20px;border-radius:30px;border:0;
@@ -272,7 +269,7 @@ body.theme-ready.style-elegant .hb .hb-tabbar a.on{flex-grow:2.3;font-size:14px;
 body.theme-ready.style-elegant .hb .hb-tabbar a.on gt-icon{color:inherit}
 
 @media(prefers-reduced-motion:reduce){
- body.theme-ready.style-elegant gt-shell .bottom-nav a,body.theme-ready.style-elegant .hb .hb-tabbar a,body.theme-ready.style-elegant gt-shell .el-week a{transition:none}
+ body.theme-ready.style-elegant gt-shell .bottom-nav a,body.theme-ready.style-elegant .hb .hb-tabbar a,body.theme-ready.style-elegant gt-shell .el-week :is(a,button){transition:none}
 }
 
 /* GT Hub e GT Garage nascono con colori scuri fissi: in stile Elegante seguono la palette, anche chiara. */
@@ -313,12 +310,6 @@ body.theme-ready.style-elegant gt-shell .coach-shadow-actions button{border-radi
 body.theme-ready.style-elegant :is(.workout-clock,.workout-live){border-radius:30px!important;border:1px solid var(--el-line)!important;background:color-mix(in srgb,var(--card) 94%,transparent)!important;box-shadow:var(--el-hi),0 14px 34px #00000047!important}
 body.theme-ready.style-elegant :is(.workout-clock,.workout-live) :is(button,a,.live-go,.live-icon){border-radius:999px!important}
 body.theme-ready.style-elegant .workout-live .live-go{background:var(--el-grad)!important;color:var(--el-ink)!important;border:0!important}
-@media(max-width:800px),(max-width:1100px) and (pointer:coarse){
- body.theme-ready.style-elegant gt-shell .bottom-nav::before{
-  content:"";position:absolute;z-index:-1;pointer-events:none;left:-40px;right:-40px;top:-34px;bottom:calc(-12px - var(--safe-bottom,0px));
-  background:linear-gradient(180deg,transparent,color-mix(in srgb,var(--bg) 88%,transparent) 46%,var(--bg));
- }
-}
 
 /* ---------- 11. Movimento: leggero, mai d'intralcio ---------- */
 @keyframes elRise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
@@ -328,12 +319,12 @@ body.theme-ready.style-elegant .workout-live .live-go{background:var(--el-grad)!
 @keyframes elSheen{0%,62%{transform:translateX(-180%) skewX(-18deg)}86%,100%{transform:translateX(460%) skewX(-18deg)}}
 @keyframes elNudge{0%,100%{transform:translateX(0)}50%{transform:translateX(3px)}}
 @media(prefers-reduced-motion:no-preference){
- body.theme-ready.style-elegant gt-shell :is(button,a.su-btn,a.button,.su-chip,.el-stat,.el-week a,.bottom-nav a),
+ body.theme-ready.style-elegant gt-shell :is(button,a.su-btn,a.button,.su-chip,.el-stat,.el-week :is(a,button),.bottom-nav a),
  body.theme-ready.style-elegant .hb :is(.hb-btn,.hb-ch,.hb-fab,.hb-tabbar a){transition:transform .18s cubic-bezier(.2,.8,.2,1),background-color .3s ease,color .3s ease,border-color .3s ease,flex-grow .3s ease}
- body.theme-ready.style-elegant gt-shell :is(button,a.su-btn,a.button,.su-chip,.el-stat,.el-week a):active,
+ body.theme-ready.style-elegant gt-shell :is(button,a.su-btn,a.button,.su-chip,.el-stat,.el-week :is(a,button)):active,
  body.theme-ready.style-elegant .hb :is(.hb-btn,.hb-ch,.hb-fab):active{transform:scale(.96)}
  body.theme-ready.style-elegant gt-shell .el-week{animation:elRise .6s cubic-bezier(.2,.8,.2,1) .06s both}
- body.theme-ready.style-elegant gt-shell .el-week a.today{animation:elPop .5s cubic-bezier(.2,.8,.2,1) .3s both}
+ body.theme-ready.style-elegant gt-shell .el-week :is(a,button).today{animation:elPop .5s cubic-bezier(.2,.8,.2,1) .3s both}
  body.theme-ready.style-elegant gt-shell .el-stats{animation:elRise .6s cubic-bezier(.2,.8,.2,1) .2s both}
  body.theme-ready.style-elegant gt-shell .el-spark{animation:elDraw 1.2s cubic-bezier(.4,0,.2,1) .45s both}
  body.theme-ready.style-elegant gt-shell  body.theme-ready.style-elegant gt-shell .el-bars i{transform-origin:left;animation:elGrow .5s cubic-bezier(.2,.8,.2,1) both}
@@ -357,3 +348,331 @@ body.theme-ready.style-elegant .workout-live .live-go{background:var(--el-grad)!
  body.theme-ready.style-elegant gt-shell .session-progress i{transition:width .6s cubic-bezier(.2,.8,.2,1)}
  body.theme-ready.style-elegant gt-active-workout .rec3-step:active{transform:scale(.88)}
 }
+
+/* ---------- 12. Schede, Calendario, Progressi e Focus muscolare ---------- */
+/* Titoli di pagina grandi, come nella Home. */
+body.theme-ready.style-elegant gt-shell main :is(.su-head,.cal-heading,.neon-page-heading) h1{font-size:clamp(34px,9.6vw,40px)!important;font-weight:550!important;letter-spacing:-.045em!important;line-height:1.04!important}
+body.theme-ready.style-elegant gt-shell main :is(.su-head,.cal-heading){align-items:flex-end;margin-bottom:18px;padding-top:6px}
+body.theme-ready.style-elegant gt-shell main :is(.cal-eyebrow,.neon-page-heading .eyebrow){color:var(--muted)!important;font-size:11px;font-weight:550;letter-spacing:.2em;text-transform:uppercase}
+body.theme-ready.style-elegant gt-shell main .cal-eyebrow::before{display:none}
+body.theme-ready.style-elegant gt-shell main .cal-heading h1 em{color:var(--muted);font-style:normal;font-weight:500;font-size:.62em;letter-spacing:-.03em}
+body.theme-ready.style-elegant gt-shell main :is(.su-sec,.plans-list-heading) h2{font-size:20px;font-weight:600;letter-spacing:-.03em}
+
+/* Schede: la scheda attiva è la protagonista, nel colore della palette. */
+body.theme-ready.style-elegant gt-shell main .simple-plan.pl-active{
+ border:0!important;border-radius:30px!important;padding:20px 18px 18px!important;background:var(--el-grad)!important;color:var(--el-ink);box-shadow:var(--el-shadow)!important;
+}
+body.theme-ready.style-elegant gt-shell main .pl-active .plan-cover-thumb{border-radius:18px;overflow:hidden;box-shadow:0 0 0 1px var(--el-ink-line)}
+body.theme-ready.style-elegant gt-shell main .pl-active .simple-plan-title{color:var(--el-ink)!important;background:none!important;border:0!important;box-shadow:none!important}
+body.theme-ready.style-elegant gt-shell main .pl-active .simple-plan-title :is(strong,b,h2,h3){font-size:24px;font-weight:650;letter-spacing:-.04em;line-height:1.1;color:var(--el-ink)}
+body.theme-ready.style-elegant gt-shell main .pl-active .simple-plan-title :is(small,em),
+body.theme-ready.style-elegant gt-shell main .pl-active .pl-progress :is(span,small,b,strong){color:var(--el-ink-muted)!important}
+body.theme-ready.style-elegant gt-shell main .pl-active .pl-progress b{color:var(--el-ink)!important}
+body.theme-ready.style-elegant gt-shell main .pl-active .plan-chevron{color:var(--el-ink-muted)}
+body.theme-ready.style-elegant gt-shell main .pl-active>.simple-plan-top .su-badge{background:none;border:1px solid var(--el-ink-line);color:var(--el-ink);padding:4px 10px}
+body.theme-ready.style-elegant gt-shell main .pl-active .su-bar{height:6px;border-radius:3px;background:var(--el-ink-line)}
+body.theme-ready.style-elegant gt-shell main .pl-active .su-bar i{background:var(--el-ink);border-radius:3px;box-shadow:none}
+body.theme-ready.style-elegant gt-shell main .pl-active .simple-days{margin-top:14px;padding:6px;border-radius:24px;background:var(--card);color:var(--text)}
+body.theme-ready.style-elegant gt-shell main .simple-day{border:0!important;border-radius:18px!important;background:none!important;box-shadow:none!important}
+body.theme-ready.style-elegant gt-shell main .simple-day+.simple-day{border-top:1px solid var(--el-line)!important;border-radius:0!important}
+body.theme-ready.style-elegant gt-shell main .simple-day-summary{min-height:56px}
+body.theme-ready.style-elegant gt-shell main .pl-active .pl-actions .su-btn{background:none!important;border:1px solid var(--el-ink-line)!important;color:var(--el-ink)!important}
+body.theme-ready.style-elegant gt-shell main .simple-plan:not(.pl-active){border-radius:26px}
+body.theme-ready.style-elegant gt-shell main .pl-new{min-height:56px;border-radius:999px;border-style:dashed}
+
+/* Calendario: elenco arioso, oggi evidenziato come nella striscia della Home. */
+body.theme-ready.style-elegant gt-shell main .cal-overview{border-radius:28px;border:1px solid var(--el-line);background:var(--el-surface);box-shadow:var(--el-hi)}
+body.theme-ready.style-elegant gt-shell main .cal-overview-text strong{font-size:11px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--muted)}
+body.theme-ready.style-elegant gt-shell main .cal-overview-text small{font-size:14px;color:var(--text)}
+body.theme-ready.style-elegant gt-shell main .cal-bigring strong{font-weight:600;letter-spacing:-.04em}
+body.theme-ready.style-elegant gt-shell main .cal-week-list{gap:0}
+body.theme-ready.style-elegant gt-shell main .cal-week-row{border:0!important;border-radius:0!important;background:none!important;box-shadow:none!important;border-bottom:1px solid var(--el-line)!important;padding-block:9px;margin:0}
+body.theme-ready.style-elegant gt-shell main .cal-week-row:last-child{border-bottom:0!important}
+body.theme-ready.style-elegant gt-shell main .cal-week-date{border-radius:20px;min-width:52px;padding:7px 0;background:none;border:0;box-shadow:none;color:var(--text)}
+body.theme-ready.style-elegant gt-shell main .cal-week-date small{font-size:10.5px;font-weight:550;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+body.theme-ready.style-elegant gt-shell main .cal-week-date strong{font-size:22px;font-weight:600;letter-spacing:-.03em;color:inherit}
+body.theme-ready.style-elegant gt-shell main .cal-week-row.today .cal-week-date{background:var(--el-grad);color:var(--el-ink);box-shadow:var(--el-shadow)}
+body.theme-ready.style-elegant gt-shell main .cal-week-row.today .cal-week-date small{color:var(--el-ink-muted)}
+body.theme-ready.style-elegant gt-shell main .cal-week-free-text{border:0;background:none;padding:0;color:var(--muted);font-size:13.5px}
+body.theme-ready.style-elegant gt-shell main .cal-row-item{border-radius:22px;border:1px solid var(--el-line);background:var(--el-surface);box-shadow:var(--el-hi)}
+body.theme-ready.style-elegant gt-shell main .cal-item-thumb{border-radius:14px;overflow:hidden}
+body.theme-ready.style-elegant gt-shell main .cal-nav-mid strong{font-weight:550;color:var(--muted)}
+
+/* Progressi: il messaggio «In evidenza» diventa la scheda principale; numeri grandi con etichetta sopra. */
+body.theme-ready.style-elegant gt-shell main .pg-insight{border:0!important;border-radius:30px!important;padding:22px!important;background:var(--el-grad)!important;color:var(--el-ink);box-shadow:var(--el-shadow)!important}
+body.theme-ready.style-elegant gt-shell main .pg-insight .su-bubble{display:none}
+body.theme-ready.style-elegant gt-shell main .pg-insight-top span{color:var(--el-ink-muted)!important;font-size:11px;font-weight:600;letter-spacing:.2em;text-transform:uppercase}
+body.theme-ready.style-elegant gt-shell main .pg-insight h2{margin-top:22px;font-size:26px;line-height:1.1;font-weight:650;letter-spacing:-.04em;color:var(--el-ink)}
+body.theme-ready.style-elegant gt-shell main .pg-insight p{color:var(--el-ink-muted)!important;font-size:14px}
+body.theme-ready.style-elegant gt-shell main :is(.pg-kpi,.history-overview) .su-stat,
+body.theme-ready.style-elegant gt-shell main .pg-kpi .su-stat{display:flex;flex-direction:column-reverse;justify-content:flex-end;gap:8px;min-height:92px;padding:16px 14px;border-radius:24px;background:var(--el-surface);border:1px solid var(--el-line);box-shadow:var(--el-hi)}
+body.theme-ready.style-elegant gt-shell main .pg-kpi .su-stat span{font-size:10px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+body.theme-ready.style-elegant gt-shell main .pg-kpi .su-stat strong{font-size:28px;font-weight:600;letter-spacing:-.04em;line-height:1}
+body.theme-ready.style-elegant gt-shell main .pg-kpi .su-stat strong small{font-size:12px;font-weight:500;letter-spacing:0;color:var(--muted);margin-left:3px}
+body.theme-ready.style-elegant gt-shell main .pg-card-head h2{font-size:11px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--muted)}
+body.theme-ready.style-elegant gt-shell main .pg-chart{border-radius:28px;padding:20px 18px}
+body.theme-ready.style-elegant gt-shell main .pg-muscles{border-radius:28px}
+body.theme-ready.style-elegant gt-shell main .su-bar{border-radius:999px;background:var(--el-raised)}
+body.theme-ready.style-elegant gt-shell main .su-bar i{border-radius:999px;background:var(--accent-text,var(--accent));box-shadow:none}
+body.theme-ready.style-elegant gt-shell main .pg-empty{color:var(--muted)}
+
+/* Focus muscolare */
+body.theme-ready.style-elegant gt-shell main .neon-page-heading{align-items:center;gap:14px;margin-bottom:18px}
+body.theme-ready.style-elegant gt-shell main .neon-page-heading h1{font-size:clamp(30px,8.4vw,36px)!important}
+body.theme-ready.style-elegant gt-shell main .muscle-period{font-size:11px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--muted)}
+body.theme-ready.style-elegant gt-shell main .muscle-period select{border-radius:999px;letter-spacing:0;text-transform:none;font-weight:600}
+body.theme-ready.style-elegant gt-shell main .muscle-focus-layout{border-radius:30px;padding:10px}
+body.theme-ready.style-elegant gt-shell main .anatomy-visual{border-radius:22px;overflow:hidden}
+body.theme-ready.style-elegant gt-shell main .muscle-selector{gap:6px}
+body.theme-ready.style-elegant gt-shell main .muscle-selector button{border-radius:999px!important;border:1px solid var(--el-line)!important;background:none!important;box-shadow:none!important;color:var(--text);padding-inline:14px;font-weight:600}
+body.theme-ready.style-elegant gt-shell main .muscle-selector button gt-icon{display:none}
+body.theme-ready.style-elegant gt-shell main .muscle-selector button strong{color:var(--muted);font-weight:600}
+body.theme-ready.style-elegant gt-shell main .muscle-selector button.selected{background:var(--el-grad)!important;border-color:transparent!important;color:var(--el-ink)!important;box-shadow:var(--el-shadow)!important}
+body.theme-ready.style-elegant gt-shell main .muscle-selector button.selected :is(span,strong){color:var(--el-ink)!important}
+body.theme-ready.style-elegant gt-shell main .muscle-detail{border-radius:30px;padding:22px 20px}
+body.theme-ready.style-elegant gt-shell main .muscle-detail .card-head h2{font-size:26px;font-weight:600;letter-spacing:-.04em}
+body.theme-ready.style-elegant gt-shell main .neon-stat-grid>div{display:flex;flex-direction:column-reverse;justify-content:flex-end;gap:8px;text-align:left;border-color:var(--el-line)}
+body.theme-ready.style-elegant gt-shell main .neon-stat-grid span{font-size:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);line-height:1.35}
+body.theme-ready.style-elegant gt-shell main .neon-stat-grid strong{font-size:26px;font-weight:600;letter-spacing:-.04em;line-height:1}
+body.theme-ready.style-elegant gt-shell main .neon-stat-grid>div:last-child strong{font-size:17px;letter-spacing:-.02em;line-height:1.5}
+body.theme-ready.style-elegant gt-shell main .muscle-volume-bars i{border-radius:999px;background:var(--el-raised);border:0}
+body.theme-ready.style-elegant gt-shell main .muscle-volume-bars i b{border-radius:999px;background:var(--accent-text,var(--accent));box-shadow:none}
+body.theme-ready.style-elegant gt-shell main .muscle-volume-bars button{border:0!important;background:none!important;box-shadow:none!important;border-radius:0}
+body.theme-ready.style-elegant gt-shell main .cal-week-row.today .cal-week-date strong{color:var(--el-ink)!important}
+body.theme-ready.style-elegant gt-shell main .cal-heading h1{color:var(--text)!important}
+body.theme-ready.style-elegant gt-shell main .neon-stat-grid>div{align-items:flex-start}
+
+/* ---------- 13. Testata, scelta app e schermate rimaste ---------- */
+body.theme-ready.style-elegant gt-shell .topbar .mobile-brand{font-weight:600;letter-spacing:-.03em}
+body.theme-ready.style-elegant gt-shell .topbar .mobile-brand span{color:var(--muted)!important;background:none!important;-webkit-text-fill-color:currentColor}
+body.theme-ready.style-elegant gt-shell .topbar .app-brand-mark{border-radius:12px}
+body.theme-ready.style-elegant gt-shell .topbar :is(gt-data-status summary,.avatar,.topbar-apps){border-radius:50%!important;border:1px solid var(--el-line)!important;background:var(--el-surface)!important;box-shadow:var(--el-hi)!important;overflow:hidden}
+body.theme-ready.style-elegant gt-shell .topbar gt-avatar{border-radius:50%;background:none;border:0;box-shadow:none;color:var(--text)}
+/* Titoli grandi anche nelle pagine che non hanno ancora l'intestazione nuova. */
+body.theme-ready.style-elegant gt-shell main :is(.page-heading,.insights-heading,.neon-page-heading,.excel-heading,.preview-heading) h1,
+body.theme-ready.style-elegant gt-shell main>ng-component>h1,
+body.theme-ready.style-elegant gt-shell main>ng-component>header>h1{font-size:clamp(30px,8.6vw,38px)!important;font-weight:550!important;letter-spacing:-.045em!important;line-height:1.06!important}
+body.theme-ready.style-elegant gt-shell main :is(.eyebrow,.insights-section>h2,.su-group>h2,.su-group-title){color:var(--muted)!important;font-size:11px;font-weight:600;letter-spacing:.18em;text-transform:uppercase}
+/* Profilo */
+body.theme-ready.style-elegant gt-shell main .su-list{border-radius:26px;border-color:var(--el-line);background:var(--el-surface);box-shadow:var(--el-hi);overflow:hidden}
+body.theme-ready.style-elegant gt-shell main .su-row{min-height:64px}
+body.theme-ready.style-elegant gt-shell main .su-row+.su-row{border-top:1px solid var(--el-line)}
+body.theme-ready.style-elegant gt-shell main .su-row .su-bubble{background:var(--el-raised);color:var(--text);box-shadow:none}
+body.theme-ready.style-elegant gt-shell main .su-tx strong{font-weight:600;letter-spacing:-.015em}
+/* Analisi */
+body.theme-ready.style-elegant gt-shell main .insights-periods{padding:4px;border-radius:999px;background:var(--el-raised);border:1px solid var(--el-line);gap:0}
+body.theme-ready.style-elegant gt-shell main .insights-periods button{border-radius:999px!important;border:0!important;background:none!important;box-shadow:none!important;color:var(--muted)}
+body.theme-ready.style-elegant gt-shell main .insights-periods button.insight-selected{background:var(--el-grad)!important;color:var(--el-ink)!important}
+body.theme-ready.style-elegant gt-shell main .insights-stats .card{display:flex;flex-direction:column;gap:6px;border-radius:24px;padding:16px}
+body.theme-ready.style-elegant gt-shell main .insights-stats .card>span{font-size:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+body.theme-ready.style-elegant gt-shell main .insights-stats .ins-ic{display:none}
+body.theme-ready.style-elegant gt-shell main .insights-stats .card strong{font-size:30px;font-weight:600;letter-spacing:-.04em;line-height:1.05}
+body.theme-ready.style-elegant gt-shell main .insights-charts .card{border-radius:28px}
+body.theme-ready.style-elegant gt-shell main .insights-charts h3{font-size:11px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--muted)}
+/* Diario benessere */
+body.theme-ready.style-elegant gt-shell main .neon-ring{box-shadow:none!important;background:conic-gradient(from 200deg,var(--accent-text,var(--accent)) 0 8%,var(--el-raised) 0)!important;filter:none}
+body.theme-ready.style-elegant gt-shell main .neon-ring>div{box-shadow:none!important;background:var(--bg)!important;border:0!important}
+body.theme-ready.style-elegant gt-shell main .neon-ring strong{font-weight:550;letter-spacing:-.05em}
+body.theme-ready.style-elegant gt-shell main .wellness-status{border-radius:999px;border:1px solid var(--el-line);background:var(--el-surface);color:var(--text);box-shadow:var(--el-hi)}
+body.theme-ready.style-elegant gt-shell main .wellness-metrics .card{border-radius:24px;text-align:left}
+body.theme-ready.style-elegant gt-shell main .wellness-metrics .card span{font-size:10px;font-weight:600;letter-spacing:.16em;color:var(--muted)}
+body.theme-ready.style-elegant gt-shell main .wellness-metrics .card strong{font-size:28px;font-weight:600;letter-spacing:-.04em}
+body.theme-ready.style-elegant gt-shell main .wellness-metrics .card gt-icon{color:var(--muted)}
+/* Riepilogo dell'allenamento */
+body.theme-ready.style-elegant gt-shell main .summary-symbol{box-shadow:none!important;border-color:var(--accent-text,var(--accent))!important;color:var(--accent-text,var(--accent))!important;background:none!important}
+body.theme-ready.style-elegant gt-shell main .summary-eyebrow{color:var(--muted)!important;font-weight:600;letter-spacing:.2em}
+body.theme-ready.style-elegant gt-shell main .summary-hero h1{font-size:clamp(30px,8.6vw,38px)!important;font-weight:550!important;letter-spacing:-.045em!important}
+body.theme-ready.style-elegant gt-shell main .summary-metrics .card{display:flex;flex-direction:column;border-radius:24px;padding:16px}
+body.theme-ready.style-elegant gt-shell main .summary-metrics .metric-icon{display:none}
+body.theme-ready.style-elegant gt-shell main .summary-metrics .card :is(strong,b){font-size:30px;font-weight:600;letter-spacing:-.04em;line-height:1.05}
+body.theme-ready.style-elegant gt-shell main .summary-metrics .card :is(span,small):not(strong small){font-size:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+body.theme-ready.style-elegant gt-shell main .summary-close{border-radius:50%}
+body.theme-ready.style-elegant gt-shell main .ws-set{border-radius:999px;border:1px solid var(--el-line);background:none}
+/* Stato vuoto */
+body.theme-ready.style-elegant gt-shell main .card.empty{border-radius:30px;padding:34px 22px}
+body.theme-ready.style-elegant gt-shell main .card.empty h3{font-size:24px;font-weight:600;letter-spacing:-.04em}
+/* Finestre e pannelli */
+body.theme-ready.style-elegant :is(.modal,.su-sheet-panel,.su-sheet>section,dialog){border-radius:30px;border-color:var(--el-line)}
+body.theme-ready.style-elegant .modal h2{font-size:24px;font-weight:600;letter-spacing:-.04em}
+
+/* Scelta dell'app: tre schede sobrie nella palette, l'app in uso evidenziata. */
+body.theme-ready.style-elegant gt-app-chooser h1.x{font-weight:550;letter-spacing:-.045em}
+body.theme-ready.style-elegant gt-app-chooser h1.x span{color:var(--text)}
+body.theme-ready.style-elegant gt-app-chooser h1.x span.g{background:none;-webkit-background-clip:border-box;background-clip:border-box;color:var(--muted)}
+body.theme-ready.style-elegant gt-app-chooser .me{background:var(--el-surface);border:1px solid var(--el-line);color:var(--text);font-weight:600}
+body.theme-ready.style-elegant gt-app-chooser .app{color:var(--text);background:var(--el-surface);border:1px solid var(--el-line);box-shadow:var(--el-hi)}
+body.theme-ready.style-elegant gt-app-chooser .app.a-gt{background:var(--el-grad);color:var(--el-ink);border:0;box-shadow:var(--el-shadow)}
+body.theme-ready.style-elegant gt-app-chooser .t b{font-weight:650;letter-spacing:-.04em}
+body.theme-ready.style-elegant gt-app-chooser .open{background:var(--el-raised);color:var(--text)}
+body.theme-ready.style-elegant gt-app-chooser .a-gt .open{background:var(--el-ink);color:var(--accent)}
+body.theme-ready.style-elegant gt-app-chooser :is(.wd,.stats>span){background:color-mix(in srgb,var(--text) 5%,transparent);border-color:var(--el-line)}
+body.theme-ready.style-elegant gt-app-chooser .a-gt .wd{background:color-mix(in srgb,var(--accent-ink) 9%,transparent);border-color:var(--el-ink-line)}
+body.theme-ready.style-elegant gt-app-chooser .a-gt .tx em{color:var(--el-ink-muted)}
+body.theme-ready.style-elegant gt-app-chooser .a-gt .ring{background:conic-gradient(from -90deg,var(--el-ink) calc(var(--p)*1%),var(--el-ink-line) 0)}
+body.theme-ready.style-elegant gt-app-chooser .a-gt .ring::before{background:var(--accent)}
+body.theme-ready.style-elegant gt-app-chooser .ring::before{background:var(--card)}
+body.theme-ready.style-elegant gt-app-chooser .adm{background:color-mix(in srgb,var(--text) 8%,transparent);border-radius:999px;font-weight:650}
+body.theme-ready.style-elegant gt-app-chooser .tx strong,body.theme-ready.style-elegant gt-app-chooser .stats b{font-weight:650}
+
+/* ============ 14. Proposta approvata (novembre 2026): una sola scheda chiara per schermata, elenchi al posto dei riquadri ============ */
+.el-only{display:none!important}
+body.theme-ready.style-elegant .el-only{display:block!important}
+body.theme-ready.style-elegant gt-shell .el-week.el-only{display:grid!important}
+body.theme-ready.style-elegant{--el-solid:color-mix(in srgb,#fff 10%,var(--accent));--el-faint:color-mix(in srgb,var(--muted) 62%,var(--bg))}
+body.theme-ready.style-elegant.theme-mono{--el-solid:var(--accent)}
+body.theme-ready.style-elegant gt-shell .el-week button{background:none;border:0;box-shadow:none;font:inherit;width:auto;min-width:0;cursor:pointer}
+body.theme-ready.style-elegant gt-shell main .el-eyebrow{font-size:10.5px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--muted)}
+body.theme-ready.style-elegant gt-shell main .el-over{margin:8px 2px -4px}
+
+/* Home: tornano le miniature degli esercizi nella scheda dell'allenamento. */
+body.theme-ready.style-elegant gt-shell .hx-next .hx-strip{display:flex!important;gap:6px;margin:18px 70px 0 0;overflow:hidden}
+body.theme-ready.style-elegant gt-shell .hx-next .hx-strip gt-exercise-thumb{--thumb-width:44px;--thumb-height:44px;width:44px;height:44px;border-radius:13px;overflow:hidden;flex:none;box-shadow:0 0 0 1px var(--el-ink-line)}
+body.theme-ready.style-elegant gt-shell .hx-next .hx-strip gt-exercise-thumb:nth-child(n+5){display:none}
+body.theme-ready.style-elegant gt-shell .hx-next:has(.hx-strip) .hx-main{top:auto;bottom:76px;transform:none}
+body.theme-ready.style-elegant gt-shell .hx-next:has(.hx-strip) .hx-main:active{transform:scale(.94)}
+body.theme-ready.style-elegant gt-shell .hx-next:has(.hx-strip) :is(h2,.hx-sub){margin-right:0}
+body.theme-ready.style-elegant gt-shell .hx-next .hx-secondary{margin-top:14px}
+
+/* Seduta: titolo grande con la miniatura a destra, sforzo su una riga, prossimo esercizio in fondo. */
+body.theme-ready.style-elegant gt-active-workout .rec3-ex-row{display:grid!important;grid-template-columns:minmax(0,1fr) auto;gap:8px 14px;align-items:start}
+body.theme-ready.style-elegant gt-active-workout .rec3-ex-text{grid-column:1;grid-row:1;min-width:0}
+body.theme-ready.style-elegant gt-active-workout .rec3-ex-text h2{font-size:clamp(26px,7.8vw,32px)!important;line-height:1.06!important;font-weight:550!important;letter-spacing:-.045em!important;margin:6px 0 8px}
+body.theme-ready.style-elegant gt-active-workout .rec3-thumb{grid-column:2;grid-row:1;width:74px!important;height:74px!important;border-radius:22px!important;padding:0;border:0;box-shadow:0 0 0 1px var(--el-line)}
+body.theme-ready.style-elegant gt-active-workout .rec3-thumb gt-exercise-thumb{--thumb-width:74px;--thumb-height:74px;width:74px;height:74px;display:block}
+body.theme-ready.style-elegant gt-active-workout .rec3-nav{grid-row:2;width:40px!important;min-width:40px;height:40px!important;min-height:40px}
+body.theme-ready.style-elegant gt-active-workout .rec3-nav:first-child{grid-column:1;justify-self:start}
+body.theme-ready.style-elegant gt-active-workout .rec3-nav:last-child{grid-column:2;justify-self:end}
+body.theme-ready.style-elegant gt-active-workout .rec3-rpe{display:flex;align-items:center;justify-content:space-between;gap:10px}
+body.theme-ready.style-elegant gt-active-workout .rec3-rpe .rec3-field-head{flex:1 1 auto;min-width:0;min-height:0!important;margin:0;flex-direction:row!important;align-items:center;text-align:left!important}
+body.theme-ready.style-elegant gt-active-workout .rec3-rpe :is(.rec3-label small,.rec3-goal){display:none}
+body.theme-ready.style-elegant gt-active-workout .rec3-rpe-track{display:flex!important;flex:none;width:auto;gap:6px!important;margin:0}
+body.theme-ready.style-elegant gt-active-workout .rec3-rpe-track button{width:40px;min-width:40px;height:40px;min-height:40px;padding:0;border-radius:50%;font-size:13.5px}
+body.theme-ready.style-elegant gt-active-workout .rec3-rpe-track button i{display:none}
+body.theme-ready.style-elegant gt-active-workout .el-next{margin:14px 0 0;text-align:center;font-size:13px;color:var(--muted)}
+
+/* Schede: la parte alta della scheda attiva è la scheda chiara; gli allenamenti diventano un elenco numerato con miniatura. */
+body.theme-ready.style-elegant gt-shell main .simple-plan.pl-active{display:flex!important;flex-direction:column;background:none!important;box-shadow:none!important;padding:0!important;border-radius:0!important;color:var(--text)}
+body.theme-ready.style-elegant gt-shell main .pl-active>:is(.simple-plan-top,.pl-progress,.pl-actions){background:var(--el-solid);color:var(--el-ink);margin:0}
+body.theme-ready.style-elegant gt-shell main .pl-active>.simple-plan-top{order:1;border-radius:30px 30px 0 0;padding:20px 18px 12px}
+body.theme-ready.style-elegant gt-shell main .pl-active>.pl-progress{order:2;padding:6px 20px 16px;margin-top:-1px}
+body.theme-ready.style-elegant gt-shell main .pl-active>.pl-actions{order:3;border-radius:0 0 30px 30px;padding:4px 18px 20px;margin-top:-1px;box-shadow:0 18px 30px -14px color-mix(in srgb,var(--accent) 30%,#000)}
+body.theme-ready.style-elegant gt-shell main .pl-active>:not(.simple-plan-top,.pl-progress,.pl-actions){order:4}
+body.theme-ready.style-elegant gt-shell main .pl-active .simple-days{background:none;padding:0;margin-top:22px;border-radius:0;counter-reset:elday}
+body.theme-ready.style-elegant gt-shell main .pl-active .simple-days::before{content:"Allenamenti";display:block;margin:0 2px 2px;font-size:20px;font-weight:600;letter-spacing:-.03em}
+body.theme-ready.style-elegant gt-shell main .pl-active .simple-day{counter-increment:elday;border-radius:0!important}
+body.theme-ready.style-elegant gt-shell main .pl-active .simple-day-summary{display:flex;align-items:center;gap:13px;padding:12px 2px;min-height:74px}
+body.theme-ready.style-elegant gt-shell main .pl-active .simple-day-summary::before{content:counter(elday,decimal-leading-zero);flex:none;width:18px;font-size:11px;font-weight:600;letter-spacing:.08em;color:var(--el-faint)}
+body.theme-ready.style-elegant gt-shell main .pl-active .simple-day-summary>span:first-of-type{flex:1;min-width:0}
+body.theme-ready.style-elegant gt-shell main .pl-day-thumb{display:block!important;--thumb-width:50px;--thumb-height:50px;width:50px;height:50px;border-radius:15px;overflow:hidden;flex:none;box-shadow:0 0 0 1px var(--el-line)}
+body.theme-ready.style-elegant gt-shell main .simple-plan:not(.pl-active) .pl-day-thumb{display:none!important}
+body.theme-ready.style-elegant gt-shell main .pl-active .simple-day-summary strong{font-size:15.5px;font-weight:600;letter-spacing:-.02em}
+body.theme-ready.style-elegant gt-shell main .pl-active .day-chevron{color:var(--el-faint)}
+
+/* Calendario: titolo fisso, periodo come scritta piccola, striscia della settimana, riepilogo con numero grande. */
+body.theme-ready.style-elegant gt-shell main .cal-heading-copy{display:flex;flex-direction:column-reverse;gap:8px}
+body.theme-ready.style-elegant gt-shell main .cal-heading .cal-eyebrow{font-size:clamp(34px,9.6vw,40px)!important;font-weight:550!important;letter-spacing:-.045em!important;line-height:1.04;text-transform:none!important;color:var(--text)!important;margin:0}
+body.theme-ready.style-elegant gt-shell main .cal-heading h1{font-size:10.5px!important;font-weight:600!important;letter-spacing:.18em!important;text-transform:uppercase;color:var(--muted)!important;line-height:1.3!important;margin:0}
+body.theme-ready.style-elegant gt-shell main .cal-heading h1 em{font-size:inherit;font-weight:inherit;letter-spacing:inherit;color:inherit;margin-left:.4em}
+body.theme-ready.style-elegant gt-shell main .cal-view-week>.el-week{margin:2px -4px 14px}
+body.theme-ready.style-elegant gt-shell main .cal-overview{display:flex;align-items:center;gap:16px;padding:16px 18px;border-radius:26px}
+body.theme-ready.style-elegant gt-shell main .cal-bigring{width:auto!important;height:auto!important;min-width:0;background:none!important;box-shadow:none!important;border:0!important;border-radius:0;padding:0}
+body.theme-ready.style-elegant gt-shell main .cal-bigring::before,body.theme-ready.style-elegant gt-shell main .cal-bigring::after{display:none!important}
+body.theme-ready.style-elegant gt-shell main .cal-bigring strong{position:static;font-size:38px;font-weight:550;letter-spacing:-.05em;line-height:1;color:var(--text);background:none}
+body.theme-ready.style-elegant gt-shell main .cal-bigring strong small{font-size:.42em;color:var(--muted);font-weight:500;letter-spacing:0;margin-left:2px}
+body.theme-ready.style-elegant gt-shell main .cal-overview .cal-bars{display:none}
+
+/* Progressi: il volume in grande, gli altri numeri in colonne, «In evidenza» sotto il grafico. */
+body.theme-ready.style-elegant gt-shell main .reference-progress.pg-simple{display:flex;flex-direction:column}
+body.theme-ready.style-elegant gt-shell main .pg-simple>:is(.el-over,.su-head,.su-seg,.pg-period){order:-6}
+body.theme-ready.style-elegant gt-shell main .pg-simple>.pg-kpi{order:-5}
+body.theme-ready.style-elegant gt-shell main .pg-simple>.pg-chart{order:-4}
+body.theme-ready.style-elegant gt-shell main .pg-simple>.pg-insight{order:-3}
+body.theme-ready.style-elegant gt-shell main .pg-kpi{display:grid!important;grid-template-columns:1fr 1fr;gap:0!important;margin-top:22px;border-bottom:1px solid var(--el-line)}
+body.theme-ready.style-elegant gt-shell main .pg-kpi .su-stat{background:none!important;border:0!important;box-shadow:none!important;border-radius:0!important;min-height:0!important;padding:14px 2px!important}
+body.theme-ready.style-elegant gt-shell main .pg-kpi .su-stat:nth-child(3){grid-column:1/-1;order:-1;padding:0 2px 18px!important;border-bottom:1px solid var(--el-line)!important}
+body.theme-ready.style-elegant gt-shell main .pg-kpi .su-stat:nth-child(3) strong{font-size:clamp(54px,16vw,66px);font-weight:500;letter-spacing:-.05em}
+body.theme-ready.style-elegant gt-shell main .pg-kpi .su-stat:nth-child(3) strong small{font-size:.26em}
+body.theme-ready.style-elegant gt-shell main .pg-kpi .su-stat:nth-child(2){border-left:1px solid var(--el-line)!important;padding-left:14px!important}
+body.theme-ready.style-elegant gt-shell main .pg-kpi .su-stat:not(:nth-child(3)) strong{font-weight:500}
+body.theme-ready.style-elegant gt-shell main .pg-chart{background:none!important;border:0!important;box-shadow:none!important;padding:16px 0 4px!important}
+body.theme-ready.style-elegant gt-shell main .pg-insight{background:var(--el-surface)!important;border:1px solid var(--el-line)!important;box-shadow:var(--el-hi)!important;color:var(--text);border-radius:26px!important;padding:18px!important;margin-top:8px}
+body.theme-ready.style-elegant gt-shell main .pg-insight-top span{color:var(--muted)!important}
+body.theme-ready.style-elegant gt-shell main .pg-insight h2{margin-top:10px;font-size:19px;color:var(--text)}
+body.theme-ready.style-elegant gt-shell main .pg-insight p{color:var(--muted)!important}
+body.theme-ready.style-elegant gt-shell main .pg-records{background:none;border:0;box-shadow:none;border-radius:0}
+body.theme-ready.style-elegant gt-shell main .pg-records .su-thumb{border-radius:14px;overflow:hidden}
+body.theme-ready.style-elegant gt-shell main .pg-records .su-badge{background:none;border:1px solid color-mix(in srgb,var(--green) 34%,transparent);color:var(--green);padding:6px 11px}
+
+/* Focus muscolare: pillole con barretta, dettaglio in colonne. */
+body.theme-ready.style-elegant gt-shell main .muscle-selector button{display:flex;align-items:center;gap:10px}
+body.theme-ready.style-elegant gt-shell main .muscle-selector button>span{flex:none;min-width:58px;text-align:left}
+body.theme-ready.style-elegant gt-shell main .el-mbar{display:block!important;flex:1;min-width:14px;height:3px;border-radius:2px;background:var(--el-raised)}
+body.theme-ready.style-elegant gt-shell main .el-mbar b{display:block;height:100%;border-radius:2px;background:var(--muted)}
+body.theme-ready.style-elegant gt-shell main .muscle-selector .selected .el-mbar{background:var(--el-ink-line)}
+body.theme-ready.style-elegant gt-shell main .muscle-selector .selected .el-mbar b{background:var(--el-ink)}
+body.theme-ready.style-elegant gt-shell main .muscle-selector strong small{display:none}
+body.theme-ready.style-elegant gt-shell main .muscle-detail{background:none!important;border:0!important;box-shadow:none!important;padding:8px 2px!important}
+body.theme-ready.style-elegant gt-shell main .muscle-detail .card-head h2::before{content:"Gruppo scelto";display:block;margin-bottom:6px;font-size:10.5px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--muted)}
+body.theme-ready.style-elegant gt-shell main .neon-stat-grid{border-top:1px solid var(--el-line);border-bottom:1px solid var(--el-line);gap:0;margin-top:14px}
+body.theme-ready.style-elegant gt-shell main .neon-stat-grid>div{padding:14px 0 14px 14px;border:0;border-left:1px solid var(--el-line);border-radius:0;background:none}
+body.theme-ready.style-elegant gt-shell main .neon-stat-grid>div:first-child{border-left:0;padding-left:2px}
+
+/* Profilo: avatar grande, riquadro Aspetto, elenchi senza riquadro. */
+body.theme-ready.style-elegant gt-shell main .pf-identity{background:none!important;border:0!important;box-shadow:none!important;padding:6px 0 4px!important;gap:16px}
+body.theme-ready.style-elegant gt-shell main .pf-avatar{width:74px;height:74px;flex:none;border-radius:50%;overflow:hidden;background:var(--el-grad);color:var(--el-ink);display:grid;place-items:center;border:0;box-shadow:none}
+body.theme-ready.style-elegant gt-shell main .pf-avatar gt-avatar{width:74px;height:74px;font-size:26px;font-weight:600;letter-spacing:-.04em;background:none;color:inherit;border:0;box-shadow:none}
+body.theme-ready.style-elegant gt-shell main .pf-who>strong{font-size:24px;font-weight:600;letter-spacing:-.04em}
+body.theme-ready.style-elegant gt-shell main .pf-who .su-badge{background:none;border:1px solid var(--el-line);color:var(--text);padding:5px 11px}
+body.theme-ready.style-elegant gt-shell main .el-look{padding:18px;border-radius:26px;margin-top:14px}
+body.theme-ready.style-elegant gt-shell main .el-look-top{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;min-height:44px;padding:0;background:none!important;border:0!important;box-shadow:none!important;border-radius:0!important;color:inherit;text-align:left}
+body.theme-ready.style-elegant gt-shell main .el-look-top strong{display:block;margin-top:6px;font-size:16px;font-weight:600;letter-spacing:-.02em}
+body.theme-ready.style-elegant gt-shell main .el-look-top gt-icon{width:17px;height:17px;color:var(--el-faint)}
+body.theme-ready.style-elegant gt-shell main .el-look .su-seg{margin-top:12px}
+body.theme-ready.style-elegant gt-shell main .el-look .su-seg button{flex:1;min-height:42px;background:none;border:0;color:var(--muted);box-shadow:none}
+body.theme-ready.style-elegant gt-shell main .pf-identity~.su-list{background:none;border:0;box-shadow:none;border-radius:0;overflow:visible}
+body.theme-ready.style-elegant gt-shell main .pf-identity~.su-list .su-row{padding-inline:2px}
+body.theme-ready.style-elegant gt-shell main .pf-identity~.su-list .su-bubble{width:38px;height:38px}
+
+/* Scelta dell'app: numeri in colonne. */
+body.theme-ready.style-elegant gt-app-chooser .stats{gap:0;border-top:1px solid var(--el-line);margin-top:14px}
+body.theme-ready.style-elegant gt-app-chooser .stats>span{background:none!important;border:0!important;border-radius:0;border-left:1px solid var(--el-line)!important;padding:12px 0 0 12px}
+body.theme-ready.style-elegant gt-app-chooser .stats>span:first-child{border-left:0!important;padding-left:2px}
+body.theme-ready.style-elegant gt-app-chooser .stats b{font-size:20px;font-weight:500;letter-spacing:-.03em}
+
+/* GT Hub · Oggi: il prossimo impegno è la scheda chiara, con l'orario in grande. */
+body.theme-ready.style-elegant .hb gt-hub-today .hb-hero{color:var(--text);box-shadow:var(--el-hi);border:1px solid var(--el-line)}
+body.theme-ready.style-elegant .hb gt-hub-today .hb-hero::before{background:var(--el-surface)}
+body.theme-ready.style-elegant .hb gt-hub-today .hb-hero :is(.hb-chip,.hb-btn.glass){border-color:var(--el-line);color:var(--text)}
+body.theme-ready.style-elegant .hb gt-hub-today .hb-hero .hb-btn.white{background:var(--el-raised);color:var(--text)}
+body.theme-ready.style-elegant .hb gt-hub-today .bento{grid-template-columns:1fr 1fr;gap:12px}
+body.theme-ready.style-elegant .hb gt-hub-today .hb-c.nx{grid-column:1/-1;grid-row:auto;padding:22px!important;border:0;border-radius:30px;background:var(--el-grad)!important;color:var(--el-ink);box-shadow:var(--el-shadow)}
+body.theme-ready.style-elegant .hb gt-hub-today .nx .k{color:var(--el-ink-muted);font-size:10.5px;font-weight:600;letter-spacing:.18em}
+body.theme-ready.style-elegant .hb gt-hub-today .nx .tm{margin-top:18px;font-size:54px;font-weight:500;letter-spacing:-.05em;color:var(--el-ink)}
+body.theme-ready.style-elegant .hb gt-hub-today .nx .tm.dim{color:var(--el-ink-muted)}
+body.theme-ready.style-elegant .hb gt-hub-today .nx strong{font-size:15.5px;font-weight:600;color:var(--el-ink)}
+body.theme-ready.style-elegant .hb gt-hub-today .nx .s{color:var(--el-ink-muted)}
+body.theme-ready.style-elegant .hb gt-hub-today .nx .hb-tag{background:none;border:1px solid var(--el-ink-line);color:var(--el-ink);border-radius:999px}
+body.theme-ready.style-elegant .hb gt-hub-today .mini{padding:18px!important}
+body.theme-ready.style-elegant .hb gt-hub-today .mini .k{font-size:10.5px;font-weight:600;letter-spacing:.18em}
+body.theme-ready.style-elegant .hb gt-hub-today .mini .k gt-icon{display:none}
+body.theme-ready.style-elegant .hb gt-hub-today .mini b{font-size:30px;font-weight:500;letter-spacing:-.04em;margin-top:9px}
+
+/* GT Garage: il carburante è la scheda chiara. */
+body.theme-ready.style-elegant .hb gt-garage .nm strong{font-size:36px;font-weight:550;letter-spacing:-.045em;line-height:1.04}
+body.theme-ready.style-elegant .hb gt-garage .hb-c.lv{border:0;border-radius:30px;padding:22px;background:var(--el-grad)!important;color:var(--el-ink);box-shadow:var(--el-shadow)}
+body.theme-ready.style-elegant .hb gt-garage .lv small{color:var(--el-ink-muted);font-size:10.5px;font-weight:600;letter-spacing:.18em;text-transform:uppercase}
+body.theme-ready.style-elegant .hb gt-garage .lv small gt-icon{display:none}
+body.theme-ready.style-elegant .hb gt-garage .lv b{font-weight:500;letter-spacing:-.05em;color:var(--el-ink)}
+body.theme-ready.style-elegant .hb gt-garage .lv :is(u,em){color:var(--el-ink-muted)}
+body.theme-ready.style-elegant .hb gt-garage .lv .hb-bar{background:var(--el-ink-line);height:6px;border-radius:3px}
+body.theme-ready.style-elegant .hb gt-garage .lv .hb-bar i{background:var(--el-ink);border-radius:3px}
+body.theme-ready.style-elegant .hb gt-garage .tile{border-radius:24px}
+body.theme-ready.style-elegant .hb gt-garage .tile>gt-icon{color:var(--muted)}
+body.theme-ready.style-elegant .hb gt-garage .tile small{font-size:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+body.theme-ready.style-elegant .hb gt-garage .tile b{font-size:21px;font-weight:500;letter-spacing:-.03em}
+body.theme-ready.style-elegant gt-active-workout .rec3-rpe-track button{border-radius:50%!important}
+body.theme-ready.style-elegant gt-active-workout .rec3-nav{border-radius:50%!important}
+body.theme-ready.style-elegant gt-shell main .cal-heading h1 em{font-size:inherit!important;font-weight:inherit!important;letter-spacing:inherit!important;color:inherit!important;font-style:normal}
+body.theme-ready.style-elegant gt-shell .el-week small{text-transform:uppercase}
+body.theme-ready.style-elegant gt-shell .hx-next .hx-strip gt-exercise-thumb :is(img,picture,span,div){width:44px!important;height:44px!important;object-fit:cover}
+body.theme-ready.style-elegant .hb gt-garage .lv .hint{color:var(--el-ink-muted)}

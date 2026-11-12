@@ -33,6 +33,7 @@ import { ActivatedRoute } from '@angular/router';
     MeasurementSheetComponent,
   ],
   template: `<div class="reference-progress pg-simple">
+    <p class="el-only el-eyebrow el-over">{{periodEyebrow()}}</p>
     <header class="su-head"><h1 gtDesign="progress.title" gtDesignLabel="progress.title">Progressi</h1><div class="su-actions"><gt-profile-link/></div></header>
     <gt-status />
     <nav class="su-seg" aria-label="Sezione dei progressi"><button type="button" [class.on]="tab()==='training'" [attr.aria-pressed]="tab()==='training'" (click)="tab.set('training')">Allenamento</button><button type="button" [class.on]="tab()==='body'" [attr.aria-pressed]="tab()==='body'" (click)="tab.set('body')">Corpo</button></nav>
@@ -88,6 +89,7 @@ export class ProgressComponent {
   /** Due viste: Allenamento (record, volume, muscoli) e Corpo (peso, misure, benessere). */
   tab=signal<'training'|'body'>(inject(ActivatedRoute,{optional:true})?.snapshot?.queryParamMap?.get('tab')==='corpo'?'body':'training');
   measureOpen=signal(false);
+  periodEyebrow(){const value=this.period();return value===-28?'Ultime 4 settimane':value===3?'Ultimi 3 mesi':value===12?'Ultimo anno':'Tutto lo storico';}
   readonly periods=[{value:-28,label:'4 settimane'},{value:3,label:'3 mesi'},{value:12,label:'1 anno'},{value:0,label:'Tutto'}];
   private periodDays=computed(()=>{const p=this.period();if(p<0)return -p;if(p===0)return 3650;const from=this.cutoff();return Math.max(1,Math.round((new Date(this.today+'T12:00:00').getTime()-new Date(from+'T12:00:00').getTime())/86400000)+1);});
   private training=computed(()=>summarizeTraining(this.s.data(),this.periodDays(),this.today));

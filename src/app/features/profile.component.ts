@@ -16,6 +16,7 @@ import { AvatarComponent } from "../shared/avatar.component";
 import { compressPhoto } from "../services/images";
 import { IosStatusComponent } from "../shared/ios-status.component";
 import { ThemeService, DEFAULT_BACKGROUND } from "../services/theme";
+import { THEME_PALETTES } from "../services/theme-palettes";
 import { feedbackForContext, feedbackSignal } from "../services/feedback";
 import { AuthService } from "../services/auth";
 import { A11yModule } from "@angular/cdk/a11y";
@@ -74,6 +75,10 @@ interface ProfileFormDraft {
  <span class="pf-who"><strong>{{s.profile().name}}</strong><small>{{s.profile().bodyWeight!==undefined?s.formatWeight(s.profile().bodyWeight!)+' '+s.settings().unit:''}}{{s.profile().bodyWeight!==undefined&&s.profile().height?' · ':''}}{{s.profile().height?s.profile().height+' cm':''}}@if(auth.user()?.username){ · @{{auth.user()?.username}}}</small><span class="su-badge violet">{{auth.uiRole()==='SuperAdmin'?'Super Admin':auth.uiRole()==='Admin'?'Admin':'Personale'}}</span></span>
  <gt-icon name="chevron-right"/>
 </button>
+<section class="su-card el-only el-look" aria-label="Aspetto">
+ <button type="button" class="el-look-top" (click)="panel.set('theme')" aria-label="Apri tema e colori"><span><span class="el-eyebrow">Aspetto</span><strong>{{lookLabel()}}</strong></span><gt-icon name="chevron-right"/></button>
+ <div class="su-seg" role="group" aria-label="Stile dell’app"><button type="button" [class.on]="!theme.elegant()" [attr.aria-pressed]="!theme.elegant()" [disabled]="theme.busy()" (click)="setLook('classic')">Classico</button><button type="button" [class.on]="theme.elegant()" [attr.aria-pressed]="theme.elegant()" [disabled]="theme.busy()" (click)="setLook('elegant')">Elegante</button></div>
+</section>
 <div class="su-group">Obiettivi</div>
 <div class="su-list">
  <button type="button" class="su-row" gtDesign="profile.goals" (click)="panel.set('goals')"><span class="su-bubble pink"><gt-icon name="trophy"/></span><span class="su-tx"><strong>Allenamenti a settimana</strong></span><span class="su-val">{{s.settings().goals?.workoutsPerWeek||'Imposta'}}</span><gt-icon class="su-chev" name="chevron-right"/></button>
@@ -382,6 +387,13 @@ export class ProfileComponent {
   removeProfilePhoto(){this.photoRequest++;this.photoBusy.set(false);this.photoDraft.set(null);this.draftSession?.changed();}
   async saveUsername(){if(this.usernameBusy())return;this.accountError.set('');this.accountMessage.set('');this.usernameBusy.set(true);try{await this.auth.setUsername(this.usernameDraft()??this.auth.user()?.username??'');this.usernameDraft.set(null);this.accountMessage.set('Nome utente salvato. Puoi accedere con questo nome oppure con l’email.');await this.persistDraftState();}catch(e){this.accountError.set((e as Error).message);}finally{this.usernameBusy.set(false);}}
   theme = inject(ThemeService);
+  lookLabel() { const config = this.theme.config(), palette = THEME_PALETTES.find((item) => item.id === config.palette); return (config.style === 'elegant' ? 'Elegante' : 'Classico') + (palette ? ' · ' + palette.name : ''); }
+  /** Cambia solo lo stile: palette, modalità e colori personali restano quelli salvati. */
+  async setLook(style: 'classic' | 'elegant') {
+    const { style: _current, ...config } = this.theme.config();
+    if ((style === 'elegant') === this.theme.elegant()) return;
+    await this.theme.saveConfig(style === 'elegant' ? { ...config, style } : config);
+  }
   defaultBackground = DEFAULT_BACKGROUND;
   auth = inject(AuthService);
   appFeatures=inject(AppFeaturesService,{optional:true});

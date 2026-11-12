@@ -85,6 +85,7 @@
 <div class="gym-toolbar rec3-toolbar"><label><input type="checkbox" [checked]="gymMode()" (change)="setGymMode($any($event.target).checked)"/>Modalità palestra</label><button class="ghost" type="button" (click)="undoLast()" [disabled]="!s.undoLabel()||committing()||s.busy()" [attr.aria-label]="s.undoLabel()?'Annulla '+s.undoLabel():'Nessuna azione da annullare'" [title]="s.undoLabel()">Annulla</button></div>
 </div></details>
 <div class="recording-save rec3-dock" [attr.data-save-set]="set.id"><ng-container [ngTemplateOutlet]="restPicker"/><ng-container [ngTemplateOutlet]="recoverySummary"/><button type="button" class="primary full-width save-series" (click)="complete($event)" [disabled]="committing()" [attr.aria-busy]="committing()"><span>{{committing()?'Salvataggio…':set.completed?'Aggiorna serie':'Salva serie'}}</span><gt-icon name="check"/></button></div>
+@if(neighborExercise(1);as following){<p class="el-only el-next">Dopo · {{following.name}}</p>}
 </section>
 }
 }

@@ -53,6 +53,7 @@ type PlanEditorDraft = {
     StatusComponent,
   ],
   template: `<div class="compact-plans">
+    <p class="el-only el-eyebrow el-over">{{plans().length}} {{plans().length===1?'scheda':'schede'}}</p>
     <header class="su-head"><h1 gtDesign="training.title" gtDesignLabel="training.title" gtDesignLabelDefault="Schede">Schede</h1><div class="su-actions"><button type="button" class="su-iconbtn" gtDesign="training.newPlan" (click)="newPlanStep.set('choose')" [disabled]="!s.ready()" aria-label="Nuova scheda"><gt-icon name="plus"/></button><gt-profile-link/></div></header>
     <nav class="su-seg" aria-label="Schede ed esercizi"><a class="on" aria-current="page" routerLink="/piani">Le mie schede</a><a routerLink="/catalogo">Esercizi</a></nav>
     <gt-status />
@@ -88,7 +89,7 @@ type PlanEditorDraft = {
             <div class="simple-days">
               @for(day of visibleDays(p);track day.id){
                 <details class="simple-day" [class.pl-today]="dayDate(day)===today" [open]="editing()===p.id&&openDayId()===day.id">
-                  <summary class="simple-day-summary"><span><strong>{{day.name}}</strong><small>{{day.sessionDate?dateLabel(dayDate(day))+' · ':day.weekday===undefined?'':weekdays[day.weekday]+' · '}}{{s.planExercises(day.id).length}} {{s.planExercises(day.id).length===1?'esercizio':'esercizi'}}</small></span>@if(completedDayWorkout(day)){<span class="pl-done" aria-label="Fatto"><gt-icon name="check"/></span>}@else if(dayDate(day)===today){<span class="su-badge pink">Oggi</span>}@else{<span class="day-chevron" aria-hidden="true">›</span>}</summary>
+                  <summary class="simple-day-summary"><gt-exercise-thumb class="el-only pl-day-thumb" [exercise]="dayThumbnail(day.id)"/><span><strong>{{day.name}}</strong><small>{{day.sessionDate?dateLabel(dayDate(day))+' · ':day.weekday===undefined?'':weekdays[day.weekday]+' · '}}{{s.planExercises(day.id).length}} {{s.planExercises(day.id).length===1?'esercizio':'esercizi'}}</small></span>@if(completedDayWorkout(day)){<span class="pl-done" aria-label="Fatto"><gt-icon name="check"/></span>}@else if(dayDate(day)===today){<span class="su-badge pink">Oggi</span>}@else{<span class="day-chevron" aria-hidden="true">›</span>}</summary>
                   <div class="simple-day-body">@if(day.phase||day.notes){<div class="day-guidance">@if(day.phase){<span class="pill">{{day.phase}}</span>}@if(day.notes){<details><summary>Indicazioni della seduta</summary><p>{{day.notes}}</p></details>}</div>}
                     @if(editing()===p.id&&!p.archived&&!p.completedAt){<div class="pl-tools" role="group" [attr.aria-label]="'Modifica '+day.name"><button type="button" class="su-iconbtn" (click)="openDay(p.id,day)" aria-label="Modifica allenamento"><gt-icon name="edit"/></button><button type="button" class="su-iconbtn" (click)="s.duplicateDay(day.id)" aria-label="Duplica allenamento"><gt-icon name="copy"/></button><button type="button" class="su-iconbtn" (click)="moveDay(day,-1)" [disabled]="day.order===0" aria-label="Sposta prima"><gt-icon name="back" class="pl-up"/></button><button type="button" class="su-iconbtn" (click)="moveDay(day,1)" [disabled]="day.order===s.days(p.id).length-1" aria-label="Sposta dopo"><gt-icon name="back" class="pl-down"/></button><button type="button" class="su-iconbtn pl-remove" (click)="removeDay(day)" aria-label="Elimina allenamento"><gt-icon name="trash"/></button></div>}
                   <div class="simple-exercises"><div>
@@ -293,6 +294,7 @@ type PlanEditorDraft = {
 export class PlansComponent {
  private confirmation=confirmationForContext();
   exerciseCount(id:string){return this.s.days(id).reduce((n,d)=>n+this.s.planExercises(d.id).length,0);}
+  dayThumbnail(dayId:string){const entry=this.s.planExercises(dayId)[0];return entry?this.s.exercise(entry.exerciseId):undefined;}
   thumbnailExercise(id:string){const day=this.s.days(id)[0],entry=day?this.s.planExercises(day.id)[0]:undefined;return entry?this.s.exercise(entry.exerciseId):undefined;}
   s = inject(Store);
   router = inject(Router);
