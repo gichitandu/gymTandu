@@ -48,6 +48,25 @@ it('riserva il Hub al Super Admin e salva con controllo di revisione', async () 
   expect((await hubApi(put({ baseRevision: 1, data: { events: [{ id: '' }] } }), main(), superAdmin)).status).toBe(400);
 });
 
+it('apre il Hub agli utenti solo se il Super Admin lo ha abilitato, con archivi separati per account', async () => {
+  const flags = { hub_enabled: 0, garage_enabled: 0 };
+  const db = { prepare: () => { const s: any = { bind: () => s, first: async () => ({ nutrition_enabled: 0, ...flags, revision: 1, updated_at: 1 }) }; return s; } };
+  const env = () => ({ ...main(), DB: db });
+  expect((await hubApi(get(), env(), client)).status).toBe(403);
+  expect((await hubApi(get(), main(), client)).status).toBe(403);
+  await hubApi(put({ baseRevision: 0, data: { events: [event()] } }), env(), superAdmin);
+  for (const open of [{ hub_enabled: 1, garage_enabled: 0 }, { hub_enabled: 0, garage_enabled: 1 }]) {
+    Object.assign(flags, open);
+    expect(await (await hubApi(get(), env(), client)).json()).toEqual({ revision: 0, updatedAt: null, data: null });
+  }
+  const saved = await hubApi(put({ baseRevision: 0, data: { notes: [{ id: 'n1', updatedAt: 1, text: 'Solo mia' }] } }), env(), client);
+  expect(saved.status).toBe(200);
+  expect(objects.has('hub/c.json')).toBe(true);
+  expect(((await (await hubApi(get(), env(), superAdmin)).json()) as any).data.notes).toEqual([]);
+  Object.assign(flags, { hub_enabled: 0, garage_enabled: 0 });
+  expect((await hubApi(get(), env(), client)).status).toBe(403);
+});
+
 it('conserva auto e rifornimenti se una copia non aggiornata dell’app non li invia', async () => {
   const car = { id: 'car', updatedAt: 1, name: 'Golf 8', fuel: 'benzina', tankLiters: 50, readings: [], deadlines: {} };
   expect((await hubApi(put({ baseRevision: 0, data: { events: [], cars: [car], fuelups: [] } }), main(), superAdmin)).status).toBe(200);

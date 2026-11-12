@@ -4,7 +4,7 @@ import { IconComponent } from '../shared/icon.component';
 import { AvatarComponent } from '../shared/avatar.component';
 import { Store } from '../services/store';
 import { MobileNavigationService } from '../services/mobile-navigation';
-import { AppSwitcherService, HUB_APPS, HubApp, HubLaunchService } from './hub-access';
+import { AppSwitcherService, HubApp, HubLaunchService } from './hub-access';
 
 /** Dentro GymTrack: l'icona del profilo apre questo foglio per passare a un'altra app o al profilo. */
 @Component({
@@ -13,7 +13,7 @@ import { AppSwitcherService, HUB_APPS, HubApp, HubLaunchService } from './hub-ac
 <section class="su-sheet as" role="dialog" aria-modal="true" aria-labelledby="app-switcher-title">
   <header class="su-sheet-head"><div><h2 id="app-switcher-title">Le tue app</h2><p>Passa da un'app all'altra quando vuoi.</p></div><button type="button" class="su-iconbtn" (click)="close()" aria-label="Chiudi"><gt-icon name="close"/></button></header>
   <div class="as-list">
-    @for(app of apps;track app.id){<button type="button" class="as-row" [class.cur]="app.id==='gymtrack'" (click)="go(app.id,app.path)">
+    @for(app of switcher.apps();track app.id){<button type="button" class="as-row" [class.cur]="app.id==='gymtrack'" (click)="go(app.id,app.path)">
       @if(app.id==='gymtrack'){<img src="/brand/gt-modern-mark.png" alt=""/>}@else{<img [src]="app.id==='auto'?'/brand/gt-garage-mark.svg':'/brand/gt-hub-mark.svg'" alt=""/>}
       <span class="as-tx"><strong>{{app.name}}</strong><small>{{app.text}}</small></span><gt-icon [name]="app.id==='gymtrack'?'check':'chevron-right'"/>
     </button>}
@@ -37,7 +37,6 @@ export class AppSwitcherComponent {
   private launch = inject(HubLaunchService);
   private router = inject(Router);
   private navigation = inject(MobileNavigationService);
-  readonly apps = HUB_APPS;
   constructor() {
     // Il foglio si chiude quando cambia pagina (anche con il tasto indietro).
     effect(() => { this.navigation.url(); untracked(() => this.close()); });

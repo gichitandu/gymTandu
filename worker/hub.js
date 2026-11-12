@@ -1,5 +1,7 @@
 import {calendarRuntimeEnv,calendarRelay,calendarConfigured} from './calendar.js';
-// GT Hub: archivio separato da GymTrack (R2 hub/<utente>.json), riservato al Super Admin.
+import {appFeatureFlags} from './program-imports.js';
+// GT Hub e GT Garage: archivio separato da GymTrack (R2 hub/<utente>.json), uno per account.
+// Il Super Admin entra sempre; gli altri utenti solo se ha abilitato GT Hub o GT Garage per tutti.
 // Promemoria e impegni vengono proiettati verso il servizio calendario/notifiche.
 export const HUB_LIMIT_BYTES=8*1024*1024;
 const HUB_COLLECTIONS=['events','notes','transactions','imports','rules','plans','people','groups','expenses','settlements','prefs','cars','fuelups'];
@@ -53,10 +55,16 @@ async function hubKeepHistory(env,user,head,now){
  const stale=(list.objects||[]).map(o=>o.key).sort().reverse().slice(HUB_HISTORY_DAYS);
  for(const key of stale)await env.BUCKET.delete(key);
 }
+/** Garage salva auto e rifornimenti nello stesso archivio del Hub: basta una delle due app abilitata. */
+export async function hubAccess(env,user){
+ if(user?.role==='SuperAdmin')return true;
+ if(!user)return false;
+ try{const flags=await appFeatureFlags(env);return flags.hubEnabled||flags.garageEnabled;}catch{return false;}
+}
 export async function hubApi(request,env,user,ctx){
  try{
   if(!user)hubFail('Accedi al tuo account.',401);
-  if(user.role!=='SuperAdmin')hubFail('GT Hub è riservato al Super Admin.',403);
+  if(!await hubAccess(env,user))hubFail('GT Hub e GT Garage non sono abilitati per il tuo account.',403);
   if(!env.BUCKET)hubFail('Archivio server non configurato.',503);
   const path=new URL(request.url).pathname;
   if(path==='/api/hub/due'){if(request.method!=='GET')hubFail('Metodo non supportato.',405);return hubReply(await hubDue(env,user));}

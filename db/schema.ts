@@ -28,7 +28,7 @@ export const excelImportFiles=sqliteTable('excel_import_files',{
  userId:text('user_id').notNull().references(()=>users.id),id:text('id').notNull(),planId:text('plan_id').notNull(),sourceName:text('source_name').notNull(),contentHash:text('content_hash').notNull(),objectKey:text('object_key').notNull(),sizeBytes:integer('size_bytes').notNull(),startDate:text('start_date').notNull(),endDate:text('end_date').notNull(),weeks:integer('weeks').notNull(),planName:text('plan_name').notNull(),importedAt:integer('imported_at').notNull(),confirmedAt:integer('confirmed_at')
 },table=>[primaryKey({columns:[table.userId,table.id]}),uniqueIndex('excel_import_files_account_hash_start').on(table.userId,table.contentHash,table.startDate)]);
 export const appFeatures=sqliteTable('app_features',{
- id:text('id').primaryKey(),nutritionEnabled:integer('nutrition_enabled').notNull().default(0),revision:integer('revision').notNull().default(1),updatedBy:text('updated_by').references(()=>users.id),updatedAt:integer('updated_at')
+ id:text('id').primaryKey(),nutritionEnabled:integer('nutrition_enabled').notNull().default(0),hubEnabled:integer('hub_enabled').notNull().default(0),garageEnabled:integer('garage_enabled').notNull().default(0),revision:integer('revision').notNull().default(1),updatedBy:text('updated_by').references(()=>users.id),updatedAt:integer('updated_at')
 });
 export const accountArchiveResets=sqliteTable('account_archive_resets',{
  id:text('id').primaryKey(),userId:text('user_id').notNull().unique().references(()=>users.id),scope:text('scope').notNull().unique(),resetId:text('reset_id').notNull(),completedAt:integer('completed_at'),recoveryKey:text('recovery_key'),retainUntil:integer('retain_until')

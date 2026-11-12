@@ -2,7 +2,7 @@ import { Routes } from "@angular/router";
 import { preserveFormDrafts } from '../services/draft-navigation';
 import { nutritionEnabledGuard } from '../services/nutrition-guard';
 import { designStudioGuard } from '../design/design-guard';
-import { hubGuard } from '../hub/hub-access';
+import { appChooserGuard, garageGuard, hubGuard } from '../hub/hub-access';
 const pages: Routes = [
  {path:'recupera-allenamenti',loadComponent:()=>import('../features/workout-recovery.component').then(m=>m.WorkoutRecoveryComponent)},
  {path:'design-studio',canActivate:[designStudioGuard],loadComponent:()=>import('../design/design-studio.component').then(m=>m.DesignStudioComponent)},
@@ -14,7 +14,7 @@ const pages: Routes = [
  {path:'focus-muscolare',loadComponent:()=>import('../features/muscle-focus.component').then(m=>m.MuscleFocusComponent)},
  {path:'analisi',loadComponent:()=>import('../features/training-insights.component').then(m=>m.TrainingInsightsComponent)},
  // GT Hub: app separata (agenda, spese, Dividi), solo Super Admin; il Worker lo verifica di nuovo.
- {path:'scegli-app',canActivate:[hubGuard],loadComponent:()=>import('../hub/app-chooser.component').then(m=>m.AppChooserComponent)},
+ {path:'scegli-app',canActivate:[appChooserGuard],loadComponent:()=>import('../hub/app-chooser.component').then(m=>m.AppChooserComponent)},
  {path:'hub',canActivate:[hubGuard],loadComponent:()=>import('../hub/hub-today.component').then(m=>m.HubTodayComponent)},
  {path:'hub/calendario',canActivate:[hubGuard],loadComponent:()=>import('../hub/hub-calendar.component').then(m=>m.HubCalendarComponent)},
  {path:'hub/spese',canActivate:[hubGuard],loadComponent:()=>import('../hub/hub-expenses.component').then(m=>m.HubExpensesComponent)},
@@ -22,9 +22,9 @@ const pages: Routes = [
  {path:'hub/dividi',canActivate:[hubGuard],loadComponent:()=>import('../hub/hub-split.component').then(m=>m.HubSplitComponent)},
  {path:'hub/dividi/:id',canActivate:[hubGuard],loadComponent:()=>import('../hub/hub-group.component').then(m=>m.HubGroupComponent)},
  // GT Garage: la scheda dell'auto, sullo stesso archivio e con gli stessi permessi del Hub.
- {path:'auto',canActivate:[hubGuard],loadComponent:()=>import('../garage/garage.component').then(m=>m.GarageComponent)},
- {path:'auto/movimenti',canActivate:[hubGuard],loadComponent:()=>import('../garage/garage-moves.component').then(m=>m.GarageMovesComponent)},
- {path:'auto/statistiche',canActivate:[hubGuard],loadComponent:()=>import('../garage/garage-insights.component').then(m=>m.GarageInsightsComponent)},
+ {path:'auto',canActivate:[garageGuard],loadComponent:()=>import('../garage/garage.component').then(m=>m.GarageComponent)},
+ {path:'auto/movimenti',canActivate:[garageGuard],loadComponent:()=>import('../garage/garage-moves.component').then(m=>m.GarageMovesComponent)},
+ {path:'auto/statistiche',canActivate:[garageGuard],loadComponent:()=>import('../garage/garage-insights.component').then(m=>m.GarageInsightsComponent)},
  {path:'hub/note',canActivate:[hubGuard],loadComponent:()=>import('../hub/hub-notes.component').then(m=>m.HubNotesComponent)},
   {
     path: "",

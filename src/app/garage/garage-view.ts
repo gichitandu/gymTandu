@@ -1,6 +1,7 @@
 import { computed, effect, inject, Injectable, signal, untracked } from '@angular/core';
 import { addMonths, isoDay, monthKey } from '../hub/hub-model';
 import { HubStore } from '../hub/hub-store';
+import { AuthService } from '../services/auth';
 import { HubView } from '../hub/hub-view';
 import { applyLive, carCosts, carDeadlines, carStatus, CarLive, monthSeries, monthTotals, odometerReadings, suggestedBudget, unlinkedFuelCosts } from './garage-stats';
 
@@ -16,6 +17,7 @@ export interface VwStatus {
 @Injectable({ providedIn: 'root' })
 export class GarageView {
   readonly hub = inject(HubStore);
+  private auth = inject(AuthService);
   readonly view = inject(HubView);
   readonly car = this.hub.car;
   readonly fuelups = computed(() => { const car = this.car(); return this.hub.fuelups().filter(f => !car || f.carId === car.id); });
@@ -56,7 +58,8 @@ export class GarageView {
 
   /** Legge lo stato del collegamento (al massimo una volta al minuto, salvo richiesta esplicita). */
   async loadVw(force = false) {
-    if (!this.hub.allowed() || (!force && Date.now() - this.loadedAt < 60000)) return;
+    // Il collegamento Volkswagen è quello dell'auto del Super Admin: gli altri utenti non lo vedono.
+    if (!this.hub.allowed() || this.auth.user()?.role !== 'SuperAdmin' || this.auth.viewAsClient() || (!force && Date.now() - this.loadedAt < 60000)) return;
     this.loadedAt = Date.now();
     try {
       const res = await fetch('/api/hub/vw', { credentials: 'same-origin', cache: 'no-store' });

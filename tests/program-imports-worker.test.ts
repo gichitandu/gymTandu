@@ -106,12 +106,28 @@ it('keeps non-workout calendar activities outside plan overlap checks while pres
  data.workouts.push({id:'historic',planId:'other-plan',date:'2026-11-03'});expect(()=>validateImportedProgramOverlaps(data)).toThrow('Sovrapposizione');
 });
 it('defaults nutrition to hidden, permits only Super Admin changes and keeps repeat settings idempotent',async()=>{
- expect(await (await appFeaturesApi(request('/api/app-features'),env,alice)).json()).toEqual({nutritionEnabled:false,revision:0,updatedAt:null});
+ expect(await (await appFeaturesApi(request('/api/app-features'),env,alice)).json()).toEqual({nutritionEnabled:false,hubEnabled:false,garageEnabled:false,revision:0,updatedAt:null});
  for(const role of ['User','Admin'])expect((await appFeaturesApi(request('/api/app-features','POST',{nutritionEnabled:true}),env,{...alice,role})).status).toBe(403);
  const change=()=>appFeaturesApi(request('/api/app-features','POST',{nutritionEnabled:true}),env,admin);
  expect((await (await change()).json() as any)).toMatchObject({nutritionEnabled:true,revision:1});expect((await (await change()).json() as any).revision).toBe(1);
  expect((await (await appFeaturesApi(request('/api/app-features','POST',{nutritionEnabled:false}),env,admin)).json() as any)).toMatchObject({nutritionEnabled:false,revision:2});
  expect((await appFeaturesApi(request('/api/app-features','POST',{}),env,admin)).status).toBe(400);
+});
+it('keeps GT Hub and GT Garage closed until a migrated database lets a Super Admin open them for everyone',async()=>{
+ // Prima della migrazione 0012: Pasti funziona, Hub e Garage restano chiusi e non si possono aprire.
+ expect((await appFeaturesApi(request('/api/app-features','POST',{hubEnabled:true}),env,admin)).status).toBe(503);
+ expect((await (await appFeaturesApi(request('/api/app-features','POST',{nutritionEnabled:true}),env,admin)).json() as any)).toMatchObject({nutritionEnabled:true,hubEnabled:false,garageEnabled:false});
+ for(const f of readdirSync('drizzle').filter(name=>/^00(0[89]|1\d)_.*\.sql$/.test(name)).sort())sql.exec(readFileSync('drizzle/'+f,'utf8'));
+ expect(await (await appFeaturesApi(request('/api/app-features'),env,alice)).json()).toMatchObject({nutritionEnabled:true,hubEnabled:false,garageEnabled:false});
+ for(const role of ['User','Admin'])expect((await appFeaturesApi(request('/api/app-features','POST',{hubEnabled:true}),env,{...alice,role})).status).toBe(403);
+ expect((await appFeaturesApi(request('/api/app-features','POST',{hubEnabled:'yes'}),env,admin)).status).toBe(400);
+ expect((await appFeaturesApi(request('/api/app-features','POST',{hubEnabled:true,other:true}),env,admin)).status).toBe(400);
+ const hub=await (await appFeaturesApi(request('/api/app-features','POST',{hubEnabled:true}),env,admin)).json() as any;
+ expect(hub).toMatchObject({nutritionEnabled:true,hubEnabled:true,garageEnabled:false});
+ const garage=await (await appFeaturesApi(request('/api/app-features','POST',{garageEnabled:true}),env,admin)).json() as any;
+ expect(garage).toMatchObject({nutritionEnabled:true,hubEnabled:true,garageEnabled:true,revision:hub.revision+1});
+ expect((await (await appFeaturesApi(request('/api/app-features','POST',{garageEnabled:true}),env,admin)).json() as any).revision).toBe(garage.revision);
+ expect(await (await appFeaturesApi(request('/api/app-features'),env,bob)).json()).toMatchObject({hubEnabled:true,garageEnabled:true});
 });
 it('adds feature and file tables without resetting account or archive records and can safely reapply the additive migration',async()=>{
  const before=sql.prepare('SELECT id,email,role FROM users ORDER BY id').all();sql.prepare('INSERT INTO archive_heads VALUES(?,?,?,?,?,?)').run('unchanged',4,'old-key',1,8,'old-hash');const head=sql.prepare('SELECT * FROM archive_heads').all();

@@ -19,7 +19,7 @@ const programSource=await readFile('worker/program-imports.js','utf8');
 const serverCatalogSource=await readFile('worker/default-catalog.js','utf8');
 const storageAlertSource=await readFile('worker/storage-alert.js','utf8');
 const vwSource=await readFile('worker/vw.js','utf8');
-const hubSource=(await readFile('worker/hub.js','utf8')).replace("import {calendarRuntimeEnv,calendarRelay,calendarConfigured} from './calendar.js';",'');
+const hubSource=(await readFile('worker/hub.js','utf8')).replace("import {calendarRuntimeEnv,calendarRelay,calendarConfigured} from './calendar.js';",'').replace("import {appFeatureFlags} from './program-imports.js';",'');
 const manifest=JSON.parse(await readFile(root+'/ngsw.json','utf8'));
 for(const url of ['/index.html','/manifest.webmanifest'])manifest.hashTable[url]=createHash('sha1').update(await readFile(root+url)).digest('hex');
 // The legacy URLs become a storage-preserving migration worker. A fresh app

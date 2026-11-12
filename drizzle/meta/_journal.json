@@ -85,6 +85,13 @@
       "when": 1793753910985,
       "tag": "0011_glossy_shadow_king",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "6",
+      "when": 1794523744802,
+      "tag": "0012_app_features_hub_garage",
+      "breakpoints": true
     }
   ]
 }

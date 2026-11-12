@@ -5,7 +5,7 @@ import { ExerciseThumbComponent } from '../shared/exercise-thumb.component';
 import { Store } from '../services/store';
 import { AuthService } from '../services/auth';
 import { Exercise, localDate } from '../models/domain';
-import { HubLaunchService } from './hub-access';
+import { AppSwitcherService, HubLaunchService } from './hub-access';
 import { HubView } from './hub-view';
 import { HubStore } from './hub-store';
 import { dayItems, gymItems, upcoming } from './hub-calendar';
@@ -28,22 +28,22 @@ import { GarageView, num } from '../garage/garage-view';
         @if(thumbs().length){<span class="strip">@for(e of thumbs();track e.id){<gt-exercise-thumb [exercise]="e"/>}</span>}
       </span>
     </button>
-    <button type="button" class="app a-hub" (click)="go('hub')">
-      <span class="ah"><img src="/brand/gt-hub-mark.svg" alt=""/><span class="t"><b>GT Hub <i class="adm"><gt-icon name="lock"/>admin</i></b><small>Agenda, spese e Dividi</small></span><span class="open"><gt-icon name="arrow"/></span></span>
+    @if(access.allowed('hub')){<button type="button" class="app a-hub" (click)="go('hub')">
+      <span class="ah"><img src="/brand/gt-hub-mark.svg" alt=""/><span class="t"><b>GT Hub @if(access.adminOnly('hub')){<i class="adm"><gt-icon name="lock"/>admin</i>}</b><small>Agenda, spese e Dividi</small></span><span class="open"><gt-icon name="arrow"/></span></span>
       <span class="stats">
         <span><small><gt-icon name="clock"/>Prossimo</small><b>{{next()?.time||'—'}}</b><em>{{next()?.title||'Nessun impegno'}}</em></span>
         <span><small><gt-icon name="wallet"/>Oggi</small><b>{{budgetLabel()}}</b><em>{{budgetNote()}}</em></span>
         <span><small><gt-icon name="users"/>Dividi</small><b [class.pos]="view.position().net>0" [class.neg]="view.position().net<0">{{short(view.position().net,true)}} €</b><em>{{view.position().net>0?'ti devono':view.position().net<0?'devi':'in pari'}}</em></span>
       </span>
-    </button>
-    <button type="button" class="app a-car" (click)="go('auto')">
-      <span class="ah"><img src="/brand/gt-garage-mark.svg" alt=""/><span class="t"><b>GT Garage <i class="adm"><gt-icon name="lock"/>admin</i></b><small>{{garage.car()?.name||'La tua auto, carburante e costi'}}</small></span><span class="open"><gt-icon name="arrow"/></span></span>
+    </button>}
+    @if(access.allowed('auto')){<button type="button" class="app a-car" (click)="go('auto')">
+      <span class="ah"><img src="/brand/gt-garage-mark.svg" alt=""/><span class="t"><b>GT Garage @if(access.adminOnly('auto')){<i class="adm"><gt-icon name="lock"/>admin</i>}</b><small>{{garage.car()?.name||'La tua auto, carburante e costi'}}</small></span><span class="open"><gt-icon name="arrow"/></span></span>
       <span class="stats">
         <span><small><gt-icon name="fuel"/>Livello</small><b>{{garage.status().fuelPct!==null?garage.status().fuelPct+' %':'—'}}</b><em>stimato</em></span>
         <span><small><gt-icon name="road"/>Residui</small><b>{{garage.status().rangeKm!==null?n(garage.status().rangeKm!)+' km':'—'}}</b><em>stimati</em></span>
         <span><small><gt-icon name="wallet"/>Mese</small><b>{{short(garage.totals().byType.fuel)}} €</b><em>carburante</em></span>
       </span>
-    </button>
+    </button>}
   </div>
   <div class="rem"><span><strong>Apri subito l'ultima app usata</strong><small>Salti questa scelta. Cambi app dal logo in alto.</small></span>
     <button type="button" class="tog" role="switch" [attr.aria-checked]="launch.read().mode==='last'" (click)="toggleLast()" aria-label="Apri subito l'ultima app usata"></button></div>
@@ -94,6 +94,7 @@ h1.x span.g{animation-delay:.16s;color:transparent;background:linear-gradient(95
 })
 export class AppChooserComponent {
   readonly launch = inject(HubLaunchService);
+  readonly access = inject(AppSwitcherService);
   readonly view = inject(HubView);
   readonly garage = inject(GarageView);
   constructor() { void this.garage.loadVw(); }

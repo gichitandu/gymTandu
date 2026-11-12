@@ -132,18 +132,39 @@ export function validateImportedProgramOverlaps(data) {
  }
 }
 
+const APP_FEATURE_FIELDS={nutritionEnabled:'nutrition_enabled',hubEnabled:'hub_enabled',garageEnabled:'garage_enabled'};
+/** Interruttori globali delle sezioni. Prima della migrazione 0012 GT Hub e GT Garage restano chiusi. */
+export async function appFeatureFlags(env){
+ if(!env.DB)return{nutritionEnabled:false,hubEnabled:false,garageEnabled:false,revision:0,updatedAt:null};
+ let row;
+ try{row=await env.DB.prepare('SELECT nutrition_enabled,hub_enabled,garage_enabled,revision,updated_at FROM app_features WHERE id=?').bind('current').first();}
+ catch(error){
+  if(!/no such column|has no column/i.test(String(error?.message)))throw error;
+  row=await env.DB.prepare('SELECT nutrition_enabled,revision,updated_at FROM app_features WHERE id=?').bind('current').first();
+ }
+ return{nutritionEnabled:row?.nutrition_enabled===1,hubEnabled:row?.hub_enabled===1,garageEnabled:row?.garage_enabled===1,revision:row?.revision||0,updatedAt:row?.updated_at??null};
+}
 export async function appFeaturesApi(request,env,user) {
  try{
   if(!user)return programReply({error:'Accedi al tuo account.'},401);
   if(!env.DB)return programReply({error:'Impostazioni non ancora disponibili.'},503);
   if(!['GET','POST'].includes(request.method))return programReply({error:'Metodo non supportato.'},405,{Allow:'GET, POST'});
   if(request.method==='POST'){
-   if(user.role!=='SuperAdmin')return programReply({error:'Solo i Super Admin possono modificare la visibilità di Pasti.'},403);
+   if(user.role!=='SuperAdmin')return programReply({error:'Solo i Super Admin possono modificare la visibilità delle sezioni.'},403);
    programWriteAllowed(request);const body=await programBody(request,1024);
-   if(typeof body.nutritionEnabled!=='boolean')return programReply({error:'Indica se mostrare la sezione Pasti.'},400);
-   await env.DB.prepare('INSERT INTO app_features(id,nutrition_enabled,revision,updated_by,updated_at) VALUES(?,?,1,?,?) ON CONFLICT(id) DO UPDATE SET nutrition_enabled=excluded.nutrition_enabled,revision=app_features.revision+1,updated_by=excluded.updated_by,updated_at=excluded.updated_at WHERE app_features.nutrition_enabled<>excluded.nutrition_enabled').bind('current',body.nutritionEnabled?1:0,user.id,Date.now()).run();
+   const keys=body&&typeof body==='object'&&!Array.isArray(body)?Object.keys(body):[];
+   if(!keys.length||keys.some(key=>!(key in APP_FEATURE_FIELDS)||typeof body[key]!=='boolean'))return programReply({error:'Indica quali sezioni mostrare.'},400);
+   const current=await appFeatureFlags(env),next={...current};for(const key of keys)next[key]=body[key];
+   if(keys.some(key=>next[key]!==current[key])){
+    try{await env.DB.prepare('INSERT INTO app_features(id,nutrition_enabled,hub_enabled,garage_enabled,revision,updated_by,updated_at) VALUES(?,?,?,?,1,?,?) ON CONFLICT(id) DO UPDATE SET nutrition_enabled=excluded.nutrition_enabled,hub_enabled=excluded.hub_enabled,garage_enabled=excluded.garage_enabled,revision=app_features.revision+1,updated_by=excluded.updated_by,updated_at=excluded.updated_at').bind('current',next.nutritionEnabled?1:0,next.hubEnabled?1:0,next.garageEnabled?1:0,user.id,Date.now()).run();}
+    catch(error){
+     if(!/no such column|has no column/i.test(String(error?.message)))throw error;
+     // Database non ancora migrato (0012): Pasti si salva come prima, GT Hub e GT Garage aspettano la migrazione.
+     if(keys.some(key=>key!=='nutritionEnabled'))return programReply({error:'Database da aggiornare: applica le migrazioni prima di aprire GT Hub o GT Garage.'},503);
+     await env.DB.prepare('INSERT INTO app_features(id,nutrition_enabled,revision,updated_by,updated_at) VALUES(?,?,1,?,?) ON CONFLICT(id) DO UPDATE SET nutrition_enabled=excluded.nutrition_enabled,revision=app_features.revision+1,updated_by=excluded.updated_by,updated_at=excluded.updated_at').bind('current',next.nutritionEnabled?1:0,user.id,Date.now()).run();
+    }
+   }
   }
-  const settings=await env.DB.prepare('SELECT nutrition_enabled,revision,updated_at FROM app_features WHERE id=?').bind('current').first();
-  return programReply({nutritionEnabled:settings?.nutrition_enabled===1,revision:settings?.revision||0,updatedAt:settings?.updated_at??null});
+  return programReply(await appFeatureFlags(env));
  }catch(error){if(error.status)return programReply({error:error.message},error.status);throw error;}
 }

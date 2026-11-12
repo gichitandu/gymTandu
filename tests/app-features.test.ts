@@ -56,3 +56,17 @@ it('redirects direct links home when the section is disabled',async()=>{
 it('bounds the direct-route wait when a feature request never resolves',async()=>{
  vi.useFakeTimers();const t=setup();t.request.mockReturnValue(new Promise(()=>{}));const result=t.features.ensureLoaded();await vi.advanceTimersByTimeAsync(7000);expect(await result).toBe(false);
 });
+it('applies the GT Hub and GT Garage flags, caches them for offline and lets only a Super Admin change them',async()=>{
+ const t=setup('User');t.request.mockResolvedValue({nutritionEnabled:false,hubEnabled:true,garageEnabled:false,revision:3});
+ await t.features.ensureLoaded();expect(t.features.hubEnabled()).toBe(true);expect(t.features.garageEnabled()).toBe(false);
+ t.request.mockClear();expect(await t.features.setFeature('garageEnabled',true)).toBe(false);expect(t.request).not.toHaveBeenCalled();
+ t.auth.offlineMode.set(true);t.features.hubEnabled.set(false);t.sync();expect(t.features.hubEnabled()).toBe(true);
+});
+it('sends only the changed Hub flag and rolls it back when the server refuses',async()=>{
+ const t=setup();await t.features.ensureLoaded();t.request.mockResolvedValueOnce({nutritionEnabled:false,hubEnabled:true,garageEnabled:false,revision:2});
+ expect(await t.features.setFeature('hubEnabled',true)).toBe(true);expect(t.request).toHaveBeenLastCalledWith('app-features',{hubEnabled:true},'POST');expect(t.features.hubEnabled()).toBe(true);
+ t.request.mockRejectedValueOnce(Error('Database da aggiornare'));expect(await t.features.setFeature('garageEnabled',true)).toBe(false);expect(t.features.garageEnabled()).toBe(false);expect(t.features.hubEnabled()).toBe(true);
+});
+it('rejects malformed Hub flags from the server',async()=>{
+ const t=setup('User');t.request.mockResolvedValue({nutritionEnabled:false,hubEnabled:'yes'});await t.features.ensureLoaded();expect(t.features.hubEnabled()).toBe(false);
+});

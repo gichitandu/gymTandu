@@ -67,6 +67,25 @@ describe('lettura estratti conto', () => {
     const hashed = withHashes('intesa', [row, row]);
     expect(new Set(hashed.map(h => h.hash)).size).toBe(2);
   });
+  it('riconosce come già importati i movimenti di un Excel reimportato o con periodo sovrapposto', () => {
+    const oct = [
+      { date: '2026-10-30', description: 'PAGAMENTO POS ESSELUNGA', amount: -2350, transfer: false },
+      { date: '2026-10-31', description: 'Caffè', amount: -120, transfer: false },
+      { date: '2026-10-31', description: 'Caffè', amount: -120, transfer: false },
+    ];
+    const imported = new Set(withHashes('intesa', oct).map(h => h.hash));
+    // Stesso file importato di nuovo: tutto già presente.
+    expect(withHashes('intesa', oct).every(h => imported.has(h.hash))).toBe(true);
+    // File successivo che riparte dal 31 ottobre (spazi e maiuscole diversi): nuovo solo il movimento di novembre.
+    const next = [
+      { date: '2026-10-31', description: '  caffè ', amount: -120, transfer: false },
+      { date: '2026-10-31', description: 'CAFFÈ', amount: -120, transfer: false },
+      { date: '2026-11-01', description: 'Caffè', amount: -120, transfer: false },
+    ];
+    expect(withHashes('intesa', next).map(h => imported.has(h.hash))).toEqual([true, true, false]);
+    // Lo stesso movimento su un'altra banca non è un duplicato.
+    expect(withHashes('revolut', oct).some(h => imported.has(h.hash))).toBe(false);
+  });
 });
 
 describe('categorie e giroconti', () => {

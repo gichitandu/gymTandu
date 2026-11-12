@@ -1,6 +1,8 @@
 import { computed, effect, inject, Injectable, signal, untracked } from '@angular/core';
 import Dexie, { Table } from 'dexie';
 import { AuthService } from '../services/auth';
+import { AppFeaturesService } from '../services/app-features';
+import { hubAllowed } from './hub-access';
 import {
   emptyHubDoc, HubCar, HubCollection, HubDoc, HubPerson, HubPlan, HubRecord, HUB_COLLECTIONS, HUB_DOC_VERSION, HubPrefs,
 } from './hub-model';
@@ -60,7 +62,9 @@ export class HubStore {
   readonly ready = signal(false);
   readonly status = signal<'local' | 'syncing' | 'saved' | 'offline' | 'error'>('local');
   readonly error = signal('');
-  readonly allowed = computed(() => { const u = this.auth.user(); return !!u && u.role === 'SuperAdmin' && !this.auth.viewAsClient() && !this.auth.offlineMode(); });
+  private features = inject(AppFeaturesService);
+  /** Archivio aperto se l'account può usare GT Hub o GT Garage (salvano nello stesso documento). */
+  readonly allowed = computed(() => hubAllowed(this.auth, this.features));
   readonly account = computed(() => this.allowed() ? this.auth.user()!.id : '');
   private opened = '';
   private revision = 0;
@@ -88,6 +92,8 @@ export class HubStore {
     if (typeof window !== 'undefined') {
       window.addEventListener('online', () => this.schedule(0));
       document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') this.schedule(0); else if (this.dirty) this.schedule(0); });
+      // Prima di un aggiornamento dell'app l'ultima versione del Hub viene scritta sul dispositivo.
+      window.addEventListener('gymtrack:before-update', event => (event as Event & { waitUntil?: (save: Promise<void>) => void }).waitUntil?.(this.persist()));
     }
   }
 
