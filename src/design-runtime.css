@@ -79,3 +79,9 @@ gt-shell .sidebar nav a[data-design-id] > span {
     scroll-behavior: auto !important;
   }
 }
+
+/* Focus muscolare nei temi Nero/Bianco: l'accento è monocromatico e non colora la figura grigia, quindi la zona usa il viola del tema Viola Neon */
+body.theme-mono .anatomy-visual .anatomy-zones ellipse{fill:#CC70FF!important}
+body.theme-mono .anatomy-visual .zone-tint{mix-blend-mode:color;opacity:.95}
+body.theme-mono .anatomy-visual .zone-glow{mix-blend-mode:screen;opacity:.5}
+body.theme-mono.light .anatomy-visual .zone-glow,body.theme-mono.custom-light .anatomy-visual .zone-glow{opacity:.4}
