@@ -164,7 +164,7 @@ export class HubImportComponent {
     const ws = sheets[0];
     if (!ws) throw new Error('Il file Excel non contiene movimenti.');
     const rows: unknown[][] = [];
-    for (let r = 1; r <= Math.min(ws.rowCount, 20000); r++) { const values = ws.getRow(r).values; rows.push(Array.isArray(values) ? values.slice(1) : []); }
+    for (let r = 1; r <= Math.min(ws.rowCount, 20000); r++) { const values = ws.getRow(r).values; rows.push(Array.isArray(values) ? Array.from(values.slice(1), v => v ?? '') : []); }
     return rows;
   }
   private build(rows: unknown[][], layout: StatementLayout, fileName: string) {

@@ -85,7 +85,7 @@ function findColumn(headers: string[], key: ColumnKey, used: Set<number>): numbe
 }
 
 export function detectStatement(rows: unknown[][], hint: HubBank = 'altro'): StatementLayout | null {
-  const top = rows.slice(0, 40).map(r => r.map(c => norm(cellText(c))));
+  const top = rows.slice(0, 40).map(r => Array.from(r ?? [], c => norm(cellText(c))));
   const text = top.map(r => r.join(' ')).join(' ');
   let best: StatementLayout | null = null, bestScore = 0;
   top.forEach((headers, headerRow) => {
