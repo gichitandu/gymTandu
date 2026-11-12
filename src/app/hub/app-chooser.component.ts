@@ -29,7 +29,7 @@ import { GarageView, num } from '../garage/garage-view';
       </span>
     </button>
     <button type="button" class="app a-hub" (click)="go('hub')">
-      <span class="ah"><span class="mk"><gt-icon name="grid"/></span><span class="t"><b>GT Hub <i class="adm"><gt-icon name="lock"/>admin</i></b><small>Agenda, spese e Dividi</small></span><span class="open"><gt-icon name="arrow"/></span></span>
+      <span class="ah"><img src="/brand/gt-hub-mark.svg" alt=""/><span class="t"><b>GT Hub <i class="adm"><gt-icon name="lock"/>admin</i></b><small>Agenda, spese e Dividi</small></span><span class="open"><gt-icon name="arrow"/></span></span>
       <span class="stats">
         <span><small><gt-icon name="clock"/>Prossimo</small><b>{{next()?.time||'—'}}</b><em>{{next()?.title||'Nessun impegno'}}</em></span>
         <span><small><gt-icon name="wallet"/>Oggi</small><b>{{budgetLabel()}}</b><em>{{budgetNote()}}</em></span>
@@ -37,7 +37,7 @@ import { GarageView, num } from '../garage/garage-view';
       </span>
     </button>
     <button type="button" class="app a-car" (click)="go('auto')">
-      <span class="ah"><span class="mk car"><gt-icon name="car"/></span><span class="t"><b>GT Garage <i class="adm"><gt-icon name="lock"/>admin</i></b><small>{{garage.car()?.name||'La tua auto, carburante e costi'}}</small></span><span class="open"><gt-icon name="arrow"/></span></span>
+      <span class="ah"><img src="/brand/gt-garage-mark.svg" alt=""/><span class="t"><b>GT Garage <i class="adm"><gt-icon name="lock"/>admin</i></b><small>{{garage.car()?.name||'La tua auto, carburante e costi'}}</small></span><span class="open"><gt-icon name="arrow"/></span></span>
       <span class="stats">
         <span><small><gt-icon name="fuel"/>Livello</small><b>{{garage.status().fuelPct!==null?garage.status().fuelPct+' %':'—'}}</b><em>stimato</em></span>
         <span><small><gt-icon name="road"/>Residui</small><b>{{garage.status().rangeKm!==null?n(garage.status().rangeKm!)+' km':'—'}}</b><em>stimati</em></span>

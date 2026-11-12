@@ -29,7 +29,7 @@ const AUTO_TABS = [
   <div class="hb-mesh" aria-hidden="true"></div>
   <main class="hb-main">
     @if(showTop()){<header class="hb-top">
-      <button type="button" class="hb-switch" (click)="switcher.set(true)" aria-haspopup="dialog" aria-label="Cambia app"><span class="hb-mk" [class.auto]="app()==='auto'"><gt-icon [name]="app()==='auto'?'car':'grid'"/></span>{{app()==='auto'?'GT Garage':'GT Hub'}}<gt-icon name="chevron-down"/></button>
+      <button type="button" class="hb-switch" (click)="switcher.set(true)" aria-haspopup="dialog" aria-label="Cambia app"><img class="hb-mk" [src]="app()==='auto'?'/brand/gt-garage-mark.svg':'/brand/gt-hub-mark.svg'" alt=""/>{{app()==='auto'?'GT Garage':'GT Hub'}}<gt-icon name="chevron-down"/></button>
       <span class="hb-right"><span class="hb-sync" [attr.data-s]="hub.status()" [attr.title]="hub.syncLabel()" role="status" [attr.aria-label]="hub.syncLabel()"></span>
       <button type="button" class="hb-me" (click)="switcher.set(true)" aria-label="Account e app"><gt-avatar [photo]="gym.profile().photo" [name]="gym.profile().name"/></button></span>
     </header>}
@@ -44,8 +44,8 @@ const AUTO_TABS = [
     <span class="hb-lab" style="margin-top:4px">Le tue app</span>
     <button type="button" class="hb-li hb-app" (click)="open('/')"><img src="/brand/gt-modern-mark.png" alt=""/><span class="bd"><strong>GymTrack</strong><small>Allenamenti, pasti e progressi</small>
       @if(nextWorkout();as w){<span class="hb-tag p" style="margin-top:6px"><gt-icon name="fire"/>{{w.title}}{{w.time?' alle '+w.time:' oggi'}}</span>}</span><gt-icon name="chevron-right" class="hb-chev"/></button>
-    <button type="button" class="hb-li hb-app" [class.cur]="app()==='hub'" (click)="app()==='hub'?switcher.set(false):open('/hub')"><span class="hb-mk lg"><gt-icon name="grid"/></span><span class="bd"><strong>GT Hub</strong><small>Agenda, spese, Dividi e note</small></span><gt-icon [name]="app()==='hub'?'check':'chevron-right'" class="hb-chev" [class.on]="app()==='hub'"/></button>
-    <button type="button" class="hb-li hb-app" [class.cur]="app()==='auto'" (click)="app()==='auto'?switcher.set(false):open('/auto')"><span class="hb-mk lg auto"><gt-icon name="car"/></span><span class="bd"><strong>GT Garage</strong><small>La tua auto, carburante e costi</small></span><gt-icon [name]="app()==='auto'?'check':'chevron-right'" class="hb-chev" [class.on]="app()==='auto'"/></button>
+    <button type="button" class="hb-li hb-app" [class.cur]="app()==='hub'" (click)="app()==='hub'?switcher.set(false):open('/hub')"><img class="hb-mk lg" src="/brand/gt-hub-mark.svg" alt=""/><span class="bd"><strong>GT Hub</strong><small>Agenda, spese, Dividi e note</small></span><gt-icon [name]="app()==='hub'?'check':'chevron-right'" class="hb-chev" [class.on]="app()==='hub'"/></button>
+    <button type="button" class="hb-li hb-app" [class.cur]="app()==='auto'" (click)="app()==='auto'?switcher.set(false):open('/auto')"><img class="hb-mk lg" src="/brand/gt-garage-mark.svg" alt=""/><span class="bd"><strong>GT Garage</strong><small>La tua auto, carburante e costi</small></span><gt-icon [name]="app()==='auto'?'check':'chevron-right'" class="hb-chev" [class.on]="app()==='auto'"/></button>
     <span class="hb-lab">Dopo l'accesso apri</span>
     <div class="hb-seg" role="radiogroup" aria-label="Dopo l'accesso apri">
       @for(m of modes;track m.id){<button type="button" role="radio" [class.on]="mode()===m.id" [attr.aria-checked]="mode()===m.id" (click)="setMode(m.id)">{{m.label}}</button>}

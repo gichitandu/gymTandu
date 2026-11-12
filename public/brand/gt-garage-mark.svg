@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="GT Garage">
+<defs><linearGradient id="c" x1="70" y1="170" x2="440" y2="380" gradientUnits="userSpaceOnUse"><stop stop-color="#C2FFE0"/><stop offset=".5" stop-color="#3FD496"/><stop offset="1" stop-color="#16A3A8"/></linearGradient></defs>
+<rect width="512" height="512" fill="#030821"/>
+<g fill="url(#c)" transform="translate(84 22) scale(.86) skewX(-7)">
+<path fill-rule="evenodd" d="M56 322v-30c0-20 10-30 30-34l46-10 50-52c10-12 24-18 40-18h78c20 0 36 6 50 18l48 44 30 8c20 6 28 18 28 38v32c0 9-6 14-14 14h-16a48 48 0 0 0-96 0H194a48 48 0 0 0-96 0H70c-9 0-14-5-14-14zM196 236h72v-42h-28c-6 0-10 2-14 6zM290 194v42h72l-38-34c-6-6-12-8-20-8z"/>
+<circle cx="146" cy="334" r="31"/><circle cx="378" cy="334" r="31"/>
+<path d="M-4 258h44a9 9 0 0 1 0 18H-4a9 9 0 0 1 0-18zM-24 300h40a9 9 0 0 1 0 18h-40a9 9 0 0 1 0-18z" opacity=".55"/>
+</g>
+</svg>

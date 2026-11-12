@@ -66,6 +66,7 @@ export class ThemeService{
   document.body.dataset['themePalette']=this.config().palette;
   document.body.classList.toggle('theme-preset',THEME_PRESETS.some(p=>p.id===this.config().palette)&&!ORIGINAL_THEME_IDS.includes(this.config().palette));
   document.body.classList.toggle('theme-satin',tokens.satin);
+  document.body.classList.toggle('theme-mono',tokens.mono);
   document.body.classList.toggle('theme-multicolor',tokens.multicolor);
   document.body.classList.toggle('theme-metallic',['oro','argento'].includes(this.config().palette)&&!this.config().accent);
   document.body.classList.toggle('palette-violet',this.config().palette==='viola-neon'&&!this.config().accent);

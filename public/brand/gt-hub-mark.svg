@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="GT Hub">
+<defs><linearGradient id="h" x1="110" y1="110" x2="410" y2="410" gradientUnits="userSpaceOnUse"><stop stop-color="#D6C8FF"/><stop offset=".48" stop-color="#8A75FF"/><stop offset="1" stop-color="#4C8DFF"/></linearGradient></defs>
+<rect width="512" height="512" fill="#030821"/>
+<g transform="translate(66 0) skewX(-13)" fill="none" stroke="url(#h)" stroke-linecap="round" stroke-linejoin="round">
+<rect x="122" y="160" width="268" height="232" rx="52" stroke-width="42"/>
+<path d="M198 118v52M314 118v52" stroke-width="42"/>
+<path d="M200 284l44 44 76-88" stroke-width="40"/>
+</g>
+</svg>

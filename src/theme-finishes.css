@@ -58,3 +58,55 @@ body.theme-ready.theme-satin gt-shell.photo-controls :is(.ref-tabs,.segmented,.n
 body.theme-ready.theme-satin gt-shell.photo-controls .bottom-nav a.selected gt-icon{
  background:linear-gradient(155deg,var(--theme-button-start),var(--theme-button-end));color:var(--accent-ink);border-color:var(--accent);box-shadow:inset 0 1px #ffffff30,0 0 calc(12px * var(--neon-glow,.55)) color-mix(in srgb,var(--accent) 18%,transparent);
 }
+/* Nero e Bianco: monochrome finish. Flat surfaces, hairlines, inverted primary action and no neon glow. */
+body.theme-ready.theme-mono{--neon-glow:0;--cta-start:var(--accent);--cta-end:var(--accent);--cta-ink:var(--accent-ink)}
+body.theme-ready.theme-mono gt-shell.photo-controls{
+ --ref-blue:var(--muted);--ref-green:var(--green);
+ --ref-line:color-mix(in srgb,var(--text) 11%,transparent);
+ --ref-surface:linear-gradient(180deg,color-mix(in srgb,var(--text) 4%,var(--card)),var(--card));
+ --ref-surface-soft:var(--raised);
+ --ref-violet-surface:linear-gradient(180deg,color-mix(in srgb,var(--text) 8%,var(--card)),color-mix(in srgb,var(--text) 3%,var(--card)));
+ --ref-gloss:inset 0 1px 0 color-mix(in srgb,var(--text) 7%,transparent);
+ --ref-primary-top:var(--accent);--ref-primary-bottom:var(--accent);--ref-primary-ink:var(--accent-ink);
+ --ref-tab-top:var(--accent);--ref-tab-bottom:var(--accent);
+}
+body.theme-ready.theme-mono.custom-light gt-shell.photo-controls{
+ --ref-surface:var(--card);--ref-violet-surface:var(--card);
+ --ref-gloss:0 1px 2px #1e1c140a,0 10px 28px #1e1c140d;
+}
+body.theme-ready.theme-mono gt-shell.photo-controls::before{background:radial-gradient(110% 38% at 50% -6%,color-mix(in srgb,var(--text) 11%,transparent),transparent 64%)}
+body.theme-ready.theme-mono.custom-light gt-shell.photo-controls::before{background:radial-gradient(110% 38% at 50% -6%,#ffffffe6,transparent 64%)}
+body.theme-ready.theme-mono gt-shell.photo-controls :is(.card,.ref-card){border-color:var(--ref-line);box-shadow:var(--ref-gloss)}
+body.theme-ready.theme-mono gt-shell.photo-controls :is(.ref-card.violet,.card.violet,.ref-violet-card){border-color:color-mix(in srgb,var(--text) 18%,transparent);box-shadow:var(--ref-gloss)}
+body.theme-ready.theme-mono gt-shell.photo-controls :is(button.primary,.button.primary,.ref-action.primary,.ref-icon-button.primary,.icon-btn.primary){
+ background:var(--accent);color:var(--accent-ink);border-color:transparent;box-shadow:none;
+}
+body.theme-ready.theme-mono gt-shell.photo-controls :is(.ref-action.secondary,button.secondary,.button.secondary){border-color:var(--ref-line);box-shadow:none}
+body.theme-ready.theme-mono gt-shell.photo-controls :is(.ref-tabs,.segmented,.neon-segments)>:is(button,a).active,
+body.theme-ready.theme-mono gt-shell.photo-controls .bottom-nav a.selected gt-icon,
+body.theme-ready.theme-mono gt-shell.photo-controls .bottom-nav a.training-selected gt-icon{
+ background:var(--accent);color:var(--accent-ink);border-color:transparent;box-shadow:none;
+}
+body.theme-ready.theme-mono gt-shell.photo-controls :is(.ref-badge,.pill):not(.green,.warning,.danger){border-color:var(--ref-line);box-shadow:none}
+/* Screen-level tints (simple UI, Home, Calendar) become greys of different lightness; status colours stay. */
+body.theme-ready.theme-mono{
+ --su-violet:var(--text);--su-blue:var(--muted);--su-grad:var(--accent);
+ --su-glass:linear-gradient(180deg,color-mix(in srgb,var(--text) 4%,var(--card)),var(--card));
+}
+body.theme-ready.theme-mono.custom-light{--su-glass:var(--card)}
+body.theme-ready.theme-mono gt-shell main>*{
+ --hx-violet:var(--text);--hx-rest:var(--muted);--hx-line:color-mix(in srgb,var(--text) 11%,transparent);
+ --cal-violet:var(--text);--cal-rest:var(--muted);--cal-pink:color-mix(in srgb,var(--text) 60%,var(--bg));
+ --cal-aur:var(--accent);--cal-line:color-mix(in srgb,var(--text) 11%,transparent);
+}
+body.theme-ready.theme-mono.dynamic-background gt-shell::before{background:radial-gradient(110% 38% at 50% -6%,color-mix(in srgb,var(--text) 9%,transparent),transparent 64%);opacity:1}
+body.theme-ready.theme-mono.custom-light.dynamic-background gt-shell::before{background:none}
+body.theme-ready.theme-mono gt-shell.photo-controls.reference-pages .app-main::before{opacity:.35}
+body.theme-ready.theme-mono.custom-light gt-shell.photo-controls.reference-pages .app-main::before{opacity:.12}
+body.theme-ready.theme-mono gt-shell .chart-empty gt-icon{color:var(--muted)}
+body.theme-ready.theme-mono gt-shell .chart-empty b{color:var(--text)}
+body.theme-ready.theme-mono gt-shell :is(.sidebar nav a.selected::after,.bottom-nav a.selected::before){background:var(--accent)}
+body.theme-ready.theme-mono gt-shell .bottom-nav a.selected::before{background:var(--accent)!important}
+body.theme-ready.theme-mono gt-shell .hx-ring{background:conic-gradient(from 200deg,var(--accent) var(--progress),color-mix(in srgb,var(--text) 9%,transparent) 0)}
+body.theme-ready.theme-mono gt-shell .hx-aurora{background:radial-gradient(420px 360px at 88% 6%,color-mix(in srgb,var(--text) 13%,transparent),transparent 66%)}
+body.theme-ready.theme-mono.custom-light gt-shell .hx-aurora{background:none}

@@ -22,7 +22,7 @@ export interface ThemePalette {
   tertiary?: string;
   buttonStart?: string;
   buttonEnd?: string;
-  finish?: "satin";
+  finish?: "satin" | "mono";
 }
 export interface ThemeTokens {
   background: string;
@@ -42,6 +42,7 @@ export interface ThemeTokens {
   buttonStart: string;
   buttonEnd: string;
   satin: boolean;
+  mono: boolean;
 }
 export const STANDARD_THEME_PRESETS: readonly ThemePalette[] = [
   {
@@ -131,6 +132,41 @@ export const STANDARD_THEME_PRESETS: readonly ThemePalette[] = [
 export const THEME_PRESETS: readonly ThemePalette[] = [
   ...APPROVED_THEME_PALETTES,
   ...STANDARD_THEME_PRESETS,
+];
+/** Monochrome themes: no accent hue, the primary action is the inverted ink. */
+export const ELEGANT_THEME_PRESETS: readonly ThemePalette[] = [
+  {
+    id: "nero",
+    name: "Nero",
+    background: "#000000",
+    card: "#0E0E10",
+    accent: "#F7F6F3",
+    text: "#F7F6F3",
+    muted: "#9A9AA0",
+    buttonText: "#0A0A0A",
+    tone: "dark",
+    finish: "mono",
+  },
+  {
+    id: "bianco",
+    name: "Bianco",
+    background: "#F7F6F3",
+    card: "#FFFFFF",
+    accent: "#0C0C0D",
+    text: "#0C0C0D",
+    muted: "#63636A",
+    buttonText: "#F7F6F3",
+    tone: "light",
+    finish: "mono",
+  },
+];
+const SELECTABLE_ORIGINAL_IDS = ["blu-azzurro", "viola-neon"];
+/** The only themes offered in the picker. Every other palette stays valid for saved themes and backups. */
+export const SELECTABLE_THEME_PRESETS: readonly ThemePalette[] = [
+  ...SELECTABLE_ORIGINAL_IDS.map(
+    (id) => APPROVED_THEME_PALETTES.find((p) => p.id === id)!,
+  ),
+  ...ELEGANT_THEME_PRESETS,
 ];
 /** Saved themes and imported backups keep their original colours and IDs. */
 const legacyPalettes: readonly ThemePalette[] = [
@@ -225,6 +261,7 @@ const legacyPalettes: readonly ThemePalette[] = [
 ];
 export const THEME_PALETTES: readonly ThemePalette[] = [
   ...THEME_PRESETS,
+  ...ELEGANT_THEME_PRESETS,
   ...legacyPalettes.filter(
     (p) => !THEME_PRESETS.some((preset) => preset.id === p.id),
   ),
@@ -378,5 +415,6 @@ export function resolveTheme(
     buttonStart,
     buttonEnd,
     satin: palette.finish === "satin",
+    mono: palette.finish === "mono" && !safe.accent && !safe.background,
   };
 }

@@ -8,7 +8,7 @@
 
 /* Page entrance: first blocks of each page rise in sequence. */
 body.theme-ready gt-shell main:not(.session-main) > *:not(router-outlet) > :nth-child(-n+7) {
-  animation: srRise .55s cubic-bezier(.2, .8, .2, 1) both;
+  animation: srRise .55s cubic-bezier(.2, .8, .2, 1) backwards;
 }
 
 body.theme-ready gt-shell main:not(.session-main) > *:not(router-outlet) > :nth-child(2) { animation-delay: .05s; }
@@ -142,3 +142,14 @@ body.theme-ready gt-shell .brand span { color: var(--accent-text); }
 
 /* Logo GT nell'intestazione: marchio ad alto contrasto (lettere bianche su gradiente), leggibile anche piccolo */
 body.theme-ready gt-shell .brand .app-brand-mark { border-radius: 11px; box-shadow: 0 6px 18px color-mix(in srgb, #16e0ff 22%, transparent); object-fit: cover; }
+
+/* Open dialogs sit above the bottom bar and the sidebar: .app-main is an isolated layer, so its own
+   order has to rise while a dialog is open, otherwise the bar covers the dialog's last buttons. */
+body gt-shell .app-main:has(.modal-backdrop) {
+  position: relative;
+  z-index: 60;
+}
+
+/* Recupera allenamenti: the long title goes under the back link instead of running off screen. */
+body.theme-ready gt-shell main .page-heading:has(.rc3-back) { flex-wrap: wrap; gap: 10px; }
+body.theme-ready gt-shell main .page-heading:has(.rc3-back) h1 { flex: 1 1 100%; min-width: 0; }

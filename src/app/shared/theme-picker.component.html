@@ -8,6 +8,7 @@
     !draft().accent
   "
   [class.preview-satin]="colors().satin"
+  [class.preview-mono]="colors().mono"
   [style.color-scheme]="colors().light ? 'light' : 'dark'"
   [style.--preview-bg]="colors().background"
   [style.--preview-card]="colors().card"
@@ -44,8 +45,8 @@
   <fieldset class="palette-picker">
     <legend>Temi predefiniti</legend>
     <p class="palette-intro">
-      Blu e viola originali, più sei nuove palette coordinate. Ogni scelta resta
-      in anteprima finché non salvi.
+      Blu e viola originali, più Nero e Bianco. Ogni scelta resta in anteprima
+      finché non salvi.
     </p>
     @if (isLegacyPalette()) {
       <p class="legacy-theme" role="status">
@@ -64,6 +65,7 @@
             [class.metallic]="palette.id === 'oro' || palette.id === 'argento'"
             [class.multicolor]="palette.id === 'multicolore'"
             [class.satin]="palette.finish === 'satin'"
+            [class.mono]="palette.finish === 'mono'"
             [attr.data-palette-id]="palette.id"
             [attr.aria-pressed]="draft().palette === palette.id"
             [attr.aria-label]="'Tema ' + palette.name"

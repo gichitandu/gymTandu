@@ -1,5 +1,5 @@
 import {describe,it,expect} from 'vitest';
-import {THEME_PALETTES,THEME_PRESETS,contrastRatio,resolveTheme,validThemeConfig} from '../src/app/services/theme-palettes';
+import {ELEGANT_THEME_PRESETS,SELECTABLE_THEME_PRESETS,THEME_PALETTES,THEME_PRESETS,contrastRatio,resolveTheme,validThemeConfig} from '../src/app/services/theme-palettes';
 function readable(tokens:ReturnType<typeof resolveTheme>){
  for(const surface of [tokens.background,tokens.card,tokens.raised]){
   expect(contrastRatio(tokens.text,surface)).toBeGreaterThanOrEqual(4.5);
@@ -62,4 +62,23 @@ it('keeps accent fill intact while adapting link and navigation text to the surr
   expect(tokens.accentText).not.toBe(tokens.accent);
   readable(tokens);
  }
+});
+
+it('offers Nero and Bianco as readable monochrome themes next to the original blue and violet',()=>{
+ expect(SELECTABLE_THEME_PRESETS.map(p=>p.id)).toEqual(['blu-azzurro','viola-neon','nero','bianco']);
+ for(const palette of ELEGANT_THEME_PRESETS){
+  const config={palette:palette.id,mode:palette.tone} as const;
+  expect(validThemeConfig(config)).toBe(true);
+  const tokens=resolveTheme(config,false);
+  expect(tokens.mono).toBe(true);expect(tokens.light).toBe(palette.tone==='light');
+  expect(tokens.background).toBe(palette.background);expect(tokens.accent).toBe(palette.accent);
+  for(const surface of [tokens.background,tokens.card,tokens.raised]){
+   expect(contrastRatio(tokens.text,surface)).toBeGreaterThanOrEqual(7);
+   expect(contrastRatio(tokens.muted,surface)).toBeGreaterThanOrEqual(4.5);
+  }
+  expect(contrastRatio(tokens.buttonText,tokens.accent)).toBeGreaterThanOrEqual(7);
+  // A personal colour turns the monochrome finish off instead of fighting it.
+  expect(resolveTheme({...config,accent:'#FF0000'},false).mono).toBe(false);
+ }
+ expect(resolveTheme({palette:'blu-azzurro',mode:'dark'},false).mono).toBe(false);
 });

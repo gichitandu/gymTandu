@@ -56,7 +56,7 @@ import { ActivatedRoute } from '@angular/router';
       </a>
       <details class="su-card pg-exercise-chart" gtDesign="progress.exerciseChart"><summary><span class="su-bubble pink"><gt-icon name="chart"/></span><span><strong gtDesign="progress.exerciseChart.title" gtDesignLabel="progress.exerciseChart.title" gtDesignLabelDefault="Grafico di un esercizio">Grafico di un esercizio</strong><small>Peso, volume, ripetizioni e 1RM stimato</small></span><gt-icon name="chevron-down"/></summary><div class="progress-details-body"><gt-progress-chart /></div></details>
       <div class="su-list pg-links">
-        @if(s.activePlan();as plan){<a class="su-row" [routerLink]="['/piano',plan.id]"><span class="su-bubble pink"><gt-icon name="layers"/></span><span class="su-tx"><strong>Andamento della scheda</strong><small>{{plan.name}} · {{planDone(plan.id)}} di {{s.days(plan.id).length}} allenamenti</small></span><gt-icon class="su-chev" name="chevron-right"/></a>}
+        @if(s.activePlan();as plan){<a class="su-row" [routerLink]="['/piano',plan.id]"><span class="su-bubble pink"><gt-icon name="layers"/></span><span class="su-tx"><strong>Andamento della scheda</strong><small>{{plan.name}} · {{planDone(plan.id)}} di {{s.days(plan.id).length}} {{s.days(plan.id).length===1?'allenamento':'allenamenti'}}</small></span><gt-icon class="su-chev" name="chevron-right"/></a>}
         <a class="su-row" routerLink="/analisi"><span class="su-bubble blue"><gt-icon name="download"/></span><span class="su-tx"><strong>Analisi ed esporta report</strong><small>Andamento dettagliato, PDF o CSV</small></span><gt-icon class="su-chev" name="chevron-right"/></a>
       </div>
     }@else{

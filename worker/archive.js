@@ -1,7 +1,7 @@
 import { APPROVED_THEME_IDS } from '../shared/approved-palettes.js';
 export const ARCHIVE_LIMIT_BYTES = 50 * 1024 * 1024;
 function archiveValidThemeConfig(value) {
- return !!value&&typeof value==='object'&&!Array.isArray(value)&&Object.keys(value).every(key=>['palette','mode','background','accent'].includes(key))&&[...APPROVED_THEME_IDS,'oro','argento','multicolore','bianco-elegante','scuro','rosso','verde','viola-neon','blu-azzurro','carbonio','artico','prugna','petrolio','sabbia','ghiaccio'].includes(value.palette)&&['dark','light','system'].includes(value.mode)&&['background','accent'].every(key=>value[key]===undefined||typeof value[key]==='string'&&/^#[0-9a-fA-F]{6}$/.test(value[key]));
+ return !!value&&typeof value==='object'&&!Array.isArray(value)&&Object.keys(value).every(key=>['palette','mode','background','accent'].includes(key))&&[...APPROVED_THEME_IDS,'oro','argento','multicolore','bianco-elegante','scuro','nero','bianco','rosso','verde','viola-neon','blu-azzurro','carbonio','artico','prugna','petrolio','sabbia','ghiaccio'].includes(value.palette)&&['dark','light','system'].includes(value.mode)&&['background','accent'].every(key=>value[key]===undefined||typeof value[key]==='string'&&/^#[0-9a-fA-F]{6}$/.test(value[key]));
 }
 // Current client backup schema; older versions stay readable via client migrations.
 const ARCHIVE_CURRENT_SCHEMA_VERSION = 11;

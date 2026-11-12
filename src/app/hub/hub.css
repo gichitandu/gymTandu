@@ -208,3 +208,8 @@ body.hub-mode:has(.hb-auto) { background: #0c0d0f; }
 .hb-auto .hb-app.cur { background: rgba(79,209,165,.1); box-shadow: inset 0 0 0 1px rgba(79,209,165,.3); }
 .hb-auto .hb-chev.on { color: var(--hb-g); }
 .hb-auto :focus-visible { outline-color: var(--hb-g); }
+
+/* App marks (GT Hub, GT Garage) are images in the GymTrack logo style. */
+img.hb-mk { display: block; background: #030821; box-shadow: 0 0 0 1px rgba(255,255,255,.14), 0 6px 16px rgba(0,0,0,.35); object-fit: cover; }
+/* Comfortable touch height for filter and quick-add chips. */
+.hb-ch { min-height: 40px; }

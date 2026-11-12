@@ -251,7 +251,7 @@ export class HomeComponent {
     return 'Prossimo · ' + this.dateLabel(session.date);
   }
   subLine(session: HomeUpcomingSession) {
-    return [session.planName, session.exerciseCount + ' esercizi', session.setCount ? session.setCount + ' serie' : '', session.durationMinutes ? 'circa ' + session.durationMinutes + ' min' : '', session.time && session.date === this.today ? 'alle ' + session.time : ''].filter(Boolean).join(' · ');
+    return [session.planName, session.exerciseCount + (session.exerciseCount === 1 ? ' esercizio' : ' esercizi'), session.setCount ? session.setCount + ' serie' : '', session.durationMinutes ? 'circa ' + session.durationMinutes + ' min' : '', session.time && session.date === this.today ? 'alle ' + session.time : ''].filter(Boolean).join(' · ');
   }
   /** Si può partire subito: seduta di oggi in calendario oppure prossimo giorno della scheda senza data. */
   canStartNow(session: HomeUpcomingSession) {

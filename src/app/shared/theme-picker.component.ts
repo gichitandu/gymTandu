@@ -12,9 +12,7 @@ import {
   ThemeConfig,
   ThemeMode,
   THEME_PALETTES,
-  THEME_PRESETS,
-  STANDARD_THEME_PRESETS,
-  APPROVED_THEME_PALETTES,
+  SELECTABLE_THEME_PRESETS,
   resolveTheme,
   validThemeConfig,
 } from "../services/theme-palettes";
@@ -30,18 +28,9 @@ import { IconComponent } from "./icon.component";
 export class ThemePickerComponent {
   readonly theme = inject(ThemeService);
   private auth = inject(AuthService);
-  readonly palettes = THEME_PRESETS;
+  readonly palettes = SELECTABLE_THEME_PRESETS;
   readonly paletteGroups = [
-    {
-      id: "approved",
-      name: "Le palette approvate",
-      palettes: APPROVED_THEME_PALETTES,
-    },
-    {
-      id: "standard",
-      name: "Altri temi disponibili",
-      palettes: STANDARD_THEME_PRESETS,
-    },
+    { id: "themes", name: "Temi", palettes: SELECTABLE_THEME_PRESETS },
   ];
   readonly modes: { value: ThemeMode; label: string }[] = [
     { value: "dark", label: "Scuro" },

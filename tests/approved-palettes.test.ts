@@ -67,7 +67,7 @@ it("preserves the original blue/violet records and lists them first without dupl
   expect(new Set(THEME_PALETTES.map((p) => p.id)).size).toBe(
     THEME_PALETTES.length,
   );
-  expect(THEME_PALETTES).toHaveLength(21);
+  expect(THEME_PALETTES).toHaveLength(23);
   expect(FACTORY_PRESETS).toHaveLength(12);
 });
 

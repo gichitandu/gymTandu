@@ -14,7 +14,7 @@ import { AppSwitcherService, HUB_APPS, HubApp, HubLaunchService } from './hub-ac
   <header class="su-sheet-head"><div><h2 id="app-switcher-title">Le tue app</h2><p>Passa da un'app all'altra quando vuoi.</p></div><button type="button" class="su-iconbtn" (click)="close()" aria-label="Chiudi"><gt-icon name="close"/></button></header>
   <div class="as-list">
     @for(app of apps;track app.id){<button type="button" class="as-row" [class.cur]="app.id==='gymtrack'" (click)="go(app.id,app.path)">
-      @if(app.id==='gymtrack'){<img src="/brand/gt-modern-mark.png" alt=""/>}@else{<span class="as-mk" [class.car]="app.id==='auto'"><gt-icon [name]="app.id==='auto'?'car':'grid'"/></span>}
+      @if(app.id==='gymtrack'){<img src="/brand/gt-modern-mark.png" alt=""/>}@else{<img [src]="app.id==='auto'?'/brand/gt-garage-mark.svg':'/brand/gt-hub-mark.svg'" alt=""/>}
       <span class="as-tx"><strong>{{app.name}}</strong><small>{{app.text}}</small></span><gt-icon [name]="app.id==='gymtrack'?'check':'chevron-right'"/>
     </button>}
   </div>
