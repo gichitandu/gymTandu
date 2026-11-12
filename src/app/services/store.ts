@@ -668,6 +668,22 @@ export class Store {
   }
   async undoGymAction(){const receipt=this.gymUndo();if(!receipt)return false;const ok=await this.change(d=>{if(this.gymUndo()?.id!==receipt.id||JSON.stringify(this.gymSnapshot(d,receipt.exerciseId))!==receipt.after||!d.workouts.some(w=>w.id===receipt.workoutId&&w.status==='draft'))throw Error('La serie è cambiata: l’annullamento non sovrascrive le modifiche successive.');const i=d.workoutExercises.findIndex(e=>e.id===receipt.exerciseId);d.workoutExercises[i]=structuredClone(receipt.before.exercise);d.sets=d.sets.filter(s=>s.workoutExerciseId!==receipt.exerciseId).concat(structuredClone(receipt.before.sets));},'Ultima azione annullata.',false);if(ok&&this.gymUndo()?.id===receipt.id)this.gymUndo.set(null);return ok;}
   saveWeightStep(exerciseId:string,step:number){return this.change(d=>{if(!d.exercises.some(e=>e.id===exerciseId)||!Number.isFinite(step)||step<=0||step>50)throw Error('Scegli un incremento da 0,1 a 50.');const p=d.exercisePreferences.find(p=>p.id===exerciseId);if(p)p.weightStep=step;else d.exercisePreferences.push({id:exerciseId,favorite:false,weightStep:step});},'Incremento salvato.',false);}
+  /** Abbina (o separa) due esercizi della seduta aperta come superset: stesso gruppo A–D, ognuno conserva le proprie serie. */
+  pairWorkoutSuperset(id:string,partnerId:string){return this.change(d=>{
+    const row=d.workoutExercises.find(e=>e.id===id);
+    if(!row||!d.workouts.some(w=>w.id===row.workoutId&&w.status==='draft'))throw Error('L’allenamento non è più aperto.');
+    const same=d.workoutExercises.filter(e=>e.workoutId===row.workoutId);
+    const clear=(group?:string)=>{if(group)for(const e of same)if(e.superset===group)delete e.superset;};
+    clear(row.superset);
+    if(!partnerId)return;
+    const partner=same.find(e=>e.id===partnerId&&e.id!==id);
+    if(!partner)throw Error('Esercizio non trovato in questo allenamento.');
+    clear(partner.superset);
+    const used=new Set(same.map(e=>e.superset).filter(Boolean));
+    const group=(['A','B','C','D'] as const).find(g=>!used.has(g));
+    if(!group)throw Error('Puoi avere al massimo 4 superset in un allenamento.');
+    row.superset=group;partner.superset=group;
+  },partnerId?'Superset creato.':'Superset rimosso.',false);}
   substituteWorkoutExercise(id:string,replacementId:string,expectedExerciseId?:string){return this.gymEdit(id,d=>{
     if(expectedExerciseId&&d.workoutExercises.find(row=>row.id===id)?.exerciseId!==expectedExerciseId)throw Error('L’esercizio è cambiato. Riapri la sostituzione.');
     replaceWorkoutExercise(d,id,replacementId);

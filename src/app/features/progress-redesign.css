@@ -104,7 +104,7 @@
 .pg-figure img{position:absolute;height:100%;left:50%;transform:translateX(-50%);width:auto}
 .pg-bars{flex:1;min-width:0;display:grid;gap:8px}
 .pg-bar-row{display:grid;grid-template-columns:62px 1fr 26px;align-items:center;gap:8px;font-size:12px}
-.pg-bar-row>span:first-child{color:var(--muted);font-weight:650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pg-bar-row>span:first-child{color:var(--muted);font-weight:650;white-space:normal;overflow-wrap:break-word}
 .pg-bar-row .su-bar{height:6px}
 .pg-bar-row b{text-align:right;font-size:12px}
 .pg-bars small{font-size:11px;color:var(--muted)}

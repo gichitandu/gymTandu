@@ -82,18 +82,14 @@
 :host .rec3 .rec3-kicker gt-icon { width: 13px; height: 13px; }
 
 :host .rec3 .rec3-ex-text h2 {
-  display: -webkit-box;
   margin: 0;
-  overflow: hidden;
   color: var(--text);
   font-size: 16px;
   font-weight: 800;
   letter-spacing: -.2px;
   line-height: 1.22;
   overflow-wrap: anywhere;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-}
+  }
 
 :host .rec3 .rec3-meta {
   display: flex;
@@ -833,7 +829,7 @@
   background: color-mix(in srgb, var(--accent) 14%, transparent); color: var(--accent-text); font-size: 12px; font-weight: 900;
 }
 :host .det3-set.warm .det3-tag { background: color-mix(in srgb, var(--text) 10%, transparent); color: var(--muted); }
-:host .det3-val { flex: 1; min-width: 0; font-size: 16px; font-weight: 800; font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+:host .det3-val { flex: 1; min-width: 0; font-size: 16px; font-weight: 800; font-variant-numeric: tabular-nums; white-space:normal;overflow-wrap:break-word}
 :host .det3-val small { color: var(--muted); font-size: 12px; font-weight: 700; }
 :host .det3-rpe { color: var(--muted); font-size: 12px; white-space: nowrap; }
 :host .det3-check {
@@ -889,7 +885,7 @@
 :host .aw-list .exercise-state.aw-now{min-width:auto;padding:4px 9px;border-radius:8px;background:color-mix(in srgb,var(--accent) 18%,transparent);color:var(--accent-text);font-size:11px;font-weight:800}
 :host .aw-chev{width:16px;height:16px;color:var(--muted);flex:none}
 :host .aw-continue{position:sticky;bottom:calc(var(--safe-bottom,0px) + 12px);z-index:5;margin-top:14px;padding-top:10px;background:linear-gradient(180deg,transparent,var(--bg) 40%)}
-:host .aw-continue .su-btn{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+:host .aw-continue .su-btn{white-space:normal;overflow-wrap:break-word}
 :host .aw-alldone{display:flex;align-items:center;gap:8px;margin:14px 2px 0;font-size:13px;color:var(--muted)}
 :host .aw-alldone gt-icon{width:18px;height:18px;color:var(--green,#4ff0b0)}
 
@@ -906,3 +902,33 @@
  :host .recording-pad.rec3>.rec3-form{grid-column:2;grid-row:1/span 4}
  :host .recording-pad.rec3>.recording-save.rec3-dock{grid-column:2;margin:0;padding-inline:0}
 }
+
+/* ===== Volta scorsa (stessa serie dell'ultimo allenamento) e superset in seduta ===== */
+:host .rec3 .rec3-last {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%;
+  margin: 10px 0 4px; padding: 9px 12px; min-height: 48px; text-align: left;
+  border: 1px solid color-mix(in srgb, var(--text) 12%, transparent); border-radius: 14px;
+  background: color-mix(in srgb, var(--text) 5%, transparent); color: var(--text);
+}
+:host .rec3 .rec3-last > span { display: flex; flex-direction: column; min-width: 0; }
+:host .rec3 .rec3-last small { color: var(--muted); font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+:host .rec3 .rec3-last b { font-size: 16px; font-weight: 800; font-variant-numeric: tabular-nums; overflow-wrap: break-word; }
+:host .rec3 .rec3-last b i { font-style: normal; }
+:host .rec3 .rec3-last em { flex: none; font-style: normal; font-size: 13px; font-weight: 800; color: var(--accent-text); }
+:host .rec3 p.rec3-last.none { display: block; min-height: 0; padding: 0 2px; border: 0; background: none; color: var(--muted); font-size: 12px; }
+
+:host .rec3 .rec3-superset { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+:host .rec3 .rec3-superset small { color: var(--muted); font-size: 12px; flex: 1 1 140px; min-width: 0; }
+:host .rec3 .rec3-superset .rec3-ss-toggle { display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 0 14px; border-radius: 999px; font-size: 13px; font-weight: 800; }
+:host .rec3 .rec3-superset gt-icon { width: 16px; height: 16px; flex: none; }
+:host .rec3 .rec3-superset.on {
+  padding: 10px 10px 10px 12px; border-radius: 16px; flex-wrap: nowrap;
+  border: 1px solid color-mix(in srgb, var(--accent-text) 40%, transparent);
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+}
+:host .rec3 .rec3-superset.on > gt-icon { color: var(--accent-text); }
+:host .rec3 .rec3-superset.on > span { flex: 1; min-width: 0; font-size: 14px; overflow-wrap: break-word; }
+:host .rec3 .rec3-superset.on > span small { display: block; flex: none; margin-top: 2px; }
+:host .rec3 .rec3-superset.on > button { flex: none; min-height: 38px; padding: 0 12px; border-radius: 12px; font-size: 13px; font-weight: 700; }
+:host .rec3 .rec3-ss-menu { display: flex; flex-wrap: wrap; gap: 6px; }
+:host .rec3 .rec3-ss-menu button { min-height: 40px; padding: 6px 14px; border-radius: 14px; font-size: 13.5px; font-weight: 700; text-align: left; white-space: normal; overflow-wrap: break-word; }

@@ -45,7 +45,7 @@
 .us3-monogram[data-tone="3"] { background: linear-gradient(145deg, #fcd34d, #f59e0b); color: #1f1300; }
 .us3-identity { flex: 1; min-width: 0; }
 .us3-identity h3 { margin: 0; font-size: 15px; font-weight: 700; overflow-wrap: anywhere; }
-.us3-identity p { margin: 2px 0 0; color: var(--muted); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.us3-identity p { margin: 2px 0 0; color: var(--muted); font-size: 12px; white-space:normal;overflow-wrap:break-word}
 .us3-pills { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 7px; }
 .us3-pill {
   display: inline-flex; align-items: center; height: 24px; padding: 0 9px; border-radius: 999px; font-size: 11px; font-weight: 800;

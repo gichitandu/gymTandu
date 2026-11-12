@@ -28,7 +28,7 @@
 .history-overview > div { padding: 0 12px; min-width: 0; }
 .history-overview > div + div { border-left: 1px solid color-mix(in srgb, var(--text) 12%, transparent); }
 .history-overview small { display: block; color: var(--muted); font-size: 10px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
-.history-overview b { display: block; margin-top: 4px; font-size: clamp(15px, 4.6vw, 20px); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 900; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.history-overview b { display: block; margin-top: 4px; font-size: clamp(15px, 4.6vw, 20px); white-space:normal; font-weight: 900; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
 .history-overview em { margin-left: 2px; color: var(--muted); font-size: 12px; font-style: normal; font-weight: 700; }
 
 /* ---------- Elenco per mese ---------- */
@@ -57,8 +57,8 @@
 .hx3-date small { margin-top: 3px; color: var(--muted); font-size: 10px; font-weight: 800; letter-spacing: .1em; }
 :host .card.hx3-session:first-of-type .hx3-date small { color: var(--accent-text); }
 .hx3-text { flex: 1; min-width: 0; }
-.hx3-text > strong { display: block; font-size: 15px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.hx3-text > small { display: block; margin-top: 2px; color: var(--muted); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hx3-text > strong { display: block; font-size: 15px; font-weight: 700; white-space:normal;overflow-wrap:break-word}
+.hx3-text > small { display: block; margin-top: 2px; color: var(--muted); font-size: 12px; white-space:normal;overflow-wrap:break-word}
 .hx3-meta { display: flex; flex-wrap: wrap; gap: 4px 10px; margin-top: 6px; color: color-mix(in srgb, var(--text) 80%, var(--muted)); font-size: 12px; font-weight: 600; font-variant-numeric: tabular-nums; }
 .hx3-session > gt-icon { flex: none; width: 18px; height: 18px; color: var(--muted); }
 

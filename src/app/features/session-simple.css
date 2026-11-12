@@ -12,8 +12,8 @@
 :host .simple-session-heading{gap:8px;margin-bottom:10px}
 :host .simple-session-heading>a{width:44px;min-width:44px;height:44px;padding:10px;border-radius:14px;border:1px solid var(--line);background:color-mix(in srgb,var(--text) 4%,transparent)}
 :host .session-title{flex:1;min-width:0}
-:host .session-compact .session-title h1{font-size:18px;font-weight:800;letter-spacing:-.3px;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;overflow-wrap:normal}
-:host .session-title p{margin:2px 0 0;font-size:12px;line-height:1.35;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+:host .session-compact .session-title h1{font-size:18px;font-weight:800;letter-spacing:-.3px;line-height:1.25;white-space:normal;overflow-wrap:break-word}
+:host .session-title p{margin:2px 0 0;font-size:12px;line-height:1.35;color:var(--muted);white-space:normal;overflow-wrap:break-word}
 :host .session-title p b{color:var(--text);font-weight:700;font-variant-numeric:tabular-nums}
 :host .session-menu{position:static;flex:none}
 :host .session-menu>summary{list-style:none;width:44px;min-width:44px;height:44px;padding:0;border-radius:14px;border:1px solid var(--line);background:color-mix(in srgb,var(--text) 4%,transparent);display:flex;align-items:center;justify-content:center;cursor:pointer}

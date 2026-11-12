@@ -17,7 +17,7 @@ body{
 .su-iconbtn gt-icon{width:20px;height:20px}
 .su-iconbtn:disabled{opacity:.45}
 .su-back{display:flex;align-items:center;gap:10px;margin:0 0 12px;min-width:0}
-.su-back strong{font-size:17px;font-weight:800;letter-spacing:-.3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.su-back strong{font-size:17px;font-weight:800;letter-spacing:-.3px;white-space:normal;overflow-wrap:break-word}
 
 /* segmenti */
 .su-seg{display:flex;gap:4px;padding:4px;border-radius:16px;background:color-mix(in srgb,var(--text) 5%,transparent);border:var(--su-stroke);margin:0 0 14px}
