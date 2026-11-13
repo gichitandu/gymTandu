@@ -1,6 +1,7 @@
 import { Component, computed, effect, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
+import { HubShareService } from './hub-share';
 import { IconComponent } from '../shared/icon.component';
 import { feedbackForContext } from '../services/feedback';
 import { cap, euro, euroParts, HubExpense, hubCategory, hubId, initials, monthName, shortDay } from './hub-model';
@@ -22,6 +23,8 @@ import { HubGroupSheetComponent, HubSettleSheetComponent, shareSummary, shareTex
   <div class="hb-money" style="margin-top:8px"><b>{{parts().whole}}</b><small>,{{parts().dec}} €</small></div>
   <span class="o8">{{g.mine===0?'Sei in pari con questo gruppo':g.mine>0?'Gli altri ti devono questa cifra in totale':'La tua parte ancora da restituire'}}</span>
   <div class="hb-actions two"><button type="button" class="hb-btn white" (click)="sheet.set('settle')" [disabled]="!mineDebts().length"><gt-icon name="check"/>Salda</button><button type="button" class="hb-btn glass" (click)="share()"><gt-icon name="share"/>Riepilogo</button></div>
+  <button type="button" class="hb-btn glass invite" (click)="invite()" [disabled]="inviting()"><gt-icon name="users"/>{{inviting()?'Preparo il link…':g.group.shared?'Invita con un link':'Condividi il gruppo e invita'}}</button>
+  @if(shareError();as err){<p class="hb-err" role="alert">{{err}}</p>}
 </section>
 <div>
   <div class="hb-sec" style="margin-top:4px"><h2>Chi deve a chi</h2></div>
@@ -60,6 +63,7 @@ import { HubGroupSheetComponent, HubSettleSheetComponent, shareSummary, shareTex
 <section class="hb-c"><div class="hb-empty"><span class="hb-sq lg v"><gt-icon name="users"/></span><strong>{{hub.ready()?'Gruppo non trovato':'Caricamento…'}}</strong>@if(hub.ready()){Potrebbe essere stato eliminato da un altro dispositivo.}</div></section>
 }`,
   styles: [`.tt{flex:1;min-width:0;display:flex;align-items:center;gap:10px}.tt h1{margin:0;font-size:19px;font-weight:750;letter-spacing:-.4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.tt small{display:block;font-size:12px;color:var(--hb-m)}.tt>span:last-child{min-width:0}
+.invite{width:100%;margin-top:8px}
 .o8{display:block;margin-top:6px;font-size:12.5px;opacity:.85}.hb-hero .hb-av{width:26px;height:26px;font-size:10px;box-shadow:0 0 0 2px rgba(15,42,51,.9)}
 .dt .flow{display:flex;align-items:center;gap:3px;flex:none}.dt .flow gt-icon{width:13px;height:13px;color:var(--hb-f)}.dt .hb-av{width:30px;height:30px;font-size:11px}
 .mark{width:auto;min-height:34px;padding:0 11px;font-size:12px;background:rgba(79,209,165,.14)!important;color:var(--hb-g);border-color:rgba(79,209,165,.3)!important}
@@ -75,6 +79,9 @@ export class HubGroupComponent {
   private router = inject(Router);
   private feedback = feedbackForContext();
   readonly euro = euro; readonly me = HUB_ME;
+  private sharing = inject(HubShareService);
+  readonly inviting = signal(false);
+  readonly shareError = signal('');
   readonly sheet = signal<'' | 'expense' | 'edit' | 'settle'>('');
   readonly edit = signal<HubExpense | null>(null);
   private params = toSignal(this.route.paramMap);
@@ -119,6 +126,18 @@ export class HubGroupComponent {
   }
   undo(id: string) { this.hub.remove('settlements', id); this.feedback.show('success', 'Pagamento annullato.'); }
   restore() { const g = this.view()?.group; if (g) this.hub.upsert('groups', { ...g, archived: false }); }
+  /** Crea (o riprende) il link: chi lo apre, dopo l'accesso, entra nel gruppo con un tocco. */
+  async invite() {
+    const g = this.view()?.group; if (!g) return;
+    this.inviting.set(true); this.shareError.set('');
+    try {
+      const link = await this.sharing.createInvite(g.id);
+      const result = await shareText(`Entra nel gruppo “${g.name}” su GymTrack · Dividi:\n${link}`, g.name);
+      if (result === 'copied') this.feedback.show('success', 'Link di invito copiato: incollalo dove vuoi.');
+      else if (result === 'failed') this.shareError.set('Non riesco a condividere il link: ' + link);
+    } catch (e) { this.shareError.set(e instanceof Error ? e.message : 'Invito non riuscito. Riprova.'); }
+    finally { this.inviting.set(false); }
+  }
   async share() {
     const g = this.view(); if (!g) return;
     const result = await shareText(shareSummary(g.group.name, g.debts, this.hv.shareName), g.group.name);

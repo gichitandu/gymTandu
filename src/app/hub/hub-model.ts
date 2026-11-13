@@ -34,7 +34,7 @@ export interface HubRule extends HubRecord { pattern: string; category: string }
 export interface HubPlan extends HubRecord { goal: number; active: boolean; alert80: boolean; caps: Record<string, number>; basedOn: string[] }
 
 export interface HubPerson extends HubRecord { name: string; color: string; me?: boolean }
-export interface HubGroup extends HubRecord { name: string; icon: string; members: string[]; archived?: boolean }
+export interface HubGroup extends HubRecord { name: string; icon: string; members: string[]; archived?: boolean; shared?: boolean }
 export type HubSplitMode = 'equal' | 'amounts' | 'percent' | 'shares';
 export interface HubExpense extends HubRecord {
   groupId: string; description: string; amount: number; paidBy: string; date: string; category: string;

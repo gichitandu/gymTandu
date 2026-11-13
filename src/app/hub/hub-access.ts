@@ -75,6 +75,16 @@ function appGuard(app: 'hub' | 'auto' | 'any'): CanActivateFn {
     return ok ? true : router.parseUrl('/');
   };
 }
+/** Link di invito a un gruppo: chi non ha ancora fatto l'accesso lo ricorda e lo ritrova dopo il login. */
+export const HUB_PENDING_INVITE = 'gymtrack-hub-invite-pending';
+export const inviteGuard: CanActivateFn = async route => {
+  const auth = inject(AuthService), features = inject(AppFeaturesService), router = inject(Router);
+  for (let i = 0; i < 120 && auth.loading() && !auth.user(); i++) await new Promise(resolve => setTimeout(resolve, 50));
+  const token = route.paramMap.get('token') ?? '';
+  if (!auth.user()) { try { sessionStorage.setItem(HUB_PENDING_INVITE, token); } catch { /* il link resta nell'indirizzo */ } return true; }
+  if (auth.user()?.role !== 'SuperAdmin' || auth.viewAsClient()) await features.ensureLoaded();
+  return hubAllowed(auth, features) ? true : router.parseUrl('/');
+};
 /** GT Hub (agenda, spese, Dividi, note). */
 export const hubGuard: CanActivateFn = appGuard('hub');
 /** GT Garage (auto, rifornimenti, statistiche). */

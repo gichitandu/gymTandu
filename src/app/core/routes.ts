@@ -2,7 +2,7 @@ import { Routes } from "@angular/router";
 import { preserveFormDrafts } from '../services/draft-navigation';
 import { nutritionEnabledGuard } from '../services/nutrition-guard';
 import { designStudioGuard } from '../design/design-guard';
-import { appChooserGuard, garageGuard, hubGuard } from '../hub/hub-access';
+import { appChooserGuard, garageGuard, hubGuard, inviteGuard } from '../hub/hub-access';
 const pages: Routes = [
  {path:'recupera-allenamenti',loadComponent:()=>import('../features/workout-recovery.component').then(m=>m.WorkoutRecoveryComponent)},
  {path:'design-studio',canActivate:[designStudioGuard],loadComponent:()=>import('../design/design-studio.component').then(m=>m.DesignStudioComponent)},
@@ -20,6 +20,7 @@ const pages: Routes = [
  {path:'hub/spese',canActivate:[hubGuard],loadComponent:()=>import('../hub/hub-expenses.component').then(m=>m.HubExpensesComponent)},
  {path:'hub/spese/importa',canActivate:[hubGuard],loadComponent:()=>import('../hub/hub-import.component').then(m=>m.HubImportComponent)},
  {path:'hub/dividi',canActivate:[hubGuard],loadComponent:()=>import('../hub/hub-split.component').then(m=>m.HubSplitComponent)},
+ {path:'hub/invito/:token',canActivate:[inviteGuard],loadComponent:()=>import('../hub/hub-invite.component').then(m=>m.HubInviteComponent)},
  {path:'hub/dividi/:id',canActivate:[hubGuard],loadComponent:()=>import('../hub/hub-group.component').then(m=>m.HubGroupComponent)},
  // GT Garage: la scheda dell'auto, sullo stesso archivio e con gli stessi permessi del Hub.
  {path:'auto',canActivate:[garageGuard],loadComponent:()=>import('../garage/garage.component').then(m=>m.GarageComponent)},

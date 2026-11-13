@@ -137,7 +137,7 @@ export async function api(request,env,ctx) {
       if(request.method!=='GET')fail('Metodo non supportato.',405);
       return json(await storageStatus(env));
     }
-    if(path==='/api/hub'||path==='/api/hub/due')return await hubApi(request,env,me,ctx);
+    if(path==='/api/hub'||path==='/api/hub/due'||path.startsWith('/api/hub/share')||path.startsWith('/api/hub/invite/'))return await hubApi(request,env,me,ctx);
     if(path==='/api/hub/vw'||path==='/api/hub/vw/sync')return await vwApi(request,env,me);
     if(path.startsWith('/api/design/'))return await designStudioApi(request,env,me);
     if(path.startsWith('/api/excel-imports'))return await excelImportsApi(request,env,me);

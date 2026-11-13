@@ -144,6 +144,13 @@ export class HubStore {
     });
     this.changed();
   }
+  /** Inserisce record arrivati da un gruppo condiviso senza cambiarne l'ora di modifica: vince il più recente. */
+  applyRemote(part: Partial<{ [K in HubCollection]: HubDoc[K] }>) {
+    const next = mergeHubDocs(this.doc(), { ...emptyHubDoc(), ...part } as HubDoc);
+    if (hubSignature(next) === hubSignature(this.doc())) return;
+    this.doc.set(next);
+    this.changed();
+  }
   remove<K extends HubCollection>(name: K, ...ids: string[]) {
     const now = Date.now(), set = new Set(ids);
     this.doc.update(d => ({ ...d, [name]: (d[name] as HubRecord[]).map(r => set.has(r.id) ? { ...r, deleted: true, updatedAt: Math.max(now, r.updatedAt + 1) } : r) }) as HubDoc);

@@ -68,6 +68,7 @@ export async function hubApi(request,env,user,ctx){
   if(!env.BUCKET)hubFail('Archivio server non configurato.',503);
   const path=new URL(request.url).pathname;
   if(path==='/api/hub/due'){if(request.method!=='GET')hubFail('Metodo non supportato.',405);return hubReply(await hubDue(env,user));}
+  if(path.startsWith('/api/hub/share')||path.startsWith('/api/hub/invite/'))return await hubShareApi(request,env,user,path);
   if(path!=='/api/hub')hubFail('Operazione non trovata.',404);
   if(request.method==='GET')return hubReply(await hubRead(env,user));
   if(request.method!=='PUT')hubFail('Metodo non supportato.',405);
@@ -189,4 +190,135 @@ export async function hubDue(env,user,now=Date.now()){
   }
  }
  return{items};
+}
+
+/* ---------------------------------------------------------------- gruppi Dividi condivisi con link di invito */
+// Copia condivisa di un gruppo (R2 hub-shared/<gruppo>.json): chi entra con il link ne diventa membro e tutti
+// vedono le stesse spese. Le persone con account hanno id "m-<utente>"; le altre restano nomi senza account.
+const SHARE_LIMITS={people:100,expenses:5000,settlements:5000};
+const SHARE_MAX_ACCOUNTS=20,SHARE_INVITE_DAYS=14;
+const SHARE_COLORS=['linear-gradient(140deg,#8ABDFB,#8F7CFF)','linear-gradient(140deg,#7EE0B0,#4FB0E8)','linear-gradient(140deg,#FFC477,#F58BA8)','linear-gradient(140deg,#F39AC7,#B78CFF)','linear-gradient(140deg,#9BE37B,#4FD1C5)'];
+const shareKey=id=>'hub-shared/'+id+'.json';
+const shareInviteKey=token=>'hub-invites/'+token+'.json';
+const shareGroupInviteKey=id=>'hub-share-invites/'+id+'.json';
+const shareIdOk=id=>typeof id==='string'&&/^[A-Za-z0-9_-]{6,100}$/.test(id);
+const shareMember=uid=>'m-'+uid;
+function shareToken(){const bytes=crypto.getRandomValues(new Uint8Array(24));let s='';for(const b of bytes)s+=String.fromCharCode(b);return btoa(s).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');}
+async function shareLoad(env,id){
+ const object=await env.BUCKET.get(shareKey(id));
+ if(!object)return null;
+ return{revision:Number(object.customMetadata?.revision||0),etag:object.etag,data:JSON.parse(await object.text())};
+}
+async function shareStore(env,id,data,previous){
+ const revision=(previous?.revision||0)+1;
+ const saved=await env.BUCKET.put(shareKey(id),JSON.stringify(data),{httpMetadata:{contentType:'application/json'},customMetadata:{revision:String(revision),updatedAt:String(Date.now())},...(previous?{onlyIf:{etagMatches:previous.etag}}:{})});
+ if(!saved)hubFail('Il gruppo è cambiato su un altro dispositivo. Riprova.',409);
+ return revision;
+}
+function shareRows(data,name){
+ const rows=data?.[name]===undefined?[]:data[name];
+ if(!Array.isArray(rows)||rows.length>SHARE_LIMITS[name])hubFail('Dati del gruppo non validi.');
+ const ids=new Set();
+ for(const row of rows){
+  if(!row||typeof row!=='object'||Array.isArray(row)||typeof row.id!=='string'||!row.id||row.id.length>150||ids.has(row.id)||!Number.isFinite(row.updatedAt))hubFail('Dati del gruppo non validi.');
+  ids.add(row.id);
+ }
+ return rows;
+}
+/** Normalizza ciò che un membro invia: i membri con account li decide solo il server. */
+export function hubShareClean(body,previous){
+ const group=body?.group;
+ if(!group||typeof group!=='object'||Array.isArray(group)||typeof group.name!=='string'||!group.name.trim()||group.name.length>60||!Array.isArray(group.members)||group.members.length>200||!Number.isFinite(group.updatedAt))hubFail('Dati del gruppo non validi.');
+ const accounts=previous?.accounts||[],allowed=new Set(accounts.map(shareMember));
+ const keep=id=>typeof id==='string'&&id.length<=150&&(!id.startsWith('m-')||allowed.has(id));
+ const people=shareRows(body,'people').filter(p=>keep(p.id));
+ const members=[...new Set([...(previous?.group?.members||[]),...group.members.filter(keep)])];
+ return{
+  accounts,
+  group:{id:previous?.group?.id||group.id,name:group.name.trim().slice(0,60),icon:typeof group.icon==='string'?group.icon.slice(0,20):'users',members,archived:!!group.archived,updatedAt:members.length!==new Set(group.members.filter(keep)).size?Math.max(group.updatedAt,previous?.group?.updatedAt||0)+1:group.updatedAt},
+  people,expenses:shareRows(body,'expenses'),settlements:shareRows(body,'settlements'),
+ };
+}
+async function shareRequire(env,user,id){
+ if(!shareIdOk(id))hubFail('Gruppo non valido.');
+ const stored=await shareLoad(env,id);
+ if(!stored||!stored.data.accounts.includes(user.id))hubFail('Gruppo non trovato.',404);
+ return stored;
+}
+async function shareInvite(env,user,id,renew){
+ await shareRequire(env,user,id);
+ const now=Date.now();
+ if(!renew){
+  const current=await env.BUCKET.get(shareGroupInviteKey(id));
+  if(current){const info=JSON.parse(await current.text());if(info.expiresAt>now+86400000)return info;}
+ }
+ const old=await env.BUCKET.get(shareGroupInviteKey(id));
+ if(old){try{await env.BUCKET.delete(shareInviteKey(JSON.parse(await old.text()).token));}catch{}}
+ const info={token:shareToken(),groupId:id,by:user.id,expiresAt:now+SHARE_INVITE_DAYS*86400000};
+ await env.BUCKET.put(shareInviteKey(info.token),JSON.stringify(info),{httpMetadata:{contentType:'application/json'}});
+ await env.BUCKET.put(shareGroupInviteKey(id),JSON.stringify(info),{httpMetadata:{contentType:'application/json'}});
+ return info;
+}
+async function shareTokenInfo(env,token){
+ if(typeof token!=='string'||!/^[A-Za-z0-9_-]{20,60}$/.test(token))hubFail('Invito non valido.',404);
+ const object=await env.BUCKET.get(shareInviteKey(token));
+ if(!object)hubFail('Invito non valido o revocato.',404);
+ const info=JSON.parse(await object.text());
+ if(!(info.expiresAt>Date.now()))hubFail('Questo invito è scaduto: chiedi un nuovo link.',410);
+ return info;
+}
+export async function hubShareApi(request,env,user,path){
+ const parts=path.split('/').filter(Boolean); // api hub share|invite ...
+ const method=request.method;
+ if(parts[2]==='share'){
+  const id=parts[3],action=parts[4];
+  if(!id){
+   if(method!=='POST')hubFail('Metodo non supportato.',405);
+   const body=await hubBody(request);
+   if(!shareIdOk(body?.group?.id))hubFail('Gruppo non valido.');
+   const existing=await shareLoad(env,body.group.id);
+   if(existing){if(!existing.data.accounts.includes(user.id))hubFail('Gruppo non valido.',409);return hubReply({id:body.group.id,revision:existing.revision});}
+   const data=hubShareClean(body,{accounts:[user.id]});
+   data.group.members=[...new Set([shareMember(user.id),...data.group.members])];
+   const revision=await shareStore(env,body.group.id,data,null);
+   return hubReply({id:body.group.id,revision});
+  }
+  const stored=await shareRequire(env,user,id);
+  if(!action){
+   if(method==='GET')return hubReply({revision:stored.revision,data:stored.data});
+   if(method!=='PUT')hubFail('Metodo non supportato.',405);
+   const body=await hubBody(request);
+   if(!Number.isSafeInteger(body?.baseRevision)||body.baseRevision!==stored.revision)return hubReply({error:'Il gruppo è cambiato su un altro dispositivo. Unisco le modifiche e riprovo.',revision:stored.revision},409);
+   const data=hubShareClean(body.data||{},stored.data);
+   const revision=await shareStore(env,id,data,stored);
+   return hubReply({revision,data});
+  }
+  if(action==='invite'){
+   if(method!=='POST')hubFail('Metodo non supportato.',405);
+   let renew=false;try{renew=!!(await hubBody(request)).renew;}catch{}
+   const info=await shareInvite(env,user,id,renew);
+   return hubReply({token:info.token,expiresAt:info.expiresAt});
+  }
+  hubFail('Operazione non trovata.',404);
+ }
+ if(parts[2]==='invite'){
+  const info=await shareTokenInfo(env,parts[3]);
+  const stored=await shareLoad(env,info.groupId);
+  if(!stored)hubFail('Il gruppo non esiste più.',404);
+  const joined=stored.data.accounts.includes(user.id);
+  if(method==='GET'){
+   const inviter=stored.data.people.find(p=>p.id===shareMember(info.by)&&!p.deleted);
+   return hubReply({groupId:info.groupId,name:stored.data.group.name,icon:stored.data.group.icon,by:inviter?.name||'Un amico',members:stored.data.accounts.length,joined});
+  }
+  if(method!=='POST')hubFail('Metodo non supportato.',405);
+  if(joined)return hubReply({groupId:info.groupId,joined:true});
+  if(stored.data.accounts.length>=SHARE_MAX_ACCOUNTS)hubFail('Il gruppo ha già il numero massimo di partecipanti.',409);
+  const now=Date.now(),data=stored.data,me=shareMember(user.id);
+  data.accounts=[...data.accounts,user.id];
+  data.group={...data.group,members:[...new Set([...data.group.members,me])],updatedAt:Math.max(now,data.group.updatedAt+1)};
+  data.people=[...data.people.filter(p=>p.id!==me),{id:me,updatedAt:now,name:String(user.name||'Amico').trim().slice(0,40)||'Amico',color:SHARE_COLORS[data.accounts.length%SHARE_COLORS.length]}];
+  await shareStore(env,info.groupId,data,stored);
+  return hubReply({groupId:info.groupId,joined:true});
+ }
+ hubFail('Operazione non trovata.',404);
 }

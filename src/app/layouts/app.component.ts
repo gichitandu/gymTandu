@@ -14,6 +14,7 @@ import { AppActivationUncertainError, AppReleaseService } from '../services/app-
 import { MobileNavigationService } from '../services/mobile-navigation';
 import { HubHostComponent } from '../hub/hub-host.component';
 import { isHubUrl } from '../hub/hub-access';
+import { HubShareService } from '../hub/hub-share';
 @Component({selector:'app-root',standalone:true,imports:[WorkoutStartOptionsComponent,ConfirmationDialogComponent,FormsModule,ShellComponent,IconComponent,FeedbackPopupsComponent,HubHostComponent],styleUrls:['./entry.css','./entry-redesign.css'],template:`
 <gt-feedback-popups/><gt-confirmation-dialog/>
 @if(auth.user()) { @if(hubMode()){@defer(on immediate){<gt-hub-host/>}@placeholder{<p class="entry-status" role="status">Apertura…</p>}}@else{<gt-shell /><gt-workout-start-options/>} } @else {
@@ -75,6 +76,7 @@ import { isHubUrl } from '../hub/hub-access';
 </main>}
 `})
 export class AppComponent {
+ private hubShare=inject(HubShareService);
  features=inject(AppFeaturesService,{optional:true});
  private viewport=inject(ViewportService);
  private navigation=inject(MobileNavigationService);

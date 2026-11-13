@@ -3,6 +3,7 @@ import { RouterOutlet } from '@angular/router';
 import { Store } from '../services/store';
 import { MobileNavigationService } from '../services/mobile-navigation';
 import { HubShellComponent } from './hub-shell.component';
+import { HubShareService } from './hub-share';
 
 /** Contenitore di GT Hub, al posto della cornice di GymTrack (stili e barra separati). */
 @Component({
@@ -12,6 +13,7 @@ import { HubShellComponent } from './hub-shell.component';
 export class HubHostComponent {
   readonly navigation = inject(MobileNavigationService);
   readonly s = inject(Store);
+  private shares = inject(HubShareService);
   constructor() {
     effect(onCleanup => { document.body.classList.add('hub-mode'); onCleanup(() => document.body.classList.remove('hub-mode')); });
   }
