@@ -1,0 +1,99 @@
+<section class="coach-shell">
+  @if (gateway.mode === 'demo') {
+  <header class="coach-header">
+    <a class="coach-brand" href="#/coach" aria-label="GymTrack Coach"><span class="brand-symbol">gt<span>·</span></span><span>GymTrack <small>COACH</small></span></a>
+    <div class="header-status"><span class="status-dot"></span>{{gateway.mode === 'demo' ? 'Anteprima interattiva' : 'Il tuo spazio personale'}}<span class="header-avatar">{{name.charAt(0).toUpperCase()}}</span></div>
+  </header>
+  } @else {
+    <a class="coach-back" routerLink="/piani"><span aria-hidden="true">‹</span> Le mie schede</a>
+  }
+
+  <nav class="coach-nav" aria-label="Navigazione coach">
+    @for (item of nav; track item.id) {
+      <button type="button" [class.active]="tab() === item.id" [attr.aria-current]="tab() === item.id ? 'page' : null" (click)="setTab(item.id)"><span>{{item.number}}</span>{{item.label}}</button>
+    }
+  </nav>
+
+  @if (error()) { <div class="message error" role="alert">{{error()}}</div> }
+  @if (notice()) { <div class="message success" role="status">{{notice()}}</div> }
+  @if (dirty() && tab() !== 'profile') { <div class="message pending" role="status">Hai modificato il profilo. <button type="button" (click)="regenerate()">Aggiorna il piano</button></div> }
+
+  @if (tab() === 'plan') {
+    <section class="hero">
+      <div class="hero-copy"><p class="eyebrow">IL TUO COACH, UN PASSO ALLA VOLTA</p><h1>Il tuo prossimo passo,<br><em>chiaro.</em></h1><p class="hero-text">Una scheda costruita sui tuoi obiettivi.<br>Indicazioni che si adattano, serie dopo serie.</p><button type="button" class="button primary" (click)="startTraining()" [disabled]="!exercise()">Esplora la tua seduta <span aria-hidden="true">↗</span></button><span class="hero-footnote">{{historyCount}} allenamenti nello storico · {{todayLabel}}</span></div>
+      <div class="hero-mascot"><span class="mascot-halo"></span><img src="/coach/mascot.webp" width="780" height="780" alt="Il tuo coach illustrato, sorridente con il pollice alzato"><span class="mascot-note"><span class="status-dot"></span>Si parte da te.</span></div>
+    </section>
+
+    @if (plan(); as p) {
+      <div class="metric-grid">
+        <div class="metric"><span class="metric-icon">↗</span><span>Il tuo obiettivo<strong>{{goalLabels[profile().goal]}}</strong></span></div>
+        <div class="metric"><span class="metric-icon">▦</span><span>La tua settimana<strong>{{p.sessions.length}} sedute <small>da {{profile().minutesPerSession}} min</small></strong></span></div>
+        <div class="metric"><span class="metric-icon">◎</span><span>Il tuo punto di partenza<strong>{{experienceLabels[profile().experience]}} <small>· blocco {{p.blockWeeks}} settimane</small></strong></span></div>
+      </div>
+      @if (recovery(); as check) { @if (check.action !== 'continue') {<div class="message pending" role="status"><strong>Un punto da rivedere.</strong> {{check.reason}} Nessuna modifica viene applicata automaticamente.</div>} }
+      <div class="section-heading"><div><p class="eyebrow">COSTRUITO PER TE</p><h2>La tua settimana</h2></div><button type="button" class="text-button" (click)="setTab('profile')">Modifica parametri <span aria-hidden="true">↗</span></button></div>
+      <div class="plan-layout">
+        <section class="panel plan-panel">
+          <div class="day-tabs" aria-label="Sedute del piano">@for (day of p.sessions; track day.id; let i = $index) {<button type="button" [class.selected]="selectedDay() === i" [attr.aria-pressed]="selectedDay() === i" (click)="selectDay(i)"><span>SEDUTA {{i + 1}}</span>{{day.name}}</button>}</div>
+          @if (session(); as day) {
+            <div class="session-heading"><div><h3>{{day.focus}}</h3><p>{{day.exercises.length}} esercizi · circa {{day.estimatedMinutes}} minuti, riscaldamento incluso</p></div><span class="small-tag">{{selectedDay() + 1}} / {{p.sessions.length}}</span></div>
+            <div class="exercise-list">
+              @for (e of day.exercises; track e.exerciseId; let i = $index) {
+                <button type="button" class="exercise-row" (click)="startTraining(i)"><span class="exercise-number">{{(i + 1).toString().padStart(2, '0')}}</span><span class="exercise-description"><strong>{{e.name}}</strong><small>{{e.sets}} × {{e.repsMin}}–{{e.repsMax}} rip · {{e.rir}} di margine · {{rest(e.restSeconds)}} recupero</small>@if(e.supersetGroup) {<span class="inline-tag">Superset {{e.supersetGroup}}</span>} @if(e.dropSet) {<span class="inline-tag">Dropset opzionale</span>}</span><span class="exercise-weight" [class.calibration]="e.calibration">{{loadText(e)}}<small>{{e.loadLabel}}</small></span><span class="row-arrow" aria-hidden="true">↗</span></button>
+              }
+            </div>
+            @for (warning of day.warnings; track $index) {<p class="inline-warning">{{warning}}</p>}
+          }
+          <div class="plan-actions"><button type="button" class="button primary" (click)="savePlan()" [disabled]="saving() || dirty()">{{saving() ? 'Salvataggio…' : gateway.mode === 'demo' ? 'Salva piano nella demo' : 'Aggiungi alle mie schede'}} <span aria-hidden="true">+</span></button><button type="button" class="button secondary" (click)="exportPlan()">Esporta JSON <span aria-hidden="true">↓</span></button></div>
+        </section>
+        <aside class="plan-aside">
+          <section class="panel note-panel"><span class="note-icon">✳</span><h3>{{historyCount ? 'Lo storico è un punto di partenza.' : 'Nessuno storico? Si comincia qui.'}}</h3><p>I primi carichi si calibrano con una serie di prova. Il programma ti indica ripetizioni, recupero e margine, senza inventare i tuoi pesi.</p><button type="button" class="text-button" (click)="setTab('method')">Come funziona <span aria-hidden="true">↗</span></button></section>
+          <section class="panel volume-panel"><div class="aside-heading"><h3>Distribuzione del lavoro</h3><span>Serie / settimana</span></div>@for (m of volumeRows(); track m.id) {<div class="volume-row"><span>{{m.name}}</span><span class="volume-track"><i [style.width.%]="m.sets / maxVolume() * 100"></i></span><b>{{m.sets}}</b></div>}<p class="caption">Serie dirette programmate. Il lavoro indiretto e le dropset sono conteggiati separatamente nel piano esportato.</p></section>
+        </aside>
+      </div>
+      @if (p.warnings.length) {<details class="panel decision-panel"><summary>{{p.warnings.length}} indicazioni da conoscere sul tuo piano</summary>@for (w of p.warnings; track $index) {<p>{{w}}</p>}</details>}
+      <details class="panel decision-panel"><summary>Perché questa scheda? <span>{{p.decisions.length}} criteri applicati</span></summary>@for (d of p.decisions; track $index) {<p><span class="rule-tag">{{d.kind === 'heuristic' ? 'Regola configurabile' : d.kind === 'constraint' ? 'Vincolo' : 'Principio dalle evidenze'}}</span> {{d.message}}</p>}</details>
+    }
+  }
+
+  @if (tab() === 'profile') {
+    <div class="page-intro"><p class="eyebrow">IL PIANO COMINCIA DA QUI</p><h1>Raccontami come<br><em>vuoi allenarti.</em></h1><p>Obiettivi concreti, tempo reale e attrezzatura disponibile.</p></div>
+    <form class="profile-layout" (ngSubmit)="regenerate()">
+      <div class="profile-main">
+        <section class="panel form-panel"><div class="panel-title"><span class="step-number">01</span><div><h2>La tua direzione</h2><p>Una priorità principale aiuta a dare coerenza al programma.</p></div></div><div class="form-grid"><label>Obiettivo<select name="goal" [(ngModel)]="draft.goal" (ngModelChange)="markDirty()"><option value="hypertrophy">Crescita muscolare</option><option value="strength">Forza</option><option value="endurance">Resistenza muscolare</option></select></label><label>Esperienza<select name="experience" [(ngModel)]="draft.experience" (ngModelChange)="markDirty()"><option value="beginner">Principiante o rientro</option><option value="intermediate">Intermedio</option><option value="advanced">Avanzato</option></select></label></div><label class="field-label">Muscoli a cui dare priorità <small>Facoltativo</small></label><div class="chip-options">@for (m of muscleOptions; track m.id) {<button type="button" [class.checked]="draft.priorities.includes(m.id)" [attr.aria-pressed]="draft.priorities.includes(m.id)" (click)="toggleMuscle(m.id)">{{m.name}}</button>}</div></section>
+        <section class="panel form-panel"><div class="panel-title"><span class="step-number">02</span><div><h2>Il tuo tempo</h2><p>Una settimana sostenibile vale più di una scheda irrealistica.</p></div></div><div class="form-grid"><label>Sedute a settimana<select name="days" [(ngModel)]="draft.daysPerWeek" (ngModelChange)="markDirty()">@for (n of [1,2,3,4,5,6]; track n) {<option [ngValue]="n">{{n}} {{n === 1 ? 'seduta' : 'sedute'}}</option>}</select></label><label>Tempo per seduta<select name="minutes" [(ngModel)]="draft.minutesPerSession" (ngModelChange)="markDirty()">@for (n of [20,30,45,60,75,90]; track n) {<option [ngValue]="n">{{n}} minuti</option>}</select></label></div></section>
+        <section class="panel form-panel"><div class="panel-title"><span class="step-number">03</span><div><h2>Il tuo spazio</h2><p>Seleziona ciò che hai realmente a disposizione.</p></div></div><div class="equipment-grid">@for (e of equipmentOptions; track e.id) {<label class="check-card" [class.checked]="draft.equipment.includes(e.id)"><input type="checkbox" [name]="'equip-' + e.id" [checked]="draft.equipment.includes(e.id)" (change)="toggleEquipment(e.id)"><span>{{e.name}}</span></label>}</div><label class="field-label" for="exclude-exercise">Esercizi da escludere <small>Facoltativo</small></label><div class="input-action"><select id="exclude-exercise" name="excluded" [(ngModel)]="excluded"><option value="">Scegli un esercizio</option>@for (e of catalog; track e.id) {<option [value]="e.id">{{e.name}}</option>}</select><button type="button" class="button secondary" [disabled]="!excluded" (click)="addExclusion()">Escludi</button></div><div class="chip-options excluded-chips">@for (id of draft.excludedExerciseIds; track id) {<button type="button" (click)="removeExclusion(id)" [attr.aria-label]="'Rimuovi esclusione: ' + exerciseName(id)">{{exerciseName(id)}} <span aria-hidden="true">×</span></button>}</div></section>
+        <section class="panel form-panel"><div class="panel-title"><span class="step-number">04</span><div><h2>Strumenti extra, se utili</h2><p>Il programma ne valuta l'uso. Attivarli non significa applicarli sempre.</p></div></div><label class="toggle-row"><span><strong>Superset</strong><small>Abbinamenti compatibili per organizzare il tempo.</small></span><input type="checkbox" name="supersets" [(ngModel)]="draft.allowSupersets" (ngModelChange)="markDirty()"></label><label class="toggle-row"><span><strong>Dropset</strong><small>Lavoro aggiuntivo limitato su esercizi adatti.</small></span><input type="checkbox" name="dropsets" [(ngModel)]="draft.allowDropSets" (ngModelChange)="markDirty()"></label><label class="toggle-row"><span><strong>Ultima serie a margine zero</strong><small>Solo quando compatibile con esperienza ed esercizio. Nessun tentativo fallito prescritto.</small></span><input type="checkbox" name="failure" [(ngModel)]="draft.allowFailure" (ngModelChange)="markDirty()"></label></section>
+        <button type="submit" class="button primary generate-button">Genera la mia scheda <span aria-hidden="true">↗</span></button>
+      </div>
+      <aside class="panel profile-note"><span class="note-icon">◎</span><h3>Non serve avere già tutti i numeri.</h3><p>Puoi iniziare senza storico. Il carico si costruisce sulle serie registrate, non su una foto o su una stima del tuo aspetto.</p><hr><strong>Tu mantieni il controllo.</strong><p>Controlla la proposta prima di salvarla. Il generatore considera i vincoli inseriti; non valuta diagnosi o riabilitazione.</p><span class="small-tag">{{historyCount}} sedute disponibili</span></aside>
+    </form>
+  }
+
+  @if (tab() === 'train') {
+    <div class="page-intro"><p class="eyebrow">UNA SERIE ALLA VOLTA</p><h1>Indicazioni semplici.<br><em>Risposte ai tuoi risultati.</em></h1><p>Prova il comportamento del coach prima di usarlo in allenamento.</p></div>
+    <div class="simulation-banner"><span class="status-dot"></span><strong>Simulazione</strong> Le serie qui inserite servono a provare il motore. Non vengono aggiunte allo storico degli allenamenti.</div>
+    @if (plan(); as p) {
+      <div class="training-selector"><label>Seduta<select [ngModel]="selectedDay()" (ngModelChange)="selectDay(+$event)">@for (day of p.sessions; track day.id; let i = $index) {<option [ngValue]="i">{{day.name}}</option>}</select></label><label>Esercizio<select [ngModel]="selectedExercise()" (ngModelChange)="selectExercise(+$event)">@for (e of session()?.exercises; track e.exerciseId; let i = $index) {<option [ngValue]="i">{{e.name}}</option>}</select></label></div>
+    }
+    @if (exercise(); as e) {
+      <div class="training-layout">
+        <section class="panel prescription-panel"><p class="eyebrow">{{e.name}}</p>@if (recommendation(); as r) {<div class="prescription-title"><h2>{{actionLabel(r.action)}}</h2><span class="small-tag">{{confidenceLabel(r.confidence)}}</span></div><p class="set-counter">SERIE {{r.setNumber}} <span>/ {{e.sets}}</span></p><div class="prescription-numbers"><div><strong>{{r.loadKg === null ? '—' : r.loadKg.toLocaleString('it-IT')}}</strong><span>{{e.loadType === 'bodyweight' ? 'Corpo libero' : r.loadKg === null ? 'Carico da calibrare' : 'kg · ' + e.loadLabel}}</span></div><span class="number-separator">×</span><div><strong>{{r.repsMin}}–{{r.repsMax}}</strong><span>ripetizioni</span></div></div><div class="target-grid"><div><span>Margine obiettivo</span><strong>{{r.rir}} ripetizioni</strong></div><div><span>Recupero</span><strong>{{rest(r.restSeconds)}}</strong></div></div><p class="coach-reason"><span>↳</span>{{r.reason}}</p>@if (r.loadKg === null && e.loadType !== 'bodyweight') {<p class="calibration-note">Scegli un peso gestibile per la serie di prova e inserisci il risultato qui sotto. Nessun massimale viene ricavato dal tuo aspetto.</p>}@if (r.dropSet) {<p class="inline-warning">{{r.dropSet.instruction}}</p>}}
+          <details class="exercise-details"><summary>Indicazioni e motivazioni dell'esercizio</summary>@for (d of e.decisions; track $index) {<p>{{d.message}}</p>}@if(e.alternatives.length) {<p><strong>Alternative compatibili:</strong> @for (id of e.alternatives; track id; let last = $last) {<span>{{exerciseName(id)}}{{last ? '' : ', '}}</span>}</p>}</details>
+        </section>
+        <section class="panel input-panel"><div class="aside-heading"><h3>Com'è andata la serie?</h3><span>Dati di prova</span></div><div class="record-fields"><label>Carico <small>{{e.loadLabel}}</small><input type="number" min="0" step="0.5" inputmode="decimal" [(ngModel)]="inputWeight" placeholder="Da scegliere" [disabled]="e.loadType === 'bodyweight'"></label><label>Ripetizioni<input type="number" min="1" max="100" step="1" inputmode="numeric" [(ngModel)]="inputReps"></label><label>Ripetizioni ancora possibili<select [(ngModel)]="inputRir"><option [ngValue]="null">Non so stimarle</option>@for (n of [0,1,2,3,4,5,6,7,8,9,10]; track n) {<option [ngValue]="n">{{n}}{{n === 10 ? '+' : ''}}</option>}</select></label></div><p class="caption">Il margine è una tua stima. “Non so” rimane un dato sconosciuto.</p><label class="technique-field">Tecnica della serie<select [(ngModel)]="inputTechnique"><option value="unknown">Non valutata</option><option value="good">Mantenuta</option><option value="degraded">Peggiorata</option></select></label><label class="simple-check"><input type="checkbox" [(ngModel)]="pain">Ho avvertito dolore</label><button type="button" class="button primary record-button" (click)="recordSet()" [disabled]="recommendation()?.action === 'stop' || recommendation()?.action === 'complete'">Registra nella simulazione <span aria-hidden="true">✓</span></button><button type="button" class="text-button reset-button" (click)="resetSimulation()">Ricomincia la prova ↻</button></section>
+      </div>
+      <section class="panel recorded-panel"><div class="aside-heading"><h3>Le tue serie di prova</h3><span>{{workingDone()}} / {{e.sets}} serie</span></div><div class="recorded-table"><div class="table-head"><span>Serie</span><span>Carico</span><span>Ripetizioni</span><span>Margine</span></div>@for (s of done(); track $index) {<div class="table-row"><span><b>{{ $index + 1 }}</b></span><span>{{s.loadKg === null ? 'Corpo libero' : s.loadKg + ' kg'}}</span><span>{{s.reps}}</span><span>{{s.rir === null ? 'Non indicato' : s.rir}}</span></div>}@empty {<p class="empty-state">Inserisci una serie per vedere come cambia il suggerimento.</p>}</div></section>
+    }
+  }
+
+  @if (tab() === 'method') {
+    <div class="page-intro"><p class="eyebrow">UN METODO TRASPARENTE</p><h1>Ogni consiglio<br><em>ha una ragione.</em></h1><p>Evidenze, vincoli personali e regole che puoi verificare.</p></div>
+    <div class="method-grid"><section class="panel method-card"><span class="step-number">01</span><h2>Una base ragionata</h2><p>Il generatore usa obiettivo, esperienza, tempo e attrezzatura. I preset sono impostazioni modificabili, non l'unica prescrizione efficace.</p></section><section class="panel method-card"><span class="step-number">02</span><h2>Risultati confrontabili</h2><p>Gli aumenti richiedono serie e sedute compatibili. Macchine diverse, riscaldamento e dati mancanti non diventano progressi inventati.</p></section><section class="panel method-card"><span class="step-number">03</span><h2>Decisioni spiegate</h2><p>Ogni proposta contiene una motivazione e una regola identificabile. I cambiamenti temporanei non riscrivono la tua storia.</p></section></div>
+    <div class="section-heading"><div><p class="eyebrow">REGISTRO DELLE CONOSCENZE</p><h2>Fonti e limiti</h2></div><span class="small-tag">Regole v{{plan()?.version || '1.0.0'}}</span></div>
+    <p class="method-disclaimer">Le fonti informano il progetto. Le soglie software sono euristiche configurabili: questo pacchetto non è stato validato clinicamente o certificato da questi autori.</p>
+    @for (source of sources(); track source.id) {<article class="panel source-card"><div><span class="source-year">{{source.year}}</span><h3><a [href]="source.url" target="_blank" rel="noopener noreferrer">{{source.title}} <span aria-hidden="true">↗</span></a></h3><p class="caption">{{source.authors}}</p><p>{{source.principle}}</p><details><summary>Limiti dell'evidenza</summary><p>{{source.limitations}}</p></details></div></article>}
+    @if(sourceError()) {<p class="message pending">Il registro delle fonti non è disponibile in questa anteprima. È incluso nel pacchetto, in docs/evidence.md e public/coach/sources.json.</p>}
+  }
+  <footer class="coach-footer"><span><b>GymTrack</b> · Coach</span><span>Motore a regole · nessuna AI</span><span>Il programma si adatta. Tu decidi.</span></footer>
+</section>

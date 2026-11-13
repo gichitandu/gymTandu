@@ -8,6 +8,7 @@ import { APPROVED_THEME_IDS } from '../shared/approved-palettes.js';
 import { calendarApi, calendarPublish, calendarConfigure } from './calendar.js';
 import { hubApi, hubInvitesApi, hubInvitePublicApi } from './hub.js';
 import { vwApi, vwScheduled } from './vw.js';
+import { groupApi, groupInvite, groupReserveRegistration } from './group.js';
 // The platform's ChatGPT access boundary remains in place. App sessions are
 // additionally bound to that authenticated visitor, and never stored in JS.
 const OWNER = 'giacomotanduo004@gmail.com';
@@ -88,6 +89,13 @@ async function catalog(db) {
   for(const g of groups.results) muscleGroups.set(g.id,g);
   return {exercises:[...exercises.values()],muscleGroups:[...muscleGroups.values()]};
 }
+/** Il codice di setup è un segreto del deploy: protegge l'attivazione e il ripristino dell'account proprietario. */
+async function requireSetupCode(request,db,env,value) {
+  const code=String(env.SETUP_CODE||'');
+  if(code.length<16) fail('Operazione non configurata: imposta il segreto SETUP_CODE (almeno 16 caratteri).',503);
+  await attempt(db,'setup:'+clientKey(request,env));
+  if(typeof value!=='string'||!equal(await digest(value),await digest(code))) fail('Codice di setup non valido.',403);
+}
 const isEditor = user => user && ['Admin','SuperAdmin'].includes(user.role);
 function validHttps(value) {try {return new URL(value).protocol==='https:';}catch{return false;}}
 function exerciseFields(b,groups) {
@@ -142,6 +150,7 @@ export async function api(request,env,ctx) {
     // Link d'invito di Dividi: chi lo apre non ha bisogno di un account (resta l'identità dell'hosting).
     if(path==='/api/hub/invite')return await hubInvitePublicApi(request,env,()=>attempt(db,'invite:'+clientKey(request,env)));
     if(path==='/api/hub/vw'||path==='/api/hub/vw/sync')return await vwApi(request,env,me);
+    if(path==='/api/group'||path.startsWith('/api/group/'))return await groupApi(request,env,me,{attempt});
     if(path.startsWith('/api/design/'))return await designStudioApi(request,env,me);
     if(path.startsWith('/api/excel-imports'))return await excelImportsApi(request,env,me);
     if(path==='/api/app-features')return await appFeaturesApi(request,env,me);
@@ -172,7 +181,10 @@ export async function api(request,env,ctx) {
     if(path==='/api/auth/me'&&request.method==='GET') {
       const owner=await db.prepare('SELECT id FROM users WHERE email=?').bind(OWNER).first();
       const platformOwner=standalone(env)?!!me&&me.email===OWNER:platformEmail(request,env)===OWNER;
-      return json({user:me?publicUser(me):null,setup:!owner&&(standalone(env)||platformEmail(request,env)===OWNER),platformOwner,ownerEmail:OWNER,...(standalone(env)&&!owner?{setupCodeRequired:true}:{})});
+      const setup=!owner&&(standalone(env)||platformEmail(request,env)===OWNER);
+      // L'email del proprietario serve solo alla schermata di attivazione o al proprietario stesso: non va mostrata a chiunque apra l'app.
+      const ownerReset=!owner||me?null:standalone(env)?'code':platformEmail(request,env)===OWNER?'platform':null;
+      return json({user:me?publicUser(me):null,setup,platformOwner,...(setup||me?.email===OWNER?{ownerEmail:OWNER}:{}),...(standalone(env)&&!owner?{setupCodeRequired:true}:{}),...(ownerReset?{ownerReset}:{})});
     }
     if(request.method==='GET'&&path==='/api/catalog') {
       if(!me) fail('Accedi per consultare gli esercizi.',401);
@@ -195,18 +207,27 @@ export async function api(request,env,ctx) {
     const bodyLimit=path==='/api/catalog/exercise'?3000000:8192;
     const b=await readLimitedJsonBody(request,bodyLimit);if(!b||typeof b!=="object"||Array.isArray(b))return json({error:"Richiesta non valida."},400);
     if(path==='/api/auth/setup'&&request.method==='POST') {
-      if(standalone(env)) {
-        // Il codice di setup è un segreto del deploy: senza di esso nessuno può reclamare l'account proprietario.
-        const code=String(env.SETUP_CODE||'');
-        if(code.length<16) fail('Attivazione non configurata: imposta il segreto SETUP_CODE (almeno 16 caratteri).',503);
-        await attempt(db,'setup:'+clientKey(request,env));
-        if(typeof b.setupCode!=='string'||!equal(await digest(b.setupCode),await digest(code))) fail('Codice di setup non valido.',403);
-      } else if(platformEmail(request,env)!==OWNER) fail('Solo il proprietario può attivare il Super Admin.',403);
+      // Senza il codice di setup nessuno può reclamare l'account proprietario.
+      if(standalone(env)) await requireSetupCode(request,db,env,b.setupCode);
+      else if(platformEmail(request,env)!==OWNER) fail('Solo il proprietario può attivare il Super Admin.',403);
       validPassword(b.password); const salt=random(), hash=await passwordHash(b.password,salt);
       const handle=b.username===undefined?null:username(b.username);if(handle)await availableUsername(db,handle);
       const u={id:crypto.randomUUID(),email:OWNER,name:'Giacomo Tanduo',username:handle,role:'SuperAdmin',active:1};
       const result=await db.prepare('INSERT OR IGNORE INTO users(id,email,name,username,role,active,salt,password_hash,created_at) VALUES(?,?,?,?,?,?,?,?,?)').bind(u.id,u.email,u.name,u.username,u.role,1,salt,hash,Date.now()).run();
       if(!result.meta.changes) fail('Account già attivato. Accedi con la password.',409);
+      return startSession(request,db,u,env);
+    }
+    if(path==='/api/auth/owner-reset'&&request.method==='POST') {
+      // Password del proprietario dimenticata: stessa prova richiesta dall'attivazione (codice di setup
+      // in modalità autonoma, identità della piattaforma su Sites). Chiude ogni sessione già aperta.
+      if(standalone(env)) await requireSetupCode(request,db,env,b.setupCode);
+      else if(platformEmail(request,env)!==OWNER) fail('Solo il proprietario può reimpostare questa password.',403);
+      validPassword(b.password);
+      const u=await db.prepare('SELECT * FROM users WHERE email=?').bind(OWNER).first();
+      if(!u) fail('Account non ancora attivato.',409);
+      const salt=random();
+      await db.batch([db.prepare('UPDATE users SET salt=?,password_hash=? WHERE id=?').bind(salt,await passwordHash(b.password,salt),u.id),db.prepare('DELETE FROM sessions WHERE user_id=?').bind(u.id)]);
+      if(standalone(env)) await db.prepare('DELETE FROM login_limits WHERE id=?').bind('setup:'+clientKey(request,env)).run();
       return startSession(request,db,u,env);
     }
     if(path==='/api/auth/login'&&request.method==='POST') {
@@ -220,6 +241,21 @@ export async function api(request,env,ctx) {
       if(!u||!u.active||!equal(hash,u.password_hash)) fail('Nome utente, email o password non validi.',401);
       await db.prepare('DELETE FROM login_limits WHERE id=?').bind(key).run();
       return startSession(request,db,u,env);
+    }
+    if(path==='/api/auth/register'&&request.method==='POST') {
+      // La registrazione libera non esiste: serve il link di invito di un gruppo ancora aperto,
+      // che vale per pochi nuovi account e scade con il gruppo. Il ruolo è sempre Cliente.
+      await attempt(db,'register:'+clientKey(request,env));
+      const invite=await groupInvite(db,b.invite);
+      if(!invite) fail('Invito non valido o scaduto. Chiedi un nuovo link.',403);
+      const u=fields({...b,role:'User'}); validPassword(b.password);
+      if(u.email===OWNER) fail('Questa email è già registrata.',409);
+      await availableUsername(db,u.username);
+      if(await db.prepare('SELECT id FROM users WHERE email=?').bind(u.email).first()) fail('Questa email è già registrata.',409);
+      if(!await groupReserveRegistration(db,invite.id)) fail('Questo invito ha già registrato il numero massimo di account. Chiedi un nuovo link.',403);
+      const created={id:crypto.randomUUID(),...u,active:1}, salt=random();
+      await db.prepare('INSERT INTO users(id,email,name,username,role,active,salt,password_hash,created_at) VALUES(?,?,?,?,?,1,?,?,?)').bind(created.id,u.email,u.name,u.username,u.role,salt,await passwordHash(b.password,salt),Date.now()).run();
+      return startSession(request,db,created,env);
     }
     if(path==='/api/auth/logout'&&request.method==='POST') {
       const token=request.headers.get('cookie')?.split(';').map(s=>s.trim()).find(s=>s.startsWith(COOKIE+'='))?.slice(COOKIE.length+1);

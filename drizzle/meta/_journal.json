@@ -92,6 +92,13 @@
       "when": 1794523744802,
       "tag": "0012_app_features_hub_garage",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "6",
+      "when": 1794590692498,
+      "tag": "0013_group_workouts",
+      "breakpoints": true
     }
   ]
 }

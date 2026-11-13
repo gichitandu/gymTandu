@@ -1,4 +1,5 @@
 import { cloneForEdit } from './edit-snapshot';
+import { AlignRow, GROUP_PLAN_ID, GroupExercise, alignedOrder, ensureGroupExercise, groupDayId } from './group-workout';
 import {historyReductions} from './workout-safety';
 import { previousWeekWorkout, reusableExerciseSets } from './weekly-reuse';
 import { WorkoutStartOptionsService } from './workout-start-options';
@@ -30,11 +31,16 @@ import { AcceptedCatalogChanges, mergeCatalog } from "./catalog-merge";
 import { ArchiveSyncService, archiveFingerprint } from "./archive-sync";
 import { exportBackup } from "./backup";
 import { TodayService } from "./today";
+import { CREATINE_MAX_DAILY_GRAMS, roundGrams } from "./creatine";
 import { ExcelProgramDraft } from '../models/excel-import';
 import { autoCompletePlan,effectiveProgramRange,excelProgramConflicts,missingProgramEvents,normalizedExerciseName,prescriptionDetails,scheduleConflicts,validateExcelProgram } from './plan-program';
 @Injectable({ providedIn: "root" })
 export class Store {
   saveWellness(row:import('../models/domain').WellnessLog){return this.change(d=>{const existing=d.wellnessLogs.find(v=>v.date===row.date);const next={...structuredClone(row),id:existing?.id||row.id};d.wellnessLogs=d.wellnessLogs.filter(v=>v.date!==row.date);d.wellnessLogs.push(next);},'Diario recupero salvato',false);}
+  /** Aggiunge (o toglie, con un valore negativo) grammi di creatina al totale del giorno; a 0 il record sparisce. */
+  addCreatine(date:string,deltaGrams:number){return this.change(d=>{const existing=d.creatineLogs.find(v=>v.date===date),next=roundGrams((existing?.grams??0)+deltaGrams);if(!Number.isFinite(next)||next<0||next>CREATINE_MAX_DAILY_GRAMS)throw Error('Inserisci un totale tra 0 e '+CREATINE_MAX_DAILY_GRAMS+' g di creatina.');d.creatineLogs=d.creatineLogs.filter(v=>v.date!==date);if(next>0)d.creatineLogs.push({id:existing?.id||'creatine-'+date,date,grams:next});},'',false);}
+  /** Imposta il totale di creatina del giorno; 0 lo azzera. */
+  setCreatine(date:string,grams:number){return this.change(d=>{const next=roundGrams(grams);if(!Number.isFinite(next)||next<0||next>CREATINE_MAX_DAILY_GRAMS)throw Error('Inserisci un totale tra 0 e '+CREATINE_MAX_DAILY_GRAMS+' g di creatina.');const existing=d.creatineLogs.find(v=>v.date===date);d.creatineLogs=d.creatineLogs.filter(v=>v.date!==date);if(next>0)d.creatineLogs.push({id:existing?.id||'creatine-'+date,date,grams:next});},'',false);}
   removeWellness(id:string){return this.change(d=>{d.wellnessLogs=d.wellnessLogs.filter(v=>v.id!==id);},'Voce rimossa',false);}
 
   private theme = inject(ThemeService, { optional: true });
@@ -627,7 +633,8 @@ export class Store {
             number: i + 1 + warmups,
             kind:"work",
             weight: prior.work[i]?.weight ?? prior.work.at(-1)?.weight ?? p?.weight ?? item.targetWeight ?? 0,
-            reps: p?.reps ?? item.repsMin,
+            // Schede normali: le ripetizioni della settimana prima; nei programmi a settimane le ripetizioni previste restano quelle del programma.
+            reps: (day.week === undefined ? prior.work[i]?.reps ?? prior.work.at(-1)?.reps : undefined) ?? p?.reps ?? item.repsMin,
             rpe: item.rpe,
             rest: item.rest,
             notes: "",
@@ -636,6 +643,35 @@ export class Store {
         }
       }
     });
+  }
+  /** Allenamento in gruppo, «stessi esercizi»: apre una seduta di oggi con gli esercizi ricevuti. I carichi partono dal mio storico, mai da quelli degli altri. */
+  startGroupWorkout(source: {sessionId: string; dayName: string; exercises: GroupExercise[]}) {
+    return this.change((d) => {
+      const open=d.workouts.find(w=>w.status==='draft');
+      if(open){if(open.dayId===groupDayId(source.sessionId))return;throw Error(this.openSessionMessage(open));}
+      if(!source.exercises.length)throw Error('Chi ha creato il gruppo non ha ancora esercizi nella seduta.');
+      const wid=uid(),date=localDate();
+      d.workouts.push({id:wid,userId:"local",planId:GROUP_PLAN_ID,dayId:groupDayId(source.sessionId),planName:'Allenamento in gruppo',dayName:source.dayName.trim()||'Allenamento in gruppo',date,startedAt:now(),duration:0,notes:"",status:"draft",bodyWeight:d.profiles[0].bodyWeight});
+      source.exercises.forEach((item,order)=>{
+        const ex=ensureGroupExercise(d,item),weid=uid(),setup=d.exercisePreferences.find(p=>p.id===ex.id)?.machineSetup;
+        d.workoutExercises.push({id:weid,workoutId:wid,exerciseId:ex.id,superset:item.superset,machineSetup:structuredClone(setup),name:ex.name,loadMode:ex.loadMode,order,rest:item.rest,notes:"",repsMin:item.repsMin,repsMax:item.repsMax});
+        const prev=d.settings[0].prefill?this.previous(ex.id,undefined,setup,date):[];
+        for(let i=0;i<item.warmupSets;i++)d.sets.push({id:uid(),workoutExerciseId:weid,number:i+1,kind:'warmup',weight:0,reps:item.repsMin,rest:item.rest,notes:'',completed:false});
+        for(let i=0;i<item.sets;i++)d.sets.push({id:uid(),workoutExerciseId:weid,number:i+1+item.warmupSets,kind:"work",weight:prev[i]?.weight??prev.at(-1)?.weight??0,reps:prev[i]?.reps??item.repsMin,rest:item.rest,notes:"",completed:false});
+      });
+      // Un superset rimasto senza compagno (elenco tagliato o esercizio duplicato) torna un esercizio singolo.
+      const rows=d.workoutExercises.filter(e=>e.workoutId===wid);
+      for(const row of rows)if(row.superset&&rows.filter(e=>e.superset===row.superset).length!==2)delete row.superset;
+    },'',false);
+  }
+  /** Allenamento in gruppo, «il mio allenamento»: sposta gli esercizi in comune nello stesso momento della seduta di riferimento. Cambia solo l'ordine. */
+  alignGroupWorkout(workoutId: string, reference: GroupExercise[]) {
+    return this.change((d) => {
+      if(!d.workouts.some(w=>w.id===workoutId&&w.status==='draft'))throw Error('La seduta non è più aperta.');
+      const rows=d.workoutExercises.filter(e=>e.workoutId===workoutId);
+      const input:AlignRow[]=rows.map(e=>({id:e.id,exerciseId:e.exerciseId,name:e.name,order:e.order,superset:e.superset,started:d.sets.some(s=>s.workoutExerciseId===e.id&&s.completed)}));
+      alignedOrder(input,reference).forEach((id,order)=>{rows.find(e=>e.id===id)!.order=order;});
+    },'',false);
   }
   updateSet(id: string, patch: Partial<WorkoutLogSet>,undo=false) {
     const exerciseId=this.data().sets.find(set=>set.id===id)?.workoutExerciseId||'';

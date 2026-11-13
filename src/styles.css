@@ -1925,3 +1925,6 @@ body.theme-ready.custom-light .favorite-button.favorite-on { color: var(--warnin
   body:has(.gt-insights-print) gt-shell main { max-width:none!important;margin:0!important;padding:14mm!important; }
   body:has(.gt-insights-print) .gt-insights-print .card { color:#111!important;background:#fff!important;box-shadow:none!important; }
 }
+
+/* Allenamento in gruppo: ingresso dalle schermate Schede ed Elenco. */
+.group-entry { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; margin: 0 0 14px; }

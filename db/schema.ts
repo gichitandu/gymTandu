@@ -49,3 +49,11 @@ export const designRevisions=sqliteTable('design_revisions',{
 export const designAudit=sqliteTable('design_audit',{
  id:text('id').primaryKey(),revision:integer('revision').notNull().references(()=>designRevisions.revision),actorId:text('actor_id').notNull().references(()=>users.id),createdAt:integer('created_at').notNull(),kind:text('kind').notNull(),delta:text('delta').notNull()
 });
+
+// Allenamento in gruppo: sedute condivise di breve durata, mai parte degli archivi personali.
+export const groupSessions=sqliteTable('group_sessions',{
+ id:text('id').primaryKey(),code:text('code').notNull(),inviteToken:text('invite_token').notNull().unique(),hostId:text('host_id').notNull().references(()=>users.id),dayName:text('day_name').notNull(),createdAt:integer('created_at').notNull(),expiresAt:integer('expires_at').notNull(),endedAt:integer('ended_at'),registrations:integer('registrations').notNull().default(0)
+},table=>[index('group_sessions_code').on(table.code),index('group_sessions_host').on(table.hostId)]);
+export const groupMembers=sqliteTable('group_members',{
+ sessionId:text('session_id').notNull().references(()=>groupSessions.id),userId:text('user_id').notNull().references(()=>users.id),name:text('name').notNull(),mode:text('mode').notNull(),payload:text('payload').notNull(),joinedAt:integer('joined_at').notNull(),updatedAt:integer('updated_at').notNull(),leftAt:integer('left_at')
+},table=>[primaryKey({columns:[table.sessionId,table.userId]}),index('group_members_user').on(table.userId)]);

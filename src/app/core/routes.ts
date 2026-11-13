@@ -1,9 +1,12 @@
+import { COACH_GATEWAY } from '../coach-ui/coach-gateway';
+import { CoachExpertBridge } from '../services/coach-expert-bridge';
 import { Routes } from "@angular/router";
 import { preserveFormDrafts } from '../services/draft-navigation';
 import { nutritionEnabledGuard } from '../services/nutrition-guard';
 import { designStudioGuard } from '../design/design-guard';
 import { appChooserGuard, garageGuard, hubGuard } from '../hub/hub-access';
 const pages: Routes = [
+ {path:'coach',canDeactivate:[(page:{canLeave():boolean})=>page.canLeave()],providers:[{provide:COACH_GATEWAY,useExisting:CoachExpertBridge}],loadComponent:()=>import('../coach-ui/coach-page.component').then(m=>m.CoachPageComponent)},
  {path:'recupera-allenamenti',loadComponent:()=>import('../features/workout-recovery.component').then(m=>m.WorkoutRecoveryComponent)},
  {path:'design-studio',canActivate:[designStudioGuard],loadComponent:()=>import('../design/design-studio.component').then(m=>m.DesignStudioComponent)},
  {path:'esercizio/:id',loadComponent:()=>import('../features/exercise-detail.component').then(m=>m.ExerciseDetailComponent)},
@@ -40,6 +43,7 @@ const pages: Routes = [
   {path:'importa-excel',loadComponent:()=>import('../features/excel-import.component').then(m=>m.ExcelImportComponent)},
   {path:'piano/:id',loadComponent:()=>import('../features/plan-dashboard.component').then(m=>m.PlanDashboardComponent)},
   {path:'riepilogo/:id',loadComponent:()=>import('../features/workout-summary.component').then(m=>m.WorkoutSummaryComponent)},
+  {path:'gruppo',loadComponent:()=>import('../features/group-workout.component').then(m=>m.GroupWorkoutComponent)},
   {path:'anteprima-allenamento',loadComponent:()=>import('../features/workout-preview.component').then(m=>m.WorkoutPreviewComponent)},
   {
     path: "allenamenti",
@@ -71,4 +75,4 @@ const pages: Routes = [
   { path: "utenti", loadComponent: () => import("../features/users.component").then(m => m.UsersComponent) },
   { path: "**", redirectTo: "" },
 ];
-export const routes: Routes = pages.map(route => route.redirectTo !== undefined ? route : {...route,canDeactivate:[preserveFormDrafts]});
+export const routes: Routes = pages.map(route => route.redirectTo !== undefined ? route : {...route,canDeactivate:[...(route.canDeactivate??[]),preserveFormDrafts]});

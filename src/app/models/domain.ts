@@ -194,8 +194,14 @@ export interface WellnessLog extends Entity {
  date:string;sleepMinutes?:number;sleepQuality?:number;energy?:number;stress?:number;
  soreness:Record<string,number>;notes:string;
 }
+/** Grammi di creatina assunti in un giorno (un solo record per data). */
+export interface CreatineLog extends Entity {
+  date: string;
+  grams: number;
+}
 export interface DataSet {
   wellnessLogs: WellnessLog[];
+  creatineLogs: CreatineLog[];
   exercisePreferences: ExercisePreference[];
   workoutUi: WorkoutUiState[];
   profiles: UserProfile[];
@@ -231,6 +237,7 @@ export const TABLES: (keyof DataSet)[] = [
   "scheduledWorkouts",
   "measurements",
   "wellnessLogs",
+  "creatineLogs",
 ];
 export const uid = () => crypto.randomUUID();
 export const now = () => new Date().toISOString();
