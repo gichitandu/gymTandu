@@ -161,3 +161,9 @@
  :host:has(> .pf-identity)>.su-list{margin-bottom:22px}
  :host:has(> .pf-identity)>.pf-identity{margin-bottom:22px}
 }
+/* Guida allenamento: tabella dei preset */
+:host .coach-presets{margin-top:16px}:host .coach-presets summary{cursor:pointer;font-weight:600;min-height:44px;display:flex;align-items:center}
+:host .coach-presets table{width:100%;border-collapse:collapse;font-size:12px;margin:8px 0}:host .coach-presets caption{text-align:left;font-size:12px;color:var(--muted,#8e9bad);padding-bottom:6px}
+:host .coach-presets th,:host .coach-presets td{padding:6px 4px;border-bottom:1px solid var(--border,#26334a);text-align:left}
+:host .coach-presets ul{padding-left:18px;font-size:13px;line-height:1.5}
+:host .coach-settings .setting-row select{flex:0 0 auto;width:auto;min-width:10.5rem;max-width:48%;padding-inline:12px;font-size:15px}

@@ -5,7 +5,8 @@ import { WorkoutStartOptionsService } from './workout-start-options';
 import { PlanReplacementRequest, PlanReplacementResult, replacePlanExercise, replaceWorkoutExercise } from './exercise-replacement';
 import { setupKey,setupSummary,hasSetup } from "./training-flow";
 import { weightProgression } from "./progression";
-import { MachineSetup,WorkoutUiState,WorkoutLogExercise,CalendarActivityInput,CalendarEventOptions,ScheduledWorkout } from "../models/domain";
+import { MachineSetup,WorkoutUiState,WorkoutLogExercise,CalendarActivityInput,CalendarEventOptions,ScheduledWorkout,CoachSettingsData,ExerciseCoachPreference } from "../models/domain";
+import { validCoachPreference,validCoachSettings,validCoachSnapshot,validSetFlag } from "./coach-data";
 import {calendarEventOptions,calendarWorkoutDuplicate,existingCalendarOptions,validateCalendarEvent} from './calendar-event-data';
 import { parseLocalDate, weeklyDates } from "./calendar";
 import { ThemeService } from "./theme";
@@ -651,7 +652,8 @@ export class Store {
         !Number.isInteger(s.reps) ||
         !Number.isFinite(s.weight) ||
         (s.rpe !== undefined && (s.rpe < 1 || s.rpe > 10)) ||
-        (s.drop!==undefined&&(!Number.isFinite(s.drop.weight)||s.drop.weight<0||!Number.isInteger(s.drop.reps)||s.drop.reps<1||s.drop.reps>999))
+        (s.drop!==undefined&&(!Number.isFinite(s.drop.weight)||s.drop.weight<0||!Number.isInteger(s.drop.reps)||s.drop.reps<1||s.drop.reps>999)) ||
+        !validSetFlag(s.flag) || !validCoachSnapshot(s.coach)
       )
         throw Error(
           "Inserisci peso positivo, ripetizioni intere e RPE tra 1 e 10.",
@@ -668,6 +670,10 @@ export class Store {
     if(ok&&receipt&&sequence===this.gymSequence)this.gymUndo.set(receipt);return ok;
   }
   async undoGymAction(){const receipt=this.gymUndo();if(!receipt)return false;const ok=await this.change(d=>{if(this.gymUndo()?.id!==receipt.id||JSON.stringify(this.gymSnapshot(d,receipt.exerciseId))!==receipt.after||!d.workouts.some(w=>w.id===receipt.workoutId&&w.status==='draft'))throw Error('La serie è cambiata: l’annullamento non sovrascrive le modifiche successive.');const i=d.workoutExercises.findIndex(e=>e.id===receipt.exerciseId);d.workoutExercises[i]=structuredClone(receipt.before.exercise);d.sets=d.sets.filter(s=>s.workoutExerciseId!==receipt.exerciseId).concat(structuredClone(receipt.before.sets));},'Ultima azione annullata.',false);if(ok&&this.gymUndo()?.id===receipt.id)this.gymUndo.set(null);return ok;}
+  /** Guida allenamento: impostazioni generali (obiettivo, esperienza, fase, cedimento, dropset). */
+  saveCoachSettings(patch:CoachSettingsData){return this.change(d=>{const next={...(d.settings[0].coach||{}),...patch};if(!validCoachSettings(next))throw Error('Impostazioni della guida non valide.');d.settings[0].coach=next;},'Guida allenamento aggiornata.',false);}
+  /** Guida allenamento: tipo di esercizio, carico minimo e compatibilità con cedimento e dropset. */
+  saveCoachPreference(exerciseId:string,patch:ExerciseCoachPreference){return this.change(d=>{if(!d.exercises.some(e=>e.id===exerciseId))throw Error('Esercizio non trovato.');const p=d.exercisePreferences.find(p=>p.id===exerciseId);const next:ExerciseCoachPreference={...(p?.coach||{}),...patch};for(const key of Object.keys(next) as (keyof ExerciseCoachPreference)[])if(next[key]===undefined)delete next[key];if(!validCoachPreference(next))throw Error('Preferenze della guida non valide.');const coach=Object.keys(next).length?next:undefined;if(p){if(coach)p.coach=coach;else delete p.coach;}else if(coach)d.exercisePreferences.push({id:exerciseId,favorite:false,coach});},'Preferenze dell’esercizio salvate.',false);}
   saveWeightStep(exerciseId:string,step:number){return this.change(d=>{if(!d.exercises.some(e=>e.id===exerciseId)||!Number.isFinite(step)||step<=0||step>50)throw Error('Scegli un incremento da 0,1 a 50.');const p=d.exercisePreferences.find(p=>p.id===exerciseId);if(p)p.weightStep=step;else d.exercisePreferences.push({id:exerciseId,favorite:false,weightStep:step});},'Incremento salvato.',false);}
   /** Abbina (o separa) due esercizi della seduta aperta come superset: stesso gruppo A–D, ognuno conserva le proprie serie. */
   pairWorkoutSuperset(id:string,partnerId:string){return this.change(d=>{

@@ -5,6 +5,7 @@ import {validWorkoutUi} from "./workout-resume";
 import { sumIngredients } from './nutrition';
 import { DataSet, TABLES } from "../models/domain";
 import {validatePrescriptionDetails} from './plan-program';
+import {validCoachPreference,validCoachSettings,validCoachSnapshot,validSetFlag} from './coach-data';
 export function validateIntegrity(d: DataSet) {
   const fail = (m: string): never => {
     throw Error("Backup non valido: " + m);
@@ -81,6 +82,9 @@ export function validateIntegrity(d: DataSet) {
   for(const state of d.workoutUi)if(!validWorkoutUi(state)||!d.workouts.some(w=>w.id===state.id&&w.status==='draft'))fail('punto di ripresa non valido');
   for(const pe of d.planExercises){if(pe.superset&&!['A','B','C','D'].includes(pe.superset)||pe.warmupSets!==undefined&&(!Number.isInteger(pe.warmupSets)||pe.warmupSets<0||pe.warmupSets>5))fail('superset o riscaldamento non valido');if(pe.superset&&d.planExercises.filter(e=>e.dayId===pe.dayId&&e.superset===pe.superset).length>2)fail('superset con più di due esercizi');}
   for(const set of d.sets)if(set.kind!==undefined&&!['work','warmup'].includes(set.kind))fail('tipo serie non valido');
+  for(const set of d.sets)if(!validSetFlag(set.flag)||!validCoachSnapshot(set.coach))fail('segnalazione o suggerimento della serie non valido');
+  if(!validCoachSettings(d.settings[0].coach))fail('impostazioni guida allenamento non valide');
+  for(const p of d.exercisePreferences)if(!validCoachPreference(p.coach))fail('preferenze guida dell’esercizio non valide');
   for(const item of [...d.planExercises,...d.workoutExercises]){try{validatePrescriptionDetails(item);}catch{fail('RIR o istruzioni dell’esercizio non validi');}}
   const settings=d.settings[0];if(settings.archiveResetId!==undefined&&(typeof settings.archiveResetId!=='string'||!settings.archiveResetId||settings.archiveResetId.length>150))fail('identificativo ripristino non valido');if(settings.catalogBaseline){const baseline=settings.catalogBaseline;if(!baseline.exercises||!baseline.groups||Object.entries(baseline.exercises).some(([id,hash])=>!id||id.length>150||typeof hash!=='string'||!/^[a-f0-9]{64}$/.test(hash))||Object.entries(baseline.groups).some(([id,name])=>!id||id.length>150||typeof name!=='string'||name.length>10000))fail('riferimento catalogo non valido');}if(settings.externalTimerEnabled!==undefined&&typeof settings.externalTimerEnabled!=='boolean')fail('preferenza timer non valida');if(settings.backupReminderDays!==undefined&&![0,7,14,30].includes(settings.backupReminderDays))fail('promemoria backup non valido');
   const photo=d.profiles[0].photo;

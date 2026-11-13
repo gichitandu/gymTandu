@@ -47,6 +47,19 @@ it('accepts older v10 snapshots, validates v11 wellness and retains the last goo
  expect((await get()).data.backup).toBe(good);
 });
 
+it('accepts coach guide fields and rejects malformed ones without replacing the last good archive',async()=>{
+ const current=JSON.parse(backup);
+ current.data.settings[0].coach={enabled:true,goal:'strength',experience:'intermediate',phase:'standard',allowFailure:false,allowDropsets:true};
+ current.data.exercisePreferences=[{id:'exercise-0',favorite:false,weightStep:2.5,coach:{movement:'compound',minLoad:20,safeForFailure:false}}];
+ current.data.workouts=[{id:'w',userId:'local',planId:'p',dayId:'d',planName:'Piano',dayName:'Giorno',date:'2026-11-01',startedAt:'2026-11-01T10:00:00.000Z',duration:0,notes:'',status:'completed'}];
+ current.data.workoutExercises=[{id:'we',workoutId:'w',exerciseId:'exercise-0',name:'Panca piana',loadMode:'external',order:0,rest:120,notes:''}];
+ current.data.sets=[{id:'s',workoutExerciseId:'we',number:1,kind:'work',weight:40,reps:9,rpe:8,completed:true,flag:'hard',coach:{v:1,rule:'increase-load',scope:'program',weight:42.5,repsMin:8,repsMax:10,rirMin:2,rirMax:2,rest:120,reason:'Prova 42,5 kg.'}}];
+ const good=JSON.stringify(current);expect((await put(good)).response.status).toBe(200);
+ const mutations=[(d:any)=>{d.settings[0].coach.goal='bulk';},(d:any)=>{d.settings[0].coach.extra=true;},(d:any)=>{d.exercisePreferences[0].coach.minLoad=-1;},(d:any)=>{d.sets[0].flag='easy';},(d:any)=>{d.sets[0].coach.repsMin=12;},(d:any)=>{d.sets[0].coach.scope='ai';}];
+ for(const mutate of mutations){const bad=structuredClone(current);mutate(bad.data);expect((await put(JSON.stringify(bad),1)).response.status).toBe(400);}
+ expect((await get()).data.backup).toBe(good);
+});
+
 it('rejects future backup versions and malformed workout dates without replacing the last good archive',async()=>{
  expect((await put()).response.status).toBe(200);
  const future=JSON.parse(backup);future.schemaVersion=999;

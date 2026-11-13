@@ -19,10 +19,12 @@ import { IconComponent } from './icon.component';
 import { LoadProgressionComponent } from './load-progression.component';
 import { ExternalTimerService } from '../services/external-timer';
 import { TodayService } from '../services/today';
-import { coachNextSet, readinessFromWellness } from '../services/coach-shadow';
+import { adviceForSet, coachSettings, snapshotOf, trainingTrend, workoutGuides } from '../services/coach-data';
+import { restText, rirText } from '../services/coach-engine';
+import { ExerciseCoachPreference } from '../models/domain';
 import type { AppUpdateEvent } from '../services/pwa';
 import { FormDraftService } from '../services/form-drafts';
-type ActiveSetDraft={weight:number;reps:number;rpe:number|undefined;setNotes:string;kind:'work'|'warmup'};
+type ActiveSetDraft={weight:number;reps:number;rpe:number|undefined;setNotes:string;kind:'work'|'warmup';flag?:'hard'|'technique'};
 interface ActiveDraftSnapshot {entries:[string,ActiveSetDraft][];exerciseId:string;setId:string;bases?:Record<string,string>}
 @Component({selector:'gt-active-workout',standalone:true,imports:[ExerciseReplacementComponent,ExerciseMotionComponent,NgTemplateOutlet,FormsModule,LoadProgressionComponent,MachineSetupComponent,MuscleMapComponent,ExerciseThumbComponent,ExerciseVideoComponent,IconComponent],templateUrl:'./active-workout.component.html',styleUrls:['./recording.css','./recording-simple.css','./workout-redesign.css','./recording-v3.css']})
 export class ActiveWorkoutComponent {
@@ -34,7 +36,7 @@ export class ActiveWorkoutComponent {
  async openReplacement(){if(this.committing())return;this.committing.set(true);try{if(await this.flushForFinish())this.replacementOpen.set(true);}finally{this.committing.set(false);}}
  replacementClosed(result:ExerciseReplacementClosed){this.replacementOpen.set(false);if(result.applied&&result.activeChanged){this.inputDrafts.clear();this.draftsChanged();this.externalTimer?.stop();this.restEnd.set(0);this.paused.set(false);this.setId.set('');this.nextRecord();this.remember(true);}}
  step=signal<WorkoutUiState['step']>('list');tab=signal<WorkoutUiState['tab']>('sets');exerciseId=signal('');setId=signal('');clock=signal(Date.now());restEnd=signal(0);paused=signal(false);pausedSeconds=signal(0);restTotal=signal(90);
- weight=0;reps=8;rpe:number|undefined;setNotes='';kind:'work'|'warmup'='work';rpes=[1,2,3,4,5,6,6.5,7,7.5,8,8.5,9,9.5,10];
+ weight=0;reps=8;rpe:number|undefined;setNotes='';kind:'work'|'warmup'='work';flag:'hard'|'technique'|undefined;rpes=[1,2,3,4,5,6,6.5,7,7.5,8,8.5,9,9.5,10];
  gymMode=signal(this.s.settings().gymMode!==false);
  setGymMode(enabled:boolean){this.gymMode.set(enabled);void this.s.change(d=>{d.settings[0].gymMode=enabled;},'',false);}swapQuery=signal('');replacementId='';
  weightStep(){const id=this.selected()?.exerciseId,value=id?this.s.preference(id)?.weightStep:undefined;return value?this.s.weight(value):2.5;}
@@ -65,15 +67,15 @@ export class ActiveWorkoutComponent {
  ngOnInit(){this.restore();this.draftSession=this.draftStorage?.bind<ActiveDraftSnapshot>(this.s.archiveKey(),'active-sets:'+this.workoutId(),()=>this.inputDrafts.size?{entries:[...this.inputDrafts],exerciseId:this.exerciseId(),setId:this.setId(),bases:Object.fromEntries(this.allSets().filter(set=>this.inputDrafts.has(set.id)).map(set=>[set.id,JSON.stringify(set)]))}:null,data=>{
   if(!Array.isArray(data?.entries)||data.entries.length>1000)return;
   const owned=new Set(this.allSets().map(set=>set.id));
-  for(const entry of data.entries){if(!Array.isArray(entry)||entry.length!==2)continue;const [id,value]=entry;if(!owned.has(id)||!value||typeof value.setNotes!=='string'||value.setNotes.length>10000||!['work','warmup'].includes(value.kind)||![value.weight,value.reps].every(n=>typeof n==='number'||n===null))continue;if(data.bases?.[id]&&data.bases[id]!==JSON.stringify(this.allSets().find(set=>set.id===id))){this.s.message.set('Una serie è cambiata dall’ultima bozza: sono conservati i valori già salvati.');continue;}this.inputDrafts.set(id,value);}
+  for(const entry of data.entries){if(!Array.isArray(entry)||entry.length!==2)continue;const [id,value]=entry;if(!owned.has(id)||!value||typeof value.setNotes!=='string'||value.setNotes.length>10000||!['work','warmup'].includes(value.kind)||![value.weight,value.reps].every(n=>typeof n==='number'||n===null)||value.flag!==undefined&&!['hard','technique'].includes(value.flag))continue;if(data.bases?.[id]&&data.bases[id]!==JSON.stringify(this.allSets().find(set=>set.id===id))){this.s.message.set('Una serie è cambiata dall’ultima bozza: sono conservati i valori già salvati.');continue;}this.inputDrafts.set(id,value);}
   const set=this.allSets().find(item=>item.id===data.setId&&this.inputDrafts.has(item.id))||this.allSets().find(item=>this.inputDrafts.has(item.id)),exercise=this.exercises().find(item=>item.id===set?.workoutExerciseId);
   if(set&&exercise){this.exerciseId.set(exercise.id);this.setId.set(set.id);this.applyInputs(this.inputDrafts.get(set.id)!);this.step.set('record');}
  });void this.draftSession?.ready.then(()=>{if(this.step()==='record'&&!this.destroyed)void this.saveDraft();});}
  restore(){const state=this.resume.read(this.s.archiveKey(),this.workoutId(),this.s.data().workoutUi.find(x=>x.id===this.workoutId()),this.s.archiveRevision());if(!state)return;const ex=this.exercises().find(e=>e.id===state.exerciseId),set=this.allSets().find(x=>x.id===state.setId&&x.workoutExerciseId===ex?.id);this.exerciseId.set(ex?.id||'');this.setId.set(set?.id||'');this.tab.set(state.tab);this.step.set(state.step==='list'?'list':!ex?'list':state.step==='record'&&!set?'detail':state.step);this.restEnd.set(state.restEnd);this.restTotal.set(state.restTotal);this.paused.set(state.paused);this.pausedSeconds.set(state.pausedSeconds);this.weight=this.s.weight(state.weight);this.reps=state.reps;this.rpe=state.rpe;this.setNotes=state.setNotes;this.kind=state.kind;this.clock.set(Date.now());if(this.step()==='record'&&!this.draftStorage)void this.saveDraft();this.syncExternalTimer();}
  snapshot():WorkoutUiState{return{id:this.workoutId(),step:this.step(),tab:this.tab(),exerciseId:this.exerciseId(),setId:this.setId(),restEnd:this.restEnd(),restTotal:this.restTotal(),paused:this.paused(),pausedSeconds:this.pausedSeconds(),weight:this.s.kg(this.weight),reps:this.reps,rpe:this.rpe,setNotes:this.setNotes,kind:this.kind,updatedAt:new Date().toISOString()};}
  remember(immediate=false){if(this.s.conflicted())return;this.syncExternalTimer();if(this.destroyed)return;if(this.s.draft()?.id!==this.workoutId()){this.resume.clear(this.s.archiveKey());return;}const state=this.snapshot();if(!validWorkoutUi(state))return;const cached=this.resume.write(this.s.archiveKey(),state,this.s.archiveRevision());clearTimeout(this.persistTimer);if(immediate||!cached)void this.s.rememberWorkout(state);else this.persistTimer=setTimeout(()=>void this.s.rememberWorkout(state),300);}
- captureInputs(){const inputs={weight:this.weight,reps:this.reps,rpe:this.rpe,setNotes:this.setNotes,kind:this.kind};if(this.setId()){this.inputDrafts.set(this.setId(),inputs);this.draftSession?.changed();}return inputs;}
- private applyInputs(inputs:ActiveSetDraft){this.weight=inputs.weight;this.reps=inputs.reps;this.rpe=inputs.rpe;this.setNotes=inputs.setNotes;this.kind=inputs.kind;}
+ captureInputs(){const inputs:ActiveSetDraft={weight:this.weight,reps:this.reps,rpe:this.rpe,setNotes:this.setNotes,kind:this.kind,flag:this.flag};if(this.setId()){this.inputDrafts.set(this.setId(),inputs);this.draftSession?.changed();}return inputs;}
+ private applyInputs(inputs:ActiveSetDraft){this.weight=inputs.weight;this.reps=inputs.reps;this.rpe=inputs.rpe;this.setNotes=inputs.setNotes;this.kind=inputs.kind;this.flag=inputs.flag;}
  private draftsChanged(){if(this.inputDrafts.size)this.draftSession?.changed();else void this.draftSession?.clear().catch(()=>{});}
  inputChanged(){this.captureInputs();this.remember();clearTimeout(this.inputTimer);this.inputTimer=setTimeout(()=>void this.saveDraft(),200);}
  @HostListener('window:gymtrack:before-update',['$event']) beforeUpdate(event:Event){(event as AppUpdateEvent).waitUntil(this.flushForFinish());}
@@ -93,7 +95,7 @@ export class ActiveWorkoutComponent {
  listDetail(e:WorkoutLogExercise){const done=this.count(e.id),total=this.s.sets(e.id).length;if(total&&done===total)return 'Completato · '+total+' serie';const last=[...this.s.previous(e.exerciseId,e.workoutId,e.machineSetup)].sort((a,b)=>b.weight-a.weight||b.reps-a.reps)[0];const target=e.repsMin!==undefined?this.repTarget(e)+' rip.':'';const parts=[done?'Serie '+(done+1)+' di '+total:total+' serie'+(target?' × '+target:'')];if(last)parts.push('ultima '+(e.loadMode==='bodyweight'||!last.weight?last.reps+' rip.':this.s.formatWeight(last.weight)+' '+this.s.settings().unit+' × '+last.reps));return parts.join(' · ');}
  open(e:WorkoutLogExercise){this.exerciseId.set(e.id);this.tab.set('sets');this.step.set('detail');this.remember();}
  quickRecord(e:WorkoutLogExercise){if(this.step()==='record')void this.saveDraft();this.open(e);this.nextRecord();}
- record(set:WorkoutLogSet){if(this.step()==='record'&&this.setId()===set.id)return;if(this.step()==='record'&&this.setId()!==set.id)void this.saveDraft();clearTimeout(this.inputTimer);this.setId.set(set.id);const inputs=this.inputDrafts.get(set.id);this.weight=inputs?inputs.weight:this.s.weightInput(set.weight&&set.weight>0?set.weight:this.warmupSuggestion(set)||set.weight);this.reps=inputs?inputs.reps:set.reps;this.rpe=inputs?inputs.rpe:set.rpe;this.setNotes=inputs?inputs.setNotes:set.notes||'';this.kind=inputs?inputs.kind:set.kind||'work';this.step.set('record');this.remember();this.revealCurrentSet();}
+ record(set:WorkoutLogSet){if(this.step()==='record'&&this.setId()===set.id)return;if(this.step()==='record'&&this.setId()!==set.id)void this.saveDraft();clearTimeout(this.inputTimer);this.setId.set(set.id);const inputs=this.inputDrafts.get(set.id);this.weight=inputs?inputs.weight:this.s.weightInput(set.weight&&set.weight>0?set.weight:this.warmupSuggestion(set)||set.weight);this.reps=inputs?inputs.reps:set.reps;this.rpe=inputs?inputs.rpe:set.rpe;this.setNotes=inputs?inputs.setNotes:set.notes||'';this.kind=inputs?inputs.kind:set.kind||'work';this.flag=inputs?inputs.flag:set.flag;this.step.set('record');this.remember();this.revealCurrentSet();}
  referenceSet=computed(()=>{const e=this.selected(),set=this.currentSet();if(!e||!set)return undefined;return this.s.sets(e.id).filter(s=>s.id!==set.id&&s.number<set.number&&s.completed&&s.kind===set.kind).at(-1)||this.previous()[Math.max(0,this.s.sets(e.id).filter(s=>s.number<set.number&&s.kind!=='warmup').length)];});
  /** Stessa serie (per posizione tra le allenanti) dell'ultimo allenamento con questo esercizio. */
  proposedWarmup=computed(()=>{const set=this.currentSet(),kg=this.warmupSuggestion(set);return set&&kg&&!(set.weight>0)?this.s.formatWeight(kg):'';});
@@ -118,22 +120,32 @@ export class ActiveWorkoutComponent {
  /** Riscaldamento: peso proposto = 50% del peso della prima serie allenante (programmato o dell'ultima volta). */
  warmupSuggestion(set=this.currentSet()){const e=this.selected();if(!e||!set||set.kind!=='warmup'||set.completed||e.loadMode!=='external')return 0;const first=this.s.sets(e.id).find(x=>x.kind!=='warmup'),base=(first&&first.weight>0?first.weight:this.previous()[0]?.weight)||0;if(!base)return 0;const step=this.s.kg(this.weightStep())||2.5;return Math.max(step,Math.round(base*.5/step)*step);}
  useReference(){const ref=this.referenceSet();if(!ref)return;this.weight=this.s.weightInput(ref.weight);this.reps=ref.reps;this.rpe=ref.rpe;this.inputChanged();}
- /** Coach Ombra: proposta per la serie allenante in corso, calcolata da storico, serie di oggi e check-in. */
+ /* Guida allenamento: prescrizione deterministica serie per serie (motore in services/coach-engine.ts).
+    Solo lettura: i valori suggeriti diventano risultati solo quando l'utente li registra. */
  coachDismissed=signal<ReadonlySet<string>>(new Set());
- coach=computed(()=>{
-  const e=this.selected(),set=this.currentSet();
-  if(!e||!set||set.kind==='warmup'||set.completed||this.coachDismissed().has(set.id))return null;
-  if(!['external','weighted-bodyweight'].includes(e.loadMode)||e.repsMin===undefined||e.repsMax===undefined)return null;
-  const working=this.s.sets(e.id).filter(x=>x.kind!=='warmup');
-  const done=working.filter(x=>x.completed&&x.number<set.number).map(x=>({weight:x.weight,reps:x.reps,rpe:x.rpe}));
-  const reference=this.previous().filter(x=>x.completed&&x.kind!=='warmup').map(x=>({weight:x.weight,reps:x.reps,rpe:x.rpe}));
-  const today=this.s.data().wellnessLogs.find(w=>w.date===(this.todayClock?.date()??localDate()));
-  const suggestion=coachNextSet({repsMin:e.repsMin,repsMax:e.repsMax,incrementKg:this.s.kg(this.weightStep()),plannedWeight:set.weight,reference,done,readiness:readinessFromWellness(today)});
-  return suggestion&&suggestion.basis!=='none'?suggestion:null;
- });
- coachDeltaLabel(){const c=this.coach(),set=this.currentSet();if(!c||!set)return '';const d=c.weight-set.weight;if(Math.abs(d)<0.000001)return 'Mantieni';return (d>0?'+':'−')+this.s.formatWeight(Math.abs(d))+' '+this.s.settings().unit;}
- applyCoach(){const c=this.coach();if(!c)return;this.weight=this.s.weightInput(c.weight);this.reps=c.reps;this.inputChanged();}
+ private coachFormat=(kg:number)=>this.s.formatWeight(kg)+' '+this.s.settings().unit;
+ coachSettings=computed(()=>coachSettings(this.s.data()));
+ coachGuides=computed(()=>this.coachSettings().enabled?workoutGuides(this.s.data(),this.workoutId(),this.coachFormat):new Map());
+ coachTrend=computed(()=>{if(!this.coachSettings().enabled)return null;const trend=trainingTrend(this.s.data(),this.workout()?.date);return trend.level==='none'?null:trend;});
+ private adviceFor(set:WorkoutLogSet|undefined){const guide=set?this.coachGuides().get(set.workoutExerciseId):undefined;return set&&guide?adviceForSet(this.s.data(),guide,set,this.coachFormat):null;}
+ coach=computed(()=>{const set=this.currentSet();if(!set||set.kind==='warmup'||set.completed||this.coachDismissed().has(set.id))return null;return this.adviceFor(set);});
+ /** Prescrizione salvata con la serie registrata, per confrontarla con i risultati reali. */
+ coachRecorded=computed(()=>{const set=this.currentSet();return set?.completed&&set.coach&&this.coachSettings().enabled?set.coach:null;});
+ private coachPatch(id:string,completed:boolean|undefined){if(completed!==true)return {};const set=this.allSets().find(row=>row.id===id);if(!set||set.coach||set.kind==='warmup')return {};const advice=this.adviceFor(set);return advice?{coach:snapshotOf(advice)}:{};}
+ coachRirText=rirText;coachRestText=restText;
+ coachPlanNotes=computed(()=>{const set=this.currentSet(),guide=this.coachGuides().get(this.exerciseId());if(!guide||!set)return [] as string[];const first=this.s.sets(set.workoutExerciseId).find(row=>row.kind!=='warmup');return first?.id===set.id?guide.plan.notes:[];});
+ coachDeltaLabel(){const c=this.coach(),set=this.currentSet();if(!c||!set)return '';if(c.weight===undefined||this.selected()?.loadMode==='bodyweight')return c.change==='rest-up'?'Più recupero':'';const d=c.weight-this.s.kg(this.weight);if(Math.abs(d)<0.0001)return 'Già impostato';return (d>0?'+':'−')+this.s.formatWeight(Math.abs(d))+' '+this.s.settings().unit;}
+ applyCoach(){const c=this.coach();if(!c)return;if(c.weight!==undefined&&this.selected()?.loadMode!=='bodyweight')this.weight=this.s.weightInput(c.weight);this.reps=c.repsTarget??c.repsMin;if(c.rest!==this.restDefault())this.restPick.set(Math.min(7200,c.rest));this.inputChanged();}
  dismissCoach(){const set=this.currentSet();if(!set)return;this.coachDismissed.update(v=>new Set(v).add(set.id));}
+ setFlag(value:'hard'|'technique'){this.flag=this.flag===value?undefined:value;this.inputChanged();}
+ /** RIR dichiarato: salvato come RPE (RIR = 10 − RPE) per compatibilità con lo storico. */
+ rirChoices=[{rir:4,label:'4+',rpe:6},{rir:3,label:'3',rpe:7},{rir:2,label:'2',rpe:8},{rir:1,label:'1',rpe:9},{rir:0,label:'0',rpe:10}];
+ coachPreference(){const id=this.selected()?.exerciseId;return id?this.s.preference(id)?.coach:undefined;}
+ async saveCoachPreference(patch:ExerciseCoachPreference){const id=this.selected()?.exerciseId;if(id)await this.s.saveCoachPreference(id,patch);}
+ coachMinLoad(){const value=this.coachPreference()?.minLoad;return value===undefined?null:this.s.weightInput(value);}
+ saveCoachMinLoad(value:string){const n=value===''?undefined:Number(value);if(n!==undefined&&(!Number.isFinite(n)||n<0||n>1000)){this.s.error.set('Inserisci un carico minimo tra 0 e 1000.');return;}void this.saveCoachPreference({minLoad:n===undefined?undefined:this.s.kg(n)});}
+ coachChoice(value:string){return value==='yes'?true:value==='no'?false:undefined;}
+ coachChoiceValue(value:boolean|undefined){return value===true?'yes':value===false?'no':'auto';}
  nextRecord(){const e=this.selected();if(!e)return;const sets=this.s.sets(e.id),set=sets.find(s=>!s.completed)||sets[0];if(set)this.record(set);}
 
  /* Registrazione serie: dati derivati per la nuova interfaccia (nessuna scrittura sull'archivio). */
@@ -164,10 +176,10 @@ export class ActiveWorkoutComponent {
  private async flushSet(id:string,reportInvalid:boolean,completed?:boolean):Promise<boolean>{
   for(;;){
    const pending=this.writes.get(id);if(pending){try{await pending;}catch{}continue;}
-   const inputs=this.inputDrafts.get(id);if(!inputs){if(completed===undefined)return true;const current=this.allSets().find(set=>set.id===id);if(!current)return false;if(current.completed===completed)return true;const completion=this.s.updateSet(id,{completed},true);this.writes.set(id,completion);try{return await completion;}finally{if(this.writes.get(id)===completion)this.writes.delete(id);}}
+   const inputs=this.inputDrafts.get(id);if(!inputs){if(completed===undefined)return true;const current=this.allSets().find(set=>set.id===id);if(!current)return false;if(current.completed===completed)return true;const completion=this.s.updateSet(id,{completed,...this.coachPatch(id,completed)},true);this.writes.set(id,completion);try{return await completion;}finally{if(this.writes.get(id)===completion)this.writes.delete(id);}}
    if(!this.allSets().some(set=>set.id===id)){this.inputDrafts.delete(id);this.draftsChanged();return true;}
    if(!Number.isFinite(inputs.weight)||inputs.weight<0||!Number.isInteger(inputs.reps)||inputs.reps<1||inputs.reps>999){if(reportInvalid)this.s.error.set('Controlla peso e ripetizioni.');await this.draftSession?.flush();return false;}
-   const job=this.s.updateSet(id,{weight:this.s.kg(inputs.weight),reps:inputs.reps,rpe:inputs.rpe,notes:inputs.setNotes,kind:inputs.kind,...(completed===undefined?{}:{completed})},true);this.writes.set(id,job);
+   const job=this.s.updateSet(id,{weight:this.s.kg(inputs.weight),reps:inputs.reps,rpe:inputs.rpe,notes:inputs.setNotes,kind:inputs.kind,flag:inputs.kind==='warmup'?undefined:inputs.flag,...(completed===undefined?{}:{completed,...this.coachPatch(id,completed)})},true);this.writes.set(id,job);
    let ok=false;try{ok=await job;}catch(error){if(reportInvalid)this.s.error.set(error instanceof Error?error.message:'Modifiche alla serie non salvate.');}finally{if(this.writes.get(id)===job)this.writes.delete(id);}
    if(!ok){await this.draftSession?.flush();return false;}
    if(this.inputDrafts.get(id)===inputs){this.inputDrafts.delete(id);this.draftsChanged();this.remember();return true;}
@@ -207,7 +219,7 @@ export class ActiveWorkoutComponent {
  rulerTicks(){const step=this.weightStep()||2.5,weight=Number.isFinite(this.weight)?this.weight:0,center=Math.round(weight/step),ticks:{n:number;x:string;major:boolean;current:boolean;label:string}[]=[];for(let i=-14;i<=14;i++){const n=center+i;if(n<0)continue;const value=+(n*step).toFixed(2),offset=(value-weight)/step*ActiveWorkoutComponent.RULER_TICK,major=n%4===0;ticks.push({n,x:'calc(50% + '+offset.toFixed(1)+'px)',major,current:Math.abs(value-weight)<0.0001,label:major?this.fmt(value):''});}return ticks;}
  repScale(){const e=this.selected();if(!e||e.repsMin===undefined)return undefined;const min=e.repsMin,max=Math.max(min,e.repsMax??min),reps=Number.isFinite(this.reps)&&this.reps>0?this.reps:min,low=Math.max(1,Math.min(min,reps)-2),high=Math.max(max,reps)+2,span=Math.max(1,high-low),pos=(value:number)=>(value-low)/span*100;return {zoneLeft:pos(min),zoneWidth:Math.max(2,pos(max)-pos(min)),marker:pos(Math.min(high,Math.max(low,reps))),inRange:reps>=min&&reps<=max,labels:[...new Set([low,min,max,high])].map(v=>({v,pos:pos(v),goal:v===min||v===max}))};}
  nextSetId(exerciseId:string){return this.s.sets(exerciseId).find(set=>!set.completed)?.id;}
- rpeGoal(){const e=this.selected();if(!e||e.rirMin===undefined)return undefined;const goal=Math.round(10-(e.rirMin+(e.rirMax??e.rirMin))/2);return goal>=6&&goal<=10?goal:undefined;}
+ rpeGoal(){const e=this.selected(),c=this.coach();const min=c?c.rirMin:e?.rirMin,max=c?c.rirMax:e?.rirMax;if(!e||min===undefined)return undefined;const goal=Math.round(10-(min+(max??min))/2);return goal>=6&&goal<=10?goal:undefined;}
  chooseRest(value:number){if(this.restRunning()){const elapsed=Math.max(0,this.restTotal()-this.remaining()),left=Math.min(7200,Math.max(0,value-elapsed));this.restTotal.set(value);this.clock.set(Date.now());if(this.paused())this.pausedSeconds.set(left);else this.restEnd.set(left?Date.now()+left*1000:0);this.remember(true);}else this.restPick.set(value===this.restDefault()?undefined:value);this.restMenu.set(false);}
  startRestNow(){this.startRest();this.restMenu.set(false);this.remember(true);}
  skipRest(){this.externalTimer?.stop();this.restEnd.set(0);this.paused.set(false);this.restMenu.set(false);this.remember(true);}

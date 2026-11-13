@@ -135,6 +135,24 @@ export interface WorkoutLogSet extends Entity {
   completed: boolean;
   /** Serie a scalare: subito dopo questa serie, meno carico per altre ripetizioni. */
   drop?: {weight:number;reps:number};
+  /** Segnalazione dell'utente: serie più dura del previsto o tecnica peggiorata. */
+  flag?: "hard" | "technique";
+  /** Prescrizione mostrata dalla guida quando la serie è stata registrata (valori suggeriti, non risultati). */
+  coach?: CoachSetSnapshot;
+}
+export interface CoachSetSnapshot {
+  v: number;
+  rule: string;
+  scope: "program" | "session";
+  weight?: number;
+  repsMin: number;
+  repsMax: number;
+  repsTarget?: number;
+  rirMin: number;
+  rirMax: number;
+  rest: number;
+  technique?: "failure" | "dropset";
+  reason: string;
 }
 export interface MealIngredient {id:string;name:string;grams:number;calories:number;protein:number;carbs:number;fat:number;}
 export interface Meal extends Entity {
@@ -163,7 +181,11 @@ export interface ScheduledWorkout extends Entity, CalendarEventOptions {
 export interface BodyMeasurement extends Entity {date:string;weight:number;waist?:number;bodyFat?:number;}
 export interface PersonalGoals {calories?:number;protein?:number;carbs?:number;fat?:number;workoutsPerWeek?:number;}
 export interface MachineSetup {machine?:string;seat?:string;backrest?:string;grip?:string;notes?:string;}
-export interface ExercisePreference extends Entity {favorite:boolean;machineSetup?:MachineSetup;weightStep?:number;}
+/** Preferenze della guida allenamento per un esercizio (tutte facoltative). */
+export interface ExerciseCoachPreference {movement?:'compound'|'isolation';minLoad?:number;safeForFailure?:boolean;dropsetCompatible?:boolean;}
+export interface ExercisePreference extends Entity {favorite:boolean;machineSetup?:MachineSetup;weightStep?:number;coach?:ExerciseCoachPreference;}
+/** Impostazioni della guida allenamento; i valori mancanti usano i default prudenti. */
+export interface CoachSettingsData {enabled?:boolean;goal?:'hypertrophy'|'strength'|'endurance';experience?:'beginner'|'intermediate'|'advanced';phase?:'standard'|'intensification'|'deload';allowFailure?:boolean;allowDropsets?:boolean;}
 export interface WorkoutUiState extends Entity {step:'list'|'detail'|'record'|'rest';tab:'sets'|'history'|'notes';exerciseId:string;setId:string;restEnd:number;restTotal:number;paused:boolean;pausedSeconds:number;weight:number;reps:number;rpe?:number;setNotes:string;kind:'work'|'warmup';updatedAt:string;}
 export interface IphoneCheck {state:'todo'|'pass'|'fail';note?:string;checkedAt?:string;}
 export interface IphoneChecklist {device:string;ios:string;checks:Record<string,IphoneCheck>;}
@@ -188,6 +210,7 @@ export interface AppSettings extends Entity {
   backgroundColor?: string;
   themeConfig?: {palette:string;mode:'dark'|'light'|'system';background?:string;accent?:string};
   goals?: PersonalGoals;
+  coach?: CoachSettingsData;
 }
 /** Daily self-reports; no physiological readiness is inferred from training. */
 export interface WellnessLog extends Entity {

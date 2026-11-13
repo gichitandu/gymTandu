@@ -149,6 +149,8 @@ const schemas = {
     rest: num.max(7200).optional(),
     notes: text.optional(),
     drop: z.object({weight:num,reps:z.number().int().min(1).max(999)}).optional(),
+    flag: z.enum(["hard","technique"]).optional(),
+    coach: z.object({v:z.number().int().min(1).max(1000),rule:z.string().min(1).max(40),scope:z.enum(["program","session"]),weight:num.max(10000).optional(),repsMin:z.number().int().min(1).max(999),repsMax:z.number().int().min(1).max(999),repsTarget:z.number().int().min(1).max(999).optional(),rirMin:z.number().min(0).max(10),rirMax:z.number().min(0).max(10),rest:num.max(7200),technique:z.enum(["failure","dropset"]).optional(),reason:z.string().max(1000)}).strict().optional(),
     completed: z.boolean(),
   }),
   settings: z.object({
@@ -165,12 +167,13 @@ const schemas = {
     iphoneChecklist:z.object({device:z.string().max(120),ios:z.string().max(80),checks:z.record(z.string().max(80),z.object({state:z.enum(['todo','pass','fail']),note:z.string().max(500).optional(),checkedAt:time.optional()}))}).optional(),
     backgroundColor: z.string().regex(/^#[0-9a-fA-F]{6}$/).optional(),
     themeConfig:z.object({palette:z.enum([...APPROVED_THEME_IDS,'oro','argento','multicolore','bianco-elegante','scuro','nero','bianco','rosso','verde','viola-neon','blu-azzurro','carbonio','artico','prugna','petrolio','sabbia','ghiaccio']),mode:z.enum(['dark','light','system']),background:z.string().regex(/^#[0-9a-fA-F]{6}$/).optional(),accent:z.string().regex(/^#[0-9a-fA-F]{6}$/).optional(),style:z.enum(['classic','elegant']).optional()}).strict().optional(),
+    coach:z.object({enabled:z.boolean().optional(),goal:z.enum(['hypertrophy','strength','endurance']).optional(),experience:z.enum(['beginner','intermediate','advanced']).optional(),phase:z.enum(['standard','intensification','deload']).optional(),allowFailure:z.boolean().optional(),allowDropsets:z.boolean().optional()}).strict().optional(),
     goals:z.object({calories:z.number().positive().max(20000).optional(),protein:z.number().positive().max(2000).optional(),carbs:z.number().positive().max(3000).optional(),fat:z.number().positive().max(2000).optional(),workoutsPerWeek:z.number().int().min(1).max(14).optional()}).optional(),
   }),
 };
 const dataSchema = z.object({
   wellnessLogs:z.array(z.object({id,date,sleepMinutes:z.number().int().min(0).max(1440).optional(),sleepQuality:z.number().int().min(1).max(5).optional(),energy:z.number().int().min(1).max(5).optional(),stress:z.number().int().min(1).max(5).optional(),soreness:z.record(id,z.number().int().min(0).max(4)).refine(value=>Object.keys(value).length<=1000),notes:z.string().max(2000)})).max(10000),
-  exercisePreferences:z.array(z.object({id,favorite:z.boolean(),machineSetup:machineSetup.optional(),weightStep:z.number().positive().max(50).optional()})).max(10000),
+  exercisePreferences:z.array(z.object({id,favorite:z.boolean(),machineSetup:machineSetup.optional(),weightStep:z.number().positive().max(50).optional(),coach:z.object({movement:z.enum(['compound','isolation']).optional(),minLoad:z.number().min(0).max(1000).optional(),safeForFailure:z.boolean().optional(),dropsetCompatible:z.boolean().optional()}).strict().optional()})).max(10000),
   workoutUi:z.array(z.object({id,step:z.enum(['list','detail','record','rest']),tab:z.enum(['sets','history','notes']),exerciseId:z.string().max(150),setId:z.string().max(150),restEnd:num,restTotal:num.max(7200),paused:z.boolean(),pausedSeconds:num.max(7200),weight:num,reps:z.number().int().min(1).max(999),rpe,setNotes:z.string().max(10000),kind:z.enum(['work','warmup']),updatedAt:time})).max(1),
   profiles: z.array(schemas.profiles).length(1),
   roles: z.array(schemas.roles).min(3).max(3),
