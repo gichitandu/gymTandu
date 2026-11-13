@@ -1,4 +1,5 @@
 import {validWellness} from './wellness';
+import {validCreatine} from './creatine';
 import {validThemeConfig} from "./theme-palettes";
 import {validateCalendarEvent} from './calendar-event-data';
 import {validWorkoutUi} from "./workout-resume";
@@ -11,6 +12,7 @@ export function validateIntegrity(d: DataSet) {
   };
   if (d.settings.some(settings => settings.reusePreviousWeek !== undefined && typeof settings.reusePreviousWeek !== 'boolean')) fail('preferenza settimana precedente non valida');
   if(!Array.isArray(d.wellnessLogs)||d.wellnessLogs.length>10000||d.wellnessLogs.some(row=>!validWellness(row))||new Set(d.wellnessLogs.map(row=>row.date)).size!==d.wellnessLogs.length)fail('diario recupero non valido o date duplicate');
+  if(!Array.isArray(d.creatineLogs)||d.creatineLogs.length>10000||d.creatineLogs.some(row=>!validCreatine(row))||new Set(d.creatineLogs.map(row=>row.date)).size!==d.creatineLogs.length)fail('diario creatina non valido o date duplicate');
   for (const name of TABLES) {
     if (new Set(d[name].map((e) => e.id)).size !== d[name].length)
       fail("ID duplicati in " + name);

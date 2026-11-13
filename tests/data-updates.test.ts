@@ -38,7 +38,7 @@ it('upgrades v6 additively, retaining every saved and edited record and photo',a
  for(const table of TABLES)if(old.tables.some(t=>t.name===table))await old.table(table).bulkPut(data[table]);old.close();
  const db=new GymDatabase(name);
  try{
-  const upgraded=await db.snapshot();expect(db.verno).toBe(8);
+  const upgraded=await db.snapshot();expect(db.verno).toBe(9);
   for(const table of TABLES)expect([...upgraded[table]].sort((a,b)=>a.id.localeCompare(b.id))).toEqual([...data[table]].sort((a,b)=>a.id.localeCompare(b.id)));
   expect(await upgraded.profiles[0].photo!.arrayBuffer()).toEqual(await data.profiles[0].photo!.arrayBuffer());
   db.close();const reopened=new GymDatabase(name);try{expect((await reopened.snapshot()).sets).toEqual(data.sets);}finally{reopened.close();}

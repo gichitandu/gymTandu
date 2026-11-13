@@ -1,3 +1,5 @@
+import { CoachVisibleTextPipe } from '../shared/coach-visible-text.pipe';
+import { coachVisibleText, replaceCoachVisibleText } from '../services/coach-expert-adapter';
 import { ProfileLinkComponent } from '../shared/profile-link.component';
 import { NgTemplateOutlet } from '@angular/common';
 import { DESIGN_DIRECTIVES } from '../design/design-directives';
@@ -42,7 +44,7 @@ type PlanEditorDraft = {
 @Component({
   standalone: true,
   styleUrls: ["./feature-polish.css", "./plans-simple.css", "./plans-reference.css", "./plans-redesign.css"],
-  imports: [ProfileLinkComponent,NgTemplateOutlet,ExerciseReplacementComponent,...DESIGN_DIRECTIVES,DateFieldComponent,
+  imports: [CoachVisibleTextPipe,ProfileLinkComponent,NgTemplateOutlet,ExerciseReplacementComponent,...DESIGN_DIRECTIVES,DateFieldComponent,
     A11yModule,ExerciseScopeComponent,
     ExerciseFamiliesComponent,
     ExerciseThumbComponent,
@@ -55,7 +57,7 @@ type PlanEditorDraft = {
   template: `<div class="compact-plans">
     <p class="el-only el-eyebrow el-over">{{plans().length}} {{plans().length===1?'scheda':'schede'}}</p>
     <header class="su-head"><h1 gtDesign="training.title" gtDesignLabel="training.title" gtDesignLabelDefault="Schede">Schede</h1><div class="su-actions"><button type="button" class="su-iconbtn" gtDesign="training.newPlan" (click)="newPlanStep.set('choose')" [disabled]="!s.ready()" aria-label="Nuova scheda"><gt-icon name="plus"/></button><gt-profile-link/></div></header>
-    <nav class="su-seg" aria-label="Schede ed esercizi"><a class="on" aria-current="page" routerLink="/piani">Le mie schede</a><a routerLink="/catalogo">Esercizi</a></nav>
+    <nav class="su-seg" aria-label="Schede ed esercizi"><a class="on" aria-current="page" routerLink="/piani">Le mie schede</a><a routerLink="/catalogo">Esercizi</a><a routerLink="/coach">Il tuo coach</a></nav>
     <gt-status />
     @if(draftNotice()){<p class="notice" role="status">{{draftNotice()}}</p>}
     <a class="button ghost group-entry" routerLink="/gruppo"><gt-icon name="users"/>Allenamento in gruppo</a>
@@ -85,7 +87,7 @@ type PlanEditorDraft = {
           </div>
           @if(p.active&&!p.completedAt&&!p.archived&&s.days(p.id).length){<div class="pl-progress"><div class="pl-progress-row">@if(p.program){<span><b>Settimana {{currentWeek(p)}}</b> di {{p.program.weeks}}</span>}@else{<span><b>{{completedForPlan(p.id)}}</b> allenamenti fatti</span>}<small>{{completedForPlan(p.id)}} di {{s.days(p.id).length}}</small></div><div class="su-bar"><i [style.width.%]="planProgress(p)"></i></div></div>}
           @if(expanded()===p.id){
-            @if(p.description){@if(p.program){<details class="program-description"><summary>Note del programma</summary><p class="simple-plan-description">{{p.description}}</p></details>}@else{<p class="simple-plan-description">{{p.description}}</p>}}
+            @if(p.description){@if(p.program){<details class="program-description"><summary>Note del programma</summary><p class="simple-plan-description">{{p.description | coachText}}</p></details>}@else{<p class="simple-plan-description">{{p.description | coachText}}</p>}}
             @if(p.program){<div class="program-week-picker"><label>Settimana<select [ngModel]="weekFor(p)" (ngModelChange)="selectWeek(p.id,$event)">@for(week of weeksFor(p);track week){<option [ngValue]="week">Settimana {{week}} / {{p.program.weeks}}</option>}</select></label></div>}
             <div class="simple-days">
               @for(day of visibleDays(p);track day.id){
@@ -94,7 +96,7 @@ type PlanEditorDraft = {
                   <div class="simple-day-body">@if(day.phase||day.notes){<div class="day-guidance">@if(day.phase){<span class="pill">{{day.phase}}</span>}@if(day.notes){<details><summary>Indicazioni della seduta</summary><p>{{day.notes}}</p></details>}</div>}
                     @if(editing()===p.id&&!p.archived&&!p.completedAt){<div class="pl-tools" role="group" [attr.aria-label]="'Modifica '+day.name"><button type="button" class="su-iconbtn" (click)="openDay(p.id,day)" aria-label="Modifica allenamento"><gt-icon name="edit"/></button><button type="button" class="su-iconbtn" (click)="s.duplicateDay(day.id)" aria-label="Duplica allenamento"><gt-icon name="copy"/></button><button type="button" class="su-iconbtn" (click)="moveDay(day,-1)" [disabled]="day.order===0" aria-label="Sposta prima"><gt-icon name="back" class="pl-up"/></button><button type="button" class="su-iconbtn" (click)="moveDay(day,1)" [disabled]="day.order===s.days(p.id).length-1" aria-label="Sposta dopo"><gt-icon name="back" class="pl-down"/></button><button type="button" class="su-iconbtn pl-remove" (click)="removeDay(day)" aria-label="Elimina allenamento"><gt-icon name="trash"/></button></div>}
                   <div class="simple-exercises"><div>
-                    @for(pe of s.planExercises(day.id);track pe.id){<div class="simple-exercise-row"><gt-exercise-thumb [exercise]="s.exercise(pe.exerciseId)"/><div><strong>{{s.exercise(pe.exerciseId)?.name}}</strong><small>{{pe.sets}} × {{pe.repsMin}}–{{pe.repsMax}} rip · {{pe.rest}} s</small>@if(pe.targetWeight!==undefined){<small>{{s.formatWeight(pe.targetWeight)}} {{s.settings().unit}}</small>}@if(pe.superset){<small>Superset {{pe.superset}}</small>}@if(pe.warmupSets){<small>{{pe.warmupSets}} serie di riscaldamento</small>}@if(pe.rirMin!==undefined){<small>RIR {{pe.rirMin}}{{pe.rirMax!==undefined&&pe.rirMax!==pe.rirMin?'–'+pe.rirMax:''}}</small>}@if(pe.rpe){<small>RPE {{pe.rpe}}</small>}@if(pe.warmupNotes||pe.reference||pe.notes){<details class="exercise-guidance"><summary>Riscaldamento e note</summary>@if(pe.warmupNotes){<small><b>Riscaldamento:</b> {{pe.warmupNotes}}</small>}@if(pe.reference){<small><b>Riferimento:</b> {{pe.reference}}{{pe.loadUnit?' · '+pe.loadUnit:''}}</small>}@if(pe.notes){<small>{{pe.notes}}</small>}</details>}</div>
+                    @for(pe of s.planExercises(day.id);track pe.id){<div class="simple-exercise-row"><gt-exercise-thumb [exercise]="s.exercise(pe.exerciseId)"/><div><strong>{{s.exercise(pe.exerciseId)?.name}}</strong><small>{{pe.sets}} × {{pe.repsMin}}–{{pe.repsMax}} rip · {{pe.rest}} s</small>@if(pe.targetWeight!==undefined){<small>{{s.formatWeight(pe.targetWeight)}} {{s.settings().unit}}</small>}@if(pe.superset){<small>Superset {{pe.superset}}</small>}@if(pe.warmupSets){<small>{{pe.warmupSets}} serie di riscaldamento</small>}@if(pe.rirMin!==undefined){<small>RIR {{pe.rirMin}}{{pe.rirMax!==undefined&&pe.rirMax!==pe.rirMin?'–'+pe.rirMax:''}}</small>}@if(pe.rpe){<small>RPE {{pe.rpe}}</small>}@if(pe.warmupNotes||pe.reference||pe.notes){<details class="exercise-guidance"><summary>Riscaldamento e note</summary>@if(pe.warmupNotes){<small><b>Riscaldamento:</b> {{pe.warmupNotes}}</small>}@if(pe.reference | coachText){<small><b>Riferimento:</b> {{pe.reference | coachText}}{{pe.loadUnit?' · '+pe.loadUnit:''}}</small>}@if(pe.notes){<small>{{pe.notes}}</small>}</details>}</div>
                       @if(editing()===p.id&&!p.archived&&!p.completedAt){<div class="pl-tools small" role="group" [attr.aria-label]="'Modifica '+s.exercise(pe.exerciseId)?.name"><button type="button" class="su-iconbtn" (click)="openExercise(day.id,pe)" aria-label="Modifica esercizio"><gt-icon name="edit"/></button><button type="button" class="su-iconbtn" (click)="replacementTarget.set(pe.id)" aria-label="Sostituisci esercizio"><gt-icon name="repeat"/></button><button type="button" class="su-iconbtn" (click)="moveExercise(pe,-1)" [disabled]="pe.order===0" aria-label="Sposta prima"><gt-icon name="back" class="pl-up"/></button><button type="button" class="su-iconbtn" (click)="moveExercise(pe,1)" [disabled]="pe.order===s.planExercises(day.id).length-1" aria-label="Sposta dopo"><gt-icon name="back" class="pl-down"/></button><button type="button" class="su-iconbtn pl-remove" (click)="removeExercise(pe)" aria-label="Rimuovi esercizio"><gt-icon name="minus"/></button></div>}
                     </div>}@empty{<p class="subtle">Nessun esercizio.</p>}
                     @if(editing()===p.id&&!p.archived&&!p.completedAt){<button type="button" class="su-btn ghost sm pl-add" (click)="openExercise(day.id)"><gt-icon name="plus"/>Aggiungi esercizio</button>}
@@ -437,7 +439,7 @@ export class PlansComponent {
   }
   private appliedDraft(value:PlanEditorDraft){
     const data=this.s.data();
-    if(value.kind==='plan'){const plan=data.plans.find(item=>item.id===value.saveId);return !!plan&&plan.name===value.plan.name.trim()&&plan.description===value.plan.description.trim();}
+    if(value.kind==='plan'){const plan=data.plans.find(item=>item.id===value.saveId);return !!plan&&plan.name===value.plan.name.trim()&&coachVisibleText(plan.description)===value.plan.description.trim();}
     if(value.kind==='day'){const day=data.days.find(item=>item.id===value.saveId);return !!day&&day.name===value.day.name.trim()&&day.weekday===(value.day.weekday===''?undefined:Number(value.day.weekday));}
     const entry=data.planExercises.find(item=>item.id===value.saveId),form=value.exercise;
     const kg=form.targetWeight===null?undefined:value.unit==='lb'?form.targetWeight/2.2046226218:form.targetWeight;
@@ -485,7 +487,7 @@ export class PlansComponent {
     this.formSaveId = p?.id || uid();
     this.planForm.reset({
       name: p?.name || "",
-      description: p?.description || "",
+      description: coachVisibleText(p?.description),
     });
     this.modal.set("plan");
     this.editorOpened();
@@ -497,7 +499,7 @@ export class PlansComponent {
     try {
     const v = this.planForm.getRawValue();
     const id = this.formSaveId ||= this.editId || uid();
-    if (await this.s.savePlan(id, v.name, v.description)) {
+    if (await this.s.savePlan(id, v.name, replaceCoachVisibleText(this.s.data().plans.find(p=>p.id===id)?.description, v.description))) {
       this.expanded.set(id);
       this.editorSaved();
     }
