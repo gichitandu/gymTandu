@@ -143,14 +143,27 @@ export class ActiveWorkoutComponent {
   if(!e||!set||set.kind==='warmup'||set.completed||this.coachDismissed().has(set.id))return null;
   if(!['external','weighted-bodyweight'].includes(e.loadMode)||e.repsMin===undefined||e.repsMax===undefined)return null;
   const working=this.s.sets(e.id).filter(x=>x.kind!=='warmup');
-  const done=working.filter(x=>x.completed&&x.number<set.number).map(x=>({weight:x.weight,reps:x.reps,rpe:x.rpe}));
-  const reference=this.previous().filter(x=>x.completed&&x.kind!=='warmup').map(x=>({weight:x.weight,reps:x.reps,rpe:x.rpe}));
+  const result=(x:{weight:number;reps:number;rpe?:number;notes?:string})=>{const f=readSetFeedback(x.notes);return {weight:x.weight,reps:x.reps,rpe:x.rpe,...(f?{rir:f.rir??null,technique:f.technique,pain:f.pain}:{})};};
+  const done=working.filter(x=>x.completed&&x.number<set.number).map(result);
+  const reference=this.previous().filter(x=>x.completed&&x.kind!=='warmup').map(result);
   const today=this.s.data().wellnessLogs.find(w=>w.date===(this.todayClock?.date()??localDate()));
   const suggestion=coachNextSet({repsMin:e.repsMin,repsMax:e.repsMax,incrementKg:this.s.kg(this.weightStep()),plannedWeight:set.weight,reference,done,readiness:readinessFromWellness(today)});
-  return suggestion&&suggestion.basis!=='none'?suggestion:null;
+  // Senza storico propone il carico della scheda solo se è davvero impostato (mai 0 kg).
+  return suggestion&&(suggestion.basis!=='none'||suggestion.weight>0)?suggestion:null;
  });
- coachDeltaLabel(){const c=this.coach(),set=this.currentSet();if(!c||!set)return '';const d=c.weight-set.weight;if(Math.abs(d)<0.000001)return 'Mantieni';return (d>0?'+':'−')+this.s.formatWeight(Math.abs(d))+' '+this.s.settings().unit;}
- applyCoach(){const c=this.coach();if(!c)return;this.weight=this.s.weightInput(c.weight);this.reps=c.reps;this.inputChanged();}
+ /** Prima serie senza riferimenti: solo indicazioni, nessun carico inventato. */
+ coachStart=computed(()=>{
+  const e=this.selected(),set=this.currentSet();
+  if(this.coach()||this.expertPrescription()||!e||!set||set.kind==='warmup'||set.completed||this.coachDismissed().has(set.id))return null;
+  if(!['external','weighted-bodyweight'].includes(e.loadMode)||e.repsMin===undefined||e.repsMax===undefined)return null;
+  if(this.s.sets(e.id).some(x=>x.completed&&x.kind!=='warmup'))return null;
+  const range=e.repsMin===e.repsMax?`${e.repsMin}`:`${e.repsMin}–${e.repsMax}`;
+  return `Nessun riferimento per questo esercizio: scegli un carico con cui completi ${range} ripetizioni lasciandone circa 2–3 in riserva. Dopo questa serie ti suggerisco carico e ripetizioni della prossima.`;
+ });
+ coachDeltaLabel(){const c=this.coach(),set=this.currentSet(),e=this.selected();if(!c||!set||!e)return '';if(c.action==='stop')return 'Fermati';
+  // Confronto con l'ultima serie allenante fatta oggi; senza, con il carico già impostato (se c'è).
+  const last=this.s.sets(e.id).filter(x=>x.completed&&x.kind!=='warmup'&&x.number<set.number).at(-1),base=last?.weight??(set.weight>0?set.weight:undefined);if(base===undefined)return '';const d=c.weight-base;if(Math.abs(d)<0.000001)return 'Mantieni';return (d>0?'+':'−')+this.s.formatWeight(Math.abs(d))+' '+this.s.settings().unit;}
+ applyCoach(){const c=this.coach();if(!c||c.action==='stop')return;this.weight=this.s.weightInput(c.weight);this.reps=c.reps;this.inputChanged();}
  dismissCoach(){const set=this.currentSet();if(!set)return;this.coachDismissed.update(v=>new Set(v).add(set.id));}
  nextRecord(){const e=this.selected();if(!e)return;const sets=this.s.sets(e.id),set=sets.find(s=>!s.completed)||sets[0];if(set)this.record(set);}
 
