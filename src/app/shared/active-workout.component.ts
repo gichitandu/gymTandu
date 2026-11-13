@@ -1,3 +1,6 @@
+import { CoachExpertBridge } from '../services/coach-expert-bridge';
+import { annotateSetNotes, readSetFeedback, coachVisibleText, replaceVisibleSetNotes, type SetFeedback } from '../services/coach-expert-adapter';
+import { CoachVisibleTextPipe } from './coach-visible-text.pipe';
 import {ExerciseMotionComponent} from './exercise-motion.component';
 import {ExerciseReplacementComponent, ExerciseReplacementClosed} from './exercise-replacement.component';
 import {exerciseComparison} from '../services/exercise-comparison';
@@ -24,7 +27,7 @@ import type { AppUpdateEvent } from '../services/pwa';
 import { FormDraftService } from '../services/form-drafts';
 type ActiveSetDraft={weight:number;reps:number;rpe:number|undefined;setNotes:string;kind:'work'|'warmup'};
 interface ActiveDraftSnapshot {entries:[string,ActiveSetDraft][];exerciseId:string;setId:string;bases?:Record<string,string>}
-@Component({selector:'gt-active-workout',standalone:true,imports:[ExerciseReplacementComponent,ExerciseMotionComponent,NgTemplateOutlet,FormsModule,LoadProgressionComponent,MachineSetupComponent,MuscleMapComponent,ExerciseThumbComponent,ExerciseVideoComponent,IconComponent],templateUrl:'./active-workout.component.html',styleUrls:['./recording.css','./recording-simple.css','./workout-redesign.css','./recording-v3.css']})
+@Component({selector:'gt-active-workout',standalone:true,imports:[CoachVisibleTextPipe,ExerciseReplacementComponent,ExerciseMotionComponent,NgTemplateOutlet,FormsModule,LoadProgressionComponent,MachineSetupComponent,MuscleMapComponent,ExerciseThumbComponent,ExerciseVideoComponent,IconComponent],templateUrl:'./active-workout.component.html',styleUrls:['./recording.css','./recording-simple.css','./workout-redesign.css','./recording-v3.css','./coach-expert-card.css']})
 export class ActiveWorkoutComponent {
  private confirmation=confirmationForContext();
  externalTimer=inject(ExternalTimerService,{optional:true});
@@ -119,9 +122,24 @@ export class ActiveWorkoutComponent {
  warmupSuggestion(set=this.currentSet()){const e=this.selected();if(!e||!set||set.kind!=='warmup'||set.completed||e.loadMode!=='external')return 0;const first=this.s.sets(e.id).find(x=>x.kind!=='warmup'),base=(first&&first.weight>0?first.weight:this.previous()[0]?.weight)||0;if(!base)return 0;const step=this.s.kg(this.weightStep())||2.5;return Math.max(step,Math.round(base*.5/step)*step);}
  useReference(){const ref=this.referenceSet();if(!ref)return;this.weight=this.s.weightInput(ref.weight);this.reps=ref.reps;this.rpe=ref.rpe;this.inputChanged();}
  /** Coach Ombra: proposta per la serie allenante in corso, calcolata da storico, serie di oggi e check-in. */
+ private readonly expertBridge = inject(CoachExpertBridge,{optional:true});
+ expertPrescription=computed(()=>{const e=this.selected();return e?this.expertBridge?.prescriptionForWorkout(e.id)??null:null;});
+ expert=computed(()=>{const e=this.selected(),set=this.currentSet();return e&&set?this.expertBridge?.liveSuggestion(e.id,set.id)??null:null;});
+ expertFeedback():SetFeedback{return readSetFeedback(this.setNotes)??{technique:'unknown',pain:false};}
+ setExpertFeedback(field:'technique'|'pain'|'rir',value:string|number|boolean|null){
+   const feedback=this.expertFeedback();
+   if(field==='technique'){if(!['unknown','good','degraded'].includes(String(value)))return;feedback.technique=value as SetFeedback['technique'];}
+   else if(field==='pain')feedback.pain=value===true;
+   else feedback.rir=value===null||value===''?null:Number(value);
+   try{this.setNotes=annotateSetNotes(this.setNotes,feedback);this.inputChanged();}catch(error){this.s.error.set(error instanceof Error?error.message:'Feedback non valido.');}
+ }
+ expertVisibleNotes(){return coachVisibleText(this.setNotes);}
+ setExpertVisibleNotes(value:string){try{this.setNotes=replaceVisibleSetNotes(this.setNotes,value);this.inputChanged();}catch(error){this.s.error.set(error instanceof Error?error.message:'Note non salvate.');}}
+ applyExpert(){const suggestion=this.expert();if(!suggestion||suggestion.loadKg===null||['stop','complete','rest','calibrate'].includes(suggestion.action))return;this.weight=this.s.weightInput(suggestion.loadKg);this.reps=suggestion.repsMin;this.restPick.set(suggestion.restSeconds);this.inputChanged();}
  coachDismissed=signal<ReadonlySet<string>>(new Set());
  coach=computed(()=>{
   const e=this.selected(),set=this.currentSet();
+  if(this.expertPrescription())return null;
   if(!e||!set||set.kind==='warmup'||set.completed||this.coachDismissed().has(set.id))return null;
   if(!['external','weighted-bodyweight'].includes(e.loadMode)||e.repsMin===undefined||e.repsMax===undefined)return null;
   const working=this.s.sets(e.id).filter(x=>x.kind!=='warmup');

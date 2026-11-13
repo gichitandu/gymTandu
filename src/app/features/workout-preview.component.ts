@@ -1,3 +1,4 @@
+import { CoachVisibleTextPipe } from '../shared/coach-visible-text.pipe';
 import {ExerciseMotionComponent} from '../shared/exercise-motion.component';
 import {Component,computed,inject,signal} from '@angular/core';
 import {takeUntilDestroyed} from '@angular/core/rxjs-interop';
@@ -9,7 +10,7 @@ import {ExerciseThumbComponent} from '../shared/exercise-thumb.component';
 import {IconComponent} from '../shared/icon.component';
 import {TrainingPlanExercise,localDate} from '../models/domain';
 
-@Component({standalone:true,imports:[ExerciseMotionComponent,RouterLink,ExerciseThumbComponent,IconComponent],templateUrl:'./workout-preview.component.html',styleUrls:['./workout-preview.component.css','./workout-preview-v3.css']})
+@Component({standalone:true,imports:[CoachVisibleTextPipe,ExerciseMotionComponent,RouterLink,ExerciseThumbComponent,IconComponent],templateUrl:'./workout-preview.component.html',styleUrls:['./workout-preview.component.css','./workout-preview-v3.css']})
 export class WorkoutPreviewComponent {
   readonly s=inject(Store);
   private route=inject(ActivatedRoute);
