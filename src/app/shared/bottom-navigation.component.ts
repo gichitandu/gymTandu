@@ -24,7 +24,7 @@ export const NUTRITION_NAV_ITEM: BottomNavItem = { path: "/alimentazione", label
 /** Sezione della barra a cui appartiene una pagina: le pagine interne evidenziano la loro sezione. */
 export function navigationSection(url: string): string {
   const path = (url || "/").split(/[?#]/, 1)[0] || "/";
-  if (/^\/(piani|piano\/|anteprima-allenamento|importa-excel|catalogo|esercizio\/|sessione)/.test(path)) return "/piani";
+  if (/^\/(piani|piano\/|anteprima-allenamento|importa-excel|catalogo|coach|esercizio\/|sessione)/.test(path)) return "/piani";
   if (/^\/(calendario|allenamenti|riepilogo\/|recupera-allenamenti)/.test(path)) return "/calendario";
   if (/^\/(progressi|analisi|focus-muscolare|recupero|sonno|riposo)/.test(path)) return "/progressi";
   if (/^\/alimentazione/.test(path)) return "/alimentazione";
