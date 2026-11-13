@@ -13,6 +13,7 @@ import { Store } from "../services/store";
 import { localDate } from "../models/domain";
 import { IconComponent } from "../shared/icon.component";
 import { StatusComponent } from "../shared/status.component";
+import { InstallAppComponent } from "../shared/install-app.component";
 import { TodayService } from '../services/today';
 import { ThemeService } from '../services/theme';
 interface HomeUpcomingSession {
@@ -23,7 +24,7 @@ interface HomeUpcomingSession {
 
 @Component({
   standalone: true,
-  imports: [...DESIGN_DIRECTIVES,
+  imports: [...DESIGN_DIRECTIVES,InstallAppComponent,
     BackupReminderComponent,
     RouterLink,
     IconComponent,

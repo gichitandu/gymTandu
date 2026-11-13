@@ -17,12 +17,13 @@ import { canResumeAtHome, MobileNavigationService } from "../services/mobile-nav
 import { AppSwitcherService, HubLaunchService } from '../hub/hub-access';
 import { AppSwitcherComponent } from '../hub/app-switcher.component';
 import { AppsMarkComponent } from '../shared/profile-link.component';
+import { InstallAppComponent } from '../shared/install-app.component';
 @Component({
   selector: "gt-shell",
   host: {class: "design-v2 photo-controls", "[class.reference-pages]":"referencePage()"},
   standalone: true,
   hostDirectives: [DesignPageDirective],
-  imports: [...DESIGN_DIRECTIVES,BottomNavigationComponent,DataStatusComponent,WorkoutClockComponent,RouterLink, RouterOutlet, IconComponent, AvatarComponent, ArchiveRecoveryComponent, AppSwitcherComponent, AppsMarkComponent],
+  imports: [...DESIGN_DIRECTIVES,BottomNavigationComponent,DataStatusComponent,WorkoutClockComponent,RouterLink, RouterOutlet, IconComponent, AvatarComponent, ArchiveRecoveryComponent, AppSwitcherComponent, AppsMarkComponent, InstallAppComponent],
   styleUrls: ['./experience.css'],
   encapsulation: ViewEncapsulation.None,
   template: ` <gt-workout-clock/><aside class="sidebar">
@@ -43,7 +44,7 @@ import { AppsMarkComponent } from '../shared/profile-link.component';
     <div class="app-main">
       @if(!router.url.startsWith('/sessione')){<header class="topbar">
         <a class="mobile-brand brand" routerLink="/"><img class="app-brand-mark" src="/brand/gt-header-mark.svg" alt="" width="36" height="36"/>Gym<span>Track</span></a
-        >        <div class="topbar-right"><gt-data-status class="header-data-status"/>
+        >        <div class="topbar-right"><gt-data-status class="header-data-status"/><gt-install-app variant="compact"/>
           @if(switcher.available()){<button type="button" class="su-iconbtn su-apps topbar-apps" (click)="switcher.open.set(true)" aria-haspopup="dialog" aria-label="Le tue app" title="Le tue app"><gt-apps-mark/></button>}<a class="avatar" routerLink="/profilo" aria-label="Apri profilo"><gt-avatar [photo]="s.profile().photo" [name]="s.profile().name" /></a>
         </div>
       </header>}
