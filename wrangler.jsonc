@@ -34,7 +34,8 @@
   "triggers": {
     "crons": ["0 6 * * *", "*/30 * * * *"]
   },
+  // Conserva i log del Worker (errori dei cron compresi) nella dashboard Cloudflare.
   "observability": {
-    "enabled": false
+    "enabled": true
   }
 }

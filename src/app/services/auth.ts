@@ -12,6 +12,8 @@ export interface ArchiveChoice {mode:'device'|'account'|'account-offline'|'signe
 export class AuthService {
   private feedback=feedbackForContext();
   user=signal<Account|null>(null); loading=signal(true); setup=signal(false); setupCodeRequired=signal(false); error=feedbackSignal('error',this.feedback); ownerEmail=signal('');
+  /** Come il proprietario può reimpostare la password dimenticata: codice di setup, identità della piattaforma o non disponibile. */
+  readonly ownerReset=signal<''|'code'|'platform'>('');
   offlineMode=signal(false); offlineAccount=signal<Account|null>(null);
   readonly platformOwner=signal(false);
   readonly archiveChoice=signal<ArchiveChoice|null>(null);
@@ -57,16 +59,23 @@ export class AuthService {
   }
   async refresh() {
     const generation=this.lifecycle;
-    try {if(!navigator.onLine)throw Error('Offline');if(this.hasPendingLogout())await this.flushPendingLogout();if(generation!==this.lifecycle||this.loggingOut())return;const r=await this.request('auth/me');if(generation!==this.lifecycle||this.loggingOut()||this.archiveChoice()?.mode==='signed-out')return;this.platformOwner.set(r.platformOwner===true);if(this.offlineMode())return;const choice=this.archiveChoice();if(r.user&&choice?.accountId&&choice.accountId!==r.user.id){this.user.set(null);this.setup.set(false);this.ownerEmail.set(r.ownerEmail);this.error.set('L’ultimo archivio appartiene a un altro account. Accedi allo stesso account per ritrovare i tuoi dati.');return;}if(!r.user||r.user.id!==this.user()?.id||r.user.role!=='SuperAdmin')this.clientViewRequested.set(false);this.user.set(r.user);this.setup.set(r.setup);this.setupCodeRequired.set(r.setupCodeRequired===true);this.ownerEmail.set(r.ownerEmail);this.error.set('');if(r.user){this.rememberChoice({mode:'account',accountId:r.user.id});this.rememberCurrentSessionOffline();}}
+    try {if(!navigator.onLine)throw Error('Offline');if(this.hasPendingLogout())await this.flushPendingLogout();if(generation!==this.lifecycle||this.loggingOut())return;const r=await this.request('auth/me');if(generation!==this.lifecycle||this.loggingOut()||this.archiveChoice()?.mode==='signed-out')return;this.platformOwner.set(r.platformOwner===true);if(this.offlineMode())return;const choice=this.archiveChoice();if(r.user&&choice?.accountId&&choice.accountId!==r.user.id){this.user.set(null);this.setup.set(false);this.ownerEmail.set(r.ownerEmail||'');this.error.set('L’ultimo archivio appartiene a un altro account. Accedi allo stesso account per ritrovare i tuoi dati.');return;}if(!r.user||r.user.id!==this.user()?.id||r.user.role!=='SuperAdmin')this.clientViewRequested.set(false);this.user.set(r.user);this.setup.set(r.setup);this.setupCodeRequired.set(r.setupCodeRequired===true);this.ownerReset.set(r.ownerReset==='code'||r.ownerReset==='platform'?r.ownerReset:'');this.ownerEmail.set(r.ownerEmail||'');this.error.set('');if(r.user){this.rememberChoice({mode:'account',accountId:r.user.id});this.rememberCurrentSessionOffline();}}
     catch(e) {if(generation!==this.lifecycle||this.loggingOut())return;if(!this.offlineMode()){const choice=this.archiveChoice(),saved=this.offlineAccount();if(choice?.mode==='account'&&saved?.id===choice.accountId)this.openLocal(true,false);else this.error.set('Accesso online non disponibile. Puoi aprire l’archivio locale.');}}
     finally {if(generation===this.lifecycle)this.loading.set(false);}
   }
-  async login(email:string,password:string,setup=false,remember=true,username?:string,setupCode?:string) {
+  login(email:string,password:string,setup=false,remember=true,username?:string,setupCode?:string) {
+    return this.enter(setup?'auth/setup':'auth/login',{email,password,...(setup&&username?{username}:{}),...(setup&&setupCode?{setupCode}:{})},remember);
+  }
+  /** Il proprietario sceglie una nuova password con la stessa prova richiesta dall'attivazione; il Worker la verifica. */
+  resetOwnerPassword(password:string,remember=true,setupCode?:string) {
+    return this.enter('auth/owner-reset',{password,...(setupCode?{setupCode}:{})},remember);
+  }
+  private async enter(path:string,body:object,remember:boolean) {
     if(this.loggingOut())throw Error('Uscita in corso. Attendi la riapertura dell’app.');
     this.clientViewRequested.set(false);
     const generation=++this.lifecycle;
     if(this.hasPendingLogout())await this.flushPendingLogout();
-    const r=await this.request(setup?'auth/setup':'auth/login',{email,password,...(setup&&username?{username}:{}),...(setup&&setupCode?{setupCode}:{})});
+    const r=await this.request(path,body);
     if(generation!==this.lifecycle||this.loggingOut())throw Error('Accesso interrotto da un cambio di sessione. Riapri l’app.');
     this.rememberChoice({mode:'account',accountId:r.user.id});this.user.set(r.user);this.setup.set(false);
     this.setOfflineOptOut(r.user.id,!remember);

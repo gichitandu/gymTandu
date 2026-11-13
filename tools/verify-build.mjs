@@ -31,6 +31,22 @@ const manifest = JSON.parse(
 );
 const html = fs.readFileSync(root + "/index.html", "utf8");
 assert(html.includes('lang="it"'));
+// Header di sicurezza (public/_headers): ogni script in linea delle pagine deve essere autorizzato
+// dall'hash della Content-Security-Policy, altrimenti il browser lo blocca e l'app resta senza stile.
+assert(fs.existsSync(path.join(root, "_headers")), "_headers mancante");
+const securityHeaders = fs.readFileSync(root + "/_headers", "utf8");
+const pagePolicy = /^\/\*\n(?:[ \t]+.*\n)*?[ \t]+Content-Security-Policy:(.*)$/m.exec(securityHeaders)?.[1] || "";
+assert(/script-src 'self'/.test(pagePolicy) && !/script-src[^;]*'unsafe-(inline|eval)'/.test(pagePolicy), "Content-Security-Policy delle pagine mancante o troppo permissiva");
+assert(pagePolicy.includes("frame-ancestors 'none'"));
+for (const line of securityHeaders.split("\n")) assert(line.length <= 2000, "Riga di _headers oltre il limite Cloudflare di 2000 caratteri");
+for (const pageFile of fs.readdirSync(root).filter((name) => name.endsWith(".html"))) {
+  const pageHtml = fs.readFileSync(path.join(root, pageFile), "utf8");
+  assert(!/\son[a-z]+\s*=/i.test(pageHtml.replace(/<script[\s\S]*?<\/script>/g, "")), `${pageFile}: gestore di eventi in linea bloccato dalla Content-Security-Policy`);
+  for (const [, inline] of pageHtml.matchAll(/<script(?![^>]*\bsrc=)[^>]*>([\s\S]*?)<\/script>/g)) {
+    const inlineHash = "sha256-" + createHash("sha256").update(inline).digest("base64");
+    assert(pagePolicy.includes(`'${inlineHash}'`), `${pageFile}: aggiorna in public/_headers l'hash dello script in linea: '${inlineHash}'`);
+  }
+}
 assert(html.includes("manifest.webmanifest"));
 assert.equal(manifest.display, "standalone");
 assert.equal(manifest.name, "GymTrack");

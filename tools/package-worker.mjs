@@ -59,7 +59,8 @@ const assets={};
 let compressedAssets=0;
 // I video tecnici (circa 9 MB) non entrano nel bundle incorporato per l'hosting Sites, che ha un limite di 63 MiB:
 // su Cloudflare sono serviti da Workers Static Assets (dist/gymtrack/browser).
-const embeddedExcluded=file=>path.relative(root,file).replaceAll('\\','/').startsWith('training/videos/');
+// Il file _headers è configurazione per Cloudflare Workers Static Assets, non una risorsa da pubblicare.
+const embeddedExcluded=file=>{const relative=path.relative(root,file).replaceAll('\\','/');return relative.startsWith('training/videos/')||relative==='_headers';};
 async function scan(dir){for(const e of await readdir(dir,{withFileTypes:true})){const file=path.join(dir,e.name);if(e.isDirectory())await scan(file);else if(!file.endsWith('.map')&&!embeddedExcluded(file)){
  const original=await readFile(file),compressed=original.length>1024?gzipSync(original,{level:9}):original;
  const gzip=compressed.length<original.length*.9;
