@@ -375,3 +375,39 @@ describe('vincoli su molte configurazioni', () => {
     expect(() => generatePlan(profile({ excludedExerciseIds: CATALOG.map(e => e.id) }), [], AS_OF)).toThrow(/esercizio compatibile/i);
   });
 });
+
+describe('range di ripetizioni per tipo di esercizio e obiettivo', () => {
+  const ALL = ['machine', 'cable', 'dumbbell', 'barbell', 'bodyweight'] as const;
+  const ranges = (goal: Profile['goal'], experience: Profile['experience']) => {
+    const plan = generatePlan(profile({ goal, experience, equipment: [...ALL], daysPerWeek: 4, minutesPerSession: 75 }), [], AS_OF);
+    return new Map(plan.sessions.flatMap(s => s.exercises).map(e => [e.exerciseId, e]));
+  };
+
+  it('in massa i multiarticolari pesanti usano meno ripetizioni degli altri', () => {
+    const byId = ranges('hypertrophy', 'intermediate');
+    const heavy = [...byId.values()].filter(e => e.decisions.some(d => d.ruleId === 'rep-range-heavy'));
+    expect(heavy.length).toBeGreaterThan(0);
+    for (const e of byId.values()) {
+      const tier = e.decisions.find(d => d.ruleId.startsWith('rep-range-'))!.ruleId;
+      const expected = { 'rep-range-heavy': [6, 8], 'rep-range-compound': [8, 10], 'rep-range-isolation': [10, 15] }[tier];
+      expect([e.repsMin, e.repsMax], e.exerciseId).toEqual(expected);
+      expect(e.decisions.find(d => d.ruleId === tier)!.sourceIds).toContain('repetition-continuum-2021');
+    }
+  });
+
+  it('per la forza i pesanti scendono a 4–6 con recupero più lungo', () => {
+    const heavy = [...ranges('strength', 'advanced').values()].filter(e => e.decisions.some(d => d.ruleId === 'rep-range-heavy'));
+    expect(heavy.length).toBeGreaterThan(0);
+    for (const e of heavy) { expect([e.repsMin, e.repsMax]).toEqual([4, 6]); expect(e.restSeconds).toBe(180); }
+  });
+
+  it('in resistenza le ripetizioni restano alte anche sui pesanti', () => {
+    for (const e of ranges('endurance', 'intermediate').values()) expect(e.repsMin).toBeGreaterThanOrEqual(10);
+  });
+
+  it('da principiante nessun esercizio usa il range pesante', () => {
+    for (const goal of ['hypertrophy', 'strength', 'endurance'] as const)
+      for (const e of ranges(goal, 'beginner').values()) expect(e.decisions.some(d => d.ruleId === 'rep-range-heavy'), `${goal} ${e.exerciseId}`).toBe(false);
+  });
+
+});

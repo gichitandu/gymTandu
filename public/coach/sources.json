@@ -1,6 +1,6 @@
 {
-  "registryVersion": "2026.11.12",
-  "checkedAt": "2026-11-12",
+  "registryVersion": "2026.11.13",
+  "checkedAt": "2026-11-13",
   "scope": "Adulti sani, allenamento di resistenza; selezione ragionata di fonti, non revisione sistematica completa né validazione professionale del software.",
   "sources": [
     {
@@ -14,6 +14,17 @@
       "searchThrough": "2024-10",
       "principle": "Progressione, aderenza e personalizzazione sono centrali. Carichi elevati favoriscono la forza; volumi maggiori possono favorire l'ipertrofia. Cedimento e tecniche complesse non sono requisiti universali.",
       "limitations": "Adulti sani; eterogeneità delle revisioni e rappresentatività limitata per atleti avanzati. Non determina carichi individuali né soglie software."
+    },
+    {
+      "id": "repetition-continuum-2021",
+      "title": "Loading Recommendations for Muscle Strength, Hypertrophy, and Local Endurance: A Re-Examination of the Repetition Continuum",
+      "authors": "Schoenfeld BJ, Grgic J, Van Every DW, Plotkin DL",
+      "year": 2021,
+      "type": "narrative-review",
+      "doi": "10.3390/sports9020032",
+      "url": "https://www.mdpi.com/2075-4663/9/2/32",
+      "principle": "Esiste una zona di carichi alti che favorisce la forza massimale. L'ipertrofia si ottiene su un ampio intervallo di carichi quando le serie sono vicine al cedimento: il range scelto per esercizio è una scelta pratica.",
+      "limitations": "Revisione narrativa; non definisce range ottimali per singolo esercizio. La divisione tra esercizi pesanti, multiarticolari e di isolamento è un preset del software."
     },
     {
       "id": "volume-frequency-2026",

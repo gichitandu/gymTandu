@@ -1,5 +1,5 @@
 import { CATALOG, getExercise } from './catalog.js';
-import { ENGINE_VERSION, EXPERIENCE_PRESETS, GOAL_PRESETS, HEURISTICS, MUSCLE_LABELS } from './config.js';
+import { ENGINE_VERSION, EXPERIENCE_PRESETS, GOAL_PRESETS, HEAVY_COMPOUNDS, HEURISTICS, MUSCLE_LABELS, type RepTier } from './config.js';
 import type { ActualSet, Decision, Exercise, ExercisePrescription, ExerciseRecommendationInput, LoadSetting, Muscle, NextSetInput, PlanSession, Profile, RecoveryAssessment, SetRecommendation, TrainingPlan, WorkoutHistory } from './models.js';
 
 const MUSCLES = Object.keys(MUSCLE_LABELS) as Muscle[];
@@ -251,12 +251,30 @@ function estimateMinutes(exercises: ExercisePrescription[]): number {
   return Math.ceil(HEURISTICS.warmupMinutes+work/60);
 }
 
+/** Beginners learn heavy lifts in the moderate range before using the lowest one. */
+function repTier(ex: Exercise, profile: Profile): RepTier {
+  if (ex.isolation || ex.loadType === 'bodyweight' || ex.movement === 'core') return 'isolation';
+  return HEAVY_COMPOUNDS.has(ex.id) && profile.experience !== 'beginner' ? 'heavy' : 'compound';
+}
+
+function repRangeReason(tier: RepTier, profile: Profile, [min, max]: [number, number]): string {
+  const range = `${min}–${max} ripetizioni`;
+  const heavyForBeginner = profile.experience === 'beginner' ? ' Da principiante i multiarticolari più pesanti restano in questo range finché tecnica e carico di riferimento non sono stabili.' : '';
+  if (tier === 'heavy') return profile.goal === 'strength'
+    ? `Multiarticolare pesante, ${range}: per la forza massimale servono carichi alti, quindi poche ripetizioni.`
+    : profile.goal === 'endurance'
+      ? `Multiarticolare pesante, ${range}: range più basso degli altri esercizi per mantenere la tecnica stabile anche verso la fine della serie.`
+      : `Multiarticolare pesante, ${range}: carico più alto e meno ripetizioni, così la tecnica regge. Per la massa conta soprattutto arrivare vicino al cedimento, ma su questi esercizi un range basso è più gestibile.`;
+  if (tier === 'compound') return `Multiarticolare, ${range}: range intermedio tra carico e numero di ripetizioni.${heavyForBeginner}`;
+  return `Isolamento o corpo libero, ${range}: carichi assoluti più bassi e più ripetizioni, più adatti a un singolo muscolo e alle articolazioni coinvolte.`;
+}
+
 function basePrescription(ex: Exercise, profile:Profile, all:Exercise[]): ExercisePrescription {
   const preset = GOAL_PRESETS[profile.goal]; const experience = EXPERIENCE_PRESETS[profile.experience];
-  const range = ex.isolation || ex.loadType==='bodyweight' || ex.movement==='core' ? preset.isolation : preset.compound;
+  const tier = repTier(ex, profile); const { reps: range, rest } = preset[tier];
   const setting = loadSetting(profile,ex);
   const sets = profile.daysPerWeek >= 5 ? Math.min(2,experience.sets) : experience.sets;
-  return {exerciseId:ex.id,name:ex.name,equipmentKey:setting.equipmentKey ?? ex.id,sets,repsMin:range[0],repsMax:range[1],rir:experience.rir,restSeconds:ex.isolation ? preset.restIsolation : preset.restCompound,loadKg:null,loadLabel:label(ex,null),loadType:ex.loadType,calibration:ex.loadType!=='bodyweight',confidence:'initial',progression:'calibrate',alternatives:all.filter(other=>other.id!==ex.id && other.movement===ex.movement && other.primary.some(m=>ex.primary.includes(m))).slice(0,3).map(other=>other.id),failureAllowedLastSet:false,decisions:[decision('goal-preset','Range, recupero e margine sono un punto di partenza configurabile, non l’unica prescrizione efficace.','heuristic',['acsm-2026','prescription-2023','rest-2024'])]};
+  return {exerciseId:ex.id,name:ex.name,equipmentKey:setting.equipmentKey ?? ex.id,sets,repsMin:range[0],repsMax:range[1],rir:experience.rir,restSeconds:rest,loadKg:null,loadLabel:label(ex,null),loadType:ex.loadType,calibration:ex.loadType!=='bodyweight',confidence:'initial',progression:'calibrate',alternatives:all.filter(other=>other.id!==ex.id && other.movement===ex.movement && other.primary.some(m=>ex.primary.includes(m))).slice(0,3).map(other=>other.id),failureAllowedLastSet:false,decisions:[decision(`rep-range-${tier}`,repRangeReason(tier,profile,range),'evidence-informed',['repetition-continuum-2021','acsm-2026']),decision('goal-preset','Range, recupero e margine sono un punto di partenza configurabile, non l’unica prescrizione efficace.','heuristic',['acsm-2026','prescription-2023','rest-2024'])]};
 }
 
 /** Cold start works with zero history. No biological profile or photo infers a load. */
