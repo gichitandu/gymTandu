@@ -77,6 +77,25 @@ describe('weekly weights and warmup reuse', () => {
     expect(store.data().sets.filter(row => row.workoutExerciseId === 'old-ex')).toEqual(old);
     expect((await database.snapshot()).sets.filter(row => row.workoutExerciseId === exercise.id).sort((a, b) => a.number - b.number)).toEqual(sets);
   }));
+  it('in una scheda normale riporta pesi e ripetizioni dello stesso allenamento della settimana prima, serie per serie', async () => {
+    vi.stubGlobal('document', {body: {classList: {toggle() {}}}});
+    const database = new GymDatabase('weekly-reuse-plain-' + crypto.randomUUID()), data = fixture();
+    delete data.plans[0].program; data.scheduledWorkouts = [];
+    for (const day of data.days) { delete day.week; delete day.weekday; delete day.sessionDate; }
+    await database.snapshot(); await database.replace(data);
+    const repo = {read: () => database.snapshot(), replace: (value: DataSet) => database.replace(value)};
+    const injector = createEnvironmentInjector([{provide: GYM_REPOSITORY, useValue: repo}, Store], null as unknown as EnvironmentInjector);
+    const store = injector.get(Store);
+    try {
+      await vi.waitFor(() => expect(store.ready()).toBe(true));
+      expect(await store.start('w1-0', '2026-09-14')).toBe(true);
+      const sets = store.sets(store.workoutExercises(store.draft()!.id)[0].id);
+      expect(sets.filter(row => row.kind === 'warmup').map(row => [row.weight, row.reps])).toEqual([[20, 12], [40, 6]]);
+      expect(sets.filter(row => row.kind === 'work').map(row => [row.weight, row.reps])).toEqual([[60, 10], [62.5, 9], [65, 8]]);
+      expect(sets.every(row => !row.completed)).toBe(true);
+      await store.settled();
+    } finally { injector.destroy(); await database.delete(); vi.unstubAllGlobals(); }
+  });
   it('a session opt-out wins even if legacy prefill is enabled', async () => withStore(async store => {
     await store.change(data => {data.settings[0].prefill = true;}, '', false);
     expect(await store.start('w2-0', '2026-09-14', {reusePreviousWeek: false})).toBe(true);

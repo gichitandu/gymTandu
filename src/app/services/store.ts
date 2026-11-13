@@ -632,7 +632,8 @@ export class Store {
             number: i + 1 + warmups,
             kind:"work",
             weight: prior.work[i]?.weight ?? prior.work.at(-1)?.weight ?? p?.weight ?? item.targetWeight ?? 0,
-            reps: p?.reps ?? item.repsMin,
+            // Schede normali: le ripetizioni della settimana prima; nei programmi a settimane le ripetizioni previste restano quelle del programma.
+            reps: (day.week === undefined ? prior.work[i]?.reps ?? prior.work.at(-1)?.reps : undefined) ?? p?.reps ?? item.repsMin,
             rpe: item.rpe,
             rest: item.rest,
             notes: "",
