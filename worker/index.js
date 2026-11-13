@@ -6,7 +6,7 @@ import { designStudioApi } from './design-studio.js';
 import { storageAlert, storageStatus } from './storage-alert.js';
 import { APPROVED_THEME_IDS } from '../shared/approved-palettes.js';
 import { calendarApi, calendarPublish, calendarConfigure } from './calendar.js';
-import { hubApi } from './hub.js';
+import { hubApi, hubInvitesApi, hubInvitePublicApi } from './hub.js';
 import { vwApi, vwScheduled } from './vw.js';
 // The platform's ChatGPT access boundary remains in place. App sessions are
 // additionally bound to that authenticated visitor, and never stored in JS.
@@ -138,6 +138,9 @@ export async function api(request,env,ctx) {
       return json(await storageStatus(env));
     }
     if(path==='/api/hub'||path==='/api/hub/due')return await hubApi(request,env,me,ctx);
+    if(path==='/api/hub/invites')return await hubInvitesApi(request,env,me);
+    // Link d'invito di Dividi: chi lo apre non ha bisogno di un account (resta l'identità dell'hosting).
+    if(path==='/api/hub/invite')return await hubInvitePublicApi(request,env,()=>attempt(db,'invite:'+clientKey(request,env)));
     if(path==='/api/hub/vw'||path==='/api/hub/vw/sync')return await vwApi(request,env,me);
     if(path.startsWith('/api/design/'))return await designStudioApi(request,env,me);
     if(path.startsWith('/api/excel-imports'))return await excelImportsApi(request,env,me);

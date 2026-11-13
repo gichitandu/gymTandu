@@ -7,6 +7,7 @@ import { euro, euroParts, initials, shortDay, hubCategory } from './hub-model';
 import { HUB_ME, HubStore } from './hub-store';
 import { HubView } from './hub-view';
 import { HubSplitSheetComponent } from './hub-split-sheet.component';
+import { HubInviteService } from './hub-invites';
 import { HubGroupSheetComponent, HubSettleSheetComponent, shareSummary, shareText } from './hub-people';
 import { expenseShares } from './hub-split';
 
@@ -81,7 +82,10 @@ export class HubSplitComponent {
     ];
     return items.sort((a, b) => b.at - a.at).slice(0, 6);
   });
+  private invites = inject(HubInviteService);
   constructor() {
+    // Chi è entrato dai link d'invito viene aggiunto ai gruppi (al massimo un controllo al minuto).
+    effect(() => { if (this.hub.ready()) untracked(() => void this.invites.refreshAll()); });
     // ?nuovo=1 apre il nuovo gruppo; tornando indietro (parametro tolto) il foglio si chiude.
     effect(() => { const open = !!this.qp()?.get('nuovo'); untracked(() => { if (open) this.sheet.set('group'); else if (this.sheet() === 'group') this.sheet.set(''); }); });
   }

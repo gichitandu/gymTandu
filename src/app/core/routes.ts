@@ -25,6 +25,7 @@ const pages: Routes = [
  {path:'auto',canActivate:[garageGuard],loadComponent:()=>import('../garage/garage.component').then(m=>m.GarageComponent)},
  {path:'auto/movimenti',canActivate:[garageGuard],loadComponent:()=>import('../garage/garage-moves.component').then(m=>m.GarageMovesComponent)},
  {path:'auto/statistiche',canActivate:[garageGuard],loadComponent:()=>import('../garage/garage-insights.component').then(m=>m.GarageInsightsComponent)},
+ {path:'invito/:token',loadComponent:()=>import('../hub/hub-invite.component').then(m=>m.HubInviteComponent)},
  {path:'hub/note',canActivate:[hubGuard],loadComponent:()=>import('../hub/hub-notes.component').then(m=>m.HubNotesComponent)},
   {
     path: "",
