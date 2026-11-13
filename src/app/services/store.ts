@@ -30,11 +30,16 @@ import { AcceptedCatalogChanges, mergeCatalog } from "./catalog-merge";
 import { ArchiveSyncService, archiveFingerprint } from "./archive-sync";
 import { exportBackup } from "./backup";
 import { TodayService } from "./today";
+import { CREATINE_MAX_DAILY_GRAMS, roundGrams } from "./creatine";
 import { ExcelProgramDraft } from '../models/excel-import';
 import { autoCompletePlan,effectiveProgramRange,excelProgramConflicts,missingProgramEvents,normalizedExerciseName,prescriptionDetails,scheduleConflicts,validateExcelProgram } from './plan-program';
 @Injectable({ providedIn: "root" })
 export class Store {
   saveWellness(row:import('../models/domain').WellnessLog){return this.change(d=>{const existing=d.wellnessLogs.find(v=>v.date===row.date);const next={...structuredClone(row),id:existing?.id||row.id};d.wellnessLogs=d.wellnessLogs.filter(v=>v.date!==row.date);d.wellnessLogs.push(next);},'Diario recupero salvato',false);}
+  /** Aggiunge (o toglie, con un valore negativo) grammi di creatina al totale del giorno; a 0 il record sparisce. */
+  addCreatine(date:string,deltaGrams:number){return this.change(d=>{const existing=d.creatineLogs.find(v=>v.date===date),next=roundGrams((existing?.grams??0)+deltaGrams);if(!Number.isFinite(next)||next<0||next>CREATINE_MAX_DAILY_GRAMS)throw Error('Inserisci un totale tra 0 e '+CREATINE_MAX_DAILY_GRAMS+' g di creatina.');d.creatineLogs=d.creatineLogs.filter(v=>v.date!==date);if(next>0)d.creatineLogs.push({id:existing?.id||'creatine-'+date,date,grams:next});},'',false);}
+  /** Imposta il totale di creatina del giorno; 0 lo azzera. */
+  setCreatine(date:string,grams:number){return this.change(d=>{const next=roundGrams(grams);if(!Number.isFinite(next)||next<0||next>CREATINE_MAX_DAILY_GRAMS)throw Error('Inserisci un totale tra 0 e '+CREATINE_MAX_DAILY_GRAMS+' g di creatina.');const existing=d.creatineLogs.find(v=>v.date===date);d.creatineLogs=d.creatineLogs.filter(v=>v.date!==date);if(next>0)d.creatineLogs.push({id:existing?.id||'creatine-'+date,date,grams:next});},'',false);}
   removeWellness(id:string){return this.change(d=>{d.wellnessLogs=d.wellnessLogs.filter(v=>v.id!==id);},'Voce rimossa',false);}
 
   private theme = inject(ThemeService, { optional: true });

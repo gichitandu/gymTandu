@@ -90,6 +90,20 @@
   }
 </section>
 
+<section class="su-card hx-creatine" aria-labelledby="hx-creatine-title">
+  <div class="hx-head"><h2 id="hx-creatine-title">Creatina</h2><button type="button" class="hx-link" (click)="toggleCreatineEdit()" [attr.aria-expanded]="creatineEditOpen()" aria-controls="hx-creatine-edit">{{creatineEditOpen()?'Chiudi':'Correggi'}}<gt-icon name="chevron-right"/></button></div>
+  <div class="hx-cr-row">
+    <p class="hx-cr-total" role="status"><b>{{formatGrams(creatineToday())}}</b><small>g oggi</small></p>
+    <div class="hx-cr-doses">@for(dose of creatineDoses;track dose){<button type="button" class="su-btn" (click)="addCreatine(dose)" [disabled]="s.busy()" [attr.aria-label]="'Aggiungi '+dose+' grammi di creatina'"><gt-icon name="plus"/>{{dose}} g</button>}</div>
+  </div>
+  @if(creatineEditOpen()){
+  <form class="hx-cr-edit" id="hx-creatine-edit" (submit)="$event.preventDefault();saveCreatine()">
+    <label for="hx-creatine-total">Totale di oggi (g)</label>
+    <div class="hx-cr-edit-row"><input id="hx-creatine-total" type="text" inputmode="decimal" autocomplete="off" placeholder="0" [value]="creatineDraft()" (input)="creatineDraft.set($any($event.target).value)"/><button type="submit" class="su-btn su-primary" [disabled]="s.busy()">Salva</button><button type="button" class="su-btn" (click)="saveCreatine(0)" [disabled]="s.busy()||!creatineToday()">Azzera</button></div>
+  </form>
+  }
+</section>
+
 @if(features?.nutritionEnabled()){
 <section class="su-card hx-meals" aria-label="Pasti di oggi">
   <div class="hx-head"><h2>Pasti di oggi</h2><a class="hx-link" routerLink="/alimentazione">Diario<gt-icon name="chevron-right"/></a></div>

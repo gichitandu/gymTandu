@@ -1,5 +1,6 @@
 import { DESIGN_DIRECTIVES } from '../design/design-directives';
 import {sleepLabel} from '../services/wellness';
+import {CREATINE_QUICK_DOSES,formatGrams} from '../services/creatine';
 import {AppFeaturesService} from '../services/app-features';
 import { AuthService } from '../services/auth';
 import { BackupReminderComponent } from "../shared/backup-reminder.component";
@@ -77,6 +78,15 @@ export class HomeComponent {
   get today() { return this.todayClock?.date() || localDate(); }
   wellness=computed(()=>this.s.data().wellnessLogs.find(row=>row.date===this.today));
   sleepLabel=sleepLabel;
+  /** Creatina: totale di oggi, dosi rapide e correzione del totale. */
+  creatineToday=computed(()=>this.s.data().creatineLogs.find(row=>row.date===this.today)?.grams??0);
+  creatineDoses=CREATINE_QUICK_DOSES;
+  formatGrams=formatGrams;
+  creatineEditOpen=signal(false);
+  creatineDraft=signal('');
+  addCreatine(grams:number){return this.s.addCreatine(this.today,grams);}
+  toggleCreatineEdit(){if(!this.creatineEditOpen()){const total=this.creatineToday();this.creatineDraft.set(total?formatGrams(total):'');}this.creatineEditOpen.update(open=>!open);}
+  async saveCreatine(grams:number|null=null){const raw=this.creatineDraft().trim().replace(',','.'),value=grams??(raw===''?0:Number(raw));if(await this.s.setCreatine(this.today,value))this.creatineEditOpen.set(false);}
   focusLabel=computed(()=>{
     const dayId=this.s.draft()?.dayId||this.nextScheduled()?.dayId||this.nextDay()?.id;
     const exerciseId=dayId?this.s.planExercises(dayId)[0]?.exerciseId:undefined;

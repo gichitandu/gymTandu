@@ -4,10 +4,10 @@ function archiveValidThemeConfig(value) {
  return !!value&&typeof value==='object'&&!Array.isArray(value)&&Object.keys(value).every(key=>['palette','mode','background','accent','style'].includes(key))&&(value.style===undefined||value.style==='classic'||value.style==='elegant')&&[...APPROVED_THEME_IDS,'oro','argento','multicolore','bianco-elegante','scuro','nero','bianco','rosso','verde','viola-neon','blu-azzurro','carbonio','artico','prugna','petrolio','sabbia','ghiaccio'].includes(value.palette)&&['dark','light','system'].includes(value.mode)&&['background','accent'].every(key=>value[key]===undefined||typeof value[key]==='string'&&/^#[0-9a-fA-F]{6}$/.test(value[key]));
 }
 // Current client backup schema; older versions stay readable via client migrations.
-const ARCHIVE_CURRENT_SCHEMA_VERSION = 11;
+const ARCHIVE_CURRENT_SCHEMA_VERSION = 12;
 const ARCHIVE_RETAINED_VERSIONS = 10;
-const archiveTables = ['profiles','roles','plans','days','planExercises','exercises','muscleGroups','workouts','workoutExercises','sets','settings','meals','scheduledWorkouts','measurements','exercisePreferences','workoutUi','wellnessLogs'];
-const archiveRowLimits={profiles:1,roles:3,plans:10000,days:100000,planExercises:100000,exercises:10000,muscleGroups:1000,workouts:100000,workoutExercises:300000,sets:1000000,settings:1,meals:10000,scheduledWorkouts:10000,measurements:10000,exercisePreferences:10000,workoutUi:1,wellnessLogs:10000};
+const archiveTables = ['profiles','roles','plans','days','planExercises','exercises','muscleGroups','workouts','workoutExercises','sets','settings','meals','scheduledWorkouts','measurements','exercisePreferences','workoutUi','wellnessLogs','creatineLogs'];
+const archiveRowLimits={profiles:1,roles:3,plans:10000,days:100000,planExercises:100000,exercises:10000,muscleGroups:1000,workouts:100000,workoutExercises:300000,sets:1000000,settings:1,meals:10000,scheduledWorkouts:10000,measurements:10000,exercisePreferences:10000,workoutUi:1,wellnessLogs:10000,creatineLogs:10000};
 function archiveJson(data, status=200, headers={}) { return Response.json(data,{status,headers:{'Cache-Control':'private, no-store','X-Content-Type-Options':'nosniff',...headers}}); }
 function archiveFail(message,status=400) { throw Object.assign(new Error(message),{status}); }
 async function archiveDigest(value) { const bytes=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(value));return [...new Uint8Array(bytes)].map(value=>value.toString(16).padStart(2,'0')).join(''); }
@@ -36,6 +36,7 @@ function archiveValidate(text) {
  for(const name of archiveTables){
   const rows=backup.data[name];
   if(name==='wellnessLogs'&&rows===undefined&&backup.schemaVersion<11)continue;
+  if(name==='creatineLogs'&&rows===undefined&&backup.schemaVersion<12)continue;
   if(!Array.isArray(rows)||rows.length>archiveRowLimits[name])archiveFail('La copia dell’archivio è incompleta.');
   const ids=new Set();
   for(const row of rows){if(!row||typeof row.id!=='string'||!row.id||row.id.length>150||ids.has(row.id))archiveFail('La copia contiene record non validi.');ids.add(row.id);}
@@ -68,6 +69,11 @@ function archiveValidate(text) {
  for(const row of data.wellnessLogs||[]){
   if(!date(row.date)||wellnessDates.has(row.date)||typeof row.notes!=='string'||row.notes.length>2000||!row.soreness||typeof row.soreness!=='object'||Array.isArray(row.soreness)||Object.keys(row.soreness).length>1000||Object.entries(row.soreness).some(([id,v])=>!id||id.length>150||!Number.isInteger(v)||v<0||v>4)||row.sleepMinutes!==undefined&&(!Number.isInteger(row.sleepMinutes)||row.sleepMinutes<0||row.sleepMinutes>1440)||[row.energy,row.stress,row.sleepQuality].some(v=>v!==undefined&&(!Number.isInteger(v)||v<1||v>5)))archiveFail('Diario recupero non valido.');
   wellnessDates.add(row.date);
+ }
+ const creatineDates=new Set();
+ for(const row of data.creatineLogs||[]){
+  if(!date(row.date)||creatineDates.has(row.date)||typeof row.grams!=='number'||!Number.isFinite(row.grams)||row.grams<=0||row.grams>100)archiveFail('Diario creatina non valido.');
+  creatineDates.add(row.date);
  }
  for(const event of data.scheduledWorkouts){
   const kind=event.kind===undefined?'workout':event.kind;
