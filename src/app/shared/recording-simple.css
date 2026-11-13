@@ -26,9 +26,14 @@
 :host .recording-save{transform:translateZ(0);backface-visibility:hidden;-webkit-backface-visibility:hidden}
 :host .recording-save>.save-series{display:grid;grid-template-columns:minmax(0,1fr) 22px;align-items:center;justify-content:center;min-height:54px;padding:12px 16px;line-height:1.4;text-shadow:none;color:var(--cta-ink,var(--accent-ink));-webkit-text-fill-color:currentColor;isolation:isolate}
 :host .save-series>span{position:relative;z-index:1;min-width:0;white-space:normal;overflow-wrap:anywhere;color:inherit;-webkit-text-fill-color:currentColor;text-align:center}:host .save-series>gt-icon{position:relative;z-index:1;width:22px;height:22px;color:inherit}:host .save-series:disabled{opacity:1}
-:host .coach-shadow{margin:12px 0;padding:12px;border:1px solid var(--border,#26334a);border-radius:14px;background:var(--card,#131923)}
-:host .coach-shadow-head{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--blue,#367dff)}:host .coach-shadow-head b{font-weight:600}
-:host .coach-shadow-delta{margin-left:auto;padding:2px 10px;border-radius:999px;background:rgba(127,127,127,.16);color:var(--text,inherit)}
+/* Coach Ombra compatto, subito sotto l'esercizio */
+:host .coach-shadow{margin:0;padding:10px 10px 10px 16px;border:1px solid var(--border,#26334a);border-radius:20px;background:var(--card,#131923)}
+:host .coach-shadow-row{display:flex;align-items:center;gap:10px}
+:host .coach-shadow-main{flex:1;min-width:0;min-height:44px;display:flex;flex-direction:column;justify-content:center;gap:2px;padding:0;border:0;background:none;color:inherit;text-align:left;font:inherit}
+:host .coach-shadow-head{display:flex;align-items:center;gap:6px;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted,#8e9bad)}:host .coach-shadow-head b{font-weight:600}:host .coach-shadow-head gt-icon{width:15px;height:15px}
+:host .coach-shadow-line{display:flex;align-items:center;flex-wrap:wrap;gap:8px}
+:host .coach-shadow-line strong{font-size:21px;font-weight:550;letter-spacing:-.03em}
+:host .coach-shadow-delta{padding:2px 10px;border-radius:999px;background:rgba(127,127,127,.16);color:var(--text,inherit);font-size:12px;font-weight:650}
 :host .coach-shadow[data-coach-action=raise] .coach-shadow-delta{background:rgba(52,199,120,.18)}:host .coach-shadow[data-coach-action=lower] .coach-shadow-delta{background:rgba(240,90,90,.18)}
-:host .coach-shadow-target strong{font-size:24px;font-weight:600}:host .coach-shadow p{margin:6px 0 10px;font-size:13px;line-height:1.5;color:var(--muted,#8e9bad)}
-:host .coach-shadow-actions{display:flex;gap:8px}:host .coach-shadow-actions button{min-height:44px;border-radius:10px;padding:0 14px}:host .coach-shadow-actions button:first-child{flex:1}
+:host .coach-shadow-apply{flex:none;min-height:44px;border-radius:999px;padding:0 18px;font-weight:650}
+:host .coach-shadow p{margin:0;padding:6px 6px 4px 0;font-size:13px;line-height:1.5;color:var(--muted,#8e9bad)}

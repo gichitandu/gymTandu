@@ -119,10 +119,10 @@ export class ActiveWorkoutComponent {
  warmupSuggestion(set=this.currentSet()){const e=this.selected();if(!e||!set||set.kind!=='warmup'||set.completed||e.loadMode!=='external')return 0;const first=this.s.sets(e.id).find(x=>x.kind!=='warmup'),base=(first&&first.weight>0?first.weight:this.previous()[0]?.weight)||0;if(!base)return 0;const step=this.s.kg(this.weightStep())||2.5;return Math.max(step,Math.round(base*.5/step)*step);}
  useReference(){const ref=this.referenceSet();if(!ref)return;this.weight=this.s.weightInput(ref.weight);this.reps=ref.reps;this.rpe=ref.rpe;this.inputChanged();}
  /** Coach Ombra: proposta per la serie allenante in corso, calcolata da storico, serie di oggi e check-in. */
- coachDismissed=signal<ReadonlySet<string>>(new Set());
+ coachOpen=signal(false);
  coach=computed(()=>{
   const e=this.selected(),set=this.currentSet();
-  if(!e||!set||set.kind==='warmup'||set.completed||this.coachDismissed().has(set.id))return null;
+  if(!e||!set||set.kind==='warmup'||set.completed)return null;
   if(!['external','weighted-bodyweight'].includes(e.loadMode)||e.repsMin===undefined||e.repsMax===undefined)return null;
   const working=this.s.sets(e.id).filter(x=>x.kind!=='warmup');
   const done=working.filter(x=>x.completed&&x.number<set.number).map(x=>({weight:x.weight,reps:x.reps,rpe:x.rpe}));
@@ -133,7 +133,7 @@ export class ActiveWorkoutComponent {
  });
  coachDeltaLabel(){const c=this.coach(),set=this.currentSet();if(!c||!set)return '';const d=c.weight-set.weight;if(Math.abs(d)<0.000001)return 'Mantieni';return (d>0?'+':'−')+this.s.formatWeight(Math.abs(d))+' '+this.s.settings().unit;}
  applyCoach(){const c=this.coach();if(!c)return;this.weight=this.s.weightInput(c.weight);this.reps=c.reps;this.inputChanged();}
- dismissCoach(){const set=this.currentSet();if(!set)return;this.coachDismissed.update(v=>new Set(v).add(set.id));}
+ coachApplied(){const c=this.coach();return !!c&&this.weight===this.s.weightInput(c.weight)&&this.reps===c.reps;}
  nextRecord(){const e=this.selected();if(!e)return;const sets=this.s.sets(e.id),set=sets.find(s=>!s.completed)||sets[0];if(set)this.record(set);}
 
  /* Registrazione serie: dati derivati per la nuova interfaccia (nessuna scrittura sull'archivio). */
