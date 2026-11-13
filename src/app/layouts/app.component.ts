@@ -14,9 +14,11 @@ import { AppActivationUncertainError, AppReleaseService } from '../services/app-
 import { MobileNavigationService } from '../services/mobile-navigation';
 import { HubHostComponent } from '../hub/hub-host.component';
 import { isHubUrl } from '../hub/hub-access';
-@Component({selector:'app-root',standalone:true,imports:[WorkoutStartOptionsComponent,ConfirmationDialogComponent,FormsModule,ShellComponent,IconComponent,FeedbackPopupsComponent,HubHostComponent],styleUrls:['./entry.css','./entry-redesign.css'],template:`
+import { HubInviteComponent } from '../hub/hub-invite.component';
+import { inviteTokenFromUrl } from '../hub/hub-invite-links';
+@Component({selector:'app-root',standalone:true,imports:[WorkoutStartOptionsComponent,ConfirmationDialogComponent,FormsModule,ShellComponent,IconComponent,FeedbackPopupsComponent,HubHostComponent,HubInviteComponent],styleUrls:['./entry.css','./entry-redesign.css'],template:`
 <gt-feedback-popups/><gt-confirmation-dialog/>
-@if(auth.user()) { @if(hubMode()){@defer(on immediate){<gt-hub-host/>}@placeholder{<p class="entry-status" role="status">Apertura…</p>}}@else{<gt-shell /><gt-workout-start-options/>} } @else {
+@if(inviteToken(); as invite){@defer(on immediate){<gt-hub-invite [token]="invite"/>}@placeholder{<p class="entry-status" role="status">Apertura dell’invito…</p>}} @else if(auth.user()) { @if(hubMode()){@defer(on immediate){<gt-hub-host/>}@placeholder{<p class="entry-status" role="status">Apertura…</p>}}@else{<gt-shell /><gt-workout-start-options/>} } @else {
 @if(auth.loggingOut()){<p class="entry-status" role="status">Uscita e aggiornamento…</p>}
 <main class="entry-page" [class.welcome-state]="welcome() && !auth.setup()" [attr.inert]="entryUpdating()||auth.loggingOut()?'':null">
 <div class="entry-layout">
@@ -80,6 +82,8 @@ export class AppComponent {
  private navigation=inject(MobileNavigationService);
  /** GT Hub (solo Super Admin) usa una cornice propria al posto di quella di GymTrack. */
  readonly hubMode=computed(()=>isHubUrl(this.navigation.url()));
+ /** Link d'invito di Dividi: pagina pubblica, si apre anche senza aver effettuato l'accesso. */
+ readonly inviteToken=computed(()=>inviteTokenFromUrl(this.navigation.url()));
  private feedback=feedbackForContext();
  auth=inject(AuthService);private theme=inject(ThemeService);welcome=signal(false);tab=signal<'account'|'local'>('account');help=signal(false);remember=true;username='';setupCode='';email='';password='';confirm='';busy=signal(false);error=feedbackSignal('error',this.feedback);show=signal(false);
  private releases=inject(AppReleaseService);entryUpdating=signal(false);private attemptedEntryBuild='';
