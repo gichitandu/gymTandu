@@ -8,6 +8,7 @@ import { APPROVED_THEME_IDS } from '../shared/approved-palettes.js';
 import { calendarApi, calendarPublish, calendarConfigure } from './calendar.js';
 import { hubApi } from './hub.js';
 import { vwApi, vwScheduled } from './vw.js';
+import { groupApi, groupInvite, groupReserveRegistration } from './group.js';
 // The platform's ChatGPT access boundary remains in place. App sessions are
 // additionally bound to that authenticated visitor, and never stored in JS.
 const OWNER = 'giacomotanduo004@gmail.com';
@@ -139,6 +140,7 @@ export async function api(request,env,ctx) {
     }
     if(path==='/api/hub'||path==='/api/hub/due')return await hubApi(request,env,me,ctx);
     if(path==='/api/hub/vw'||path==='/api/hub/vw/sync')return await vwApi(request,env,me);
+    if(path==='/api/group'||path.startsWith('/api/group/'))return await groupApi(request,env,me,{attempt});
     if(path.startsWith('/api/design/'))return await designStudioApi(request,env,me);
     if(path.startsWith('/api/excel-imports'))return await excelImportsApi(request,env,me);
     if(path==='/api/app-features')return await appFeaturesApi(request,env,me);
@@ -217,6 +219,21 @@ export async function api(request,env,ctx) {
       if(!u||!u.active||!equal(hash,u.password_hash)) fail('Nome utente, email o password non validi.',401);
       await db.prepare('DELETE FROM login_limits WHERE id=?').bind(key).run();
       return startSession(request,db,u,env);
+    }
+    if(path==='/api/auth/register'&&request.method==='POST') {
+      // La registrazione libera non esiste: serve il link di invito di un gruppo ancora aperto,
+      // che vale per pochi nuovi account e scade con il gruppo. Il ruolo è sempre Cliente.
+      await attempt(db,'register:'+clientKey(request,env));
+      const invite=await groupInvite(db,b.invite);
+      if(!invite) fail('Invito non valido o scaduto. Chiedi un nuovo link.',403);
+      const u=fields({...b,role:'User'}); validPassword(b.password);
+      if(u.email===OWNER) fail('Questa email è già registrata.',409);
+      await availableUsername(db,u.username);
+      if(await db.prepare('SELECT id FROM users WHERE email=?').bind(u.email).first()) fail('Questa email è già registrata.',409);
+      if(!await groupReserveRegistration(db,invite.id)) fail('Questo invito ha già registrato il numero massimo di account. Chiedi un nuovo link.',403);
+      const created={id:crypto.randomUUID(),...u,active:1}, salt=random();
+      await db.prepare('INSERT INTO users(id,email,name,username,role,active,salt,password_hash,created_at) VALUES(?,?,?,?,?,1,?,?,?)').bind(created.id,u.email,u.name,u.username,u.role,salt,await passwordHash(b.password,salt),Date.now()).run();
+      return startSession(request,db,created,env);
     }
     if(path==='/api/auth/logout'&&request.method==='POST') {
       const token=request.headers.get('cookie')?.split(';').map(s=>s.trim()).find(s=>s.startsWith(COOKIE+'='))?.slice(COOKIE.length+1);

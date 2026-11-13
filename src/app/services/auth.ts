@@ -61,6 +61,18 @@ export class AuthService {
     catch(e) {if(generation!==this.lifecycle||this.loggingOut())return;if(!this.offlineMode()){const choice=this.archiveChoice(),saved=this.offlineAccount();if(choice?.mode==='account'&&saved?.id===choice.accountId)this.openLocal(true,false);else this.error.set('Accesso online non disponibile. Puoi aprire l’archivio locale.');}}
     finally {if(generation===this.lifecycle)this.loading.set(false);}
   }
+  /** Nuovo account Cliente: possibile solo con il link di invito di un allenamento in gruppo ancora aperto. */
+  async register(invite:string,fields:{name:string;email:string;username:string;password:string},remember=true) {
+    if(this.loggingOut())throw Error('Uscita in corso. Attendi la riapertura dell’app.');
+    this.clientViewRequested.set(false);
+    const generation=++this.lifecycle;
+    if(this.hasPendingLogout())await this.flushPendingLogout();
+    const r=await this.request('auth/register',{invite,...fields});
+    if(generation!==this.lifecycle||this.loggingOut())throw Error('Accesso interrotto da un cambio di sessione. Riapri l’app.');
+    this.rememberChoice({mode:'account',accountId:r.user.id});this.user.set(r.user);this.setup.set(false);
+    this.setOfflineOptOut(r.user.id,!remember);
+    if(remember)this.rememberCurrentSessionOffline();
+  }
   async login(email:string,password:string,setup=false,remember=true,username?:string,setupCode?:string) {
     if(this.loggingOut())throw Error('Uscita in corso. Attendi la riapertura dell’app.');
     this.clientViewRequested.set(false);

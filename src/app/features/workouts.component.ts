@@ -25,6 +25,7 @@ import { ExerciseFilterComponent } from "../shared/exercise-filter.component";
   template: `<header class="su-head"><h1>Calendario</h1><div class="su-actions"><a class="su-iconbtn" routerLink="/calendario" [queryParams]="{add:1}" aria-label="Aggiungi al calendario"><gt-icon name="plus"/></a><gt-profile-link/></div></header>
     <nav class="su-seg" aria-label="Vista del calendario"><a routerLink="/calendario">Settimana</a><a routerLink="/calendario" [queryParams]="{view:'month'}">Mese</a><a class="on" aria-current="page" routerLink="/allenamenti">Elenco</a></nav>
     <gt-status />
+    <a class="button ghost group-entry" routerLink="/gruppo"><gt-icon name="users"/>Allenamento in gruppo</a>
     <gt-open-workouts />
     @if (selected(); as w) {
       <button type="button" class="history-back" (click)="selectedId.set('')"><gt-icon name="back" />Storico</button>

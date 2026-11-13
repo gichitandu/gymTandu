@@ -58,6 +58,7 @@ type PlanEditorDraft = {
     <nav class="su-seg" aria-label="Schede ed esercizi"><a class="on" aria-current="page" routerLink="/piani">Le mie schede</a><a routerLink="/catalogo">Esercizi</a></nav>
     <gt-status />
     @if(draftNotice()){<p class="notice" role="status">{{draftNotice()}}</p>}
+    <a class="button ghost group-entry" routerLink="/gruppo"><gt-icon name="users"/>Allenamento in gruppo</a>
     <div class="pl-body">
     @if(!archived()&&overlaps().length){<section class="card plan-overlap" role="status" aria-label="Piani con date sovrapposte">
      <h3>Piani sovrapposti</h3>

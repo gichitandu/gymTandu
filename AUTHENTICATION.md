@@ -60,3 +60,23 @@ Verifica: 40 test superati, inclusi login via username/email, normalizzazione, d
 ## Schermata di ingresso e identità visiva
 
 Schermata di accesso ridisegnata dal riferimento fornito: emblema GT cromato/blu ricostruito dalla foto, wordmark GymTrack, sfondo nero con dettagli blu elettrico, campi iconici e pulsante sfumato. Presentazione introduttiva accessibile dal pulsante indietro, con aree Allenamento/Nutrizione/Risultati. Accesso Account con username o email e spazio locale in due sezioni; attivazione SuperAdmin mantiene il flusso esistente. Il controllo “Ricordami su questo iPhone” abilita lo stesso accesso locale esplicito già previsto e ne espone la conseguenza prima del login. Il recupero password mostra il percorso di supporto attualmente disponibile. Logo nell’intestazione/sidebar, favicon e icone PWA; asset precaricato per offline. La prova visiva su Safari reale resta da eseguire, con build production e 40 test automatici passati.
+
+## Allenamento in gruppo e registrazione su invito (13 novembre 2026)
+
+Da Schede → «Allenamento in gruppo» (`/gruppo`) un account crea un gruppo a partire
+dalla propria seduta aperta e riceve un codice di 6 cifre, un QR e un link di invito
+(`/#/gruppo?invito=…`). Il gruppo dura al massimo 8 ore o finché chi lo ha creato lo
+chiude. Il server (`worker/group.js`, tabelle `group_sessions` e `group_members`)
+conserva solo esercizi e avanzamento della seduta in corso: le serie restano
+nell'archivio personale di ognuno.
+
+- Chi ha già un account entra con il codice; i tentativi sono limitati per account.
+- Chi non ha un account può crearlo solo dal link di invito di un gruppo ancora
+  aperto (`POST /api/auth/register`): ruolo sempre Cliente, al massimo 5 nuovi
+  account per invito, tentativi limitati. Senza invito valido la registrazione
+  resta riservata al Super Admin.
+- Chi entra sceglie tra «stessi esercizi» (seduta copiata da chi invita, carichi dal
+  proprio storico) e «il mio allenamento» (gli esercizi in comune vengono allineati
+  nell'ordine alla seduta di chi invita).
+
+Prima del deploy va applicata la migrazione D1 `drizzle/0013_group_workouts.sql`.
