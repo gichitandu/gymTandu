@@ -38,8 +38,8 @@ import { inviteTokenFromUrl } from '../services/group-workout';
 <section class="entry-panel" aria-labelledby="entry-title">
 <div class="entry-topline"><button class="entry-back" aria-label="Torna alla presentazione" (click)="welcome.set(true)" [disabled]="auth.setup()"><gt-icon name="back"/></button><span class="entry-language" lang="it">IT</span></div>
 <div class="entry-brand"><img src="/brand/gt-modern-mark.png" alt="Logo GT GymTrack"/><div class="entry-wordmark">Gym<span>Track</span></div><p class="brand-tagline">{{features?.nutritionEnabled()?'ALLENAMENTO · NUTRIZIONE · PROGRESSI':'ALLENAMENTO · PROGRESSI'}}</p></div>
-<header class="entry-heading"><p class="entry-kicker">IL TUO SPAZIO DI ALLENAMENTO</p><h1 id="entry-title">{{auth.setup()?'Attiva il tuo account':registering()?'Crea il tuo account':'Bentornato'}}</h1><p>{{auth.setup()?'Giacomo, prepara il tuo spazio Super Admin.':registering()?'Bastano pochi dati per allenarti in gruppo.':'Gestisci i tuoi allenamenti ovunque.'}}</p></header>
-@if(invite()&&!auth.setup()){<p class="entry-help" role="status">@if(inviteHost()){<strong>{{inviteHost()}}</strong> ti ha invitato ad allenarti in gruppo@if(inviteDay()){ ({{inviteDay()}})}. }@else if(inviteChecked()){Questo invito non è più valido: chiedi un nuovo link o un codice. }@if(registering()){Hai già un account? <button type="button" class="entry-text-button" (click)="registering.set(false)">Accedi</button>}@else if(inviteOpen()){Non hai un account? <button type="button" class="entry-text-button" (click)="registering.set(true);tab.set('account')">Registrati</button>}</p>}
+<header class="entry-heading"><p class="entry-kicker">IL TUO SPAZIO DI ALLENAMENTO</p><h1 id="entry-title">{{auth.setup()?'Attiva il tuo account':reset()?'Nuova password':registering()?'Crea il tuo account':'Bentornato'}}</h1><p>{{auth.setup()?'Giacomo, prepara il tuo spazio Super Admin.':reset()?'Reimposta l’accesso del proprietario.':registering()?'Bastano pochi dati per allenarti in gruppo.':'Gestisci i tuoi allenamenti ovunque.'}}</p></header>
+@if(invite()&&!auth.setup()&&!reset()){<p class="entry-help" role="status">@if(inviteHost()){<strong>{{inviteHost()}}</strong> ti ha invitato ad allenarti in gruppo@if(inviteDay()){ ({{inviteDay()}})}. }@else if(inviteChecked()){Questo invito non è più valido: chiedi un nuovo link o un codice. }@if(registering()){Hai già un account? <button type="button" class="entry-text-button" (click)="registering.set(false)">Accedi</button>}@else if(inviteOpen()){Non hai un account? <button type="button" class="entry-text-button" (click)="registering.set(true);tab.set('account')">Registrati</button>}</p>}
 @if(auth.previousAccountArchive()){<p class="entry-help">Per ritrovare piani ed esercizi, accedi allo stesso account usato nell’ultima apertura. Lo spazio senza account è un archivio separato.</p>}
 @if(!auth.setup()){<div class="entry-tabs" role="tablist" aria-label="Modalità di accesso"><button id="account-tab" role="tab" [attr.aria-selected]="tab()==='account'" aria-controls="account-panel" [class.active]="tab()==='account'" (click)="tab.set('account')">Account</button><button id="local-tab" role="tab" [attr.aria-selected]="tab()==='local'" aria-controls="local-panel" [class.active]="tab()==='local'" (click)="tab.set('local')">Sul dispositivo</button></div>}
 @if(tab()==='account' || auth.setup()) {
@@ -54,15 +54,18 @@ import { inviteTokenFromUrl } from '../services/group-workout';
 <div class="entry-field"><gt-icon name="user"/><div><label for="register-name">Il tuo nome</label><input id="register-name" name="name" type="text" autocomplete="name" [(ngModel)]="name" required maxlength="80" placeholder="Come ti vedranno gli amici" /></div></div>
 <div class="entry-field"><gt-icon name="mail"/><div><label for="register-email">Email</label><input id="register-email" name="email" type="email" autocomplete="email" autocapitalize="none" autocorrect="off" spellcheck="false" [(ngModel)]="email" required maxlength="254" placeholder="nome@esempio.it" /></div></div>
 <div class="entry-field"><gt-icon name="user"/><div><label for="register-username">Scegli un nome utente</label><input id="register-username" name="username" autocomplete="username" [(ngModel)]="username" autocapitalize="none" autocorrect="off" spellcheck="false" required minlength="3" maxlength="30" pattern="[A-Za-z0-9][A-Za-z0-9._-]{2,29}" placeholder="Il tuo nome univoco" /></div></div>
+}@else if(reset()){
+@if(auth.ownerReset()==='code'){<div class="entry-field"><gt-icon name="lock"/><div><label for="reset-code">Codice di setup</label><input id="reset-code" name="reset-code" type="password" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" [(ngModel)]="setupCode" required maxlength="128" placeholder="Il codice scelto durante il deploy" /></div></div>}
 }@else{
 <div class="entry-field"><gt-icon name="user"/><div><label for="login-identifier">Nome utente o email</label><input id="login-identifier" name="username" type="text" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" required maxlength="254" [(ngModel)]="email" placeholder="Il tuo username o la tua email" /></div></div>
 }
-<div class="entry-field"><gt-icon name="lock"/><div><label for="login-password">{{creating()?'Scegli una password':'Password'}}</label><input id="login-password" name="password" [type]="show()?'text':'password'" [attr.autocomplete]="creating()?'new-password':'current-password'" [(ngModel)]="password" required [minlength]="creating()?8:1" maxlength="128" placeholder="••••••••" /></div><button class="entry-eye" type="button" [attr.aria-label]="show()?'Nascondi password':'Mostra password'" [attr.aria-pressed]="show()" (click)="show.set(!show())"><gt-icon [name]="show()?'eye-off':'eye'"/></button></div>
+<div class="entry-field"><gt-icon name="lock"/><div><label for="login-password">{{auth.setup()||registering()?'Scegli una password':reset()?'Nuova password':'Password'}}</label><input id="login-password" name="password" [type]="show()?'text':'password'" [attr.autocomplete]="creating()?'new-password':'current-password'" [(ngModel)]="password" required [minlength]="creating()?8:1" maxlength="128" placeholder="••••••••" /></div><button class="entry-eye" type="button" [attr.aria-label]="show()?'Nascondi password':'Mostra password'" [attr.aria-pressed]="show()" (click)="show.set(!show())"><gt-icon [name]="show()?'eye-off':'eye'"/></button></div>
 @if(creating()) {<div class="entry-field"><gt-icon name="lock"/><div><label for="confirm-password">Conferma password</label><input id="confirm-password" name="confirm-password" type="password" autocomplete="new-password" [(ngModel)]="confirm" required minlength="8" maxlength="128" placeholder="Ripeti la password" /></div></div><p class="entry-helper">Almeno 8 caratteri, senza obbligo di caratteri speciali.</p>}
-<div class="entry-options"><label class="remember-option"><input type="checkbox" name="offline-access" [(ngModel)]="remember"/><span>Ricordami su questo iPhone</span></label>@if(!creating()){<button type="button" class="entry-text-button" (click)="help.set(!help())" [attr.aria-expanded]="help()">Password dimenticata?</button>}</div>
+<div class="entry-options"><label class="remember-option"><input type="checkbox" name="offline-access" [(ngModel)]="remember"/><span>Ricordami su questo iPhone</span></label>@if(!creating()){<button type="button" class="entry-text-button" (click)="help.set(!help())" [attr.aria-expanded]="help()">Password dimenticata?</button>}@if(reset()){<button type="button" class="entry-text-button" (click)="toggleReset(false)">Torna all’accesso</button>}</div>
 @if(remember){<p class="entry-helper">Puoi riaprire i dati salvati su questo dispositivo anche senza Internet: non serve un backup sul server. L’archivio sarà accessibile a chi usa questo iPhone; la password non viene salvata.</p>}
-@if(help()&&!auth.setup()){<p class="entry-help" role="status">Per recuperare l’accesso o richiedere un account, contatta il Super Admin della palestra.</p>}
-<button class="entry-primary" [disabled]="busy()||auth.loading()||loginForm.invalid">{{busy()?'Accesso in corso…':auth.setup()?'Attiva account':registering()?'Crea account ed entra':'Accedi'}} <gt-icon name="arrow"/></button>
+@if(help()&&!creating()){<p class="entry-help" role="status">Per recuperare l’accesso o richiedere un account, contatta il Super Admin della palestra.@if(auth.ownerReset()){ <button type="button" class="entry-text-button" (click)="toggleReset(true)">Sei il proprietario? Reimposta la password</button>}</p>}
+@if(reset()){<p class="entry-help" role="status">{{auth.ownerReset()==='code'?'Inserisci il codice di setup del deploy (segreto SETUP_CODE) e scegli la nuova password.':'Scegli la nuova password dell’account proprietario.'}} Gli altri dispositivi dovranno accedere di nuovo; i dati non vengono toccati.</p>}
+<button class="entry-primary" [disabled]="busy()||auth.loading()||loginForm.invalid">{{busy()?'Accesso in corso…':auth.setup()?'Attiva account':reset()?'Reimposta password':registering()?'Crea account ed entra':'Accedi'}} <gt-icon name="arrow"/></button>
 </form>
 <p class="entry-device-hint">Su iPhone puoi salvare le credenziali nell’app Password e compilarle con Face ID.</p>
 </div>
@@ -87,13 +90,13 @@ export class AppComponent {
  /** GT Hub (solo Super Admin) usa una cornice propria al posto di quella di GymTrack. */
  readonly hubMode=computed(()=>isHubUrl(this.navigation.url()));
  private feedback=feedbackForContext();
- auth=inject(AuthService);private theme=inject(ThemeService);welcome=signal(false);tab=signal<'account'|'local'>('account');help=signal(false);remember=true;username='';setupCode='';email='';name='';password='';confirm='';busy=signal(false);error=feedbackSignal('error',this.feedback);show=signal(false);
+ auth=inject(AuthService);private theme=inject(ThemeService);welcome=signal(false);tab=signal<'account'|'local'>('account');help=signal(false);reset=signal(false);remember=true;username='';setupCode='';email='';name='';password='';confirm='';busy=signal(false);error=feedbackSignal('error',this.feedback);show=signal(false);
  private releases=inject(AppReleaseService);entryUpdating=signal(false);private attemptedEntryBuild='';
  /** Link di invito a un allenamento in gruppo: l'unico modo per creare da soli un account Cliente. */
  readonly invite=signal(typeof location==='undefined'?'':inviteTokenFromUrl(location.href));
  readonly inviteHost=signal('');readonly inviteDay=signal('');readonly inviteOpen=signal(false);readonly inviteChecked=signal(false);
  readonly registering=signal(false);
- readonly creating=computed(()=>this.auth.setup()||this.registering());
+ readonly creating=computed(()=>this.auth.setup()||this.registering()||this.reset());
  private async checkInvite(){
   try{const r=await this.auth.request('group/invite?token='+this.invite());this.inviteChecked.set(true);if(r.valid){this.inviteHost.set(r.hostName);this.inviteDay.set(r.dayName);this.inviteOpen.set(r.registrationOpen===true);if(r.registrationOpen===true&&!this.auth.user()&&!this.email&&!this.password)this.registering.set(true);}}
   catch{/* senza rete resta disponibile il normale accesso */}
@@ -108,14 +111,15 @@ export class AppComponent {
   catch(error){if(error instanceof AppActivationUncertainError){reloading=true;location.reload();}else this.error.set('Aggiornamento rimandato. Puoi accedere e riprovare dalle impostazioni.');}
   finally{if(!reloading)this.entryUpdating.set(false);}
  }
+ toggleReset(on:boolean){this.reset.set(on&&!!this.auth.ownerReset());if(on)this.registering.set(false);this.help.set(false);this.password='';this.confirm='';this.setupCode='';this.error.set('');}
  async submit() {
   if(this.busy()) return;this.error.set('');
-  const registering=this.registering()&&!this.auth.setup();
-  if((this.auth.setup()||registering)&&this.password!==this.confirm) {this.error.set('Le password non coincidono.');return;}
+  const reset=this.reset()&&!this.auth.setup(),registering=this.registering()&&!this.auth.setup()&&!reset;
+  if((this.auth.setup()||reset||registering)&&this.password!==this.confirm) {this.error.set('Le password non coincidono.');return;}
   if((this.auth.setup()||registering) && !/^[a-zA-Z0-9][a-zA-Z0-9._-]{2,29}$/.test(this.username.trim())) {this.error.set('Scegli un nome utente valido di 3–30 caratteri.');return;}
   this.busy.set(true);
   try {if(registering){await this.auth.register(this.invite(),{name:this.name.trim(),email:this.email.trim(),username:this.username.trim(),password:this.password},this.remember);this.password='';this.confirm='';this.registering.set(false);return;}
-   await this.auth.login(this.auth.setup()?this.auth.ownerEmail():this.email,this.password,this.auth.setup(),this.remember,this.username,this.setupCode.trim());this.password='';this.confirm='';this.setupCode='';}
+   if(reset)await this.auth.resetOwnerPassword(this.password,this.remember,this.setupCode.trim());else await this.auth.login(this.auth.setup()?this.auth.ownerEmail():this.email,this.password,this.auth.setup(),this.remember,this.username,this.setupCode.trim());this.password='';this.confirm='';this.setupCode='';this.reset.set(false);}
   catch(e) {this.error.set(e instanceof Error?e.message:'Accesso non riuscito.');}
   finally {this.busy.set(false);}
  }
