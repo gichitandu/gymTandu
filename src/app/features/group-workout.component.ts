@@ -10,12 +10,12 @@ import { localDate } from '../models/domain';
 import { IconComponent } from '../shared/icon.component';
 import { ProfileLinkComponent } from '../shared/profile-link.component';
 import { StatusComponent } from '../shared/status.component';
+import { GroupDayOption, GroupDayPickerComponent } from './group-day-picker.component';
 
-interface DayOption { id: string; label: string; shared: number; total: number }
 
 @Component({
   standalone: true,
-  imports: [FormsModule, RouterLink, IconComponent, ProfileLinkComponent, StatusComponent],
+  imports: [FormsModule, RouterLink, IconComponent, ProfileLinkComponent, StatusComponent, GroupDayPickerComponent],
   template: `<header class="su-head"><h1>Allenamento in gruppo</h1><div class="su-actions"><gt-profile-link/></div></header>
 <a class="group-back" routerLink="/piani"><gt-icon name="back"/>Schede</a>
 <gt-status/>
@@ -41,7 +41,7 @@ interface DayOption { id: string; label: string; shared: number; total: number }
         <p><strong>{{d.dayName}}</strong> · {{draftShared()}} in comune su {{s.workoutExercises(d.id).length}}</p>
         <button type="button" class="primary" [disabled]="working()" (click)="chooseMatch()">Uso la seduta aperta</button>
       }@else if(dayOptions().length){
-        <label>Il mio allenamento di oggi<select [ngModel]="dayId()" (ngModelChange)="dayId.set($event)">@for(o of dayOptions();track o.id){<option [value]="o.id">{{o.label}} — {{o.shared}} in comune su {{o.total}}</option>}</select></label>
+        <gt-group-day-picker title="Il mio allenamento" [options]="dayOptions()" [value]="dayId()" (valueChange)="dayId.set($event)" [showShared]="true" [initialDate]="initialDate()"/>
         <button type="button" class="primary" [disabled]="working()||!dayId()" (click)="chooseMatch()">Inizio il mio allenamento</button>
       }@else{<p class="subtle">Non hai ancora una scheda con esercizi. <a routerLink="/piani">Creane una</a> oppure usa l’opzione 1.</p>}
     </section>
@@ -82,7 +82,7 @@ interface DayOption { id: string; label: string; shared: number; total: number }
       <p><strong>{{d.dayName}}</strong> · {{s.workoutExercises(d.id).length}} esercizi</p>
       <button type="button" class="primary" [disabled]="working()" (click)="create()"><gt-icon name="users"/>Crea il gruppo</button>
     }@else if(dayOptions().length){
-      <label>Il mio allenamento di oggi<select [ngModel]="dayId()" (ngModelChange)="dayId.set($event)">@for(o of dayOptions();track o.id){<option [value]="o.id">{{o.label}} · {{o.total}} esercizi</option>}</select></label>
+      <gt-group-day-picker title="Scegli l’allenamento da condividere" [options]="dayOptions()" [value]="dayId()" (valueChange)="dayId.set($event)" [initialDate]="initialDate()"/>
       <button type="button" class="primary" [disabled]="working()||!dayId()" (click)="create()"><gt-icon name="users"/>Inizia e crea il gruppo</button>
     }@else{<p class="subtle">Per creare un gruppo serve una scheda con almeno un esercizio. <a routerLink="/piani">Vai alle schede</a></p>}
   </section>
@@ -140,17 +140,27 @@ export class GroupWorkoutComponent implements OnDestroy {
   canShare = typeof navigator !== 'undefined' && typeof navigator.share === 'function';
   hostExercises = computed(() => this.host()?.exercises || []);
   draftShared = computed(() => { const draft = this.s.draft(); return draft ? sharedExercises(this.s.workoutExercises(draft.id), this.hostExercises()).length : 0; });
-  /** Giorni tra cui scegliere: prima il piano attivo; nei programmi a calendario solo la seduta di oggi, se c'è. */
-  dayOptions = computed<DayOption[]>(() => {
-    const data = this.s.data(), today = localDate(), reference = this.me()?.host === false ? this.hostExercises() : [];
+  /** Giorno chiesto dal calendario (`?giorno=`): preselezionato con la sua data come filtro. */
+  private requestedDay = inject(ActivatedRoute).snapshot.queryParamMap.get('giorno') || '';
+  readonly initialDate = signal('');
+  private initialized = false;
+  /**
+   * Giorni tra cui scegliere (prima il piano attivo), con le date in cui sono programmati: nei programmi
+   * a calendario il filtro parte da oggi, poi si cerca per nome, esercizio, scheda, settimana o data.
+   */
+  dayOptions = computed<GroupDayOption[]>(() => {
+    const data = this.s.data(), reference = this.me()?.host === false ? this.hostExercises() : [];
     const plans = data.plans.filter(p => !p.archived && !p.completedAt).sort((a, b) => Number(b.active) - Number(a.active));
-    const out: DayOption[] = [];
+    const scheduled = new Map<string, string[]>();
+    for (const e of data.scheduledWorkouts) if ((e.kind || 'workout') === 'workout' && e.dayId) scheduled.set(e.dayId, [...(scheduled.get(e.dayId) ?? []), e.date]);
+    const out: GroupDayOption[] = [];
     for (const plan of plans) {
-      let days = data.days.filter(d => d.planId === plan.id).sort((a, b) => a.order - b.order);
-      if (days.some(d => d.sessionDate === today)) days = days.filter(d => d.sessionDate === today);
+      const days = data.days.filter(d => d.planId === plan.id).sort((a, b) => a.order - b.order);
       for (const day of days) {
-        const rows = data.planExercises.filter(e => e.dayId === day.id).map(e => ({ exerciseId: e.exerciseId, name: data.exercises.find(x => x.id === e.exerciseId)?.name || '' }));
-        if (rows.length) out.push({ id: day.id, label: plans.length > 1 ? plan.name + ' · ' + day.name : day.name, shared: sharedExercises(rows, reference).length, total: rows.length });
+        const rows = data.planExercises.filter(e => e.dayId === day.id).sort((a, b) => a.order - b.order).map(e => ({ exerciseId: e.exerciseId, name: data.exercises.find(x => x.id === e.exerciseId)?.name || '' }));
+        if (!rows.length) continue;
+        const dates = [...new Set([...(day.sessionDate ? [day.sessionDate] : []), ...(scheduled.get(day.id) ?? [])])].sort();
+        out.push({ id: day.id, label: plans.length > 1 ? plan.name + ' · ' + day.name : day.name, planId: plan.id, planName: plan.name, dayName: day.name, week: day.week, dates, exercises: rows.map(r => r.name), shared: sharedExercises(rows, reference).length, total: rows.length });
       }
     }
     // Con un invito in mano conviene partire dal giorno con più esercizi in comune.
@@ -166,7 +176,19 @@ export class GroupWorkoutComponent implements OnDestroy {
   });
 
   constructor() {
-    effect(() => { const options = this.dayOptions(); untracked(() => { if (!options.some(o => o.id === this.dayId())) this.dayId.set(options[0]?.id || ''); }); });
+    effect(() => {
+      const options = this.dayOptions();
+      untracked(() => {
+        if (!this.initialized && options.length) {
+          // Dal calendario: quel giorno e la sua data; altrimenti, se c'è una seduta programmata oggi, si parte da lì.
+          this.initialized = true;
+          const today = localDate(), requested = options.find(o => o.id === this.requestedDay), todays = options.find(o => o.dates.includes(today));
+          this.initialDate.set(requested ? (requested.dates.find(d => d >= today) ?? '') : todays ? today : '');
+          if (requested ?? todays) this.dayId.set((requested ?? todays)!.id);
+        }
+        if (!options.some(o => o.id === this.dayId())) this.dayId.set(options[0]?.id || '');
+      });
+    });
     // Link di invito: appena account e stato sono pronti si entra nel gruppo, una sola volta.
     effect(() => {
       if (!inviteTokenFromUrl('?invito=' + this.invite) || this.inviteUsed || !this.group.available() || !this.group.loaded()) return;

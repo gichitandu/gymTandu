@@ -241,6 +241,8 @@ export class CalendarComponent {
    if(await this.s.startScheduled(event.id,date)&&!this.destroyed&&archive===this.s.archiveKey())await this.router.navigateByUrl('/sessione');
   }finally{this.actionBusy.set(false);}
  }
+ /** Allenamento in gruppo partendo da questa voce: la pagina del gruppo la propone già selezionata. */
+ startGroup(item:CalendarAgendaItem){const dayId=item.workout?.status==='draft'?'':item.event?.dayId||'';void this.router.navigate(['/gruppo'],dayId?{queryParams:{giorno:dayId}}:{});}
  async startItem(item:CalendarAgendaItem){if(!this.itemCanStart(item))return;if(item.event)await this.start(item.event);else if(item.workout?.status==='draft')await this.router.navigateByUrl('/sessione');}
  async viewItem(item:CalendarAgendaItem){
   if(item.workout?.status==='completed')await this.router.navigateByUrl('/riepilogo/'+encodeURIComponent(item.workout.id)+'?from=calendario');

@@ -727,6 +727,14 @@
                 item.status === "partial" ? "Riprendi" : "Avvia"
               }}
             </button>
+            <button
+              type="button"
+              (click)="startGroup(item)"
+              [disabled]="actionBusy() || s.busy()"
+              title="Condividi questo allenamento in un gruppo"
+            >
+              <gt-icon name="users" /><span>Gruppo</span>
+            </button>
           } @else if (item.kind === "workout") {
             <button type="button" class="cal-dock-go" (click)="viewItem(item)">
               <gt-icon name="eye" />Vedi
