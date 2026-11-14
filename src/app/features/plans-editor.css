@@ -340,3 +340,26 @@
 @media (prefers-reduced-motion: reduce) {
   .pe-more > summary gt-icon, .pl-manage-chev { transition: none; }
 }
+
+/* Coach Ombra nell'editor dell'esercizio */
+.pe-coach {
+  --coach-tone: var(--accent-text, var(--accent));
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 4px 10px;
+  margin-top: 12px;
+  padding: 10px 12px;
+  border: 1px solid color-mix(in srgb, var(--coach-tone) 38%, transparent);
+  border-radius: 16px;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--coach-tone) 13%, transparent), color-mix(in srgb, var(--text) 3%, transparent) 70%);
+}
+.pe-coach[data-coach-action="raise"] { --coach-tone: var(--green, #42d5a0); }
+.pe-coach[data-coach-action="lower"] { --coach-tone: var(--warning, #ffc95c); }
+.pe-coach-icon { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 11px; background: color-mix(in srgb, var(--coach-tone) 20%, transparent); color: var(--coach-tone); }
+.pe-coach-icon gt-icon { width: 17px; height: 17px; }
+.pe-coach-text { min-width: 0; }
+.pe-coach-text small { display: block; color: var(--coach-tone); font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+.pe-coach-text strong { display: block; margin-top: 2px; font-size: 17px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.pe-coach-text p { margin: 4px 0 0; font-size: 12.5px; line-height: 1.4; color: var(--muted); }
+.pe-coach-text p:empty { display: none; }
+.pe-coach-use { grid-column: 2; justify-self: start; min-height: 36px; margin-top: 4px; border-color: color-mix(in srgb, var(--coach-tone) 55%, transparent); background: color-mix(in srgb, var(--coach-tone) 20%, transparent); color: var(--coach-tone); font-weight: 750; }

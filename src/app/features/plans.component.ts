@@ -29,6 +29,7 @@ import {
   localDate,
 } from "../models/domain";
 import { TodayService } from '../services/today';
+import { coachNextSet, daysBetween } from '../services/coach-shadow';
 import { parseLocalDate } from '../services/calendar';
 import { IconComponent } from "../shared/icon.component";
 import { StatusComponent } from "../shared/status.component";
@@ -193,6 +194,7 @@ type PlanEditorDraft = {
                   <button type="button" class="su-iconbtn pe-fav" [class.on]="s.isFavorite(selected.id)" (click)="s.toggleFavorite(selected.id)" [attr.aria-pressed]="s.isFavorite(selected.id)" [attr.aria-label]="s.isFavorite(selected.id)?'Rimuovi dai preferiti':'Aggiungi ai preferiti'">{{s.isFavorite(selected.id)?'★':'☆'}}</button>
                   <button type="button" class="su-chip" (click)="exerciseStep.set('pick')" [disabled]="saving()">Cambia</button></div>
               }@else{<button type="button" class="su-btn sm ghost" (click)="exerciseStep.set('pick')">Scegli un esercizio</button>}
+              @if(coachHint();as hint){<div class="pe-coach" [attr.data-coach-action]="hint.action" role="group" aria-label="Suggerimento del Coach Ombra"><span class="pe-coach-icon" aria-hidden="true"><gt-icon name="bolt"/></span><div class="pe-coach-text"><small>Coach Ombra{{hint.title?' · '+hint.title:''}}</small>@if(hint.target){<strong>{{hint.target}}</strong>}<p>{{hint.last}}</p><p>{{hint.reason}}</p></div>@if(hint.weight!==null){<button type="button" class="su-chip pe-coach-use" (click)="useCoachWeight(hint.weight)" [disabled]="saving()||exerciseForm.controls.targetWeight.value===hint.weight">{{exerciseForm.controls.targetWeight.value===hint.weight?'Impostato ✓':'Usa come peso target'}}</button>}</div>}
               <div class="pe-row">
                 <div><span class="su-label" id="pe-sets-label">Serie allenanti</span>
                   <div class="pe-stepper" role="group" aria-labelledby="pe-sets-label"><button type="button" (click)="bump('sets',-1,1,30)" [disabled]="saving()" aria-label="Una serie in meno">−</button><input type="number" inputmode="numeric" min="1" max="30" formControlName="sets" aria-labelledby="pe-sets-label"/><button type="button" (click)="bump('sets',1,1,30)" [disabled]="saving()" aria-label="Una serie in più">+</button></div></div>
@@ -361,6 +363,25 @@ export class PlansComponent {
     for(const day of this.visibleDays(plan))for(const row of this.s.planExercises(day.id)){const group=this.s.muscle(this.s.exercise(row.exerciseId)?.muscleGroupId||'');if(group)totals.set(group,(totals.get(group)||0)+row.sets);}
     return [...totals].map(([name,sets])=>({name,sets})).sort((a,b)=>b.sets-a.sets||a.name.localeCompare(b.name));
   }
+  /** Coach Ombra nell'editor: cosa proporrebbe per questo esercizio, letto dall'ultima seduta registrata. */
+  coachHint(){
+    if(this.modal()!=='exercise'||this.exerciseStep()!=='config')return null;
+    const form=this.exerciseForm.getRawValue(),exercise=this.s.exercise(form.exerciseId||'');
+    const repsMin=Number(form.repsMin),repsMax=Number(form.repsMax);
+    if(!exercise||!Number.isInteger(repsMin)||!Number.isInteger(repsMax)||repsMin<1||repsMax<repsMin)return null;
+    const previous=this.s.previous(exercise.id);
+    const empty={action:'hold',title:'',target:'',last:'',reason:'',weight:null as number|null};
+    if(!previous.length)return {...empty,reason:'Nessuna seduta registrata con questo esercizio: dopo il primo allenamento il Coach Ombra ti suggerirà carico e ripetizioni.'};
+    const unit=(kg:number)=>this.s.formatWeight(kg)+' '+this.s.settings().unit,data=this.s.data();
+    const row=data.workoutExercises.find(item=>item.id===previous[0].workoutExerciseId),date=data.workouts.find(workout=>workout.id===row?.workoutId)?.date;
+    const loaded=exercise.loadMode!=='bodyweight';
+    const suggestion=coachNextSet({repsMin,repsMax,incrementKg:this.s.preference(exercise.id)?.weightStep??this.s.kg(2.5),loadMode:exercise.loadMode,targetRpe:form.rpe??undefined,reference:previous.map(item=>({weight:item.weight,reps:item.reps,rpe:item.rpe})),daysSinceReference:daysBetween(date,this.today),done:[],formatWeight:unit});
+    if(!suggestion)return null;
+    const same=previous.every(item=>Math.abs(item.weight-previous[0].weight)<0.000001);
+    const last='Ultima volta: '+(loaded?(same?unit(previous[0].weight)+' × '+previous.map(item=>item.reps).join(' · '):previous.map(item=>unit(item.weight)+' × '+item.reps).join(' · ')):previous.map(item=>item.reps).join(' · ')+' rip.');
+    return {action:suggestion.action,title:suggestion.title,target:loaded?unit(suggestion.weight)+' · '+suggestion.reps+' rip.':suggestion.reps+' rip.',last,reason:suggestion.reason,weight:loaded&&suggestion.weight>0?this.s.weightInput(suggestion.weight):null as number|null};
+  }
+  useCoachWeight(weight:number){const control=this.exerciseForm.controls.targetWeight;control.setValue(weight);control.markAsDirty();this.advancedOpen.set(true);}
   availableExercises = computed(() =>
     this.s
       .data()
