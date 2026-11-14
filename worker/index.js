@@ -9,6 +9,7 @@ import { calendarApi, calendarPublish, calendarConfigure } from './calendar.js';
 import { hubApi, hubInvitesApi, hubInvitePublicApi } from './hub.js';
 import { vwApi, vwScheduled } from './vw.js';
 import { groupApi, groupInvite, groupReserveRegistration } from './group.js';
+import { mealScanApi } from './meal-scan.js';
 // The platform's ChatGPT access boundary remains in place. App sessions are
 // additionally bound to that authenticated visitor, and never stored in JS.
 const OWNER = 'giacomotanduo004@gmail.com';
@@ -154,6 +155,7 @@ export async function api(request,env,ctx) {
     if(path.startsWith('/api/design/'))return await designStudioApi(request,env,me);
     if(path.startsWith('/api/excel-imports'))return await excelImportsApi(request,env,me);
     if(path==='/api/app-features')return await appFeaturesApi(request,env,me);
+    if(path==='/api/meal-scan')return await mealScanApi(request,env,me);
     if(path==='/api/auth/device-recovery'&&request.method==='POST'){
       const ownerDevice= /iPhone/i.test(request.headers.get('user-agent')||'') && (me?me.email===OWNER:platformEmail(request,env)===OWNER);
       if(!ownerDevice)return json({signedOut:false});

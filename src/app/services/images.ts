@@ -53,6 +53,20 @@ export async function compressPhoto(file:Blob):Promise<Blob>{
   throw Error('Impossibile ridurre la foto entro 500 KB. Ritagliala in Foto o salva il pasto senza immagine.');
  }finally{release();canvas.width=1;canvas.height=1;}
 }
+/** Copia ridotta in JPEG (data URL) per la lettura con AI: meno byte da inviare, la foto salvata resta invariata. */
+export async function photoDataUrl(photo:Blob,signal?:AbortSignal,max=1024):Promise<string>{
+ const {image,release}=await decodePhoto(photo,signal);
+ const canvas=document.createElement('canvas');
+ try{
+  if(signal?.aborted)throw photoAbort();
+  const size=imageSize(image.naturalWidth,image.naturalHeight,max);canvas.width=size.width;canvas.height=size.height;
+  const context=canvas.getContext('2d');if(!context)throw Error('Immagine non disponibile.');
+  context.fillStyle='#fff';context.fillRect(0,0,size.width,size.height);context.drawImage(image,0,0,size.width,size.height);
+  const url=canvas.toDataURL('image/jpeg',.8);
+  if(!url.startsWith('data:image/jpeg;base64,'))throw Error('Foto non convertibile per l’analisi. Prova un’immagine JPEG.');
+  return url;
+ }finally{release();canvas.width=1;canvas.height=1;}
+}
 export async function photoPixels(photo:Blob,signal?:AbortSignal):Promise<Uint8Array>{
  const {image,release}=await decodePhoto(photo,signal);
  const canvas=document.createElement('canvas');

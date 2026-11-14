@@ -129,6 +129,50 @@ l'invio passa da Resend (gratuito):
 Senza la chiave il controllo gira ma non invia nulla (solo una riga nel registro
 del Worker). L'indirizzo si può cambiare con la variabile `ALERT_EMAIL`.
 
+## Lettura delle foto dei pasti con Workers AI (gratuita, con blocco automatico)
+
+In **Pasti**, con l'account online, la foto del piatto o di un'etichetta viene letta da
+Workers AI di Cloudflare (modello `@cf/google/gemma-4-26b-a4b-it`, disponibile anche sul
+piano Workers Free): l'app propone alimenti, grammi e valori, da controllare prima di
+salvare. Per l'analisi viene inviata una copia ridotta della foto; il modello è indicato da
+Cloudflare come "zero data retention".
+
+Workers AI include **10.000 Neuron al giorno**, con ripristino alle **00:00 UTC** (le 01:00
+o le 02:00 in Italia). Per non superarli mai:
+
+- prima di ogni lettura il Worker prenota in D1 (tabella `ai_usage`, migrazione `0013`) il
+  costo massimo della richiesta, con una sola istruzione SQL atomica. Se il totale
+  supererebbe il **95%** dell'allocazione (9.500 Neuron) il modello non viene chiamato e
+  l'app mostra **«Attendere ripristino»** con l'orario;
+- dopo la risposta la prenotazione viene sostituita dal consumo reale (token dichiarati dal
+  modello, maggiorati del 20% per prudenza). Se il consumo non è dichiarato o la richiesta
+  fallisce in modo incerto, resta contata l'intera prenotazione;
+- se Cloudflare risponde che l'allocazione è esaurita (errore 3036), il giorno viene
+  bloccato comunque fino al ripristino;
+- se il database non risponde o la migrazione non è applicata, la lettura con AI resta
+  spenta: senza una prenotazione riuscita non parte alcuna richiesta;
+- quando riceve il blocco, l'app lo ricorda sul dispositivo e fino all'orario di ripristino
+  non invia più nulla, nemmeno la richiesta dello stato. Resta il riconoscimento sul
+  dispositivo, che non usa Cloudflare, e l'inserimento a mano.
+
+Il binding è già in `wrangler.jsonc` (`"ai": { "binding": "AI" }`): basta pubblicare e
+applicare le migrazioni D1. Per disattivare la funzione togli quel blocco e ripubblica.
+
+Variabili facoltative, che possono solo **restringere** il limite:
+`AI_DAILY_NEURON_LIMIT` (meno di 10.000) e `AI_RESERVE_PERCENT` (più di 5).
+
+Cose da sapere:
+
+- Il contatore vede solo le letture fatte da GymTrack. Se nello stesso account Cloudflare
+  altri Worker usano Workers AI, i loro consumi si sommano senza essere contati qui: in quel
+  caso abbassa `AI_DAILY_NEURON_LIMIT`.
+- La garanzia più forte resta il piano: con **Workers Free** Cloudflare rifiuta le richieste
+  oltre l'allocazione e non addebita nulla. Con Workers Paid i Neuron in più si pagano: il
+  blocco al 95% serve proprio a non arrivarci.
+- Anche `wrangler dev` usa il vero Workers AI e consuma l'allocazione dell'account.
+- I Super Admin e gli Admin vedono consumo, soglia e orario di ripristino in Pasti, nel
+  riquadro "Lettura foto con AI".
+
 ## GT Garage: dati automatici della Golf (facoltativo, gratuito)
 
 Il Worker legge ogni 30 minuti (cron `*/30 * * * *`) il pacchetto di dati più recente dal
