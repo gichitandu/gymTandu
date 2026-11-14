@@ -51,6 +51,7 @@ export class GymDatabase extends Dexie {
     // App releases add stores/indexes without replacing the user's archive.
     this.version(7).stores({archiveMeta:'id'});
     this.version(8).stores({wellnessLogs:'id,&date'});
+    this.version(9).stores({creatineLogs:'id,&date'});
   }
   entity<K extends keyof DataSet>(name: K): Table<DataSet[K][number], string> {
     return this.table(name);

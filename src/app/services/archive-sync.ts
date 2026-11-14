@@ -39,7 +39,7 @@ export function archiveSummary(data: DataSet) {
 }
 export function archiveHasContent(data: DataSet): boolean {
   const counts = archiveSummary(data);
-  if (Object.values(counts).some(Boolean) || data.wellnessLogs.length || data.days.length || data.sets.length || data.scheduledWorkouts.length || data.measurements.length || data.exercisePreferences.length || data.workoutUi.length) return true;
+  if (Object.values(counts).some(Boolean) || data.wellnessLogs.length || data.creatineLogs.length || data.days.length || data.sets.length || data.scheduledWorkouts.length || data.measurements.length || data.exercisePreferences.length || data.workoutUi.length) return true;
   if (data.profiles.some(profile => profile.name !== 'Atleta' || profile.photo || profile.bodyWeight || profile.height || profile.birthDate || profile.goal)) return true;
   const groups = new Map(defaultGroups.map(group => [group.id, group.name]));
   if (data.muscleGroups.some(group => groups.get(group.id) !== group.name)) return true;
@@ -282,7 +282,7 @@ export class ArchiveSyncService {
     if (losesRecordedWork(remote, local)) return false;
     if (serverUnchanged) return true;
     const canonical = (value: unknown): string => JSON.stringify(value, (_key, item) => item && typeof item === 'object' && !Array.isArray(item) ? Object.fromEntries(Object.entries(item).sort(([a], [b]) => a.localeCompare(b))) : item);
-    const tables: (keyof DataSet)[] = ['plans','days','planExercises','exercises','muscleGroups','workouts','workoutExercises','sets','meals','scheduledWorkouts','measurements','wellnessLogs'];
+    const tables: (keyof DataSet)[] = ['plans','days','planExercises','exercises','muscleGroups','workouts','workoutExercises','sets','meals','scheduledWorkouts','measurements','wellnessLogs','creatineLogs'];
     return tables.every(table => {
       const rows = new Map<string, string>(((local as any)[table] || []).map((row: {id: string}) => [row.id, canonical(row)] as [string, string]));
       return ((remote as any)[table] || []).every((row: {id: string}) => rows.get(row.id) === canonical(row));

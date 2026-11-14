@@ -34,6 +34,18 @@ it('retains a complete archive in server storage across a new Worker environment
  expect(sql.prepare('SELECT COUNT(*) AS n FROM archive_heads').get()!.n).toBe(1);
  expect(objects.size).toBe(1);
 });
+it('accetta copie v11 senza creatina, valida il diario v12 e conserva l’ultima copia valida', async () => {
+ const old=JSON.parse(backup);old.schemaVersion=11;delete old.data.creatineLogs;
+ expect((await put(JSON.stringify(old))).response.status).toBe(200);
+ const current=JSON.parse(backup);current.data.creatineLogs=[{id:'creatine-2026-11-13',date:'2026-11-13',grams:5}];
+ const good=JSON.stringify(current);expect((await put(good,1)).response.status).toBe(200);
+ for(const patch of [{date:'2026-02-30'},{grams:0},{grams:101},{grams:'5'}]){
+  const bad=structuredClone(current);Object.assign(bad.data.creatineLogs[0],patch);expect((await put(JSON.stringify(bad),2)).response.status).toBe(400);
+ }
+ const missing=structuredClone(current);delete missing.data.creatineLogs;expect((await put(JSON.stringify(missing),2)).response.status).toBe(400);
+ const duplicated=structuredClone(current);duplicated.data.creatineLogs.push({...duplicated.data.creatineLogs[0],id:'other-id'});expect((await put(JSON.stringify(duplicated),2)).response.status).toBe(400);
+ expect((await get()).data.backup).toBe(good);
+});
 it('accepts older v10 snapshots, validates v11 wellness and retains the last good server copy after invalid input',async()=>{
  const old=JSON.parse(backup);old.schemaVersion=10;delete old.data.wellnessLogs;
  expect((await put(JSON.stringify(old))).response.status).toBe(200);

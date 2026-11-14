@@ -1,3 +1,4 @@
+import { coachVisibleText } from './coach-expert-adapter';
 import {DataSet, Exercise, TrainingPlanExercise} from '../models/domain';
 
 export interface WorkoutPreviewSelection {scheduledId?:string;dayId?:string}
@@ -36,7 +37,7 @@ export function buildWorkoutPreview(data:DataSet,selection:WorkoutPreviewSelecti
     const trimmed=text?.trim();
     if(trimmed&&!notes.some(note=>note.text===trimmed))notes.push({title,text:trimmed});
   };
-  if(available){addNote('Allenamento',day.notes);addNote('Promemoria',event?.notes);addNote('Piano',plan.description);}
+  if(available){addNote('Allenamento',day.notes);addNote('Promemoria',event?.notes);addNote('Piano',coachVisibleText(plan.description));}
   else addNote('Promemoria',event?.notes);
   const catalog=new Map(data.exercises.map(exercise=>[exercise.id,exercise]));
   const muscles=new Map(data.muscleGroups.map(group=>[group.id,group.name]));

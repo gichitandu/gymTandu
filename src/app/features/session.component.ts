@@ -8,6 +8,7 @@ import { Store } from "../services/store";
 import { StatusComponent } from "../shared/status.component";
 import { IconComponent } from "../shared/icon.component";
 import { ActiveWorkoutComponent } from "../shared/active-workout.component";
+import { GroupStripComponent } from '../shared/group-strip.component';
 import { localDate } from '../models/domain';
 import { parseLocalDate } from '../services/calendar';
 import { ScreenWakeLock } from '../services/screen-wake-lock';
@@ -19,6 +20,7 @@ import { ScreenWakeLock } from '../services/screen-wake-lock';
     StatusComponent,
     IconComponent,
     ActiveWorkoutComponent,
+    GroupStripComponent,
   ],
   styleUrl:'./session-simple.css',
   template: `<gt-status />
@@ -29,6 +31,7 @@ import { ScreenWakeLock } from '../services/screen-wake-lock';
         <div class="simple-session-heading"><a class="button ghost" routerLink="/" aria-label="Esci dalla seduta: resta aperta e la riprendi quando vuoi"><gt-icon name="back"/></a><div class="session-title"><h1>{{w.dayName}}</h1><p>@if(programWeek(w);as week){<span>{{week}}</span> · }<b>{{completedSets(w.id)}}/{{allSets(w.id).length}}</b> serie<span class="session-plan"> · {{w.planName}}</span></p></div><details class="session-menu" #sessionMenu><summary class="button ghost" aria-label="Altre opzioni dell’allenamento: data e annullamento"><gt-icon name="more"/></summary><div class="session-menu-panel"><span class="session-menu-label session-plan-label">Piano: {{w.planName}}</span><span class="session-menu-label">Data dell’allenamento</span><gt-date-field class="compact" aria-label="Data allenamento" [max]="today" [ngModel]="w.date" (ngModelChange)="update(w.id,'date',$event)"/><button class="ghost danger session-cancel" aria-label="Annulla allenamento" (click)="sessionMenu.open=false;cancel(w.id)" [disabled]="s.busy()||finishing()">Annulla allenamento</button></div></details><button class="ghost session-finish" aria-label="Termina allenamento" (click)="finish()" [disabled]="s.busy()||finishing()">{{finishing()?'Salvataggio…':'Termina'}}</button></div>
         <div class="session-progress" role="progressbar" aria-label="Serie completate" [attr.aria-valuenow]="completedSets(w.id)" aria-valuemin="0" [attr.aria-valuemax]="allSets(w.id).length"><i [style.width.%]="allSets(w.id).length?completedSets(w.id)/allSets(w.id).length*100:0"></i></div>
       </header>
+      <gt-group-strip/>
       <gt-active-workout [workoutId]="w.id" (finish)="finish()" />
       <details class="session-options session-simple-options"><summary>Le tue note e la durata</summary>
         <div class="form-grid"><label class="wide">Note<textarea maxlength="2000" [ngModel]="w.notes" (ngModelChange)="update(w.id,'notes',$event)"></textarea></label>

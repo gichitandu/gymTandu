@@ -24,6 +24,11 @@
       "bucket_name": "gymtrack-archives"
     }
   ],
+  // Lettura delle foto dei pasti con Workers AI. Il Worker conta i consumi in D1 e si ferma al 95% dei
+  // 10.000 Neuron gratuiti al giorno (ripristino alle 00:00 UTC): vedi docs/CLOUDFLARE_DEPLOY.md
+  "ai": {
+    "binding": "AI"
+  },
   "vars": {
     "SELF_HOSTED": "1",
     // Indirizzo pubblico (non segreto) del servizio calendario/notifiche: vedi calendar-relay/README.md
@@ -34,7 +39,8 @@
   "triggers": {
     "crons": ["0 6 * * *", "*/30 * * * *"]
   },
+  // Conserva i log del Worker (errori dei cron compresi) nella dashboard Cloudflare.
   "observability": {
-    "enabled": false
+    "enabled": true
   }
 }

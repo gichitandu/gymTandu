@@ -8,6 +8,7 @@ import { WorkoutLogExercise, WorkoutLogSet } from "../models/domain";
 import { IconComponent } from "./icon.component";
 import type { AppUpdateEvent } from '../services/pwa';
 import { FormDraftService } from '../services/form-drafts';
+import { coachVisibleText, replaceVisibleSetNotes } from '../services/coach-expert-adapter';
 
 type NumberField = 'weight' | 'reps' | 'rpe' | 'rest';
 type SetDraft = Partial<Record<NumberField, number | null | undefined>> & { notes?: string; kind?: 'work' | 'warmup' };
@@ -257,10 +258,14 @@ export class WorkoutEditorComponent {
     const draft = this.drafts.get(set.id);
     return draft && Object.hasOwn(draft, key) ? draft[key] : key === 'weight' ? this.s.weightInput(set.weight) : set[key];
   }
-  notesValue(set: WorkoutLogSet) { return this.drafts.get(set.id)?.notes ?? set.notes ?? ''; }
+  // Il testo modificabile esclude il riscontro strutturato del coach, che resta conservato nella nota salvata.
+  notesValue(set: WorkoutLogSet) { return coachVisibleText(this.drafts.get(set.id)?.notes ?? set.notes ?? ''); }
   kindValue(set: WorkoutLogSet) { return this.drafts.get(set.id)?.kind ?? set.kind ?? 'work'; }
   patchNumber(set: WorkoutLogSet, key: NumberField, value: number | null) { this.queueDraft(set.id, { [key]: value }); }
-  patchNotes(set: WorkoutLogSet, notes: string) { this.queueDraft(set.id, { notes }); }
+  patchNotes(set: WorkoutLogSet, notes: string) {
+    try { this.queueDraft(set.id, { notes: replaceVisibleSetNotes(this.drafts.get(set.id)?.notes ?? set.notes, notes) }); }
+    catch (error) { this.s.error.set(error instanceof Error ? error.message : 'Note non salvate.'); }
+  }
   patchKind(set: WorkoutLogSet, kind: 'work' | 'warmup') { this.queueDraft(set.id, { kind }); }
   private queueDraft(id: string, patch: SetDraft) {
     this.drafts.set(id, { ...this.drafts.get(id), ...patch });
@@ -281,7 +286,7 @@ export class WorkoutEditorComponent {
       if (!Number.isFinite(value) || value < 0 || key === 'reps' && (!Number.isInteger(value) || value < 1 || value > 999) || key === 'rpe' && (value < 1 || value > 10) || key === 'rest' && value > 3600) return undefined;
       patch[key] = key === 'weight' ? this.s.kg(value) : value;
     }
-    if (draft.notes !== undefined) { if (draft.notes.length > 500) return undefined; patch.notes = draft.notes; }
+    if (draft.notes !== undefined) { if (coachVisibleText(draft.notes).length > 500 || draft.notes.length > 2000) return undefined; patch.notes = draft.notes; }
     if (draft.kind !== undefined) patch.kind = draft.kind;
     return patch;
   }

@@ -30,6 +30,10 @@ export const excelImportFiles=sqliteTable('excel_import_files',{
 export const appFeatures=sqliteTable('app_features',{
  id:text('id').primaryKey(),nutritionEnabled:integer('nutrition_enabled').notNull().default(0),hubEnabled:integer('hub_enabled').notNull().default(0),garageEnabled:integer('garage_enabled').notNull().default(0),revision:integer('revision').notNull().default(1),updatedBy:text('updated_by').references(()=>users.id),updatedAt:integer('updated_at')
 });
+// Contatore giornaliero (UTC) dei Neuron di Workers AI: ferma la lettura delle foto prima del limite gratuito.
+export const aiUsage=sqliteTable('ai_usage',{
+ day:text('day').primaryKey(),neurons:integer('neurons').notNull().default(0),requests:integer('requests').notNull().default(0),blocked:integer('blocked').notNull().default(0),updatedAt:integer('updated_at').notNull()
+});
 export const accountArchiveResets=sqliteTable('account_archive_resets',{
  id:text('id').primaryKey(),userId:text('user_id').notNull().unique().references(()=>users.id),scope:text('scope').notNull().unique(),resetId:text('reset_id').notNull(),completedAt:integer('completed_at'),recoveryKey:text('recovery_key'),retainUntil:integer('retain_until')
 });
@@ -49,3 +53,11 @@ export const designRevisions=sqliteTable('design_revisions',{
 export const designAudit=sqliteTable('design_audit',{
  id:text('id').primaryKey(),revision:integer('revision').notNull().references(()=>designRevisions.revision),actorId:text('actor_id').notNull().references(()=>users.id),createdAt:integer('created_at').notNull(),kind:text('kind').notNull(),delta:text('delta').notNull()
 });
+
+// Allenamento in gruppo: sedute condivise di breve durata, mai parte degli archivi personali.
+export const groupSessions=sqliteTable('group_sessions',{
+ id:text('id').primaryKey(),code:text('code').notNull(),inviteToken:text('invite_token').notNull().unique(),hostId:text('host_id').notNull().references(()=>users.id),dayName:text('day_name').notNull(),createdAt:integer('created_at').notNull(),expiresAt:integer('expires_at').notNull(),endedAt:integer('ended_at'),registrations:integer('registrations').notNull().default(0)
+},table=>[index('group_sessions_code').on(table.code),index('group_sessions_host').on(table.hostId)]);
+export const groupMembers=sqliteTable('group_members',{
+ sessionId:text('session_id').notNull().references(()=>groupSessions.id),userId:text('user_id').notNull().references(()=>users.id),name:text('name').notNull(),mode:text('mode').notNull(),payload:text('payload').notNull(),joinedAt:integer('joined_at').notNull(),updatedAt:integer('updated_at').notNull(),leftAt:integer('left_at')
+},table=>[primaryKey({columns:[table.sessionId,table.userId]}),index('group_members_user').on(table.userId)]);

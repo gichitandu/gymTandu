@@ -39,6 +39,18 @@ try {
   const vw = await call('/api/hub/vw'); assert.equal(vw.status, 200); assert.deepEqual(await vw.json(), {configured: false, state: 'off', message: '', checkedAt: null, updatedAt: null, capturedAt: null, values: null, vehicle: null});
   assert.equal((await call('/api/hub/vw/sync', 'POST', {})).status, 200);
   console.log('PASS packaged Worker: GT Hub revisions, stale-copy conflict and record validation, GT Garage Volkswagen status');
+  // Lettura foto dei pasti: spenta senza Workers AI, poi con un modello sostitutivo e il blocco prima del limite gratuito.
+  assert.deepEqual((({available, blocked}) => ({available, blocked}))(await (await call('/api/meal-scan')).json()), {available: false, blocked: false});
+  let aiCalls = 0;
+  env.AI = {async run(model) {aiCalls++; assert.ok(model.startsWith('@cf/')); return {choices: [{message: {content: '{"kind":"plate","dish":"Riso","items":[{"name":"Riso","grams":180,"calories":234,"protein":4.9,"carbs":50.8,"fat":0.5}]}'}}], usage: {prompt_tokens: 1500, completion_tokens: 200}};}};
+  const photo = {image: 'data:image/jpeg;base64,AAAA'};
+  const scanned = await call('/api/meal-scan', 'POST', photo); assert.equal(scanned.status, 200, await scanned.clone().text());
+  const meal = await scanned.json(); assert.equal(meal.items[0].name, 'Riso'); assert.equal(meal.status.used, 23); assert.equal(meal.status.cap, 9500);
+  sql.prepare('UPDATE ai_usage SET neurons = 9401').run();
+  const waiting = await call('/api/meal-scan', 'POST', photo); assert.equal(waiting.status, 429); assert.equal((await waiting.json()).code, 'AI_LIMIT');
+  assert.equal(aiCalls, 1); assert.equal((await (await call('/api/meal-scan')).json()).blocked, true);
+  delete env.AI;
+  console.log('PASS packaged Worker: meal photo reading stops before the free Workers AI allocation');
   sql.prepare("UPDATE users SET role = 'Admin'").run();
   const denied = await call('/api/hub'); assert.equal(denied.status, 403);
   assert.equal((await call('/api/hub/vw')).status, 403);

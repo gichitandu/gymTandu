@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject, signal } from '@angular/core';
+import { Component, computed, effect, inject, signal, untracked } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { IconComponent } from '../shared/icon.component';
@@ -8,6 +8,7 @@ import { HUB_ME, HubStore } from './hub-store';
 import { HubView } from './hub-view';
 import { expenseShares } from './hub-split';
 import { HubSplitSheetComponent } from './hub-split-sheet.component';
+import { HubInviteService } from './hub-invites';
 import { HubGroupSheetComponent, HubSettleSheetComponent, shareSummary, shareText } from './hub-people';
 
 @Component({
@@ -98,7 +99,10 @@ export class HubGroupComponent {
     return out;
   });
   private wasFound = false;
+  private invites = inject(HubInviteService);
   constructor() {
+    // Chi è entrato dai link d'invito viene aggiunto ai gruppi (al massimo un controllo al minuto).
+    effect(() => { if (this.hub.ready()) untracked(() => void this.invites.refreshAll()); });
     // Se il gruppo viene eliminato (anche da un altro dispositivo) si torna alla lista.
     effect(() => { const found = !!this.view(); if (found) this.wasFound = true; else if (this.wasFound && this.hub.ready()) void this.router.navigate(['/hub/dividi'], { replaceUrl: true }); });
   }
