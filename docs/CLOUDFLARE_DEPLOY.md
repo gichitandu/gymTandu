@@ -158,8 +158,16 @@ aggiornino.
 
 - I dati degli utenti stanno in D1 (account) e R2 (copie complete). Esegui ogni
   tanto un'esportazione: `npx wrangler d1 export gymtrack-accounts --remote --output backup.sql`.
-- Non perdere il codice di setup finché l'account proprietario non è attivato;
-  dopo l'attivazione non serve più, ma tienilo al sicuro.
+- Conserva il codice di setup anche dopo l'attivazione: serve per reimpostare la
+  password del proprietario se viene dimenticata (schermata di accesso →
+  "Password dimenticata?" → "Sei il proprietario? Reimposta la password"). Il
+  reset chiude le sessioni aperte e non tocca i dati. Se hai perso anche il
+  codice, impostane uno nuovo con `npx wrangler secret put SETUP_CODE`.
+- I log del Worker (errori dei controlli programmati compresi) sono attivi
+  (`observability` in `wrangler.jsonc`) e si leggono nella dashboard Cloudflare.
+- `public/_headers` applica ai file statici la Content-Security-Policy e gli altri
+  header di sicurezza. Se dopo un aggiornamento di Angular `npm run verify:build`
+  segnala un hash diverso per lo script in linea, copialo in quel file.
 - Per modificare un utente, resettare una password o disattivarlo usa la gestione
   utenti dell'app (solo Super Admin).
 

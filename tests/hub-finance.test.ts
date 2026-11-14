@@ -171,3 +171,34 @@ describe('ripetizioni del calendario', () => {
     expect(eventOccurrences({ date: '2026-11-11', repeat: 'weekly' }, '2026-11-12', '2026-11-30')).toEqual(['2026-11-18', '2026-11-25']);
   });
 });
+
+describe('piano risparmio modificato per ambito', () => {
+  const day = (m: string, d: string) => `2026-${m}-${d}`;
+  const items = ['08', '09', '10'].flatMap(m => [
+    { id: 'r' + m, date: day(m, '05'), category: 'ristoranti', amount: 20000, label: 'r', source: 'bank' as const },
+    { id: 's' + m, date: day(m, '06'), category: 'shopping', amount: 20000, label: 's', source: 'bank' as const },
+    { id: 'a' + m, date: day(m, '07'), category: 'casa', amount: 60000, label: 'a', source: 'bank' as const },
+  ]);
+  it('sposta il risparmio sugli altri ambiti quando uno è bloccato o scelto a mano', () => {
+    const auto = computePlan(items, 10000, '2026-11-11')!;
+    const lock = computePlan(items, 10000, '2026-11-11', { shopping: 0 })!;
+    expect(lock.rows.find(r => r.category === 'shopping')).toMatchObject({ cut: 0, cap: 20000, manual: true });
+    expect(lock.rows.find(r => r.category === 'ristoranti')!.cut).toBe(9000);  // massimo automatico 45%
+    expect(lock.achieved).toBeLessThan(auto.achieved);
+    const more = computePlan(items, 10000, '2026-11-11', { shopping: 8000 })!;
+    expect(more.rows.find(r => r.category === 'shopping')!.cut).toBe(8000);
+    expect(more.rows.find(r => r.category === 'ristoranti')!.cut).toBe(2000);
+    expect(more.achieved).toBe(10000);
+    // Una scelta oltre la media viene limitata e le spese fisse restano intatte.
+    const capped = computePlan(items, 10000, '2026-11-11', { shopping: 99999, casa: 5000 })!;
+    expect(capped.rows.find(r => r.category === 'shopping')).toMatchObject({ cut: 20000, cap: 0 });
+    const casa = capped.rows.find(r => r.category === 'casa')!;
+    expect(casa.cut).toBe(0);
+    expect(casa.manual).toBeUndefined();
+  });
+  it('non produce mai tagli negativi per via degli arrotondamenti', () => {
+    const odd = ['08', '09', '10'].map(m => ({ id: 'x' + m, date: day(m, '05'), category: 'abbonamenti', amount: 151, label: 'x', source: 'bank' as const }));
+    const plan = computePlan(odd, 0, '2026-11-11')!;
+    expect(plan.rows.every(r => r.cut >= 0 && r.cap <= r.avg)).toBe(true);
+  });
+});

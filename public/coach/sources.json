@@ -1,0 +1,109 @@
+{
+  "registryVersion": "2026.11.13",
+  "checkedAt": "2026-11-13",
+  "scope": "Adulti sani, allenamento di resistenza; selezione ragionata di fonti, non revisione sistematica completa né validazione professionale del software.",
+  "sources": [
+    {
+      "id": "acsm-2026",
+      "title": "Resistance Training Prescription for Muscle Function, Hypertrophy, and Physical Performance in Healthy Adults: An Overview of Reviews",
+      "authors": "Currier BS et al.; American College of Sports Medicine",
+      "year": 2026,
+      "type": "position-stand-overview-of-reviews",
+      "doi": "10.1249/MSS.0000000000003897",
+      "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC12965823/",
+      "searchThrough": "2024-10",
+      "principle": "Progressione, aderenza e personalizzazione sono centrali. Carichi elevati favoriscono la forza; volumi maggiori possono favorire l'ipertrofia. Cedimento e tecniche complesse non sono requisiti universali.",
+      "limitations": "Adulti sani; eterogeneità delle revisioni e rappresentatività limitata per atleti avanzati. Non determina carichi individuali né soglie software."
+    },
+    {
+      "id": "repetition-continuum-2021",
+      "title": "Loading Recommendations for Muscle Strength, Hypertrophy, and Local Endurance: A Re-Examination of the Repetition Continuum",
+      "authors": "Schoenfeld BJ, Grgic J, Van Every DW, Plotkin DL",
+      "year": 2021,
+      "type": "narrative-review",
+      "doi": "10.3390/sports9020032",
+      "url": "https://www.mdpi.com/2075-4663/9/2/32",
+      "principle": "Esiste una zona di carichi alti che favorisce la forza massimale. L'ipertrofia si ottiene su un ampio intervallo di carichi quando le serie sono vicine al cedimento: il range scelto per esercizio è una scelta pratica.",
+      "limitations": "Revisione narrativa; non definisce range ottimali per singolo esercizio. La divisione tra esercizi pesanti, multiarticolari e di isolamento è un preset del software."
+    },
+    {
+      "id": "volume-frequency-2026",
+      "title": "The Resistance Training Dose Response: Meta-Regressions Exploring the Effects of Weekly Volume and Frequency on Muscle Hypertrophy and Strength Gains",
+      "authors": "Pelland JC, Remmert JF, Robinson ZP, Hinson SR, Zourdos MC",
+      "year": 2026,
+      "onlinePublished": "2025-12-04",
+      "type": "systematic-review-meta-regression",
+      "doi": "10.1007/s40279-025-02344-w",
+      "url": "https://link.springer.com/article/10.1007/s40279-025-02344-w",
+      "principle": "Volume con rendimenti decrescenti; considerare lavoro diretto e indiretto. La frequenza ha implicazioni diverse per forza e ipertrofia.",
+      "limitations": "Meta-regressioni di gruppo, non predittori validati della risposta individuale. Il conteggio frazionale è una stima, non una misura biologica esatta."
+    },
+    {
+      "id": "rir-2024",
+      "title": "Exploring the Dose-Response Relationship Between Estimated Resistance Training Proximity to Failure, Strength Gain, and Muscle Hypertrophy: A Series of Meta-Regressions",
+      "authors": "Robinson ZP et al.",
+      "year": 2024,
+      "type": "exploratory-meta-regression",
+      "doi": "10.1007/s40279-024-02069-2",
+      "url": "https://pubmed.ncbi.nlm.nih.gov/38970765/",
+      "principle": "La vicinanza al cedimento può essere più rilevante per l'ipertrofia che per la forza; non identifica un RIR ottimo unico.",
+      "limitations": "RIR spesso stimati dai protocolli; analisi esplorativa e adattamento del modello modesto."
+    },
+    {
+      "id": "rest-2024",
+      "title": "Give it a rest: a systematic review with Bayesian meta-analysis on the effect of inter-set rest interval duration on muscle hypertrophy",
+      "authors": "Singer A et al.",
+      "year": 2024,
+      "type": "systematic-review-meta-analysis",
+      "doi": "10.3389/fspor.2024.1429789",
+      "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC11349676/",
+      "principle": "Evitare recuperi troppo brevi se compromettono il lavoro successivo. Ipertrofia possibile con più durate di recupero.",
+      "limitations": "Nove studi, interventi brevi, eterogeneità e intervalli di incertezza ampi. Non stabilisce che ogni esercizio richieda esattamente 90 secondi."
+    },
+    {
+      "id": "supersets-2025",
+      "title": "Superset Versus Traditional Resistance Training Prescriptions: A Systematic Review and Meta-analysis Exploring Acute and Chronic Effects on Mechanical, Metabolic, and Perceptual Variables",
+      "authors": "Zhang X, Weakley J, Li H, Li Z, García-Ramos A",
+      "year": 2025,
+      "type": "systematic-review-meta-analysis",
+      "doi": "10.1007/s40279-025-02176-8",
+      "url": "https://link.springer.com/article/10.1007/s40279-025-02176-8",
+      "principle": "Superset utili per risparmiare tempo, con sforzo percepito maggiore. Abbinamenti antagonisti preservano meglio il volume rispetto a due esercizi biomeccanicamente simili.",
+      "limitations": "Diciannove studi, solo tre sugli adattamenti cronici; equivalenza individuale e superiorità non dimostrate."
+    },
+    {
+      "id": "dropsets-2026",
+      "title": "Acute and Chronic Effects of Drop-Set Training: A Meta-Analysis and Systematic Review",
+      "authors": "Havers T, Micke F, Geisler S, Held S",
+      "year": 2026,
+      "published": "2026-04-01",
+      "type": "systematic-review-meta-analysis",
+      "doi": "10.1186/s40798-026-01012-1",
+      "url": "https://link.springer.com/article/10.1186/s40798-026-01012-1",
+      "searchThrough": "2026-01-20",
+      "principle": "Dropset come opzione di efficienza temporale, con sforzo acuto maggiore e nessuna superiorità cronica chiara rispetto alle serie tradizionali.",
+      "limitations": "Dodici studi, 274 partecipanti, protocolli e durate limitati; nessuna conversione universale fra dropset e serie tradizionali."
+    },
+    {
+      "id": "rir-accuracy-2022",
+      "title": "Accuracy in Predicting Repetitions to Task Failure in Resistance Exercise: A Scoping Review and Exploratory Meta-analysis",
+      "authors": "Halperin I et al.",
+      "year": 2022,
+      "type": "scoping-review-exploratory-meta-analysis",
+      "url": "https://pubmed.ncbi.nlm.nih.gov/34542869/",
+      "principle": "Il RIR dichiarato è incerto; combinarlo con ripetizioni, tecnica segnalata e andamento di più sedute.",
+      "limitations": "Accuratezza variabile; non assumere che tutta l'incertezza dipenda dal livello di esperienza."
+    },
+    {
+      "id": "prescription-2023",
+      "title": "Resistance training prescription for muscle strength and hypertrophy in healthy adults: a systematic review and Bayesian network meta-analysis",
+      "authors": "Currier BS et al.",
+      "year": 2023,
+      "type": "systematic-review-network-meta-analysis",
+      "doi": "10.1136/bjsports-2023-106807",
+      "url": "https://bjsm.bmj.com/content/57/18/1211",
+      "principle": "Numerose prescrizioni migliorano forza e massa; flessibilità e aderenza sono compatibili con un programma efficace.",
+      "limitations": "Graduatorie di protocolli non equivalgono al programma ottimale per ogni persona."
+    }
+  ]
+}

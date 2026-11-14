@@ -3,7 +3,7 @@ import { DatabaseSync } from 'node:sqlite';
 import { readFileSync } from 'node:fs';
 import relay, { renderCalendar } from '../calendar-relay/index.js';
 import { dispatchHubReminders } from '../calendar-relay/hub.js';
-import { hubApi, hubCalendarEvents, hubReminders, hubZonedUtc } from '../worker/hub.js';
+import { hubApi, hubCalendarEvents, hubInvitePublicApi, hubInvitesApi, hubReminders, hubZonedUtc } from '../worker/hub.js';
 
 let sql: DatabaseSync, relayEnv: any, objects: Map<string, { text: string; meta: any; etag: string }>, bucket: any;
 const secret = 's'.repeat(64), origin = 'https://calendar.example.test';
@@ -118,4 +118,35 @@ it('aggiunge gli impegni con orario al calendario abbonato', () => {
   expect(text).toContain('DTSTART:20261111T163000Z');
   expect(text).toContain('SUMMARY:Dentista');
   expect(text).toContain('SUMMARY:Allenamento');
+});
+
+it('crea un link d’invito di Dividi, registra chi entra e lo conferma solo al proprietario', async () => {
+  const req = (path: string, method: string, body?: any) => new Request('https://gymtrack.test' + path, { method, headers: body ? { 'Content-Type': 'application/json' } : {}, body: body ? JSON.stringify(body) : undefined });
+  const group = { name: 'Casa via Roma', icon: 'house', members: ['Marta', 'Luca'] };
+  expect((await hubInvitesApi(req('/api/hub/invites', 'POST', { groupId: 'g1', group }), main(), null)).status).toBe(401);
+  const created = await (await hubInvitesApi(req('/api/hub/invites', 'POST', { groupId: 'g1', group }), main(), superAdmin)).json() as any;
+  expect(created.token).toMatch(/^[A-Za-z0-9_-]{32}$/);
+  expect(created.joins).toEqual([]);
+  const read = await (await hubInvitePublicApi(req('/api/hub/invite?t=' + created.token, 'GET'), main())).json() as any;
+  expect(read).toEqual({ group });
+  expect(JSON.stringify(read)).not.toContain('owner');
+  let tries = 0; const limit = async () => { tries++; };
+  expect((await hubInvitePublicApi(req('/api/hub/invite', 'POST', { token: created.token, name: '  ' }), main(), limit)).status).toBe(400);
+  const joined = await (await hubInvitePublicApi(req('/api/hub/invite', 'POST', { token: created.token, name: 'Giulia' }), main(), limit)).json() as any;
+  expect(joined.name).toBe('Giulia');
+  await hubInvitePublicApi(req('/api/hub/invite', 'POST', { token: created.token, name: 'giulia' }), main(), limit);
+  expect(tries).toBe(3);
+  // Un altro account non può leggere le richieste né disattivare il link.
+  const other = { id: 'other', role: 'SuperAdmin' };
+  expect((await hubInvitesApi(req('/api/hub/invites', 'POST', { groupId: 'g1', token: created.token, group }), main(), other)).status).toBe(403);
+  expect((await hubInvitesApi(req('/api/hub/invites', 'DELETE', { token: created.token }), main(), other)).status).toBe(403);
+  const pending = await (await hubInvitesApi(req('/api/hub/invites', 'POST', { groupId: 'g1', token: created.token, group }), main(), superAdmin)).json() as any;
+  expect(pending.joins.map((j: any) => j.name)).toEqual(['Giulia']);
+  const acked = await (await hubInvitesApi(req('/api/hub/invites', 'POST', { groupId: 'g1', token: created.token, group, ack: [pending.joins[0].id] }), main(), superAdmin)).json() as any;
+  expect(acked.joins).toEqual([]);
+  expect((await hubInvitesApi(req('/api/hub/invites', 'DELETE', { token: created.token }), main(), superAdmin)).status).toBe(200);
+  expect((await hubInvitePublicApi(req('/api/hub/invite?t=' + created.token, 'GET'), main())).status).toBe(404);
+  expect((await hubInvitePublicApi(req('/api/hub/invite', 'POST', { token: created.token, name: 'Pino' }), main(), limit)).status).toBe(404);
+  expect((await hubInvitesApi(req('/api/hub/invites', 'POST', { groupId: 'g1', token: created.token, group }), main(), superAdmin)).status).toBe(404);
+  expect((await hubInvitePublicApi(req('/api/hub/invite?t=../hub/owner', 'GET'), main())).status).toBe(404);
 });

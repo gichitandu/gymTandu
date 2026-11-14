@@ -3,7 +3,7 @@ export { validateIntegrity } from "./integrity";
 import { z } from "zod";
 import { DataSet } from "../models/domain";
 import {APPROVED_THEME_IDS} from '../../../shared/approved-palettes.js';
-export const BACKUP_VERSION = 11;
+export const BACKUP_VERSION = 12;
 const id = z.string().min(1).max(150);
 const text = z.string().max(10000);
 const nonempty = z.string().trim().min(1).max(200);
@@ -169,6 +169,7 @@ const schemas = {
   }),
 };
 const dataSchema = z.object({
+  creatineLogs:z.array(z.object({id,date,grams:z.number().positive().max(100)})).max(10000),
   wellnessLogs:z.array(z.object({id,date,sleepMinutes:z.number().int().min(0).max(1440).optional(),sleepQuality:z.number().int().min(1).max(5).optional(),energy:z.number().int().min(1).max(5).optional(),stress:z.number().int().min(1).max(5).optional(),soreness:z.record(id,z.number().int().min(0).max(4)).refine(value=>Object.keys(value).length<=1000),notes:z.string().max(2000)})).max(10000),
   exercisePreferences:z.array(z.object({id,favorite:z.boolean(),machineSetup:machineSetup.optional(),weightStep:z.number().positive().max(50).optional()})).max(10000),
   workoutUi:z.array(z.object({id,step:z.enum(['list','detail','record','rest']),tab:z.enum(['sets','history','notes']),exerciseId:z.string().max(150),setId:z.string().max(150),restEnd:num,restTotal:num.max(7200),paused:z.boolean(),pausedSeconds:num.max(7200),weight:num,reps:z.number().int().min(1).max(999),rpe,setNotes:z.string().max(10000),kind:z.enum(['work','warmup']),updatedAt:time})).max(1),
@@ -222,7 +223,7 @@ export async function exportBackup(data: DataSet) {
   );
 }
 // Add explicit vN -> vN+1 pure functions here when the on-disk format evolves.
-export const migrations: Record<number, (value: unknown) => unknown> = {1: value => ({...(value as object),meals:[]}),2:value=>value,3:value=>({...value as object,scheduledWorkouts:[],measurements:[]}),4:value=>({...value as object,exercisePreferences:[],workoutUi:[]}),5:value=>value,6:value=>value,7:value=>value,8:value=>value,9:value=>value,10:value=>({...value as object,wellnessLogs:[]})};
+export const migrations: Record<number, (value: unknown) => unknown> = {1: value => ({...(value as object),meals:[]}),2:value=>value,3:value=>({...value as object,scheduledWorkouts:[],measurements:[]}),4:value=>({...value as object,exercisePreferences:[],workoutUi:[]}),5:value=>value,6:value=>value,7:value=>value,8:value=>value,9:value=>value,10:value=>({...value as object,wellnessLogs:[]}),11:value=>({...value as object,creatineLogs:[]})};
 export async function importBackup(json: string): Promise<DataSet> {
   if (new Blob([json]).size > 50 * 1024 * 1024)
     throw Error("Backup troppo grande: limite 50 MB.");

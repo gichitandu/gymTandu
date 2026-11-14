@@ -13,7 +13,7 @@
 import type { DataSet, WorkoutLogExercise } from "../models/domain";
 import { setupKey } from "./training-flow";
 
-export type CoachAction = "raise" | "hold" | "lower";
+export type CoachAction = "raise" | "hold" | "lower" | "stop";
 export type Readiness = "low" | "normal" | "high";
 export type CoachLoadMode =
   "external" | "bodyweight" | "weighted-bodyweight" | "assisted";
@@ -25,6 +25,10 @@ export interface CoachSetResult {
   weight: number;
   reps: number;
   rpe?: number;
+  /** Riscontro strutturato dichiarato dall'utente (mai dedotto dal testo libero). */
+  rir?: number | null;
+  technique?: "good" | "degraded" | "unknown";
+  pain?: boolean;
 }
 
 export interface CoachSession {
@@ -87,6 +91,13 @@ const clamp = (value: number, min: number, max: number) =>
   Math.min(max, Math.max(min, value));
 const validRpe = (rpe: number | undefined): rpe is number =>
   rpe !== undefined && Number.isFinite(rpe) && rpe >= 1 && rpe <= 10;
+/** L'RPE indicato vale di più; altrimenti le ripetizioni in riserva dichiarate (RPE ≈ 10 − RIR). */
+const effort = (set: CoachSetResult): number | undefined =>
+  validRpe(set.rpe)
+    ? set.rpe
+    : typeof set.rir === "number" && Number.isFinite(set.rir) && set.rir >= 0 && set.rir <= 10
+      ? 10 - set.rir
+      : undefined;
 const validSet = (set: CoachSetResult) =>
   !!set &&
   Number.isFinite(set.weight) &&
@@ -104,7 +115,8 @@ const defaultFormat = (kg: number) => number(kg) + " kg";
  */
 export function estimate1rm(set: CoachSetResult): number | undefined {
   if (!validSet(set) || set.weight <= 0) return undefined;
-  const reserve = validRpe(set.rpe) ? clamp(10 - set.rpe, 0, 5) : 1;
+  const level = effort(set);
+  const reserve = level !== undefined ? clamp(10 - level, 0, 5) : 1;
   const total = set.reps + reserve;
   if (total > 20) return undefined;
   return total <= 1 ? set.weight : set.weight * (1 + total / 30);
@@ -172,7 +184,7 @@ export function coachNextSet(input: CoachInput): CoachSuggestion | null {
   const evidence: string[] = [];
   const flags: CoachFlag[] = [];
   if (reference.length) {
-    const rpes = reference.map((set) => set.rpe).filter(validRpe);
+    const rpes = reference.map(effort).filter((value): value is number => value !== undefined);
     evidence.push(
       (next ? "Seduta di oggi" : "Volta scorsa") +
         (!next && input.daysSinceReference !== undefined && input.daysSinceReference >= 0
@@ -187,7 +199,7 @@ export function coachNextSet(input: CoachInput): CoachSuggestion | null {
     evidence.push(
       "Oggi finora: " +
         setsLine(done, format, loaded) +
-        (validRpe(last.rpe) ? " · ultima serie RPE " + number(last.rpe) : ""),
+        (effort(last) !== undefined ? " · ultima serie RPE " + number(effort(last)!) : ""),
     );
   evidence.push(
     "Obiettivo: " +
@@ -213,6 +225,7 @@ export function coachNextSet(input: CoachInput): CoachSuggestion | null {
     raise: !loaded ? "Una ripetizione in più" : assisted ? "Riduci l'assistenza" : "Sali di carico",
     hold: loaded ? "Mantieni il carico" : "Mantieni",
     lower: assisted ? "Aumenta l'assistenza" : "Alleggerisci",
+    stop: "Fermati",
   };
   const build = (
     action: CoachAction,
@@ -238,7 +251,19 @@ export function coachNextSet(input: CoachInput): CoachSuggestion | null {
 
   /* ===== Durante la seduta: decide l'ultima serie fatta ===== */
   if (last) {
-    const rpe = validRpe(last.rpe) ? last.rpe : undefined;
+    const stop = (reason: string) => {
+      flags.push("fatigue");
+      return build("stop", last.weight, repsMin, reason, "session", "high");
+    };
+    if (done.some((set) => set.pain))
+      return stop(
+        "Hai segnalato dolore: interrompi questo esercizio oggi. Non compensare con altre serie; se il dolore persiste, fatti valutare.",
+      );
+    if (last.technique === "degraded")
+      return stop(
+        "La tecnica è peggiorata: chiudi qui l'esercizio. La prossima volta riparti da questo carico curando l'esecuzione.",
+      );
+    const rpe = effort(last);
     const confidence: CoachConfidence = rpe === undefined ? "medium" : "high";
     const session = (
       action: CoachAction,
@@ -361,8 +386,8 @@ export function coachNextSet(input: CoachInput): CoachSuggestion | null {
         last.weight,
         inRange(last.reps),
         loaded
-          ? "Mantieni il carico. Registra l'RPE per avere suggerimenti più precisi."
-          : "Ripeti le stesse ripetizioni. Registra l'RPE per avere suggerimenti più precisi.",
+          ? "Mantieni il carico. Indica l'RPE o le ripetizioni ancora possibili per suggerimenti più precisi."
+          : "Ripeti le stesse ripetizioni. Indica l'RPE o le ripetizioni ancora possibili per suggerimenti più precisi.",
       );
     if (rpe <= target && !tired) {
       if (atTop)
@@ -416,7 +441,7 @@ export function coachNextSet(input: CoachInput): CoachSuggestion | null {
   const anchor = reference[Math.min(index, reference.length - 1)];
   const weight = anchor.weight;
   const days = input.daysSinceReference;
-  const rpes = reference.map((set) => set.rpe).filter(validRpe);
+  const rpes = reference.map(effort).filter((value): value is number => value !== undefined);
   const allRpe = rpes.length === reference.length;
   const maxRpe = rpes.length ? Math.max(...rpes) : undefined;
   const under = reference.filter((set) => set.reps < repsMin).length;
@@ -433,6 +458,20 @@ export function coachNextSet(input: CoachInput): CoachSuggestion | null {
     extra: { title?: string; restBonus?: number; confidence?: CoachConfidence } = {},
   ) => build(action, value, reps, reason, "reference", extra.confidence ?? confidence, extra);
 
+  if (reference.some((set) => set.pain || set.technique === "degraded"))
+    return fromReference(
+      "hold",
+      weight,
+      repsMin,
+      reference.some((set) => set.pain)
+        ? next
+          ? "Oggi hai segnalato dolore: la prossima volta non aumentare. Se ricompare, interrompi l'esercizio."
+          : "L'ultima volta hai segnalato dolore: non aumentare. Se ricompare, interrompi l'esercizio."
+        : next
+          ? "Oggi la tecnica è peggiorata: la prossima volta stesso carico, curando l'esecuzione prima di aumentare."
+          : "L'ultima volta la tecnica è peggiorata: stesso carico, curando l'esecuzione prima di aumentare.",
+      { title: "Non aumentare", confidence: "high" },
+    );
   if (!next && days !== undefined && days >= 42 && loaded) {
     flags.push("layoff");
     const lighter = shift(weight, -stepsFor(weight, 0.1));

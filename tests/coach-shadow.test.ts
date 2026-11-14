@@ -438,3 +438,44 @@ describe("storico confrontabile", () => {
     expect(daysBetween("non valida", "2026-01-15")).toBeUndefined();
   });
 });
+
+describe("Coach Ombra con il riscontro sulla serie", () => {
+  it("con dolore segnalato oggi dice di fermarsi", () => {
+    expect(
+      coachNextSet({ ...base, done: [{ weight: 60, reps: 10, rpe: 7, pain: true }] }),
+    ).toMatchObject({ action: "stop", basis: "session" });
+  });
+
+  it("con tecnica peggiorata nell'ultima serie dice di fermarsi", () => {
+    expect(
+      coachNextSet({ ...base, done: [{ weight: 60, reps: 10, technique: "degraded" }] }),
+    ).toMatchObject({ action: "stop" });
+  });
+
+  it("usa le ripetizioni in riserva quando manca l'RPE", () => {
+    expect(
+      coachNextSet({ ...base, done: [{ weight: 60, reps: 12, rir: 3, technique: "good" }] }),
+    ).toMatchObject({ action: "raise", weight: 62.5, reps: 10 });
+    // Serie al limite (RIR 0): stesso carico, anche una ripetizione in meno va bene.
+    expect(
+      coachNextSet({ ...base, done: [{ weight: 60, reps: 10, rir: 0 }] }),
+    ).toMatchObject({ action: "hold", weight: 60, reps: 9 });
+  });
+
+  it("l'RPE indicato prevale sulle ripetizioni in riserva", () => {
+    expect(
+      coachNextSet({ ...base, done: [{ weight: 60, reps: 12, rpe: 9.5, rir: 4 }] }),
+    ).toMatchObject({ action: "hold", weight: 60 });
+  });
+
+  it("aumenta dal riferimento anche con solo RIR dichiarati", () => {
+    const reference = [{ weight: 50, reps: 12, rir: 2 }, { weight: 50, reps: 12, rir: 3 }];
+    expect(coachNextSet({ ...base, reference, done: [] })).toMatchObject({ action: "raise", weight: 52.5 });
+  });
+
+  it("non aumenta se l'ultima volta c'era dolore o tecnica peggiorata", () => {
+    const easy = { weight: 50, reps: 12, rpe: 7 };
+    expect(coachNextSet({ ...base, reference: [easy, { ...easy, pain: true }], done: [] })).toMatchObject({ action: "hold", weight: 50 });
+    expect(coachNextSet({ ...base, reference: [easy, { ...easy, technique: "degraded" as const }], done: [] })).toMatchObject({ action: "hold", weight: 50 });
+  });
+});

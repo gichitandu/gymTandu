@@ -4,7 +4,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { IconComponent } from '../shared/icon.component';
 import { feedbackForContext } from '../services/feedback';
-import { computePlan, cumulativeByDay, monthIncome, monthSpending, planInsights, PlanLevel } from './hub-finance';
+import { computePlan, cumulativeByDay, monthIncome, monthSpending, planInsights, PlanLevel, PlanRow } from './hub-finance';
 import { addMonths, cap, daysInMonth, euro, euroParts, hubBankShort, HUB_CATEGORIES, hubCategory, hubId, HubTransaction, monthKey, monthName, shortDay, addDays, dayLabel } from './hub-model';
 import { HubStore } from './hub-store';
 import { HubView } from './hub-view';
@@ -78,13 +78,23 @@ type Filter = 'tutti' | 'uscite' | 'entrate' | 'scegli' | 'divise';
     <div class="ml">@for(l of levels;track l){<span [class.on]="plan.level===l">{{cap(l)}}</span>}</div>
     <div class="nums"><div><small>Spendi in media</small><b class="hb-num">{{euro(plan.avgTotal,{decimals:false})}} €</b></div><gt-icon name="arrow"/><div style="text-align:right"><small>Nuovo tetto al mese</small><b class="hb-num" style="color:#b3a6ff">{{euro(plan.capTotal,{decimals:false})}} €</b></div></div>
     <p class="hb-sub" style="margin:10px 0 0;font-size:12px">Media di {{plan.months.length===1?monthName(plan.months[0]):plan.months.length+' mesi ('+monthsLabel(plan.months)+')'}}.</p>
+    @if(hasOverrides() && plan.achieved>plan.goal+100){<p class="ovr">Con le tue scelte risparmi {{euro(plan.achieved,{decimals:false})}} € al mese, più dell’obiettivo. <button type="button" class="hb-link" (click)="goal.set(roundGoal(plan.achieved))">Usa {{euro(roundGoal(plan.achieved),{decimals:false})}} € come obiettivo</button></p>}
   </section>
   <div>
-    <div class="hb-sec" style="margin-top:4px"><h2>Il piano per ambito</h2></div>
+    <div class="hb-sec" style="margin-top:4px"><h2>Il piano per ambito</h2>@if(hasOverrides()){<button type="button" class="hb-link" (click)="resetOverrides()">Tutto automatico</button>}</div>
+    <p class="hb-sub pl-hint">Tocca un ambito per decidere tu quanto tagliare, o per segnarlo come non riducibile: il resto dell’obiettivo si sposta sugli altri.</p>
     <section class="hb-c hb-list pl">
-      @for(r of variableRows(plan);track r.category){<div class="hb-li"><span [class]="'hb-sq sm '+tone(r.category)"><gt-icon [name]="icon(r.category)"/></span>
-        <span class="bd"><strong>{{label(r.category)}} <span class="hb-tag n">{{typeLabel(r.type)}}</span></strong><span class="two"><span class="old" [style.width.%]="r.avg/maxAvg(plan)*100"></span><span class="new" [style.width.%]="r.cap/maxAvg(plan)*100" [style.background]="color(r.category)"></span></span></span>
-        <span class="rt2"><b class="hb-num">−{{euro(r.cut,{decimals:false})}} €</b><small>{{euro(r.avg,{decimals:false})}} → {{euro(r.cap,{decimals:false})}} €</small></span></div>}
+      @for(r of variableRows(plan);track r.category){<div class="prow" [class.open]="planEdit()===r.category">
+        <button type="button" class="hb-li" (click)="toggleEdit(r.category)" [attr.aria-expanded]="planEdit()===r.category"><span [class]="'hb-sq sm '+tone(r.category)"><gt-icon [name]="icon(r.category)"/></span>
+        <span class="bd"><strong>{{label(r.category)}} @if(r.manual){<span [class]="'hb-tag '+(r.cut?'v':'r')">{{r.cut?'Scelto da te':'Non riducibile'}}</span>}@else{<span class="hb-tag n">{{typeLabel(r.type)}}</span>}</strong><span class="two"><span class="old" [style.width.%]="r.avg/maxAvg(plan)*100"></span><span class="new" [style.width.%]="r.cap/maxAvg(plan)*100" [style.background]="color(r.category)"></span></span></span>
+        <span class="rt2"><b class="hb-num" [class.zero]="!r.cut">{{r.cut?'−'+euro(r.cut,{decimals:false}):'0'}} €</b><small>{{euro(r.avg,{decimals:false})}} → {{euro(r.cap,{decimals:false})}} €</small></span></button>
+        @if(planEdit()===r.category){<div class="ed">
+          <div class="stp"><button type="button" class="pm2" (click)="stepCut(r,-500)" [disabled]="!r.cut" aria-label="Taglia 5 € in meno"><gt-icon name="minus"/></button>
+            <span><b class="hb-num">{{r.cut?'−'+euro(r.cut,{decimals:false}):'0'}} €</b><small>tetto {{euro(r.cap,{decimals:false})}} € al mese</small></span>
+            <button type="button" class="pm2" (click)="stepCut(r,500)" [disabled]="r.cap<=0" aria-label="Taglia 5 € in più"><gt-icon name="plus"/></button></div>
+          <div class="opts"><button type="button" class="hb-btn sm" [class.on]="r.manual&&!r.cut" (click)="setCut(r,0)">Non riducibile</button>@if(r.manual){<button type="button" class="hb-btn sm" (click)="setAuto(r.category)">Automatico</button>}</div>
+        </div>}
+      </div>}
       @if(fixedTotal(plan)){<div class="hb-li fix"><span class="hb-sq sm b"><gt-icon name="house"/></span><span class="bd"><strong>Spese fisse</strong><small>{{fixedLabels(plan)}} · non toccate</small></span><span class="rt2"><b style="color:var(--hb-m)">0 €</b><small>{{euro(fixedTotal(plan),{decimals:false})}} €</small></span></div>}
     </section>
   </div>
@@ -145,6 +155,12 @@ type Filter = 'tutti' | 'uscite' | 'entrate' | 'scegli' | 'divise';
 .nums{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px;margin-top:14px;padding-top:14px;border-top:1px solid rgba(255,255,255,.06)}.nums small{display:block;font-size:11.5px;color:var(--hb-m)}.nums b{display:block;margin-top:3px;font-size:19px;font-weight:750;letter-spacing:-.6px}.nums gt-icon{width:18px;height:18px;color:var(--hb-f)}
 .pl .hb-li{align-items:flex-start;cursor:default}.pl .bd strong{display:flex;align-items:center;gap:8px}
 .two{position:relative;display:block;height:8px;margin-top:9px;border-radius:5px;background:rgba(255,255,255,.06)}.two .old{position:absolute;left:0;top:0;bottom:0;border-radius:5px;background:repeating-linear-gradient(135deg,rgba(255,255,255,.14) 0 3px,transparent 3px 6px)}.two .new{position:absolute;left:0;top:0;bottom:0;border-radius:5px}
+.prow+.prow{border-top:1px solid rgba(255,255,255,.05)}.prow.open{background:rgba(255,255,255,.03)}.pl .prow .hb-li{cursor:pointer}
+.pl-hint{margin:-4px 2px 10px;font-size:12.5px;line-height:1.45}
+.ed{padding:0 14px 14px 60px}.stp{display:flex;align-items:center;justify-content:space-between;gap:10px}.stp span{text-align:center;flex:1}.stp b{display:block;font-size:20px;font-weight:750;color:var(--hb-g)}.stp small{display:block;font-size:11.5px;color:var(--hb-m);margin-top:2px}
+.pm2{display:grid;place-items:center;flex:none;width:44px;height:44px;border-radius:50%;border:1px solid var(--hb-ln)!important;background:rgba(255,255,255,.05)!important;cursor:pointer}.pm2:disabled{opacity:.35;cursor:default}.pm2 gt-icon{width:18px;height:18px}
+.opts{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}.opts .hb-btn{width:auto;flex:1}.opts .hb-btn.on{border-color:rgba(255,107,129,.45)!important;color:var(--hb-r)}
+.rt2 b.zero{color:var(--hb-m)}.ovr{margin:10px 0 0;font-size:12.5px;line-height:1.45;color:var(--hb-m)}.ovr .hb-link{padding:0;border:0;background:none;color:var(--hb-v);font:inherit;font-weight:650;text-decoration:underline;cursor:pointer}
 .rt2{text-align:right;flex:none}.rt2 b{display:block;font-size:15px;font-weight:750;color:var(--hb-g)}.rt2 small{display:block;margin-top:2px;font-size:11.5px;color:var(--hb-m);font-variant-numeric:tabular-nums}.fix{opacity:.6}
 .wk{display:flex;align-items:center;gap:14px;padding:15px}.wk b{font-size:24px;font-weight:750;letter-spacing:-.8px}
 .why .hb-li{align-items:flex-start;cursor:default}.why .bd strong{white-space:normal}.why p{margin:3px 0 0;font-size:12.5px;line-height:1.45;color:var(--hb-m)}
@@ -215,7 +231,11 @@ export class HubExpensesComponent {
 
   readonly goal = signal(0);
   readonly alert80 = signal(true);
-  readonly draftPlan = computed(() => computePlan(this.view.spend(), this.goal(), this.view.today()));
+  /** Tagli scelti a mano per ambito (centesimi; 0 = non riducibile). Salvati con “Attiva/Aggiorna il piano”. */
+  readonly overrides = signal<Record<string, number>>({});
+  readonly planEdit = signal('');
+  readonly hasOverrides = computed(() => Object.keys(this.overrides()).length > 0);
+  readonly draftPlan = computed(() => computePlan(this.view.spend(), this.goal(), this.view.today(), this.overrides()));
   readonly sliderMax = computed(() => { const p = computePlan(this.view.spend(), 0, this.view.today()); return Math.max(10000, Math.ceil((p?.reducible ?? 50000) * 0.5 / 5000) * 5000); });
 
   readonly rowsAll = computed(() => {
@@ -248,7 +268,7 @@ export class HubExpensesComponent {
     effect(() => {
       const plan = this.hub.plan();
       untracked(() => {
-        if (plan) { this.goal.set(plan.goal); this.alert80.set(plan.alert80); }
+        if (plan) { this.goal.set(plan.goal); this.alert80.set(plan.alert80); this.overrides.set({ ...(plan.overrides ?? {}) }); }
         else if (!this.goal()) { const p = computePlan(this.view.spend(), 0, this.view.today()); this.goal.set(p ? Math.max(5000, Math.round(p.reducible * 0.2 / 2500) * 2500) : 20000); }
       });
     });
@@ -273,7 +293,7 @@ export class HubExpensesComponent {
   levelTitle(l: PlanLevel) { return ({ facile: 'Obiettivo facile', realistico: 'Obiettivo realistico', impegnativo: 'Obiettivo impegnativo', troppo: 'Fuori portata' })[l]; }
   levelText(p: { level: PlanLevel; avgCutPct: number; maxPossible: number }) { return p.level === 'troppo' ? `Con i limiti per ambito arrivi al massimo a ${euro(p.maxPossible, { decimals: false })} € al mese.` : `Tagli in media il ${p.avgCutPct}% delle spese che puoi ridurre.`; }
   monthsLabel(months: string[]) { return months.map(m => monthName(m).slice(0, 3)).reverse().join('–'); }
-  variableRows(p: { rows: { category: string; type: string; avg: number; cut: number; cap: number }[] }) { return p.rows.filter(r => r.type !== 'fisso'); }
+  variableRows(p: { rows: PlanRow[] }) { return p.rows.filter(r => r.type !== 'fisso'); }
   fixedTotal(p: { rows: { type: string; avg: number }[] }) { return p.rows.filter(r => r.type === 'fisso').reduce((s, r) => s + r.avg, 0); }
   fixedLabels(p: { rows: { type: string; category: string }[] }) { return p.rows.filter(r => r.type === 'fisso').map(r => this.label(r.category)).join(', '); }
   maxAvg(p: { rows: { avg: number; type: string }[] }) { return Math.max(1, ...p.rows.filter(r => r.type !== 'fisso').map(r => r.avg)); }
@@ -281,9 +301,16 @@ export class HubExpensesComponent {
   insights(p: NonNullable<ReturnType<typeof computePlan>>) { return planInsights(p, this.view.spend(), this.view.recurring()); }
   activate(p: NonNullable<ReturnType<typeof computePlan>>) {
     const current = this.hub.plan();
-    this.hub.upsert('plans', { id: current?.id ?? hubId(), updatedAt: current?.updatedAt ?? 0, goal: this.goal(), active: true, alert80: this.alert80(), caps: Object.fromEntries(p.rows.map(r => [r.category, r.cap])), basedOn: p.months });
+    this.hub.upsert('plans', { id: current?.id ?? hubId(), updatedAt: current?.updatedAt ?? 0, goal: this.goal(), active: true, alert80: this.alert80(), caps: Object.fromEntries(p.rows.map(r => [r.category, r.cap])), basedOn: p.months, overrides: { ...this.overrides() } });
     this.feedback.show('success', 'Piano attivo: trovi il budget di oggi nella schermata Oggi.');
   }
+  toggleEdit(category: string) { this.planEdit.set(this.planEdit() === category ? '' : category); }
+  /** Più taglio su un ambito: l'obiettivo resta lo stesso, quindi gli ambiti automatici tagliano di meno (e viceversa). */
+  stepCut(r: { category: string; cut: number; avg: number }, delta: number) { this.setCut(r, delta > 0 ? Math.floor(r.cut / 500) * 500 + delta : Math.ceil(r.cut / 500) * 500 + delta); }
+  setCut(r: { category: string; avg: number }, cut: number) { this.overrides.update(o => ({ ...o, [r.category]: Math.max(0, Math.min(r.avg, cut)) })); }
+  setAuto(category: string) { this.overrides.update(o => { const { [category]: _removed, ...rest } = o; return rest; }); }
+  resetOverrides() { this.overrides.set({}); this.planEdit.set(''); }
+  roundGoal(cents: number) { return Math.floor(cents / 500) * 500; }
   deactivate() { const p = this.hub.plan(); if (p) this.hub.upsert('plans', { ...p, active: false }); }
   protected readonly categories = HUB_CATEGORIES;
   protected readonly shortDay = shortDay;

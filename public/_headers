@@ -1,0 +1,13 @@
+# Header di sicurezza per i file statici serviti da Cloudflare Workers Static Assets (wrangler.jsonc).
+# Il file non viene pubblicato: Cloudflare lo legge e applica le regole alle risposte.
+# L'hash in script-src autorizza l'unico script in linea di index.html (caricamento del foglio di stile
+# generato da Angular): tools/verify-build.mjs fallisce se dopo un aggiornamento non corrisponde più.
+/*
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'sha256-LMY6wYoFV9I4wWzxaq1N/dTpl4iurQktw706UCHK3vM='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; media-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' data: blob:; worker-src 'self' blob:; frame-src https://www.youtube-nocookie.com; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+# Il riconoscimento delle foto dei pasti gira in un worker separato con TensorFlow.js, che richiede
+# 'unsafe-eval': l'eccezione vale solo per quel worker, non per le pagine dell'app.
+/food-ai-worker.js
+  ! Content-Security-Policy
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-eval'; connect-src 'self'; object-src 'none'

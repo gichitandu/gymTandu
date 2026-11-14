@@ -11,6 +11,7 @@ import { Store } from '../src/app/services/store';
 import { FormDraftService } from '../src/app/services/form-drafts';
 import { PlansComponent } from '../src/app/features/plans.component';
 import { ActiveWorkoutComponent } from '../src/app/shared/active-workout.component';
+import { annotateSetNotes } from '../src/app/services/coach-expert-adapter';
 
 let db: GymDatabase, injector: EnvironmentInjector, s: Store;
 let formDrafts: FormDraftService, draftName: string;
@@ -129,7 +130,7 @@ it('riassume allenamento e serie per gruppo muscolare senza modificare l’archi
   expect(JSON.stringify(s.data().planExercises)).toBe(before);
 });
 
-it('in seduta il Coach Ombra propone l’aumento dopo una seduta completa, si applica con un tocco e si può ignorare', async () => {
+it('in seduta il Coach Ombra propone l’aumento dopo una seduta completa, si applica con un tocco e si riadatta dopo la serie', async () => {
   await s.savePlan('p', 'Piano', ''); await s.saveDay('d', 'p', 'Giorno');
   await s.savePlanExercise({ id: 'pe', dayId: 'd', exerciseId: 'exercise-0', sets: 3, repsMin: 8, repsMax: 12, rest: 90, notes: '', order: 0 });
   await s.start('d');
@@ -145,8 +146,7 @@ it('in seduta il Coach Ombra propone l’aumento dopo una seduta completa, si ap
   const coach = active.coach()!;
   expect(coach).toMatchObject({ action: 'raise', weight: 62.5, reps: 10, basis: 'reference', confidence: 'high', title: 'Sali di carico' });
   expect(coach.evidence[0]).toContain('60 kg × 12 · 12 · 12');
-  expect(active.coachTarget()).toBe('62,5 kg × 10 rip.');
-  expect(active.coachChips()).toEqual([{ text: '+2,5 kg', tone: 'up' }, { text: '−2 rip. vs volta scorsa', tone: 'same' }]);
+  expect(active.coachConfidenceLabel()).toBe('Dati completi');
   expect(active.coachApplied()).toBe(false);
   active.applyCoach();
   expect(active.weight).toBe(62.5); expect(active.reps).toBe(10); expect(active.coachApplied()).toBe(true);
@@ -160,6 +160,31 @@ it('in seduta il Coach Ombra propone l’aumento dopo una seduta completa, si ap
   const end = active.restEnd();
   active.applyCoachRest();
   expect(active.restEnd()).toBeGreaterThan(end); expect(active.coachRestBonus()).toBe(0);
-  active.dismissCoach();
-  expect(active.coach()).toBeNull();
+});
+
+it('il dolore segnalato su una serie fa fermare il Coach, e dopo una seduta con dolore non propone aumenti', async () => {
+  await s.savePlan('p', 'Piano', ''); await s.saveDay('d', 'p', 'Giorno');
+  await s.savePlanExercise({ id: 'pe', dayId: 'd', exerciseId: 'exercise-0', sets: 3, repsMin: 8, repsMax: 12, rest: 90, notes: '', order: 0 });
+  await s.start('d');
+  const row = s.workoutExercises(s.draft()!.id)[0];
+  const [first] = s.sets(row.id);
+  await s.updateSet(first.id, { weight: 60, reps: 12, rpe: 7, completed: true, notes: annotateSetNotes('', { technique: 'unknown', pain: true }) });
+  const id = s.draft()!.id;
+  active = runInInjectionContext(injector, () => new ActiveWorkoutComponent());
+  Object.defineProperty(active, 'workoutId', { value: () => id });
+  active.quickRecord(active.exercises()[0]);
+  expect(active.coach()).toMatchObject({ action: 'stop', basis: 'session', title: 'Fermati' });
+  expect(active.coachApplied()).toBe(false); expect(active.coachDeltaLabel()).toBe('Fermati');
+  const weight = active.weight; active.applyCoach(); expect(active.weight).toBe(weight);
+  // La seduta successiva parte senza aumento, anche se i numeri lo permetterebbero.
+  for (const set of s.sets(row.id).slice(1)) await s.updateSet(set.id, { weight: 60, reps: 12, rpe: 7, completed: true });
+  active.ngOnDestroy(); active = undefined;
+  expect(await s.finish()).toBe(true);
+  await new Promise(resolve => setTimeout(resolve, 5));
+  await s.start('d');
+  const next = s.draft()!.id;
+  active = runInInjectionContext(injector, () => new ActiveWorkoutComponent());
+  Object.defineProperty(active, 'workoutId', { value: () => next });
+  active.quickRecord(active.exercises()[0]);
+  expect(active.coach()).toMatchObject({ action: 'hold', weight: 60, basis: 'reference', title: 'Non aumentare' });
 });
