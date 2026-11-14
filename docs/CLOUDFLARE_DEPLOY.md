@@ -140,7 +140,7 @@ Cloudflare come "zero data retention".
 Workers AI include **10.000 Neuron al giorno**, con ripristino alle **00:00 UTC** (le 01:00
 o le 02:00 in Italia). Per non superarli mai:
 
-- prima di ogni lettura il Worker prenota in D1 (tabella `ai_usage`, migrazione `0013`) il
+- prima di ogni lettura il Worker prenota in D1 (tabella `ai_usage`, migrazione `0014`) il
   costo massimo della richiesta, con una sola istruzione SQL atomica. Se il totale
   supererebbe il **95%** dell'allocazione (9.500 Neuron) il modello non viene chiamato e
   l'app mostra **«Attendere ripristino»** con l'orario;
@@ -202,8 +202,16 @@ aggiornino.
 
 - I dati degli utenti stanno in D1 (account) e R2 (copie complete). Esegui ogni
   tanto un'esportazione: `npx wrangler d1 export gymtrack-accounts --remote --output backup.sql`.
-- Non perdere il codice di setup finché l'account proprietario non è attivato;
-  dopo l'attivazione non serve più, ma tienilo al sicuro.
+- Conserva il codice di setup anche dopo l'attivazione: serve per reimpostare la
+  password del proprietario se viene dimenticata (schermata di accesso →
+  "Password dimenticata?" → "Sei il proprietario? Reimposta la password"). Il
+  reset chiude le sessioni aperte e non tocca i dati. Se hai perso anche il
+  codice, impostane uno nuovo con `npx wrangler secret put SETUP_CODE`.
+- I log del Worker (errori dei controlli programmati compresi) sono attivi
+  (`observability` in `wrangler.jsonc`) e si leggono nella dashboard Cloudflare.
+- `public/_headers` applica ai file statici la Content-Security-Policy e gli altri
+  header di sicurezza. Se dopo un aggiornamento di Angular `npm run verify:build`
+  segnala un hash diverso per lo script in linea, copialo in quel file.
 - Per modificare un utente, resettare una password o disattivarlo usa la gestione
   utenti dell'app (solo Super Admin).
 

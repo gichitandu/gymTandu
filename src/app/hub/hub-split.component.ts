@@ -7,6 +7,7 @@ import { euro, euroParts, initials, shortDay, hubCategory } from './hub-model';
 import { HUB_ME, HubStore } from './hub-store';
 import { HubView } from './hub-view';
 import { HubSplitSheetComponent } from './hub-split-sheet.component';
+import { HubInviteService } from './hub-invites';
 import { HubGroupSheetComponent, HubSettleSheetComponent, shareSummary, shareText } from './hub-people';
 import { expenseShares } from './hub-split';
 
@@ -81,7 +82,10 @@ export class HubSplitComponent {
     ];
     return items.sort((a, b) => b.at - a.at).slice(0, 6);
   });
+  private invites = inject(HubInviteService);
   constructor() {
+    // Chi è entrato dai link d'invito viene aggiunto ai gruppi (al massimo un controllo al minuto).
+    effect(() => { if (this.hub.ready()) untracked(() => void this.invites.refreshAll()); });
     // ?nuovo=1 apre il nuovo gruppo; tornando indietro (parametro tolto) il foglio si chiude.
     effect(() => { const open = !!this.qp()?.get('nuovo'); untracked(() => { if (open) this.sheet.set('group'); else if (this.sheet() === 'group') this.sheet.set(''); }); });
   }
@@ -89,8 +93,10 @@ export class HubSplitComponent {
   color(id: string) { return this.hub.person(id)?.color ?? '#8a8a9a'; }
   ini(id: string) { return id === HUB_ME ? 'Tu' : initials(this.hub.personName(id)); }
   toneOf(i: number) { return ['b', 'g', 'o', 'v', 'p', 'c'][i % 6]; }
-  closeGroup() { this.sheet.set(''); if (this.qp()?.get('nuovo')) void this.router.navigate([], { relativeTo: this.route, queryParams: {}, replaceUrl: true }); }
-  openGroup(id: string) { void this.router.navigate(['/hub/dividi', id]); }
+  /** Gruppo appena creato: si apre la sua pagina (al posto di ?nuovo=1), senza una seconda navigazione che la annulli. */
+  private opening = false;
+  closeGroup() { this.sheet.set(''); if (!this.opening && this.qp()?.get('nuovo')) void this.router.navigate([], { relativeTo: this.route, queryParams: {}, replaceUrl: true }); }
+  openGroup(id: string) { this.opening = true; void this.router.navigate(['/hub/dividi', id], { replaceUrl: !!this.qp()?.get('nuovo') }).finally(() => { this.opening = false; }); }
   async shareAll() {
     const debts = this.view.groupViews().filter(g => !g.group.archived).flatMap(g => g.debts);
     const result = await shareText(shareSummary('Riepilogo Dividi', debts, this.view.shareName), 'Riepilogo Dividi');

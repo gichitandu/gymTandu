@@ -190,3 +190,96 @@ export async function hubDue(env,user,now=Date.now()){
  }
  return{items};
 }
+
+/* ---------------------------------------------------------------- Dividi: inviti con link */
+// Chi riceve il link apre una pagina e scrive il proprio nome, senza account GymTrack.
+// R2 hub-invites/<token>.json: proprietario, gruppo (solo nome, icona e nomi dei membri) e richieste
+// di ingresso, che l'app del proprietario aggiunge al gruppo nel proprio archivio e poi conferma.
+const HUB_INVITE_TOKEN=/^[A-Za-z0-9_-]{24,64}$/;
+const HUB_INVITE_JOINS=100;
+const hubInviteKey=token=>'hub-invites/'+token+'.json';
+const hubText=(v,max)=>typeof v==='string'?v.replace(/[\u0000-\u001f\u007f]/g,'').trim().slice(0,max):'';
+function hubRandom(bytes){return[...crypto.getRandomValues(new Uint8Array(bytes))].map(b=>b.toString(16).padStart(2,'0')).join('');}
+export function hubInviteGroup(group){
+ if(!group||typeof group!=='object'||Array.isArray(group))hubFail('Gruppo non valido.');
+ const name=hubText(group.name,60),icon=typeof group.icon==='string'&&/^[a-z]{1,20}$/.test(group.icon)?group.icon:'users';
+ const members=Array.isArray(group.members)?group.members.map(m=>hubText(m,40)).filter(Boolean).slice(0,50):[];
+ if(!name)hubFail('Gruppo non valido.');
+ return{name,icon,members};
+}
+async function hubInviteRead(env,token){
+ if(typeof token!=='string'||!HUB_INVITE_TOKEN.test(token))return null;
+ const head=await env.BUCKET.head(hubInviteKey(token));if(!head)return null;
+ const object=await env.BUCKET.get(hubInviteKey(token));if(!object)return null;
+ try{return{data:JSON.parse(await object.text()),etag:head.etag};}catch{return null;}
+}
+/** Scrive l'invito solo se nessun altro lo ha cambiato nel frattempo; riprova sulla versione nuova. */
+async function hubInviteUpdate(env,token,change){
+ for(let i=0;i<4;i++){
+  const current=await hubInviteRead(env,token);if(!current)return null;
+  const next=change(current.data);
+  const saved=await env.BUCKET.put(hubInviteKey(token),JSON.stringify(next),{httpMetadata:{contentType:'application/json'},onlyIf:{etagMatches:current.etag}});
+  if(saved)return next;
+ }
+ hubFail('Invito modificato nello stesso momento. Riprova.',409);
+}
+const hubJoins=data=>Array.isArray(data?.joins)?data.joins:[];
+/** Proprietario: crea o aggiorna il link di un gruppo, legge le persone entrate e conferma quelle già aggiunte. */
+export async function hubInvitesApi(request,env,user){
+ try{
+  if(!user)hubFail('Accedi al tuo account.',401);
+  if(!await hubAccess(env,user))hubFail('GT Hub e GT Garage non sono abilitati per il tuo account.',403);
+  if(!env.BUCKET)hubFail('Archivio server non configurato.',503);
+  if(!['POST','DELETE'].includes(request.method))hubFail('Metodo non supportato.',405);
+  const body=await hubBody(request);
+  if(!body||typeof body!=='object'||Array.isArray(body))hubFail('Richiesta non valida.');
+  const token=body.token;
+  if(token!==undefined&&(typeof token!=='string'||!HUB_INVITE_TOKEN.test(token)))hubFail('Link non valido.');
+  const existing=token?await hubInviteRead(env,token):null;
+  if(existing&&existing.data.owner!==user.id)hubFail('Link non valido.',403);
+  if(request.method==='DELETE'){
+   if(existing)await env.BUCKET.delete(hubInviteKey(token));
+   return hubReply({ok:true});
+  }
+  if(typeof body.groupId!=='string'||!body.groupId||body.groupId.length>150)hubFail('Gruppo non valido.');
+  if(existing&&existing.data.groupId!==body.groupId)hubFail('Link non valido.',403);
+  const group=hubInviteGroup(body.group),now=Date.now();
+  const ack=new Set(Array.isArray(body.ack)?body.ack.filter(id=>typeof id==='string').slice(0,HUB_INVITE_JOINS):[]);
+  if(token&&!existing)hubFail('Questo link d’invito non è più attivo.',404);
+  if(!existing){
+   // Link nuovo: un token mai usato, non indovinabile.
+   const fresh=btoa(String.fromCharCode(...crypto.getRandomValues(new Uint8Array(24)))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+   await env.BUCKET.put(hubInviteKey(fresh),JSON.stringify({owner:user.id,groupId:body.groupId,group,joins:[],createdAt:now,updatedAt:now}),{httpMetadata:{contentType:'application/json'}});
+   return hubReply({token:fresh,joins:[]});
+  }
+  const saved=await hubInviteUpdate(env,token,data=>({...data,group,joins:hubJoins(data).filter(j=>!ack.has(j.id)),updatedAt:now}));
+  return hubReply({token,joins:saved?saved.joins:[]});
+ }catch(error){return hubReply({error:error.status?error.message:'Servizio non disponibile. Riprova.'},error.status||503);}
+}
+/** Pagina pubblica del link: mostra il gruppo e registra il nome di chi entra. `limit` conta i tentativi. */
+export async function hubInvitePublicApi(request,env,limit){
+ try{
+  if(!env.BUCKET)hubFail('Servizio non configurato.',503);
+  if(request.method==='GET'){
+   const found=await hubInviteRead(env,new URL(request.url).searchParams.get('t'));
+   if(!found)hubFail('Questo link d’invito non è più attivo.',404);
+   return hubReply({group:found.data.group});
+  }
+  if(request.method!=='POST')hubFail('Metodo non supportato.',405);
+  if(limit)await limit();
+  const body=await hubBody(request);
+  const name=hubText(body?.name,40);
+  if(!name)hubFail('Scrivi il tuo nome.');
+  if(!await hubInviteRead(env,body?.token))hubFail('Questo link d’invito non è più attivo.',404);
+  let joined;
+  const saved=await hubInviteUpdate(env,body.token,data=>{
+   const joins=hubJoins(data),same=joins.find(j=>j.name.toLowerCase()===name.toLowerCase());
+   if(same){joined=same;return data;}
+   if(joins.length>=HUB_INVITE_JOINS)hubFail('Troppe richieste per questo gruppo. Chiedi un nuovo link.',429);
+   joined={id:hubRandom(8),name,at:Date.now()};
+   return{...data,joins:[...joins,joined]};
+  });
+  if(!saved)hubFail('Questo link d’invito non è più attivo.',404);
+  return hubReply({ok:true,group:saved.group,name:joined.name});
+ }catch(error){return hubReply({error:error.status?error.message:'Servizio non disponibile. Riprova.'},error.status||503);}
+}

@@ -259,3 +259,15 @@ it('persists all eight approved personal palettes for every role without changin
  }
  expect(sql.prepare('SELECT * FROM users ORDER BY id').all()).toEqual(users);
 });
+it('lets only the verified platform owner reset a forgotten owner password and hides the owner email from others',async()=>{
+ const old=await activate();
+ const other=await (await call('auth/me',undefined,{email:'altro@example.com',visitor:'altro'})).json();
+ expect(other.ownerReset).toBeUndefined();expect(other.ownerEmail).toBeUndefined();
+ expect((await call('auth/owner-reset',{password:'new-owner-password-1'},{email:'altro@example.com',visitor:'altro'})).status).toBe(403);
+ expect((await (await call('auth/me')).json()).ownerReset).toBe('platform');
+ const reset=await call('auth/owner-reset',{password:'new-owner-password-1'});
+ expect(reset.status).toBe(200);
+ expect((await (await call('auth/me',undefined,{cookie:old})).json()).user).toBeNull();
+ expect((await call('auth/login',{identifier:owner,password:'owner-password-123'})).status).toBe(401);
+ expect((await call('auth/login',{identifier:owner,password:'new-owner-password-1'})).status).toBe(200);
+});

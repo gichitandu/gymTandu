@@ -148,6 +148,10 @@ body.hub-mode { background: #09090d; }
 .hb-field:focus-within { border-color: rgba(143,124,255,.6); box-shadow: 0 0 0 3px rgba(143,124,255,.15); }
 .hb-field gt-icon { width: 18px; height: 18px; color: var(--hb-m); flex: none; }
 .hb-field input, .hb-field select, .hb-field textarea { flex: 1; min-width: 0; width: 100%; min-height: 48px; padding: 0; border: 0; outline: 0; background: none; color: var(--hb-t); font: inherit; font-size: 16px; }
+/* Il campo è già evidenziato dal bordo del contenitore: niente secondo riquadro (outline del focus
+   o sfondo del tema chiaro di GymTrack) attorno all'input interno. */
+.hb .hb-field :is(input, select, textarea) { background: none; border: 0; border-radius: 0; box-shadow: none; }
+.hb .hb-field :is(input, select, textarea):focus-visible { outline: none; }
 .hb-field textarea { padding: 12px 0; min-height: 90px; resize: vertical; line-height: 1.45; font-weight: 500; }
 .hb-field select option { background: #1a1a22; }
 .hb-field small { display: block; font-size: 10.5px; color: var(--hb-m); font-weight: 600; letter-spacing: .3px; text-transform: uppercase; }

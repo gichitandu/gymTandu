@@ -108,3 +108,36 @@ it('disables the server copy for the account-less space and keeps account copies
   const account = await call('archive?scope=account', undefined, { cookie });
   expect(account.status).toBe(200);
 });
+it('shows the owner email only during activation or to the signed-in owner', async () => {
+  expect((await (await call('auth/me')).json()).ownerEmail).toBe(owner);
+  const cookie = await activate();
+  const anonymous = await (await call('auth/me')).json();
+  expect(anonymous.ownerEmail).toBeUndefined();
+  expect(JSON.stringify(anonymous)).not.toContain(owner);
+  expect((await (await call('auth/me', undefined, { cookie })).json()).ownerEmail).toBe(owner);
+});
+it('lets the owner reset a forgotten password only with the setup code and signs out old sessions', async () => {
+  expect((await (await call('auth/me')).json()).ownerReset).toBeUndefined();
+  expect((await call('auth/owner-reset', { password: 'new-owner-password-1', setupCode })).status).toBe(409);
+  const oldCookie = await activate();
+  expect((await (await call('auth/me')).json()).ownerReset).toBe('code');
+  expect((await call('auth/owner-reset', { password: 'new-owner-password-1' })).status).toBe(403);
+  expect((await call('auth/owner-reset', { password: 'new-owner-password-1', setupCode: 'sbagliato' })).status).toBe(403);
+  expect((await call('auth/owner-reset', { password: 'corta', setupCode })).status).toBe(400);
+  expect((await call('auth/login', { identifier: owner, password: 'owner-password-123' })).status).toBe(200);
+  const reset = await call('auth/owner-reset', { password: 'new-owner-password-1', setupCode });
+  expect(reset.status).toBe(200);
+  const cookie = reset.headers.get('set-cookie')!.split(';')[0];
+  expect((await (await call('auth/me', undefined, { cookie })).json()).user.role).toBe('SuperAdmin');
+  expect((await (await call('auth/me', undefined, { cookie: oldCookie })).json()).user).toBeNull();
+  expect((await call('auth/login', { identifier: owner, password: 'owner-password-123' })).status).toBe(401);
+  expect((await call('auth/login', { identifier: owner, password: 'new-owner-password-1' })).status).toBe(200);
+});
+it('throttles wrong setup codes on the owner reset and refuses it without SETUP_CODE', async () => {
+  await activate();
+  let last = 0;
+  for (let i = 0; i < 12; i++) last = (await call('auth/owner-reset', { password: 'new-owner-password-1', setupCode: 'sbagliato' })).status;
+  expect(last).toBe(429);
+  delete env.SETUP_CODE;
+  expect((await call('auth/owner-reset', { password: 'new-owner-password-1', setupCode: '' }, { ip: '198.51.100.9' })).status).toBe(503);
+});
