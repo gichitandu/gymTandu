@@ -30,6 +30,10 @@ export const excelImportFiles=sqliteTable('excel_import_files',{
 export const appFeatures=sqliteTable('app_features',{
  id:text('id').primaryKey(),nutritionEnabled:integer('nutrition_enabled').notNull().default(0),hubEnabled:integer('hub_enabled').notNull().default(0),garageEnabled:integer('garage_enabled').notNull().default(0),revision:integer('revision').notNull().default(1),updatedBy:text('updated_by').references(()=>users.id),updatedAt:integer('updated_at')
 });
+// Contatore giornaliero (UTC) dei Neuron di Workers AI: ferma la lettura delle foto prima del limite gratuito.
+export const aiUsage=sqliteTable('ai_usage',{
+ day:text('day').primaryKey(),neurons:integer('neurons').notNull().default(0),requests:integer('requests').notNull().default(0),blocked:integer('blocked').notNull().default(0),updatedAt:integer('updated_at').notNull()
+});
 export const accountArchiveResets=sqliteTable('account_archive_resets',{
  id:text('id').primaryKey(),userId:text('user_id').notNull().unique().references(()=>users.id),scope:text('scope').notNull().unique(),resetId:text('reset_id').notNull(),completedAt:integer('completed_at'),recoveryKey:text('recovery_key'),retainUntil:integer('retain_until')
 });

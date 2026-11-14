@@ -44,3 +44,26 @@
 :host .ai-details{margin-top:24px}
 :host .ai-details>summary{font-size:12px;min-height:44px;align-content:center;cursor:pointer;color:var(--muted)}
 @media(min-width:801px){:host .meal-summary,:host .meal-list-heading,:host .meal-diary-list,:host .meal-add,:host .meal-editor,:host .ai-details{max-width:none}}
+:host .meal-ai-wait{display:flex;align-items:flex-start;gap:10px;margin:0 0 18px;padding:12px 14px;border:1px solid #eacb72;border-radius:14px;background:#eacb7218;font-size:13px;line-height:1.5;color:var(--text)}
+:host .meal-ai-wait gt-icon{flex:none;margin-top:1px;color:#eacb72}
+:host .meal-ai-wait b{display:block;font-size:14px}
+:host .meal-ai-status .meal-ai-wait{margin:0}
+:host .meal-ai-meter{margin:14px 2px 0;font-size:12px;line-height:1.5;color:var(--muted)}
+:host .meal-ai-meter-bar{height:4px;margin-top:6px;overflow:hidden;border-radius:4px;background:var(--line)}
+:host .meal-ai-meter-bar>i{display:block;height:100%;border-radius:inherit;background:var(--blue)}
+:host .meal-photo-add{margin:12px 0}
+:host .meal-photo-add>button{flex:1;min-height:48px;gap:8px}
+:host .meal-type-chips{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin-top:18px}
+:host .meal-type-chips>button{min-height:44px;padding:8px 4px;border-radius:12px;font-size:13px;overflow-wrap:anywhere}
+:host .meal-type-chips>button.active{background:var(--blue);border-color:var(--blue);color:#fff;font-weight:700}
+:host .ingredient-quick{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr);align-items:end;gap:12px;margin-top:8px}
+:host .ingredient-quick label{font-size:12px}
+:host .ingredient-summary{margin:0;padding-bottom:6px;font-size:12px;line-height:1.5;color:var(--muted);text-align:right}
+:host .ingredient-summary strong{display:block;font-size:16px;color:var(--text)}
+:host .ingredient-more{margin-top:8px}
+:host .ingredient-more>summary{min-height:36px;align-content:center;cursor:pointer;font-size:12px;color:var(--muted)}
+:host .ingredient-more>label{display:block;font-size:12px;margin-bottom:10px}
+:host .ingredient-values{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+:host .ingredient-values label{font-size:12px}
+:host .meal-editor .form-grid>.meal-confirm-totals,:host .meal-editor .form-grid>.meal-name-field{margin-top:0}
+@media(max-width:360px){:host .meal-type-chips{grid-template-columns:repeat(2,minmax(0,1fr))}}
