@@ -27,7 +27,12 @@ export function splitProblem(amount: number, mode: HubSplitMode, parts: Record<s
   const active = Object.values(parts).filter(v => v > 0);
   if (amount <= 0) return 'Inserisci un importo.';
   if (!active.length) return 'Scegli almeno una persona.';
-  if (mode === 'amounts') { const sum = active.reduce((s, v) => s + v, 0); if (sum !== amount) return `Mancano ${((amount - sum) / 100).toLocaleString('it-IT', { minimumFractionDigits: 2 })} € da assegnare.`; }
+  if (mode === 'amounts') {
+    const sum = active.reduce((s, v) => s + v, 0), diff = Math.abs(amount - sum);
+    const text = (diff / 100).toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    if (sum < amount) return `Mancano ${text} € da assegnare.`;
+    if (sum > amount) return `Hai assegnato ${text} € in più del totale.`;
+  }
   if (mode === 'percent') { const sum = active.reduce((s, v) => s + v, 0); if (Math.abs(sum - 100) > 0.001) return `Le percentuali sommano ${sum.toLocaleString('it-IT')}%, devono fare 100%.`; }
   return '';
 }

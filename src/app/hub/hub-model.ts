@@ -153,13 +153,37 @@ export function euroParts(cents: number, sign = false) {
   const comma = text.lastIndexOf(',');
   return { whole: comma < 0 ? text : text.slice(0, comma), dec: comma < 0 ? '00' : text.slice(comma + 1) };
 }
-/** "34,20" / "34.20" / "1.234,5" → centesimi; null se non valido. */
+/**
+ * "34,20" / "34.20" / "1.234,5" / "1.234" / "12," → centesimi; null se non valido.
+ * Scrittura italiana: la virgola è sempre il separatore dei decimali; un punto seguito
+ * da 3 cifre (o più punti) indica le migliaia. Calcolo su stringa, senza errori di virgola mobile.
+ */
 export function parseEuroInput(value: string | number | null | undefined): number | null {
   if (typeof value === 'number') return Number.isFinite(value) ? Math.round(value * 100) : null;
-  const text = String(value ?? '').replace(/[€\s]/g, '').trim();
+  let text = String(value ?? '').replace(/[€\s ']/g, '').trim();
   if (!text) return null;
-  const normalized = /,\d{1,2}$/.test(text) ? text.replace(/\./g, '').replace(',', '.') : text.replace(/,/g, '');
-  const n = Number(normalized);
-  return Number.isFinite(n) ? Math.round(n * 100) : null;
+  const negative = /^[-−]/.test(text);
+  text = text.replace(/^[-−+]/, '');
+  let whole: string, dec = '';
+  const comma = text.lastIndexOf(','), dot = text.lastIndexOf('.');
+  if (comma >= 0 && dot >= 0) {
+    // Entrambi i separatori: l'ultimo è quello dei decimali.
+    const sep = comma > dot ? ',' : '.', other = sep === ',' ? '.' : ',';
+    const at = text.lastIndexOf(sep);
+    whole = text.slice(0, at).split(other).join(''); dec = text.slice(at + 1);
+  } else if (comma >= 0) {
+    if (text.indexOf(',') !== comma) return null;
+    whole = text.slice(0, comma); dec = text.slice(comma + 1);
+  } else if (dot >= 0) {
+    const parts = text.split('.');
+    if (parts.length > 2 || (parts[1].length === 3 && parts[0].length > 0 && parts[0] !== '0')) { whole = parts.join(''); }
+    else { whole = parts[0]; dec = parts[1]; }
+  } else whole = text;
+  if (!/^\d*$/.test(whole) || !/^\d*$/.test(dec) || (!whole && !dec)) return null;
+  const cents = Number(whole || '0') * 100 + Number((dec + '00').slice(0, 2)) + (Number(dec[2] ?? '0') >= 5 ? 1 : 0);
+  if (!Number.isSafeInteger(cents)) return null;
+  return negative ? -cents : cents;
 }
+/** Centesimi → testo da modificare in un campo ("1234,5" → "1234,50"), senza separatore delle migliaia. */
+export function euroInputText(cents: number) { return (cents / 100).toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2, useGrouping: false }); }
 export function initials(name: string) { return name.trim().split(/\s+/).map(p => p[0] ?? '').join('').slice(0, 2).toUpperCase() || '?'; }

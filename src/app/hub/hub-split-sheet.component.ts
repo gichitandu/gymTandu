@@ -4,9 +4,11 @@ import { Router } from '@angular/router';
 import { IconComponent } from '../shared/icon.component';
 import { feedbackForContext, feedbackSignal } from '../services/feedback';
 import { confirmationForContext } from '../services/confirmation';
-import { euro, HubExpense, hubId, HubSplitMode, HubTransaction, HUB_SPENDING_CATEGORIES, initials, parseEuroInput, validDay, hubToday } from './hub-model';
+import { euro, euroInputText, HubExpense, hubId, HubSplitMode, HubTransaction, HUB_SPENDING_CATEGORIES, initials, parseEuroInput, validDay, hubToday } from './hub-model';
 import { computeShares, splitProblem } from './hub-split';
 import { HUB_ME, HubStore } from './hub-store';
+import { HubView } from './hub-view';
+import { expenseShareText, shareText } from './hub-share';
 
 const MODES: { v: HubSplitMode; l: string }[] = [{ v: 'equal', l: 'Uguale' }, { v: 'amounts', l: 'Importi' }, { v: 'percent', l: '%' }, { v: 'shares', l: 'Quote' }];
 
@@ -22,7 +24,7 @@ const MODES: { v: HubSplitMode; l: string }[] = [{ v: 'equal', l: 'Uguale' }, { 
     <div class="hb-empty"><span class="hb-sq lg v"><gt-icon name="users"/></span><strong>Nessun gruppo</strong>Crea un gruppo (casa, viaggio, calcetto…) e aggiungi le persone con cui dividere.</div>
     <button type="button" class="hb-btn pri" (click)="newGroup()"><gt-icon name="plus"/>Crea un gruppo</button>
   }@else{
-    <label class="amountx"><input name="amount" inputmode="decimal" [(ngModel)]="amount" (ngModelChange)="amountText.set($event)" placeholder="0,00" autocomplete="off" aria-label="Importo"/><span>€</span></label>
+    <label class="amountx"><input name="amount" inputmode="decimal" [(ngModel)]="amount" (ngModelChange)="onAmount($event)" placeholder="0,00" autocomplete="off" aria-label="Importo"/><span>€</span></label>
     <label class="hb-field"><input name="desc" [(ngModel)]="description" maxlength="120" placeholder="Descrizione" aria-label="Descrizione"/>
       <select class="cat" name="cat" [(ngModel)]="category" aria-label="Categoria">@for(c of categories;track c.id){<option [value]="c.id">{{c.label}}</option>}</select></label>
     @if(tx();as t){<div class="lk"><span class="hb-sq sm v"><gt-icon name="link"/></span><span class="grow"><strong>Collegata al movimento</strong><small>{{t.date}} · {{t.description}} {{euro(t.amount,{sign:true})}}</small><em>Nelle tue spese conta solo la tua parte: {{euro(myShare())}} €</em></span></div>}
@@ -35,13 +37,15 @@ const MODES: { v: HubSplitMode; l: string }[] = [{ v: 'equal', l: 'Uguale' }, { 
       @for(p of members();track p.id){<div class="hb-li">
         <button type="button" class="cb" [class.on]="(parts()[p.id]??0)>0" (click)="toggle(p.id)" [attr.aria-pressed]="(parts()[p.id]??0)>0" [attr.aria-label]="'Includi '+p.name">@if((parts()[p.id]??0)>0){<gt-icon name="check"/>}</button>
         <span class="hb-av" [style.background]="p.color">{{initials(p.name)}}</span><span class="bd"><strong>{{p.id===me?'Tu':p.name}}</strong></span>
-        @if(mode()!=='equal'&&(parts()[p.id]??0)>0){<input class="val" inputmode="decimal" [ngModel]="valueText(p.id)" (ngModelChange)="setValue(p.id,$event)" [name]="'v'+p.id" [attr.aria-label]="'Quota di '+p.name"/>}
+        @if(mode()!=='equal'&&(parts()[p.id]??0)>0){<label class="valw"><input class="val" inputmode="decimal" autocomplete="off" [ngModel]="valueText(p.id)" (ngModelChange)="setValue(p.id,$event)" (blur)="commitValue(p.id)" [name]="'v'+p.id" [attr.aria-label]="'Quota di '+p.name"/><span>{{unit()}}</span></label>}
         <span class="amt">{{euro(shares()[p.id]??0)}} €</span>
       </div>}
     </section>
     <div class="tot"><span>{{activeCount()}} persone</span>@if(problem()){<span class="hb-neg">{{problem()}}</span>}@else{<span class="hb-pos">{{euro(cents())}} € divisi senza resto ✓</span>}</div>
+    @if(mode()==='amounts'&&remainder()>0&&activeCount()){<button type="button" class="hb-link fill" (click)="fillRemainder()">Dividi tra tutti i {{euro(remainder())}} € mancanti</button>}
     @if(error()){<p class="hb-err" role="alert">{{error()}}</p>}
     <div class="hb-actions"><button class="hb-btn pri" type="submit" [disabled]="!!problem()"><gt-icon name="check"/>{{expense()?'Salva modifiche':'Aggiungi spesa'}}</button>
+      <button type="button" class="hb-btn sm" (click)="share()" [disabled]="!!problem()||!description.trim()"><gt-icon name="share"/>Condividi spesa</button>
       @if(expense();as e){<button type="button" class="hb-btn sm danger" (click)="remove(e)"><gt-icon name="trash"/>Elimina spesa</button>}</div>
   }
 </form>`,
@@ -54,7 +58,8 @@ const MODES: { v: HubSplitMode; l: string }[] = [{ v: 'equal', l: 'Uguale' }, { 
 .payer{padding-left:5px}.payer .hb-av{width:26px;height:26px;font-size:10px;box-shadow:none}
 .mem{margin-top:10px}.mem .hb-li{cursor:default;padding:10px 14px}.mem .hb-av{width:32px;height:32px;font-size:12px}
 .cb{display:grid;place-items:center;flex:none;width:24px;height:24px;padding:0;border-radius:8px;border:2px solid rgba(255,255,255,.2);background:none;cursor:pointer;color:#fff}.cb.on{border:0;background:linear-gradient(140deg,#8f7cff,#5b8cff)}.cb gt-icon{width:14px;height:14px}
-.val{width:64px;height:34px;padding:0 8px;border-radius:10px;border:1px solid var(--hb-ln);background:rgba(255,255,255,.06);color:var(--hb-t);font:inherit;font-size:14px;text-align:right}
+.valw{display:flex;align-items:center;gap:3px;color:var(--hb-m);font-size:12px}.fill{display:block;margin:8px 4px 0;font-size:12.5px}
+.val{width:72px;height:34px;padding:0 8px;border-radius:10px;border:1px solid var(--hb-ln);background:rgba(255,255,255,.06);color:var(--hb-t);font:inherit;font-size:14px;text-align:right}
 .tot{display:flex;justify-content:space-between;gap:10px;margin:10px 4px 0;font-size:12.5px;color:var(--hb-m)}`],
 })
 export class HubSplitSheetComponent {
@@ -63,6 +68,7 @@ export class HubSplitSheetComponent {
   readonly expense = input<HubExpense | null>(null);
   readonly closed = output<void>();
   private hub = inject(HubStore);
+  private hv = inject(HubView);
   private router = inject(Router);
   private feedback = feedbackForContext();
   private confirm = confirmationForContext();
@@ -80,6 +86,12 @@ export class HubSplitSheetComponent {
   readonly paidBy = signal(HUB_ME);
   readonly mode = signal<HubSplitMode>('equal');
   readonly parts = signal<Record<string, number>>({});
+  /** Testo che si sta scrivendo in una quota: resta com'è finché il campo non perde il focus. */
+  readonly drafts = signal<Record<string, string>>({});
+  /** In "Importi": finché nessuno modifica a mano le quote, seguono il totale. */
+  private amountsTouched = false;
+  readonly unit = computed(() => this.mode() === 'amounts' ? '€' : this.mode() === 'percent' ? '%' : 'q.');
+  readonly remainder = computed(() => this.mode() === 'amounts' ? this.cents() - Object.values(this.parts()).filter(v => v > 0).reduce((s, v) => s + v, 0) : 0);
   readonly cents = computed(() => Math.max(0, parseEuroInput(this.amountText()) ?? 0));
   readonly shares = computed(() => computeShares(this.cents(), this.mode(), this.parts()));
   readonly myShare = computed(() => this.shares()[HUB_ME] ?? 0);
@@ -101,13 +113,22 @@ export class HubSplitSheetComponent {
         this.resetParts();
       });
     });
+    // I gruppi possono arrivare dopo l'apertura (archivio ancora in caricamento o gruppo appena creato).
+    effect(() => {
+      const groups = this.groups();
+      untracked(() => { if (!this.expense() && !groups.some(g => g.id === this.groupId()) && groups.length) this.pickGroup(this.group() && groups.some(g => g.id === this.group()) ? this.group() : groups[0].id); });
+    });
   }
-  private setAmount(cents: number) { this.amount = (cents / 100).toLocaleString('it-IT', { minimumFractionDigits: 2 }).replace(/\./g, ''); this.amountText.set(this.amount); }
-  private resetParts() { this.parts.set(Object.fromEntries(this.members().map(p => [p.id, 1]))); if (!this.members().some(p => p.id === this.paidBy())) this.paidBy.set(this.members()[0]?.id ?? HUB_ME); }
+  private setAmount(cents: number) { this.amount = euroInputText(cents); this.amountText.set(this.amount); }
+  onAmount(text: string) {
+    this.amountText.set(text);
+    if (this.mode() === 'amounts' && !this.amountsTouched) this.setMode('amounts');
+  }
+  private resetParts() { this.drafts.set({}); this.amountsTouched = false; this.parts.set(Object.fromEntries(this.members().map(p => [p.id, 1]))); if (!this.members().some(p => p.id === this.paidBy())) this.paidBy.set(this.members()[0]?.id ?? HUB_ME); }
   pickGroup(id: string) { this.groupId.set(id); this.resetParts(); }
   setMode(mode: HubSplitMode) {
     const active = this.members().filter(p => (this.parts()[p.id] ?? 0) > 0);
-    this.mode.set(mode);
+    this.mode.set(mode); this.drafts.set({}); this.amountsTouched = false;
     if (mode === 'equal' || mode === 'shares') this.parts.set(Object.fromEntries(active.map(p => [p.id, 1])));
     if (mode === 'percent') { const each = Math.floor(10000 / Math.max(1, active.length)) / 100; this.parts.set(Object.fromEntries(active.map((p, i) => [p.id, i === 0 ? Math.round((100 - each * (active.length - 1)) * 100) / 100 : each]))); }
     if (mode === 'amounts') this.parts.set(computeShares(this.cents(), 'equal', Object.fromEntries(active.map(p => [p.id, 1]))));
@@ -118,11 +139,43 @@ export class HubSplitSheetComponent {
     if (this.mode() === 'equal' || this.mode() === 'shares') this.parts.set(next);
     else { this.parts.set(next); this.setMode(this.mode()); }
   }
-  valueText(id: string) { const v = this.parts()[id] ?? 0; return this.mode() === 'amounts' ? (v / 100).toLocaleString('it-IT', { minimumFractionDigits: 2 }) : String(v).replace('.', ','); }
+  valueText(id: string) {
+    const draft = this.drafts()[id];
+    if (draft !== undefined) return draft;
+    const v = this.parts()[id] ?? 0;
+    return this.mode() === 'amounts' ? euroInputText(v) : String(v).replace('.', ',');
+  }
+  /** Mentre si scrive il testo resta quello digitato (niente "1" → "1,00" a metà battitura). */
   setValue(id: string, text: string) {
-    const n = this.mode() === 'amounts' ? parseEuroInput(text) : Number(String(text).replace(',', '.'));
+    this.drafts.update(d => ({ ...d, [id]: text }));
+    const n = this.mode() === 'amounts' ? parseEuroInput(text) : Number(String(text).trim().replace(',', '.'));
     if (n === null || !Number.isFinite(n) || n < 0) return;
-    this.parts.update(p => ({ ...p, [id]: n }));
+    if (this.mode() === 'amounts') this.amountsTouched = true;
+    // Uno zero a metà battitura ("0," → "0,50") non toglie la persona: si decide all'uscita dal campo.
+    if (n > 0) this.parts.update(p => ({ ...p, [id]: n }));
+  }
+  commitValue(id: string) {
+    const draft = this.drafts()[id];
+    this.drafts.update(d => { const { [id]: _drop, ...rest } = d; return rest; });
+    if (draft === undefined) return;
+    const n = this.mode() === 'amounts' ? parseEuroInput(draft) : Number(String(draft).trim().replace(',', '.'));
+    if (n === 0) this.parts.update(p => ({ ...p, [id]: 0 }));
+  }
+  /** Assegna in parti uguali tra le persone incluse quello che manca al totale. */
+  fillRemainder() {
+    const left = this.remainder(); if (left <= 0) return;
+    const active = Object.entries(this.parts()).filter(([, v]) => v > 0).map(([id]) => id);
+    const extra = computeShares(left, 'equal', Object.fromEntries(active.map(id => [id, 1])));
+    this.parts.update(p => { const next = { ...p }; for (const [id, v] of Object.entries(extra)) next[id] = (next[id] ?? 0) + v; return next; });
+    this.drafts.set({}); this.amountsTouched = true;
+  }
+  async share() {
+    if (this.problem() || !this.description.trim()) return;
+    const group = this.groups().find(g => g.id === this.groupId())?.name ?? '';
+    const text = expenseShareText({ description: this.description.trim(), amount: this.cents(), paidBy: this.paidBy(), date: this.tx()?.date ?? this.date, shares: this.shares() }, group, this.hv.shareName);
+    const result = await shareText(text, this.description.trim());
+    if (result === 'copied') this.feedback.show('success', 'Spesa copiata: incollala dove vuoi.');
+    if (result === 'failed') this.error.set('Condivisione non disponibile su questo dispositivo.');
   }
   newGroup() { this.close(); void this.router.navigate(['/hub/dividi'], { queryParams: { nuovo: 1 } }); }
   save() {

@@ -3,23 +3,15 @@ import { FormsModule } from '@angular/forms';
 import { IconComponent } from '../shared/icon.component';
 import { feedbackForContext, feedbackSignal } from '../services/feedback';
 import { confirmationForContext } from '../services/confirmation';
-import { euro, HubGroup, hubId, HubPerson, HUB_PERSON_COLORS, initials, parseEuroInput, hubToday } from './hub-model';
+import { euro, euroInputText, HubGroup, hubId, HubPerson, HUB_PERSON_COLORS, initials, parseEuroInput, hubToday } from './hub-model';
 import { Debt } from './hub-split';
+import { shareText } from './hub-share';
 import { HUB_ME, HubStore } from './hub-store';
 import { HubInviteService, inviteMessage, inviteUrl } from './hub-invites';
 
-export const GROUP_ICONS = ['house', 'users', 'pin', 'car', 'cart', 'coffee', 'ticket', 'weight', 'heart', 'bag'];
+export { expenseShareText, shareSummary, shareText } from './hub-share';
 
-/** Testo da condividere (WhatsApp, Messaggi…) con chi deve a chi. */
-export function shareSummary(title: string, debts: readonly Debt[], name: (id: string) => string) {
-  const lines = debts.length ? debts.map(d => `• ${name(d.from)} → ${name(d.to)}: ${euro(d.amount)} €`) : ['Tutti in pari ✓'];
-  return `${title}\n${lines.join('\n')}\n\nDa GymTrack · Dividi`;
-}
-export async function shareText(text: string, title: string) {
-  const nav = navigator as Navigator & { share?: (data: ShareData) => Promise<void> };
-  if (nav.share) { try { await nav.share({ title, text }); return 'shared'; } catch (e) { if ((e as Error)?.name === 'AbortError') return 'cancelled'; } }
-  try { await navigator.clipboard.writeText(text); return 'copied'; } catch { return 'failed'; }
-}
+export const GROUP_ICONS = ['house', 'users', 'pin', 'car', 'cart', 'coffee', 'ticket', 'weight', 'heart', 'bag'];
 
 /** Nuovo gruppo o modifica: nome, icona e persone. */
 @Component({
@@ -82,21 +74,34 @@ export class HubGroupSheetComponent {
   }
   toggle(id: string) {
     const g = this.group();
-    if (g && this.members().includes(id) && this.hub.expenses().some(e => e.groupId === g.id && (e.paidBy === id || (e.parts[id] ?? 0) > 0))) { this.error.set('Questa persona ha spese nel gruppo: non può essere tolta.'); return; }
+    this.error.set('');
+    if (g && this.members().includes(id) && (this.hub.expenses().some(e => e.groupId === g.id && (e.paidBy === id || (e.parts[id] ?? 0) > 0)) || this.hub.settlements().some(s => s.groupId === g.id && (s.from === id || s.to === id)))) { this.error.set('Questa persona ha spese o pagamenti nel gruppo: non può essere tolta.'); return; }
+    // Una persona appena scritta e poi tolta sparisce del tutto (non era ancora salvata).
+    if (this.members().includes(id) && this.draftPeople().some(p => p.id === id)) { this.draftPeople.update(l => l.filter(p => p.id !== id)); this.members.update(l => l.filter(x => x !== id)); return; }
     this.members.update(list => list.includes(id) ? list.filter(x => x !== id) : [...list, id]);
   }
   addPerson() {
-    const name = this.newName.trim(); if (!name) return;
-    const existing = this.others().find(p => p.name.toLowerCase() === name.toLowerCase());
+    const name = this.newName.trim().replace(/\s+/g, ' '); if (!name) return;
+    this.error.set('');
+    if (['tu', 'io', 'me'].includes(name.toLowerCase())) { this.error.set('Ci sei già tu nel gruppo: scrivi il nome di un\'altra persona.'); return; }
+    const existing = this.others().find(p => p.name.trim().toLowerCase() === name.toLowerCase());
     const id = existing?.id ?? hubId();
-    if (!existing) this.draftPeople.update(l => [...l, { id, updatedAt: 0, name, color: HUB_PERSON_COLORS[this.others().length % HUB_PERSON_COLORS.length] }]);
+    if (!existing) {
+      const used = new Set(this.others().map(p => p.color));
+      const color = HUB_PERSON_COLORS.find(c => !used.has(c)) ?? HUB_PERSON_COLORS[this.others().length % HUB_PERSON_COLORS.length];
+      this.draftPeople.update(l => [...l, { id, updatedAt: 0, name, color }]);
+    }
     if (!this.members().includes(id)) this.members.update(l => [...l, id]);
     this.newName = '';
   }
   save() {
     this.error.set('');
+    // Un nome scritto ma non confermato con "+" viene aggiunto comunque.
+    if (this.newName.trim()) { this.addPerson(); if (this.error()) return; }
+    const isNew = !this.group();
     const g = this.write(!!this.token()); if (!g) return;
     this.created = true;
+    this.feedback.show('success', isNew ? `Gruppo “${g.name}” creato.` : 'Gruppo aggiornato.');
     this.saved.emit(g.id); this.closed.emit();
   }
   /** Salva nome, icona e persone. Con un link d'invito il gruppo può partire anche solo con te. */
@@ -174,7 +179,7 @@ export class HubGroupSheetComponent {
   @for(d of debts();track $index){<div class="hb-c row">
     <span class="flow"><span class="hb-av" [style.background]="color(d.from)">{{ini(d.from)}}</span><gt-icon name="arrow"/><span class="hb-av" [style.background]="color(d.to)">{{ini(d.to)}}</span></span>
     <span class="bd"><strong>{{label(d)}}</strong><small>{{groupName(d.groupId)}}</small></span>
-    <input inputmode="decimal" [ngModel]="amountText(d)" (ngModelChange)="setAmount(d,$event)" [attr.aria-label]="'Importo pagato da '+name(d.from)"/>
+    <input inputmode="decimal" autocomplete="off" [ngModel]="amountText(d)" (ngModelChange)="setAmount(d,$event)" (blur)="drafts.delete(key(d))" [attr.aria-label]="'Importo pagato da '+name(d.from)"/>
     <button type="button" class="hb-btn sm mark" (click)="settle(d)">Pagato</button></div>}
   <p class="hb-sub" style="font-size:12px;margin-top:10px">Registra solo il pagamento: GymTrack non sposta soldi.</p>
 </section>`,
@@ -189,14 +194,16 @@ export class HubSettleSheetComponent {
   private hub = inject(HubStore);
   private feedback = feedbackForContext();
   private amounts = new Map<string, number>();
-  private key(d: Debt & { groupId: string }) { return `${d.groupId}|${d.from}|${d.to}`; }
+  /** Testo in scrittura: non viene riformattato a metà battitura. */
+  readonly drafts = new Map<string, string>();
+  key(d: Debt & { groupId: string }) { return `${d.groupId}|${d.from}|${d.to}`; }
   name(id: string) { return this.hub.personName(id); }
   ini(id: string) { return id === HUB_ME ? 'Tu' : initials(this.name(id)); }
   color(id: string) { return this.hub.person(id)?.color ?? '#8a8a9a'; }
   groupName(id: string) { return this.hub.groups().find(g => g.id === id)?.name ?? ''; }
   label(d: Debt) { return d.to === HUB_ME ? `${this.name(d.from)} ti deve ${euro(d.amount)} €` : d.from === HUB_ME ? `Devi ${euro(d.amount)} € a ${this.name(d.to)}` : `${this.name(d.from)} deve ${euro(d.amount)} € a ${this.name(d.to)}`; }
-  amountText(d: Debt & { groupId: string }) { return euro(this.amounts.get(this.key(d)) ?? d.amount); }
-  setAmount(d: Debt & { groupId: string }, text: string) { const v = parseEuroInput(text); if (v && v > 0) this.amounts.set(this.key(d), Math.min(v, d.amount)); }
+  amountText(d: Debt & { groupId: string }) { return this.drafts.get(this.key(d)) ?? euroInputText(this.amounts.get(this.key(d)) ?? d.amount); }
+  setAmount(d: Debt & { groupId: string }, text: string) { this.drafts.set(this.key(d), text); const v = parseEuroInput(text); if (v && v > 0) this.amounts.set(this.key(d), Math.min(v, d.amount)); }
   settle(d: Debt & { groupId: string }) {
     const amount = this.amounts.get(this.key(d)) ?? d.amount;
     this.hub.upsert('settlements', { id: hubId(), updatedAt: 0, groupId: d.groupId, from: d.from, to: d.to, amount, date: hubToday() });
