@@ -307,8 +307,9 @@ body.theme-ready.style-elegant gt-shell .su-chip.on{background:var(--el-grad);co
 body.theme-ready.style-elegant gt-shell :is(.su-stat,.cal-week-row,.cal-row-item,.history-overview){border-radius:22px;border-color:var(--el-line)}
 body.theme-ready.style-elegant gt-shell :is(.su-bubble,.hx3-date){border-radius:50%}
 body.theme-ready.style-elegant gt-shell :is(.date-field,.cal-date-jump,.catalog-search){border-radius:999px}
-body.theme-ready.style-elegant gt-shell .coach-shadow{border-radius:24px;border:1px solid var(--el-line);background:var(--el-surface);box-shadow:var(--el-hi)}
-body.theme-ready.style-elegant gt-shell .coach-shadow-actions button{border-radius:999px}
+body.theme-ready.style-elegant gt-shell .coach-shadow{border-radius:20px;box-shadow:var(--el-hi)}
+body.theme-ready.style-elegant gt-shell .coach-shadow-icon{border-radius:50%}
+body.theme-ready.style-elegant gt-shell .coach-shadow-copy small{font-weight:600;letter-spacing:.16em}
 body.theme-ready.style-elegant :is(.workout-clock,.workout-live){border-radius:30px!important;border:1px solid var(--el-line)!important;background:color-mix(in srgb,var(--card) 94%,transparent)!important;box-shadow:var(--el-hi),0 14px 34px #00000047!important}
 body.theme-ready.style-elegant :is(.workout-clock,.workout-live) :is(button,a,.live-go,.live-icon){border-radius:999px!important}
 body.theme-ready.style-elegant .workout-live .live-go{background:var(--el-grad)!important;color:var(--el-ink)!important;border:0!important}

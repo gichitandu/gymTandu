@@ -460,6 +460,25 @@ export class Store {
       p.updatedAt = now();
     }, "Allenamento del piano salvato.");
   }
+  /**
+   * Struttura iniziale di una scheda appena creata: aggiunge gli allenamenti indicati
+   * in un'unica scrittura. Non tocca le schede che hanno già allenamenti.
+   */
+  async addPlanDays(planId: string, names: string[]) {
+    const wanted = names.map((name) => name.trim()).filter(Boolean);
+    if (!wanted.length || wanted.length > 14) return false;
+    return this.change((d) => {
+      const plan = d.plans.find((p) => p.id === planId);
+      if (!plan) throw Error("Piano non trovato");
+      if (plan.program || plan.archived || plan.completedAt)
+        throw Error("Questa scheda non può ricevere nuovi allenamenti.");
+      if (d.days.some((day) => day.planId === planId)) return;
+      wanted.forEach((name, order) =>
+        d.days.push({ id: uid(), planId, name: name.slice(0, 80), order }),
+      );
+      plan.updatedAt = now();
+    }, "Scheda creata con " + wanted.length + " allenamenti.");
+  }
   /** Sedute ancora in programma (non avviate) collegate a un piano: sono quelle che si possono togliere dal calendario. */
   plannedEventsOf(planId:string){return this.data().scheduledWorkouts.filter(event=>event.planId===planId&&(event.kind??'workout')==='workout'&&!event.workoutId);}
   /** Sedute in programma (mai avviate) il cui piano non esiste più. */

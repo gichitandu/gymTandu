@@ -19,7 +19,7 @@ import { IconComponent } from './icon.component';
 import { LoadProgressionComponent } from './load-progression.component';
 import { ExternalTimerService } from '../services/external-timer';
 import { TodayService } from '../services/today';
-import { coachNextSet, readinessFromWellness } from '../services/coach-shadow';
+import { coachHistory, coachNextSet, daysBetween, readinessFromWellness } from '../services/coach-shadow';
 import type { AppUpdateEvent } from '../services/pwa';
 import { FormDraftService } from '../services/form-drafts';
 type ActiveSetDraft={weight:number;reps:number;rpe:number|undefined;setNotes:string;kind:'work'|'warmup'};
@@ -118,22 +118,39 @@ export class ActiveWorkoutComponent {
  /** Riscaldamento: peso proposto = 50% del peso della prima serie allenante (programmato o dell'ultima volta). */
  warmupSuggestion(set=this.currentSet()){const e=this.selected();if(!e||!set||set.kind!=='warmup'||set.completed||e.loadMode!=='external')return 0;const first=this.s.sets(e.id).find(x=>x.kind!=='warmup'),base=(first&&first.weight>0?first.weight:this.previous()[0]?.weight)||0;if(!base)return 0;const step=this.s.kg(this.weightStep())||2.5;return Math.max(step,Math.round(base*.5/step)*step);}
  useReference(){const ref=this.referenceSet();if(!ref)return;this.weight=this.s.weightInput(ref.weight);this.reps=ref.reps;this.rpe=ref.rpe;this.inputChanged();}
- /** Coach Ombra: proposta per la serie allenante in corso, calcolata da storico, serie di oggi e check-in. */
- coachDismissed=signal<ReadonlySet<string>>(new Set());
+ /** Coach Ombra: proposta per la serie allenante in corso, calcolata da storico, serie di oggi, obiettivo del piano e check-in. */
+ coachDismissed=signal<ReadonlySet<string>>(new Set());coachWhy=signal(false);private coachRested=signal<ReadonlySet<string>>(new Set());
+ private coachUnit=(kg:number)=>this.s.formatWeight(kg)+' '+this.s.settings().unit;
+ /** Sforzo previsto: RIR della scheda importata oppure RPE indicato nel piano per questo esercizio. */
+ private coachTargetRpe(e:WorkoutLogExercise){if(e.rirMin!==undefined)return 10-(e.rirMin+(e.rirMax??e.rirMin))/2;const workout=this.workout(),entries=workout?this.s.data().planExercises.filter(x=>x.dayId===workout.dayId&&x.exerciseId===e.exerciseId):[];return entries.length===1?entries[0].rpe:undefined;}
  coach=computed(()=>{
   const e=this.selected(),set=this.currentSet();
   if(!e||!set||set.kind==='warmup'||set.completed||this.coachDismissed().has(set.id))return null;
-  if(!['external','weighted-bodyweight'].includes(e.loadMode)||e.repsMin===undefined||e.repsMax===undefined)return null;
+  if(e.repsMin===undefined||e.repsMax===undefined)return null;
   const working=this.s.sets(e.id).filter(x=>x.kind!=='warmup');
   const done=working.filter(x=>x.completed&&x.number<set.number).map(x=>({weight:x.weight,reps:x.reps,rpe:x.rpe}));
-  const reference=this.previous().filter(x=>x.completed&&x.kind!=='warmup').map(x=>({weight:x.weight,reps:x.reps,rpe:x.rpe}));
-  const today=this.s.data().wellnessLogs.find(w=>w.date===(this.todayClock?.date()??localDate()));
-  const suggestion=coachNextSet({repsMin:e.repsMin,repsMax:e.repsMax,incrementKg:this.s.kg(this.weightStep()),plannedWeight:set.weight,reference,done,readiness:readinessFromWellness(today)});
+  const previous=this.previous().filter(x=>x.completed&&x.kind!=='warmup'),reference=previous.map(x=>({weight:x.weight,reps:x.reps,rpe:x.rpe}));
+  const data=this.s.data(),sourceId=previous[0]?.workoutExerciseId,sourceRow=data.workoutExercises.find(x=>x.id===sourceId),sourceDate=data.workouts.find(w=>w.id===sourceRow?.workoutId)?.date;
+  const today=data.wellnessLogs.find(w=>w.date===(this.todayClock?.date()??localDate())),muscle=this.s.exercise(e.exerciseId)?.muscleGroupId;
+  const suggestion=coachNextSet({repsMin:e.repsMin,repsMax:e.repsMax,incrementKg:this.s.kg(this.weightStep()),loadMode:e.loadMode,targetRpe:this.coachTargetRpe(e),plannedWeight:set.weight,setIndex:working.filter(x=>x.number<set.number).length,reference,history:coachHistory(data,e).filter(session=>session.id!==sourceId),daysSinceReference:this.recordingPast()?undefined:daysBetween(sourceDate,this.workout()?.date),done,readiness:this.recordingPast()?undefined:readinessFromWellness(today),sore:!this.recordingPast()&&!!muscle&&(today?.soreness?.[muscle]??0)>=2,formatWeight:this.coachUnit});
   return suggestion&&suggestion.basis!=='none'?suggestion:null;
  });
- coachDeltaLabel(){const c=this.coach(),set=this.currentSet();if(!c||!set)return '';const d=c.weight-set.weight;if(Math.abs(d)<0.000001)return 'Mantieni';return (d>0?'+':'−')+this.s.formatWeight(Math.abs(d))+' '+this.s.settings().unit;}
- applyCoach(){const c=this.coach();if(!c)return;this.weight=this.s.weightInput(c.weight);this.reps=c.reps;this.inputChanged();}
- dismissCoach(){const set=this.currentSet();if(!set)return;this.coachDismissed.update(v=>new Set(v).add(set.id));}
+ /** Valori proposti, scritti come nel riquadro «Volta scorsa». */
+ coachTarget(){const c=this.coach(),e=this.selected();if(!c||!e)return '';return (e.loadMode==='bodyweight'?'':this.s.formatWeight(c.weight)+' '+this.s.settings().unit+' × ')+c.reps+' rip.';}
+ /** Differenze rispetto alla stessa serie della volta scorsa (o, se manca, all'ultima serie di oggi). */
+ coachChips(){const c=this.coach(),e=this.selected(),ref=this.lastTimeSet()??this.referenceSet();if(!c||!e||!ref)return [];const chips:{text:string;tone:'up'|'down'|'same'}[]=[],label=this.lastTimeSet()?'volta scorsa':'serie precedente';
+  if(e.loadMode!=='bodyweight'){const delta=+(this.s.weight(c.weight)-this.s.weight(ref.weight)).toFixed(2),better=e.loadMode==='assisted'?delta<0:delta>0;if(delta)chips.push({text:(delta>0?'+':'−')+this.fmt(Math.abs(delta))+' '+this.s.settings().unit,tone:better?'up':'down'});}
+  const reps=c.reps-ref.reps;if(reps)chips.push({text:(reps>0?'+':'−')+Math.abs(reps)+' rip.',tone:chips.length?'same':reps>0?'up':'down'});
+  if(!chips.length)chips.push({text:'= '+label,tone:'same'});else chips[chips.length-1].text+=' vs '+label;
+  return chips;}
+ coachConfidenceLabel(){const level=this.coach()?.confidence;return level==='high'?'Dati completi':level==='medium'?'Dati parziali':'Dati scarsi';}
+ /** La proposta coincide già con i valori nei campi: non serve applicarla di nuovo. */
+ coachApplied(){const c=this.coach(),e=this.selected();return !!c&&!!e&&this.reps===c.reps&&(e.loadMode==='bodyweight'||Math.abs((Number(this.weight)||0)-this.s.weightInput(c.weight))<0.005);}
+ applyCoach(){const c=this.coach(),e=this.selected();if(!c||!e||this.committing())return;if(e.loadMode!=='bodyweight')this.weight=this.s.weightInput(c.weight);this.reps=c.reps;this.inputChanged();}
+ dismissCoach(){const set=this.currentSet();if(!set)return;this.coachWhy.set(false);this.coachDismissed.update(v=>new Set(v).add(set.id));}
+ /** Recupero in più dopo una serie molto dura: proposto solo mentre il timer sta scorrendo, una volta per serie. */
+ coachRestBonus(){const c=this.coach(),set=this.currentSet();return c&&set&&c.restBonus>0&&this.restRunning()&&!this.coachRested().has(set.id)?c.restBonus:0;}
+ applyCoachRest(){const bonus=this.coachRestBonus(),set=this.currentSet();if(!bonus||!set)return;this.adjustRest(bonus);this.coachRested.update(v=>new Set(v).add(set.id));}
  nextRecord(){const e=this.selected();if(!e)return;const sets=this.s.sets(e.id),set=sets.find(s=>!s.completed)||sets[0];if(set)this.record(set);}
 
  /* Registrazione serie: dati derivati per la nuova interfaccia (nessuna scrittura sull'archivio). */

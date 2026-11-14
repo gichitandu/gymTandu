@@ -26,9 +26,34 @@
 :host .recording-save{transform:translateZ(0);backface-visibility:hidden;-webkit-backface-visibility:hidden}
 :host .recording-save>.save-series{display:grid;grid-template-columns:minmax(0,1fr) 22px;align-items:center;justify-content:center;min-height:54px;padding:12px 16px;line-height:1.4;text-shadow:none;color:var(--cta-ink,var(--accent-ink));-webkit-text-fill-color:currentColor;isolation:isolate}
 :host .save-series>span{position:relative;z-index:1;min-width:0;white-space:normal;overflow-wrap:anywhere;color:inherit;-webkit-text-fill-color:currentColor;text-align:center}:host .save-series>gt-icon{position:relative;z-index:1;width:22px;height:22px;color:inherit}:host .save-series:disabled{opacity:1}
-:host .coach-shadow{margin:12px 0;padding:12px;border:1px solid var(--border,#26334a);border-radius:14px;background:var(--card,#131923)}
-:host .coach-shadow-head{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--blue,#367dff)}:host .coach-shadow-head b{font-weight:600}
-:host .coach-shadow-delta{margin-left:auto;padding:2px 10px;border-radius:999px;background:rgba(127,127,127,.16);color:var(--text,inherit)}
-:host .coach-shadow[data-coach-action=raise] .coach-shadow-delta{background:rgba(52,199,120,.18)}:host .coach-shadow[data-coach-action=lower] .coach-shadow-delta{background:rgba(240,90,90,.18)}
-:host .coach-shadow-target strong{font-size:24px;font-weight:600}:host .coach-shadow p{margin:6px 0 10px;font-size:13px;line-height:1.5;color:var(--muted,#8e9bad)}
-:host .coach-shadow-actions{display:flex;gap:8px}:host .coach-shadow-actions button{min-height:44px;border-radius:10px;padding:0 14px}:host .coach-shadow-actions button:first-child{flex:1}
+:host{--coach-tone:var(--accent-text,var(--accent,#367dff))}
+:host .coach-shadow{--coach-tone:var(--accent-text,var(--accent,#367dff));display:grid;gap:8px;margin:0;padding:10px 12px;border:1px solid color-mix(in srgb,var(--coach-tone) 38%,transparent);border-radius:14px;background:linear-gradient(135deg,color-mix(in srgb,var(--coach-tone) 13%,transparent),color-mix(in srgb,var(--text,#fff) 4%,transparent) 70%);color:var(--text,inherit);min-width:0}
+:host .coach-shadow[data-coach-action=raise]{--coach-tone:var(--green,#42d5a0)}
+:host .coach-shadow[data-coach-action=lower]{--coach-tone:var(--warning,#ffc95c)}
+:host .coach-shadow-main{display:flex;align-items:center;gap:10px;width:100%;min-height:44px;margin:0;padding:0;border:0;background:none;color:inherit;font:inherit;text-align:left;cursor:pointer;box-shadow:none}
+:host .coach-shadow-main:disabled{cursor:default;opacity:1}
+:host .coach-shadow-icon{display:grid;place-items:center;flex:none;width:34px;height:34px;border-radius:11px;background:color-mix(in srgb,var(--coach-tone) 20%,transparent);color:var(--coach-tone)}
+:host .coach-shadow-icon gt-icon{width:18px;height:18px}
+:host .coach-shadow-copy{display:flex;flex-direction:column;flex:1;min-width:0}
+:host .coach-shadow-copy small{color:var(--coach-tone);font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;overflow-wrap:anywhere}
+:host .coach-shadow-copy b{font-size:19px;font-weight:800;line-height:1.2;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+:host .coach-shadow-main em{display:inline-flex;align-items:center;gap:4px;flex:none;min-height:32px;padding:0 14px;border:1px solid color-mix(in srgb,var(--coach-tone) 60%,transparent);border-radius:999px;background:color-mix(in srgb,var(--coach-tone) 24%,transparent);color:var(--coach-tone);font-style:normal;font-size:13px;font-weight:800}
+:host .coach-shadow-main em gt-icon{width:14px;height:14px}
+:host .coach-shadow.applied .coach-shadow-main em{padding:0 4px;border-color:transparent;background:none}
+:host .coach-shadow-reason{margin:0;font-size:13px;line-height:1.45;color:var(--muted,#8e9bad)}
+:host .coach-shadow-chips{display:flex;flex-wrap:wrap;gap:6px}
+:host .coach-shadow-chips:empty{display:none}
+:host .coach-shadow-chip{display:inline-flex;align-items:center;gap:5px;min-height:28px;margin:0;padding:0 10px;border:0;border-radius:999px;background:color-mix(in srgb,var(--text,#fff) 9%,transparent);color:var(--text,inherit);font:inherit;font-size:12px;font-weight:700;font-variant-numeric:tabular-nums;box-shadow:none}
+:host .coach-shadow-chip[data-tone=up]{background:color-mix(in srgb,var(--green,#42d5a0) 18%,transparent);color:var(--green,#42d5a0)}
+:host .coach-shadow-chip[data-tone=down]{background:color-mix(in srgb,var(--warning,#ffc95c) 18%,transparent);color:var(--warning,#ffc95c)}
+:host .coach-shadow-action{background:color-mix(in srgb,var(--coach-tone) 20%,transparent);color:var(--coach-tone)}
+:host button.coach-shadow-rest{min-height:28px;border:1px solid color-mix(in srgb,var(--coach-tone) 55%,transparent);background:transparent;color:var(--coach-tone);cursor:pointer}
+:host .coach-shadow-rest gt-icon{width:14px;height:14px}
+:host .coach-shadow-foot{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:-2px 0 -4px}
+:host .coach-shadow-link{min-height:36px;margin:0;padding:0 2px;border:0;background:none;color:var(--muted,#8e9bad);font:inherit;font-size:12.5px;font-weight:700;text-decoration:underline;text-underline-offset:3px;cursor:pointer;box-shadow:none}
+:host .coach-shadow-confidence{display:inline-flex;align-items:center;gap:3px;color:var(--muted,#8e9bad);font-size:11.5px;font-weight:600}
+:host .coach-shadow-confidence i{width:6px;height:6px;border-radius:50%;background:color-mix(in srgb,var(--text,#fff) 18%,transparent)}
+:host .coach-shadow-confidence i:last-of-type{margin-right:4px}
+:host .coach-shadow[data-coach-confidence] .coach-shadow-confidence i:first-of-type,:host .coach-shadow:is([data-coach-confidence=medium],[data-coach-confidence=high]) .coach-shadow-confidence i:nth-of-type(2),:host .coach-shadow[data-coach-confidence=high] .coach-shadow-confidence i:nth-of-type(3){background:var(--coach-tone)}
+:host .coach-shadow-why{display:grid;gap:4px;margin:0;padding:8px 0 2px 16px;border-top:1px solid color-mix(in srgb,var(--text,#fff) 10%,transparent);font-size:12.5px;line-height:1.45;color:var(--muted,#8e9bad)}
+:host .coach-shadow-why li{overflow-wrap:anywhere}
