@@ -29,7 +29,7 @@ const domains = [
   { files: /^src\/app\/(?:features\/calendar\.component\.(?:ts|html|css)|services\/calendar(?:-[\w-]+)?\.ts|shared\/calendar-[\w.-]+)$/, tests: /^tests\/calendar[\w-]*\.test\.ts$/ },
   { files: /^src\/app\/(?:features\/progress(?:\.component\.ts|-design\.css|-reference\.css)|shared\/progress-chart\.component\.ts|services\/(?:progression|statistics)\.ts)$/, tests: /^tests\/(?:progression|plan-statistics|ui-flows|gym-improvements|client-view)\.test\.ts$/ },
   { files: /^src\/app\/(?:features\/(?:session|workouts|workout-[\w-]+)\.component\.(?:ts|html|css)|services\/(?:workout-[\w-]+|training-flow|weekly-reuse|rest-clock)\.ts|shared\/(?:workout-[\w-]+|active-workout)\.component\.(?:ts|html|css))$/, tests: /^tests\/(?:workout-[\w-]+|recording-flow|training-upgrades|weekly-reuse-and-replacement|ui-flows)\.test\.ts$/ },
-  { files: /^src\/app\/(?:features\/(?:nutrition\.component\.ts|nutrition-simple\.css)|services\/(?:nutrition|nutrition-guard|local-ai)\.ts)$/, tests: /^tests\/(?:nutrition-[\w-]+|food-[\w-]+|local-ai|ui-flows)\.test\.ts$/ },
+  { files: /^src\/app\/(?:features\/(?:nutrition\.component\.ts|nutrition-simple\.css)|services\/(?:nutrition|nutrition-guard|local-ai|meal-scan)\.ts)$/, tests: /^tests\/(?:nutrition-[\w-]+|food-[\w-]+|meal-scan-[\w-]+|local-ai|ui-flows)\.test\.ts$/ },
   { files: /^src\/app\/(?:features\/(?:plans|plan-dashboard)\.component\.(?:ts|html|css)|services\/(?:plan-[\w-]+)\.ts)$/, tests: /^tests\/(?:plan-[\w-]+|concluded-plan-recommendations|ui-flows)\.test\.ts$/ },
   { files: /^src\/app\/features\/profile\.component\.ts$/, tests: /^tests\/(?:profile-[\w-]+|ui-flows)\.test\.ts$/ }
 ];

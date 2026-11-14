@@ -50,3 +50,10 @@ export function resizeIngredient(item:MealIngredient,grams:number):MealIngredien
  const ratio=grams/item.grams;
  return {...item,grams,calories:Math.round(item.calories*ratio*10)/10,protein:Math.round(item.protein*ratio*10)/10,carbs:Math.round(item.carbs*ratio*10)/10,fat:Math.round(item.fat*ratio*10)/10};
 }
+/** Momento della giornata proposto per un nuovo pasto: l'utente può sempre cambiarlo. */
+export function mealTypeForHour(hour:number):'breakfast'|'lunch'|'dinner'|'snack'{
+ if(hour>=5&&hour<11)return 'breakfast';
+ if(hour>=11&&hour<15)return 'lunch';
+ if(hour>=15&&hour<18)return 'snack';
+ return 'dinner';
+}

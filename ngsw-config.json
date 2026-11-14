@@ -44,6 +44,16 @@
           "!/training/videos/**"
         ]
       }
+    },
+    {
+      "name": "coach",
+      "installMode": "lazy",
+      "updateMode": "prefetch",
+      "resources": {
+        "files": [
+          "/coach/**"
+        ]
+      }
     }
   ]
 }

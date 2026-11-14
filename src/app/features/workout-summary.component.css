@@ -113,3 +113,12 @@
 @media (min-width:700px){
  .summary-metrics{grid-template-columns:repeat(4,minmax(0,1fr))}
 }
+
+/* Coach Ombra: consigli per la prossima seduta */
+.summary-coach .summary-card-head h2 { color: var(--accent-text, var(--accent)); }
+.summary-coach .summary-row { align-items: flex-start; }
+.coach-next { --coach-tone: var(--accent-text, var(--accent)); display: flex; flex-direction: column; align-items: flex-end; text-align: right; }
+.coach-next[data-coach-action=raise] { --coach-tone: var(--green, #42d5a0); }
+.coach-next[data-coach-action=lower] { --coach-tone: var(--warning, #f5c76d); }
+.coach-next b { color: var(--text); font-size: 14px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.summary-row .coach-next small { margin-top: 3px; padding: 2px 8px; border-radius: 999px; background: color-mix(in srgb, var(--coach-tone) 18%, transparent); color: var(--coach-tone); font-size: 11px; font-weight: 700; line-height: 1.4; }
