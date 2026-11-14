@@ -332,7 +332,8 @@ export function recurringCharges(txs: readonly HubTransaction[], today: string):
 export const PLAN_MAX_CUT: Record<HubCategoryType, number> = { fisso: 0, essenziale: 0.10, ricorrente: 0.35, flessibile: 0.45, entrata: 0, giroconto: 0 };
 const PLAN_WEIGHT: Record<HubCategoryType, number> = { fisso: 0, essenziale: 0.35, ricorrente: 0.7, flessibile: 1, entrata: 0, giroconto: 0 };
 export type PlanLevel = 'facile' | 'realistico' | 'impegnativo' | 'troppo';
-export interface PlanRow { category: string; type: HubCategoryType; avg: number; cut: number; cap: number }
+/** `manual`: taglio scelto dall'utente per questo ambito (0 = non riducibile), escluso dalla ripartizione automatica. */
+export interface PlanRow { category: string; type: HubCategoryType; avg: number; cut: number; cap: number; manual?: boolean }
 export interface PlanResult {
   months: string[]; avgTotal: number; fixedTotal: number; reducible: number; goal: number;
   achieved: number; maxPossible: number; level: PlanLevel; avgCutPct: number; capTotal: number; rows: PlanRow[];
@@ -349,8 +350,10 @@ export function planMonths(items: readonly SpendItem[], today: string) {
 /**
  * Taglio per ambito: proporzionale alla spesa media, più forte sulle spese flessibili e dove
  * l'ultimo mese supera la media; mai oltre il massimo dell'ambito. Le spese fisse non si toccano.
+ * `overrides` (centesimi per ambito) fissa il taglio scelto dall'utente, fino all'intera spesa
+ * media (0 = “non posso ridurla”): il resto dell'obiettivo si ripartisce sugli altri ambiti.
  */
-export function computePlan(items: readonly SpendItem[], goal: number, today: string): PlanResult | null {
+export function computePlan(items: readonly SpendItem[], goal: number, today: string, overrides: Readonly<Record<string, number>> = {}): PlanResult | null {
   const months = planMonths(items, today);
   if (!months.length) return null;
   const sums: Record<string, number> = {}, last: Record<string, number> = {};
@@ -368,9 +371,14 @@ export function computePlan(items: readonly SpendItem[], goal: number, today: st
     const above = r.avg ? Math.max(0, ((last[r.category] ?? 0) - r.avg) / r.avg) : 0;
     return [r.category, r.avg * PLAN_WEIGHT[r.type] * (1 + Math.min(1, above))];
   }));
-  const limit = (r: PlanRow) => Math.floor(r.avg * PLAN_MAX_CUT[r.type]);
+  for (const r of rows) {
+    const o = overrides[r.category];
+    if (r.type !== 'fisso' && typeof o === 'number' && Number.isFinite(o)) { r.manual = true; r.cut = Math.max(0, Math.min(r.avg, Math.round(o))); }
+  }
+  const limit = (r: PlanRow) => r.manual ? r.cut : Math.floor(r.avg * PLAN_MAX_CUT[r.type]);
   const maxPossible = rows.reduce((s, r) => s + limit(r), 0);
-  let remaining = Math.min(goal, maxPossible);
+  const manualCut = rows.filter(r => r.manual).reduce((s, r) => s + r.cut, 0);
+  let remaining = Math.max(0, Math.min(goal, maxPossible) - manualCut);
   for (let round = 0; round < 10 && remaining > 0; round++) {
     const open = rows.filter(r => r.cut < limit(r) && (weights.get(r.category) ?? 0) > 0);
     const total = open.reduce((s, r) => s + (weights.get(r.category) ?? 0), 0);
@@ -385,8 +393,8 @@ export function computePlan(items: readonly SpendItem[], goal: number, today: st
   }
   if (remaining > 0) for (const r of rows) { const room = limit(r) - r.cut; const take = Math.min(room, remaining); r.cut += take; remaining -= take; if (!remaining) break; }
   for (const r of rows) {
-    // Tetti arrotondati all'euro, senza cambiare il risparmio complessivo oltre pochi centesimi.
-    r.cap = Math.max(0, Math.round((r.avg - r.cut) / 100) * 100);
+    // Tetti arrotondati all'euro (mai sopra la media), senza cambiare il risparmio oltre pochi centesimi.
+    r.cap = Math.min(r.avg, Math.max(0, Math.round((r.avg - r.cut) / 100) * 100));
     r.cut = r.avg - r.cap;
   }
   const avgTotal = rows.reduce((s, r) => s + r.avg, 0);

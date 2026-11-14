@@ -31,7 +31,8 @@ export interface HubTransaction extends HubRecord {
 export interface HubImport extends HubRecord { bank: HubBank; fileName: string; importedAt: string; from: string; to: string; count: number }
 export interface HubRule extends HubRecord { pattern: string; category: string }
 
-export interface HubPlan extends HubRecord { goal: number; active: boolean; alert80: boolean; caps: Record<string, number>; basedOn: string[] }
+/** `overrides`: taglio scelto a mano per ambito (centesimi, 0 = non riducibile). */
+export interface HubPlan extends HubRecord { goal: number; active: boolean; alert80: boolean; caps: Record<string, number>; basedOn: string[]; overrides?: Record<string, number> }
 
 export interface HubPerson extends HubRecord { name: string; color: string; me?: boolean }
 /** `invite`: token del link d'invito attivo (Dividi), se creato. */
