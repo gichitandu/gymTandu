@@ -121,7 +121,7 @@ export class HubGroupComponent {
   restore() { const g = this.view()?.group; if (g) this.hub.upsert('groups', { ...g, archived: false }); }
   async share() {
     const g = this.view(); if (!g) return;
-    const result = await shareText(shareSummary(g.group.name, g.debts, this.hv.shareName), g.group.name);
+    const result = await shareText(shareSummary(g.group.name, g.debts, this.hv.shareName, g.expenses), g.group.name);
     if (result === 'copied') this.feedback.show('success', 'Riepilogo copiato: incollalo dove vuoi.');
   }
 }
