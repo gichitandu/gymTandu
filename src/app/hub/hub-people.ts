@@ -1,9 +1,9 @@
-import { Component, computed, effect, inject, input, output, signal, untracked } from '@angular/core';
+import { Component, computed, DestroyRef, effect, inject, input, output, signal, untracked } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { IconComponent } from '../shared/icon.component';
 import { feedbackForContext, feedbackSignal } from '../services/feedback';
 import { confirmationForContext } from '../services/confirmation';
-import { euro, HubGroup, hubId, HUB_PERSON_COLORS, initials, parseEuroInput, hubToday } from './hub-model';
+import { euro, HubGroup, hubId, HubPerson, HUB_PERSON_COLORS, initials, parseEuroInput, hubToday } from './hub-model';
 import { Debt } from './hub-split';
 import { HUB_ME, HubStore } from './hub-store';
 import { HubInviteService, inviteMessage, inviteUrl } from './hub-invites';
@@ -38,24 +38,18 @@ export async function shareText(text: string, title: string) {
   </div>
   <div class="add"><label class="hb-field"><input name="newp" [(ngModel)]="newName" maxlength="40" placeholder="Aggiungi una persona" (keydown.enter)="$event.preventDefault();addPerson()" aria-label="Nome della nuova persona"/></label><button type="button" class="hb-btn sm" (click)="addPerson()" [disabled]="!newName.trim()"><gt-icon name="plus"/></button></div>
   <p class="hb-sub" style="font-size:12px;margin-top:8px">Le persone non hanno bisogno di un account: aggiungile per nome oppure invitale con un link. Per avvisarle dei saldi usa “Invia riepilogo”.</p>
-  <span class="hb-lab">Invito con link</span>
-  <div class="hb-c inv">
-    <span class="hb-sq sm v"><gt-icon name="share"/></span>
-    <span class="bd">@if(group()?.invite){<strong>Link d'invito attivo</strong><small>Chi lo apre scrive il proprio nome ed entra nel gruppo.</small>}@else{<strong>Invita con un link</strong><small>Mandalo su WhatsApp o Messaggi: chi lo apre si aggiunge da solo.</small>}</span>
-  </div>
-  <div class="inv-act">
-    <button type="button" class="hb-btn sm" (click)="invite()" [disabled]="inviting()"><gt-icon name="share"/>{{inviting()?'Preparazione…':group()?.invite?'Condividi link':group()?'Crea link d\'invito':'Crea e invita con link'}}</button>
-    @if(group()?.invite){<button type="button" class="hb-btn sm" (click)="revokeInvite()" [disabled]="inviting()"><gt-icon name="close"/>Disattiva link</button>}
-  </div>
+  <button type="button" class="hb-btn sm inv" (click)="invite()" [disabled]="inviting()"><gt-icon name="share"/>{{inviteLabel()}}</button>
+  @if(token()){<p class="inv-on"><gt-icon name="check"/><span>{{group() ? 'Link attivo: chi lo apre entra nel gruppo.' : 'Link pronto: tocca “Crea gruppo” per salvare il gruppo.'}}</span><button type="button" class="inv-off" (click)="revokeInvite()" [disabled]="inviting()">Disattiva</button></p>}
   @if(error()){<p class="hb-err" role="alert">{{error()}}</p>}
   <div class="hb-actions"><button class="hb-btn pri" type="submit"><gt-icon name="check"/>{{group()?'Salva':'Crea gruppo'}}</button>
     @if(group();as g){<button type="button" class="hb-btn sm danger" (click)="remove(g)"><gt-icon name="trash"/>{{hasActivity()?'Archivia gruppo':'Elimina gruppo'}}</button>}</div>
 </form>`,
-  styles: [`.ic{display:grid;place-items:center;width:42px;height:42px;border-radius:13px;background:rgba(255,255,255,.05)!important;border:1px solid var(--hb-ln)!important;color:var(--hb-m);cursor:pointer}.ic.on{background:rgba(143,124,255,.18)!important;border-color:rgba(143,124,255,.55)!important;color:#fff}.ic gt-icon{width:19px;height:19px}
+  styles: [`.ic{display:grid;place-items:center;width:42px;height:42px;border-radius:13px;background:rgba(255,255,255,.05)!important;border:1px solid var(--hb-ln)!important;color:var(--hb-m);cursor:pointer}.ic.on{background:rgba(143,124,255,.18)!important;border-color:rgba(143,124,255,.55)!important;color:var(--hb-v)}.ic gt-icon{width:19px;height:19px}
 .hb-ch .hb-av{width:24px;height:24px;font-size:9.5px;box-shadow:none;margin-left:-6px}.me{cursor:default}
 .add{display:flex;gap:8px;margin-top:10px}.add .hb-field{flex:1}.add .hb-btn{width:52px}
-.inv{display:flex;align-items:center;gap:12px;padding:12px 14px}.inv .bd{flex:1;min-width:0}.inv strong{display:block;font-size:14px}.inv small{display:block;font-size:12px;color:var(--hb-m);margin-top:2px;line-height:1.35}
-.inv-act{display:flex;gap:8px;margin-top:8px}.inv-act .hb-btn{width:auto;flex:1}`],
+.inv{width:100%;margin-top:12px;gap:8px}
+.inv-on{display:flex;align-items:center;gap:8px;margin:8px 2px 0;font-size:12.5px;line-height:1.35;color:var(--hb-m)}.inv-on>gt-icon{flex:none;width:15px;height:15px;color:var(--hb-g)}.inv-on span{flex:1;min-width:0}
+.inv-off{flex:none;min-height:32px;padding:0 6px;color:var(--hb-r);font-size:12.5px;font-weight:650;cursor:pointer}`],
 })
 export class HubGroupSheetComponent {
   readonly group = input<HubGroup | null>(null);
@@ -69,12 +63,22 @@ export class HubGroupSheetComponent {
   name = ''; newName = '';
   readonly icon = signal('house');
   readonly members = signal<string[]>([]);
-  readonly others = computed(() => this.hub.people().filter(p => p.id !== HUB_ME));
+  /** Persone scritte qui ma non ancora salvate: entrano nell'archivio solo con “Crea gruppo”/“Salva”. */
+  private readonly draftPeople = signal<HubPerson[]>([]);
+  readonly others = computed(() => [...this.hub.people().filter(p => p.id !== HUB_ME), ...this.draftPeople()]);
   private invites = inject(HubInviteService);
   readonly inviting = signal(false);
+  /** Gruppo nuovo: id riservato e link già creato, salvati solo premendo “Crea gruppo”. */
+  private readonly draftId = hubId();
+  private readonly draftToken = signal('');
+  private created = false;
+  readonly token = computed(() => this.group()?.invite ?? this.draftToken());
+  readonly inviteLabel = computed(() => this.inviting() ? 'Preparazione del link…' : this.token() ? 'Condividi link d’invito' : 'Invita con un link');
   readonly hasActivity = computed(() => { const g = this.group(); return !!g && (this.hub.expenses().some(e => e.groupId === g.id) || this.hub.settlements().some(s => s.groupId === g.id)); });
   constructor() {
     effect(() => { const g = this.group(); untracked(() => { if (g) { this.name = g.name; this.icon.set(g.icon); this.members.set(g.members.filter(m => m !== HUB_ME)); } }); });
+    // Foglio chiuso senza creare il gruppo: il link preparato per lui viene disattivato.
+    inject(DestroyRef).onDestroy(() => { const token = this.draftToken(); if (token && !this.created) void this.invites.discard(token); });
   }
   toggle(id: string) {
     const g = this.group();
@@ -85,13 +89,14 @@ export class HubGroupSheetComponent {
     const name = this.newName.trim(); if (!name) return;
     const existing = this.others().find(p => p.name.toLowerCase() === name.toLowerCase());
     const id = existing?.id ?? hubId();
-    if (!existing) this.hub.upsert('people', { id, updatedAt: 0, name, color: HUB_PERSON_COLORS[this.others().length % HUB_PERSON_COLORS.length] });
+    if (!existing) this.draftPeople.update(l => [...l, { id, updatedAt: 0, name, color: HUB_PERSON_COLORS[this.others().length % HUB_PERSON_COLORS.length] }]);
     if (!this.members().includes(id)) this.members.update(l => [...l, id]);
     this.newName = '';
   }
   save() {
     this.error.set('');
-    const g = this.write(!!this.group()?.invite); if (!g) return;
+    const g = this.write(!!this.token()); if (!g) return;
+    this.created = true;
     this.saved.emit(g.id); this.closed.emit();
   }
   /** Salva nome, icona e persone. Con un link d'invito il gruppo può partire anche solo con te. */
@@ -99,45 +104,61 @@ export class HubGroupSheetComponent {
     const name = this.name.trim();
     if (!name) { this.error.set('Dai un nome al gruppo.'); return null; }
     if (!this.members().length && !viaLink) { this.error.set('Aggiungi almeno una persona oltre a te, oppure invitala con un link.'); return null; }
-    const g = this.group(), id = g?.id ?? hubId();
+    const g = this.group(), id = g?.id ?? this.draftId;
     // I membri entrati dal link mentre il foglio era aperto restano nel gruppo.
     const current = this.hub.groups().find(x => x.id === id);
     const joined = (current?.members ?? []).filter(m => m !== HUB_ME && !(g?.members ?? []).includes(m));
     const members = [HUB_ME, ...new Set([...this.members(), ...joined])];
-    const next: HubGroup = { id, updatedAt: current?.updatedAt ?? g?.updatedAt ?? 0, name, icon: this.icon(), members, archived: g?.archived, ...(current?.invite ?? g?.invite ? { invite: current?.invite ?? g?.invite } : {}) };
+    const invite = current?.invite ?? g?.invite ?? (this.draftToken() || undefined);
+    const next: HubGroup = { id, updatedAt: current?.updatedAt ?? g?.updatedAt ?? 0, name, icon: this.icon(), members, archived: g?.archived, ...(invite ? { invite } : {}) };
+    const newPeople = this.draftPeople().filter(p => members.includes(p.id));
+    if (newPeople.length) this.hub.upsert('people', ...newPeople);
+    this.draftPeople.set([]);
     this.hub.upsert('groups', next);
     return this.hub.groups().find(x => x.id === id) ?? next;
   }
-  /** Crea (se serve) il link d'invito e lo apre nel foglio di condivisione. */
+  /** Crea (se serve) il link d'invito e apre la condivisione. Non salva il gruppo: per quello c'è “Crea gruppo”/“Salva”. */
   async invite() {
     if (this.inviting()) return;
     this.error.set('');
-    const isNew = !this.group();
-    const g = this.write(true); if (!g) return;
+    const stored = this.group();
+    const name = this.name.trim() || stored?.name || '';
+    if (!name) { this.error.set('Dai un nome al gruppo prima di invitare.'); return; }
     this.inviting.set(true);
     try {
-      const token = await this.invites.sync(g, true);
-      const result = await shareText(inviteMessage(g.name, inviteUrl(token)), 'Invito al gruppo');
+      let token = this.token();
+      if (!token || stored) {
+        const draft: HubGroup = stored ?? { id: this.draftId, updatedAt: 0, name, icon: this.icon(), members: [HUB_ME, ...this.members()], invite: this.draftToken() || undefined };
+        token = await this.invites.sync(draft, true, !!stored);
+        if (!stored) this.draftToken.set(token);
+      }
+      const result = await shareText(inviteMessage(name, inviteUrl(token)), 'Invito al gruppo');
       if (result === 'copied') this.feedback.show('success', 'Link d’invito copiato: incollalo in un messaggio.');
-      else if (result === 'failed') this.error.set('Link creato, ma non è stato possibile condividerlo. Riprova da “Condividi link”.');
-      if (isNew) { this.saved.emit(g.id); this.closed.emit(); }
+      else if (result === 'failed') this.error.set('Link pronto, ma la condivisione non è riuscita. Riprova da “Condividi link d’invito”.');
     } catch (e) {
       this.error.set(e instanceof Error ? e.message : 'Link d’invito non creato. Riprova.');
-      if (isNew) { this.saved.emit(g.id); this.closed.emit(); }
     } finally { this.inviting.set(false); }
   }
   async revokeInvite() {
-    const g = this.group(); if (!g?.invite || this.inviting()) return;
+    if (!this.token() || this.inviting()) return;
     if (!await this.confirm.ask({ title: 'Disattivare il link?', message: 'Chi ha già il link non potrà più entrare nel gruppo. Le persone già aggiunte restano.', confirmLabel: 'Disattiva', tone: 'danger' })) return;
     this.inviting.set(true); this.error.set('');
-    try { await this.invites.revoke(g); this.feedback.show('success', 'Link d’invito disattivato.'); }
+    try {
+      const g = this.group();
+      await this.invites.revoke(g ?? { id: this.draftId, updatedAt: 0, name: '', icon: '', members: [], invite: this.draftToken() });
+      if (!g) this.draftToken.set('');
+      this.feedback.show('success', 'Link d’invito disattivato.');
+    }
     catch (e) { this.error.set(e instanceof Error ? e.message : 'Link non disattivato. Riprova.'); }
     finally { this.inviting.set(false); }
   }
   async remove(g: HubGroup) {
     const archive = this.hasActivity();
     if (!await this.confirm.ask({ title: archive ? 'Archiviare il gruppo?' : 'Eliminare il gruppo?', message: archive ? 'Spese e saldi restano conservati; il gruppo non compare più tra quelli attivi.' : `“${g.name}” verrà eliminato.`, confirmLabel: archive ? 'Archivia' : 'Elimina', tone: 'danger' })) return;
-    if (archive) this.hub.upsert('groups', { ...g, archived: true }); else this.hub.remove('groups', g.id);
+    // Un gruppo archiviato o eliminato non accetta più persone dal link.
+    if (g.invite) void this.invites.discard(g.invite);
+    const { invite: _link, ...rest } = g;
+    if (archive) this.hub.upsert('groups', { ...rest, archived: true }); else this.hub.remove('groups', g.id);
     this.closed.emit();
   }
 }

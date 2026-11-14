@@ -37,21 +37,25 @@ export class HubInviteService {
 
   private snapshot(group: HubGroup): HubInviteGroup {
     const me = this.auth.user()?.name?.trim() || 'Organizzatore';
-    return { name: group.name, icon: group.icon, members: group.members.map(id => id === HUB_ME ? me : this.hub.personName(id)) };
+    return { name: group.name, icon: group.icon, members: group.members.flatMap(id => id === HUB_ME ? [me] : this.hub.person(id) ? [this.hub.personName(id)] : []) };
   }
   private current(id: string) { return this.hub.groups().find(g => g.id === id); }
 
-  /** Sincronizza un gruppo con il suo link e restituisce il token. Con `create` crea un link nuovo se manca o non è più attivo. */
-  async sync(group: HubGroup, create = false): Promise<string> {
+  /**
+   * Sincronizza un gruppo con il suo link e restituisce il token. Con `create` crea un link nuovo se manca o non è più attivo.
+   * Con `persist` falso (gruppo ancora in bozza) non scrive nulla nell'archivio: il gruppo nasce solo con “Crea gruppo”.
+   */
+  async sync(group: HubGroup, create = false, persist = true): Promise<string> {
     const send = (token?: string) => call<{ token: string; joins: HubInviteJoin[] }>('/api/hub/invites', 'POST', { groupId: group.id, token, group: this.snapshot(group) });
     let first: { token: string; joins: HubInviteJoin[] };
     try { first = await send(group.invite); }
     catch (error) {
       if (!(error instanceof InviteHttpError && error.status === 404)) throw error;
       // Link revocato da un altro dispositivo: lo si toglie dal gruppo, oppure se ne crea uno nuovo su richiesta.
-      if (!create) { this.forget(group.id); throw error; }
+      if (!create) { if (persist) this.forget(group.id); throw error; }
       first = await send();
     }
+    if (!persist || !this.current(group.id)) return first.token;
     let g = this.current(group.id) ?? group;
     if (g.invite !== first.token) { g = { ...g, invite: first.token }; this.hub.upsert('groups', g); }
     if (first.joins.length) {
@@ -66,6 +70,11 @@ export class HubInviteService {
   async revoke(group: HubGroup) {
     if (group.invite) await call('/api/hub/invites', 'DELETE', { token: group.invite });
     this.forget(group.id);
+  }
+  /** Disattiva un link non più legato a un gruppo salvato (bozza chiusa, gruppo eliminato). Errori ignorati. */
+  async discard(token: string) {
+    if (!token) return;
+    try { await call('/api/hub/invites', 'DELETE', { token }); } catch { /* il link resta solo inutilizzato */ }
   }
   private forget(id: string) {
     const g = this.current(id); if (!g?.invite) return;
