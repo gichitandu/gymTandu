@@ -34,7 +34,8 @@ export const GROUP_ICONS = ['house', 'users', 'pin', 'car', 'cart', 'coffee', 't
   @if(token()){<p class="inv-on"><gt-icon name="check"/><span>{{group() ? 'Link attivo: chi lo apre entra nel gruppo.' : 'Link pronto: tocca “Crea gruppo” per salvare il gruppo.'}}</span><button type="button" class="inv-off" (click)="revokeInvite()" [disabled]="inviting()">Disattiva</button></p>}
   @if(error()){<p class="hb-err" role="alert">{{error()}}</p>}
   <div class="hb-actions"><button class="hb-btn pri" type="submit"><gt-icon name="check"/>{{group()?'Salva':'Crea gruppo'}}</button>
-    @if(group();as g){<button type="button" class="hb-btn sm danger" (click)="remove(g)"><gt-icon name="trash"/>{{hasActivity()?'Archivia gruppo':'Elimina gruppo'}}</button>}</div>
+    @if(group();as g){<button type="button" class="hb-btn sm danger" (click)="remove(g)"><gt-icon name="trash"/>{{hasActivity()?'Archivia gruppo':'Elimina gruppo'}}</button>
+      @if(hasActivity()){<button type="button" class="hb-btn sm danger" (click)="removeForever(g)"><gt-icon name="trash"/>Elimina definitivamente</button>}}</div>
 </form>`,
   styles: [`.ic{display:grid;place-items:center;width:42px;height:42px;border-radius:13px;background:rgba(255,255,255,.05)!important;border:1px solid var(--hb-ln)!important;color:var(--hb-m);cursor:pointer}.ic.on{background:rgba(143,124,255,.18)!important;border-color:rgba(143,124,255,.55)!important;color:var(--hb-v)}.ic gt-icon{width:19px;height:19px}
 .hb-ch .hb-av{width:24px;height:24px;font-size:9.5px;box-shadow:none;margin-left:-6px}.me{cursor:default}
@@ -164,6 +165,18 @@ export class HubGroupSheetComponent {
     if (g.invite) void this.invites.discard(g.invite);
     const { invite: _link, ...rest } = g;
     if (archive) this.hub.upsert('groups', { ...rest, archived: true }); else this.hub.remove('groups', g.id);
+    this.closed.emit();
+  }
+  /** Elimina il gruppo insieme a spese e pagamenti registrati (non annullabile). */
+  async removeForever(g: HubGroup) {
+    if (!await this.confirm.ask({ title: 'Eliminare definitivamente il gruppo?', message: `“${g.name}” verrà eliminato insieme a tutte le sue spese e ai pagamenti registrati. L’operazione non si può annullare.`, confirmLabel: 'Elimina definitivamente', tone: 'danger' })) return;
+    if (g.invite) void this.invites.discard(g.invite);
+    const expenseIds = this.hub.expenses().filter(e => e.groupId === g.id).map(e => e.id);
+    const settlementIds = this.hub.settlements().filter(s => s.groupId === g.id).map(s => s.id);
+    if (expenseIds.length) this.hub.remove('expenses', ...expenseIds);
+    if (settlementIds.length) this.hub.remove('settlements', ...settlementIds);
+    this.hub.remove('groups', g.id);
+    this.feedback.show('success', `Gruppo “${g.name}” eliminato.`);
     this.closed.emit();
   }
 }
