@@ -217,3 +217,32 @@ it('il dolore segnalato su una serie fa fermare il Coach, e dopo una seduta con 
   active.quickRecord(active.exercises()[0]);
   expect(active.coach()).toMatchObject({ action: 'hold', weight: 60, basis: 'reference', title: 'Non aumentare' });
 });
+
+it('nell’editor il Coach Ombra propone il peso dall’ultima seduta e lo usa solo su richiesta', async () => {
+  await s.savePlan('p', 'Piano', ''); await s.saveDay('d', 'p', 'Giorno');
+  await s.savePlanExercise({ id: 'pe', dayId: 'd', exerciseId: 'exercise-0', sets: 3, repsMin: 8, repsMax: 12, rest: 90, notes: '', order: 0 });
+  const component = createPlans();
+  component.openExercise('d');
+  expect(component.coachHint()).toBeNull(); // ancora nella scelta dell'esercizio
+  component.chooseExercise('exercise-4');
+  expect(component.coachHint()).toMatchObject({ weight: null, target: '' });
+  expect(component.coachHint()!.reason).toContain('Nessuna seduta registrata');
+  // Dopo una seduta completa il Coach propone il passo successivo.
+  await s.start('d');
+  const row = s.workoutExercises(s.draft()!.id)[0];
+  for (const set of s.sets(row.id)) await s.updateSet(set.id, { weight: 60, reps: 12, rpe: 8, completed: true });
+  expect(await s.finish()).toBe(true);
+  component.chooseExercise('exercise-0');
+  const hint = component.coachHint()!;
+  expect(hint).toMatchObject({ action: 'raise', title: 'Sali di carico', weight: 62.5, target: '62,5 kg · 10 rip.', last: 'Ultima volta: 60 kg × 12 · 12 · 12' });
+  // Il suggerimento segue l'intervallo e l'RPE target scelti nel modulo, senza scrivere nulla da solo.
+  expect(component.exerciseForm.controls.targetWeight.value).toBeNull();
+  component.exerciseForm.patchValue({ repsMin: 6, repsMax: 8 });
+  expect(component.coachHint()!.action).toBe('raise');
+  component.exerciseForm.patchValue({ repsMin: 13, repsMax: 8 });
+  expect(component.coachHint()).toBeNull();
+  component.exerciseForm.patchValue({ repsMin: 8, repsMax: 12 });
+  component.useCoachWeight(hint.weight!);
+  expect(component.exerciseForm.controls.targetWeight.value).toBe(62.5); expect(component.advancedOpen()).toBe(true);
+  expect(s.planExercises('d')).toHaveLength(1);
+});

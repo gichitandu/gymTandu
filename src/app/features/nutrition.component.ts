@@ -55,7 +55,7 @@ interface MealFormDraft {
 <details class="meal-photo-options"><summary>Cambia foto</summary><div class="actions"><button type="button" (click)="camera.click()" [disabled]="photoBusy()">Scatta foto</button><button type="button" (click)="gallery.click()" [disabled]="photoBusy()">Scegli da Foto</button></div></details>}
 @else{<div class="actions meal-photo-add"><button type="button" (click)="camera.click()" [disabled]="photoBusy()"><gt-icon name="camera"/>Scatta foto</button><button type="button" (click)="gallery.click()" [disabled]="photoBusy()">Scegli da Foto</button></div>}
 @if(suggestions().length){<div class="notice"><b>Possibili alimenti · scegli e correggi</b><div class="actions">@for(food of suggestions();track food.id){<button (click)="choose(food.id,true)">{{food.name}}</button>}</div></div>}
-@if(photo){<p class="meal-estimate-note">Stima da verificare: controlla alimenti, quantità e valori prima di salvare.@if(analysisSource()==='cloud'){ Per l’analisi la foto è stata inviata a Cloudflare Workers AI.}</p>}
+@if(photo){<p class="meal-estimate-note">Stima da verificare: controlla alimenti, quantità e valori prima di salvare.@if(analysisSource()==='cloud'){ {{providerNote()}}}</p>}
 @if(ingredients.length){<section class="ingredient-review"><div class="section-title"><h3>Alimenti del pasto</h3><span class="pill">{{ingredients.length}} {{ingredients.length===1?'voce':'voci'}}</span></div>@for(item of ingredients;track item.id){<div class="ingredient-item"><div class="ingredient-title"><strong>{{item.name}}</strong><button class="icon-btn ghost danger" [attr.aria-label]="'Rimuovi '+item.name" (click)="removeIngredient(item.id)">×</button></div><div class="ingredient-quick"><label>Quantità (g)<input type="number" inputmode="decimal" min="1" max="10000" [ngModel]="item.grams" (change)="changeIngredientGrams(item.id,$any($event.target).valueAsNumber)"/></label><p class="ingredient-summary"><strong>{{item.calories.toLocaleString('it-IT',{maximumFractionDigits:0})}} kcal</strong><span>P {{item.protein.toLocaleString('it-IT',{maximumFractionDigits:1})}} · C {{item.carbs.toLocaleString('it-IT',{maximumFractionDigits:1})}} · G {{item.fat.toLocaleString('it-IT',{maximumFractionDigits:1})}}</span></p></div><details class="ingredient-more"><summary>Correggi nome e valori</summary><label>Nome<input type="text" maxlength="100" [ngModel]="item.name" (change)="renameIngredient(item.id,$any($event.target).value)"/></label><div class="ingredient-values">@for(field of nutritionFields;track field.key){<label>{{field.label}}<input type="number" inputmode="decimal" min="0" step="0.1" [ngModel]="item[field.key]" (ngModelChange)="changeIngredientValue(item.id,field.key,$event)"/></label>}</div></details></div>}<p class="subtle">Cambia i grammi: calorie e macronutrienti si ricalcolano in proporzione.</p></section>}
 <form (ngSubmit)="save()"><div class="meal-type-chips" role="radiogroup" aria-label="Tipo di pasto">@for(type of mealTypes;track type.id){<button type="button" role="radio" [attr.aria-checked]="mealType===type.id" [class.active]="mealType===type.id" (click)="setMealType(type.id)">{{type.label}}</button>}</div>
 <div class="form-grid">
@@ -79,6 +79,16 @@ interface MealFormDraft {
 @if(isAdmin()){<details class="card ai-details" [open]="aiOpen"><summary>Lettura foto con AI · solo admin</summary>
 @if(cloud?.status();as c){<dl class="device-report"><dt>Workers AI (Cloudflare)</dt><dd>{{c.available?(c.blocked?'In pausa: attendere ripristino':'Attiva'):c.setup==='migration'?'Database da aggiornare: applica le migrazioni':'Non configurata su questo server'}}</dd>@if(c.available){<dt>Uso di oggi</dt><dd>{{c.used}} di {{c.limit}} Neuron ({{c.usedPercent}}%) · {{c.requests}} letture</dd><dt>Blocco automatico</dt><dd>Al {{c.thresholdPercent}}% del limite gratuito ({{c.cap}} Neuron)</dd><dt>Ripristino</dt><dd>Ogni giorno alle {{cloud!.resetTime()}} (00:00 UTC)</dd>}</dl>}
 <p class="subtle" style="margin-top:12px">Con l’account online la foto viene letta da Workers AI di Cloudflare, che propone alimenti, grammi e valori. Il server conta i consumi e si ferma prima del limite gratuito giornaliero: fino al ripristino non parte alcuna richiesta. Senza connessione, senza Workers AI o durante la pausa resta il riconoscimento sul dispositivo qui sotto.</p>
+@if(cloud?.status()?.gemini;as g){<div class="gemini-box" style="margin-top:12px"><h4 style="margin:0 0 6px">Gemini personale (gratuito)</h4>
+<p class="subtle">{{g.configured?(g.source==='app'?'Attivo con la tua chiave. Le tue foto vengono lette da Gemini; gli altri account usano Workers AI. Oggi: '+g.used+' di '+g.dailyLimit+' letture.':'Attivo con la chiave impostata sul server.'):'Incolla la tua chiave di Google AI Studio per far leggere a Gemini le tue foto. Gli altri account continuano a usare Workers AI. Se Gemini non risponde o finisce il limite si passa automaticamente a Workers AI.'}}</p>
+@if(!g.storage){<p class="subtle">Archivio del server non disponibile: impossibile salvare la chiave.</p>}@else{
+<form (submit)="$event.preventDefault();saveGemini()"><label>Chiave API Gemini<input type="password" autocomplete="off" autocapitalize="off" spellcheck="false" [value]="geminiKey()" (input)="geminiKey.set($any($event.target).value)" placeholder="Incolla la chiave"></label>
+<label>Modello (facoltativo)<input type="text" autocomplete="off" autocapitalize="off" spellcheck="false" [value]="geminiModel()" (input)="geminiModel.set($any($event.target).value)" [placeholder]="g.model"></label>
+<div class="actions"><button class="primary" [disabled]="geminiBusy()||!geminiKey().trim()">{{geminiBusy()?'Verifica in corso…':g.configured&&g.source==='app'?'Sostituisci chiave':'Salva e attiva'}}</button>@if(g.configured&&g.source==='app'){<button type="button" class="ghost danger" (click)="removeGemini()" [disabled]="geminiBusy()">Rimuovi chiave</button>}</div></form>}
+@if(g.configured&&g.source==='app'){<div class="actions"><button type="button" (click)="loadGeminiModels()" [disabled]="geminiBusy()">Scegli un altro modello</button></div>
+@if(geminiModels().length){<label>Modello in uso: {{g.model}}<select [value]="g.model" (change)="pickGeminiModel($any($event.target).value)" [disabled]="geminiBusy()">@for(m of geminiModels();track m){<option [value]="m" [selected]="m===g.model">{{m}}</option>}</select></label><p class="subtle">I modelli «lite» sono di solito più veloci: se Gemini va in timeout, provane uno.</p>}}
+@if(geminiMessage()){<p class="subtle" role="status">{{geminiMessage()}}</p>}
+<p class="subtle">La chiave viene verificata con Google, salvata cifrata sul server e non viene mai mostrata né restituita all’app. Con il piano gratuito Google può usare le foto inviate per migliorare i suoi servizi: usalo solo per foto che puoi condividere.</p></div>}
 <p class="subtle" style="margin-top:12px">Riconoscimento sul dispositivo: il primo utilizzo scarica il modello gratuito (circa 2 MB), poi funziona anche offline. Riconosce alcuni alimenti singoli e può non riconoscere piatti misti: scegli o correggi sempre i risultati prima di salvare.</p><p class="subtle" style="margin-top:12px">{{ai.status()}}</p>
 @if(ai.report();as r){<dl class="device-report"><dt>Motore</dt><dd>{{r.backend}} · {{r.model}}</dd><dt>Ultima prova sul dispositivo</dt><dd>{{r.milliseconds}} ms per inferenza, {{r.loadMs}} ms caricamento</dd><dt>Memoria tensori</dt><dd>{{(r.tensorBytes/1048576).toFixed(1)}} MB (non è la RAM totale)</dd><dt>Modello all’avvio della prova</dt><dd>{{r.cached?'Letto dal dispositivo':'Caricato dal sito'}}</dd></dl>}
 <div class="actions"><button (click)="prepareAI()" [disabled]="ai.busy()||!ai.supported">Verifica modello</button>@if(ai.busy()&&(preparingAI()||analysisState()==='running')){<button (click)="analysisState()==='running'?cancelAnalysis():ai.cancel()">Interrompi</button>}<button (click)="ai.remove()" [disabled]="ai.busy()">Reimposta riconoscimento</button></div>
@@ -117,6 +127,30 @@ export class NutritionComponent {
  analysisState=signal<'idle'|'running'|'done'|'unrecognized'|'error'|'cancelled'|'blocked'>('idle');analysisMessage=signal('');preparingAI=signal(false);private analysisRequest=0;
  /** Lettura con Workers AI tramite il server; assente offline o nei contesti senza account. */
  cloud=inject(MealScanService,{optional:true});analysisSource=signal<''|'cloud'|'device'>('');private scanIds=new Set<string>();
+ geminiModels=signal<string[]>([]);
+ async loadGeminiModels(){
+  if(!this.cloud||this.geminiBusy())return;this.geminiBusy.set(true);this.geminiMessage.set('');
+  try{const result=await this.cloud.geminiModels();this.geminiModels.set(result.models);if(!result.models.length)this.geminiMessage.set('Google non ha elencato modelli utilizzabili con questa chiave.');}
+  catch(e){this.geminiMessage.set((e as Error).message);}finally{this.geminiBusy.set(false);}
+ }
+ async pickGeminiModel(model:string){
+  if(!this.cloud||this.geminiBusy()||!model)return;this.geminiBusy.set(true);this.geminiMessage.set('');
+  try{await this.cloud.saveGeminiModel(model);this.geminiMessage.set('Modello cambiato in '+model+'. Riprova la foto.');}
+  catch(e){this.geminiMessage.set((e as Error).message);}finally{this.geminiBusy.set(false);}
+ }
+ geminiKey=signal('');geminiModel=signal('');geminiBusy=signal(false);geminiMessage=signal('');
+ async saveGemini(){
+  if(!this.cloud||this.geminiBusy())return;this.geminiBusy.set(true);this.geminiMessage.set('');
+  try{await this.cloud.saveGeminiKey(this.geminiKey(),this.geminiModel());this.geminiKey.set('');this.geminiMessage.set('Gemini attivato per il tuo account.');}
+  catch(e){this.geminiMessage.set((e as Error).message);}finally{this.geminiBusy.set(false);}
+ }
+ async removeGemini(){
+  if(!this.cloud||this.geminiBusy())return;this.geminiBusy.set(true);this.geminiMessage.set('');
+  try{await this.cloud.removeGeminiKey();this.geminiMessage.set('Chiave rimossa: le tue foto tornano a Workers AI.');}
+  catch(e){this.geminiMessage.set((e as Error).message);}finally{this.geminiBusy.set(false);}
+ }
+ geminiReason=signal('');scanProvider=signal<''|'gemini'|'cloudflare'>('');scanFellBack=signal(false);
+ providerNote(){return this.scanProvider()==='gemini'?'Foto letta con Gemini (Google).':this.scanProvider()==='cloudflare'?(this.scanFellBack()?'Gemini non era disponibile'+(this.geminiReason()?' ('+this.geminiReason()+')':'')+': foto letta con Cloudflare Workers AI.':'Foto letta con Cloudflare Workers AI.'):'Per l’analisi la foto è stata inviata a un servizio AI.';}
  aiBlocked(){return !!this.cloud?.blocked();}
  aiWaitDetail(){const time=this.cloud?.resetTime();return 'Lettura foto con AI in pausa'+(time?' fino alle '+time:'')+': il limite gratuito giornaliero è quasi raggiunto. Puoi comunque scrivere il pasto a mano.';}
  aiMeter(){const status=this.cloud?.status();if(!status?.available||this.aiBlocked())return null;return {percent:Math.min(100,status.thresholdPercent>0?status.usedPercent/status.thresholdPercent*100:100),text:'Lettura foto con AI · usato il '+status.usedPercent.toLocaleString('it-IT',{maximumFractionDigits:1})+'% del limite gratuito di oggi'};}
@@ -177,7 +211,7 @@ export class NutritionComponent {
     // Con il blocco attivo non parte nessuna richiesta, nemmeno quella dello stato.
     const status=this.cloud.blocked()?null:await this.cloud.ensureStatus();if(!current())return;
     if(this.cloud.blocked()){this.showBlocked();return;}
-    if(status?.available){const result=await this.cloud.scan(photo);if(!current())return;this.applyScan(result);return;}
+    if(status?.available||status?.gemini?.configured){const result=await this.cloud.scan(photo);if(!current())return;this.scanProvider.set(result.provider||'');this.scanFellBack.set(!!result.fallback);this.geminiReason.set(result.geminiError||'');this.applyScan(result);return;}
    }catch(e){
     if(!current())return;
     if(e instanceof MealScanLimitError){this.showBlocked();return;}
@@ -202,7 +236,7 @@ export class NutritionComponent {
   if(!this.composedName.trim()&&result.dish)this.composedName=result.dish;
   this.source='photo-suggestion';this.addingFood.set(!!this.name.trim());
   this.analysisState.set('done');
-  this.analysisMessage.set(result.kind==='label'?'Ho letto l’etichetta: controlla porzione e valori, poi salva.':items.length===1?'Ho trovato 1 alimento: controlla la quantità e salva.':'Ho trovato '+items.length+' alimenti: controlla le quantità e salva.');
+  this.analysisMessage.set((result.provider==='gemini'?'Letto con Gemini. ':result.provider==='cloudflare'?(result.fallback?'Gemini non disponibile'+(result.geminiError?' ('+result.geminiError+')':'')+': letto con Cloudflare. ':'Letto con Cloudflare. '):'')+(result.kind==='label'?'Ho letto l’etichetta: controlla porzione e valori, poi salva.':items.length===1?'Ho trovato 1 alimento: controlla la quantità e salva.':'Ho trovato '+items.length+' alimenti: controlla le quantità e salva.'));
   this.draftChanged();
  }
  cancelAnalysis(){this.analysisRequest++;this.ai.cancel();this.cloud?.cancel();this.analysisState.set('cancelled');this.analysisMessage.set('Analisi annullata. La foto è conservata: puoi riprovare o compilare il pasto.');}
