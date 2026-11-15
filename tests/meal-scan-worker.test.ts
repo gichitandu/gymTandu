@@ -222,7 +222,7 @@ const put = (body: any) => new Request('https://gymtrack.test/api/meal-scan', { 
 const remove = () => new Request('https://gymtrack.test/api/meal-scan', { method: 'DELETE' });
 
 it('un admin incolla la chiave nell’app: viene verificata, salvata cifrata e non è mai restituita', async () => {
-  const fetchMock = vi.fn(async (_url: string, init: any) => init.method === 'GET' ? ({ ok: true, status: 200 }) : geminiReply(JSON.stringify(meal))); vi.stubGlobal('fetch', fetchMock);
+  const fetchMock = vi.fn(async (_url: string, init: any) => geminiReply(JSON.stringify(meal))); vi.stubGlobal('fetch', fetchMock);
   const store = bucket(); env = { ...env, BUCKET: store, SETUP_CODE: 'codice-di-setup-finto' };
   // Chi non è admin non può salvare né leggere.
   expect((await mealScanApi(put({ apiKey: KEY }), env, client, NOON)).status).toBe(403);
@@ -233,9 +233,9 @@ it('un admin incolla la chiave nell’app: viene verificata, salvata cifrata e n
   fetchMock.mockResolvedValueOnce({ ok: false, status: 403 } as any);
   expect((await mealScanApi(put({ apiKey: KEY }), env, owner, NOON)).status).toBe(400);
   fetchMock.mockResolvedValueOnce({ ok: false, status: 404 } as any);
-  expect(((await (await mealScanApi(put({ apiKey: KEY, model: 'modello-inesistente' }), env, owner, NOON)).json()) as any).error).toContain('Modello non trovato');
+  expect(((await (await mealScanApi(put({ apiKey: KEY, model: 'modello-inesistente' }), env, owner, NOON)).json()) as any).error).toContain('Modello non disponibile');
   expect(store.files.size).toBe(0);
-  const saved = await mealScanApi(put({ apiKey: KEY, model: 'gemini-2.5-flash' }), env, owner, NOON); const text = JSON.stringify(await saved.json());
+  const saved = await mealScanApi(put({ apiKey: KEY, model: 'gemini-3.8-flash' }), env, owner, NOON); const text = JSON.stringify(await saved.json());
   expect(saved.status).toBe(200); expect(text).not.toContain(KEY); expect(text).toContain('"configured":true');
   expect([...store.files.values()].join('')).not.toContain(KEY);
   expect(fetchMock.mock.calls.at(-1)![1].headers['x-goog-api-key']).toBe(KEY);

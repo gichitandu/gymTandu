@@ -23,7 +23,7 @@ const MEAL_SCAN_MAX_ITEMS=8;
 // Gemini (piano gratuito di Google AI Studio): solo Admin e Super Admin che incollano la propria chiave
 // nell'app (oppure, in alternativa, gli indirizzi in GEMINI_USER_EMAILS con il secret GEMINI_API_KEY).
 // Il modello si sceglie nell'app (o con GEMINI_MODEL); in caso di errore o limite la lettura passa a Workers AI.
-export const GEMINI_DEFAULT_MODEL='gemini-2.5-flash';
+export const GEMINI_DEFAULT_MODEL='gemini-3.8-flash';
 export const GEMINI_DEFAULT_DAILY_LIMIT=100;
 const GEMINI_TIMEOUT_MS=30000;
 const MEAL_SCAN_HISTORY_DAYS=60;
@@ -182,7 +182,9 @@ async function geminiLoad(env,user){
   const record=JSON.parse(await object.text());let apiKey=null;
   if(typeof record.apiKey==='string')apiKey=record.apiKey;
   else if(typeof record.data==='string'&&typeof record.iv==='string'){const cipher=await geminiCipher(env,user);if(cipher)apiKey=new TextDecoder().decode(await crypto.subtle.decrypt({name:'AES-GCM',iv:fromBase64(record.iv)},cipher,fromBase64(record.data)));}
-  return apiKey?{apiKey,model:geminiModelName(record.model),source:'app'}:null;
+  // Modelli ritirati da Google: le chiavi salvate con questi nomi passano al modello predefinito.
+  const model=record.model==='gemini-2.5-flash'?GEMINI_DEFAULT_MODEL:geminiModelName(record.model);
+  return apiKey?{apiKey,model,source:'app'}:null;
  }catch{return null;}
 }
 /** Credenziali Gemini dell'utente: prima quelle incollate nell'app, poi (facoltativo) i secret del server. */
@@ -277,12 +279,17 @@ async function geminiSettings(request,env,user,now){
  const model=body?.model?geminiModelName(String(body.model).trim()):GEMINI_DEFAULT_MODEL;
  if(!/^[\x21-\x7e]{20,200}$/.test(apiKey))mealScanFail('La chiave Gemini non sembra valida: incolla solo la chiave, senza spazi.');
  if(body?.model&&model!==String(body.model).trim())mealScanFail('Nome del modello non valido.');
+ // Prova reale (una richiesta minima): GET sul modello non basta, perché un modello ritirato risulta ancora elencato.
  let check;
- try{check=await geminiFetch(GEMINI_API+model,{method:'GET',headers:{'x-goog-api-key':apiKey}},15000);}
+ try{check=await geminiFetch(GEMINI_API+model+':generateContent',{method:'POST',headers:{'Content-Type':'application/json','x-goog-api-key':apiKey},body:JSON.stringify({contents:[{role:'user',parts:[{text:'ok'}]}],generationConfig:{maxOutputTokens:8}})},20000);}
  catch{return mealScanReply({error:'Impossibile verificare la chiave con Google. Riprova.'},502);}
- if(check.status===404)mealScanFail('Modello non trovato: controlla il nome in Google AI Studio.');
- if([400,401,403].includes(check.status))mealScanFail('Google ha rifiutato la chiave: controlla di averla copiata per intero.');
- if(!check.ok)return mealScanReply({error:'Impossibile verificare la chiave con Google. Riprova.'},502);
+ if(!check.ok){
+  let detail='';try{const body=await check.json();detail=[body?.error?.status,body?.error?.message].filter(item=>typeof item==='string').join(': ').replace(/\s+/g,' ').slice(0,200);}catch{}
+  if(check.status===404)mealScanFail('Modello non disponibile'+(detail?' ('+detail+')':'')+'. Scrivi nel campo Modello il nome attuale indicato da Google AI Studio.');
+  if([400,401,403].includes(check.status))mealScanFail('Google ha rifiutato la chiave: controlla di averla copiata per intero.'+(detail?' ('+detail+')':''));
+  if(check.status===429)mealScanFail('La chiave è valida ma la quota gratuita di Gemini non è disponibile ora'+(detail?' ('+detail+')':'')+'.');
+  return mealScanReply({error:'Impossibile verificare la chiave con Google. Riprova.'},502);
+ }
  await geminiStore(env,user,apiKey,model);
  return mealScanReply({gemini:await geminiInfo(env,user,now)});
 }

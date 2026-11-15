@@ -171,7 +171,7 @@ per cambiarlo), la lettura passa a Workers AI.
 
 1. Crea una chiave su <https://aistudio.google.com/apikey> (senza attivare la fatturazione).
 2. Incollala nel riquadro e tocca «Salva e attiva». Il modello è facoltativo (predefinito
-   `gemini-2.5-flash`): se Google lo sostituisce, scrivi qui il nome attuale.
+   `gemini-3.8-flash`): se Google lo sostituisce, scrivi qui il nome attuale.
 
 Il server verifica la chiave con Google prima di salvarla, la conserva nel bucket R2 privato
 (cifrata con AES-GCM derivata da `SETUP_CODE` e dall'utente, se il secret è impostato) e non la
