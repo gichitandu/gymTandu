@@ -26,7 +26,7 @@ beforeEach(() => {
   env = { DB: d1(), AI: { run } };
   vi.spyOn(console, 'error').mockImplementation(() => {});
 });
-afterEach(() => { sql.close(); vi.restoreAllMocks(); });
+afterEach(() => { sql.close(); vi.restoreAllMocks(); vi.unstubAllGlobals(); });
 
 it('blocca al 95% dell’allocazione gratuita e non permette di allargare il limite dalle variabili', () => {
   expect(mealScanBudget({})).toEqual({ limit: MEAL_SCAN_FREE_NEURONS, reservePercent: 5, cap: CAP });
@@ -171,4 +171,45 @@ it('accetta dal modello solo alimenti con valori plausibili', async () => {
   run.mockResolvedValue({ response: 'Non vedo cibo.', usage: { prompt_tokens: 900, completion_tokens: 10 } });
   expect(await (await scan()).json()).toMatchObject({ kind: 'none', items: [] });
   expect((await mealScanStatus(env, NOON)).requests).toBe(1);
+});
+
+// Gemini: riservato agli indirizzi autorizzati, con ripiego su Workers AI. Rete simulata, nessuna chiave reale.
+const owner = { id: 'owner', role: 'SuperAdmin', email: 'owner@example.test' };
+const geminiReply = (text: string, ok = true, status = 200) => ({ ok, status, json: async () => ({ candidates: [{ content: { parts: [{ text }] } }] }) });
+const geminiCount = () => (sql.prepare('SELECT requests FROM ai_usage WHERE day=?').get('gemini-2026-11-14') as any)?.requests;
+
+it('Gemini serve solo gli indirizzi elencati; gli altri account usano sempre Workers AI', async () => {
+  const fetchMock = vi.fn(async () => geminiReply(JSON.stringify(meal))); vi.stubGlobal('fetch', fetchMock);
+  env = { ...env, GEMINI_API_KEY: 'chiave-finta', GEMINI_USER_EMAILS: 'Owner@Example.test, altro@example.test' };
+  const mine = await (await scan(NOON, owner)).json() as any;
+  expect(mine.provider).toBe('gemini'); expect(mine.items).toEqual(meal.items);
+  expect(fetchMock).toHaveBeenCalledTimes(1); expect(run).not.toHaveBeenCalled();
+  const [url, init] = fetchMock.mock.calls[0] as any[];
+  expect(url).toContain('https://generativelanguage.googleapis.com/'); expect(url).not.toContain('chiave-finta');
+  expect(init.headers['x-goog-api-key']).toBe('chiave-finta');
+  expect(JSON.parse(init.body).contents[0].parts[1].inline_data.mime_type).toBe('image/jpeg');
+  expect(geminiCount()).toBe(1); expect(usage()).toBeUndefined();
+  sql.prepare('INSERT INTO app_features(id,nutrition_enabled,revision) VALUES(?,1,1)').run('current');
+  const other = await (await scan(NOON, { ...client, email: 'cliente@example.test' })).json() as any;
+  expect(other.provider).toBe('cloudflare'); expect(run).toHaveBeenCalledTimes(1); expect(fetchMock).toHaveBeenCalledTimes(1);
+  // Senza chiave o con un indirizzo non elencato Gemini non viene mai chiamato.
+  env = { ...env, GEMINI_API_KEY: '' }; expect(((await (await scan(NOON, owner)).json()) as any).provider).toBe('cloudflare');
+  expect(fetchMock).toHaveBeenCalledTimes(1);
+});
+
+it('se Gemini fallisce o raggiunge il limite la lettura passa a Workers AI', async () => {
+  const fetchMock = vi.fn(async () => geminiReply('', false, 500)); vi.stubGlobal('fetch', fetchMock);
+  env = { ...env, GEMINI_API_KEY: 'chiave-finta', GEMINI_USER_EMAILS: 'owner@example.test', GEMINI_DAILY_LIMIT: '2' };
+  expect(((await (await scan(NOON, owner)).json()) as any).provider).toBe('cloudflare');
+  fetchMock.mockResolvedValue(geminiReply('{"kind":"none","items":[]}') as any);
+  expect(((await (await scan(NOON, owner)).json()) as any).provider).toBe('gemini');
+  // Limite giornaliero Gemini (2) raggiunto: Cloudflare, senza chiamare Google.
+  expect(((await (await scan(NOON, owner)).json()) as any).provider).toBe('cloudflare');
+  expect(fetchMock).toHaveBeenCalledTimes(2); expect(geminiCount()).toBe(2);
+  // 429 di Google: giorno bloccato per Gemini.
+  sql.exec("DELETE FROM ai_usage WHERE day LIKE 'gemini-%'");
+  fetchMock.mockResolvedValue(geminiReply('', false, 429) as any);
+  await scan(NOON, owner); await scan(NOON, owner);
+  expect(fetchMock).toHaveBeenCalledTimes(3);
+  expect((sql.prepare("SELECT blocked FROM ai_usage WHERE day LIKE 'gemini-%'").get() as any).blocked).toBe(1);
 });

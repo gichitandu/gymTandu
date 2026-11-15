@@ -161,6 +161,23 @@ applicare le migrazioni D1. Per disattivare la funzione togli quel blocco e ripu
 Variabili facoltative, che possono solo **restringere** il limite:
 `AI_DAILY_NEURON_LIMIT` (meno di 10.000) e `AI_RESERVE_PERCENT` (più di 5).
 
+### Gemini solo per il proprietario (facoltativo, gratuito)
+
+Gli account elencati in `GEMINI_USER_EMAILS` leggono le foto con Gemini (piano gratuito di
+Google AI Studio); tutti gli altri continuano a usare Workers AI. Se Gemini non risponde o
+raggiunge il limite giornaliero, la lettura passa a Workers AI.
+
+1. Crea una chiave su <https://aistudio.google.com/apikey> (senza attivare la fatturazione).
+2. `npx wrangler secret put GEMINI_API_KEY` e incolla la chiave.
+3. In `wrangler.jsonc`, in `vars`, aggiungi `"GEMINI_USER_EMAILS": "tua@email"` (più indirizzi
+   separati da virgola; l'indirizzo non è un segreto). Facoltativi: `GEMINI_MODEL` (predefinito
+   `gemini-2.5-flash`) e `GEMINI_DAILY_LIMIT` (richieste al giorno, predefinito 100: tienilo
+   sotto il limite del tuo piano).
+4. Pubblica di nuovo. Non servono nuove migrazioni.
+
+Il conteggio usa la tabella `ai_usage` (riga `gemini-AAAA-MM-GG`). Con il piano gratuito Google
+può usare i contenuti inviati per migliorare i suoi prodotti: invia solo foto che puoi condividere.
+
 Cose da sapere:
 
 - Il contatore vede solo le letture fatte da GymTrack. Se nello stesso account Cloudflare
