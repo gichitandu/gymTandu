@@ -250,6 +250,7 @@ async function geminiScan(env,user,image,now){
   // Un 500/503/504 di Google è quasi sempre un picco passeggero: al massimo tre tentativi, con una breve pausa.
   // Ogni tentativo conta nel limite giornaliero, come per Google.
   let output,lastError='';
+  const startedAt=Date.now();
   for(let attempt=0;attempt<GEMINI_MAX_ATTEMPTS;attempt++){
    const key=await geminiReserve(env,user,now);
    if(!key)return{error:attempt?lastError:'limite giornaliero Gemini raggiunto'};
@@ -257,7 +258,7 @@ async function geminiScan(env,user,image,now){
    catch(error){
     // 429 = limite del piano gratuito raggiunto: stop fino al ripristino.
     if(error?.httpStatus===429)await mealScanBlockDay(env,key).catch(()=>{});
-    lastError=error?.name==='AbortError'?'tempo scaduto':String(error?.message||error).slice(0,200);
+    lastError=error?.name==='AbortError'?'tempo scaduto dopo '+Math.round((Date.now()-startedAt)/1000)+' s con '+credentials.model:String(error?.message||error).slice(0,200);
     console.error('Gemini non disponibile:',lastError);
     if(![500,503,504].includes(error?.httpStatus)||attempt===GEMINI_MAX_ATTEMPTS-1)return{error:lastError};
     await new Promise(resolve=>setTimeout(resolve,GEMINI_RETRY_DELAY_MS*(attempt+1)));
@@ -281,6 +282,22 @@ async function geminiInfo(env,user,now){
  }catch{}
  return info;
 }
+/** Modelli Gemini che la chiave dell'admin può usare per generare testo da una foto. */
+async function geminiModels(env,user){
+ if(!mealScanAdmin(user))mealScanFail('Solo gli admin possono configurare Gemini.',403);
+ const credentials=await geminiCredentials(env,user);
+ if(!credentials)mealScanFail('Incolla prima la chiave Gemini.');
+ let response;
+ try{response=await geminiFetch('https://generativelanguage.googleapis.com/v1beta/models?pageSize=200',{method:'GET',headers:{'x-goog-api-key':credentials.apiKey}},15000);}
+ catch{return mealScanReply({error:'Impossibile leggere l’elenco dei modelli. Riprova.'},502);}
+ if(!response.ok)return mealScanReply({error:'Google non ha restituito l’elenco dei modelli (HTTP '+response.status+').'},502);
+ const data=await response.json();
+ const models=(Array.isArray(data?.models)?data.models:[])
+  .filter(item=>typeof item?.name==='string'&&Array.isArray(item.supportedGenerationMethods)&&item.supportedGenerationMethods.includes('generateContent'))
+  .map(item=>item.name.replace(/^models\//,'')).filter(name=>/^gemini-/.test(name)&&!/embed|tts|image|live|audio|robotics|computer/i.test(name)&&/^[A-Za-z0-9._-]{1,60}$/.test(name))
+  .sort((a,b)=>(/lite/.test(b)?1:0)-(/lite/.test(a)?1:0)||a.localeCompare(b)).slice(0,40);
+ return mealScanReply({models,current:credentials.model});
+}
 /** Salva o rimuove la chiave personale dell'Admin. La chiave viene verificata con Google prima di salvarla. */
 async function geminiSettings(request,env,user,now){
  if(!mealScanAdmin(user))return mealScanReply({error:'Solo gli admin possono configurare Gemini.'},403);
@@ -291,8 +308,10 @@ async function geminiSettings(request,env,user,now){
  }
  const text=await request.text();if(text.length>2048)mealScanFail('Richiesta non valida.');
  let body;try{body=JSON.parse(text);}catch{mealScanFail('Richiesta non valida.');}
- const apiKey=typeof body?.apiKey==='string'?body.apiKey.trim():'';
+ let apiKey=typeof body?.apiKey==='string'?body.apiKey.trim():'';
  const model=body?.model?geminiModelName(String(body.model).trim()):GEMINI_DEFAULT_MODEL;
+ // Senza chiave nuova si cambia solo il modello, riusando la chiave già salvata dall'app.
+ if(!apiKey){const stored=await geminiLoad(env,user);if(stored?.source!=='app')mealScanFail('Incolla prima la chiave Gemini.');apiKey=stored.apiKey;}
  if(!/^[\x21-\x7e]{20,200}$/.test(apiKey))mealScanFail('La chiave Gemini non sembra valida: incolla solo la chiave, senza spazi.');
  if(body?.model&&model!==String(body.model).trim())mealScanFail('Nome del modello non valido.');
  // Prova reale (una richiesta minima): GET sul modello non basta, perché un modello ritirato risulta ancora elencato.
@@ -318,6 +337,7 @@ export async function mealScanApi(request,env,user,now=Date.now()){
   if(request.method==='PUT'||request.method==='DELETE')return await geminiSettings(request,env,user,now);
   if(!await mealScanAllowed(env,user))return mealScanReply({error:'La sezione Pasti non è attiva per questo account.'},403);
   const status=await mealScanStatus(env,now);
+  if(request.method==='GET'&&new URL(request.url).searchParams.get('models')==='1')return await geminiModels(env,user);
   if(request.method==='GET')return mealScanReply(mealScanAdmin(user)?{...status,gemini:await geminiInfo(env,user,now)}:status);
   const useGemini=!!await geminiCredentials(env,user);
   if(!status.available&&!useGemini)return mealScanReply({error:status.setup==='migration'?'Database da aggiornare: applica le migrazioni prima di usare la lettura foto.':'Lettura foto con AI non configurata su questo server.',code:'AI_UNAVAILABLE',status},503);

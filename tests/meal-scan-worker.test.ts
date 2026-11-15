@@ -276,3 +276,24 @@ it('Gemini chiede un ragionamento ridotto e, se il modello non lo accetta, ripro
   expect(JSON.parse(fetchMock.mock.calls[0][1].body).generationConfig.thinkingConfig).toEqual({ thinkingLevel: 'low' });
   expect(JSON.parse(fetchMock.mock.calls[1][1].body).generationConfig.thinkingConfig).toBeUndefined();
 });
+
+it('l’admin vede i modelli disponibili e cambia solo il modello senza reinserire la chiave', async () => {
+  const fetchMock = vi.fn(async (url: string) => String(url).includes('/models?') ? ({ ok: true, status: 200, json: async () => ({ models: [
+    { name: 'models/gemini-3.8-flash', supportedGenerationMethods: ['generateContent'] },
+    { name: 'models/gemini-3.8-flash-lite', supportedGenerationMethods: ['generateContent'] },
+    { name: 'models/gemini-embedding-001', supportedGenerationMethods: ['embedContent'] },
+    { name: 'models/imagen-4', supportedGenerationMethods: ['predict'] }] }) }) : geminiReply(JSON.stringify(meal)));
+  vi.stubGlobal('fetch', fetchMock);
+  env = { ...env, BUCKET: bucket(), SETUP_CODE: 'codice-finto' };
+  const models = (u: any = owner) => mealScanApi(new Request('https://gymtrack.test/api/meal-scan?models=1'), env, u, NOON);
+  expect((await models()).status).toBe(400);
+  await mealScanApi(put({ apiKey: KEY }), env, owner, NOON);
+  const listed = await (await models()).json() as any;
+  expect(listed.models).toEqual(['gemini-3.8-flash-lite', 'gemini-3.8-flash']);
+  expect((await models(client)).status).toBe(403);
+  const changed = await (await mealScanApi(put({ model: 'gemini-3.8-flash-lite' }), env, owner, NOON)).json() as any;
+  expect(changed.gemini).toMatchObject({ configured: true, model: 'gemini-3.8-flash-lite' });
+  expect(fetchMock.mock.calls.at(-1)![0]).toContain('gemini-3.8-flash-lite:generateContent');
+  await scan(NOON, owner); expect(String(fetchMock.mock.calls.at(-1)![0])).toContain('gemini-3.8-flash-lite:generateContent');
+  expect((await mealScanApi(put({ model: 'gemini-3.8-flash' }), { ...env, BUCKET: bucket() }, owner, NOON)).status).toBe(400);
+});

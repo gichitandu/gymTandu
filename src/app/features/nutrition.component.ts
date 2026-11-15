@@ -85,6 +85,8 @@ interface MealFormDraft {
 <form (submit)="$event.preventDefault();saveGemini()"><label>Chiave API Gemini<input type="password" autocomplete="off" autocapitalize="off" spellcheck="false" [value]="geminiKey()" (input)="geminiKey.set($any($event.target).value)" placeholder="Incolla la chiave"></label>
 <label>Modello (facoltativo)<input type="text" autocomplete="off" autocapitalize="off" spellcheck="false" [value]="geminiModel()" (input)="geminiModel.set($any($event.target).value)" [placeholder]="g.model"></label>
 <div class="actions"><button class="primary" [disabled]="geminiBusy()||!geminiKey().trim()">{{geminiBusy()?'Verifica in corso…':g.configured&&g.source==='app'?'Sostituisci chiave':'Salva e attiva'}}</button>@if(g.configured&&g.source==='app'){<button type="button" class="ghost danger" (click)="removeGemini()" [disabled]="geminiBusy()">Rimuovi chiave</button>}</div></form>}
+@if(g.configured&&g.source==='app'){<div class="actions"><button type="button" (click)="loadGeminiModels()" [disabled]="geminiBusy()">Scegli un altro modello</button></div>
+@if(geminiModels().length){<label>Modello in uso: {{g.model}}<select [value]="g.model" (change)="pickGeminiModel($any($event.target).value)" [disabled]="geminiBusy()">@for(m of geminiModels();track m){<option [value]="m" [selected]="m===g.model">{{m}}</option>}</select></label><p class="subtle">I modelli «lite» sono di solito più veloci: se Gemini va in timeout, provane uno.</p>}}
 @if(geminiMessage()){<p class="subtle" role="status">{{geminiMessage()}}</p>}
 <p class="subtle">La chiave viene verificata con Google, salvata cifrata sul server e non viene mai mostrata né restituita all’app. Con il piano gratuito Google può usare le foto inviate per migliorare i suoi servizi: usalo solo per foto che puoi condividere.</p></div>}
 <p class="subtle" style="margin-top:12px">Riconoscimento sul dispositivo: il primo utilizzo scarica il modello gratuito (circa 2 MB), poi funziona anche offline. Riconosce alcuni alimenti singoli e può non riconoscere piatti misti: scegli o correggi sempre i risultati prima di salvare.</p><p class="subtle" style="margin-top:12px">{{ai.status()}}</p>
@@ -125,6 +127,17 @@ export class NutritionComponent {
  analysisState=signal<'idle'|'running'|'done'|'unrecognized'|'error'|'cancelled'|'blocked'>('idle');analysisMessage=signal('');preparingAI=signal(false);private analysisRequest=0;
  /** Lettura con Workers AI tramite il server; assente offline o nei contesti senza account. */
  cloud=inject(MealScanService,{optional:true});analysisSource=signal<''|'cloud'|'device'>('');private scanIds=new Set<string>();
+ geminiModels=signal<string[]>([]);
+ async loadGeminiModels(){
+  if(!this.cloud||this.geminiBusy())return;this.geminiBusy.set(true);this.geminiMessage.set('');
+  try{const result=await this.cloud.geminiModels();this.geminiModels.set(result.models);if(!result.models.length)this.geminiMessage.set('Google non ha elencato modelli utilizzabili con questa chiave.');}
+  catch(e){this.geminiMessage.set((e as Error).message);}finally{this.geminiBusy.set(false);}
+ }
+ async pickGeminiModel(model:string){
+  if(!this.cloud||this.geminiBusy()||!model)return;this.geminiBusy.set(true);this.geminiMessage.set('');
+  try{await this.cloud.saveGeminiModel(model);this.geminiMessage.set('Modello cambiato in '+model+'. Riprova la foto.');}
+  catch(e){this.geminiMessage.set((e as Error).message);}finally{this.geminiBusy.set(false);}
+ }
  geminiKey=signal('');geminiModel=signal('');geminiBusy=signal(false);geminiMessage=signal('');
  async saveGemini(){
   if(!this.cloud||this.geminiBusy())return;this.geminiBusy.set(true);this.geminiMessage.set('');

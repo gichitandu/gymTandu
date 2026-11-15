@@ -118,6 +118,16 @@ export class MealScanService {
  }
  /** Salva la chiave Gemini personale dell'admin: il server la verifica con Google e non la restituisce mai. */
  async saveGeminiKey(apiKey:string,model:string):Promise<void>{await this.geminiRequest('PUT',{apiKey:apiKey.trim(),model:model.trim()});}
+ /** Cambia solo il modello, riusando la chiave già salvata dal server. */
+ async saveGeminiModel(model:string):Promise<void>{await this.geminiRequest('PUT',{model:model.trim()});}
+ /** Modelli Gemini disponibili per la chiave dell'admin. */
+ async geminiModels():Promise<{models:string[];current:string}>{
+  if(!this.online())throw Error('Serve la connessione e l’accesso all’account.');
+  const response=await fetch('/api/meal-scan?models=1',{credentials:'same-origin',cache:'no-store'});
+  let data:any;try{data=await response.json();}catch{throw Error('Risposta del server non valida. Riprova.');}
+  if(!response.ok)throw Error(data?.error||'Elenco dei modelli non disponibile.');
+  return {models:Array.isArray(data?.models)?data.models.filter((item:unknown)=>typeof item==='string'):[],current:typeof data?.current==='string'?data.current:''};
+ }
  async removeGeminiKey():Promise<void>{await this.geminiRequest('DELETE');}
  private async geminiRequest(method:'PUT'|'DELETE',body?:unknown){
   if(!this.online())throw Error('Serve la connessione e l’accesso all’account.');
