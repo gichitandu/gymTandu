@@ -2,7 +2,8 @@ import {inject,Injectable,signal} from '@angular/core';
 import {AuthService} from './auth';
 import {photoDataUrl} from './images';
 
-export interface MealScanStatus {available:boolean;blocked:boolean;usedPercent:number;thresholdPercent:number;resetAt:number;remainingScans:number;used?:number;cap?:number;limit?:number;requests?:number;setup?:string}
+export interface GeminiInfo {configured:boolean;source:''|'app'|'server';model:string;dailyLimit:number;used:number;storage:boolean}
+export interface MealScanStatus {gemini?:GeminiInfo;available:boolean;blocked:boolean;usedPercent:number;thresholdPercent:number;resetAt:number;remainingScans:number;used?:number;cap?:number;limit?:number;requests?:number;setup?:string}
 export interface MealScanItem {name:string;grams:number;calories:number;protein:number;carbs:number;fat:number}
 export interface MealScanResult {kind:'plate'|'label'|'none';dish:string;items:MealScanItem[]}
 /** Il limite gratuito giornaliero è quasi esaurito: nessuna richiesta fino al ripristino. */
@@ -65,7 +66,8 @@ export class MealScanService {
  /** Toglie il blocco solo dopo l'orario di ripristino. */
  private expire(){if(this.blockedUntil()&&!this.blocked()){this.unblock();this.status.set(null);this.statusAt=0;}}
  private apply(status:MealScanStatus){
-  this.status.set(status);this.statusAt=Date.now();
+  // Le risposte alle scansioni non contengono i dati Gemini: restano quelli dell'ultimo stato completo.
+  this.status.set({...status,gemini:status.gemini??this.status()?.gemini});this.statusAt=Date.now();
   if(status.available&&status.blocked)this.block(status.resetAt);else this.unblock();
  }
 
@@ -112,6 +114,17 @@ export class MealScanService {
    if(this.blocked())throw new MealScanLimitError(this.blockedUntil());
    return validResult(await this.call({image},controller.signal,60000));
   }finally{this.busy.set(false);if(this.controller===controller)this.controller=undefined;}
+ }
+ /** Salva la chiave Gemini personale dell'admin: il server la verifica con Google e non la restituisce mai. */
+ async saveGeminiKey(apiKey:string,model:string):Promise<void>{await this.geminiRequest('PUT',{apiKey:apiKey.trim(),model:model.trim()});}
+ async removeGeminiKey():Promise<void>{await this.geminiRequest('DELETE');}
+ private async geminiRequest(method:'PUT'|'DELETE',body?:unknown){
+  if(!this.online())throw Error('Serve la connessione e l’accesso all’account.');
+  const response=await fetch('/api/meal-scan',{method,credentials:'same-origin',cache:'no-store',headers:body?{'Content-Type':'application/json'}:{},body:body?JSON.stringify(body):undefined});
+  let data:any;try{data=await response.json();}catch{throw Error('Risposta del server non valida. Riprova.');}
+  if(!response.ok)throw Error(data?.error||'Operazione non riuscita. Riprova.');
+  const current=this.status();if(current&&data?.gemini)this.status.set({...current,gemini:data.gemini});
+  else await this.ensureStatus(true);
  }
  cancel(){this.controller?.abort();}
  ngOnDestroy(){clearTimeout(this.timer);this.controller?.abort();}

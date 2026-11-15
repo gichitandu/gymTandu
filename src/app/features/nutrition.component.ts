@@ -79,6 +79,14 @@ interface MealFormDraft {
 @if(isAdmin()){<details class="card ai-details" [open]="aiOpen"><summary>Lettura foto con AI · solo admin</summary>
 @if(cloud?.status();as c){<dl class="device-report"><dt>Workers AI (Cloudflare)</dt><dd>{{c.available?(c.blocked?'In pausa: attendere ripristino':'Attiva'):c.setup==='migration'?'Database da aggiornare: applica le migrazioni':'Non configurata su questo server'}}</dd>@if(c.available){<dt>Uso di oggi</dt><dd>{{c.used}} di {{c.limit}} Neuron ({{c.usedPercent}}%) · {{c.requests}} letture</dd><dt>Blocco automatico</dt><dd>Al {{c.thresholdPercent}}% del limite gratuito ({{c.cap}} Neuron)</dd><dt>Ripristino</dt><dd>Ogni giorno alle {{cloud!.resetTime()}} (00:00 UTC)</dd>}</dl>}
 <p class="subtle" style="margin-top:12px">Con l’account online la foto viene letta da Workers AI di Cloudflare, che propone alimenti, grammi e valori. Il server conta i consumi e si ferma prima del limite gratuito giornaliero: fino al ripristino non parte alcuna richiesta. Senza connessione, senza Workers AI o durante la pausa resta il riconoscimento sul dispositivo qui sotto.</p>
+@if(cloud?.status()?.gemini;as g){<div class="gemini-box" style="margin-top:12px"><h4 style="margin:0 0 6px">Gemini personale (gratuito)</h4>
+<p class="subtle">{{g.configured?(g.source==='app'?'Attivo con la tua chiave. Le tue foto vengono lette da Gemini; gli altri account usano Workers AI. Oggi: '+g.used+' di '+g.dailyLimit+' letture.':'Attivo con la chiave impostata sul server.'):'Incolla la tua chiave di Google AI Studio per far leggere a Gemini le tue foto. Gli altri account continuano a usare Workers AI. Se Gemini non risponde o finisce il limite si passa automaticamente a Workers AI.'}}</p>
+@if(!g.storage){<p class="subtle">Archivio del server non disponibile: impossibile salvare la chiave.</p>}@else{
+<form (submit)="$event.preventDefault();saveGemini()"><label>Chiave API Gemini<input type="password" autocomplete="off" autocapitalize="off" spellcheck="false" [value]="geminiKey()" (input)="geminiKey.set($any($event.target).value)" placeholder="Incolla la chiave"></label>
+<label>Modello (facoltativo)<input type="text" autocomplete="off" autocapitalize="off" spellcheck="false" [value]="geminiModel()" (input)="geminiModel.set($any($event.target).value)" [placeholder]="g.model"></label>
+<div class="actions"><button class="primary" [disabled]="geminiBusy()||!geminiKey().trim()">{{geminiBusy()?'Verifica in corso…':g.configured&&g.source==='app'?'Sostituisci chiave':'Salva e attiva'}}</button>@if(g.configured&&g.source==='app'){<button type="button" class="ghost danger" (click)="removeGemini()" [disabled]="geminiBusy()">Rimuovi chiave</button>}</div></form>}
+@if(geminiMessage()){<p class="subtle" role="status">{{geminiMessage()}}</p>}
+<p class="subtle">La chiave viene verificata con Google, salvata cifrata sul server e non viene mai mostrata né restituita all’app. Con il piano gratuito Google può usare le foto inviate per migliorare i suoi servizi: usalo solo per foto che puoi condividere.</p></div>}
 <p class="subtle" style="margin-top:12px">Riconoscimento sul dispositivo: il primo utilizzo scarica il modello gratuito (circa 2 MB), poi funziona anche offline. Riconosce alcuni alimenti singoli e può non riconoscere piatti misti: scegli o correggi sempre i risultati prima di salvare.</p><p class="subtle" style="margin-top:12px">{{ai.status()}}</p>
 @if(ai.report();as r){<dl class="device-report"><dt>Motore</dt><dd>{{r.backend}} · {{r.model}}</dd><dt>Ultima prova sul dispositivo</dt><dd>{{r.milliseconds}} ms per inferenza, {{r.loadMs}} ms caricamento</dd><dt>Memoria tensori</dt><dd>{{(r.tensorBytes/1048576).toFixed(1)}} MB (non è la RAM totale)</dd><dt>Modello all’avvio della prova</dt><dd>{{r.cached?'Letto dal dispositivo':'Caricato dal sito'}}</dd></dl>}
 <div class="actions"><button (click)="prepareAI()" [disabled]="ai.busy()||!ai.supported">Verifica modello</button>@if(ai.busy()&&(preparingAI()||analysisState()==='running')){<button (click)="analysisState()==='running'?cancelAnalysis():ai.cancel()">Interrompi</button>}<button (click)="ai.remove()" [disabled]="ai.busy()">Reimposta riconoscimento</button></div>
@@ -117,6 +125,17 @@ export class NutritionComponent {
  analysisState=signal<'idle'|'running'|'done'|'unrecognized'|'error'|'cancelled'|'blocked'>('idle');analysisMessage=signal('');preparingAI=signal(false);private analysisRequest=0;
  /** Lettura con Workers AI tramite il server; assente offline o nei contesti senza account. */
  cloud=inject(MealScanService,{optional:true});analysisSource=signal<''|'cloud'|'device'>('');private scanIds=new Set<string>();
+ geminiKey=signal('');geminiModel=signal('');geminiBusy=signal(false);geminiMessage=signal('');
+ async saveGemini(){
+  if(!this.cloud||this.geminiBusy())return;this.geminiBusy.set(true);this.geminiMessage.set('');
+  try{await this.cloud.saveGeminiKey(this.geminiKey(),this.geminiModel());this.geminiKey.set('');this.geminiMessage.set('Gemini attivato per il tuo account.');}
+  catch(e){this.geminiMessage.set((e as Error).message);}finally{this.geminiBusy.set(false);}
+ }
+ async removeGemini(){
+  if(!this.cloud||this.geminiBusy())return;this.geminiBusy.set(true);this.geminiMessage.set('');
+  try{await this.cloud.removeGeminiKey();this.geminiMessage.set('Chiave rimossa: le tue foto tornano a Workers AI.');}
+  catch(e){this.geminiMessage.set((e as Error).message);}finally{this.geminiBusy.set(false);}
+ }
  aiBlocked(){return !!this.cloud?.blocked();}
  aiWaitDetail(){const time=this.cloud?.resetTime();return 'Lettura foto con AI in pausa'+(time?' fino alle '+time:'')+': il limite gratuito giornaliero è quasi raggiunto. Puoi comunque scrivere il pasto a mano.';}
  aiMeter(){const status=this.cloud?.status();if(!status?.available||this.aiBlocked())return null;return {percent:Math.min(100,status.thresholdPercent>0?status.usedPercent/status.thresholdPercent*100:100),text:'Lettura foto con AI · usato il '+status.usedPercent.toLocaleString('it-IT',{maximumFractionDigits:1})+'% del limite gratuito di oggi'};}

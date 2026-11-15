@@ -42,7 +42,7 @@ it('richiede un account e segue la visibilità della sezione Pasti', async () =>
   expect(run).not.toHaveBeenCalled();
   sql.prepare('INSERT INTO app_features(id,nutrition_enabled,revision) VALUES(?,1,1)').run('current');
   expect((await mealScanApi(get(), env, client, NOON)).status).toBe(200);
-  expect((await mealScanApi(new Request('https://gymtrack.test/api/meal-scan', { method: 'DELETE' }), env, admin, NOON)).status).toBe(405);
+  expect((await mealScanApi(new Request('https://gymtrack.test/api/meal-scan', { method: 'PATCH' }), env, admin, NOON)).status).toBe(405);
   // Il percorso è collegato al Worker principale e senza sessione non raggiunge il modello.
   const routed = await api(new Request('https://gymtrack.test/api/meal-scan', { headers: { 'oai-authenticated-user-id': 'visitor' } }), env, {});
   expect(routed.status).toBe(401);
@@ -176,7 +176,7 @@ it('accetta dal modello solo alimenti con valori plausibili', async () => {
 // Gemini: riservato agli indirizzi autorizzati, con ripiego su Workers AI. Rete simulata, nessuna chiave reale.
 const owner = { id: 'owner', role: 'SuperAdmin', email: 'owner@example.test' };
 const geminiReply = (text: string, ok = true, status = 200) => ({ ok, status, json: async () => ({ candidates: [{ content: { parts: [{ text }] } }] }) });
-const geminiCount = () => (sql.prepare('SELECT requests FROM ai_usage WHERE day=?').get('gemini-2026-11-14') as any)?.requests;
+const geminiCount = () => (sql.prepare('SELECT requests FROM ai_usage WHERE day=?').get('gemini-2026-11-14-owner') as any)?.requests;
 
 it('Gemini serve solo gli indirizzi elencati; gli altri account usano sempre Workers AI', async () => {
   const fetchMock = vi.fn(async () => geminiReply(JSON.stringify(meal))); vi.stubGlobal('fetch', fetchMock);
@@ -212,4 +212,41 @@ it('se Gemini fallisce o raggiunge il limite la lettura passa a Workers AI', asy
   await scan(NOON, owner); await scan(NOON, owner);
   expect(fetchMock).toHaveBeenCalledTimes(3);
   expect((sql.prepare("SELECT blocked FROM ai_usage WHERE day LIKE 'gemini-%'").get() as any).blocked).toBe(1);
+});
+
+// Chiave personale incollata nell'app: archivio R2 finto, Google simulato.
+const bucket = () => { const files = new Map<string, string>(); return { files, put: async (k: string, v: string) => { files.set(k, v); }, get: async (k: string) => files.has(k) ? { text: async () => files.get(k)! } : null, delete: async (k: string) => { files.delete(k); } }; };
+const KEY = 'AIza' + 'x'.repeat(35);
+const put = (body: any) => new Request('https://gymtrack.test/api/meal-scan', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+const remove = () => new Request('https://gymtrack.test/api/meal-scan', { method: 'DELETE' });
+
+it('un admin incolla la chiave nell’app: viene verificata, salvata cifrata e non è mai restituita', async () => {
+  const fetchMock = vi.fn(async (_url: string, init: any) => init.method === 'GET' ? ({ ok: true, status: 200 }) : geminiReply(JSON.stringify(meal))); vi.stubGlobal('fetch', fetchMock);
+  const store = bucket(); env = { ...env, BUCKET: store, SETUP_CODE: 'codice-di-setup-finto' };
+  // Chi non è admin non può salvare né leggere.
+  expect((await mealScanApi(put({ apiKey: KEY }), env, client, NOON)).status).toBe(403);
+  expect(store.files.size).toBe(0);
+  // Chiavi malformate o rifiutate da Google non vengono salvate.
+  expect((await mealScanApi(put({ apiKey: 'corta' }), env, owner, NOON)).status).toBe(400);
+  fetchMock.mockResolvedValueOnce({ ok: false, status: 403 } as any);
+  expect((await mealScanApi(put({ apiKey: KEY }), env, owner, NOON)).status).toBe(400);
+  fetchMock.mockResolvedValueOnce({ ok: false, status: 404 } as any);
+  expect(((await (await mealScanApi(put({ apiKey: KEY, model: 'modello-inesistente' }), env, owner, NOON)).json()) as any).error).toContain('Modello non trovato');
+  expect(store.files.size).toBe(0);
+  const saved = await mealScanApi(put({ apiKey: KEY, model: 'gemini-2.5-flash' }), env, owner, NOON); const text = JSON.stringify(await saved.json());
+  expect(saved.status).toBe(200); expect(text).not.toContain(KEY); expect(text).toContain('"configured":true');
+  expect([...store.files.values()].join('')).not.toContain(KEY);
+  expect(fetchMock.mock.calls.at(-1)![1].headers['x-goog-api-key']).toBe(KEY);
+  // La chiave salvata viene usata solo da questo account.
+  const mine = await (await scan(NOON, owner)).json() as any;
+  expect(mine.provider).toBe('gemini'); expect(fetchMock.mock.calls.at(-1)![1].headers['x-goog-api-key']).toBe(KEY);
+  const status = await (await mealScanApi(get(), env, owner, NOON)).json() as any;
+  expect(status.gemini).toMatchObject({ configured: true, source: 'app', used: 1 }); expect(JSON.stringify(status)).not.toContain(KEY);
+  sql.prepare('INSERT INTO app_features(id,nutrition_enabled,revision) VALUES(?,1,1)').run('current');
+  expect(((await (await scan(NOON, { ...client, email: 'x@example.test' })).json()) as any).provider).toBe('cloudflare');
+  // Con un altro SETUP_CODE la chiave non è più leggibile: si passa a Workers AI.
+  expect(((await (await mealScanApi(post(), { ...env, SETUP_CODE: 'altro-codice-finto' }, owner, NOON)).json()) as any).provider).toBe('cloudflare');
+  // Rimozione.
+  expect(((await (await mealScanApi(remove(), env, owner, NOON)).json()) as any).gemini.configured).toBe(false);
+  expect(store.files.size).toBe(0); expect(((await (await scan(NOON, owner)).json()) as any).provider).toBe('cloudflare');
 });

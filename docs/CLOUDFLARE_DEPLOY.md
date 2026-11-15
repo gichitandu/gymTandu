@@ -161,22 +161,28 @@ applicare le migrazioni D1. Per disattivare la funzione togli quel blocco e ripu
 Variabili facoltative, che possono solo **restringere** il limite:
 `AI_DAILY_NEURON_LIMIT` (meno di 10.000) e `AI_RESERVE_PERCENT` (più di 5).
 
-### Gemini solo per il proprietario (facoltativo, gratuito)
+### Gemini personale per Admin e Super Admin (facoltativo, gratuito)
 
-Gli account elencati in `GEMINI_USER_EMAILS` leggono le foto con Gemini (piano gratuito di
-Google AI Studio); tutti gli altri continuano a usare Workers AI. Se Gemini non risponde o
-raggiunge il limite giornaliero, la lettura passa a Workers AI.
+Un Admin o Super Admin può far leggere le proprie foto a Gemini (piano gratuito di Google AI
+Studio) direttamente dall'app, senza toccare file né secret: in **Pasti → Lettura foto con AI**
+compare il riquadro «Gemini personale». Gli altri account continuano a usare Workers AI. Se
+Gemini non risponde o raggiunge il limite giornaliero (100 richieste per utente, `GEMINI_DAILY_LIMIT`
+per cambiarlo), la lettura passa a Workers AI.
 
 1. Crea una chiave su <https://aistudio.google.com/apikey> (senza attivare la fatturazione).
-2. `npx wrangler secret put GEMINI_API_KEY` e incolla la chiave.
-3. In `wrangler.jsonc`, in `vars`, aggiungi `"GEMINI_USER_EMAILS": "tua@email"` (più indirizzi
-   separati da virgola; l'indirizzo non è un segreto). Facoltativi: `GEMINI_MODEL` (predefinito
-   `gemini-2.5-flash`) e `GEMINI_DAILY_LIMIT` (richieste al giorno, predefinito 100: tienilo
-   sotto il limite del tuo piano).
-4. Pubblica di nuovo. Non servono nuove migrazioni.
+2. Incollala nel riquadro e tocca «Salva e attiva». Il modello è facoltativo (predefinito
+   `gemini-2.5-flash`): se Google lo sostituisce, scrivi qui il nome attuale.
 
-Il conteggio usa la tabella `ai_usage` (riga `gemini-AAAA-MM-GG`). Con il piano gratuito Google
-può usare i contenuti inviati per migliorare i suoi prodotti: invia solo foto che puoi condividere.
+Il server verifica la chiave con Google prima di salvarla, la conserva nel bucket R2 privato
+(cifrata con AES-GCM derivata da `SETUP_CODE` e dall'utente, se il secret è impostato) e non la
+restituisce mai all'app: l'app vede solo se è attiva. Se cambi `SETUP_CODE` la chiave non è più
+leggibile e va incollata di nuovo. «Rimuovi chiave» la cancella. Non servono migrazioni: il
+conteggio usa la tabella `ai_usage` (righe `gemini-AAAA-MM-GG-id`).
+
+In alternativa, per gestirla da terminale: secret `GEMINI_API_KEY` e variabile
+`GEMINI_USER_EMAILS` (indirizzi separati da virgola); la chiave incollata nell'app ha la precedenza.
+Con il piano gratuito Google può usare i contenuti inviati per migliorare i suoi prodotti: invia
+solo foto che puoi condividere.
 
 Cose da sapere:
 
