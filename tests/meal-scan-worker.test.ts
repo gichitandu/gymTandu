@@ -2,7 +2,7 @@ import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { DatabaseSync } from 'node:sqlite';
 import { readFileSync, readdirSync } from 'node:fs';
 import { api } from '../worker/index.js';
-import { MEAL_SCAN_FREE_NEURONS, MEAL_SCAN_MODEL, MEAL_SCAN_RESERVATION, mealScanApi, mealScanBudget, mealScanNeurons, mealScanParse, mealScanStatus } from '../worker/meal-scan.js';
+import { MEAL_SCAN_FREE_NEURONS, MEAL_SCAN_MODEL, MEAL_SCAN_RESERVATION, mealScanApi, mealScanBudget, mealScanNeurons, mealScanParse, mealScanStatus, setGeminiRetryDelay } from '../worker/meal-scan.js';
 
 // Dati sintetici: SQLite in memoria al posto di D1 e un modello finto al posto di Workers AI.
 const NOON = Date.UTC(2026, 10, 14, 12), CAP = 9500;
@@ -20,6 +20,7 @@ const usage = () => sql.prepare('SELECT neurons,requests,blocked FROM ai_usage W
 const preset = (neurons: number) => sql.prepare('INSERT INTO ai_usage(day,neurons,requests,blocked,updated_at) VALUES(?,?,0,0,0)').run('2026-11-14', neurons);
 
 beforeEach(() => {
+  setGeminiRetryDelay(0);
   sql = new DatabaseSync(':memory:');
   for (const file of readdirSync('drizzle').filter(file => file.endsWith('.sql')).sort()) sql.exec(readFileSync('drizzle/' + file, 'utf8'));
   run = vi.fn(async () => answer());
@@ -198,10 +199,10 @@ it('Gemini serve solo gli indirizzi elencati; gli altri account usano sempre Wor
 });
 
 it('se Gemini fallisce o raggiunge il limite la lettura passa a Workers AI', async () => {
-  const fetchMock = vi.fn(async () => geminiReply('', false, 500)); vi.stubGlobal('fetch', fetchMock);
+  const fetchMock = vi.fn(async () => geminiReply('', false, 403)); vi.stubGlobal('fetch', fetchMock);
   env = { ...env, GEMINI_API_KEY: 'chiave-finta', GEMINI_USER_EMAILS: 'owner@example.test', GEMINI_DAILY_LIMIT: '2' };
   const failed = await (await scan(NOON, owner)).json() as any;
-  expect(failed.provider).toBe('cloudflare'); expect(failed.geminiError).toContain('Gemini HTTP 500');
+  expect(failed.provider).toBe('cloudflare'); expect(failed.geminiError).toContain('Gemini HTTP 403');
   fetchMock.mockResolvedValue(geminiReply('{"kind":"none","items":[]}') as any);
   expect(((await (await scan(NOON, owner)).json()) as any).provider).toBe('gemini');
   // Limite giornaliero Gemini (2) raggiunto: Cloudflare, senza chiamare Google.
@@ -251,4 +252,18 @@ it('un admin incolla la chiave nell’app: viene verificata, salvata cifrata e n
   // Rimozione.
   expect(((await (await mealScanApi(remove(), env, owner, NOON)).json()) as any).gemini.configured).toBe(false);
   expect(store.files.size).toBe(0); expect(((await (await scan(NOON, owner)).json()) as any).provider).toBe('cloudflare');
+});
+
+it('Gemini riprova dopo un 503 passeggero e passa a Cloudflare solo se continua a fallire', async () => {
+  const fetchMock = vi.fn(); vi.stubGlobal('fetch', fetchMock);
+  env = { ...env, GEMINI_API_KEY: 'chiave-finta', GEMINI_USER_EMAILS: 'owner@example.test' };
+  fetchMock.mockResolvedValueOnce(geminiReply('', false, 503) as any).mockResolvedValueOnce(geminiReply(JSON.stringify(meal)) as any);
+  const ok = await (await scan(NOON, owner)).json() as any;
+  expect(ok.provider).toBe('gemini'); expect(fetchMock).toHaveBeenCalledTimes(2); expect(geminiCount()).toBe(2); expect(run).not.toHaveBeenCalled();
+  fetchMock.mockReset(); fetchMock.mockResolvedValue(geminiReply('', false, 503) as any);
+  const down = await (await scan(NOON, owner)).json() as any;
+  expect(down.provider).toBe('cloudflare'); expect(down.geminiError).toContain('503'); expect(fetchMock).toHaveBeenCalledTimes(3);
+  // Un errore definitivo (chiave rifiutata) non viene ritentato.
+  fetchMock.mockReset(); fetchMock.mockResolvedValue(geminiReply('', false, 403) as any);
+  await scan(NOON, owner); expect(fetchMock).toHaveBeenCalledTimes(1);
 });
