@@ -7,6 +7,10 @@ import { CATALOG, DEFAULT_PROFILE, generatePlan, recommendNextSet, assessRecover
 import type { ActualSet, Equipment, ExercisePrescription, Muscle, Profile, TrainingPlan, RecoveryAssessment } from '../coach/models';
 
 type Tab = 'plan' | 'train' | 'profile' | 'method';
+type MuscleGroup = 'upper' | 'legs' | 'core';
+type MuscleTone = 'push' | 'pull' | 'legs' | 'arms' | 'core';
+const MUSCLE_GROUP: Record<Muscle, MuscleGroup> = { chest: 'upper', back: 'upper', shoulders: 'upper', biceps: 'upper', triceps: 'upper', quads: 'legs', hamstrings: 'legs', glutes: 'legs', calves: 'legs', core: 'core' };
+const MUSCLE_TONE: Record<Muscle, MuscleTone> = { chest: 'push', shoulders: 'push', back: 'pull', biceps: 'arms', triceps: 'arms', quads: 'legs', hamstrings: 'legs', glutes: 'legs', calves: 'legs', core: 'core' };
 interface Source { id: string; title: string; authors?: string; year: number; url: string; principle: string; limitations: string; }
 
 @Component({
@@ -66,6 +70,16 @@ export class CoachPageComponent {
   readonly volumeRows = computed(() => this.muscleOptions.map(m => ({ ...m, sets: this.plan()?.weeklyVolume[m.id] ?? 0 })).filter(m => m.sets > 0));
   readonly maxVolume = computed(() => Math.max(1, ...this.volumeRows().map(m => m.sets)));
   readonly workingDone = computed(() => this.done().filter(s => s.kind === 'working').length);
+  readonly weeklySets = computed(() => this.volumeRows().reduce((sum, m) => sum + m.sets, 0));
+  readonly volumeSorted = computed(() => [...this.volumeRows()].sort((a, b) => b.sets - a.sets));
+  readonly volumeGroups = computed(() => {
+    const rows = this.volumeRows(), total = Math.max(1, this.weeklySets());
+    const groups: { id: MuscleGroup; label: string }[] = [{ id: 'upper', label: 'Parte alta' }, { id: 'legs', label: 'Gambe' }, { id: 'core', label: 'Core' }];
+    return groups.map(g => {
+      const sets = rows.filter(m => MUSCLE_GROUP[m.id] === g.id).reduce((sum, m) => sum + m.sets, 0);
+      return { ...g, sets, share: sets / total * 100 };
+    }).filter(g => g.sets > 0);
+  });
   inputWeight: number | null = null;
   inputReps = 10;
   inputRir: number | null = null;
@@ -123,6 +137,12 @@ export class CoachPageComponent {
   }
   removeExclusion(id: string) { this.draft.excludedExerciseIds = this.draft.excludedExerciseIds.filter(x => x !== id); this.markDirty(); }
   exerciseName(id: string) { return CATALOG.find(e => e.id === id)?.name || id; }
+  /** Muscolo principale dal catalogo, solo per etichetta e colore della riga. */
+  primaryMuscle(id: string): { name: string; tone: MuscleTone } | null {
+    const muscle = CATALOG.find(e => e.id === id)?.primary[0];
+    if (!muscle) return null;
+    return { name: this.muscleOptions.find(m => m.id === muscle)?.name ?? muscle, tone: MUSCLE_TONE[muscle] };
+  }
 
   regenerate(useDraft = true) {
     this.error.set('');

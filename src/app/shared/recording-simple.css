@@ -52,3 +52,26 @@
 :host .coach-shadow[data-coach-confidence] .coach-shadow-confidence i:first-of-type,:host .coach-shadow:is([data-coach-confidence=medium],[data-coach-confidence=high]) .coach-shadow-confidence i:nth-of-type(2),:host .coach-shadow[data-coach-confidence=high] .coach-shadow-confidence i:nth-of-type(3){background:var(--accent-text,var(--accent,#367dff))}
 :host button.coach-shadow-rest{display:inline-flex;align-items:center;gap:6px;min-height:36px;margin:2px 0 0 4px;padding:0 12px;border:1px solid color-mix(in srgb,var(--accent-text,var(--accent,#367dff)) 55%,transparent);border-radius:999px;background:transparent;color:var(--accent-text,var(--accent,#367dff));font:inherit;font-size:12.5px;font-weight:700}
 :host .coach-shadow-rest gt-icon{width:14px;height:14px}
+:host .coach-shadow-title{display:inline-flex;align-items:center;min-height:24px;padding:0 10px;border-radius:999px;background:color-mix(in srgb,var(--text,#fff) 10%,transparent);font-size:12px;font-weight:750;letter-spacing:.01em}
+:host .coach-shadow[data-coach-action=raise] .coach-shadow-title{background:color-mix(in srgb,var(--green,#42d5a0) 20%,transparent);color:var(--green,#42d5a0)}
+:host .coach-shadow[data-coach-action=lower] .coach-shadow-title,:host .coach-shadow[data-coach-action=stop] .coach-shadow-title{background:color-mix(in srgb,var(--warning,#ffc95c) 20%,transparent);color:var(--warning,#ffc95c)}
+:host .coach-shadow-brief{margin:2px 0 0;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font-size:12.5px;line-height:1.4;color:var(--muted,#8e9bad)}
+:host .coach-shadow-confidence-mini{margin-top:4px}
+
+/* ===== Coach Ombra in seduta: card ridisegnata (stessa struttura e stessi comandi) ===== */
+:host .coach-shadow-compact{--coach-tone:var(--accent-text,var(--accent,#367dff));position:relative;overflow:hidden;padding:12px 12px 12px 20px;border:1px solid color-mix(in srgb,var(--coach-tone) 42%,transparent);border-radius:22px;background:linear-gradient(135deg,color-mix(in srgb,var(--coach-tone) 17%,var(--card,#131923)),var(--card,#131923) 72%);box-shadow:0 12px 28px color-mix(in srgb,var(--coach-tone) 13%,transparent)}
+:host .coach-shadow-compact[data-coach-action=raise]{--coach-tone:var(--green,#42d5a0)}
+:host .coach-shadow-compact[data-coach-action=lower],:host .coach-shadow-compact[data-coach-action=stop]{--coach-tone:var(--warning,#ffc95c)}
+:host .coach-shadow-compact::before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:linear-gradient(180deg,var(--coach-tone),color-mix(in srgb,var(--coach-tone) 30%,transparent))}
+:host .coach-shadow-compact .coach-shadow-main{align-items:flex-start;gap:6px;text-align:left}
+:host .coach-shadow-compact .coach-shadow-head{gap:8px;color:var(--coach-tone);font-size:11px;font-weight:800;letter-spacing:.14em}
+:host .coach-shadow-compact .coach-shadow-head gt-icon{display:grid;place-items:center;box-sizing:border-box;width:26px;height:26px;padding:5px;border-radius:9px;background:color-mix(in srgb,var(--coach-tone) 22%,transparent);color:var(--coach-tone)}
+:host .coach-shadow-compact .coach-shadow-line{gap:10px}
+:host .coach-shadow-compact .coach-shadow-line strong{font-size:27px;font-weight:850;letter-spacing:-.035em;line-height:1.1;color:var(--text,inherit);font-variant-numeric:tabular-nums}
+:host .coach-shadow-compact .coach-shadow-delta{padding:3px 10px;font-size:12px;font-weight:800}
+:host .coach-shadow-compact[data-coach-action=raise] .coach-shadow-delta::before{content:"▲ ";font-size:9px}
+:host .coach-shadow-compact[data-coach-action=lower] .coach-shadow-delta::before{content:"▼ ";font-size:9px}
+:host .coach-shadow-compact .coach-shadow-title{order:-1}
+:host .coach-shadow-compact .coach-shadow-apply{min-height:48px;padding:0 20px;border:0;background:var(--coach-tone);color:var(--bg,#0b0f17);font-size:14.5px;font-weight:800;box-shadow:0 8px 20px color-mix(in srgb,var(--coach-tone) 36%,transparent)}
+:host .coach-shadow-compact.applied .coach-shadow-apply{background:color-mix(in srgb,var(--coach-tone) 20%,transparent);color:var(--coach-tone);box-shadow:none}
+:host .coach-shadow-compact .coach-shadow-brief{padding:6px 6px 0 0;font-size:13px;color:var(--text,inherit);opacity:.8}

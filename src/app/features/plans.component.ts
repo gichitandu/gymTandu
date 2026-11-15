@@ -29,6 +29,7 @@ import {
   localDate,
 } from "../models/domain";
 import { TodayService } from '../services/today';
+import { coachNextSet, daysBetween } from '../services/coach-shadow';
 import { parseLocalDate } from '../services/calendar';
 import { IconComponent } from "../shared/icon.component";
 import { StatusComponent } from "../shared/status.component";
@@ -170,6 +171,11 @@ type PlanEditorDraft = {
         }
         @if (modal() === "exercise") {
           <form class="pe-form" [formGroup]="exerciseForm" (ngSubmit)="saveExercise()">
+            <ol class="pe-steps" aria-label="Passi">
+              <li [class.pe-on]="exerciseStep()==='pick'" [class.pe-done]="exerciseStep()==='config'"><button type="button" (click)="exerciseStep.set('pick')" [disabled]="saving()||exerciseStep()==='pick'" [attr.aria-current]="exerciseStep()==='pick'?'step':null"><i>{{exerciseStep()==='config'?'✓':'1'}}</i>Esercizio</button></li>
+              <li class="pe-steps-line" aria-hidden="true"></li>
+              <li [class.pe-on]="exerciseStep()==='config'"><span [attr.aria-current]="exerciseStep()==='config'?'step':null"><i>2</i>Schema</span></li>
+            </ol>
             @if(exerciseStep()==='pick'){
               <div class="pe-search"><gt-icon name="search"/><input type="search" aria-label="Cerca esercizio per nome" [ngModel]="exerciseSearch()" (ngModelChange)="exerciseSearch.set($event)" [ngModelOptions]="{ standalone: true }" placeholder="Cerca: panca, squat, curl…" enterkeyhint="search" autocomplete="off" /></div>
               <gt-exercise-scope class="pe-scope" [value]="scope()" (choose)="scope.set($event)"/>
@@ -193,6 +199,12 @@ type PlanEditorDraft = {
                   <button type="button" class="su-iconbtn pe-fav" [class.on]="s.isFavorite(selected.id)" (click)="s.toggleFavorite(selected.id)" [attr.aria-pressed]="s.isFavorite(selected.id)" [attr.aria-label]="s.isFavorite(selected.id)?'Rimuovi dai preferiti':'Aggiungi ai preferiti'">{{s.isFavorite(selected.id)?'★':'☆'}}</button>
                   <button type="button" class="su-chip" (click)="exerciseStep.set('pick')" [disabled]="saving()">Cambia</button></div>
               }@else{<button type="button" class="su-btn sm ghost" (click)="exerciseStep.set('pick')">Scegli un esercizio</button>}
+              @if(coachHint();as hint){<section class="pe-coach" [attr.data-coach-action]="hint.action" [attr.data-coach-confidence]="hint.confidence" aria-label="Suggerimento del Coach Ombra">
+                <div class="pe-coach-head"><span class="pe-coach-icon" aria-hidden="true"><gt-icon name="bolt"/></span><span class="pe-coach-kicker">Coach Ombra</span>@if(hint.title){<span class="pe-coach-badge">{{hint.title}}</span>}</div>
+                @if(hint.target){<div class="pe-coach-compare"><div class="pe-coach-col"><small>Ultima volta</small><b>{{hint.lastShort}}</b></div><span class="pe-coach-arrow" aria-hidden="true"><gt-icon name="arrow"/></span><div class="pe-coach-col main"><small>Proposta</small><b>{{hint.target}}</b>@if(hint.delta){<i class="pe-coach-delta">{{hint.delta}}</i>}</div></div><p class="pe-coach-last">{{hint.last}}</p>}
+                <p class="pe-coach-reason">{{hint.reason}}</p>
+                <div class="pe-coach-foot">@if(hint.confidenceLabel){<span class="pe-coach-conf" [attr.aria-label]="'Affidabilità: '+hint.confidenceLabel"><i></i><i></i><i></i>{{hint.confidenceLabel}}</span>}@if(hint.weight!==null){<button type="button" class="pe-coach-use" (click)="useCoachWeight(hint.weight)" [disabled]="saving()||exerciseForm.controls.targetWeight.value===hint.weight"><gt-icon [name]="exerciseForm.controls.targetWeight.value===hint.weight?'check':'sparkle'"/>{{exerciseForm.controls.targetWeight.value===hint.weight?'Peso target impostato':'Usa come peso target'}}</button>}</div>
+              </section>}
               <div class="pe-row">
                 <div><span class="su-label" id="pe-sets-label">Serie allenanti</span>
                   <div class="pe-stepper" role="group" aria-labelledby="pe-sets-label"><button type="button" (click)="bump('sets',-1,1,30)" [disabled]="saving()" aria-label="Una serie in meno">−</button><input type="number" inputmode="numeric" min="1" max="30" formControlName="sets" aria-labelledby="pe-sets-label"/><button type="button" (click)="bump('sets',1,1,30)" [disabled]="saving()" aria-label="Una serie in più">+</button></div></div>
@@ -223,6 +235,7 @@ type PlanEditorDraft = {
                 <textarea id="pe-ex-notes" class="su-field" formControlName="notes" maxlength="1000" placeholder="Tecnica, presa, tempo…"></textarea>
               </details>
               <div class="pe-actions">
+                <p class="pe-summary" aria-live="polite">{{exerciseSummary()}}</p>
                 <button class="su-btn su-primary" [disabled]="exerciseForm.invalid || repsInverted() || saving() || s.busy()">{{saving()?'Salvataggio…':'Salva esercizio'}}</button>
                 @if(!editId){<button type="button" class="su-btn sm" (click)="saveExercise(true)" [disabled]="exerciseForm.invalid || repsInverted() || saving() || s.busy()"><gt-icon name="plus"/>Salva e aggiungi un altro</button>}
               </div>
@@ -361,6 +374,34 @@ export class PlansComponent {
     for(const day of this.visibleDays(plan))for(const row of this.s.planExercises(day.id)){const group=this.s.muscle(this.s.exercise(row.exerciseId)?.muscleGroupId||'');if(group)totals.set(group,(totals.get(group)||0)+row.sets);}
     return [...totals].map(([name,sets])=>({name,sets})).sort((a,b)=>b.sets-a.sets||a.name.localeCompare(b.name));
   }
+  /** Coach Ombra nell'editor: cosa proporrebbe per questo esercizio, letto dall'ultima seduta registrata. */
+  coachHint(){
+    if(this.modal()!=='exercise'||this.exerciseStep()!=='config')return null;
+    const form=this.exerciseForm.getRawValue(),exercise=this.s.exercise(form.exerciseId||'');
+    const repsMin=Number(form.repsMin),repsMax=Number(form.repsMax);
+    if(!exercise||!Number.isInteger(repsMin)||!Number.isInteger(repsMax)||repsMin<1||repsMax<repsMin)return null;
+    const previous=this.s.previous(exercise.id);
+    const empty={action:'hold',title:'',target:'',last:'',lastShort:'',delta:'',confidence:'low',confidenceLabel:'',reason:'',weight:null as number|null};
+    if(!previous.length)return {...empty,reason:'Nessuna seduta registrata con questo esercizio: dopo il primo allenamento il Coach Ombra ti suggerirà carico e ripetizioni.'};
+    const unit=(kg:number)=>this.s.formatWeight(kg)+' '+this.s.settings().unit,data=this.s.data();
+    const row=data.workoutExercises.find(item=>item.id===previous[0].workoutExerciseId),date=data.workouts.find(workout=>workout.id===row?.workoutId)?.date;
+    const loaded=exercise.loadMode!=='bodyweight';
+    const suggestion=coachNextSet({repsMin,repsMax,incrementKg:this.s.preference(exercise.id)?.weightStep??this.s.kg(2.5),loadMode:exercise.loadMode,targetRpe:form.rpe??undefined,reference:previous.map(item=>({weight:item.weight,reps:item.reps,rpe:item.rpe})),daysSinceReference:daysBetween(date,this.today),done:[],formatWeight:unit});
+    if(!suggestion)return null;
+    const same=previous.every(item=>Math.abs(item.weight-previous[0].weight)<0.000001);
+    const last='Ultima volta: '+(loaded?(same?unit(previous[0].weight)+' × '+previous.map(item=>item.reps).join(' · '):previous.map(item=>unit(item.weight)+' × '+item.reps).join(' · ')):previous.map(item=>item.reps).join(' · ')+' rip.');
+    const first=previous[0],diff=loaded?suggestion.weight-first.weight:suggestion.reps-first.reps;
+    const delta=Math.abs(diff)<0.000001?'= stesso carico':(diff>0?'+':'−')+(loaded?unit(Math.abs(diff)):Math.abs(diff)+' rip.');
+    return {action:suggestion.action,title:suggestion.title,target:loaded?unit(suggestion.weight)+' · '+suggestion.reps+' rip.':suggestion.reps+' rip.',last,lastShort:loaded?unit(first.weight)+' × '+first.reps:first.reps+' rip.',delta:loaded?delta:delta.replace('= stesso carico','= stesse rip.'),confidence:suggestion.confidence as string,confidenceLabel:suggestion.confidence==='high'?'Dati completi':suggestion.confidence==='medium'?'Dati parziali':'Dati scarsi',reason:suggestion.reason,weight:loaded&&suggestion.weight>0?this.s.weightInput(suggestion.weight):null as number|null};
+  }
+  /** Riepilogo in tempo reale dell'esercizio che si sta impostando: serie, ripetizioni, recupero e durata indicativa. */
+  exerciseSummary(){
+    const v=this.exerciseForm.getRawValue(),sets=Number(v.sets)||0,min=Number(v.repsMin)||0,max=Number(v.repsMax)||0,rest=Number(v.rest)||0,warm=Number(v.warmupSets)||0;
+    if(!sets||!min||!max)return 'Imposta serie e ripetizioni';
+    const minutes=Math.max(1,Math.round((sets*(45+rest)+warm*75)/60));
+    return sets+' × '+(min===max?min:min+'–'+max)+' rip · rec. '+this.restLabel(rest)+(warm?' · '+warm+' risc.':'')+' · ~'+minutes+' min';
+  }
+  useCoachWeight(weight:number){const control=this.exerciseForm.controls.targetWeight;control.setValue(weight);control.markAsDirty();this.advancedOpen.set(true);}
   availableExercises = computed(() =>
     this.s
       .data()

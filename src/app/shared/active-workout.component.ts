@@ -166,7 +166,7 @@ export class ActiveWorkoutComponent {
  });
  coachDeltaLabel(){const c=this.coach(),set=this.currentSet(),e=this.selected();if(!c||!set||!e)return '';if(c.action==='stop')return 'Fermati';
   // Confronto con l'ultima serie allenante fatta oggi; senza, con il carico già impostato (se c'è).
-  const last=this.s.sets(e.id).filter(x=>x.completed&&x.kind!=='warmup'&&x.number<set.number).at(-1),base=last?.weight??(set.weight>0?set.weight:undefined);if(base===undefined)return '';const d=c.weight-base;if(Math.abs(d)<0.000001)return 'Mantieni';return (d>0?'+':'−')+this.s.formatWeight(Math.abs(d))+' '+this.s.settings().unit;}
+  const last=this.s.sets(e.id).filter(x=>x.completed&&x.kind!=='warmup'&&x.number<set.number).at(-1),base=last?.weight??this.lastTimeSet()?.weight??(set.weight>0?set.weight:undefined);if(base===undefined)return '';const d=c.weight-base;if(Math.abs(d)<0.000001)return 'Mantieni';return (d>0?'+':'−')+this.s.formatWeight(Math.abs(d))+' '+this.s.settings().unit;}
  applyCoach(){const c=this.coach();if(!c||c.action==='stop')return;this.weight=this.s.weightInput(c.weight);this.reps=c.reps;this.inputChanged();}
  coachApplied(){const c=this.coach();return !!c&&c.action!=='stop'&&this.weight===this.s.weightInput(c.weight)&&this.reps===c.reps;}
  dismissCoach(){const set=this.currentSet();if(!set)return;this.coachDismissed.update(v=>new Set(v).add(set.id));}
