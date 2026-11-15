@@ -270,7 +270,7 @@ async function geminiSettings(request,env,user,now){
  let body;try{body=JSON.parse(text);}catch{mealScanFail('Richiesta non valida.');}
  const apiKey=typeof body?.apiKey==='string'?body.apiKey.trim():'';
  const model=body?.model?geminiModelName(String(body.model).trim()):GEMINI_DEFAULT_MODEL;
- if(!/^[A-Za-z0-9_-]{30,80}$/.test(apiKey))mealScanFail('La chiave Gemini non sembra valida: incolla solo la chiave, senza spazi.');
+ if(!/^[\x21-\x7e]{20,200}$/.test(apiKey))mealScanFail('La chiave Gemini non sembra valida: incolla solo la chiave, senza spazi.');
  if(body?.model&&model!==String(body.model).trim())mealScanFail('Nome del modello non valido.');
  let check;
  try{check=await geminiFetch(GEMINI_API+model,{method:'GET',headers:{'x-goog-api-key':apiKey}},15000);}
