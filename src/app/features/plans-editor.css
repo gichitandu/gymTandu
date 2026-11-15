@@ -28,8 +28,8 @@
   display: grid;
   gap: 8px;
   margin: auto -18px 0;
-  padding: 14px 18px calc(14px + var(--safe-bottom, 0px));
-  background: linear-gradient(180deg, transparent, var(--card) 22%);
+  padding: 22px 18px calc(14px + var(--safe-bottom, 0px));
+  background: linear-gradient(180deg, transparent, var(--card) 34%);
 }
 .pe-actions .su-btn { min-height: 52px; }
 .pe-actions .su-btn.sm { min-height: 46px; }
@@ -340,3 +340,99 @@
 @media (prefers-reduced-motion: reduce) {
   .pe-more > summary gt-icon, .pl-manage-chev { transition: none; }
 }
+
+/* ===== Passi 1·2 e riepilogo dell'esercizio ===== */
+.pe-steps { display: flex; align-items: center; gap: 8px; margin: 12px 0 0; padding: 0; list-style: none; }
+.pe-steps li { display: flex; align-items: center; flex: none; }
+.pe-steps button,
+.pe-steps li > span {
+  display: inline-flex; align-items: center; gap: 8px; min-height: 36px; margin: 0; padding: 0 12px 0 6px;
+  border: 0; border-radius: 999px; background: transparent; color: var(--muted); font-size: 13px; font-weight: 700; box-shadow: none;
+}
+.pe-steps i {
+  display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%;
+  background: color-mix(in srgb, var(--text) 10%, transparent); color: var(--muted); font-style: normal; font-size: 12px; font-weight: 800;
+}
+.pe-steps li.pe-on button, .pe-steps li.pe-on > span { color: var(--text); background: color-mix(in srgb, var(--accent) 16%, transparent); }
+.pe-steps li.pe-on i { background: var(--accent); color: var(--accent-ink, #111); }
+.pe-steps li.pe-done button { color: var(--text); }
+.pe-steps li.pe-done i { background: color-mix(in srgb, var(--green, #42d5a0) 24%, transparent); color: var(--green, #42d5a0); }
+.pe-steps-line { flex: 1 1 auto !important; height: 2px; min-width: 16px; border-radius: 2px; background: color-mix(in srgb, var(--text) 12%, transparent); }
+.pe-summary {
+  margin: 0; padding: 8px 12px; border-radius: 12px; text-align: center;
+  background: color-mix(in srgb, var(--text) 8%, var(--card)); color: var(--muted); font-size: 12.5px; font-weight: 650; font-variant-numeric: tabular-nums;
+}
+
+/* ===== Coach Ombra nell'editor dell'esercizio ===== */
+.pe-coach {
+  --coach-tone: var(--accent-text, var(--accent));
+  position: relative;
+  display: flex; flex-direction: column; gap: 12px;
+  margin-top: 14px; padding: 14px;
+  border: 1px solid transparent; border-radius: 22px;
+  background:
+    linear-gradient(var(--card), var(--card)) padding-box,
+    linear-gradient(135deg, color-mix(in srgb, var(--coach-tone) 75%, transparent), color-mix(in srgb, var(--coach-tone) 8%, transparent) 55%, color-mix(in srgb, var(--theme-secondary, var(--coach-tone)) 50%, transparent)) border-box;
+  box-shadow: 0 14px 34px color-mix(in srgb, var(--coach-tone) 16%, transparent);
+  overflow: hidden;
+}
+.pe-coach[data-coach-action="raise"] { --coach-tone: var(--green, #42d5a0); }
+.pe-coach[data-coach-action="lower"] { --coach-tone: var(--warning, #ffc95c); }
+.pe-coach::before {
+  content: ""; position: absolute; inset: 0; z-index: 0; pointer-events: none;
+  background: radial-gradient(120% 90% at 0 0, color-mix(in srgb, var(--coach-tone) 18%, transparent), transparent 62%);
+}
+.pe-coach > * { position: relative; z-index: 1; }
+.pe-coach-head { display: flex; align-items: center; gap: 10px; }
+.pe-coach-icon {
+  position: relative; display: grid; place-items: center; flex: none; width: 34px; height: 34px; border-radius: 12px;
+  background: color-mix(in srgb, var(--coach-tone) 22%, transparent); color: var(--coach-tone);
+}
+.pe-coach-icon::after {
+  content: ""; position: absolute; inset: -4px; border-radius: 15px; border: 1.5px solid var(--coach-tone); opacity: 0;
+  animation: peCoachPulse 2.8s ease-out 1;
+}
+.pe-coach-icon gt-icon { width: 18px; height: 18px; }
+.pe-coach-kicker { flex: 1; min-width: 0; color: var(--coach-tone); font-size: 11.5px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; }
+.pe-coach-badge {
+  flex: none; padding: 4px 11px; border-radius: 999px; background: color-mix(in srgb, var(--coach-tone) 20%, transparent);
+  color: var(--coach-tone); font-size: 12px; font-weight: 800;
+}
+.pe-coach-compare { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1.5fr); align-items: stretch; gap: 8px; }
+.pe-coach-col {
+  display: flex; flex-direction: column; gap: 3px; min-width: 0; padding: 10px 12px; border-radius: 16px;
+  background: color-mix(in srgb, var(--text) 6%, transparent);
+}
+.pe-coach-col small { color: var(--muted); font-size: 10.5px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
+.pe-coach-col b { font-size: 15px; font-weight: 750; line-height: 1.25; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.pe-coach-col.main {
+  background: linear-gradient(150deg, color-mix(in srgb, var(--coach-tone) 24%, transparent), color-mix(in srgb, var(--coach-tone) 9%, transparent));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--coach-tone) 45%, transparent);
+}
+.pe-coach-col.main small { color: var(--coach-tone); }
+.pe-coach-col.main b { font-size: 17px; font-weight: 850; letter-spacing: -.02em; }
+.pe-coach-delta {
+  align-self: flex-start; margin-top: 2px; padding: 2px 9px; border-radius: 999px; background: color-mix(in srgb, var(--coach-tone) 24%, transparent);
+  color: var(--coach-tone); font-size: 12px; font-style: normal; font-weight: 800; font-variant-numeric: tabular-nums;
+}
+.pe-coach-arrow { display: grid; place-items: center; color: var(--coach-tone); }
+.pe-coach-arrow gt-icon { width: 18px; height: 18px; }
+.pe-coach-last { margin: -4px 2px 0; font-size: 11.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.pe-coach-reason { margin: 0 2px; font-size: 13px; line-height: 1.5; color: var(--text); opacity: .86; }
+.pe-coach-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; }
+.pe-coach-conf { display: inline-flex; align-items: center; gap: 4px; color: var(--muted); font-size: 11.5px; font-weight: 650; }
+.pe-coach-conf i { width: 18px; height: 5px; border-radius: 3px; background: color-mix(in srgb, var(--text) 16%, transparent); }
+.pe-coach-conf i:last-of-type { margin-right: 4px; }
+.pe-coach[data-coach-confidence]:not([data-coach-confidence=""]) .pe-coach-conf i:first-of-type,
+.pe-coach:is([data-coach-confidence="medium"], [data-coach-confidence="high"]) .pe-coach-conf i:nth-of-type(2),
+.pe-coach[data-coach-confidence="high"] .pe-coach-conf i:nth-of-type(3) { background: var(--coach-tone); }
+.pe-coach-use {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px; flex: 1 1 190px; min-height: 46px; margin: 0; padding: 0 18px;
+  border: 0; border-radius: 999px; background: var(--coach-tone); color: var(--bg); font-size: 14px; font-weight: 800;
+  box-shadow: 0 8px 22px color-mix(in srgb, var(--coach-tone) 38%, transparent);
+}
+.pe-coach-use gt-icon { width: 17px; height: 17px; }
+.pe-coach-use:disabled { background: color-mix(in srgb, var(--coach-tone) 18%, transparent); color: var(--coach-tone); box-shadow: none; opacity: 1; }
+@keyframes peCoachPulse { 0% { opacity: .7; transform: scale(.85); } 100% { opacity: 0; transform: scale(1.35); } }
+@media (max-width: 359px) { .pe-coach-compare { grid-template-columns: 1fr; } .pe-coach-arrow { transform: rotate(90deg); } }
+@media (prefers-reduced-motion: reduce) { .pe-coach-icon::after { animation: none; } }

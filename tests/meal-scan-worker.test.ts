@@ -2,7 +2,7 @@ import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { DatabaseSync } from 'node:sqlite';
 import { readFileSync, readdirSync } from 'node:fs';
 import { api } from '../worker/index.js';
-import { MEAL_SCAN_FREE_NEURONS, MEAL_SCAN_MODEL, MEAL_SCAN_RESERVATION, mealScanApi, mealScanBudget, mealScanNeurons, mealScanParse, mealScanStatus } from '../worker/meal-scan.js';
+import { MEAL_SCAN_FREE_NEURONS, MEAL_SCAN_MODEL, MEAL_SCAN_RESERVATION, mealScanApi, mealScanBudget, mealScanNeurons, mealScanParse, mealScanStatus, setGeminiRetryDelay } from '../worker/meal-scan.js';
 
 // Dati sintetici: SQLite in memoria al posto di D1 e un modello finto al posto di Workers AI.
 const NOON = Date.UTC(2026, 10, 14, 12), CAP = 9500;
@@ -20,13 +20,14 @@ const usage = () => sql.prepare('SELECT neurons,requests,blocked FROM ai_usage W
 const preset = (neurons: number) => sql.prepare('INSERT INTO ai_usage(day,neurons,requests,blocked,updated_at) VALUES(?,?,0,0,0)').run('2026-11-14', neurons);
 
 beforeEach(() => {
+  setGeminiRetryDelay(0);
   sql = new DatabaseSync(':memory:');
   for (const file of readdirSync('drizzle').filter(file => file.endsWith('.sql')).sort()) sql.exec(readFileSync('drizzle/' + file, 'utf8'));
   run = vi.fn(async () => answer());
   env = { DB: d1(), AI: { run } };
   vi.spyOn(console, 'error').mockImplementation(() => {});
 });
-afterEach(() => { sql.close(); vi.restoreAllMocks(); });
+afterEach(() => { sql.close(); vi.restoreAllMocks(); vi.unstubAllGlobals(); });
 
 it('blocca al 95% dell’allocazione gratuita e non permette di allargare il limite dalle variabili', () => {
   expect(mealScanBudget({})).toEqual({ limit: MEAL_SCAN_FREE_NEURONS, reservePercent: 5, cap: CAP });
@@ -42,7 +43,7 @@ it('richiede un account e segue la visibilità della sezione Pasti', async () =>
   expect(run).not.toHaveBeenCalled();
   sql.prepare('INSERT INTO app_features(id,nutrition_enabled,revision) VALUES(?,1,1)').run('current');
   expect((await mealScanApi(get(), env, client, NOON)).status).toBe(200);
-  expect((await mealScanApi(new Request('https://gymtrack.test/api/meal-scan', { method: 'DELETE' }), env, admin, NOON)).status).toBe(405);
+  expect((await mealScanApi(new Request('https://gymtrack.test/api/meal-scan', { method: 'PATCH' }), env, admin, NOON)).status).toBe(405);
   // Il percorso è collegato al Worker principale e senza sessione non raggiunge il modello.
   const routed = await api(new Request('https://gymtrack.test/api/meal-scan', { headers: { 'oai-authenticated-user-id': 'visitor' } }), env, {});
   expect(routed.status).toBe(401);
@@ -171,4 +172,128 @@ it('accetta dal modello solo alimenti con valori plausibili', async () => {
   run.mockResolvedValue({ response: 'Non vedo cibo.', usage: { prompt_tokens: 900, completion_tokens: 10 } });
   expect(await (await scan()).json()).toMatchObject({ kind: 'none', items: [] });
   expect((await mealScanStatus(env, NOON)).requests).toBe(1);
+});
+
+// Gemini: riservato agli indirizzi autorizzati, con ripiego su Workers AI. Rete simulata, nessuna chiave reale.
+const owner = { id: 'owner', role: 'SuperAdmin', email: 'owner@example.test' };
+const geminiReply = (text: string, ok = true, status = 200) => ({ ok, status, json: async () => ({ candidates: [{ content: { parts: [{ text }] } }] }) });
+const geminiCount = () => (sql.prepare('SELECT requests FROM ai_usage WHERE day=?').get('gemini-2026-11-14-owner') as any)?.requests;
+
+it('Gemini serve solo gli indirizzi elencati; gli altri account usano sempre Workers AI', async () => {
+  const fetchMock = vi.fn(async () => geminiReply(JSON.stringify(meal))); vi.stubGlobal('fetch', fetchMock);
+  env = { ...env, GEMINI_API_KEY: 'chiave-finta', GEMINI_USER_EMAILS: 'Owner@Example.test, altro@example.test' };
+  const mine = await (await scan(NOON, owner)).json() as any;
+  expect(mine.provider).toBe('gemini'); expect(mine.items).toEqual(meal.items);
+  expect(fetchMock).toHaveBeenCalledTimes(1); expect(run).not.toHaveBeenCalled();
+  const [url, init] = fetchMock.mock.calls[0] as any[];
+  expect(url).toContain('https://generativelanguage.googleapis.com/'); expect(url).not.toContain('chiave-finta');
+  expect(init.headers['x-goog-api-key']).toBe('chiave-finta');
+  expect(JSON.parse(init.body).contents[0].parts[1].inline_data.mime_type).toBe('image/jpeg');
+  expect(geminiCount()).toBe(1); expect(usage()).toBeUndefined();
+  sql.prepare('INSERT INTO app_features(id,nutrition_enabled,revision) VALUES(?,1,1)').run('current');
+  const other = await (await scan(NOON, { ...client, email: 'cliente@example.test' })).json() as any;
+  expect(other.provider).toBe('cloudflare'); expect(run).toHaveBeenCalledTimes(1); expect(fetchMock).toHaveBeenCalledTimes(1);
+  // Senza chiave o con un indirizzo non elencato Gemini non viene mai chiamato.
+  env = { ...env, GEMINI_API_KEY: '' }; expect(((await (await scan(NOON, owner)).json()) as any).provider).toBe('cloudflare');
+  expect(fetchMock).toHaveBeenCalledTimes(1);
+});
+
+it('se Gemini fallisce o raggiunge il limite la lettura passa a Workers AI', async () => {
+  const fetchMock = vi.fn(async () => geminiReply('', false, 403)); vi.stubGlobal('fetch', fetchMock);
+  env = { ...env, GEMINI_API_KEY: 'chiave-finta', GEMINI_USER_EMAILS: 'owner@example.test', GEMINI_DAILY_LIMIT: '2' };
+  const failed = await (await scan(NOON, owner)).json() as any;
+  expect(failed.provider).toBe('cloudflare'); expect(failed.geminiError).toContain('Gemini HTTP 403');
+  fetchMock.mockResolvedValue(geminiReply('{"kind":"none","items":[]}') as any);
+  expect(((await (await scan(NOON, owner)).json()) as any).provider).toBe('gemini');
+  // Limite giornaliero Gemini (2) raggiunto: Cloudflare, senza chiamare Google.
+  expect(((await (await scan(NOON, owner)).json()) as any).provider).toBe('cloudflare');
+  expect(fetchMock).toHaveBeenCalledTimes(2); expect(geminiCount()).toBe(2);
+  // 429 di Google: giorno bloccato per Gemini.
+  sql.exec("DELETE FROM ai_usage WHERE day LIKE 'gemini-%'");
+  fetchMock.mockResolvedValue(geminiReply('', false, 429) as any);
+  await scan(NOON, owner); await scan(NOON, owner);
+  expect(fetchMock).toHaveBeenCalledTimes(3);
+  expect((sql.prepare("SELECT blocked FROM ai_usage WHERE day LIKE 'gemini-%'").get() as any).blocked).toBe(1);
+});
+
+// Chiave personale incollata nell'app: archivio R2 finto, Google simulato.
+const bucket = () => { const files = new Map<string, string>(); return { files, put: async (k: string, v: string) => { files.set(k, v); }, get: async (k: string) => files.has(k) ? { text: async () => files.get(k)! } : null, delete: async (k: string) => { files.delete(k); } }; };
+const KEY = 'AIza' + 'x'.repeat(35);
+const put = (body: any) => new Request('https://gymtrack.test/api/meal-scan', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+const remove = () => new Request('https://gymtrack.test/api/meal-scan', { method: 'DELETE' });
+
+it('un admin incolla la chiave nell’app: viene verificata, salvata cifrata e non è mai restituita', async () => {
+  const fetchMock = vi.fn(async (_url: string, init: any) => geminiReply(JSON.stringify(meal))); vi.stubGlobal('fetch', fetchMock);
+  const store = bucket(); env = { ...env, BUCKET: store, SETUP_CODE: 'codice-di-setup-finto' };
+  // Chi non è admin non può salvare né leggere.
+  expect((await mealScanApi(put({ apiKey: KEY }), env, client, NOON)).status).toBe(403);
+  expect(store.files.size).toBe(0);
+  // Chiavi malformate o rifiutate da Google non vengono salvate; i formati con punto restano ammessi.
+  expect((await mealScanApi(put({ apiKey: 'con spazio ' + 'x'.repeat(30) }), env, owner, NOON)).status).toBe(400);
+  expect((await mealScanApi(put({ apiKey: 'corta' }), env, owner, NOON)).status).toBe(400);
+  fetchMock.mockResolvedValueOnce({ ok: false, status: 403 } as any);
+  expect((await mealScanApi(put({ apiKey: KEY }), env, owner, NOON)).status).toBe(400);
+  fetchMock.mockResolvedValueOnce({ ok: false, status: 404 } as any);
+  expect(((await (await mealScanApi(put({ apiKey: KEY, model: 'modello-inesistente' }), env, owner, NOON)).json()) as any).error).toContain('Modello non disponibile');
+  expect(store.files.size).toBe(0);
+  const saved = await mealScanApi(put({ apiKey: KEY, model: 'gemini-3.8-flash' }), env, owner, NOON); const text = JSON.stringify(await saved.json());
+  expect(saved.status).toBe(200); expect(text).not.toContain(KEY); expect(text).toContain('"configured":true');
+  expect([...store.files.values()].join('')).not.toContain(KEY);
+  expect(fetchMock.mock.calls.at(-1)![1].headers['x-goog-api-key']).toBe(KEY);
+  // La chiave salvata viene usata solo da questo account.
+  const mine = await (await scan(NOON, owner)).json() as any;
+  expect(mine.provider).toBe('gemini'); expect(fetchMock.mock.calls.at(-1)![1].headers['x-goog-api-key']).toBe(KEY);
+  const status = await (await mealScanApi(get(), env, owner, NOON)).json() as any;
+  expect(status.gemini).toMatchObject({ configured: true, source: 'app', used: 1 }); expect(JSON.stringify(status)).not.toContain(KEY);
+  sql.prepare('INSERT INTO app_features(id,nutrition_enabled,revision) VALUES(?,1,1)').run('current');
+  expect(((await (await scan(NOON, { ...client, email: 'x@example.test' })).json()) as any).provider).toBe('cloudflare');
+  // Con un altro SETUP_CODE la chiave non è più leggibile: si passa a Workers AI.
+  expect(((await (await mealScanApi(post(), { ...env, SETUP_CODE: 'altro-codice-finto' }, owner, NOON)).json()) as any).provider).toBe('cloudflare');
+  // Rimozione.
+  expect(((await (await mealScanApi(remove(), env, owner, NOON)).json()) as any).gemini.configured).toBe(false);
+  expect(store.files.size).toBe(0); expect(((await (await scan(NOON, owner)).json()) as any).provider).toBe('cloudflare');
+});
+
+it('Gemini riprova dopo un 503 passeggero e passa a Cloudflare solo se continua a fallire', async () => {
+  const fetchMock = vi.fn(); vi.stubGlobal('fetch', fetchMock);
+  env = { ...env, GEMINI_API_KEY: 'chiave-finta', GEMINI_USER_EMAILS: 'owner@example.test' };
+  fetchMock.mockResolvedValueOnce(geminiReply('', false, 503) as any).mockResolvedValueOnce(geminiReply(JSON.stringify(meal)) as any);
+  const ok = await (await scan(NOON, owner)).json() as any;
+  expect(ok.provider).toBe('gemini'); expect(fetchMock).toHaveBeenCalledTimes(2); expect(geminiCount()).toBe(2); expect(run).not.toHaveBeenCalled();
+  fetchMock.mockReset(); fetchMock.mockResolvedValue(geminiReply('', false, 503) as any);
+  const down = await (await scan(NOON, owner)).json() as any;
+  expect(down.provider).toBe('cloudflare'); expect(down.geminiError).toContain('503'); expect(fetchMock).toHaveBeenCalledTimes(3);
+  // Un errore definitivo (chiave rifiutata) non viene ritentato.
+  fetchMock.mockReset(); fetchMock.mockResolvedValue(geminiReply('', false, 403) as any);
+  await scan(NOON, owner); expect(fetchMock).toHaveBeenCalledTimes(1);
+});
+
+it('Gemini chiede un ragionamento ridotto e, se il modello non lo accetta, riprova senza', async () => {
+  const fetchMock = vi.fn(); vi.stubGlobal('fetch', fetchMock);
+  env = { ...env, GEMINI_API_KEY: 'chiave-finta', GEMINI_USER_EMAILS: 'owner@example.test' };
+  fetchMock.mockResolvedValueOnce({ ok: false, status: 400, json: async () => ({ error: { status: 'INVALID_ARGUMENT', message: 'Unknown field thinkingConfig' } }) } as any).mockResolvedValueOnce(geminiReply(JSON.stringify(meal)) as any);
+  expect(((await (await scan(NOON, owner)).json()) as any).provider).toBe('gemini');
+  expect(JSON.parse(fetchMock.mock.calls[0][1].body).generationConfig.thinkingConfig).toEqual({ thinkingLevel: 'low' });
+  expect(JSON.parse(fetchMock.mock.calls[1][1].body).generationConfig.thinkingConfig).toBeUndefined();
+});
+
+it('l’admin vede i modelli disponibili e cambia solo il modello senza reinserire la chiave', async () => {
+  const fetchMock = vi.fn(async (url: string) => String(url).includes('/models?') ? ({ ok: true, status: 200, json: async () => ({ models: [
+    { name: 'models/gemini-3.8-flash', supportedGenerationMethods: ['generateContent'] },
+    { name: 'models/gemini-3.8-flash-lite', supportedGenerationMethods: ['generateContent'] },
+    { name: 'models/gemini-embedding-001', supportedGenerationMethods: ['embedContent'] },
+    { name: 'models/imagen-4', supportedGenerationMethods: ['predict'] }] }) }) : geminiReply(JSON.stringify(meal)));
+  vi.stubGlobal('fetch', fetchMock);
+  env = { ...env, BUCKET: bucket(), SETUP_CODE: 'codice-finto' };
+  const models = (u: any = owner) => mealScanApi(new Request('https://gymtrack.test/api/meal-scan?models=1'), env, u, NOON);
+  expect((await models()).status).toBe(400);
+  await mealScanApi(put({ apiKey: KEY }), env, owner, NOON);
+  const listed = await (await models()).json() as any;
+  expect(listed.models).toEqual(['gemini-3.8-flash-lite', 'gemini-3.8-flash']);
+  expect((await models(client)).status).toBe(403);
+  const changed = await (await mealScanApi(put({ model: 'gemini-3.8-flash-lite' }), env, owner, NOON)).json() as any;
+  expect(changed.gemini).toMatchObject({ configured: true, model: 'gemini-3.8-flash-lite' });
+  expect(fetchMock.mock.calls.at(-1)![0]).toContain('gemini-3.8-flash-lite:generateContent');
+  await scan(NOON, owner); expect(String(fetchMock.mock.calls.at(-1)![0])).toContain('gemini-3.8-flash-lite:generateContent');
+  expect((await mealScanApi(put({ model: 'gemini-3.8-flash' }), { ...env, BUCKET: bucket() }, owner, NOON)).status).toBe(400);
 });

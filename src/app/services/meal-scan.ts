@@ -2,9 +2,10 @@ import {inject,Injectable,signal} from '@angular/core';
 import {AuthService} from './auth';
 import {photoDataUrl} from './images';
 
-export interface MealScanStatus {available:boolean;blocked:boolean;usedPercent:number;thresholdPercent:number;resetAt:number;remainingScans:number;used?:number;cap?:number;limit?:number;requests?:number;setup?:string}
+export interface GeminiInfo {configured:boolean;source:''|'app'|'server';model:string;dailyLimit:number;used:number;storage:boolean}
+export interface MealScanStatus {gemini?:GeminiInfo;available:boolean;blocked:boolean;usedPercent:number;thresholdPercent:number;resetAt:number;remainingScans:number;used?:number;cap?:number;limit?:number;requests?:number;setup?:string}
 export interface MealScanItem {name:string;grams:number;calories:number;protein:number;carbs:number;fat:number}
-export interface MealScanResult {kind:'plate'|'label'|'none';dish:string;items:MealScanItem[]}
+export interface MealScanResult {kind:'plate'|'label'|'none';dish:string;items:MealScanItem[];/** Chi ha letto la foto; "fallback" indica che Gemini era attivo ma ha risposto Cloudflare. */provider?:'gemini'|'cloudflare';fallback?:boolean;/** Motivo per cui Gemini non ha risposto (solo admin). */geminiError?:string}
 /** Il limite gratuito giornaliero è quasi esaurito: nessuna richiesta fino al ripristino. */
 export class MealScanLimitError extends Error {
  readonly code='AI_LIMIT';
@@ -26,7 +27,7 @@ function validResult(value:unknown):MealScanResult {
  const items=(Array.isArray(data?.items)?data.items:[]).filter(item=>item&&typeof item.name==='string'&&item.name.trim()&&item.name.length<=100&&item.grams>0
   &&(Object.keys(limits) as (keyof typeof limits)[]).every(key=>typeof item[key]==='number'&&Number.isFinite(item[key])&&item[key]>=0&&item[key]<=limits[key]))
   .slice(0,8).map(item=>({name:item.name.trim(),grams:item.grams,calories:item.calories,protein:item.protein,carbs:item.carbs,fat:item.fat}));
- return {kind:items.length?(data.kind==='label'?'label':'plate'):'none',dish:items.length&&typeof data.dish==='string'?data.dish.trim().slice(0,100):'',items};
+ return {kind:items.length?(data.kind==='label'?'label':'plate'):'none',dish:items.length&&typeof data.dish==='string'?data.dish.trim().slice(0,100):'',items,provider:data?.provider==='gemini'?'gemini':data?.provider==='cloudflare'?'cloudflare':undefined,geminiError:typeof data?.geminiError==='string'&&data.geminiError?data.geminiError.slice(0,200):undefined};
 }
 
 /**
@@ -65,7 +66,8 @@ export class MealScanService {
  /** Toglie il blocco solo dopo l'orario di ripristino. */
  private expire(){if(this.blockedUntil()&&!this.blocked()){this.unblock();this.status.set(null);this.statusAt=0;}}
  private apply(status:MealScanStatus){
-  this.status.set(status);this.statusAt=Date.now();
+  // Le risposte alle scansioni non contengono i dati Gemini: restano quelli dell'ultimo stato completo.
+  this.status.set({...status,gemini:status.gemini??this.status()?.gemini});this.statusAt=Date.now();
   if(status.available&&status.blocked)this.block(status.resetAt);else this.unblock();
  }
 
@@ -110,8 +112,30 @@ export class MealScanService {
    // Il blocco può essere arrivato da un'altra scheda mentre la foto veniva preparata.
    const stored=readBlock();if(stored&&!this.blocked())this.block(stored);
    if(this.blocked())throw new MealScanLimitError(this.blockedUntil());
-   return validResult(await this.call({image},controller.signal,60000));
+   const gemini=!!this.status()?.gemini?.configured,result=validResult(await this.call({image},controller.signal,100000));
+   return gemini&&result.provider==='cloudflare'?{...result,fallback:true}:result;
   }finally{this.busy.set(false);if(this.controller===controller)this.controller=undefined;}
+ }
+ /** Salva la chiave Gemini personale dell'admin: il server la verifica con Google e non la restituisce mai. */
+ async saveGeminiKey(apiKey:string,model:string):Promise<void>{await this.geminiRequest('PUT',{apiKey:apiKey.trim(),model:model.trim()});}
+ /** Cambia solo il modello, riusando la chiave già salvata dal server. */
+ async saveGeminiModel(model:string):Promise<void>{await this.geminiRequest('PUT',{model:model.trim()});}
+ /** Modelli Gemini disponibili per la chiave dell'admin. */
+ async geminiModels():Promise<{models:string[];current:string}>{
+  if(!this.online())throw Error('Serve la connessione e l’accesso all’account.');
+  const response=await fetch('/api/meal-scan?models=1',{credentials:'same-origin',cache:'no-store'});
+  let data:any;try{data=await response.json();}catch{throw Error('Risposta del server non valida. Riprova.');}
+  if(!response.ok)throw Error(data?.error||'Elenco dei modelli non disponibile.');
+  return {models:Array.isArray(data?.models)?data.models.filter((item:unknown)=>typeof item==='string'):[],current:typeof data?.current==='string'?data.current:''};
+ }
+ async removeGeminiKey():Promise<void>{await this.geminiRequest('DELETE');}
+ private async geminiRequest(method:'PUT'|'DELETE',body?:unknown){
+  if(!this.online())throw Error('Serve la connessione e l’accesso all’account.');
+  const response=await fetch('/api/meal-scan',{method,credentials:'same-origin',cache:'no-store',headers:body?{'Content-Type':'application/json'}:{},body:body?JSON.stringify(body):undefined});
+  let data:any;try{data=await response.json();}catch{throw Error('Risposta del server non valida. Riprova.');}
+  if(!response.ok)throw Error(data?.error||'Operazione non riuscita. Riprova.');
+  const current=this.status();if(current&&data?.gemini)this.status.set({...current,gemini:data.gemini});
+  else await this.ensureStatus(true);
  }
  cancel(){this.controller?.abort();}
  ngOnDestroy(){clearTimeout(this.timer);this.controller?.abort();}
