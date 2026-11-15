@@ -200,7 +200,8 @@ it('Gemini serve solo gli indirizzi elencati; gli altri account usano sempre Wor
 it('se Gemini fallisce o raggiunge il limite la lettura passa a Workers AI', async () => {
   const fetchMock = vi.fn(async () => geminiReply('', false, 500)); vi.stubGlobal('fetch', fetchMock);
   env = { ...env, GEMINI_API_KEY: 'chiave-finta', GEMINI_USER_EMAILS: 'owner@example.test', GEMINI_DAILY_LIMIT: '2' };
-  expect(((await (await scan(NOON, owner)).json()) as any).provider).toBe('cloudflare');
+  const failed = await (await scan(NOON, owner)).json() as any;
+  expect(failed.provider).toBe('cloudflare'); expect(failed.geminiError).toContain('Gemini HTTP 500');
   fetchMock.mockResolvedValue(geminiReply('{"kind":"none","items":[]}') as any);
   expect(((await (await scan(NOON, owner)).json()) as any).provider).toBe('gemini');
   // Limite giornaliero Gemini (2) raggiunto: Cloudflare, senza chiamare Google.

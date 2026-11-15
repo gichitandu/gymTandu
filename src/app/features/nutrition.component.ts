@@ -136,8 +136,8 @@ export class NutritionComponent {
   try{await this.cloud.removeGeminiKey();this.geminiMessage.set('Chiave rimossa: le tue foto tornano a Workers AI.');}
   catch(e){this.geminiMessage.set((e as Error).message);}finally{this.geminiBusy.set(false);}
  }
- scanProvider=signal<''|'gemini'|'cloudflare'>('');scanFellBack=signal(false);
- providerNote(){return this.scanProvider()==='gemini'?'Foto letta con Gemini (Google).':this.scanProvider()==='cloudflare'?(this.scanFellBack()?'Gemini non era disponibile: foto letta con Cloudflare Workers AI.':'Foto letta con Cloudflare Workers AI.'):'Per l’analisi la foto è stata inviata a un servizio AI.';}
+ geminiReason=signal('');scanProvider=signal<''|'gemini'|'cloudflare'>('');scanFellBack=signal(false);
+ providerNote(){return this.scanProvider()==='gemini'?'Foto letta con Gemini (Google).':this.scanProvider()==='cloudflare'?(this.scanFellBack()?'Gemini non era disponibile'+(this.geminiReason()?' ('+this.geminiReason()+')':'')+': foto letta con Cloudflare Workers AI.':'Foto letta con Cloudflare Workers AI.'):'Per l’analisi la foto è stata inviata a un servizio AI.';}
  aiBlocked(){return !!this.cloud?.blocked();}
  aiWaitDetail(){const time=this.cloud?.resetTime();return 'Lettura foto con AI in pausa'+(time?' fino alle '+time:'')+': il limite gratuito giornaliero è quasi raggiunto. Puoi comunque scrivere il pasto a mano.';}
  aiMeter(){const status=this.cloud?.status();if(!status?.available||this.aiBlocked())return null;return {percent:Math.min(100,status.thresholdPercent>0?status.usedPercent/status.thresholdPercent*100:100),text:'Lettura foto con AI · usato il '+status.usedPercent.toLocaleString('it-IT',{maximumFractionDigits:1})+'% del limite gratuito di oggi'};}
@@ -198,7 +198,7 @@ export class NutritionComponent {
     // Con il blocco attivo non parte nessuna richiesta, nemmeno quella dello stato.
     const status=this.cloud.blocked()?null:await this.cloud.ensureStatus();if(!current())return;
     if(this.cloud.blocked()){this.showBlocked();return;}
-    if(status?.available||status?.gemini?.configured){const result=await this.cloud.scan(photo);if(!current())return;this.scanProvider.set(result.provider||'');this.scanFellBack.set(!!result.fallback);this.applyScan(result);return;}
+    if(status?.available||status?.gemini?.configured){const result=await this.cloud.scan(photo);if(!current())return;this.scanProvider.set(result.provider||'');this.scanFellBack.set(!!result.fallback);this.geminiReason.set(result.geminiError||'');this.applyScan(result);return;}
    }catch(e){
     if(!current())return;
     if(e instanceof MealScanLimitError){this.showBlocked();return;}
@@ -223,7 +223,7 @@ export class NutritionComponent {
   if(!this.composedName.trim()&&result.dish)this.composedName=result.dish;
   this.source='photo-suggestion';this.addingFood.set(!!this.name.trim());
   this.analysisState.set('done');
-  this.analysisMessage.set((result.provider==='gemini'?'Letto con Gemini. ':result.provider==='cloudflare'?(result.fallback?'Gemini non disponibile: letto con Cloudflare. ':'Letto con Cloudflare. '):'')+(result.kind==='label'?'Ho letto l’etichetta: controlla porzione e valori, poi salva.':items.length===1?'Ho trovato 1 alimento: controlla la quantità e salva.':'Ho trovato '+items.length+' alimenti: controlla le quantità e salva.'));
+  this.analysisMessage.set((result.provider==='gemini'?'Letto con Gemini. ':result.provider==='cloudflare'?(result.fallback?'Gemini non disponibile'+(result.geminiError?' ('+result.geminiError+')':'')+': letto con Cloudflare. ':'Letto con Cloudflare. '):'')+(result.kind==='label'?'Ho letto l’etichetta: controlla porzione e valori, poi salva.':items.length===1?'Ho trovato 1 alimento: controlla la quantità e salva.':'Ho trovato '+items.length+' alimenti: controlla le quantità e salva.'));
   this.draftChanged();
  }
  cancelAnalysis(){this.analysisRequest++;this.ai.cancel();this.cloud?.cancel();this.analysisState.set('cancelled');this.analysisMessage.set('Analisi annullata. La foto è conservata: puoi riprovare o compilare il pasto.');}

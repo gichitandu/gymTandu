@@ -5,7 +5,7 @@ import {photoDataUrl} from './images';
 export interface GeminiInfo {configured:boolean;source:''|'app'|'server';model:string;dailyLimit:number;used:number;storage:boolean}
 export interface MealScanStatus {gemini?:GeminiInfo;available:boolean;blocked:boolean;usedPercent:number;thresholdPercent:number;resetAt:number;remainingScans:number;used?:number;cap?:number;limit?:number;requests?:number;setup?:string}
 export interface MealScanItem {name:string;grams:number;calories:number;protein:number;carbs:number;fat:number}
-export interface MealScanResult {kind:'plate'|'label'|'none';dish:string;items:MealScanItem[];/** Chi ha letto la foto; "fallback" indica che Gemini era attivo ma ha risposto Cloudflare. */provider?:'gemini'|'cloudflare';fallback?:boolean}
+export interface MealScanResult {kind:'plate'|'label'|'none';dish:string;items:MealScanItem[];/** Chi ha letto la foto; "fallback" indica che Gemini era attivo ma ha risposto Cloudflare. */provider?:'gemini'|'cloudflare';fallback?:boolean;/** Motivo per cui Gemini non ha risposto (solo admin). */geminiError?:string}
 /** Il limite gratuito giornaliero è quasi esaurito: nessuna richiesta fino al ripristino. */
 export class MealScanLimitError extends Error {
  readonly code='AI_LIMIT';
@@ -27,7 +27,7 @@ function validResult(value:unknown):MealScanResult {
  const items=(Array.isArray(data?.items)?data.items:[]).filter(item=>item&&typeof item.name==='string'&&item.name.trim()&&item.name.length<=100&&item.grams>0
   &&(Object.keys(limits) as (keyof typeof limits)[]).every(key=>typeof item[key]==='number'&&Number.isFinite(item[key])&&item[key]>=0&&item[key]<=limits[key]))
   .slice(0,8).map(item=>({name:item.name.trim(),grams:item.grams,calories:item.calories,protein:item.protein,carbs:item.carbs,fat:item.fat}));
- return {kind:items.length?(data.kind==='label'?'label':'plate'):'none',dish:items.length&&typeof data.dish==='string'?data.dish.trim().slice(0,100):'',items,provider:data?.provider==='gemini'?'gemini':data?.provider==='cloudflare'?'cloudflare':undefined};
+ return {kind:items.length?(data.kind==='label'?'label':'plate'):'none',dish:items.length&&typeof data.dish==='string'?data.dish.trim().slice(0,100):'',items,provider:data?.provider==='gemini'?'gemini':data?.provider==='cloudflare'?'cloudflare':undefined,geminiError:typeof data?.geminiError==='string'&&data.geminiError?data.geminiError.slice(0,200):undefined};
 }
 
 /**

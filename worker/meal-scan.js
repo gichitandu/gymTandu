@@ -222,29 +222,34 @@ async function geminiRun(credentials,image){
    generationConfig:{temperature:.2,maxOutputTokens:MEAL_SCAN_MAX_OUTPUT_TOKENS,responseMimeType:'application/json'},
   }),
  },GEMINI_TIMEOUT_MS);
- if(!response.ok)throw Object.assign(new Error('Gemini HTTP '+response.status),{httpStatus:response.status});
+ if(!response.ok){
+  let detail='';try{const body=await response.json();detail=[body?.error?.status,body?.error?.message].filter(item=>typeof item==='string').join(': ');}catch{}
+  throw Object.assign(new Error(('Gemini HTTP '+response.status+(detail?' · '+detail:'')).replace(/\s+/g,' ').slice(0,200)),{httpStatus:response.status});
+ }
  const data=await response.json();
  return (data?.candidates?.[0]?.content?.parts||[]).map(part=>typeof part?.text==='string'?part.text:'').join('');
 }
-/** Restituisce il pasto letto da Gemini, oppure null per passare a Workers AI. Non lancia mai. */
+/** Restituisce {meal} se Gemini ha letto la foto, altrimenti {error} (motivo breve, solo per l'admin) per passare a Workers AI. Non lancia mai. */
 async function geminiScan(env,user,image,now){
  try{
   const credentials=await geminiCredentials(env,user);
-  if(!credentials)return null;
+  if(!credentials)return{error:'nessuna chiave attiva'};
   const key=await geminiReserve(env,user,now);
-  if(!key)return null;
+  if(!key)return{error:'limite giornaliero Gemini raggiunto'};
   let output;
   try{output=await geminiRun(credentials,image);}
   catch(error){
    // 429 = limite del piano gratuito raggiunto: stop fino al ripristino.
    if(error?.httpStatus===429)await mealScanBlockDay(env,key).catch(()=>{});
-   console.error('Gemini non disponibile:',error?.name==='AbortError'?'tempo scaduto':String(error?.message||error).slice(0,120));
-   return null;
+   const detail=error?.name==='AbortError'?'tempo scaduto':String(error?.message||error).slice(0,200);
+   console.error('Gemini non disponibile:',detail);
+   return{error:detail};
   }
-  return mealScanParse(output)||{kind:'none',dish:'',items:[]};
+  return{meal:mealScanParse(output)||{kind:'none',dish:'',items:[]}};
  }catch(error){
-  console.error('Gemini non disponibile:',String(error?.message||error).slice(0,120));
-  return null;
+  const detail=String(error?.message||error).slice(0,200);
+  console.error('Gemini non disponibile:',detail);
+  return{error:detail};
  }
 }
 /** Stato Gemini per Admin e Super Admin: mai la chiave, solo se è presente e quanto è stata usata oggi. */
@@ -295,11 +300,14 @@ export async function mealScanApi(request,env,user,now=Date.now()){
   if(!status.available&&!useGemini)return mealScanReply({error:status.setup==='migration'?'Database da aggiornare: applica le migrazioni prima di usare la lettura foto.':'Lettura foto con AI non configurata su questo server.',code:'AI_UNAVAILABLE',status},503);
   // La foto viene controllata prima di prenotare, così una richiesta errata non consuma il limite.
   const image=await mealScanBody(request);
+  let geminiError='';
   if(useGemini){
-   const meal=await geminiScan(env,user,image,now);
-   if(meal)return mealScanReply({...meal,provider:'gemini',status});
+   const tried=await geminiScan(env,user,image,now);
+   if(tried.meal)return mealScanReply({...tried.meal,provider:'gemini',status});
+   geminiError=tried.error||'';
   }
-  if(!status.available)return mealScanReply({error:'Lettura foto con AI non disponibile al momento.',code:'AI_UNAVAILABLE',status},503);
+  const why=geminiError?' Gemini: '+geminiError+'.':'';
+  if(!status.available)return mealScanReply({error:'Lettura foto con AI non disponibile al momento.'+why,code:'AI_UNAVAILABLE',status},503);
   const day=await mealScanReserve(env,now);
   if(!day)return mealScanReply({error:MEAL_SCAN_WAIT_MESSAGE,code:'AI_LIMIT',status:{...await mealScanStatus(env,now),blocked:true,remainingScans:0}},429);
   let result;
@@ -314,13 +322,13 @@ export async function mealScanApi(request,env,user,now=Date.now()){
    const notExecuted=/\b(?:3040|3042|5007|5028|5035)\b|out of capacity|capacity temporarily/i.test(detail);
    if(notExecuted)await mealScanSettle(env,day,0);
    console.error('Lettura foto pasto non riuscita:',error?.timeout?'tempo scaduto':detail.slice(0,200));
-   return mealScanReply({error:notExecuted?'L’AI è momentaneamente occupata. Riprova tra poco.':'Analisi della foto non riuscita. Riprova oppure inserisci il pasto a mano.',code:'AI_ERROR',status:await mealScanStatus(env,now)},error?.timeout?504:502);
+   return mealScanReply({error:(notExecuted?'L’AI è momentaneamente occupata. Riprova tra poco.':'Analisi della foto non riuscita. Riprova oppure inserisci il pasto a mano.')+why,code:'AI_ERROR',status:await mealScanStatus(env,now)},error?.timeout?504:502);
   }
   // Senza un consumo dichiarato resta contata l'intera prenotazione.
   const neurons=mealScanNeurons(result?.usage);
   if(neurons!==null)await mealScanSettle(env,day,neurons);
   const meal=mealScanParse(mealScanOutput(result))||{kind:'none',dish:'',items:[]};
-  return mealScanReply({...meal,provider:'cloudflare',status:await mealScanStatus(env,now)});
+  return mealScanReply({...meal,provider:'cloudflare',...(geminiError?{geminiError}:{}),status:await mealScanStatus(env,now)});
  }catch(error){
   if(error.status)return mealScanReply({error:error.message},error.status);
   console.error('Lettura foto pasto: errore del servizio:',String(error?.message||error).slice(0,200));
