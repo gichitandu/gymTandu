@@ -55,7 +55,7 @@ interface MealFormDraft {
 <details class="meal-photo-options"><summary>Cambia foto</summary><div class="actions"><button type="button" (click)="camera.click()" [disabled]="photoBusy()">Scatta foto</button><button type="button" (click)="gallery.click()" [disabled]="photoBusy()">Scegli da Foto</button></div></details>}
 @else{<div class="actions meal-photo-add"><button type="button" (click)="camera.click()" [disabled]="photoBusy()"><gt-icon name="camera"/>Scatta foto</button><button type="button" (click)="gallery.click()" [disabled]="photoBusy()">Scegli da Foto</button></div>}
 @if(suggestions().length){<div class="notice"><b>Possibili alimenti · scegli e correggi</b><div class="actions">@for(food of suggestions();track food.id){<button (click)="choose(food.id,true)">{{food.name}}</button>}</div></div>}
-@if(photo){<p class="meal-estimate-note">Stima da verificare: controlla alimenti, quantità e valori prima di salvare.@if(analysisSource()==='cloud'){ Per l’analisi la foto è stata inviata a Cloudflare Workers AI.}</p>}
+@if(photo){<p class="meal-estimate-note">Stima da verificare: controlla alimenti, quantità e valori prima di salvare.@if(analysisSource()==='cloud'){ {{providerNote()}}}</p>}
 @if(ingredients.length){<section class="ingredient-review"><div class="section-title"><h3>Alimenti del pasto</h3><span class="pill">{{ingredients.length}} {{ingredients.length===1?'voce':'voci'}}</span></div>@for(item of ingredients;track item.id){<div class="ingredient-item"><div class="ingredient-title"><strong>{{item.name}}</strong><button class="icon-btn ghost danger" [attr.aria-label]="'Rimuovi '+item.name" (click)="removeIngredient(item.id)">×</button></div><div class="ingredient-quick"><label>Quantità (g)<input type="number" inputmode="decimal" min="1" max="10000" [ngModel]="item.grams" (change)="changeIngredientGrams(item.id,$any($event.target).valueAsNumber)"/></label><p class="ingredient-summary"><strong>{{item.calories.toLocaleString('it-IT',{maximumFractionDigits:0})}} kcal</strong><span>P {{item.protein.toLocaleString('it-IT',{maximumFractionDigits:1})}} · C {{item.carbs.toLocaleString('it-IT',{maximumFractionDigits:1})}} · G {{item.fat.toLocaleString('it-IT',{maximumFractionDigits:1})}}</span></p></div><details class="ingredient-more"><summary>Correggi nome e valori</summary><label>Nome<input type="text" maxlength="100" [ngModel]="item.name" (change)="renameIngredient(item.id,$any($event.target).value)"/></label><div class="ingredient-values">@for(field of nutritionFields;track field.key){<label>{{field.label}}<input type="number" inputmode="decimal" min="0" step="0.1" [ngModel]="item[field.key]" (ngModelChange)="changeIngredientValue(item.id,field.key,$event)"/></label>}</div></details></div>}<p class="subtle">Cambia i grammi: calorie e macronutrienti si ricalcolano in proporzione.</p></section>}
 <form (ngSubmit)="save()"><div class="meal-type-chips" role="radiogroup" aria-label="Tipo di pasto">@for(type of mealTypes;track type.id){<button type="button" role="radio" [attr.aria-checked]="mealType===type.id" [class.active]="mealType===type.id" (click)="setMealType(type.id)">{{type.label}}</button>}</div>
 <div class="form-grid">
@@ -136,6 +136,8 @@ export class NutritionComponent {
   try{await this.cloud.removeGeminiKey();this.geminiMessage.set('Chiave rimossa: le tue foto tornano a Workers AI.');}
   catch(e){this.geminiMessage.set((e as Error).message);}finally{this.geminiBusy.set(false);}
  }
+ scanProvider=signal<''|'gemini'|'cloudflare'>('');scanFellBack=signal(false);
+ providerNote(){return this.scanProvider()==='gemini'?'Foto letta con Gemini (Google).':this.scanProvider()==='cloudflare'?(this.scanFellBack()?'Gemini non era disponibile: foto letta con Cloudflare Workers AI.':'Foto letta con Cloudflare Workers AI.'):'Per l’analisi la foto è stata inviata a un servizio AI.';}
  aiBlocked(){return !!this.cloud?.blocked();}
  aiWaitDetail(){const time=this.cloud?.resetTime();return 'Lettura foto con AI in pausa'+(time?' fino alle '+time:'')+': il limite gratuito giornaliero è quasi raggiunto. Puoi comunque scrivere il pasto a mano.';}
  aiMeter(){const status=this.cloud?.status();if(!status?.available||this.aiBlocked())return null;return {percent:Math.min(100,status.thresholdPercent>0?status.usedPercent/status.thresholdPercent*100:100),text:'Lettura foto con AI · usato il '+status.usedPercent.toLocaleString('it-IT',{maximumFractionDigits:1})+'% del limite gratuito di oggi'};}
@@ -196,7 +198,7 @@ export class NutritionComponent {
     // Con il blocco attivo non parte nessuna richiesta, nemmeno quella dello stato.
     const status=this.cloud.blocked()?null:await this.cloud.ensureStatus();if(!current())return;
     if(this.cloud.blocked()){this.showBlocked();return;}
-    if(status?.available){const result=await this.cloud.scan(photo);if(!current())return;this.applyScan(result);return;}
+    if(status?.available||status?.gemini?.configured){const result=await this.cloud.scan(photo);if(!current())return;this.scanProvider.set(result.provider||'');this.scanFellBack.set(!!result.fallback);this.applyScan(result);return;}
    }catch(e){
     if(!current())return;
     if(e instanceof MealScanLimitError){this.showBlocked();return;}
@@ -221,7 +223,7 @@ export class NutritionComponent {
   if(!this.composedName.trim()&&result.dish)this.composedName=result.dish;
   this.source='photo-suggestion';this.addingFood.set(!!this.name.trim());
   this.analysisState.set('done');
-  this.analysisMessage.set(result.kind==='label'?'Ho letto l’etichetta: controlla porzione e valori, poi salva.':items.length===1?'Ho trovato 1 alimento: controlla la quantità e salva.':'Ho trovato '+items.length+' alimenti: controlla le quantità e salva.');
+  this.analysisMessage.set((result.provider==='gemini'?'Letto con Gemini. ':result.provider==='cloudflare'?(result.fallback?'Gemini non disponibile: letto con Cloudflare. ':'Letto con Cloudflare. '):'')+(result.kind==='label'?'Ho letto l’etichetta: controlla porzione e valori, poi salva.':items.length===1?'Ho trovato 1 alimento: controlla la quantità e salva.':'Ho trovato '+items.length+' alimenti: controlla le quantità e salva.'));
   this.draftChanged();
  }
  cancelAnalysis(){this.analysisRequest++;this.ai.cancel();this.cloud?.cancel();this.analysisState.set('cancelled');this.analysisMessage.set('Analisi annullata. La foto è conservata: puoi riprovare o compilare il pasto.');}
