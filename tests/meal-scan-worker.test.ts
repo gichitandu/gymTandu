@@ -267,3 +267,12 @@ it('Gemini riprova dopo un 503 passeggero e passa a Cloudflare solo se continua 
   fetchMock.mockReset(); fetchMock.mockResolvedValue(geminiReply('', false, 403) as any);
   await scan(NOON, owner); expect(fetchMock).toHaveBeenCalledTimes(1);
 });
+
+it('Gemini chiede un ragionamento ridotto e, se il modello non lo accetta, riprova senza', async () => {
+  const fetchMock = vi.fn(); vi.stubGlobal('fetch', fetchMock);
+  env = { ...env, GEMINI_API_KEY: 'chiave-finta', GEMINI_USER_EMAILS: 'owner@example.test' };
+  fetchMock.mockResolvedValueOnce({ ok: false, status: 400, json: async () => ({ error: { status: 'INVALID_ARGUMENT', message: 'Unknown field thinkingConfig' } }) } as any).mockResolvedValueOnce(geminiReply(JSON.stringify(meal)) as any);
+  expect(((await (await scan(NOON, owner)).json()) as any).provider).toBe('gemini');
+  expect(JSON.parse(fetchMock.mock.calls[0][1].body).generationConfig.thinkingConfig).toEqual({ thinkingLevel: 'low' });
+  expect(JSON.parse(fetchMock.mock.calls[1][1].body).generationConfig.thinkingConfig).toBeUndefined();
+});

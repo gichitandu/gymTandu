@@ -112,7 +112,7 @@ export class MealScanService {
    // Il blocco può essere arrivato da un'altra scheda mentre la foto veniva preparata.
    const stored=readBlock();if(stored&&!this.blocked())this.block(stored);
    if(this.blocked())throw new MealScanLimitError(this.blockedUntil());
-   const gemini=!!this.status()?.gemini?.configured,result=validResult(await this.call({image},controller.signal,60000));
+   const gemini=!!this.status()?.gemini?.configured,result=validResult(await this.call({image},controller.signal,100000));
    return gemini&&result.provider==='cloudflare'?{...result,fallback:true}:result;
   }finally{this.busy.set(false);if(this.controller===controller)this.controller=undefined;}
  }

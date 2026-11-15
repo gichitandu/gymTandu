@@ -25,7 +25,9 @@ const MEAL_SCAN_MAX_ITEMS=8;
 // Il modello si sceglie nell'app (o con GEMINI_MODEL); in caso di errore o limite la lettura passa a Workers AI.
 export const GEMINI_DEFAULT_MODEL='gemini-3.8-flash';
 export const GEMINI_DEFAULT_DAILY_LIMIT=100;
-const GEMINI_TIMEOUT_MS=25000;
+const GEMINI_TIMEOUT_MS=40000;
+// Con il ragionamento attivo parte dei token di uscita viene consumata prima della risposta.
+const GEMINI_MAX_OUTPUT_TOKENS=2048;
 const GEMINI_MAX_ATTEMPTS=3;
 let GEMINI_RETRY_DELAY_MS=1500;
 /** Solo per i test: pausa tra i tentativi. */
@@ -220,20 +222,25 @@ async function geminiFetch(url,init,timeout){
 async function geminiRun(credentials,image){
  const match=/^data:(image\/(?:jpeg|png|webp));base64,(.+)$/.exec(image);
  if(!match)throw new Error('immagine non valida');
- const response=await geminiFetch(GEMINI_API+credentials.model+':generateContent',{
-  method:'POST',headers:{'Content-Type':'application/json','x-goog-api-key':credentials.apiKey},
-  body:JSON.stringify({
-   systemInstruction:{parts:[{text:MEAL_SCAN_SYSTEM}]},
-   contents:[{role:'user',parts:[{text:MEAL_SCAN_PROMPT},{inline_data:{mime_type:match[1],data:match[2]}}]}],
-   generationConfig:{temperature:.2,maxOutputTokens:MEAL_SCAN_MAX_OUTPUT_TOKENS,responseMimeType:'application/json'},
-  }),
- },GEMINI_TIMEOUT_MS);
- if(!response.ok){
+ const send=async thinking=>{
+  const response=await geminiFetch(GEMINI_API+credentials.model+':generateContent',{
+   method:'POST',headers:{'Content-Type':'application/json','x-goog-api-key':credentials.apiKey},
+   body:JSON.stringify({
+    systemInstruction:{parts:[{text:MEAL_SCAN_SYSTEM}]},
+    contents:[{role:'user',parts:[{text:MEAL_SCAN_PROMPT},{inline_data:{mime_type:match[1],data:match[2]}}]}],
+    generationConfig:{temperature:.2,maxOutputTokens:GEMINI_MAX_OUTPUT_TOKENS,responseMimeType:'application/json',...(thinking?{thinkingConfig:{thinkingLevel:'low'}}:{})},
+   }),
+  },GEMINI_TIMEOUT_MS);
+  if(response.ok)return{response};
   let detail='';try{const body=await response.json();detail=[body?.error?.status,body?.error?.message].filter(item=>typeof item==='string').join(': ');}catch{}
-  throw Object.assign(new Error(('Gemini HTTP '+response.status+(detail?' · '+detail:'')).replace(/\s+/g,' ').slice(0,200)),{httpStatus:response.status});
- }
- const data=await response.json();
- return (data?.candidates?.[0]?.content?.parts||[]).map(part=>typeof part?.text==='string'?part.text:'').join('');
+  return{failure:Object.assign(new Error(('Gemini HTTP '+response.status+(detail?' · '+detail:'')).replace(/\s+/g,' ').slice(0,200)),{httpStatus:response.status,detail})};
+ };
+ // Prima con ragionamento ridotto (più veloce); se il modello non accetta il parametro, di nuovo senza.
+ let result=await send(true);
+ if(result.failure?.httpStatus===400&&/think/i.test(result.failure.detail))result=await send(false);
+ if(result.failure)throw result.failure;
+ const data=await result.response.json();
+ return (data?.candidates?.[0]?.content?.parts||[]).map(part=>typeof part?.text==='string'&&!part.thought?part.text:'').join('');
 }
 /** Restituisce {meal} se Gemini ha letto la foto, altrimenti {error} (motivo breve, solo per l'admin) per passare a Workers AI. Non lancia mai. */
 async function geminiScan(env,user,image,now){
