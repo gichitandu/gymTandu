@@ -3,8 +3,12 @@ import {
   coachHistory,
   coachNextSession,
   coachNextSet,
+  coachPulse,
+  coachRestSeconds,
+  weeklyMuscleSets,
   daysBetween,
   estimate1rm,
+  isCompoundExercise,
   readinessFromWellness,
 } from "../src/app/services/coach-shadow";
 import type { DataSet, WorkoutLogExercise } from "../src/app/models/domain";
@@ -477,5 +481,115 @@ describe("Coach Ombra con il riscontro sulla serie", () => {
     const easy = { weight: 50, reps: 12, rpe: 7 };
     expect(coachNextSet({ ...base, reference: [easy, { ...easy, pain: true }], done: [] })).toMatchObject({ action: "hold", weight: 50 });
     expect(coachNextSet({ ...base, reference: [easy, { ...easy, technique: "degraded" as const }], done: [] })).toMatchObject({ action: "hold", weight: 50 });
+  });
+});
+
+describe("Coach Ombra: alternative, recupero, andamento e volume", () => {
+  it("offre alternative di pari sforzo e quella più pesante solo con dati completi", () => {
+    const hold = coachNextSet({ ...base, reference: sets(60, [10, 9, 8], 8), done: [] })!;
+    expect(hold).toMatchObject({ action: "hold", weight: 60, reps: 11 });
+    expect(hold.options).toEqual([
+      { kind: "easier", label: "Più leggero", weight: 57.5, reps: 12 },
+      { kind: "harder", label: "Più pesante", weight: 62.5, reps: 9 },
+    ]);
+    // Senza RPE il Coach non propone di salire, nemmeno come alternativa.
+    const blind = coachNextSet({ ...base, reference: [{ weight: 60, reps: 10 }], done: [] })!;
+    expect(blind.options.map((option) => option.kind)).toEqual(["easier"]);
+    // Dopo un aumento l'alternativa prudente è restare vicino al carico precedente.
+    const raise = coachNextSet({ ...base, reference: sets(60, [12, 12, 12], 8), done: [] })!;
+    expect(raise.options).toEqual([{ kind: "easier", label: "Più leggero", weight: 60, reps: 12 }]);
+  });
+
+  it("non offre alternative più pesanti con fatica, dolore o corpo libero", () => {
+    const tired = coachNextSet({ ...base, readiness: "low", reference: sets(60, [10, 9, 8], 8), done: [] })!;
+    expect(tired.options.some((option) => option.kind === "harder")).toBe(false);
+    const pain = coachNextSet({ ...base, reference: [{ weight: 60, reps: 10, rpe: 7, pain: true }], done: [] })!;
+    expect(pain.flags).toContain("caution");
+    expect(pain.options.some((option) => option.kind === "harder")).toBe(false);
+    expect(coachNextSet({ ...base, done: [{ weight: 60, reps: 10, rpe: 8, pain: true }] })!.options).toEqual([]);
+    expect(
+      coachNextSet({ ...base, loadMode: "bodyweight", reference: sets(0, [10, 9, 8], 8), done: [] })!.options,
+    ).toEqual([]);
+  });
+
+  it("consiglia più recupero solo se quello del piano è chiaramente breve", () => {
+    expect(coachRestSeconds(8, 12, true)).toBe(120);
+    expect(coachRestSeconds(8, 12)).toBe(90);
+    expect(coachRestSeconds(3, 5, true)).toBe(240);
+    expect(coachRestSeconds(15, 20)).toBe(60);
+    const input = { ...base, reference: sets(60, [10, 9, 8], 8), done: [] };
+    expect(coachNextSet({ ...input, compound: true, plannedRest: 60 })!.rest).toMatchObject({ seconds: 120 });
+    expect(coachNextSet({ ...input, compound: true, plannedRest: 120 })!.rest).toBeUndefined();
+    expect(coachNextSet({ ...input, plannedRest: 75 })!.rest).toBeUndefined();
+    expect(coachNextSet(input)!.rest).toBeUndefined();
+  });
+
+  it("distingue multiarticolari e isolamento dal nome, poi dai muscoli secondari", () => {
+    for (const name of ["Panca piana", "Leg press", "Rematore bilanciere", "Lat machine", "Squat", "Stacco rumeno", "Shoulder press"])
+      expect(isCompoundExercise({ name }), name).toBe(true);
+    for (const name of ["Curl manubri", "Leg extension", "Pushdown cavo", "Alzate laterali", "Croci ai cavi", "French press", "Leg curl seduto"])
+      expect(isCompoundExercise({ name }), name).toBe(false);
+    expect(isCompoundExercise({ name: "Esercizio personale", secondaryMuscleIds: ["a"] })).toBe(true);
+    expect(isCompoundExercise({ name: "Esercizio personale" })).toBe(false);
+    expect(isCompoundExercise(undefined)).toBe(false);
+  });
+
+  it("confronta le serie di oggi con le stesse serie della volta scorsa", () => {
+    expect(coachPulse([], sets(60, [10], 8))).toBeUndefined();
+    expect(coachPulse(sets(60, [11, 10]), sets(60, [10, 9, 8]))).toEqual({ tone: "up", text: "+2 rip. sulla volta scorsa" });
+    expect(coachPulse(sets(60, [9]), sets(60, [10, 9]))).toMatchObject({ tone: "down" });
+    expect(coachPulse(sets(60, [10]), sets(60, [10]))).toMatchObject({ tone: "same" });
+    expect(coachPulse(sets(62.5, [10]), sets(60, [12]))).toEqual({ tone: "up", text: "Carico più alto della volta scorsa" });
+    expect(coachPulse(sets(57.5, [12]), sets(60, [10]))).toMatchObject({ tone: "down" });
+    expect(coachPulse([...sets(62.5, [10]), ...sets(57.5, [10])], sets(60, [10, 10]))).toBeUndefined();
+    expect(coachPulse(sets(20, [10]), sets(25, [10]), "assisted")).toBeUndefined();
+    const live = coachNextSet({ ...base, reference: sets(60, [10, 9, 8], 8), done: [{ weight: 60, reps: 11, rpe: 8 }] })!;
+    expect(live.pulse).toEqual({ tone: "up", text: "+1 rip. sulla volta scorsa" });
+  });
+
+  it("riconosce il calo su tre sedute con sforzo alto e propone una seduta di scarico", () => {
+    const suggestion = coachNextSet({
+      ...base,
+      reference: sets(60, [9, 8, 8], 9.5),
+      history: [{ sets: sets(60, [10, 9, 8], 9) }, { sets: sets(60, [10, 10, 9], 9) }],
+      done: [],
+    })!;
+    expect(suggestion).toMatchObject({ action: "lower", weight: 55, title: "Seduta di scarico" });
+    expect(suggestion.flags).toContain("deload");
+    expect(suggestion.options.some((option) => option.kind === "harder")).toBe(false);
+  });
+
+  it("riporta il volume settimanale del muscolo tra i dati usati", () => {
+    const line = (weeklySets: number) =>
+      coachNextSet({ ...base, reference: sets(60, [10], 8), done: [], weeklySets, muscleName: "Petto" })!
+        .evidence.find((text) => text.startsWith("Petto"));
+    expect(line(6)).toContain("6 serie allenanti negli ultimi 7 giorni · sotto le 10");
+    expect(line(14)).toContain("fascia utile");
+    expect(line(24)).toContain("volume alto");
+    expect(line(0)).toBeUndefined();
+  });
+
+  it("conta le serie allenanti del muscolo negli ultimi 7 giorni", () => {
+    const data = {
+      exercises: [{ id: "bench", muscleGroupId: "chest" }, { id: "row", muscleGroupId: "back" }],
+      workouts: [{ id: "old", date: "2026-03-01" }, { id: "recent", date: "2026-03-06" }, { id: "today", date: "2026-03-10" }],
+      workoutExercises: [
+        { id: "a", workoutId: "old", exerciseId: "bench" },
+        { id: "b", workoutId: "recent", exerciseId: "bench" },
+        { id: "c", workoutId: "today", exerciseId: "bench" },
+        { id: "d", workoutId: "today", exerciseId: "row" },
+      ],
+      sets: [
+        { workoutExerciseId: "a", completed: true },
+        { workoutExerciseId: "b", completed: true },
+        { workoutExerciseId: "b", completed: true, kind: "warmup" },
+        { workoutExerciseId: "c", completed: true },
+        { workoutExerciseId: "c", completed: false },
+        { workoutExerciseId: "d", completed: true },
+      ],
+    } as unknown as DataSet;
+    expect(weeklyMuscleSets(data, "chest", "2026-03-10")).toBe(2);
+    expect(weeklyMuscleSets(data, "back", "2026-03-10")).toBe(1);
+    expect(weeklyMuscleSets(data, "", "2026-03-10")).toBe(0);
   });
 });

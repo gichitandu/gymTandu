@@ -162,6 +162,35 @@ it('in seduta il Coach Ombra propone l’aumento dopo una seduta completa, si ap
   expect(active.restEnd()).toBeGreaterThan(end); expect(active.coachRestBonus()).toBe(0);
 });
 
+it('in seduta il Coach Ombra chiede lo sforzo mancante con un tocco, offre alternative e il recupero consigliato', async () => {
+  await s.savePlan('p', 'Piano', ''); await s.saveDay('d', 'p', 'Giorno');
+  await s.savePlanExercise({ id: 'pe', dayId: 'd', exerciseId: 'exercise-0', sets: 3, repsMin: 8, repsMax: 12, rest: 60, notes: '', order: 0 });
+  await s.start('d');
+  const id = s.draft()!.id;
+  active = runInInjectionContext(injector, () => new ActiveWorkoutComponent());
+  Object.defineProperty(active, 'workoutId', { value: () => id });
+  active.quickRecord(active.exercises()[0]);
+  // Prima serie salvata senza RPE: il Coach non sale e chiede le ripetizioni in riserva.
+  active.weight = 60; active.reps = 12; active.rpe = undefined; await active.complete();
+  await vi.waitFor(() => expect(active!.coach()).toMatchObject({ action: 'hold', weight: 60, confidence: 'medium' }));
+  const asked = active.coachAsk()!;
+  expect(asked).toMatchObject({ weight: 60, reps: 12, completed: true });
+  await active.answerCoachAsk(3);
+  expect(s.data().sets.find(set => set.id === asked.id)).toMatchObject({ rpe: 7, completed: true, weight: 60, reps: 12 });
+  expect(active.coachAsk()).toBeUndefined();
+  expect(active.coach()).toMatchObject({ action: 'raise', weight: 62.5, confidence: 'high' });
+  // Alternativa prudente: un tocco la porta nei campi, senza salvare nulla.
+  const easier = active.coach()!.options.find(option => option.kind === 'easier')!;
+  expect(easier).toMatchObject({ weight: 60 });
+  active.applyCoachOption(easier);
+  expect(active.weight).toBe(60); expect(active.reps).toBe(easier.reps); expect(active.coachOptionApplied(easier)).toBe(true);
+  expect(s.sets(active.exerciseId()).filter(set => set.completed)).toHaveLength(1);
+  // Recupero del piano di 60 s su un multiarticolare: il Coach propone 2 minuti e li imposta.
+  expect(active.coachRestAdvice()).toMatchObject({ seconds: 120 });
+  active.applyCoachRestAdvice();
+  expect(active.restTotal()).toBe(120); expect(active.coachRestAdvice()).toBeUndefined();
+});
+
 it('il dolore segnalato su una serie fa fermare il Coach, e dopo una seduta con dolore non propone aumenti', async () => {
   await s.savePlan('p', 'Piano', ''); await s.saveDay('d', 'p', 'Giorno');
   await s.savePlanExercise({ id: 'pe', dayId: 'd', exerciseId: 'exercise-0', sets: 3, repsMin: 8, repsMax: 12, rest: 90, notes: '', order: 0 });

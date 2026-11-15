@@ -9,6 +9,16 @@
  *  - rientro dopo una pausa lunga, stallo su più sedute e salto di carico troppo
  *    grande hanno la precedenza sull'aumento automatico;
  *  - senza RPE il Coach non propone aumenti, salvo ripetizioni chiaramente oltre il massimo.
+ *
+ * Riferimenti usati per le soglie (indicazioni generali, non prescrizioni mediche):
+ *  - doppia progressione e autoregolazione con RPE/RIR (Helms 2016, Zourdos 2016);
+ *  - vicinanza al cedimento: per la crescita contano le serie a circa 0–3 ripetizioni
+ *    in riserva, il cedimento sistematico non serve (Refalo 2023, Robinson 2024);
+ *  - recupero tra le serie: almeno 1,5–2 minuti nei multiarticolari, oltre con carichi
+ *    pesanti; negli esercizi di isolamento bastano 60–90 s (Schoenfeld 2016, Singer 2024);
+ *  - volume settimanale per muscolo: circa 10–20 serie allenanti, con benefici che
+ *    crescono sempre meno oltre questa fascia (Schoenfeld 2017, Pelland 2024);
+ *  - scarico dopo cali ripetuti con sforzo alto (Bell 2023, consenso tra allenatori).
  */
 import type { DataSet, WorkoutLogExercise } from "../models/domain";
 import { setupKey } from "./training-flow";
@@ -19,7 +29,22 @@ export type CoachLoadMode =
   "external" | "bodyweight" | "weighted-bodyweight" | "assisted";
 export type CoachConfidence = "low" | "medium" | "high";
 export type CoachFlag =
-  "stall" | "layoff" | "big-jump" | "fatigue" | "sore" | "low-readiness" | "first-time";
+  | "stall" | "layoff" | "big-jump" | "fatigue" | "sore" | "low-readiness" | "first-time"
+  | "deload" | "caution";
+
+/** Alternativa di pari sforzo alla proposta principale: un incremento in meno o in più. */
+export interface CoachOption {
+  kind: "easier" | "harder";
+  label: string;
+  weight: number;
+  reps: number;
+}
+
+/** Confronto tra le serie fatte oggi e le stesse serie dell'ultima seduta. */
+export interface CoachPulse {
+  tone: "up" | "same" | "down";
+  text: string;
+}
 
 export interface CoachSetResult {
   weight: number;
@@ -65,6 +90,14 @@ export interface CoachInput {
   perspective?: "now" | "next";
   /** Formato del carico per i testi (unità dell'utente). Predefinito: kg. */
   formatWeight?: (kg: number) => string;
+  /** Esercizio multiarticolare: chiede più recupero di uno di isolamento. */
+  compound?: boolean;
+  /** Recupero previsto dal piano, in secondi: serve a segnalare quando è troppo breve. */
+  plannedRest?: number;
+  /** Serie allenanti del muscolo principale negli ultimi 7 giorni, compresa la seduta in corso. */
+  weeklySets?: number;
+  /** Nome del muscolo principale, per i testi. */
+  muscleName?: string;
 }
 
 export interface CoachSuggestion {
@@ -83,6 +116,12 @@ export interface CoachSuggestion {
   restBonus: number;
   /** Massimale stimato in kg, solo per il carico esterno. */
   estimated1rm?: number;
+  /** Alternative di pari sforzo (più leggero / più pesante), solo con carico esterno. */
+  options: CoachOption[];
+  /** Recupero consigliato, presente solo se quello del piano è chiaramente più breve. */
+  rest?: { seconds: number; reason: string };
+  /** Andamento di oggi rispetto all'ultima seduta, quando ci sono serie confrontabili. */
+  pulse?: CoachPulse;
 }
 
 const EPSILON = 0.000001;
@@ -137,6 +176,84 @@ function setsLine(sets: CoachSetResult[], format: (kg: number) => string, loaded
   if (sets.every((set) => same(set.weight, sets[0].weight)))
     return format(sets[0].weight) + " × " + sets.map((set) => set.reps).join(" · ");
   return sets.map((set) => format(set.weight) + " × " + set.reps).join(" · ");
+}
+
+/**
+ * Recupero indicativo tra le serie, in secondi: più lungo con poche ripetizioni
+ * (carichi pesanti) e negli esercizi multiarticolari.
+ */
+export function coachRestSeconds(repsMin: number, repsMax: number, compound = false) {
+  const middle = (repsMin + repsMax) / 2;
+  if (middle <= 5) return compound ? 240 : 180;
+  if (middle <= 8) return compound ? 150 : 120;
+  if (middle <= 12) return compound ? 120 : 90;
+  return compound ? 90 : 60;
+}
+
+const ISOLATION = /curl|croci|fly|butterfly|pec ?deck|pectoral|alzat|raise|extension|estension|pushdown|push down|french|kickback|calf|polpacc|crunch|plank|shrug|scrollat|face pull|abdu|addu|pullover/;
+const COMPOUND = /panca|press|squat|stacc|deadlift|remator|row|lat machine|pulldown|pull down|trazion|pull-?up|chin|dip|affond|lunge|hip thrust|military|pulley|piegament|push-?up|distens|spint|hack|clean|snatch/;
+/**
+ * Stima se un esercizio è multiarticolare dal nome (italiano e inglese); se il nome
+ * non basta, conta la presenza di muscoli secondari nel catalogo.
+ */
+export function isCompoundExercise(exercise?: { name?: string; secondaryMuscleIds?: string[] } | null) {
+  const name = (exercise?.name ?? "").toLocaleLowerCase("it");
+  if (ISOLATION.test(name)) return false;
+  if (COMPOUND.test(name)) return true;
+  return (exercise?.secondaryMuscleIds?.length ?? 0) > 0;
+}
+
+/**
+ * Confronta le serie fatte oggi con le stesse serie (per posizione) dell'ultima seduta:
+ * a parità di carico conta le ripetizioni, altrimenti la direzione del carico.
+ */
+export function coachPulse(
+  done: CoachSetResult[],
+  reference: CoachSetResult[],
+  mode: CoachLoadMode = "external",
+): CoachPulse | undefined {
+  const count = Math.min(done.length, reference.length);
+  if (!count) return undefined;
+  const now = done.slice(0, count), before = reference.slice(0, count);
+  const sum = (sets: CoachSetResult[], value: (set: CoachSetResult) => number) =>
+    sets.reduce((total, set) => total + value(set), 0);
+  if (mode === "bodyweight" || now.every((set, index) => same(set.weight, before[index].weight))) {
+    const delta = sum(now, (set) => set.reps) - sum(before, (set) => set.reps);
+    return delta === 0
+      ? { tone: "same", text: "In pari con la volta scorsa" }
+      : { tone: delta > 0 ? "up" : "down", text: `${delta > 0 ? "+" : "−"}${Math.abs(delta)} rip. sulla volta scorsa` };
+  }
+  // Carichi diversi: il volume ingannerebbe (più carico = meno ripetizioni), conta la direzione del carico.
+  if (mode === "assisted") return undefined;
+  const heavier = now.every((set, index) => set.weight >= before[index].weight - EPSILON);
+  const lighter = now.every((set, index) => set.weight <= before[index].weight + EPSILON);
+  if (heavier) return { tone: "up", text: "Carico più alto della volta scorsa" };
+  if (lighter) return { tone: "down", text: "Carico più basso della volta scorsa" };
+  return undefined;
+}
+
+/**
+ * Serie allenanti completate per un muscolo principale negli ultimi 7 giorni
+ * (data indicata compresa), contando anche la seduta in corso.
+ */
+export function weeklyMuscleSets(data: DataSet, muscleGroupId: string, today: string) {
+  const end = Date.parse(today.slice(0, 10) + "T12:00:00Z");
+  if (!muscleGroupId || !Number.isFinite(end)) return 0;
+  const from = new Date(end - 6 * 86400000).toISOString().slice(0, 10);
+  const workouts = new Set(
+    data.workouts
+      .filter((workout) => workout.date >= from && workout.date <= today.slice(0, 10))
+      .map((workout) => workout.id),
+  );
+  const muscles = new Map(data.exercises.map((exercise) => [exercise.id, exercise.muscleGroupId]));
+  const rows = new Set(
+    data.workoutExercises
+      .filter((row) => workouts.has(row.workoutId) && muscles.get(row.exerciseId) === muscleGroupId)
+      .map((row) => row.id),
+  );
+  return data.sets.filter(
+    (set) => set.completed && set.kind !== "warmup" && rows.has(set.workoutExerciseId),
+  ).length;
 }
 
 /**
@@ -220,6 +337,30 @@ export function coachNextSet(input: CoachInput): CoachSuggestion | null {
     evidence.push("Check-in di oggi: muscolo indolenzito");
     flags.push("sore");
   }
+  if (!next && input.weeklySets !== undefined && Number.isInteger(input.weeklySets) && input.weeklySets > 0) {
+    const weekly = input.weeklySets;
+    evidence.push(
+      `${input.muscleName || "Questo muscolo"}: ${weekly} serie allenanti negli ultimi 7 giorni` +
+        (weekly > 20
+          ? " · volume alto: oltre le 20 il beneficio in più è piccolo"
+          : weekly >= 10
+            ? " · nella fascia utile (10–20)"
+            : " · sotto le 10 di riferimento"),
+    );
+  }
+  const advisedRest = coachRestSeconds(repsMin, repsMax, input.compound === true);
+  const rest =
+    !next &&
+    input.plannedRest !== undefined &&
+    Number.isFinite(input.plannedRest) &&
+    input.plannedRest > 0 &&
+    input.plannedRest <= advisedRest - 30
+      ? {
+          seconds: advisedRest,
+          reason: `${input.compound ? "Esercizio multiarticolare" : "Con questo intervallo di ripetizioni"}: circa ${advisedRest >= 120 ? number(advisedRest / 60) + " min" : advisedRest + " s"} di recupero aiutano a non perdere ripetizioni nelle serie successive.`,
+        }
+      : undefined;
+  const pulse = next ? undefined : coachPulse(done, reference, mode);
 
   const titles: Record<CoachAction, string> = {
     raise: !loaded ? "Una ripetizione in più" : assisted ? "Riduci l'assistenza" : "Sali di carico",
@@ -235,19 +376,57 @@ export function coachNextSet(input: CoachInput): CoachSuggestion | null {
     basis: CoachSuggestion["basis"],
     confidence: CoachConfidence,
     extra: { title?: string; restBonus?: number } = {},
-  ): CoachSuggestion => ({
-    action,
-    weight: loaded ? round(Math.max(0, weight)) : 0,
-    reps,
-    reason,
-    basis,
-    title: extra.title ?? titles[action],
-    confidence,
-    evidence,
-    flags,
-    restBonus: extra.restBonus ?? 0,
-    ...(estimated1rm === undefined ? {} : { estimated1rm }),
-  });
+  ): CoachSuggestion => {
+    const value = loaded ? round(Math.max(0, weight)) : 0;
+    return {
+      action,
+      weight: value,
+      reps,
+      reason,
+      basis,
+      title: extra.title ?? titles[action],
+      confidence,
+      evidence,
+      flags,
+      restBonus: extra.restBonus ?? 0,
+      ...(estimated1rm === undefined ? {} : { estimated1rm }),
+      options: alternatives(action, value, reps, confidence),
+      ...(rest && action !== "stop" ? { rest } : {}),
+      ...(pulse ? { pulse } : {}),
+    };
+  };
+  /**
+   * Alternative di pari sforzo: stesso massimale implicito della proposta (Epley),
+   * spostato di un incremento. Quella più pesante compare solo con dati completi
+   * e senza segnali di fatica, dolore, rientro o salto troppo grande.
+   */
+  const alternatives = (
+    action: CoachAction,
+    weight: number,
+    reps: number,
+    confidence: CoachConfidence,
+  ): CoachOption[] => {
+    if (mode !== "external" || action === "stop" || !(weight > 0)) return [];
+    const implied = weight * (1 + reps / 30);
+    const equivalent = (value: number) => 30 * (implied / value - 1);
+    const result: CoachOption[] = [];
+    const lighter = shift(weight, -1);
+    if (lighter > 0 && lighter < weight) {
+      const lighterReps = inRange(Math.round(equivalent(lighter)));
+      if (lighterReps >= reps)
+        result.push({ kind: "easier", label: "Più leggero", weight: lighter, reps: lighterReps });
+    }
+    const blocked: CoachFlag[] = [
+      "fatigue", "sore", "low-readiness", "layoff", "big-jump", "deload", "caution", "first-time",
+    ];
+    if (confidence === "high" && action === "hold" && !flags.some((flag) => blocked.includes(flag))) {
+      const heavier = shift(weight, 1);
+      const heavierReps = Math.min(repsMax, Math.floor(equivalent(heavier) + 1e-9));
+      if (heavierReps >= repsMin)
+        result.push({ kind: "harder", label: "Più pesante", weight: heavier, reps: heavierReps });
+    }
+    return result;
+  };
 
   /* ===== Durante la seduta: decide l'ultima serie fatta ===== */
   if (last) {
@@ -446,7 +625,7 @@ export function coachNextSet(input: CoachInput): CoachSuggestion | null {
   const maxRpe = rpes.length ? Math.max(...rpes) : undefined;
   const under = reference.filter((set) => set.reps < repsMin).length;
   const allAtMax = reference.every((set) => set.reps >= repsMax);
-  const lastTime = next ? "oggi" : "l'ultima volta";
+  const ofLastTime = next ? "di oggi" : "dell'ultima volta";
   const LastTime = next ? "Oggi" : "L'ultima volta";
   const confidence: CoachConfidence =
     allRpe && (days === undefined || days <= 14) ? "high" : "medium";
@@ -458,6 +637,7 @@ export function coachNextSet(input: CoachInput): CoachSuggestion | null {
     extra: { title?: string; restBonus?: number; confidence?: CoachConfidence } = {},
   ) => build(action, value, reps, reason, "reference", extra.confidence ?? confidence, extra);
 
+  if (reference.some((set) => set.pain || set.technique === "degraded")) flags.push("caution");
   if (reference.some((set) => set.pain || set.technique === "degraded"))
     return fromReference(
       "hold",
@@ -523,6 +703,19 @@ export function coachNextSet(input: CoachInput): CoachSuggestion | null {
     sessions.every((sets) => same(sets[0].weight, reference[0].weight)) &&
     total(sessions[0]) <= total(sessions[2]) &&
     total(sessions[0]) <= total(sessions[1]);
+  const hardSessions = (maxRpe !== undefined && maxRpe >= 9) || under > 0;
+  if (stalled && loaded && hardSessions && total(sessions[0]) < total(sessions[1]) && total(sessions[1]) < total(sessions[2])) {
+    flags.push("deload");
+    evidence.push("Ripetizioni in calo da 3 sedute con sforzo alto");
+    const lighter = shift(weight, -stepsFor(weight, 0.1));
+    return fromReference(
+      "lower",
+      lighter,
+      inRange(anchor.reps),
+      `Da tre sedute le ripetizioni calano a ${format(reference[0].weight)} con sforzo alto: è un segnale di fatica accumulata. ${next ? "La prossima volta fai" : "Fai oggi"} una seduta di scarico a ${format(lighter)} (circa ${assisted ? "+" : "−"}10%), lontano dal cedimento, poi riparti.`,
+      { title: "Seduta di scarico", confidence: "medium" },
+    );
+  }
   if (stalled) {
     flags.push("stall");
     evidence.push("Carico e ripetizioni fermi da 3 sedute");
@@ -592,14 +785,14 @@ export function coachNextSet(input: CoachInput): CoachSuggestion | null {
       "hold",
       weight,
       repsMax,
-      `${loaded ? "Stesso carico" : "Stesse ripetizioni"} di ${lastTime}: ripeti il massimo qui e recupera le ripetizioni mancanti nelle serie successive.`,
+      `${loaded ? "Stesso carico" : "Stesse ripetizioni"} ${ofLastTime}: ripeti il massimo qui e recupera le ripetizioni mancanti nelle serie successive.`,
     );
   const reps = inRange(anchor.reps + 1);
   return fromReference(
     "hold",
     weight,
     reps,
-    `${loaded ? "Stesso carico" : "Stesso esercizio"} di ${lastTime}, puntando a una ripetizione in più (${anchor.reps} → ${reps}).`,
+    `${loaded ? "Stesso carico" : "Stesso esercizio"} ${ofLastTime}, puntando a una ripetizione in più (${anchor.reps} → ${reps}).`,
   );
 }
 

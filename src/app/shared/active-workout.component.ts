@@ -22,7 +22,7 @@ import { IconComponent } from './icon.component';
 import { LoadProgressionComponent } from './load-progression.component';
 import { ExternalTimerService } from '../services/external-timer';
 import { TodayService } from '../services/today';
-import { coachHistory, coachNextSet, daysBetween, readinessFromWellness } from '../services/coach-shadow';
+import { coachHistory, coachNextSet, daysBetween, readinessFromWellness, isCompoundExercise, weeklyMuscleSets, type CoachOption } from '../services/coach-shadow';
 import type { AppUpdateEvent } from '../services/pwa';
 import { FormDraftService } from '../services/form-drafts';
 type ActiveSetDraft={weight:number;reps:number;rpe:number|undefined;setNotes:string;kind:'work'|'warmup'};
@@ -150,8 +150,10 @@ export class ActiveWorkoutComponent {
   const previous=this.previous().filter(x=>x.completed&&x.kind!=='warmup');
   const done=working.filter(x=>x.completed&&x.number<set.number).map(result),reference=previous.map(result);
   const data=this.s.data(),sourceId=previous[0]?.workoutExerciseId,sourceRow=data.workoutExercises.find(x=>x.id===sourceId),sourceDate=data.workouts.find(w=>w.id===sourceRow?.workoutId)?.date;
-  const today=data.wellnessLogs.find(w=>w.date===(this.todayClock?.date()??localDate())),muscle=this.s.exercise(e.exerciseId)?.muscleGroupId;
-  const suggestion=coachNextSet({repsMin:e.repsMin,repsMax:e.repsMax,incrementKg:this.s.kg(this.weightStep()),loadMode:e.loadMode,targetRpe:this.coachTargetRpe(e),plannedWeight:set.weight,setIndex:working.filter(x=>x.number<set.number).length,reference,history:coachHistory(data,e).filter(session=>session.id!==sourceId),daysSinceReference:this.recordingPast()?undefined:daysBetween(sourceDate,this.workout()?.date),done,readiness:this.recordingPast()?undefined:readinessFromWellness(today),sore:!this.recordingPast()&&!!muscle&&(today?.soreness?.[muscle]??0)>=2,formatWeight:this.coachUnit});
+  const catalog=this.s.exercise(e.exerciseId),muscle=catalog?.muscleGroupId,past=this.recordingPast(),day=this.workout()?.date??localDate();
+  const today=data.wellnessLogs.find(w=>w.date===(this.todayClock?.date()??localDate()));
+  const suggestion=coachNextSet({repsMin:e.repsMin,repsMax:e.repsMax,incrementKg:this.s.kg(this.weightStep()),loadMode:e.loadMode,targetRpe:this.coachTargetRpe(e),plannedWeight:set.weight,setIndex:working.filter(x=>x.number<set.number).length,reference,history:coachHistory(data,e).filter(session=>session.id!==sourceId),daysSinceReference:this.recordingPast()?undefined:daysBetween(sourceDate,this.workout()?.date),done,readiness:this.recordingPast()?undefined:readinessFromWellness(today),sore:!this.recordingPast()&&!!muscle&&(today?.soreness?.[muscle]??0)>=2,formatWeight:this.coachUnit,
+   compound:isCompoundExercise(catalog??e),plannedRest:past?undefined:this.restDefault(),weeklySets:past||!muscle?undefined:weeklyMuscleSets(data,muscle,day),muscleName:muscle?this.s.muscle(muscle):undefined});
   // Senza storico propone il carico della scheda solo se è davvero impostato (mai 0 kg).
   return suggestion&&(suggestion.basis!=='none'||suggestion.weight>0)?suggestion:null;
  });
@@ -174,6 +176,19 @@ export class ActiveWorkoutComponent {
  /** Recupero in più dopo una serie molto dura: proposto solo mentre il timer sta scorrendo, una volta per serie. */
  coachRestBonus(){const c=this.coach(),set=this.currentSet();return c&&set&&c.restBonus>0&&this.restRunning()&&!this.coachRested().has(set.id)?c.restBonus:0;}
  applyCoachRest(){const bonus=this.coachRestBonus(),set=this.currentSet();if(!bonus||!set)return;this.adjustRest(bonus);this.coachRested.update(v=>new Set(v).add(set.id));}
+ /** Alternative del coach (più leggero / più pesante): un tocco le porta nei campi della serie. */
+ coachOptionText(option:CoachOption){return this.s.formatWeight(option.weight)+' '+this.s.settings().unit+' × '+option.reps;}
+ coachOptionApplied(option:CoachOption){return this.weight===this.s.weightInput(option.weight)&&this.reps===option.reps;}
+ applyCoachOption(option:CoachOption){this.weight=this.s.weightInput(option.weight);this.reps=option.reps;this.inputChanged();}
+ /** Recupero consigliato dal coach: proposto solo finché quello attivo (o il prossimo) è più breve. */
+ coachRestAdvice(){const rest=this.coach()?.rest;return rest&&(this.restRunning()?this.restTotal():this.restShown())<rest.seconds?rest:undefined;}
+ applyCoachRestAdvice(){const rest=this.coachRestAdvice();if(rest)this.chooseRest(rest.seconds);}
+ /** Ultima serie allenante fatta oggi senza sforzo indicato: il coach lo chiede con un tocco, perché senza non propone aumenti. */
+ coachAsk=computed(()=>{const e=this.selected(),set=this.currentSet();if(!e||!set||!this.coach()||this.coach()!.action==='stop')return undefined;const last=this.s.sets(e.id).filter(x=>x.completed&&x.kind!=='warmup'&&x.number<set.number).at(-1);if(!last||last.rpe!==undefined)return undefined;const feedback=readSetFeedback(last.notes);return typeof feedback?.rir==='number'?undefined:last;});
+ coachAskChoices=[{rir:0,label:'0',hint:'al limite'},{rir:1,label:'1',hint:''},{rir:2,label:'2',hint:''},{rir:3,label:'3',hint:''},{rir:4,label:'4+',hint:'facile'}];
+ /** Registra lo sforzo della serie precedente (RPE = 10 − ripetizioni in riserva) passando dallo Store. */
+ async answerCoachAsk(rir:number){const last=this.coachAsk();if(!last||this.committing())return;this.committing.set(true);try{if(!await this.flushSet(last.id,true))return;await this.s.updateSet(last.id,{rpe:10-Math.min(4,Math.max(0,rir))},true);}catch(error){this.s.error.set(error instanceof Error?error.message:'Sforzo della serie non salvato.');}finally{this.committing.set(false);}}
+ coachIcon(){const action=this.coach()?.action;return action==='raise'?'strength':action==='lower'?'chevron-down':action==='stop'?'shield':'target';}
  nextRecord(){const e=this.selected();if(!e)return;const sets=this.s.sets(e.id),set=sets.find(s=>!s.completed)||sets[0];if(set)this.record(set);}
 
  /* Registrazione serie: dati derivati per la nuova interfaccia (nessuna scrittura sull'archivio). */
