@@ -417,6 +417,13 @@
             target() ? "Obiettivo settimanale" : "Completamento"
           }}</strong>
           <small>{{ weekGoalText() }}</small>
+          @if (periodChips().length) {
+            <span class="gx-chips"
+              >@for (chip of periodChips(); track chip.text) {
+                <span class="gx-chip"><gt-icon [name]="chip.icon" />{{ chip.text }}</span>
+              }</span
+            >
+          }
           <div class="cal-bars" aria-hidden="true">
             @for (date of dates(); track date; let i = $index) {
               <span class="cal-bar" [class.today]="date === today"
@@ -484,17 +491,27 @@
                 >
                   @for (item of items; track item.id) {
                     <span
-                      class="cal-pill"
+                      class="cal-pill gx-wk"
                       [attr.data-state]="item.status"
                       [attr.data-kind]="item.kind"
-                      ><gt-icon
-                        [name]="
-                          item.status === 'completed'
-                            ? 'check'
-                            : item.status === 'partial'
-                              ? 'clock'
-                              : itemIcon(item)
-                        " /><span>{{ item.title }}</span></span
+                      ><span class="gx-wk-thumb"
+                        >@if (itemExercise(item); as exercise) {
+                          <gt-exercise-thumb [exercise]="exercise" />
+                        } @else {
+                          <gt-icon [name]="itemIcon(item)" />
+                        }</span
+                      ><span class="gx-wk-copy"
+                        ><strong>{{ item.title }}</strong
+                        ><span class="gx-chips"
+                          >@for (chip of itemChips(item); track chip.text) {
+                            <span class="gx-chip" [class.gx-acc]="chip.accent"
+                              ><gt-icon [name]="chip.icon" />{{ chip.text }}</span
+                            >
+                          }</span
+                        ></span
+                      >@if (item.status === "completed") {
+                        <span class="gx-wk-check"><gt-icon name="check" /></span>
+                      }</span
                     >
                   } @empty {
                     <span class="cal-week-free-text">{{
@@ -530,6 +547,7 @@
                 type="button"
                 class="cal-day"
                 [attr.data-state]="cell.state"
+                [attr.data-level]="cell.level || null"
                 [class.selected]="selected() === cell.date"
                 [class.today]="cell.date === today"
                 [attr.aria-label]="dayAria(cell.date)"
@@ -556,6 +574,14 @@
           <span><i data-state="rest"></i>Riposo</span>
         </div>
       </section>
+      @if (summary().completed) {
+        <section class="gx-tri" aria-label="Numeri del mese">
+          <div><small>Allenamenti</small><b>{{ summary().completed }}</b></div>
+          @for (chip of periodChips(); track chip.text) {
+            <div><small>{{ chip.label }}</small><b>{{ chip.text }}</b></div>
+          }
+        </section>
+      }
 
       <div class="cal-agenda-heading">
         <div>

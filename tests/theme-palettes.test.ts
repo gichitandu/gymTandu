@@ -90,6 +90,10 @@ it('keeps the «Elegante» style as an optional part of the theme, independent f
   expect(validThemeConfig({...classic,style:'classic'})).toBe(true);
   // The style never changes colours: tokens are identical with and without it.
   expect(resolveTheme(elegant,false)).toEqual(resolveTheme(classic,false));
+  // «Sportivo» follows the same rule: a third optional style, never a colour change.
+  const sport={...classic,style:'sport'} as const;
+  expect(validThemeConfig(sport)).toBe(true);
+  expect(resolveTheme(sport,false)).toEqual(resolveTheme(classic,false));
  }
  for(const style of ['', 'fancy', 1, null, true])expect(validThemeConfig({palette:'nero',mode:'dark',style})).toBe(false);
 });

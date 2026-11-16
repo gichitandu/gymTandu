@@ -1,0 +1,156 @@
+/* Stile «Sportivo»: titoli in corsivo pieno, scia diagonale, numeri grandi.
+   Attivo solo con body.style-sport; i colori restano quelli della palette scelta.
+   Parte dallo stile «Classico» e non tocca né «Classico» né «Elegante». */
+@font-face{font-family:"GT Kanit";font-weight:700;font-style:italic;font-display:swap;src:url("./fonts/kanit-latin-700-italic.woff2") format("woff2")}
+@font-face{font-family:"GT Kanit";font-weight:800;font-style:italic;font-display:swap;src:url("./fonts/kanit-latin-800-italic.woff2") format("woff2")}
+
+/* ---------- 1. Valori di base ---------- */
+body.style-sport{
+ --gx-disp:"GT Kanit","Arial Narrow",system-ui,sans-serif;--gx-disp-style:italic;--gx-disp-weight:800;--gx-track:-.01em;
+ --gx-r:20px;--gx-chip-r:8px;--gx-cut:20px;
+ --sp-line:color-mix(in srgb,var(--text) 11%,transparent);
+ --sp-panel:linear-gradient(180deg,color-mix(in srgb,var(--text) 6%,var(--card)),var(--card));
+ --sp-grad:linear-gradient(100deg,var(--accent),color-mix(in srgb,var(--accent) 55%,var(--theme-secondary,var(--accent))));
+ --sp-ink:var(--accent-ink);--sp-acc:var(--accent-text,var(--accent));
+ --sp-stripes:repeating-linear-gradient(112deg,transparent 0 9px,color-mix(in srgb,var(--sp-ink) 14%,transparent) 9px 15px);
+ --neon-glow:0;
+}
+/* La «scia»: due fasce di luce diagonali in alto, al posto di aloni e vortici. */
+body.theme-ready.style-sport.dynamic-background gt-shell::before,body.theme-ready.style-sport gt-shell .hx-aurora{background:none!important}
+body.theme-ready.style-sport gt-shell.photo-controls.reference-pages .app-main::before{opacity:0!important}
+body.theme-ready.style-sport gt-shell .app-main{
+ background:
+  linear-gradient(112deg,transparent 0 58%,color-mix(in srgb,var(--accent) 12%,transparent) 58% 66%,transparent 66% 69%,color-mix(in srgb,var(--theme-secondary,var(--accent)) 12%,transparent) 69% 73%,transparent 73%) top/100% 420px no-repeat,
+  radial-gradient(90% 320px at 85% 0,color-mix(in srgb,var(--accent) 15%,transparent),transparent 70%) top/100% 420px no-repeat;
+}
+body.theme-ready.style-sport.custom-light gt-shell .app-main{background:linear-gradient(112deg,transparent 0 60%,color-mix(in srgb,var(--text) 6%,transparent) 60% 67%,transparent 67% 70%,color-mix(in srgb,var(--text) 4%,transparent) 70% 73%,transparent 73%) top/100% 420px no-repeat}
+
+/* ---------- 2. Tipografia ---------- */
+body.theme-ready.style-sport gt-shell main :is(h1,h2,h3,.hx-title){font-family:var(--gx-disp)!important;font-style:italic;font-weight:800!important;letter-spacing:-.01em!important;text-transform:none}
+body.theme-ready.style-sport gt-shell main :is(.su-head,.cal-heading,.neon-page-heading) h1{font-size:clamp(32px,9.4vw,40px)!important;line-height:1.02!important}
+body.theme-ready.style-sport gt-shell main{font-variant-numeric:tabular-nums}
+body.theme-ready.style-sport gt-shell main :is(.cal-eyebrow,.hx-date){display:flex;align-items:center;gap:8px;font-family:var(--gx-disp);font-style:italic;font-weight:700;font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:var(--sp-acc)}
+body.theme-ready.style-sport gt-shell main :is(.cal-eyebrow,.hx-date)::before{content:"";width:20px;height:3px;flex:none;background:var(--sp-grad);transform:skewX(-24deg)}
+body.theme-ready.style-sport gt-shell main .cal-heading h1 em{font-style:italic;background:var(--sp-grad);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;padding-right:6px}
+
+/* ---------- 3. Superfici ---------- */
+body.theme-ready.style-sport gt-shell main :is(.card,.ref-card,.su-card,.rc3-card,.rec3-card){border-radius:20px;border:1px solid var(--sp-line);background:var(--sp-panel);box-shadow:inset 0 1px 0 color-mix(in srgb,var(--text) 7%,transparent)}
+body.theme-ready.style-sport gt-shell main :is(.su-iconbtn,.ref-icon-button,.icon-btn,.cal-round){border-radius:13px!important;border:1px solid var(--sp-line)!important;background:var(--sp-panel)!important;box-shadow:none!important}
+
+/* ---------- 4. Pulsanti, etichette e selettori ---------- */
+body.theme-ready.style-sport gt-shell :is(button.primary,.button.primary,.ref-action.primary,.su-btn.su-primary,.save-theme,.cal-primary){
+ position:relative;overflow:hidden;background:var(--sp-grad)!important;color:var(--sp-ink)!important;border-color:transparent!important;border-radius:16px!important;
+ box-shadow:0 12px 30px color-mix(in srgb,var(--accent) 32%,transparent)!important;
+ font-family:var(--gx-disp);font-style:italic;font-weight:700;font-size:18px;letter-spacing:.01em;
+}
+body.theme-ready.style-sport gt-shell :is(button.primary,.button.primary,.ref-action.primary,.su-btn.su-primary,.cal-primary)::after{content:"";position:absolute;right:-10px;top:0;bottom:0;width:86px;background:var(--sp-stripes);pointer-events:none}
+body.theme-ready.style-sport gt-shell :is(button.primary,.button.primary,.ref-action.primary,.su-btn.su-primary) gt-icon{color:inherit}
+body.theme-ready.style-sport gt-shell main :is(.su-btn:not(.su-primary),button.secondary,.button.secondary,button.ghost,.button.ghost){border-radius:13px;border-color:var(--sp-line);box-shadow:none;font-weight:650}
+body.theme-ready.style-sport gt-shell :is(.su-badge,.ref-badge){
+ border:0!important;border-radius:0!important;box-shadow:none!important;padding:4px 13px 4px 11px!important;background:var(--sp-grad)!important;color:var(--sp-ink)!important;
+ clip-path:polygon(7px 0,100% 0,calc(100% - 7px) 100%,0 100%);font-family:var(--gx-disp);font-style:italic;font-weight:700;font-size:12px;letter-spacing:.1em;text-transform:uppercase;
+}
+body.theme-ready.style-sport gt-shell :is(.su-badge,.ref-badge) gt-icon{color:inherit!important}
+body.theme-ready.style-sport gt-shell :is(.su-badge.muted,.ref-badge.muted){background:color-mix(in srgb,var(--text) 10%,transparent)!important;color:var(--muted)!important}
+body.theme-ready.style-sport gt-shell main .gx-tag{border-radius:0;padding:4px 13px 4px 11px;clip-path:polygon(7px 0,100% 0,calc(100% - 7px) 100%,0 100%)}
+body.theme-ready.style-sport gt-shell :is(.ref-tabs,.segmented,.neon-segments,.su-seg,.cal-view-switch){border-radius:15px!important;border:1px solid var(--sp-line)!important;background:color-mix(in srgb,var(--text) 5%,var(--card))!important;box-shadow:none!important}
+body.theme-ready.style-sport gt-shell :is(.ref-tabs,.segmented,.neon-segments,.su-seg)>:is(button,a){border-radius:11px!important}
+body.theme-ready.style-sport gt-shell :is(.ref-tabs,.segmented,.neon-segments,.su-seg)>:is(button,a):is(.active,.on){background:var(--sp-grad)!important;color:var(--sp-ink)!important;border-color:transparent!important;box-shadow:none!important;font-family:var(--gx-disp);font-style:italic;font-weight:700;font-size:15px}
+body.theme-ready.style-sport gt-shell .cal-view-switch .cal-view-glider{border-radius:11px!important;background:var(--sp-grad)!important;box-shadow:none!important}
+body.theme-ready.style-sport gt-shell .cal-view-switch>button.active{color:var(--sp-ink)!important;font-family:var(--gx-disp);font-style:italic;font-weight:700;font-size:15px}
+body.theme-ready.style-sport gt-shell .cal-view-switch>button.active gt-icon{color:inherit!important}
+
+/* ---------- 5. Barra di navigazione (telefono): sospesa, con tacca inclinata sulla voce attiva ---------- */
+@media(max-width:800px),(max-width:1100px) and (pointer:coarse){
+ body.theme-ready.style-sport gt-shell .bottom-nav{
+  left:max(14px,var(--safe-left,0px))!important;right:max(14px,var(--safe-right,0px))!important;bottom:calc(12px + var(--safe-bottom,0px))!important;width:auto;max-width:520px;margin-inline:auto;
+  min-height:0!important;height:66px;padding:0 6px!important;border-radius:22px;border:1px solid var(--sp-line)!important;background:color-mix(in srgb,var(--text) 5%,var(--card))!important;
+  backdrop-filter:none!important;-webkit-backdrop-filter:none!important;box-shadow:0 16px 36px #0009!important;position:fixed!important;transform:translate3d(0,0,0);-webkit-transform:translate3d(0,0,0);
+ }
+ body.theme-ready.style-sport.custom-light gt-shell .bottom-nav{box-shadow:0 12px 30px #1e1c1424!important}
+ body.theme-ready.style-sport gt-shell .bottom-nav a{position:relative;min-height:0!important;height:100%;gap:4px!important;border-radius:0!important;background:none!important;color:var(--muted)!important;font-size:11px!important;font-weight:600}
+ body.theme-ready.style-sport gt-shell .bottom-nav a::before{display:none!important}
+ body.theme-ready.style-sport gt-shell .bottom-nav a gt-icon{width:23px!important;height:23px!important;padding:0!important;background:none!important;border:0!important;box-shadow:none!important;color:inherit!important;border-radius:0!important}
+ body.theme-ready.style-sport gt-shell .bottom-nav a:is(.selected,.training-selected){color:var(--sp-acc)!important}
+ body.theme-ready.style-sport gt-shell .bottom-nav a:is(.selected,.training-selected)>span{font-family:var(--gx-disp);font-style:italic;font-weight:700;font-size:12px!important;letter-spacing:.08em;text-transform:uppercase}
+ body.theme-ready.style-sport gt-shell .bottom-nav a:is(.selected,.training-selected)::after{content:"";position:absolute;top:-2px;left:50%;width:34px;height:4px;margin-left:-17px;background:var(--sp-grad);transform:skewX(-24deg);box-shadow:0 0 14px var(--accent)}
+ body.theme-ready.style-sport gt-shell main{padding-bottom:calc(112px + var(--safe-bottom,0px))}
+}
+
+/* ---------- 6. Home ---------- */
+body.theme-ready.style-sport gt-shell .hx-title{font-size:clamp(34px,10.2vw,42px)!important;line-height:1.02!important;margin-top:14px!important}
+body.theme-ready.style-sport gt-shell .hx-title .hx-name{display:block;color:var(--text)!important;-webkit-text-fill-color:currentColor}
+body.theme-ready.style-sport gt-shell .hx-title .hx-grad{display:inline-block;padding-right:8px;background:var(--sp-grad)!important;-webkit-background-clip:text!important;background-clip:text!important;color:transparent!important;-webkit-text-fill-color:transparent!important}
+/* Settimana ad anelli */
+body.theme-ready.style-sport gt-shell .el-week{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));margin:20px 0 0;text-align:center}
+body.theme-ready.style-sport gt-shell .el-week :is(a,button){display:grid;justify-items:center;gap:7px;padding:0;min-height:44px;color:var(--text);text-decoration:none;background:none;border:0;box-shadow:none}
+body.theme-ready.style-sport gt-shell .el-week small{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+body.theme-ready.style-sport gt-shell .el-week b{position:relative;width:42px;height:42px;display:grid;place-items:center;border-radius:50%;border:2px solid var(--sp-line);font-family:var(--gx-disp);font-style:italic;font-weight:700;font-size:17px;line-height:1}
+body.theme-ready.style-sport gt-shell .el-week i{display:none}
+body.theme-ready.style-sport gt-shell .el-week [data-state=done] b{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 14%,transparent)}
+body.theme-ready.style-sport gt-shell .el-week [data-state=done] b::after{
+ content:"";position:absolute;right:-4px;bottom:-4px;width:15px;height:15px;border-radius:50%;border:2px solid var(--bg);
+ background:var(--green,#70D4AD) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23031927' stroke-width='4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12.5l4.5 4.5L19 7.5'/%3E%3C/svg%3E") center/10px no-repeat;
+}
+body.theme-ready.style-sport gt-shell .el-week :is([data-state=planned],[data-state=plan]) b{border-style:dashed;border-color:color-mix(in srgb,var(--accent) 62%,transparent)}
+body.theme-ready.style-sport gt-shell .el-week .today b{border:0;background:var(--sp-grad);color:var(--sp-ink);box-shadow:0 8px 22px color-mix(in srgb,var(--accent) 45%,transparent);transform:scale(1.1)}
+/* Scheda dell'allenamento con la figura */
+body.theme-ready.style-sport gt-shell .hx-next{
+ position:relative;overflow:hidden;margin-top:18px!important;padding:18px 18px 16px!important;border-radius:22px!important;
+ border:1px solid color-mix(in srgb,var(--accent) 38%,transparent)!important;box-shadow:none!important;
+ background:linear-gradient(150deg,color-mix(in srgb,var(--accent) 22%,#050918),#070f1d 58%)!important;color:#F4F8FF!important;
+}
+body.theme-ready.style-sport gt-shell .hx-next::before{content:"";position:absolute;right:64px;top:-40px;width:54px;height:330px;background:linear-gradient(var(--accent),transparent);opacity:.16;transform:skewX(-22deg);pointer-events:none}
+body.theme-ready.style-sport gt-shell .hx-next .sp-fig{
+ position:absolute;right:-34px;top:-8px;--thumb-width:236px;--thumb-height:236px;width:236px;height:236px;border-radius:0;background:none;mix-blend-mode:screen;pointer-events:none;
+ -webkit-mask-image:radial-gradient(closest-side,#000 62%,transparent);mask-image:radial-gradient(closest-side,#000 62%,transparent);
+}
+body.theme-ready.style-sport gt-shell .hx-next>:not(.sp-fig){position:relative}
+body.theme-ready.style-sport gt-shell .hx-next h2{font-size:clamp(28px,8.4vw,34px)!important;line-height:1!important;margin:46px 0 8px!important;max-width:9.5ch;color:#F4F8FF!important;text-shadow:0 2px 18px #000a}
+body.theme-ready.style-sport gt-shell .hx-next:not(:has(.sp-fig)) h2{margin-top:14px!important;max-width:none}
+body.theme-ready.style-sport gt-shell .hx-next .hx-sub{color:#B9C7DA!important;font-weight:550;text-shadow:0 1px 10px #000c;max-width:24ch}
+body.theme-ready.style-sport gt-shell .hx-next:has(.sp-fig) .hx-strip{display:none}
+body.theme-ready.style-sport gt-shell .hx-next .hx-when{background:#0a1424c7!important;border:0!important;color:#F4F8FF!important;border-radius:8px;font-weight:650}
+body.theme-ready.style-sport gt-shell .hx-next .hx-main{width:100%;min-height:58px;font-size:20px;margin-top:14px}
+body.theme-ready.style-sport gt-shell .hx-next .hx-secondary .su-btn{background:#0a142499!important;border-color:#ffffff24!important;color:#F4F8FF!important}
+body.theme-ready.style-sport gt-shell .hx-next .hx-secondary .su-btn gt-icon{color:inherit!important}
+/* Numeri della settimana */
+body.theme-ready.style-sport gt-shell .el-stats{display:grid;grid-template-columns:1.15fr 1fr;gap:10px;margin-top:12px}
+body.theme-ready.style-sport gt-shell .el-stat{display:grid;align-content:start;gap:0;padding:14px 16px!important;text-decoration:none;color:var(--text)}
+body.theme-ready.style-sport gt-shell .el-eyebrow{font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+body.theme-ready.style-sport gt-shell .el-num{font-family:var(--gx-disp);font-style:italic;font-weight:800;font-size:46px;line-height:1;margin-top:6px;letter-spacing:0}
+body.theme-ready.style-sport gt-shell .el-num small{font-size:18px;font-weight:700;color:var(--muted);margin-left:5px}
+body.theme-ready.style-sport gt-shell .el-spark{width:100%;height:30px;margin-top:8px;overflow:visible}
+body.theme-ready.style-sport gt-shell .el-spark path{fill:none;stroke:var(--accent);stroke-width:3;stroke-linejoin:round;stroke-linecap:round;vector-effect:non-scaling-stroke}
+body.theme-ready.style-sport gt-shell .el-spark circle{fill:var(--accent)}
+body.theme-ready.style-sport gt-shell .el-bars{display:flex;gap:4px;margin-top:14px;height:12px}
+body.theme-ready.style-sport gt-shell .el-bars i{flex:1;border-radius:2px;background:color-mix(in srgb,var(--text) 12%,transparent);transform:skewX(-22deg)}
+body.theme-ready.style-sport gt-shell .el-bars i.on{background:var(--sp-grad);box-shadow:0 0 10px color-mix(in srgb,var(--accent) 55%,transparent)}
+body.theme-ready.style-sport gt-shell .hx-weeknote{grid-column:1/-1;margin:2px 2px 0;font-family:var(--gx-disp);font-style:italic;font-weight:700;font-size:15px;color:var(--text)}
+body.theme-ready.style-sport gt-shell .hx-levels button{font-family:var(--gx-disp);font-style:italic;font-weight:800;font-size:20px}
+body.theme-ready.style-sport gt-shell .hx-cr-total b{font-family:var(--gx-disp);font-style:italic;font-weight:800}
+
+/* ---------- 7. Elenchi: taglio diagonale delle foto e numeri in corsivo ---------- */
+body.theme-ready.style-sport gt-shell main .gx-ex .gx-ex-pic{position:relative}
+body.theme-ready.style-sport gt-shell main .gx-ex .gx-ex-no{color:transparent;-webkit-text-stroke:1.5px color-mix(in srgb,var(--text) 16%,transparent)}
+body.theme-ready.style-sport gt-shell main .preview-summary.gx-hero::before{content:"";position:absolute;left:38%;top:-30px;width:70px;height:330px;background:linear-gradient(var(--accent),transparent);opacity:.18;transform:skewX(-22deg);pointer-events:none}
+body.theme-ready.style-sport gt-shell main .gx-vol i{transform:skewX(-22deg);transform-origin:left}
+/* Seduta: elenco degli esercizi */
+body.theme-ready.style-sport gt-shell .session-title p b{font-family:var(--gx-disp);font-style:italic;font-weight:800;color:var(--sp-acc)}
+body.theme-ready.style-sport gt-shell .session-progress i{background:var(--sp-grad)!important}
+body.theme-ready.style-sport gt-shell .training-list-row strong{font-family:var(--gx-disp);font-style:italic;font-weight:700;font-size:18px;line-height:1.1}
+body.theme-ready.style-sport gt-shell .training-list-row.is-now{border-color:color-mix(in srgb,var(--accent) 55%,transparent)!important;background:linear-gradient(140deg,color-mix(in srgb,var(--accent) 18%,var(--card)),var(--card) 62%)!important}
+body.theme-ready.style-sport gt-shell .aw-dots b{width:18px!important;height:6px!important;border-radius:2px!important;transform:skewX(-22deg)}
+body.theme-ready.style-sport gt-shell .exercise-state.aw-now{border-radius:0!important;background:var(--sp-grad)!important;color:var(--sp-ink)!important;clip-path:polygon(7px 0,100% 0,calc(100% - 7px) 100%,0 100%);padding:4px 13px!important;font-family:var(--gx-disp);font-style:italic;font-weight:700;text-transform:uppercase;letter-spacing:.1em;font-size:12px}
+
+/* ---------- 8. Profilo: il riquadro Aspetto è visibile anche qui ---------- */
+body.theme-ready.style-sport .el-look.el-only{display:block!important;padding:14px 16px!important;margin-bottom:6px}
+body.theme-ready.style-sport gt-shell main .el-look-top{display:flex;align-items:center;justify-content:space-between;width:100%;padding:0 0 12px;background:none;border:0;box-shadow:none;color:var(--text);text-align:left}
+body.theme-ready.style-sport gt-shell main .el-look-top strong{display:block;font-family:var(--gx-disp);font-style:italic;font-weight:700;font-size:19px;margin-top:3px}
+body.theme-ready.style-sport gt-shell main .el-look .su-seg{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));padding:4px}
+/* Calendario: il titolo del periodo resta su una riga, con l'iniziale maiuscola. */
+body.theme-ready.style-sport gt-shell main .cal-heading h1{font-size:clamp(26px,7.6vw,34px)!important;white-space:nowrap}
+body.theme-ready.style-sport gt-shell main .cal-heading h1::first-letter{text-transform:uppercase}
+body.theme-ready.style-sport gt-shell main .cal-heading h1 em{font-size:.62em;margin-top:2px}
+/* Temi chiari: la scheda dell'allenamento resta scura, quindi il pulsante principale diventa chiaro. */
+body.theme-ready.style-sport.custom-light gt-shell .hx-next .hx-main{background:#F4F8FF!important;color:#0B1220!important;box-shadow:0 12px 30px #0006!important}

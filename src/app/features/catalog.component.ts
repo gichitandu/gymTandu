@@ -45,10 +45,11 @@ type CatalogEditorDraft = {
     @if(scope()==='recent'){<p class="catalog-helper">Esercizi delle ultime sessioni, incluse quelle in corso.</p>}
     <details class="catalog-filter-options"><summary><gt-icon name="settings"/><span>Altri filtri</span><gt-icon name="back"/></summary><div class="catalog-filter-fields"><label>Gruppo muscolare<select [ngModel]="group()" (ngModelChange)="group.set($event)"><option value="">Tutti i gruppi</option>@for(g of s.data().muscleGroups;track g.id){<option [value]="g.id">{{g.name}}</option>}</select></label>@if(s.canEditCatalog()){<label>Stato<select [ngModel]="active()" (ngModelChange)="active.set($event)"><option value="active">Attivi</option><option value="all">Tutti, anche disattivati</option><option value="inactive">Solo disattivati</option></select></label>}</div><gt-exercise-families [query]="query()" (choose)="query.set($event);group.set('')"/></details>
     <div class="catalog-count"><span role="status" aria-live="polite">{{filtered().length}} esercizi · {{s.sharedCatalog()?'Catalogo condiviso':'Il tuo catalogo'}}</span>@if(query()||group()||scope()!=='all'||active()!=='active'||animated()){<button type="button" class="ghost" (click)="query.set('');group.set('');scope.set('all');active.set('active');animated.set(false)">Azzera filtri</button>}</div>
-    <div class="catalog-grid catalog-design-list">
+    <div class="catalog-grid gx-cat">
       @for(e of filtered();track e.id){
-        <article class="card catalog-exercise-card catalog-design-row catalog-compact" [class.catalog-inactive]="!e.active">
-          <div class="catalog-row-head"><a class="catalog-exercise-link" [routerLink]="['/esercizio',e.id]"><gt-exercise-thumb [exercise]="e"/><span class="catalog-row-copy"><h3>{{e.name}}</h3><small>{{e.equipment}}{{e.equipment?' · ':''}}{{s.muscle(e.muscleGroupId)}}</small>@if(!e.active||motionFrames(e)){<span class="catalog-row-tags">@if(motionFrames(e)){<span class="su-badge violet"><gt-icon name="play"/>Animato</span>}@if(!e.active){<span class="catalog-state">Disattivato</span>}</span>}</span></a>@if(s.canEditCatalog()){<button type="button" class="ghost catalog-edit" (click)="open(e)" [attr.aria-label]="'Modifica '+e.name"><gt-icon name="edit"/></button>}<button type="button" class="ghost favorite-button" [class.favorite-on]="s.isFavorite(e.id)" [attr.aria-pressed]="s.isFavorite(e.id)" [attr.aria-label]="(s.isFavorite(e.id)?'Rimuovi dai preferiti: ':'Aggiungi ai preferiti: ')+e.name" (click)="s.toggleFavorite(e.id)" [disabled]="s.busy()">{{s.isFavorite(e.id)?'★':'☆'}}</button></div>
+        <article class="gx-cat-card" [class.catalog-inactive]="!e.active" [style.--gx-c]="muscleColor(e.muscleGroupId)">
+          <a class="gx-cat-link" [routerLink]="['/esercizio',e.id]"><gt-exercise-thumb class="gx-cat-pic" [exercise]="e"/><span class="gx-cat-copy"><small class="gx-ex-kicker">{{s.muscle(e.muscleGroupId)}}</small><h3>{{e.name}}</h3><span class="gx-chips">@if(e.equipment){<span class="gx-chip">{{e.equipment}}</span>}@if(motionFrames(e)){<span class="gx-chip gx-acc"><gt-icon name="play"/>Animato</span>}@if(!e.active){<span class="gx-chip catalog-state">Disattivato</span>}</span></span></a>
+          <div class="gx-cat-tools">@if(s.canEditCatalog()){<button type="button" class="ghost catalog-edit" (click)="open(e)" [attr.aria-label]="'Modifica '+e.name"><gt-icon name="edit"/></button>}<button type="button" class="ghost favorite-button" [class.favorite-on]="s.isFavorite(e.id)" [attr.aria-pressed]="s.isFavorite(e.id)" [attr.aria-label]="(s.isFavorite(e.id)?'Rimuovi dai preferiti: ':'Aggiungi ai preferiti: ')+e.name" (click)="s.toggleFavorite(e.id)" [disabled]="s.busy()">{{s.isFavorite(e.id)?'★':'☆'}}</button></div>
         </article>
       }@empty{<div class="card empty catalog-empty"><gt-icon name="search"/><h3>Nessun esercizio trovato</h3><p>{{scope()==='favorites'?'Tocca la stella accanto agli esercizi per ritrovarli qui.':scope()==='recent'?'Qui compariranno gli esercizi delle tue sessioni.':'Prova un altro nome, attrezzo o gruppo muscolare.'}}</p>@if(query()||group()){<button type="button" class="ghost" (click)="query.set('');group.set('')">Rimuovi ricerca e filtri</button>}</div>}
     </div>
@@ -175,6 +176,9 @@ type CatalogEditorDraft = {
 })
 export class CatalogComponent {
   motionFrames=exerciseMotionFrames;
+  /** Un colore stabile per gruppo muscolare, per riconoscerli a colpo d'occhio nella griglia. */
+  private static readonly MUSCLE_COLORS=['#0DD9FF','#8B7BFF','#FFB84D','#5FE3A8','#FF7AB8','#FFD84D','#FF8A5C','#6FB2FF'];
+  muscleColor(groupId:string){const index=this.s.data().muscleGroups.findIndex(group=>group.id===groupId);return index<0?'var(--accent)':CatalogComponent.MUSCLE_COLORS[index%CatalogComponent.MUSCLE_COLORS.length];}
  private confirmation=confirmationForContext();
   s = inject(Store);
   fb = inject(FormBuilder);

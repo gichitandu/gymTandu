@@ -3,7 +3,7 @@ import { APPROVED_THEME_PALETTES } from "../../../shared/approved-palettes.js";
 export { APPROVED_THEME_PALETTES };
 export type ThemeMode = "dark" | "light" | "system";
 /** Look of the whole experience (GymTrack, GT Hub, GT Garage). Colours stay those of the chosen palette. */
-export type ThemeStyle = "classic" | "elegant";
+export type ThemeStyle = "classic" | "elegant" | "sport";
 export interface ThemeConfig {
   palette: string;
   mode: ThemeMode;
@@ -282,7 +282,8 @@ export function validThemeConfig(value: unknown): value is ThemeConfig {
     (config["accent"] === undefined || hex(config["accent"])) &&
     (config["style"] === undefined ||
       config["style"] === "classic" ||
-      config["style"] === "elegant") &&
+      config["style"] === "elegant" ||
+      config["style"] === "sport") &&
     Object.keys(config).every((key) =>
       ["palette", "mode", "background", "accent", "style"].includes(key),
     )

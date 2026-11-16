@@ -28,7 +28,9 @@
               "src/screens-redesign.css",
               "src/simple-ui.css",
               "src/design-runtime.css",
-              "src/style-elegant.css"
+              "src/style-elegant.css",
+              "src/lists-redesign.css",
+              "src/style-sport.css"
             ],
             "outputPath": "dist/gymtrack"
           },

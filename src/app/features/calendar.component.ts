@@ -97,6 +97,7 @@ export class CalendarComponent {
   return dates.map((date,index)=>({date,state:states[index],out:states[index]==='out',
    joinLeft:states[index]==='completed'&&index%7>0&&states[index-1]==='completed',
    joinRight:states[index]==='completed'&&index%7<6&&states[index+1]==='completed',
+   level:states[index]==='completed'?this.dayLevel(date):0,
    extra:(this.agendaByDate().get(date)||[]).some(item=>item.kind!=='workout'&&item.kind!=='rest')}));
  });
  readonly durationText=formatCalendarDuration;
@@ -174,6 +175,32 @@ export class CalendarComponent {
  daySummary(id:string){const exercises=this.s.planExercises(id);return exercises.length?`${exercises.length} esercizi · ${exercises.reduce((n,exercise)=>n+exercise.sets,0)} serie`:'Programmazione salvata';}
  muscles(id:string){return [...new Set(this.s.planExercises(id).map(exercise=>this.s.muscle(this.s.exercise(exercise.exerciseId)?.muscleGroupId||'')).filter(Boolean))].join(' · ');}
  itemTime(item:CalendarAgendaItem){return item.time||'';}
+ /** Etichette della riga nella settimana: durata e volume a seduta fatta, contenuto a seduta prevista. */
+ itemChips(item:CalendarAgendaItem){
+  const chips:{icon:string;text:string;accent?:boolean}[]=[];
+  if(item.kind!=='workout'){if(item.time)chips.push({icon:'clock',text:item.time});chips.push({icon:this.itemIcon(item),text:item.durationMinutes?formatCalendarDuration(item.durationMinutes):calendarKindLabel(item.kind)});return chips;}
+  if(item.status==='completed'&&item.workout){
+   if(item.durationMinutes)chips.push({icon:'clock',text:formatCalendarDuration(item.durationMinutes)});
+   const volume=this.s.volume(item.workout.id);if(volume)chips.push({icon:'weight',text:this.s.formatWeight(volume)+' '+this.s.settings().unit});
+   if(!chips.length)chips.push({icon:'check',text:'Completato'});return chips;
+  }
+  chips.push({icon:item.status==='partial'?'clock':'calendar',text:item.status==='partial'?'In corso':item.status==='missed'?'Saltato':'In programma',accent:true});
+  const exercises=item.workout?this.s.workoutExercises(item.workout.id).length:this.s.planExercises(item.event?.dayId||'').length;
+  if(exercises)chips.push({icon:'weight',text:exercises+(exercises===1?' esercizio':' esercizi')});
+  return chips;
+ }
+ /** Volume sollevato nelle sedute concluse del periodo mostrato. */
+ private periodVolume=computed(()=>this.periodDates().flatMap(date=>this.agendaByDate().get(date)||[]).reduce((sum,item)=>sum+(item.kind==='workout'&&item.status==='completed'&&item.workout?this.s.volume(item.workout.id):0),0));
+ readonly periodChips=computed(()=>{
+  const chips:{icon:string;label:string;text:string}[]=[],stats=this.summary(),volume=this.periodVolume();
+  if(stats.hasDuration&&stats.durationMinutes)chips.push({icon:'clock',label:'Tempo',text:formatCalendarDuration(stats.durationMinutes)});
+  if(volume)chips.push({icon:'weight',label:'Volume',text:this.s.formatWeight(volume)+' '+this.s.settings().unit});
+  return chips;
+ });
+ /** Intensità del giorno nel mese: 1 leggero, 2 medio, 3 il più intenso (rispetto al volume massimo del mese mostrato). */
+ private dayVolume(date:string){return (this.agendaByDate().get(date)||[]).reduce((sum,item)=>sum+(item.kind==='workout'&&item.status==='completed'&&item.workout?this.s.volume(item.workout.id):0),0);}
+ private monthMaxVolume=computed(()=>this.dates().reduce((max,date)=>Math.max(max,this.dayVolume(date)),0));
+ dayLevel(date:string){const max=this.monthMaxVolume(),volume=this.dayVolume(date);return !max||!volume?1:volume>=max*.85?3:volume>=max*.5?2:1;}
  itemIcon(item:CalendarAgendaItem){return calendarKindIcon(item.kind);}
  itemStatus(item:CalendarAgendaItem){return calendarStatusLabel(item.status);}
  itemDetails(item:CalendarAgendaItem){if(item.kind!=='workout')return item.durationMinutes?formatCalendarDuration(item.durationMinutes):calendarKindLabel(item.kind);const exercises=item.workout?this.s.workoutExercises(item.workout.id).length:this.s.planExercises(item.event?.dayId||'').length;return exercises?`${exercises} esercizi · ${item.totalSets} serie`:'Programmazione salvata';}
