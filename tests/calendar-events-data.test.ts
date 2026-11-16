@@ -126,3 +126,16 @@ it.each([{time:'24:00'},{time:'7:00'},{durationMinutes:0},{durationMinutes:1441}
  const raw=JSON.parse(await exportBackup(before));raw.data.scheduledWorkouts=[candidate];await expect(importBackup(JSON.stringify(raw))).rejects.toThrow();
  expect(await db.snapshot()).toEqual(before);
 });
+
+it('lets the active plan move or schedule a session over the period of an open inactive plan, but not the reverse',async()=>{
+ await plan();await s.savePlan('copy','Piano · recuperato','');await s.saveDay('copy-day','copy','Parte alta');
+ const program={importId:'import',sourceName:'Scheda.xlsx',sourceKind:'GT-1' as const,startDate:'2026-11-02',endDate:'2026-11-29',weeks:4,fileHash:'a'.repeat(64),importedAt:new Date().toISOString(),sessionCount:1};
+ await s.change(data=>{for(const item of data.plans){item.active=item.id==='p';if(item.id==='copy')item.program=program;}},'',false);
+ expect(await s.scheduleWorkout('2026-10-26','day','','mine')).toBe(true);
+ expect(await s.moveCalendarEvent('mine','2026-11-18')).toBe(true);expect(s.data().scheduledWorkouts.find(row=>row.id==='mine')?.date).toBe('2026-11-18');
+ expect(await s.scheduleWorkout('2026-11-20','day','','mine-2')).toBe(true);
+ await s.change(data=>{data.scheduledWorkouts.push({id:'theirs',date:'2026-11-10',planId:'copy',dayId:'copy-day',planName:'Piano · recuperato',dayName:'Parte alta',notes:''});},'',false);
+ // Una seduta già programmata della copia blocca ancora quella data precisa; la copia non può invadere il piano attivo.
+ expect(await s.moveCalendarEvent('mine','2026-11-10')).toBe(false);expect(s.error()).toContain('è già programmato');
+ expect(await s.moveCalendarEvent('theirs','2026-11-18')).toBe(false);expect(s.error()).toContain('Spostamento bloccato');
+});
