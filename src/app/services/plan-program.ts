@@ -62,13 +62,14 @@ const planIsClosed=(data:DataSet,planId:string)=>{const plan=data.plans.find(ite
 /**
  * Conflitti di data con altri piani ancora aperti. Un allenamento già registrato blocca sempre la data
  * (salvo piani archiviati o conclusi). Con `onlyActivePlans` periodi e sedute solo programmate dei piani
- * non attivi non bloccano l'avvio del piano attivo.
+ * non attivi non bloccano l'avvio del piano attivo. Con `inactivePeriodsFree` (spostamento o programmazione
+ * del piano attivo) si ignora solo il periodo dei piani non attivi: le loro sedute programmate bloccano ancora.
  */
-export function scheduleConflicts(data:DataSet,dates:string[],planId:string,ignoreEventId?:string,options:{onlyActivePlans?:boolean}={}):string[]{
+export function scheduleConflicts(data:DataSet,dates:string[],planId:string,ignoreEventId?:string,options:{onlyActivePlans?:boolean;inactivePeriodsFree?:boolean}={}):string[]{
  const messages:string[]=[];
  const counts=(id:string)=>{if(id===planId||!planIsOpen(data,id))return false;return !options.onlyActivePlans||!!data.plans.find(plan=>plan.id===id)?.active;};
  for(const date of dates){
-  for(const plan of data.plans){if(!counts(plan.id))continue;const range=effectiveProgramRange(data,plan);if(range&&date>=range.startDate&&date<=range.endDate)messages.push(`${dateLabel(date)}: il periodo è già occupato dal piano “${plan.name}”.`);}
+  for(const plan of data.plans){if(!counts(plan.id)||options.inactivePeriodsFree&&!plan.active)continue;const range=effectiveProgramRange(data,plan);if(range&&date>=range.startDate&&date<=range.endDate)messages.push(`${dateLabel(date)}: il periodo è già occupato dal piano “${plan.name}”.`);}
   for(const entry of data.scheduledWorkouts)if((entry.kind??'workout')==='workout'&&entry.id!==ignoreEventId&&counts(entry.planId)&&entry.date===date)messages.push(`${dateLabel(date)}: “${entry.dayName}” del piano “${entry.planName}” è già programmato.`);
   for(const entry of data.workouts)if(entry.planId!==planId&&!planIsClosed(data,entry.planId)&&entry.date===date)messages.push(`${dateLabel(date)}: “${entry.dayName}” del piano “${entry.planName}” è già registrato.`);
  }

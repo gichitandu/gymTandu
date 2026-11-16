@@ -923,7 +923,7 @@ export class Store {
       if(plan.program&&(repeatCount!==1||d.scheduledWorkouts.some(event=>event.id!==id&&event.planId===plan.id&&event.dayId===dayId))||previous&&d.plans.some(item=>item.id===previous.planId&&item.program)&&previous.dayId!==dayId)throw Error('Questa seduta del piano importato è già programmata. Usa Sposta per cambiare data o ora.');
       if(index>=0&&d.scheduledWorkouts[index].workoutId)throw Error('Una programmazione già avviata non può essere modificata.');
       if(index>=0&&repeatCount!==1)throw Error('Per ripetere l’allenamento crea una nuova programmazione.');
-      const conflicts=scheduleConflicts(d,dates,plan.id,id);
+      const conflicts=scheduleConflicts(d,dates,plan.id,id,{inactivePeriodsFree:plan.active});
       if(conflicts.length)throw Error('Programmazione bloccata: data occupata da un altro piano. '+conflicts[0]);
       if(typeof notes!=='string')throw Error('Le note non sono valide.');
       if(notes.length>2000&&notes!==previous?.notes)throw Error('Le note possono contenere al massimo 2000 caratteri.');
@@ -957,7 +957,8 @@ export class Store {
       validateCalendarEvent(candidate);
       if((event.kind??'workout')==='workout'){
         const plan=d.plans.find(plan=>plan.id===event.planId);if(!plan||plan.archived||!d.days.some(day=>day.id===event.dayId&&day.planId===plan.id))throw Error('Il giorno del piano non è più disponibile. La programmazione è conservata.');
-        const conflicts=scheduleConflicts(d,[date],event.planId,id);if(conflicts.length)throw Error('Spostamento bloccato: '+conflicts[0]);
+        // Il periodo di un piano aperto ma non attivo (es. una copia recuperata) non blocca il piano attivo; le sue sedute programmate sì.
+        const conflicts=scheduleConflicts(d,[date],event.planId,id,{inactivePeriodsFree:plan.active});if(conflicts.length)throw Error('Spostamento bloccato: '+conflicts[0]);
         if(calendarWorkoutDuplicate(d.scheduledWorkouts,candidate))throw Error('Questo allenamento è già programmato nella data e nell’orario scelti.');
       }else if(d.scheduledWorkouts.some(other=>other.id!==id&&other.kind===candidate.kind&&other.date===candidate.date&&other.dayName.toLocaleLowerCase('it')===candidate.dayName.toLocaleLowerCase('it')&&(!other.time||!candidate.time||other.time===candidate.time)))throw Error('Questa attività è già presente nella data scelta.');
       Object.assign(event,candidate);if(candidate.time===undefined)delete event.time;
