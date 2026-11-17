@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="it"><head><meta charset="utf-8"><title>GT video tecnico</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:1280px;height:720px;background:#050916;overflow:hidden;font-family:"Liberation Sans",Arial,Helvetica,sans-serif;color:#fff}
+.kicker{position:absolute;left:36px;top:17px;font-size:13px;font-weight:700;letter-spacing:.2px;color:#2bc4e3}
+.kicker i{font-style:normal;color:#8e9ab3;margin:0 6px}
+h1{position:absolute;left:36px;top:42px;font-size:30px;font-weight:700;line-height:34px;width:1200px}
+#stage{position:absolute;left:12px;top:112px;width:620px;height:596px;background:#060b18}
+#stage canvas{display:block;width:620px;height:596px}
+#stage:after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(5,9,22,.0) 92%,#050916 100%),linear-gradient(0deg,rgba(5,9,22,.0) 94%,#050916 100%);pointer-events:none}
+.view{position:absolute;left:36px;top:686px;font-size:14px;color:#8f98ae;letter-spacing:.2px;text-transform:uppercase}
+.divider{position:absolute;left:652px;top:112px;width:1px;height:538px;background:#181c29}
+.panel{position:absolute;left:686px;top:130px;width:548px}
+.step{font-size:14px;font-weight:700;color:#c07bff;text-transform:uppercase;letter-spacing:.2px}
+h2{font-size:26px;font-weight:400;line-height:32px;margin-top:20px}
+.body{margin-top:26px;font-size:22px;line-height:30px;color:#e6eaf5}
+ul{list-style:none;margin-top:26px}
+li{position:relative;padding-left:18px;font-size:22px;line-height:30px;color:#e6eaf5;margin-bottom:19px}
+li:before{content:"";position:absolute;left:0;top:5px;width:4px;height:21px;background:#2bc4e3;border-radius:1px}
+.track{position:absolute;left:686px;top:607px;width:548px;height:3px;background:#1c1f33}
+.fill{height:3px;width:0;background:#a550fb}
+.phase{position:absolute;left:686px;top:629px;font-size:14px;font-weight:700;color:#2bc4e3;text-transform:uppercase}
+.note{position:absolute;left:686px;top:662px;font-size:14px;color:#8f98ae}
+</style></head><body>
+<div class="kicker">GT<i>/</i>GUIDA TECNICA</div>
+<h1 id="title"></h1>
+<div id="stage"></div>
+<div class="view" id="view"></div>
+<div class="divider"></div>
+<div class="panel"><div class="step" id="step"></div><h2 id="head"></h2><div id="content"></div></div>
+<div class="track"><div class="fill" id="fill"></div></div>
+<div class="phase" id="phase"></div>
+<div class="note">Tecnica illustrativa · adatta il movimento al tuo controllo</div>
+<script type="module">
+import {build} from '/tools/scene.mjs';
+let engine;
+window.setup = spec => { const host=document.getElementById('stage'); host.replaceChildren(); engine = build(host, spec, {w:620,h:596}); document.getElementById('title').textContent = spec.name; };
+window.frame = (s, yaw, ui) => {
+  engine.draw(s, yaw);
+  document.getElementById('step').textContent = ui.step;
+  document.getElementById('head').textContent = ui.head;
+  const c = document.getElementById('content');
+  c.replaceChildren();
+  if (ui.bullets) { const ul=document.createElement('ul'); for (const b of ui.bullets){const li=document.createElement('li');li.textContent=b;ul.append(li);} c.append(ul); }
+  else { const d=document.createElement('div'); d.className='body'; d.textContent=ui.text; c.append(d); }
+  document.getElementById('fill').style.width = (ui.progress*548)+'px';
+  document.getElementById('phase').textContent = ui.phase;
+  document.getElementById('view').textContent = 'Modello 3D schematico  ·  ' + ui.view;
+};
+window.ready = true;
+</script></body></html>
