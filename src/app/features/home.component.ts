@@ -44,7 +44,9 @@ export class HomeComponent {
   private todayClock = inject(TodayService,{optional:true});
   private theme = inject(ThemeService,{optional:true});
   /** Stile «Elegante»: striscia della settimana in alto e riquadri Volume/Settimana al posto dell'anello. */
-  elegant = computed(() => this.theme?.config().style === 'elegant');
+  elegant = computed(() => this.theme?.config().style === 'elegant' || this.theme?.config().style === 'sport');
+  /** Stile «Sportivo»: la figura del primo esercizio entra nella scheda dell'allenamento. */
+  sport = computed(() => this.theme?.config().style === 'sport');
   dayNumber(date: string) { return +date.slice(8, 10); }
   private volumeOf(workoutId: string) {
     return this.s.workoutExercises(workoutId).reduce((sum, row) => sum + this.s.sets(row.id).reduce((total, set) => total + (set.completed && set.kind !== 'warmup' ? (set.weight || 0) * (set.reps || 0) : 0), 0), 0);

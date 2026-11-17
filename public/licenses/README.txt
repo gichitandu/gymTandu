@@ -1,1 +1,3 @@
 Video references: Open-Source Workout Database, https://github.com/rthepen/workout-database (MIT; license alongside this file). Italian catalog labels and descriptions are authored for GymTrack. Video content belongs to its respective YouTube creator and is linked/embedded, not redistributed. Source channel and source title appear in the video dialog.
+
+Font «Kanit» (stile Sportivo): Copyright 2020 The Kanit Project Authors, https://github.com/cadsondemak/kanit (SIL Open Font License 1.1; license alongside this file as kanit-OFL.txt). Only the Latin subset of the 700 and 800 italic weights is bundled.

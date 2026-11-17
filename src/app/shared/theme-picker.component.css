@@ -650,7 +650,7 @@
     scroll-behavior: auto;
   }
 }
-/* Stile: Classico / Elegante */
+/* Stile: Classico / Elegante / Sportivo */
 .style-picker {
   border: 0;
   margin: 0 0 20px;
@@ -665,7 +665,7 @@
 }
 .style-options {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 10px;
 }
 .style-option {
@@ -735,4 +735,37 @@
   height: 26px;
   border-radius: 50%;
   box-shadow: none;
+}
+
+.style-option[data-style="sport"] .style-sample {
+  position: relative;
+  overflow: hidden;
+  background:
+    linear-gradient(
+      112deg,
+      transparent 0 62%,
+      color-mix(in srgb, var(--preview-accent) 28%, transparent) 62% 74%,
+      transparent 74%
+    ),
+    var(--preview-bg);
+}
+.style-option[data-style="sport"] .style-sample i {
+  height: 10px;
+  width: 42%;
+  border-radius: 2px;
+  transform: skewX(-22deg);
+}
+.style-option[data-style="sport"] .style-sample b {
+  width: 38%;
+  border-radius: 0;
+  box-shadow: none;
+  clip-path: polygon(6px 0, 100% 0, calc(100% - 6px) 100%, 0 100%);
+}
+@media (max-width: 380px) {
+  .style-option {
+    padding: 8px 8px 10px;
+  }
+  .style-option small {
+    display: none;
+  }
 }

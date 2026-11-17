@@ -79,5 +79,8 @@ export class WorkoutPreviewComponent {
   date(value:string){const date=new Date(value+'T12:00:00');return Number.isNaN(date.getTime())?value:date.toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long',year:'numeric'});}
   range(min:number|undefined,max:number|undefined){return min===undefined?String(max??'—'):max===undefined||max===min?String(min):min+'–'+max;}
   rest(seconds:number){if(seconds<60)return seconds.toLocaleString('it-IT')+' s';const minutes=Math.floor(seconds/60),remaining=seconds%60;return minutes+' min'+(remaining?' '+remaining.toLocaleString('it-IT')+' s':'');}
+  /** Recupero in forma breve per le celle dell'elenco: 1:30 oppure 45 s. */
+  restShort(seconds:number){return seconds<60?seconds+' s':Math.floor(seconds/60)+':'+String(seconds%60).padStart(2,'0');}
+  two(value:number){return String(value).padStart(2,'0');}
   hasAdvice(item:Readonly<TrainingPlanExercise>,description?:string){return !!(item.warmupNotes||item.reference||item.notes||description);}
 }

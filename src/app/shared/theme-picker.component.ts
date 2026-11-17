@@ -41,6 +41,7 @@ export class ThemePickerComponent {
   readonly styles: { value: ThemeStyle; label: string; hint: string }[] = [
     { value: "classic", label: "Classico", hint: "L’aspetto di sempre" },
     { value: "elegant", label: "Elegante", hint: "Essenziale, titoli grandi" },
+    { value: "sport", label: "Sportivo", hint: "Grintoso, numeri grandi" },
   ];
   readonly draft = signal<ThemeConfig>(structuredClone(this.theme.config()));
   private baseline = signal(JSON.stringify(this.theme.config()));
@@ -106,7 +107,7 @@ export class ThemePickerComponent {
   chooseStyle(style: ThemeStyle) {
     this.issue.set("");
     this.draft.update(({ style: _previous, ...config }) =>
-      style === "elegant" ? { ...config, style } : config,
+      style === "classic" ? config : { ...config, style },
     );
   }
   chooseMode(mode: ThemeMode) {

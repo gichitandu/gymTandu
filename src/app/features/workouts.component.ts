@@ -11,6 +11,7 @@ import { Store } from "../services/store";
 import { IconComponent } from "../shared/icon.component";
 import { StatusComponent } from "../shared/status.component";
 import { ExerciseFilterComponent } from "../shared/exercise-filter.component";
+import { ExerciseThumbComponent } from "../shared/exercise-thumb.component";
 @Component({
   standalone: true,
   styleUrls: ["./account-polish.css", "./history-v3.css"],
@@ -21,6 +22,7 @@ import { ExerciseFilterComponent } from "../shared/exercise-filter.component";
     IconComponent,
     StatusComponent,
     ExerciseFilterComponent,
+    ExerciseThumbComponent,
   ],
   template: `<header class="su-head"><h1>Calendario</h1><div class="su-actions"><a class="su-iconbtn" routerLink="/calendario" [queryParams]="{add:1}" aria-label="Aggiungi al calendario"><gt-icon name="plus"/></a><gt-profile-link/></div></header>
     <nav class="su-seg" aria-label="Vista del calendario"><a routerLink="/calendario">Settimana</a><a routerLink="/calendario" [queryParams]="{view:'month'}">Mese</a><a class="on" aria-current="page" routerLink="/allenamenti">Elenco</a></nav>
@@ -77,10 +79,12 @@ import { ExerciseFilterComponent } from "../shared/exercise-filter.component";
         @for (group of groups(); track group.key) {
           <div class="history-month"><span>{{ group.label }}</span><small>{{ group.items.length }} {{ group.items.length===1?'seduta':'sedute' }}</small></div>
           @for (w of group.items; track w.id) {
-          <a class="card hx3-session" [routerLink]="['/riepilogo',w.id]" [queryParams]="{from:'elenco'}" [attr.aria-label]="'Riepilogo di '+w.dayName+' del '+(w.date | date: 'dd/MM/yyyy')">
-            <span class="hx3-date"><strong>{{w.date | date: "dd"}}</strong><small>{{ weekday(w.date) }}</small></span>
+          <a class="card hx3-session gx-hi" [routerLink]="['/riepilogo',w.id]" [queryParams]="{from:'elenco'}" [attr.aria-label]="'Riepilogo di '+w.dayName+' del '+(w.date | date: 'dd/MM/yyyy')">
+            <span class="hx3-date gx-ticket"><strong>{{w.date | date: "d"}}</strong><small>{{ weekday(w.date) }}</small></span>
             <span class="hx3-text"><strong>{{ w.dayName }}</strong><small>{{ w.planName }}</small>
-              <span class="hx3-meta"><span>{{ s.workoutExercises(w.id).length }} es.</span><span>{{ setCount(w.id) }} serie</span><span>{{w.duration>0?w.duration+' min':'durata n.d.'}}</span><span>{{ volumeLabel(s.volume(w.id)) }} {{ s.settings().unit }}</span></span></span>
+              <span class="hx3-meta gx-chips"><span class="gx-chip"><gt-icon name="clock"/>{{w.duration>0?w.duration+' min':'durata n.d.'}}</span><span class="gx-chip"><gt-icon name="weight"/>{{ volumeLabel(s.volume(w.id)) }} {{ s.settings().unit }}</span></span>
+              <span class="gx-thumbs">@for(row of s.workoutExercises(w.id).slice(0,4);track row.id){<gt-exercise-thumb [exercise]="s.exercise(row.exerciseId)"/>}<span>{{ s.workoutExercises(w.id).length }} {{ s.workoutExercises(w.id).length===1?'esercizio':'esercizi' }} · {{ setCount(w.id) }} serie</span></span>
+              <span class="gx-vol" aria-hidden="true"><i [style.width.%]="volumeShare(w.id)"></i></span></span>
             <gt-icon name="chevron-right" />
           </a>
           }
@@ -148,6 +152,9 @@ export class WorkoutsComponent {
   volumeLabel(kg:number){return this.s.weight(kg).toLocaleString('en-US',{maximumFractionDigits:1}).replace(/[,.]/g,m=>m===','?'.':',');}
   overview=computed(()=>{const list=this.filtered();return {sets:list.reduce((n,w)=>n+this.setCount(w.id),0),volume:list.reduce((n,w)=>n+this.s.volume(w.id),0)};});
   groups=computed(()=>{const out:{key:string;label:string;items:ReturnType<WorkoutsComponent['filtered']>}[]=[];for(const w of this.filtered()){const key=w.date.slice(0,7);let group=out.find(g=>g.key===key);if(!group){group={key,label:this.monthLabel(key),items:[]};out.push(group);}group.items.push(w);}return out;});
+  /** Barra del volume: quanto pesa la seduta rispetto alla più intensa dell'elenco mostrato. */
+  private maxVolume=computed(()=>this.filtered().reduce((max,w)=>Math.max(max,this.s.volume(w.id)),0));
+  volumeShare(id:string){const max=this.maxVolume();return max?Math.max(4,Math.round(this.s.volume(id)/max*100)):0;}
   monthLabel(key:string){const [y,m]=key.split('-').map(Number);try{const text=new Date(y,(m||1)-1,1).toLocaleDateString('it-IT',{month:'long',year:'numeric'});return text.charAt(0).toUpperCase()+text.slice(1);}catch{return key;}}
   weekday(date:string){try{return new Date(date+'T12:00:00').toLocaleDateString('it-IT',{weekday:'short'}).replace('.','').toUpperCase();}catch{return '';}}
   longDate(date:string){try{return new Date(date+'T12:00:00').toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long',year:'numeric'});}catch{return date;}}

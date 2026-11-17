@@ -27,6 +27,8 @@ export class ThemeService{
  private cacheConfig(value:ThemePreference){return validThemeConfig(value.config)?value.config:this.legacy(value.color);}
  /** True when the «Elegante» look is active for every app of the suite. */
  elegant(){return this.config().style==='elegant';}
+ /** True when the «Sportivo» look is active. */
+ sport(){return this.config().style==='sport';}
  isLight(){return resolveTheme(this.config(),this.systemLight()).light;}
  /** Reuse the last confirmed palette before authentication, without loading account archives. */
  restoreEntryTheme(){
@@ -70,6 +72,7 @@ export class ThemeService{
   document.body.classList.toggle('theme-satin',tokens.satin);
   document.body.classList.toggle('theme-mono',tokens.mono);
   document.body.classList.toggle('style-elegant',this.config().style==='elegant');
+  document.body.classList.toggle('style-sport',this.config().style==='sport');
   document.body.classList.toggle('theme-multicolor',tokens.multicolor);
   document.body.classList.toggle('theme-metallic',['oro','argento'].includes(this.config().palette)&&!this.config().accent);
   document.body.classList.toggle('palette-violet',this.config().palette==='viola-neon'&&!this.config().accent);

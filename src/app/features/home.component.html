@@ -17,6 +17,7 @@
 
 <section class="hx-next su-hero" aria-label="Il tuo allenamento">
   @if(upcoming();as session){
+    @if(sport()&&upcomingExercises()[0];as figure){<gt-exercise-thumb class="sp-fig" aria-hidden="true" [exercise]="figure"/>}
     <div class="hx-next-row"><span class="su-badge pink"><gt-icon name="fire"/>{{tagLabel(session)}}</span>@if(session.periodLabel){<span class="hx-when">{{session.periodLabel}}</span>}</div>
     <h2>{{session.title}}</h2>
     <p class="hx-sub">{{subLine(session)}}</p>

@@ -4,13 +4,15 @@
     <section class="card preview-empty" role="status"><p>Caricamento allenamento…</p></section>
   }@else{
     @let workout=preview();
-    <section class="preview-summary">
-      @if(workout.planName){<p class="preview-plan">{{workout.planName}}</p>}
-      <h1>{{workout.title}}</h1>
-      @if(workout.date){<p class="preview-date"><gt-icon name="calendar"/>{{date(workout.date!)}}</p>}
-      @if(workout.week||workout.phase){<p class="preview-phase">@if(workout.week){<span>Settimana {{workout.week}}</span>}@if(workout.phase){<span>{{workout.phase}}</span>}</p>}
-      @if(workout.available&&workout.exercises[0]?.exercise){<gt-exercise-thumb class="preview-cover" [exercise]="workout.exercises[0].exercise"/>}
-      @if(workout.available){<div class="preview-totals"><span><gt-icon name="weight"/><strong>{{workout.exercises.length}}</strong><small>Esercizi</small></span><span><gt-icon name="plans"/><strong>{{workout.workSets}}</strong><small>Serie di lavoro</small></span>@if(workout.warmupSets){<span><gt-icon name="activity"/><strong>{{workout.warmupSets}}</strong><small>Riscaldamento</small></span>}</div>}
+    <section class="preview-summary gx-hero">
+      @if(workout.available&&workout.exercises[0]?.exercise){<gt-exercise-thumb class="preview-cover gx-hero-fig" [exercise]="workout.exercises[0].exercise"/>}
+      <div class="gx-hero-in">
+        @if(workout.planName){<p class="preview-plan"><span class="gx-tag">{{workout.planName}}</span></p>}
+        <h1>{{workout.title}}</h1>
+        @if(workout.date){<p class="preview-date"><gt-icon name="calendar"/>{{date(workout.date!)}}</p>}
+        @if(workout.week||workout.phase){<p class="preview-phase">@if(workout.week){<span>Settimana {{workout.week}}</span>}@if(workout.phase){<span>{{workout.phase}}</span>}</p>}
+        @if(workout.available){<div class="preview-totals gx-chips"><span class="gx-chip"><gt-icon name="weight"/><strong>{{workout.exercises.length}}</strong><small>{{workout.exercises.length===1?'esercizio':'esercizi'}}</small></span><span class="gx-chip"><gt-icon name="plans"/><strong>{{workout.workSets}}</strong><small>serie</small></span>@if(workout.warmupSets){<span class="gx-chip"><gt-icon name="activity"/><strong>{{workout.warmupSets}}</strong><small>riscaldamento</small></span>}</div>}
+      </div>
     </section>
     @if(!workout.available){<section class="card preview-empty" role="status"><gt-icon name="info"/><p>{{workout.message}}</p><a class="button ghost" [routerLink]="backPath()" [queryParams]="backParams()">Torna indietro</a></section>}
     @if(workout.available){<div class="preview-section-title"><h2>Esercizi</h2><span>Tocca per tecnica e dettagli</span></div>}
@@ -18,8 +20,8 @@
     @if(workout.available){<div class="preview-exercises">@for(row of workout.exercises;track row.id;let number=$index){
       @let item=row.prescription;
       <details class="card preview-exercise">
-        <summary class="preview-exercise-summary"><span class="wp3-number" aria-hidden="true">{{number+1}}</span><gt-exercise-thumb [exercise]="row.exercise"/><div class="exercise-title"><span class="exercise-number wp3-sr">ESERCIZIO {{number+1}}</span><h2>{{row.name}}</h2><p>{{item.sets}} serie · {{range(item.repsMin,item.repsMax)}} rip. · {{rest(item.rest)}}</p>@if(lastTime(row.exercise?.id);as last){<p class="wp-last">Ultima: <b>{{last}}</b></p>}</div><gt-icon class="preview-exercise-arrow" name="back"/></summary>
-        <div class="preview-exercise-body"><p class="preview-muscle">{{row.muscle}}{{row.muscle&&row.exercise?.equipment?' · ':''}}{{row.exercise?.equipment}}</p>
+        <summary class="preview-exercise-summary gx-ex"><gt-exercise-thumb class="gx-ex-pic" [exercise]="row.exercise"/><div class="exercise-title gx-ex-body"><span class="gx-ex-no" aria-hidden="true">{{two(number+1)}}</span><span class="exercise-number wp3-sr">ESERCIZIO {{number+1}}</span>@if(row.muscle||row.exercise?.equipment){<span class="gx-ex-kicker">{{row.muscle}}{{row.muscle&&row.exercise?.equipment?' · ':''}}{{row.exercise?.equipment}}</span>}<h2>{{row.name}}</h2><p class="gx-cells"><span><b>{{item.sets}}</b> serie</span><span><b>{{range(item.repsMin,item.repsMax)}}</b> rip.</span><span><b>{{restShort(item.rest)}}</b> recupero</span></p>@if(lastTime(row.exercise?.id);as last){<p class="wp-last gx-chip gx-acc"><gt-icon name="weight"/><span class="wp3-sr">Ultima: </span><b>{{last}}</b></p>}</div><gt-icon class="preview-exercise-arrow" name="back"/></summary>
+        <div class="preview-exercise-body">
         <gt-exercise-motion [exercise]="row.exercise"/>
         <dl class="prescription-grid"><div><dt>Serie</dt><dd>{{item.sets}}</dd></div><div><dt>Ripetizioni</dt><dd>{{range(item.repsMin,item.repsMax)}}</dd></div><div><dt>Recupero</dt><dd>{{rest(item.rest)}}</dd></div></dl>
         @if(item.rirMin!==undefined||item.rirMax!==undefined||item.rpe!==undefined||item.superset||item.warmupSets){<div class="prescription-tags">@if(item.rirMin!==undefined||item.rirMax!==undefined){<span title="Ripetizioni in riserva">RIR {{range(item.rirMin,item.rirMax)}}</span>}@if(item.rpe!==undefined){<span>RPE {{item.rpe}}</span>}@if(item.superset){<span>Superset {{item.superset}}</span>}@if(item.warmupSets){<span>{{item.warmupSets}} serie di riscaldamento</span>}</div>}

@@ -791,3 +791,8 @@ body.theme-ready.style-elegant :is(.archive-recovery,.machine-details,.data-valu
  content:"";position:absolute;right:8px;top:50%;width:8px;height:8px;margin-top:-6px;border:solid var(--muted);border-width:0 2px 2px 0;transform:rotate(45deg);transition:transform .2s ease;
 }
 body.theme-ready.style-elegant :is(.archive-recovery,.machine-details,.data-values,.calendar-manual,.archive-protection)[open]>summary::after{transform:rotate(-135deg);margin-top:-2px}
+
+/* Elenchi ridisegnati (lists-redesign.css): nello stile Elegante i pannelli seguono lo stesso bianco con bordo sottile. */
+body.theme-ready.style-elegant{--gx-panel:var(--el-surface);--gx-soft:color-mix(in srgb,var(--text) 6%,transparent);--gx-line:var(--el-line)}
+body.theme-ready.style-elegant gt-shell main .gx-hi .gx-ticket{background:var(--el-raised)!important;border-color:var(--el-line)!important}
+body.theme-ready.style-elegant gt-shell main a.hx3-session.gx-hi{box-shadow:var(--el-hi)!important}

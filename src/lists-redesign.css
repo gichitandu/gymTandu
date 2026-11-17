@@ -1,0 +1,215 @@
+/* Elenchi e calendario ridisegnati (novembre 2026): valgono per tutti e tre gli stili.
+   Ogni stile cambia solo le variabili --gx-*: carattere dei titoli, inclinazione, raggio e sfumatura.
+   Le classi gx-* sono nuove: nessuna regola precedente le usa. */
+
+/* ---------- 1. Variabili ---------- */
+body{
+ --gx-disp:inherit;--gx-disp-style:normal;--gx-disp-weight:800;--gx-track:-.02em;
+ --gx-r:20px;--gx-chip-r:9px;--gx-slant:0deg;--gx-cut:0px;
+ --gx-line:color-mix(in srgb,var(--text) 11%,transparent);
+ --gx-panel:linear-gradient(180deg,color-mix(in srgb,var(--text) 6%,var(--card)),var(--card));
+ --gx-soft:color-mix(in srgb,var(--text) 8%,transparent);
+ --gx-grad:linear-gradient(100deg,var(--accent),color-mix(in srgb,var(--accent) 55%,var(--theme-secondary,var(--accent))));
+ --gx-ink:var(--accent-ink);--gx-acc:var(--accent-text,var(--accent));
+ --gx-tile:#050918;--gx-photo-text:#F4F8FF;--gx-photo-muted:#B9C7DA;
+ --gx-good:var(--green,#70D4AD);
+}
+body.style-elegant{
+ --gx-disp-weight:560;--gx-track:-.04em;--gx-r:26px;--gx-chip-r:999px;
+ --gx-grad:linear-gradient(160deg,color-mix(in srgb,#fff 30%,var(--accent)),var(--accent));
+}
+
+/* ---------- 2. Mattoncini comuni ---------- */
+body.theme-ready gt-shell main .gx-chips{display:flex;flex-wrap:wrap;gap:6px;align-items:center;min-width:0}
+body.theme-ready gt-shell main .gx-chip{
+ display:inline-flex;align-items:center;gap:5px;min-height:26px;padding:3px 10px;margin:0;border:0;border-radius:var(--gx-chip-r);
+ background:var(--gx-soft);color:var(--text);font-size:12.5px;font-weight:600;line-height:1.2;letter-spacing:0;white-space:nowrap;text-transform:none;
+}
+body.theme-ready gt-shell main .gx-chip gt-icon{width:13px;height:13px;flex:none;color:var(--gx-acc)}
+body.theme-ready gt-shell main .gx-chip.gx-acc{background:color-mix(in srgb,var(--accent) 16%,transparent);color:var(--gx-acc)}
+body.theme-ready gt-shell main .gx-chip :is(strong,b,small){font:inherit;color:inherit;margin:0}
+body.theme-ready gt-shell main .gx-tag{
+ display:inline-block;padding:4px 12px;border-radius:8px;background:var(--gx-grad);color:var(--gx-ink);
+ font-family:var(--gx-disp);font-style:var(--gx-disp-style);font-weight:700;font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;line-height:1.3;
+}
+body.theme-ready.style-elegant gt-shell main .gx-tag{background:none;border:1px solid color-mix(in srgb,var(--gx-photo-text) 26%,transparent);color:var(--gx-photo-muted);border-radius:999px;font-weight:600;letter-spacing:.16em}
+body.theme-ready gt-shell main .gx-ex-kicker{display:block;font-size:10.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--gx-c,var(--gx-acc));line-height:1.3}
+body.theme-ready.style-elegant gt-shell main .gx-ex-kicker{color:var(--muted)}
+
+/* ---------- 3. Anteprima allenamento: scheda con figura ed elenco esercizi ---------- */
+body.theme-ready gt-shell main .preview-summary.gx-hero{
+ position:relative;overflow:hidden;display:flex;align-items:flex-end;min-height:232px;padding:18px!important;margin-top:12px;
+ border-radius:calc(var(--gx-r) + 4px)!important;border:1px solid color-mix(in srgb,var(--accent) 36%,transparent)!important;
+ background:linear-gradient(160deg,color-mix(in srgb,var(--accent) 24%,var(--gx-tile)),var(--gx-tile) 68%)!important;box-shadow:none!important;color:var(--gx-photo-text);
+}
+body.theme-ready gt-shell main .gx-hero .gx-hero-fig{
+ position:absolute;right:-34px;top:-22px;margin:0;--thumb-width:286px;--thumb-height:286px;width:286px!important;height:286px!important;max-width:none;
+ border:0!important;border-radius:0!important;background:none!important;mix-blend-mode:screen;pointer-events:none;
+ -webkit-mask-image:radial-gradient(closest-side,#000 62%,transparent);mask-image:radial-gradient(closest-side,#000 62%,transparent);
+}
+body.theme-ready gt-shell main .gx-hero .gx-hero-in{position:relative;min-width:0;max-width:100%}
+body.theme-ready gt-shell main .gx-hero .preview-plan{margin:0 0 10px;color:inherit}
+body.theme-ready gt-shell main .gx-hero h1{
+ margin:0 0 8px;max-width:11ch;color:var(--gx-photo-text)!important;font-family:var(--gx-disp)!important;font-style:var(--gx-disp-style);
+ font-weight:var(--gx-disp-weight)!important;font-size:clamp(30px,8.8vw,36px)!important;line-height:1!important;letter-spacing:var(--gx-track)!important;text-shadow:0 2px 18px #000a;
+}
+body.theme-ready gt-shell main .gx-hero :is(.preview-date,.preview-phase){color:var(--gx-photo-muted);margin:0 0 10px;font-size:12.5px;text-shadow:0 1px 10px #000c}
+body.theme-ready gt-shell main .gx-hero .preview-totals.gx-chips{display:flex;grid-template-columns:none;margin:4px 0 0;padding:0;border:0;gap:6px}
+body.theme-ready gt-shell main .gx-hero .preview-totals .gx-chip{flex-direction:row;padding:3px 10px;background:color-mix(in srgb,#0a1424 78%,transparent);color:var(--gx-photo-text);border-radius:var(--gx-chip-r);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+body.theme-ready gt-shell main .gx-hero .preview-totals .gx-chip gt-icon{display:block;color:var(--accent)}
+body.theme-ready gt-shell main .gx-hero .preview-totals .gx-chip strong{font-size:12.5px;font-weight:700}
+body.theme-ready gt-shell main .gx-hero .preview-totals .gx-chip small{font-size:12.5px;font-weight:600;color:inherit;opacity:1}
+
+body.theme-ready gt-shell main .preview-exercises{display:flex;flex-direction:column;gap:10px}
+body.theme-ready gt-shell main details.preview-exercise{padding:0!important;overflow:hidden;border-radius:var(--gx-r)!important;border:1px solid var(--gx-line)!important;background:var(--gx-panel)!important;box-shadow:inset 0 1px 0 color-mix(in srgb,var(--text) 6%,transparent)!important}
+body.theme-ready gt-shell main details.preview-exercise[open]{border-color:color-mix(in srgb,var(--accent) 42%,transparent)!important}
+body.theme-ready gt-shell main .preview-exercise-summary.gx-ex{display:flex!important;align-items:stretch!important;gap:0!important;min-height:112px!important;padding:0!important;position:relative}
+body.theme-ready gt-shell main .gx-ex .gx-ex-pic{
+ --thumb-width:112px;--thumb-height:100%;width:112px!important;height:auto!important;min-height:112px;align-self:stretch;flex:none;margin:0;
+ border:0!important;border-radius:0!important;background:var(--gx-tile)!important;
+ clip-path:polygon(0 0,100% 0,calc(100% - var(--gx-cut)) 100%,0 100%);
+}
+body.theme-ready gt-shell main .gx-ex .gx-ex-body{position:relative;flex:1;min-width:0;padding:13px 14px 12px 12px;display:block}
+body.theme-ready gt-shell main .gx-ex .gx-ex-no{
+ position:absolute;right:12px;top:6px;font-family:var(--gx-disp);font-style:var(--gx-disp-style);font-weight:800;font-size:46px;line-height:1;letter-spacing:0;
+ color:color-mix(in srgb,var(--text) 9%,transparent);pointer-events:none;
+}
+body.theme-ready gt-shell main .gx-ex h2{
+ margin:3px 50px 9px 0!important;font-family:var(--gx-disp)!important;font-style:var(--gx-disp-style);font-weight:700!important;font-size:18.5px!important;line-height:1.1!important;
+ letter-spacing:var(--gx-track)!important;text-transform:none!important;color:var(--text);overflow-wrap:anywhere;
+}
+body.theme-ready gt-shell main .gx-cells{display:flex;gap:16px;margin:0!important;padding:0;color:var(--muted);font-size:10px!important;font-weight:700;letter-spacing:.1em;text-transform:uppercase;line-height:1.3}
+body.theme-ready gt-shell main .gx-cells span{display:block;white-space:nowrap}
+body.theme-ready gt-shell main .gx-cells b{display:block;font-family:var(--gx-disp);font-style:var(--gx-disp-style);font-weight:var(--gx-disp-weight);font-size:20px;line-height:1.1;letter-spacing:0;color:var(--text);text-transform:none}
+body.theme-ready gt-shell main .gx-ex .wp-last.gx-chip{display:inline-flex;margin:9px 0 0!important;font-size:12.5px!important}
+body.theme-ready gt-shell main .gx-ex .wp-last.gx-chip b{font-weight:650;color:inherit}
+body.theme-ready gt-shell main .gx-ex .preview-exercise-arrow{position:absolute;right:12px;bottom:12px;width:16px;height:16px;margin:0;color:var(--muted);transform:rotate(-90deg);transition:transform .2s ease}
+body.theme-ready gt-shell main details.preview-exercise[open] .gx-ex .preview-exercise-arrow{transform:rotate(90deg)}
+body.theme-ready gt-shell main details.preview-exercise>.preview-exercise-body{padding:4px 14px 14px;border-top:1px solid var(--gx-line)}
+body.theme-ready gt-shell main .preview-section-title h2{font-family:var(--gx-disp)!important;font-style:var(--gx-disp-style);font-weight:var(--gx-disp-weight)!important;font-size:23px!important;letter-spacing:var(--gx-track)!important;text-transform:none!important}
+
+/* ---------- 4. Catalogo esercizi: griglia di schede con foto ---------- */
+body.theme-ready gt-shell main .catalog-grid.gx-cat{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:10px}
+@media(min-width:720px){body.theme-ready gt-shell main .catalog-grid.gx-cat{grid-template-columns:repeat(auto-fill,minmax(190px,1fr))}}
+body.theme-ready gt-shell main .gx-cat-card{position:relative;overflow:hidden;min-width:0;margin:0;padding:0;border-radius:var(--gx-r);border:1px solid var(--gx-line);background:var(--gx-panel);box-shadow:inset 0 1px 0 color-mix(in srgb,var(--text) 6%,transparent)}
+body.theme-ready gt-shell main .gx-cat-card::before{content:"";position:absolute;z-index:1;left:0;top:14px;width:4px;height:34px;border-radius:0 3px 3px 0;background:var(--gx-c,var(--accent));box-shadow:0 0 12px var(--gx-c,var(--accent))}
+body.theme-ready.style-elegant gt-shell main .gx-cat-card::before{display:none}
+body.theme-ready gt-shell main .gx-cat-link{display:block;color:inherit;text-decoration:none;min-width:0;height:100%}
+body.theme-ready gt-shell main .gx-cat-link .gx-cat-pic{display:grid;--thumb-width:100%;--thumb-height:128px;width:100%!important;height:128px!important;border:0!important;border-radius:0!important;background:var(--gx-tile)!important;-webkit-mask-image:linear-gradient(#000 62%,transparent);mask-image:linear-gradient(#000 62%,transparent)}
+body.theme-ready gt-shell main .gx-cat-copy{display:block;padding:0 12px 12px;margin-top:-6px;position:relative;min-width:0}
+body.theme-ready gt-shell main .gx-cat-copy h3{margin:3px 0 8px!important;min-height:2.2em;font-family:var(--gx-disp)!important;font-style:var(--gx-disp-style);font-weight:700!important;font-size:16px!important;line-height:1.1!important;letter-spacing:var(--gx-track)!important;text-transform:none!important;overflow-wrap:anywhere;color:var(--text)}
+body.theme-ready gt-shell main .gx-cat-tools{position:absolute;z-index:2;right:7px;top:7px;display:flex;gap:5px}
+body.theme-ready gt-shell main .gx-cat-tools button{
+ width:34px!important;min-width:34px!important;height:34px!important;min-height:34px!important;padding:0!important;display:grid;place-items:center;border:0!important;border-radius:11px!important;
+ background:#050918b8!important;color:#C9D6E6!important;box-shadow:none!important;font-size:19px;line-height:1;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+}
+body.theme-ready gt-shell main .gx-cat-tools button gt-icon{width:16px;height:16px}
+body.theme-ready gt-shell main .gx-cat-tools .favorite-on{color:#FFC24D!important;text-shadow:0 0 10px #ffc24d88}
+body.theme-ready gt-shell main .gx-cat-card.catalog-inactive .gx-cat-pic{opacity:.45}
+body.theme-ready gt-shell main .gx-cat .catalog-empty{grid-column:1/-1}
+
+/* ---------- 5. Storico: data in evidenza, etichette, miniature e barra del volume ---------- */
+body.theme-ready gt-shell main a.hx3-session.gx-hi{display:flex!important;align-items:stretch!important;gap:12px!important;padding:12px!important;border-radius:var(--gx-r)!important;border:1px solid var(--gx-line)!important;background:var(--gx-panel)!important;box-shadow:inset 0 1px 0 color-mix(in srgb,var(--text) 6%,transparent)!important;margin-bottom:10px}
+body.theme-ready gt-shell main .gx-hi .gx-ticket{
+ width:58px!important;min-width:58px;height:auto!important;flex:none;display:grid!important;place-content:center;text-align:center;gap:2px;padding:8px 0;
+ border-radius:14px!important;background:color-mix(in srgb,var(--accent) 14%,transparent)!important;border:1px solid color-mix(in srgb,var(--accent) 34%,transparent)!important;
+}
+body.theme-ready gt-shell main .gx-hi .gx-ticket strong{font-family:var(--gx-disp);font-style:var(--gx-disp-style);font-weight:var(--gx-disp-weight);font-size:28px;line-height:1;letter-spacing:0;color:var(--text)}
+body.theme-ready gt-shell main .gx-hi .gx-ticket small{font-size:10.5px;font-weight:700;letter-spacing:.12em;color:var(--gx-acc)}
+body.theme-ready gt-shell main .gx-hi .hx3-text{display:block!important;flex:1;min-width:0}
+body.theme-ready gt-shell main .gx-hi .hx3-text>strong{display:block;font-family:var(--gx-disp);font-style:var(--gx-disp-style);font-weight:700;font-size:18.5px;line-height:1.1;letter-spacing:var(--gx-track);color:var(--text)}
+body.theme-ready gt-shell main .gx-hi .hx3-text>small{display:block;margin:2px 0 8px;font-size:12px;color:var(--muted)}
+body.theme-ready gt-shell main .gx-hi .hx3-meta.gx-chips{display:flex;gap:6px;margin:0}
+body.theme-ready gt-shell main .gx-thumbs{display:flex;align-items:center;gap:8px;margin-top:9px;font-size:12px;color:var(--muted);min-width:0}
+body.theme-ready gt-shell main .gx-thumbs gt-exercise-thumb{--thumb-width:34px;--thumb-height:34px;width:34px;height:34px;border-radius:10px;border:2px solid var(--card);margin-left:-16px;background:var(--gx-tile)}
+body.theme-ready gt-shell main .gx-thumbs gt-exercise-thumb:first-child{margin-left:0}
+body.theme-ready gt-shell main .gx-vol{display:block;height:5px;margin-top:10px;border-radius:3px;background:var(--gx-soft);overflow:hidden}
+body.theme-ready gt-shell main .gx-vol i{display:block;height:100%;border-radius:3px;background:var(--gx-grad)}
+body.theme-ready gt-shell main .gx-hi>gt-icon{align-self:center;flex:none;color:var(--muted)}
+body.theme-ready gt-shell main .history-month span{font-family:var(--gx-disp);font-style:var(--gx-disp-style);font-weight:var(--gx-disp-weight);font-size:20px;letter-spacing:var(--gx-track);text-transform:none;color:var(--text)}
+
+/* ---------- 6. Calendario · settimana: linea del tempo ---------- */
+body.theme-ready gt-shell main .cal-overview-text .gx-chips{margin-top:8px}
+body.theme-ready gt-shell main .cal-overview:has(.gx-chips) .cal-bars{display:none}
+body.theme-ready gt-shell main .cal-week-list{position:relative;display:flex!important;flex-direction:column;gap:10px!important;padding:0!important;margin-top:14px;border:0!important;background:none!important;box-shadow:none!important}
+body.theme-ready gt-shell main .cal-week-list::before{content:"";position:absolute;left:52px;top:18px;bottom:18px;width:2px;border-radius:2px;background:var(--gx-line)}
+body.theme-ready gt-shell main .cal-week-row{
+ position:relative;display:grid!important;grid-template-columns:40px minmax(0,1fr)!important;column-gap:26px!important;align-items:start!important;
+ padding:0!important;margin:0!important;min-height:0!important;border:0!important;border-radius:0!important;background:none!important;box-shadow:none!important;
+}
+body.theme-ready gt-shell main .cal-week-row::before{display:none!important}
+body.theme-ready gt-shell main .cal-week-row::after{
+ content:"";position:absolute;left:47px;top:17px;width:12px;height:12px;border-radius:50%;box-sizing:border-box;
+ background:var(--bg);border:2px solid color-mix(in srgb,var(--text) 26%,var(--bg));inset-block-end:auto;opacity:1;transform:none;
+}
+body.theme-ready gt-shell main .cal-week-row:is([data-state=completed],[data-state=partial])::after{background:var(--accent);border-color:var(--accent);box-shadow:0 0 0 4px color-mix(in srgb,var(--accent) 20%,transparent)}
+body.theme-ready gt-shell main .cal-week-row[data-state=planned]::after{border-style:dashed;border-color:var(--accent)}
+body.theme-ready gt-shell main .cal-week-row.today::after{left:45px;top:15px;width:16px;height:16px;background:var(--bg);border:3px solid var(--accent);box-shadow:0 0 14px color-mix(in srgb,var(--accent) 70%,transparent)}
+body.theme-ready gt-shell main .cal-week-date{
+ display:grid!important;justify-items:center;align-content:start;gap:0;width:40px!important;min-width:0!important;height:auto!important;min-height:44px!important;padding:6px 0 0!important;
+ border:0!important;border-radius:12px!important;background:none!important;box-shadow:none!important;color:var(--text)!important;
+}
+body.theme-ready gt-shell main .cal-week-date small{font-size:10.5px!important;font-weight:700!important;letter-spacing:.1em!important;text-transform:uppercase;color:var(--muted)!important}
+body.theme-ready gt-shell main .cal-week-date strong{font-family:var(--gx-disp)!important;font-style:var(--gx-disp-style);font-weight:var(--gx-disp-weight)!important;font-size:22px!important;line-height:1.05!important;letter-spacing:0!important;color:inherit!important}
+body.theme-ready gt-shell main .cal-week-row.today .cal-week-date :is(small,strong){color:var(--gx-acc)!important}
+body.theme-ready gt-shell main .cal-week-body{min-width:0;display:flex;flex-direction:column;gap:8px;padding:0!important}
+body.theme-ready gt-shell main .cal-week-pills{display:flex!important;flex-direction:column;gap:8px;width:100%;min-height:0!important;padding:0!important;border:0!important;background:none!important;box-shadow:none!important;text-align:left;color:inherit}
+body.theme-ready gt-shell main .cal-pill.gx-wk{
+ display:flex!important;align-items:center;gap:12px;width:100%;min-height:0;max-width:none;padding:10px!important;border-radius:var(--gx-r)!important;
+ border:1px solid var(--gx-line)!important;background:var(--gx-panel)!important;box-shadow:inset 0 1px 0 color-mix(in srgb,var(--text) 6%,transparent)!important;color:var(--text)!important;white-space:normal;
+}
+body.theme-ready gt-shell main .cal-pill.gx-wk:is([data-state=planned],[data-state=other]){border-style:dashed!important;border-color:color-mix(in srgb,var(--accent) 46%,transparent)!important;background:none!important;box-shadow:none!important}
+body.theme-ready gt-shell main .cal-pill.gx-wk[data-state=missed]{opacity:.62}
+body.theme-ready gt-shell main .gx-wk-thumb{width:58px;height:58px;flex:none;display:grid;place-items:center;border-radius:14px;overflow:hidden;background:var(--gx-tile);color:var(--gx-acc)}
+body.theme-ready gt-shell main .gx-wk-thumb gt-exercise-thumb{--thumb-width:58px;--thumb-height:58px;width:58px;height:58px;border-radius:0;border:0}
+body.theme-ready gt-shell main .gx-wk-thumb>gt-icon{width:24px;height:24px}
+body.theme-ready gt-shell main .cal-pill.gx-wk[data-kind=rest]{padding:6px 10px!important;border-style:dashed!important;background:none!important;box-shadow:none!important}
+body.theme-ready gt-shell main .cal-pill.gx-wk[data-kind=rest] .gx-wk-thumb{width:34px;height:34px;border-radius:10px;background:var(--gx-soft)}
+body.theme-ready gt-shell main .cal-pill.gx-wk[data-kind=rest] .gx-chips{display:none}
+body.theme-ready gt-shell main .gx-wk-copy{display:block;flex:1;min-width:0}
+body.theme-ready gt-shell main .gx-wk-copy>strong{display:block;font-family:var(--gx-disp);font-style:var(--gx-disp-style);font-weight:700;font-size:17.5px;line-height:1.12;letter-spacing:var(--gx-track);color:var(--text);overflow-wrap:anywhere;white-space:normal}
+body.theme-ready gt-shell main .gx-wk-copy .gx-chips{margin-top:7px}
+body.theme-ready gt-shell main .gx-wk-check{width:26px;height:26px;flex:none;display:grid;place-items:center;border-radius:50%;background:color-mix(in srgb,var(--gx-good) 18%,transparent);color:var(--gx-good)}
+body.theme-ready gt-shell main .gx-wk-check gt-icon{width:14px;height:14px}
+body.theme-ready gt-shell main .cal-pill.gx-wk>gt-icon{display:none}
+body.theme-ready gt-shell main :is(.cal-week-free-text,.cal-week-free){
+ display:flex!important;align-items:center;justify-content:flex-start;gap:8px;width:100%;min-height:44px!important;padding:0 14px!important;border-radius:14px!important;
+ border:1px dashed var(--gx-line)!important;background:none!important;box-shadow:none!important;color:var(--muted)!important;font-size:13px!important;font-weight:500!important;text-align:left;
+}
+/* Giorno aperto: le voci restano quelle di sempre, dentro una scheda in evidenza. */
+body.theme-ready gt-shell main .cal-week-body .cal-row-item{border-radius:var(--gx-r)!important;border:1px solid var(--gx-line)!important;background:var(--gx-panel)!important;box-shadow:inset 0 1px 0 color-mix(in srgb,var(--text) 6%,transparent)!important;margin:0!important}
+body.theme-ready gt-shell main .cal-week-row.today .cal-week-body .cal-row-item[data-kind=workout]:not([data-state=completed]){
+ border-color:color-mix(in srgb,var(--accent) 55%,transparent)!important;
+ background:linear-gradient(140deg,color-mix(in srgb,var(--accent) 22%,var(--card)),var(--card) 62%)!important;
+ box-shadow:0 14px 34px color-mix(in srgb,var(--accent) 15%,transparent)!important;
+}
+body.theme-ready gt-shell main .cal-week-body .cal-row-item .cal-item-copy strong{font-family:var(--gx-disp);font-style:var(--gx-disp-style);font-weight:700;font-size:18px;letter-spacing:var(--gx-track);line-height:1.12}
+body.theme-ready gt-shell main .cal-week-row.today .cal-week-body .cal-row-item .cal-item-action:not(.is-done){background:var(--gx-grad)!important;color:var(--gx-ink)!important;border-color:transparent!important;box-shadow:0 8px 20px color-mix(in srgb,var(--accent) 34%,transparent)!important}
+
+/* ---------- 7. Calendario · mese: intensità del giorno e numeri del periodo ---------- */
+body.theme-ready gt-shell main .cal-day[data-level]{border-color:transparent!important;box-shadow:none!important}
+body.theme-ready gt-shell main .cal-day[data-level="1"]{background:color-mix(in srgb,var(--accent) 22%,var(--card))!important;color:var(--text)!important}
+body.theme-ready gt-shell main .cal-day[data-level="2"]{background:color-mix(in srgb,var(--accent) 48%,var(--card))!important;color:var(--text)!important}
+body.theme-ready gt-shell main .cal-day[data-level="3"]{background:var(--gx-grad)!important;color:var(--gx-ink)!important;box-shadow:0 6px 16px color-mix(in srgb,var(--accent) 30%,transparent)!important}
+body.theme-ready gt-shell main .cal-day[data-level] strong{color:inherit!important;font-family:var(--gx-disp);font-style:var(--gx-disp-style);font-weight:700}
+body.theme-ready gt-shell main .cal-day[data-level] .cal-day-ring{display:none}
+body.theme-ready gt-shell main .gx-tri{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;margin:14px 0 0;padding:14px 4px;border-radius:var(--gx-r);border:1px solid var(--gx-line);background:var(--gx-panel);box-shadow:inset 0 1px 0 color-mix(in srgb,var(--text) 6%,transparent)}
+body.theme-ready gt-shell main .gx-tri>div{padding:0 12px;min-width:0;border-left:1px solid var(--gx-line)}
+body.theme-ready gt-shell main .gx-tri>div:first-child{border-left:0}
+body.theme-ready gt-shell main .gx-tri small{display:block;font-size:10.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+body.theme-ready gt-shell main .gx-tri b{display:block;margin-top:5px;font-family:var(--gx-disp);font-style:var(--gx-disp-style);font-weight:var(--gx-disp-weight);font-size:clamp(20px,6.4vw,28px);line-height:1;letter-spacing:0;white-space:nowrap}
+body.theme-ready gt-shell main .cal-cw:is(.join-l,.join-r)::before{display:none!important}
+body.theme-ready gt-shell main .cal-pill.gx-wk{position:relative}
+body.theme-ready gt-shell main .gx-wk-check{position:absolute;left:52px;top:50px;width:20px;height:20px;background:var(--gx-good);color:#04221a;border:2px solid var(--card)}
+body.theme-ready gt-shell main .gx-wk-check gt-icon{width:11px;height:11px}
+body.theme-ready gt-shell main .gx-wk-copy .gx-chips{gap:5px;flex-wrap:nowrap;overflow:hidden}
+body.theme-ready gt-shell main .gx-wk-copy .gx-chip{padding:3px 8px;font-size:12px}
+body.theme-ready gt-shell main .gx-tri b{font-size:clamp(16px,4.9vw,24px)}
+body.theme-ready gt-shell main .gx-tri>div{padding:0 10px}
+/* Titolo del calendario: mai a capo a metà parola sui telefoni stretti. */
+body.theme-ready gt-shell main .cal-heading h1{overflow-wrap:normal}
+body.theme-ready gt-shell main .cal-heading h1 em{display:block}
+body.theme-ready.style-elegant gt-shell main .cal-heading .cal-eyebrow.cal-eyebrow{font-size:clamp(27px,8.2vw,36px)!important;white-space:nowrap}
+body.theme-ready.style-elegant gt-shell main .cal-heading h1 em{display:inline}
+body.theme-ready gt-shell main .gx-hero .preview-totals .gx-chip{flex:none;width:auto;min-width:0}
+body.theme-ready gt-shell main .gx-hero .preview-totals .gx-chip :is(strong,small){color:var(--gx-photo-text)!important}

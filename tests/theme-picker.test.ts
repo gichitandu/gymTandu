@@ -248,3 +248,16 @@ it("keeps the chosen style while palette, mode and colours change, and stores Cl
   component.chooseStyle("classic");
   expect(component.draft()).toEqual({ palette: "viola-neon", mode: "light" });
 });
+
+it("offers Sportivo as a third style and stores it like Elegante", () => {
+  const { component } = setup();
+  expect(component.styles.map((style) => style.value)).toEqual(["classic", "elegant", "sport"]);
+  component.chooseStyle("sport");
+  expect(component.draft().style).toBe("sport");
+  component.choosePalette("viola-neon");
+  expect(component.draft()).toEqual({ palette: "viola-neon", mode: "dark", style: "sport" });
+  component.chooseStyle("elegant");
+  expect(component.draft().style).toBe("elegant");
+  component.chooseStyle("classic");
+  expect(component.draft()).toEqual({ palette: "viola-neon", mode: "dark" });
+});

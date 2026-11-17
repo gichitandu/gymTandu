@@ -28,6 +28,16 @@ it('rejects invalid theme colors, modes, palettes, and unknown config properties
  }
 });
 
+it.each(['elegant','sport'] as const)('round-trips the %s style in backups and rejects unknown styles',async(style)=>{
+ const data=seed(),themeConfig={palette:'blu-azzurro',mode:'dark' as const,style};
+ data.settings[0].themeConfig=themeConfig;
+ expect(()=>validateIntegrity(data)).not.toThrow();
+ const text=await exportBackup(data),restored=await importBackup(text);
+ expect(restored.settings[0].themeConfig).toEqual(themeConfig);
+ const backup=JSON.parse(text);backup.data.settings[0].themeConfig={...themeConfig,style:'fancy'};
+ await expect(importBackup(JSON.stringify(backup))).rejects.toThrow('non validi');
+});
+
 it.each(['oro','argento','multicolore','bianco-elegante','scuro','rosso','verde'])('round-trips the %s preset with personal colors intact',async(palette)=>{
  const data=seed(),themeConfig={palette,mode:'system' as const,background:'#182735',accent:'#D6B76D'};
  data.settings[0].themeConfig=themeConfig;

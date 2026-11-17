@@ -28,7 +28,7 @@
 :host .preview-guidance>summary{padding:10px 12px;min-height:44px;font-size:11px}
 .preview-guidance>summary gt-icon{width:16px;height:16px;color:var(--accent-text)}
 :host .preview-exercises{gap:9px}
-:host .preview-exercise{padding:6px!important;border-radius:14px;background:linear-gradient(110deg,var(--accent-soft),transparent 80%),var(--card);overflow:hidden}
+:host .preview-exercise{padding:0!important;border-radius:14px;background:linear-gradient(110deg,var(--accent-soft),transparent 80%),var(--card);overflow:hidden}
 .preview-exercise-summary{display:flex;align-items:center;gap:11px;min-height:80px;list-style:none;cursor:pointer}
 .preview-exercise-summary::-webkit-details-marker{display:none}
 :host .preview-exercise gt-exercise-thumb{--thumb-width:98px;--thumb-height:77px;border:0;background:var(--bg);border-radius:10px}
