@@ -48,10 +48,20 @@ it('compila gli alimenti letti dall’AI e salva il pasto dopo la conferma', asy
   expect(data().meals[0].ingredients![1]).toMatchObject({ name: 'Riso basmati', grams: 90, calories: 117 });
 });
 
-it('correggere il nome di un alimento ricalcola i valori dal riferimento, per i grammi attuali', async () => {
+it('rinominare un alimento non cambia i valori finché non si preme il pulsante', async () => {
+  await component.recognize();
+  const rice = component.ingredients[1], before = { ...rice };
+  component.renameIngredient(rice.id, 'Pasta');
+  expect(component.ingredients[1]).toEqual({ ...before, name: 'Pasta' });
+  expect(cloud.correct).not.toHaveBeenCalled();
+  expect(component.ingredientNotes()[rice.id]).toContain('Ricalcola valori dal nome');
+});
+
+it('il pulsante ricalcola i valori dal riferimento, per i grammi attuali', async () => {
   await component.recognize();
   const rice = component.ingredients[1];
   component.renameIngredient(rice.id, 'Pasta');
+  await component.reestimate(rice.id);
   const fixed = component.ingredients[1];
   expect(fixed).toMatchObject({ id: rice.id, name: 'Pasta', grams: 180, calories: 284, protein: 10.4, carbs: 55.6, fat: 1.6 });
   expect(cloud.correct).not.toHaveBeenCalled();
@@ -64,6 +74,7 @@ it('se il nome non è nel riferimento chiede la stima all’AI e la porta ai gra
   cloud.correct.mockResolvedValue({ name: 'Gnocchi', grams: 100, calories: 150, protein: 3.5, carbs: 32, fat: 0.5 });
   component.changeIngredientGrams(rice.id, 200);
   component.renameIngredient(rice.id, 'Gnocchi di patate');
+  void component.reestimate(rice.id);
   expect(component.ingredientBusy()[rice.id]).toBe(true);
   await vi.waitFor(() => expect(component.ingredientBusy()[rice.id]).toBe(false));
   expect(cloud.correct).toHaveBeenCalledWith('Gnocchi di patate', 200);
@@ -75,6 +86,7 @@ it('se l’AI non è disponibile mantiene i valori e lo dice, senza inventarne',
   const rice = component.ingredients[1], before = { ...rice };
   cloud.correct.mockRejectedValue(new MealScanLimitError(RESET));
   component.renameIngredient(rice.id, 'Gnocchi di patate');
+  await component.reestimate(rice.id);
   await vi.waitFor(() => expect(component.ingredientBusy()[rice.id]).toBe(false));
   expect(component.ingredients[1]).toEqual({ ...before, name: 'Gnocchi di patate' });
   expect(component.ingredientNotes()[rice.id]).toContain('valori non aggiornati');
