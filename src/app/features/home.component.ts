@@ -305,6 +305,12 @@ export class HomeComponent {
     if (session.kind === 'scheduled' && session.eventId) await this.startEvent(session.eventId);
     else await this.start(session.dayId);
   }
+  /** Con l'obiettivo impostato il titolo dice già quanti allenamenti mancano: nello stile Elegante la nota aggiunge solo la serie di giorni. */
+  eleganceNote = computed(() => {
+    if (!this.goals()?.workoutsPerWeek) return this.weekNote();
+    const streak = this.streak();
+    return streak > 1 ? streak + ' giorni di fila' : '';
+  });
   weekNote = computed(() => {
     const goal = this.goals()?.workoutsPerWeek, done = this.weekCount(), streak = this.streak();
     const parts = [goal ? (done >= goal ? 'Obiettivo raggiunto' : 'Ancora ' + (goal - done) + (goal - done === 1 ? ' allenamento' : ' allenamenti') + ' per l’obiettivo') : done + (done === 1 ? ' allenamento' : ' allenamenti') + ' questa settimana'];

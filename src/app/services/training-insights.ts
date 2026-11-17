@@ -7,6 +7,8 @@ export interface TrainingPeriod {
 }
 export interface TrainingInsight {title:string;message:string;kind:'progress'|'consistency'|'recovery'|'schedule';}
 const fromDays=(today:string,days:number)=>{const date=new Date(today+'T12:00:00');date.setDate(date.getDate()-days+1);return localDate(date);};
+/** Data leggibile in italiano («martedì 17 novembre»); se non valida resta com'è. */
+export const readableDate=(date:string,withYear=false)=>{const d=new Date(date+'T12:00:00');return Number.isNaN(d.getTime())?date:d.toLocaleDateString('it-IT',{weekday:withYear?undefined:'long',day:'numeric',month:'long',...(withYear?{year:'numeric'}:{})});};
 const finished=(data:DataSet,from:string,to:string)=>data.workouts.filter(w=>w.status==='completed'&&w.date>=from&&w.date<=to);
 /**
  * Settimana di scarico: suggerisce una pausa più leggera dopo molte settimane consecutive
@@ -53,7 +55,7 @@ export function summarizeTraining(data:DataSet,days=28,today=localDate()):{curre
   }
  }
  const next=data.scheduledWorkouts.filter(e=>(e.kind??'workout')==='workout'&&e.date>=today&&!e.done&&!data.workouts.some(w=>w.id===e.workoutId&&w.status==='completed')).sort((a,b)=>a.date.localeCompare(b.date)||(a.time||'').localeCompare(b.time||''))[0];
- if(next)insights.push({kind:'schedule',title:'Prossimo appuntamento',message:`${next.dayName} · ${next.date}${next.time?' alle '+next.time:''}. Puoi aggiungere un promemoria al calendario del telefono.`});
+ if(next)insights.push({kind:'schedule',title:'Prossimo appuntamento',message:`${next.dayName} · ${readableDate(next.date)}${next.time?' alle '+next.time:''}. Puoi aggiungere un promemoria al calendario del telefono.`});
  const wellness=data.wellnessLogs.find(row=>row.date===today);
  if(wellness&&((wellness.energy!==undefined&&wellness.energy<=2)||(wellness.stress!==undefined&&wellness.stress>=4)))
   insights.push({kind:'recovery',title:'Ascolta le sensazioni',message:'Oggi hai registrato poca energia o stress elevato. Valuta personalmente l’intensità e, se necessario, confrontati con un professionista.'});

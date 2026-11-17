@@ -50,14 +50,16 @@
   <a class="su-card el-stat" routerLink="/progressi" [attr.aria-label]="'Volume della settimana: '+weekVolumeLabel().value+' '+weekVolumeLabel().unit">
     <span class="el-eyebrow">Volume</span>
     <b class="el-num">{{weekVolumeLabel().value}}<small>{{weekVolumeLabel().unit}}</small></b>
+    <span class="el-cap">questa settimana</span>
     <svg class="el-spark" viewBox="0 0 120 36" preserveAspectRatio="none" aria-hidden="true"><path pathLength="1" [attr.d]="volumeLine().d"/><circle [attr.cx]="volumeLine().x" [attr.cy]="volumeLine().y" r="2.6"/></svg>
   </a>
   <a class="su-card el-stat" gtDesign="home.goals" routerLink="/profilo" [queryParams]="{section:'goals'}" [attr.aria-label]="goals()?.workoutsPerWeek?'Allenamenti della settimana: '+weekCount()+' di '+goals()!.workoutsPerWeek:'Imposta un obiettivo settimanale'">
     <span class="el-eyebrow">Settimana</span>
     <b class="el-num">{{weekCount()}}@if(goals()?.workoutsPerWeek){<small>/ {{goals()!.workoutsPerWeek}}</small>}</b>
+    <span class="el-cap">allenamenti</span>
     <span class="el-bars" aria-hidden="true">@for(done of weekBars();track $index){<i [class.on]="done"></i>}</span>
   </a>
-  <p class="hx-weeknote">{{weekNote()}}</p>
+  @if(eleganceNote()){<p class="hx-weeknote">{{eleganceNote()}}</p>}
 </section>
 }@else{
 <section class="su-card hx-weekcard" gtDesign="home.week" aria-label="Questa settimana">

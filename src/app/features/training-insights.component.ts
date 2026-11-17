@@ -4,7 +4,7 @@ import {Store} from '../services/store';
 import {TodayService} from '../services/today';
 import {IconComponent} from '../shared/icon.component';
 import {DataChartComponent} from '../shared/data-chart.component';
-import {summarizeTraining,trainingTimeline,trainingReportCsv,workoutReminderIcs} from '../services/training-insights';
+import {summarizeTraining,trainingTimeline,trainingReportCsv,workoutReminderIcs,readableDate} from '../services/training-insights';
 
 @Component({
  standalone:true,host:{class:'gt-insights-print'},imports:[RouterLink,IconComponent,DataChartComponent],
@@ -39,7 +39,7 @@ import {summarizeTraining,trainingTimeline,trainingReportCsv,workoutReminderIcs}
  <section class="insights-section insights-export" aria-labelledby="export-heading">
   <h2 id="export-heading">Report dei tuoi allenamenti</h2><p class="insights-note">Il report include soltanto le sedute completate nel periodo selezionato. Rimane sul dispositivo finché non decidi di condividerlo.</p>
   <div class="insights-export-actions"><button type="button" class="primary" (click)="downloadReport()"><gt-icon name="download"/> Esporta CSV</button><button type="button" (click)="printReport()"><gt-icon name="note"/> Stampa / salva in PDF</button></div>
-  <p class="insights-note">Periodo: {{summary().current.from}} — {{summary().current.to}}. Per il PDF usa la funzione di stampa del browser.</p>
+  <p class="insights-note">Periodo: {{day(summary().current.from)}} — {{day(summary().current.to)}}. Per il PDF usa la funzione di stampa del browser.</p>
  </section>
  `,
  styles:[`
@@ -86,6 +86,7 @@ import {summarizeTraining,trainingTimeline,trainingReportCsv,workoutReminderIcs}
 export class TrainingInsightsComponent {
  readonly s=inject(Store);private clock=inject(TodayService);
  readonly period=signal(28);
+ day=(date:string)=>readableDate(date,true);
  readonly summary=computed(()=>summarizeTraining(this.s.data(),this.period(),this.clock.date()));
  readonly timeline=computed(()=>trainingTimeline(this.s.data(),this.period(),this.clock.date()));
  readonly sessionTimeline=computed(()=>this.timeline().map(row=>({label:row.label,value:row.sessions})));

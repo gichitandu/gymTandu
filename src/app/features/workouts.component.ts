@@ -34,7 +34,7 @@ import { ExerciseFilterComponent } from "../shared/exercise-filter.component";
         <h2>{{ w.dayName }}</h2>
         <p class="history-done-sub">{{ w.planName }} · {{ longDate(w.date) }}</p>
         <p class="history-done-time">{{ w.startedAt | date: "HH:mm" }} – {{ w.endedAt | date: "HH:mm" }}</p>
-        <div class="history-done-stats"><div><b>{{w.duration>0?w.duration:'—'}}</b><small>min</small></div><div><b>{{ setCount(w.id) }}</b><small>serie</small></div><div><b>{{ s.formatWeight(s.volume(w.id)) }}</b><small>{{ s.settings().unit }}</small></div><div><b>{{ repCount(w.id) }}</b><small>rip</small></div></div>
+        <div class="history-done-stats"><div><b>{{w.duration>0?w.duration:'—'}}</b><small>min</small></div><div><b>{{ setCount(w.id) }}</b><small>serie</small></div><div><b>{{ volumeLabel(s.volume(w.id)) }}</b><small>{{ s.settings().unit }}</small></div><div><b>{{ repCount(w.id) }}</b><small>rip</small></div></div>
       </section>
       <div class="history-detail-actions"><a class="button ghost" [routerLink]="['/riepilogo',w.id]"><gt-icon name="trophy"/>Riepilogo</a><button type="button" class="ghost" (click)="reopen(w.id)" [disabled]="s.busy()||reopening()||deleting()"><gt-icon name="repeat"/>{{reopening()?'Riapertura…':'Riapri'}}</button></div>
       @if(w.notes){<section class="card history-notes"><gt-icon name="note"/><p>{{w.notes}}</p></section>}
@@ -72,7 +72,7 @@ import { ExerciseFilterComponent } from "../shared/exercise-filter.component";
             (ngModelChange)="to.set($event)"
         ></gt-date-field></label>
       </div></details>
-      <section class="history-overview" aria-label="Riepilogo degli allenamenti trovati"><div><small>Allenamenti</small><b>{{ filtered().length }}</b></div><div><small>Serie</small><b>{{ overview().sets }}</b></div><div><small>Volume</small><b>{{ s.formatWeight(overview().volume) }}<em>{{ s.settings().unit }}</em></b></div></section>
+      <section class="history-overview" aria-label="Riepilogo degli allenamenti trovati"><div><small>Allenamenti</small><b>{{ filtered().length }}</b></div><div><small>Serie</small><b>{{ overview().sets }}</b></div><div><small>Volume</small><b>{{ volumeLabel(overview().volume) }}<em>{{ s.settings().unit }}</em></b></div></section>
       <div class="hx3-list">
         @for (group of groups(); track group.key) {
           <div class="history-month"><span>{{ group.label }}</span><small>{{ group.items.length }} {{ group.items.length===1?'seduta':'sedute' }}</small></div>
@@ -80,7 +80,7 @@ import { ExerciseFilterComponent } from "../shared/exercise-filter.component";
           <a class="card hx3-session" [routerLink]="['/riepilogo',w.id]" [queryParams]="{from:'elenco'}" [attr.aria-label]="'Riepilogo di '+w.dayName+' del '+(w.date | date: 'dd/MM/yyyy')">
             <span class="hx3-date"><strong>{{w.date | date: "dd"}}</strong><small>{{ weekday(w.date) }}</small></span>
             <span class="hx3-text"><strong>{{ w.dayName }}</strong><small>{{ w.planName }}</small>
-              <span class="hx3-meta"><span>{{ s.workoutExercises(w.id).length }} es.</span><span>{{ setCount(w.id) }} serie</span><span>{{w.duration>0?w.duration+' min':'durata n.d.'}}</span><span>{{ s.formatWeight(s.volume(w.id)) }} {{ s.settings().unit }}</span></span></span>
+              <span class="hx3-meta"><span>{{ s.workoutExercises(w.id).length }} es.</span><span>{{ setCount(w.id) }} serie</span><span>{{w.duration>0?w.duration+' min':'durata n.d.'}}</span><span>{{ volumeLabel(s.volume(w.id)) }} {{ s.settings().unit }}</span></span></span>
             <gt-icon name="chevron-right" />
           </a>
           }
@@ -144,6 +144,8 @@ export class WorkoutsComponent {
   );
   /* Storico v3: valori solo di presentazione. */
   activeFilters(){return [this.plan(),this.day(),this.exercise(),this.from(),this.to()].filter(Boolean).length;}
+  /** Volume con separatore delle migliaia anche sotto i 10.000 (5.737,5 invece di 5737,5). */
+  volumeLabel(kg:number){return this.s.weight(kg).toLocaleString('en-US',{maximumFractionDigits:1}).replace(/[,.]/g,m=>m===','?'.':',');}
   overview=computed(()=>{const list=this.filtered();return {sets:list.reduce((n,w)=>n+this.setCount(w.id),0),volume:list.reduce((n,w)=>n+this.s.volume(w.id),0)};});
   groups=computed(()=>{const out:{key:string;label:string;items:ReturnType<WorkoutsComponent['filtered']>}[]=[];for(const w of this.filtered()){const key=w.date.slice(0,7);let group=out.find(g=>g.key===key);if(!group){group={key,label:this.monthLabel(key),items:[]};out.push(group);}group.items.push(w);}return out;});
   monthLabel(key:string){const [y,m]=key.split('-').map(Number);try{const text=new Date(y,(m||1)-1,1).toLocaleDateString('it-IT',{month:'long',year:'numeric'});return text.charAt(0).toUpperCase()+text.slice(1);}catch{return key;}}
