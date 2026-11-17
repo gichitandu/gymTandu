@@ -100,3 +100,14 @@ it('riporta gli errori del server senza bloccare e segnala il servizio non confi
   fetchMock.mockResolvedValue(new Response('<html>', { status: 404 }));
   expect(await scan.ensureStatus(true)).toBeNull();
 });
+
+it('correct() invia solo nome e grammi e restituisce la prima voce valida', async () => {
+  fetchMock.mockResolvedValue(reply({ kind: 'plate', dish: '', items: [item], status: status() }));
+  const scan = service();
+  expect(await scan.correct('Riso', 180)).toEqual(item);
+  const [, options] = fetchMock.mock.calls[0] as [string, RequestInit];
+  expect(JSON.parse(String(options.body))).toEqual({ food: { name: 'Riso', grams: 180 } });
+  expect(images.photoDataUrl).not.toHaveBeenCalled();
+  fetchMock.mockResolvedValue(reply({ kind: 'none', dish: '', items: [], status: status() }));
+  expect(await scan.correct('Sasso', 100)).toBeNull();
+});

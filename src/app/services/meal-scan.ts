@@ -116,6 +116,14 @@ export class MealScanService {
    return gemini&&result.provider==='cloudflare'?{...result,fallback:true}:result;
   }finally{this.busy.set(false);if(this.controller===controller)this.controller=undefined;}
  }
+ /** Rivaluta un alimento corretto dall'utente: valori nutrizionali per quei grammi, oppure null se l'AI non lo riconosce. */
+ async correct(name:string,grams:number,signal?:AbortSignal):Promise<MealScanItem|null>{
+  if(this.blocked())throw new MealScanLimitError(this.blockedUntil());
+  this.expire();
+  if(!this.online())throw Object.assign(Error('La correzione con AI richiede la connessione e l’accesso all’account.'),{code:'AI_UNAVAILABLE'});
+  const result=validResult(await this.call({food:{name,grams}},signal,30000));
+  return result.items[0]??null;
+ }
  /** Salva la chiave Gemini personale dell'admin: il server la verifica con Google e non la restituisce mai. */
  async saveGeminiKey(apiKey:string,model:string):Promise<void>{await this.geminiRequest('PUT',{apiKey:apiKey.trim(),model:model.trim()});}
  /** Cambia solo il modello, riusando la chiave già salvata dal server. */

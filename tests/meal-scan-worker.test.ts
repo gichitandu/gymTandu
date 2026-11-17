@@ -29,6 +29,17 @@ beforeEach(() => {
 });
 afterEach(() => { sql.close(); vi.restoreAllMocks(); vi.unstubAllGlobals(); });
 
+it('corregge un alimento con il solo testo, senza foto, e conta nel limite come una lettura', async () => {
+  const response = await mealScanApi(post({ food: { name: 'Gnocchi', grams: 200 } }), env, admin, NOON);
+  expect(response.status).toBe(200);
+  expect((await response.json()).provider).toBe('cloudflare');
+  const content = run.mock.calls[0][1].messages[1].content;
+  expect(content).toHaveLength(1); expect(content[0].text).toContain('"Gnocchi"'); expect(content[0].text).toContain('200 g');
+  expect(usage().requests).toBe(1);
+  for (const food of [{ name: '', grams: 100 }, { name: 'Riso', grams: 0 }, { name: 'Riso', grams: 'x' }, null]) expect((await mealScanApi(post({ food }), env, admin, NOON)).status).toBe(400);
+  expect(run).toHaveBeenCalledTimes(1);
+});
+
 it('blocca al 95% dell’allocazione gratuita e non permette di allargare il limite dalle variabili', () => {
   expect(mealScanBudget({})).toEqual({ limit: MEAL_SCAN_FREE_NEURONS, reservePercent: 5, cap: CAP });
   expect(mealScanBudget({ AI_DAILY_NEURON_LIMIT: '50000', AI_RESERVE_PERCENT: '0' })).toEqual({ limit: 10000, reservePercent: 5, cap: CAP });

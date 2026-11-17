@@ -43,6 +43,12 @@ Usa questo schema, con numeri senza unità di misura:
 "kind" vale "plate" per un piatto, "label" per un'etichetta o una confezione, "none" se non c'è cibo.
 Al massimo ${MEAL_SCAN_MAX_ITEMS} alimenti. Se non riconosci cibo rispondi {"kind":"none","dish":"","items":[]}.`;
 
+/** Correzione di un alimento letto male: solo testo, nessuna foto. Il nome è dato dall'utente e passato come stringa JSON. */
+const mealFoodPrompt=(name,grams)=>`L'utente ha corretto il nome di un alimento letto male da una foto. Fornisci i valori nutrizionali realistici per ${grams} g di questo alimento, cotto/pronto come viene normalmente consumato: ${JSON.stringify(name)}.
+Usa questo schema, con numeri senza unità di misura, con UN solo alimento e "grams" uguale a ${grams}:
+{"kind":"plate","dish":"","items":[{"name":"nome in italiano","grams":${grams},"calories":0,"protein":0,"carbs":0,"fat":0}]}
+Se non è un alimento rispondi {"kind":"none","dish":"","items":[]}.`;
+
 function mealScanReply(data,status=200,headers={}){return Response.json(data,{status,headers:{'Cache-Control':'private, no-store','X-Content-Type-Options':'nosniff',...headers}});}
 function mealScanFail(message,status=400){throw Object.assign(new Error(message),{status});}
 const mealScanDay=now=>new Date(now).toISOString().slice(0,10);
@@ -139,9 +145,14 @@ async function mealScanBody(request){
  try{for(;;){const part=await reader.read();if(part.done)break;bytes+=part.value.byteLength;if(bytes>MEAL_SCAN_BODY_LIMIT){await reader.cancel();mealScanFail('Foto troppo grande per l’analisi.',413);}parts.push(decoder.decode(part.value,{stream:true}));}parts.push(decoder.decode());}
  catch(error){if(error.status)throw error;mealScanFail('Richiesta non valida.');}
  let body;try{body=JSON.parse(parts.join(''));}catch{mealScanFail('Richiesta non valida.');}
+ if(body?.food!==undefined){
+  const name=mealScanText(body.food?.name,100),grams=mealScanNumber(body.food?.grams,10000);
+  if(!name||!grams)mealScanFail('Alimento da correggere non valido.');
+  return{prompt:mealFoodPrompt(name,grams)};
+ }
  const image=body?.image;
  if(typeof image!=='string'||image.length>MEAL_SCAN_IMAGE_LIMIT||!/^data:image\/(?:jpeg|png|webp);base64,[A-Za-z0-9+/]+={0,2}$/.test(image))mealScanFail('Foto non valida per l’analisi.');
- return image;
+ return{prompt:MEAL_SCAN_PROMPT,image};
 }
 
 /** La lettura delle foto segue la visibilità della sezione Pasti; Admin e Super Admin la usano sempre. */
@@ -150,12 +161,12 @@ async function mealScanAllowed(env,user){
  return (await appFeatureFlags(env)).nutritionEnabled===true;
 }
 
-async function mealScanRun(env,image){
+async function mealScanRun(env,input){
  let timer;
  const timeout=new Promise((_,reject)=>{timer=setTimeout(()=>reject(Object.assign(new Error('timeout'),{timeout:true})),MEAL_SCAN_TIMEOUT_MS);});
  try{
   return await Promise.race([env.AI.run(MEAL_SCAN_MODEL,{
-   messages:[{role:'system',content:MEAL_SCAN_SYSTEM},{role:'user',content:[{type:'text',text:MEAL_SCAN_PROMPT},{type:'image_url',image_url:{url:image}}]}],
+   messages:[{role:'system',content:MEAL_SCAN_SYSTEM},{role:'user',content:[{type:'text',text:input.prompt},...(input.image?[{type:'image_url',image_url:{url:input.image}}]:[])]}],
    max_completion_tokens:MEAL_SCAN_MAX_OUTPUT_TOKENS,temperature:.2,chat_template_kwargs:{enable_thinking:false},
   },{rejectIfBusy:true}),timeout]);
  }finally{clearTimeout(timer);}
@@ -219,15 +230,15 @@ async function geminiFetch(url,init,timeout){
  const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),timeout);
  try{return await fetch(url,{...init,signal:controller.signal});}finally{clearTimeout(timer);}
 }
-async function geminiRun(credentials,image){
- const match=/^data:(image\/(?:jpeg|png|webp));base64,(.+)$/.exec(image);
- if(!match)throw new Error('immagine non valida');
+async function geminiRun(credentials,input){
+ const match=input.image?/^data:(image\/(?:jpeg|png|webp));base64,(.+)$/.exec(input.image):null;
+ if(input.image&&!match)throw new Error('immagine non valida');
  const send=async thinking=>{
   const response=await geminiFetch(GEMINI_API+credentials.model+':generateContent',{
    method:'POST',headers:{'Content-Type':'application/json','x-goog-api-key':credentials.apiKey},
    body:JSON.stringify({
     systemInstruction:{parts:[{text:MEAL_SCAN_SYSTEM}]},
-    contents:[{role:'user',parts:[{text:MEAL_SCAN_PROMPT},{inline_data:{mime_type:match[1],data:match[2]}}]}],
+    contents:[{role:'user',parts:[{text:input.prompt},...(match?[{inline_data:{mime_type:match[1],data:match[2]}}]:[])]}],
     generationConfig:{temperature:.2,maxOutputTokens:GEMINI_MAX_OUTPUT_TOKENS,responseMimeType:'application/json',...(thinking?{thinkingConfig:{thinkingLevel:'low'}}:{})},
    }),
   },GEMINI_TIMEOUT_MS);
@@ -243,7 +254,7 @@ async function geminiRun(credentials,image){
  return (data?.candidates?.[0]?.content?.parts||[]).map(part=>typeof part?.text==='string'&&!part.thought?part.text:'').join('');
 }
 /** Restituisce {meal} se Gemini ha letto la foto, altrimenti {error} (motivo breve, solo per l'admin) per passare a Workers AI. Non lancia mai. */
-async function geminiScan(env,user,image,now){
+async function geminiScan(env,user,input,now){
  try{
   const credentials=await geminiCredentials(env,user);
   if(!credentials)return{error:'nessuna chiave attiva'};
@@ -254,7 +265,7 @@ async function geminiScan(env,user,image,now){
   for(let attempt=0;attempt<GEMINI_MAX_ATTEMPTS;attempt++){
    const key=await geminiReserve(env,user,now);
    if(!key)return{error:attempt?lastError:'limite giornaliero Gemini raggiunto'};
-   try{output=await geminiRun(credentials,image);lastError='';break;}
+   try{output=await geminiRun(credentials,input);lastError='';break;}
    catch(error){
     // 429 = limite del piano gratuito raggiunto: stop fino al ripristino.
     if(error?.httpStatus===429)await mealScanBlockDay(env,key).catch(()=>{});
@@ -342,10 +353,10 @@ export async function mealScanApi(request,env,user,now=Date.now()){
   const useGemini=!!await geminiCredentials(env,user);
   if(!status.available&&!useGemini)return mealScanReply({error:status.setup==='migration'?'Database da aggiornare: applica le migrazioni prima di usare la lettura foto.':'Lettura foto con AI non configurata su questo server.',code:'AI_UNAVAILABLE',status},503);
   // La foto viene controllata prima di prenotare, così una richiesta errata non consuma il limite.
-  const image=await mealScanBody(request);
+  const input=await mealScanBody(request);
   let geminiError='';
   if(useGemini){
-   const tried=await geminiScan(env,user,image,now);
+   const tried=await geminiScan(env,user,input,now);
    if(tried.meal)return mealScanReply({...tried.meal,provider:'gemini',status});
    geminiError=tried.error||'';
   }
@@ -354,7 +365,7 @@ export async function mealScanApi(request,env,user,now=Date.now()){
   const day=await mealScanReserve(env,now);
   if(!day)return mealScanReply({error:MEAL_SCAN_WAIT_MESSAGE,code:'AI_LIMIT',status:{...await mealScanStatus(env,now),blocked:true,remainingScans:0}},429);
   let result;
-  try{result=await mealScanRun(env,image);}
+  try{result=await mealScanRun(env,input);}
   catch(error){
    const detail=String(error?.message||error);
    if(/\b3036\b|daily free allocation|used up your daily/i.test(detail)){
