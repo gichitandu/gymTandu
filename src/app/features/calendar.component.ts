@@ -183,6 +183,9 @@ export class CalendarComponent {
  itemActionLabel(item:CalendarAgendaItem){return item.status==='partial'?'Riprendi allenamento':item.date<this.today?'Registra allenamento passato':'Inizia allenamento';}
  canDuplicate(item=this.selectedItem()){if(!item)return false;if(item.kind!=='workout')return true;const dayId=item.workout?.dayId||item.event?.dayId,planId=item.workout?.planId||item.event?.planId;return this.availableDays().some(day=>day.id===dayId)&&!this.s.data().plans.find(plan=>plan.id===planId)?.program;}
  canMove(item=this.selectedItem()){return !!item?.event&&!item.event.workoutId&&!item.workout&&!item.event.done&&this.available(item.event);}
+ /** Un allenamento già iniziato o registrato si può spostare di giorno; la programmazione non ancora iniziata ha il suo percorso. */
+ canMoveWorkout(item=this.selectedItem()){return !!item?.workout&&!!item.workout.date;}
+ moveWorkoutId='';
  canRemove(item=this.selectedItem()){if(item?.workout)return item.workout.status!=='completed'||this.s.settings().allowCompletedWorkoutDeletion===true;return !!item?.event&&!item.event.done;}
  repeatPreview(){try{return weeklyDates(this.eventDate,Number(this.repeatCount)).map(date=>this.shortLabel(date)).join(' · ');}catch{return '';}}
  formTitle(){return this.formMode()==='move'?'Sposta attività':this.formMode()==='duplicate'?'Duplica attività':this.formMode()==='edit'?'Modifica attività':'Aggiungi al calendario';}
@@ -194,7 +197,7 @@ export class CalendarComponent {
  }
  open(event?:ScheduledWorkout){
   if(event&&(event.workoutId||event.done)){this.s.error.set('Un’attività già avviata o completata mantiene la sua programmazione.');return;}
-  this.formVersion++;this.formId=event?.id||uid();this.s.error.set('');this.editing=event?.id||'';this.formMode.set(event?'edit':'create');this.fillForm(event);this.moreOpen.set(false);this.modal.set(true);
+  this.formVersion++;this.moveWorkoutId='';this.formId=event?.id||uid();this.s.error.set('');this.editing=event?.id||'';this.formMode.set(event?'edit':'create');this.fillForm(event);this.moreOpen.set(false);this.modal.set(true);
  }
  editSelected(){const item=this.selectedItem();if(this.canMove(item)&&item?.event)this.open(item.event);else this.s.error.set('Questa attività si può consultare senza modificarne i dati registrati.');}
  quickDuplicate(){
@@ -202,7 +205,14 @@ export class CalendarComponent {
   const source=item.event||{id:'',date:item.date,planId:item.workout!.planId,dayId:item.workout!.dayId,planName:item.planName,dayName:item.title,notes:item.notes};
   this.open();this.fillForm(source);this.formMode.set('duplicate');this.editing='';this.formId=uid();this.eventDate=moveDate(item.date,7);
  }
- quickMove(){const item=this.selectedItem();if(!item?.event||!this.canMove(item))return;this.open(item.event);this.formMode.set('move');}
+ quickMove(){
+  const item=this.selectedItem();
+  if(item?.workout&&this.canMoveWorkout(item)){
+   this.formVersion++;this.formId=item.workout.id;this.s.error.set('');this.editing='';this.fillForm(undefined);this.kind='workout';this.eventDate=item.workout.date;this.eventTime='';
+   this.moveWorkoutId=item.workout.id;this.formMode.set('move');this.moreOpen.set(false);this.modal.set(true);return;
+  }
+  if(!item?.event||!this.canMove(item))return;this.open(item.event);this.formMode.set('move');
+ }
  async quickRemove(){
   const item=this.selectedItem();if(!item||!this.canRemove(item)||this.actionBusy())return;
   if(!item.workout){if(item.event)await this.remove(item.event);return;}
@@ -218,7 +228,7 @@ export class CalendarComponent {
   if(this.saving()||!this.modal())return;this.saving.set(true);
   const version=this.formVersion,archive=this.s.archiveKey(),snapshot={id:this.formId||=this.editing||uid(),mode:this.formMode(),date:this.eventDate,time:this.eventTime.trim()||undefined,dayId:this.dayId,kind:this.kind,title:this.activityTitle,notes:this.notes,repeat:Number(this.repeatCount),durationMinutes:this.durationMinutes===null?undefined:Number(this.durationMinutes),estimatedCalories:this.estimatedCalories===null?undefined:Number(this.estimatedCalories)};
   try{
-   const saved=snapshot.mode==='move'?await this.s.moveCalendarEvent(snapshot.id,snapshot.date,snapshot.time||''):
+   const saved=snapshot.mode==='move'&&this.moveWorkoutId?await this.s.moveWorkoutDate(this.moveWorkoutId,snapshot.date):snapshot.mode==='move'?await this.s.moveCalendarEvent(snapshot.id,snapshot.date,snapshot.time||''):
     snapshot.kind==='workout'?await this.s.scheduleWorkout(snapshot.date,snapshot.dayId,snapshot.notes,snapshot.id,snapshot.repeat,{time:snapshot.time,durationMinutes:snapshot.durationMinutes,estimatedCalories:snapshot.estimatedCalories}):
     await this.s.scheduleCalendarActivity({id:snapshot.id,date:snapshot.date,kind:snapshot.kind,title:snapshot.title,notes:snapshot.notes,time:snapshot.time,durationMinutes:snapshot.durationMinutes,estimatedCalories:snapshot.estimatedCalories},snapshot.repeat);
    if(saved&&!this.destroyed&&version===this.formVersion&&archive===this.s.archiveKey()){this.choose(snapshot.date);this.filter.set('all');this.kindFilter.set('all');this.close();}

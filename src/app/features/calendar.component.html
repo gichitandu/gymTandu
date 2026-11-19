@@ -770,8 +770,8 @@
           <button
             type="button"
             (click)="quickMove()"
-            [disabled]="actionBusy() || !canMove(item)"
-            title="Sposta una voce non ancora iniziata"
+            [disabled]="actionBusy() || !(canMove(item) || canMoveWorkout(item))"
+            title="Sposta la voce in un altro giorno"
           >
             <gt-icon name="calendar" /><span>Sposta</span>
           </button>
@@ -986,14 +986,14 @@
             aria-label="Data dell’attività"
             required
         /></label>
-        <label
+        @if (!moveWorkoutId) {<label
           >Orario <small>Facoltativo</small
           ><input
             name="time"
             type="time"
             [(ngModel)]="eventTime"
             [disabled]="saving()"
-        /></label>
+        /></label>}
         @if (formMode() === "create" || formMode() === "duplicate") {
           <label
             >Ripeti<select

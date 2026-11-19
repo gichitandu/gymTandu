@@ -963,6 +963,23 @@ export class Store {
       Object.assign(event,candidate);if(candidate.time===undefined)delete event.time;
     },'Programmazione spostata.',false);
   }
+  /** Sposta un allenamento già iniziato o registrato a un altro giorno (oggi o passato): serie, carichi e programmazione collegata restano invariati. */
+  async moveWorkoutDate(id:string,date:string) {
+    return this.change(d=>{
+      const workout=d.workouts.find(item=>item.id===id);if(!workout)throw Error('Allenamento non trovato.');
+      parseLocalDate(date);if(date>localDate())throw Error('Un allenamento registrato si può spostare a oggi o a una data passata.');
+      if(date===workout.date)throw Error('L’allenamento è già in questa data.');
+      if(d.workouts.some(other=>other.id!==id&&other.dayId===workout.dayId&&other.date===date))throw Error('Questa seduta è già registrata in quella data.');
+      const plan=d.plans.find(item=>item.id===workout.planId),event=d.scheduledWorkouts.find(item=>item.workoutId===id);
+      if(plan){
+        const conflicts=plan.program?scheduleConflicts(d,[date],plan.id,event?.id,{onlyActivePlans:plan.active}):d.plans.filter(other=>other.id!==plan.id&&other.program&&!other.archived&&!other.completedAt&&(!plan.active||other.active)).flatMap(other=>{const range=effectiveProgramRange(d,other);return range&&date>=range.startDate&&date<=range.endDate?[`Il periodo è già occupato dal piano “${other.name}”.`]:[];});
+        if(conflicts.length)throw Error('Spostamento bloccato: '+conflicts[0]);
+      }
+      workout.date=date;
+      if(workout.status==='draft')workout.durationUnknown=date<localDate();
+      if(event)event.date=date;
+    },'Allenamento spostato.',false);
+  }
   async removeCalendarEvent(id:string) {
     return this.change(d=>{
       const event=d.scheduledWorkouts.find(item=>item.id===id);if(!event)throw Error('Voce del calendario non trovata.');
