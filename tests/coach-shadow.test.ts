@@ -409,7 +409,7 @@ describe("storico confrontabile", () => {
     workoutExercises: [
       row("old-row", "old"),
       row("mid-row", "mid"),
-      row("setup-row", "other-setup", { machineSetup: { seat: "4" } }),
+      row("setup-row", "other-setup", { machineSetup: { machine: "Altra macchina", seat: "4" } }),
       row("now-row", "now"),
       row("future-row", "future"),
     ],
@@ -425,7 +425,7 @@ describe("storico confrontabile", () => {
   } as unknown as DataSet;
   const current = data.workoutExercises[3] as WorkoutLogExercise;
 
-  it("restituisce solo sedute precedenti, completate e con la stessa configurazione", () => {
+  it("restituisce solo sedute precedenti, completate e sulla stessa macchina", () => {
     const history = coachHistory(data, current);
     expect(history.map((session) => session.id)).toEqual(["mid-row", "old-row"]);
     expect(history[0].sets).toEqual([

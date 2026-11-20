@@ -15,6 +15,7 @@ import { ExerciseThumbComponent } from './exercise-thumb.component';
 import { ExerciseVideoComponent } from './exercise-video.component';
 import { MuscleMapComponent } from './muscle-map.component';
 import { MachineSetupComponent } from './machine-setup.component';
+import { MachinePickerComponent } from './machine-picker.component';
 import { remainingSeconds, formatSeconds } from '../services/rest-clock';
 import { setupSummary,supersetNext } from '../services/training-flow';
 import { validWorkoutUi,WorkoutResumeService } from '../services/workout-resume';
@@ -27,7 +28,7 @@ import type { AppUpdateEvent } from '../services/pwa';
 import { FormDraftService } from '../services/form-drafts';
 type ActiveSetDraft={weight:number;reps:number;rpe:number|undefined;setNotes:string;kind:'work'|'warmup'};
 interface ActiveDraftSnapshot {entries:[string,ActiveSetDraft][];exerciseId:string;setId:string;bases?:Record<string,string>}
-@Component({selector:'gt-active-workout',standalone:true,imports:[CoachVisibleTextPipe,ExerciseReplacementComponent,ExerciseMotionComponent,NgTemplateOutlet,FormsModule,LoadProgressionComponent,MachineSetupComponent,MuscleMapComponent,ExerciseThumbComponent,ExerciseVideoComponent,IconComponent],templateUrl:'./active-workout.component.html',styleUrls:['./recording.css','./recording-simple.css','./workout-redesign.css','./recording-v3.css','./coach-expert-card.css']})
+@Component({selector:'gt-active-workout',standalone:true,imports:[MachinePickerComponent,CoachVisibleTextPipe,ExerciseReplacementComponent,ExerciseMotionComponent,NgTemplateOutlet,FormsModule,LoadProgressionComponent,MachineSetupComponent,MuscleMapComponent,ExerciseThumbComponent,ExerciseVideoComponent,IconComponent],templateUrl:'./active-workout.component.html',styleUrls:['./recording.css','./recording-simple.css','./workout-redesign.css','./recording-v3.css','./coach-expert-card.css']})
 export class ActiveWorkoutComponent {
  private confirmation=confirmationForContext();
  externalTimer=inject(ExternalTimerService,{optional:true});
@@ -87,6 +88,8 @@ export class ActiveWorkoutComponent {
  muscle(e:WorkoutLogExercise){return this.s.muscle(this.s.exercise(e.exerciseId)?.muscleGroupId||'');}
  secondary(e:WorkoutLogExercise){return (this.s.exercise(e.exerciseId)?.secondaryMuscleIds||[]).map(id=>this.s.muscle(id));}
  setupLabel= (e:WorkoutLogExercise)=>setupSummary(e.machineSetup);
+ /** Dopo il cambio di macchina le serie non registrate hanno i carichi dell'ultima volta su quella macchina: si scartano i valori digitati prima. */
+ machineChanged(){const e=this.selected();if(!e)return;clearTimeout(this.inputTimer);for(const set of this.s.sets(e.id))if(!set.completed)this.inputDrafts.delete(set.id);this.draftsChanged();const set=this.currentSet();if(this.step()==='record'&&set&&!set.completed){this.weight=this.s.weightInput(set.weight&&set.weight>0?set.weight:this.warmupSuggestion(set)||set.weight);this.reps=set.reps;}this.remember();}
  hasPair(e:WorkoutLogExercise){return !!e.superset&&this.exercises().filter(x=>x.superset===e.superset).length===2;}
  count(id:string){return this.s.sets(id).filter(s=>s.completed).length;}
  /** Esercizio da fare adesso nell'elenco: quello iniziato, altrimenti il primo con serie mancanti. */

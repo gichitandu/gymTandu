@@ -9,12 +9,13 @@ import { DatePipe } from "@angular/common";
 import { ActivatedRoute, Router, RouterLink } from "@angular/router";
 import { Store } from "../services/store";
 import { IconComponent } from "../shared/icon.component";
+import { MachinePickerComponent } from "../shared/machine-picker.component";
 import { StatusComponent } from "../shared/status.component";
 import { ExerciseFilterComponent } from "../shared/exercise-filter.component";
 @Component({
   standalone: true,
   styleUrls: ["./account-polish.css", "./history-v3.css"],
-  imports: [ProfileLinkComponent,...DESIGN_DIRECTIVES,DateFieldComponent,OpenWorkoutsComponent,
+  imports: [MachinePickerComponent,ProfileLinkComponent,...DESIGN_DIRECTIVES,DateFieldComponent,OpenWorkoutsComponent,
     FormsModule,
     DatePipe,
     RouterLink,
@@ -39,7 +40,7 @@ import { ExerciseFilterComponent } from "../shared/exercise-filter.component";
       <div class="history-detail-actions"><a class="button ghost" [routerLink]="['/riepilogo',w.id]"><gt-icon name="trophy"/>Riepilogo</a><button type="button" class="ghost" (click)="reopen(w.id)" [disabled]="s.busy()||reopening()||deleting()"><gt-icon name="repeat"/>{{reopening()?'Riapertura…':'Riapri'}}</button></div>
       @if(w.notes){<section class="card history-notes"><gt-icon name="note"/><p>{{w.notes}}</p></section>}
       <div class="history-section-title"><span>Esercizi · {{ s.workoutExercises(w.id).length }}</span><small>R = riscaldamento</small></div>
-      @for(exercise of s.workoutExercises(w.id);track exercise.id){<section class="card history-exercise"><h3>{{exercise.name}}</h3>@if(exercise.substitutedFrom){<p class="subtle">Al posto di {{exercise.substitutedFrom.name}} · solo questa seduta</p>}<div class="history-sets">@for(set of s.sets(exercise.id);track set.id){<span class="history-set" [class.done]="set.completed" [class.warm]="set.kind==='warmup'" [attr.aria-label]="'Serie '+set.number+': '+s.formatWeight(set.weight)+' '+s.settings().unit+' per '+set.reps+(set.completed?', confermata':', non eseguita')"><small>{{set.kind==='warmup'?'R':'S'+set.number}}</small><b>{{set.completed?s.formatWeight(set.weight)+'×'+set.reps:'—'}}</b></span>}</div></section>}
+      @for(exercise of s.workoutExercises(w.id);track exercise.id){<section class="card history-exercise"><h3>{{exercise.name}}</h3>@if(exercise.substitutedFrom){<p class="subtle">Al posto di {{exercise.substitutedFrom.name}} · solo questa seduta</p>}@if(exercise.loadMode!=='bodyweight'){<gt-machine-picker [workoutExerciseId]="exercise.id" [showOthers]="false"/>}<div class="history-sets">@for(set of s.sets(exercise.id);track set.id){<span class="history-set" [class.done]="set.completed" [class.warm]="set.kind==='warmup'" [attr.aria-label]="'Serie '+set.number+': '+s.formatWeight(set.weight)+' '+s.settings().unit+' per '+set.reps+(set.completed?', confermata':', non eseguita')"><small>{{set.kind==='warmup'?'R':'S'+set.number}}</small><b>{{set.completed?s.formatWeight(set.weight)+'×'+set.reps:'—'}}</b></span>}</div></section>}
       <details class="card history-more"><summary>Altre azioni<gt-icon name="chevron-down"/></summary><div class="history-more-body"><p class="subtle">Per modificare la sessione, riaprila. Puoi configurare l’eliminazione dei terminati in Profilo → Impostazioni.</p><a class="button ghost" routerLink="/profilo" [queryParams]="{section:'settings'}"><gt-icon name="settings"/>Configura eliminazione</a>@if(s.settings().allowCompletedWorkoutDeletion){<button type="button" class="ghost danger" (click)="remove(w.id)" [disabled]="s.busy()||reopening()||deleting()">{{deleting()?'Eliminazione…':'Elimina allenamento'}}</button>}</div></details>
     } @else {
       <details class="history-filter-panel"><summary><gt-icon name="sliders"/>Filtri@if(activeFilters()){<span class="history-filter-count">{{activeFilters()}}</span>}<gt-icon name="chevron-down"/></summary>

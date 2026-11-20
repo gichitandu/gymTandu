@@ -1,5 +1,5 @@
 import {DataSet,localDate} from '../models/domain';
-import {setupKey} from './training-flow';
+import {machineKey} from './training-flow';
 export function buildWorkoutSummary(data:DataSet,id:string){
  const workout=data.workouts.find(w=>w.id===id&&w.status==='completed');
  const rows=data.workoutExercises.filter(e=>e.workoutId===id),ids=new Set(rows.map(e=>e.id));
@@ -14,7 +14,7 @@ export function buildWorkoutSummary(data:DataSet,id:string){
  for(const row of rows){
   if(!known(row.loadUnit))continue;
   const current=work.filter(s=>s.workoutExerciseId===row.id);if(!current.length)continue;
-  const matches=data.workoutExercises.filter(e=>previousIds.has(e.workoutId)&&e.exerciseId===row.exerciseId&&e.loadMode===row.loadMode&&setupKey(e.machineSetup)===setupKey(row.machineSetup)&&(e.loadUnit||'')===(row.loadUnit||''));
+  const matches=data.workoutExercises.filter(e=>previousIds.has(e.workoutId)&&e.exerciseId===row.exerciseId&&e.loadMode===row.loadMode&&machineKey(e.machineSetup)===machineKey(row.machineSetup)&&(e.loadUnit||'')===(row.loadUnit||''));
   const old=data.sets.filter(s=>s.completed&&s.kind!=='warmup'&&matches.some(e=>e.id===s.workoutExerciseId));if(!old.length)continue;
   const load=row.loadMode==='external'||row.loadMode==='weighted-bodyweight';
   if(!load&&row.loadMode!=='bodyweight')continue;

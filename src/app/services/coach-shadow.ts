@@ -21,7 +21,7 @@
  *  - scarico dopo cali ripetuti con sforzo alto (Bell 2023, consenso tra allenatori).
  */
 import type { DataSet, WorkoutLogExercise } from "../models/domain";
-import { setupKey } from "./training-flow";
+import { machineKey } from "./training-flow";
 
 export type CoachAction = "raise" | "hold" | "lower" | "stop";
 export type Readiness = "low" | "normal" | "high";
@@ -839,7 +839,7 @@ export function coachHistory(
         entry.workoutId === workout.id &&
         entry.exerciseId === current.exerciseId &&
         entry.loadMode === current.loadMode &&
-        setupKey(entry.machineSetup) === setupKey(current.machineSetup),
+        machineKey(entry.machineSetup) === machineKey(current.machineSetup),
     );
     if (!row) continue;
     const sets = data.sets

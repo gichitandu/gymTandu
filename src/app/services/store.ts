@@ -4,7 +4,7 @@ import {historyReductions} from './workout-safety';
 import { previousWeekWorkout, reusableExerciseSets } from './weekly-reuse';
 import { WorkoutStartOptionsService } from './workout-start-options';
 import { PlanReplacementRequest, PlanReplacementResult, replacePlanExercise, replaceWorkoutExercise } from './exercise-replacement';
-import { setupKey,setupSummary,hasSetup } from "./training-flow";
+import { setupKey,setupSummary,hasSetup,machineKey,hasMachine } from "./training-flow";
 import { weightProgression } from "./progression";
 import { MachineSetup,WorkoutUiState,WorkoutLogExercise,CalendarActivityInput,CalendarEventOptions,ScheduledWorkout } from "../models/domain";
 import {calendarEventOptions,calendarWorkoutDuplicate,existingCalendarOptions,validateCalendarEvent} from './calendar-event-data';
@@ -59,6 +59,43 @@ export class Store {
   preference(id:string){return this.data().exercisePreferences.find(p=>p.id===id);}
   isFavorite(id:string){return this.preference(id)?.favorite||false;}
   toggleFavorite(id:string){return this.change(d=>{if(!d.exercises.some(e=>e.id===id))throw Error('Esercizio non trovato.');const p=d.exercisePreferences.find(p=>p.id===id);if(p)p.favorite=!p.favorite;else d.exercisePreferences.push({id,favorite:true});},'',false);}
+  /**
+   * Indica su quale macchina è stato fatto l'esercizio di una seduta.
+   * Seduta in corso: riprende sedile/presa e i carichi delle serie non ancora registrate dall'ultima volta su quella macchina,
+   * e la ricorda come macchina abituale. Seduta registrata: cambia solo l'etichetta, le serie restano quelle salvate.
+   */
+  async assignMachine(workoutExerciseId:string,machine:string){
+    const name=String(machine||'').replace(/\s+/g,' ').trim().slice(0,120),key=machineKey({machine:name});let message='';
+    const ok=await this.change(d=>{
+      const e=d.workoutExercises.find(row=>row.id===workoutExerciseId);if(!e)throw Error('Esercizio della seduta non trovato.');
+      const workout=d.workouts.find(row=>row.id===e.workoutId);if(!workout)throw Error('Allenamento non trovato.');
+      if(machineKey(e.machineSetup)===key){message='';return;}
+      const {machine:_old,...rest}=e.machineSetup||{};
+      if(workout.status==='completed'){
+        const next={...rest,...(name?{machine:name}:{})};e.machineSetup=Object.values(next).some(v=>!!v)?next:undefined;
+        message=name?'Seduta del '+workout.date.split('-').reverse().join('/')+' assegnata a '+name+': ultima volta, progressione e Coach si aggiornano.':'Macchina tolta dalla seduta del '+workout.date.split('-').reverse().join('/')+'.';
+        return;
+      }
+      const earlier=d.workouts.filter(row=>row.status==='completed'&&row.id!==workout.id).sort((a,b)=>b.date.localeCompare(a.date)||b.startedAt.localeCompare(a.startedAt));
+      let source:typeof e|undefined,sets:WorkoutLogSet[]=[];
+      if(name)for(const row of earlier){
+        const match=d.workoutExercises.find(x=>x.workoutId===row.id&&x.exerciseId===e.exerciseId&&x.loadMode===e.loadMode&&machineKey(x.machineSetup)===key);
+        if(!match)continue;const done=d.sets.filter(x=>x.workoutExerciseId===match.id&&x.completed&&x.kind!=='warmup').sort((a,b)=>a.number-b.number);
+        if(done.length){source=match;sets=done;break;}
+      }
+      e.machineSetup=name?{...structuredClone(source?.machineSetup||{}),machine:name}:(Object.values(rest).some(v=>!!v)?rest:undefined);
+      const pref=d.exercisePreferences.find(row=>row.id===e.exerciseId),setup=e.machineSetup?structuredClone(e.machineSetup):undefined;
+      if(pref)pref.machineSetup=setup;else d.exercisePreferences.push({id:e.exerciseId,favorite:false,machineSetup:setup});
+      let refilled=0;
+      if(sets.length){
+        const own=d.sets.filter(x=>x.workoutExerciseId===e.id&&x.kind!=='warmup').sort((a,b)=>a.number-b.number);
+        own.forEach((set,index)=>{const ref=sets[index]??sets.at(-1);if(set.completed||!ref)return;set.weight=ref.weight;set.reps=ref.reps;refilled++;});
+      }
+      message=!name?'Macchina tolta: l’ultima volta torna a considerare tutte le sedute.':sets.length?name+': ripresi i carichi dell’ultima volta su questa macchina'+(refilled?'':' (le serie già registrate restano invariate)')+'.':name+': prima volta su questa macchina, la seduta di oggi farà da riferimento.';
+    },'',false);
+    if(ok&&message)this.message.set(message);
+    return ok;
+  }
   saveMachineSetup(id:string,setup:MachineSetup,workoutExerciseId?:string){return this.change(d=>{if(!d.exercises.some(e=>e.id===id))throw Error('Esercizio non trovato.');const clean=Object.fromEntries(Object.entries(setup).map(([key,value])=>[key,value?.trim()||undefined]));const p=d.exercisePreferences.find(p=>p.id===id);if(p)p.machineSetup=clean;else d.exercisePreferences.push({id,favorite:false,machineSetup:clean});if(workoutExerciseId){const e=d.workoutExercises.find(e=>e.id===workoutExerciseId&&e.exerciseId===id);if(e&&!d.sets.some(s=>s.workoutExerciseId===e.id&&s.completed))e.machineSetup=structuredClone(clean);}},'Configurazione personale salvata. Le serie già registrate conservano la configurazione precedente.',false);}
   rememberWorkout(state:WorkoutUiState){return this.change(d=>{if(!d.workouts.some(w=>w.id===state.id&&w.status==='draft'))return;d.workoutUi=[structuredClone(state)];},'',false);}
 
@@ -298,6 +335,20 @@ export class Store {
     const w = this.data().workouts.find((w) => w.id === id);
     return w ? sessionVolume(this.data(), w) : 0;
   }
+  /** Macchine già usate per l'esercizio, dalla più recente: per ognuna data e serie allenanti dell'ultima seduta completata su quella macchina. */
+  machinesFor(exerciseId:string,excludeWorkoutId?:string){
+    const data=this.data(),out=new Map<string,{key:string;name:string;date:string;sets:WorkoutLogSet[]}>();
+    for(const w of this.completed()){
+      if(w.id===excludeWorkoutId)continue;
+      for(const e of data.workoutExercises){
+        if(e.workoutId!==w.id||e.exerciseId!==exerciseId)continue;
+        const key=machineKey(e.machineSetup);if(!key||out.has(key))continue;
+        const sets=this.sets(e.id).filter(x=>x.completed&&x.kind!=='warmup');if(!sets.length)continue;
+        out.set(key,{key,name:e.machineSetup!.machine!.replace(/\s+/g,' ').trim(),date:w.date,sets});
+      }
+    }
+    return [...out.values()];
+  }
   configurations(id:string){return [...new Map(this.data().workoutExercises.filter(e=>e.exerciseId===id&&this.completed().some(w=>w.id===e.workoutId)).map(e=>[setupKey(e.machineSetup),{key:setupKey(e.machineSetup),label:setupSummary(e.machineSetup)||"Configurazione non registrata"}])).values()];}
   records(id: string,machine?:string) {
     return exerciseRecords(this.data(), id,machine);
@@ -325,7 +376,7 @@ export class Store {
         (e) =>
           e.workoutId === w.id &&
           e.exerciseId === exerciseId &&
-          (!hasSetup(machineSetup)||setupKey(e.machineSetup)===setupKey(machineSetup)) &&
+          (!hasMachine(machineSetup)||machineKey(e.machineSetup)===machineKey(machineSetup)) &&
           e.loadMode === (this.exercise(exerciseId)?.loadMode ?? e.loadMode),
       );
       if (e) {const sets=this.sets(e.id).filter((s) => s.completed&&s.kind!=="warmup");if(sets.length)return sets;}
