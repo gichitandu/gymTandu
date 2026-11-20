@@ -67,8 +67,11 @@ const planIsClosed=(data:DataSet,planId:string)=>{const plan=data.plans.find(ite
 export function scheduleConflicts(data:DataSet,dates:string[],planId:string,ignoreEventId?:string,options:{onlyActivePlans?:boolean}={}):string[]{
  const messages:string[]=[];
  const counts=(id:string)=>{if(id===planId||!planIsOpen(data,id))return false;return !options.onlyActivePlans||!!data.plans.find(plan=>plan.id===id)?.active;};
+ const own=data.plans.find(plan=>plan.id===planId),ownRange=own&&planIsOpen(data,own.id)?effectiveProgramRange(data,own):null;
  for(const date of dates){
-  for(const plan of data.plans){if(!counts(plan.id))continue;const range=effectiveProgramRange(data,plan);if(range&&date>=range.startDate&&date<=range.endDate)messages.push(`${dateLabel(date)}: il periodo è già occupato dal piano “${plan.name}”.`);}
+  // Una data già dentro il periodo del piano stesso non crea sovrapposizioni nuove: quelle esistenti si risolvono dal riepilogo dei piani sovrapposti.
+  const insideOwn=!!ownRange&&date>=ownRange.startDate&&date<=ownRange.endDate;
+  if(!insideOwn)for(const plan of data.plans){if(!counts(plan.id))continue;const range=effectiveProgramRange(data,plan);if(range&&date>=range.startDate&&date<=range.endDate)messages.push(`${dateLabel(date)}: il periodo è già occupato dal piano “${plan.name}”.`);}
   for(const entry of data.scheduledWorkouts)if((entry.kind??'workout')==='workout'&&entry.id!==ignoreEventId&&counts(entry.planId)&&entry.date===date)messages.push(`${dateLabel(date)}: “${entry.dayName}” del piano “${entry.planName}” è già programmato.`);
   for(const entry of data.workouts)if(entry.planId!==planId&&!planIsClosed(data,entry.planId)&&entry.date===date)messages.push(`${dateLabel(date)}: “${entry.dayName}” del piano “${entry.planName}” è già registrato.`);
  }

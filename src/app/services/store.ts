@@ -957,7 +957,7 @@ export class Store {
       validateCalendarEvent(candidate);
       if((event.kind??'workout')==='workout'){
         const plan=d.plans.find(plan=>plan.id===event.planId);if(!plan||plan.archived||!d.days.some(day=>day.id===event.dayId&&day.planId===plan.id))throw Error('Il giorno del piano non è più disponibile. La programmazione è conservata.');
-        const conflicts=scheduleConflicts(d,[date],event.planId,id);if(conflicts.length)throw Error('Spostamento bloccato: '+conflicts[0]);
+        const conflicts=scheduleConflicts(d,[date],event.planId,id,{onlyActivePlans:plan.active});if(conflicts.length)throw Error('Spostamento bloccato: '+conflicts[0]);
         if(calendarWorkoutDuplicate(d.scheduledWorkouts,candidate))throw Error('Questo allenamento è già programmato nella data e nell’orario scelti.');
       }else if(d.scheduledWorkouts.some(other=>other.id!==id&&other.kind===candidate.kind&&other.date===candidate.date&&other.dayName.toLocaleLowerCase('it')===candidate.dayName.toLocaleLowerCase('it')&&(!other.time||!candidate.time||other.time===candidate.time)))throw Error('Questa attività è già presente nella data scelta.');
       Object.assign(event,candidate);if(candidate.time===undefined)delete event.time;

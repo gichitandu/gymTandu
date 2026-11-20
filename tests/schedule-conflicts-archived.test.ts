@@ -58,3 +58,19 @@ describe("piano attivo e calendario del programma", () => {
     expect(missingProgramEvents(data)).toEqual([]);
   });
 });
+
+describe("spostamento dentro il periodo del proprio piano", () => {
+  it("una copia recuperata con le stesse date non blocca lo spostamento nel periodo del piano", () => {
+    const data = seed() as any;
+    data.plans.push(plan("originale", { active: true, program }), plan("copia", { name: "copia · recuperato", program }));
+    data.scheduledWorkouts.push({ id: "c1", date: "2026-11-21", planId: "copia", dayId: "d", planName: "copia · recuperato", dayName: "A", notes: "" });
+    expect(scheduleConflicts(data, ["2026-11-21"], "originale", undefined, { onlyActivePlans: true })).toEqual([]);
+    expect(scheduleConflicts(data, ["2026-11-21"], "originale")).toEqual(["21/11/2026: “A” del piano “copia · recuperato” è già programmato."]);
+  });
+  it("fuori dal proprio periodo un altro programma aperto continua a bloccare", () => {
+    const data = seed() as any;
+    const later = { ...program, startDate: "2026-11-30", endDate: "2027-01-24" };
+    data.plans.push(plan("originale", { active: true, program }), plan("successivo", { active: true, program: later }));
+    expect(scheduleConflicts(data, ["2026-12-02"], "originale").length).toBe(1);
+  });
+});

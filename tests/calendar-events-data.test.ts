@@ -109,8 +109,13 @@ it('moves workout schedules with the existing overlap guards and never moves or 
  await s.savePlan('other','Altro piano','');await s.saveDay('other-day','other','Giorno');
  expect(await s.scheduleWorkout(blockedDate,'other-day','','other-event')).toBe(true);
  expect(await s.scheduleWorkout('2026-11-01','day','','movable')).toBe(true);
- expect(await s.moveCalendarEvent('movable',blockedDate)).toBe(false);
- expect(s.data().scheduledWorkouts.find(row=>row.id==='movable')?.date).toBe('2026-11-01');
+ // Un piano aperto ma non attivo (per esempio una copia recuperata) non blocca lo spostamento del piano attivo, come per l'avvio.
+ expect(await s.moveCalendarEvent('movable',blockedDate)).toBe(true);
+ expect(s.data().scheduledWorkouts.find(row=>row.id==='movable')?.date).toBe(blockedDate);
+ expect(await s.moveCalendarEvent('movable','2026-11-01')).toBe(true);
+ // Il piano non attivo resta invece bloccato dalle date del piano attivo.
+ expect(await s.moveCalendarEvent('other-event','2026-11-01')).toBe(false);
+ expect(s.data().scheduledWorkouts.find(row=>row.id==='other-event')?.date).toBe(blockedDate);
 });
 
 it('roundtrips all new metadata and migrates version 8 backups without replacing legacy data',async()=>{
