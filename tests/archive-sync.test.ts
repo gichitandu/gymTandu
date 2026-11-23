@@ -292,3 +292,9 @@ it('keeps the device space local, without waiting for the network, when the stat
   const spa=await setup();spa.fetch.mockImplementation(async()=>new Response('<!doctype html><title>GymTrack</title>',{status:200,headers:{'content-type':'text/html; charset=utf-8'}}));
   expect(await spa.service.open(spa.key,local)).toBe(local);expect(spa.service.status()).toBe('local');
 });
+it('keeps syncing the device space when the archive API answers 404 in JSON for a missing old version',async()=>{
+  const t=await setup(plans('Copia server'));await t.service.open(t.key,plans('Copia server'));expect(t.service.status()).toBe('saved');
+  t.fetch.mockImplementationOnce(async()=>Response.json({error:'Copia precedente non trovata.'},{status:404}));
+  await t.service.readVersion(99).catch(()=>undefined);
+  expect(t.service.status()).not.toBe('local');expect(await t.service.flush()).toBe(true);
+});
