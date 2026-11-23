@@ -121,6 +121,8 @@ export class CalendarComponent {
  constructor(){
   const query=inject(ActivatedRoute).snapshot.queryParamMap,date=query.get('date');if(date)this.choose(date);if(query.get('view')==='month')this.view.set('month');
   // Un solo modo per programmare: altre pagine aprono qui il pannello «Aggiungi» (es. riposo).
+  // «Sposta» dalla Home: apre direttamente lo spostamento della seduta programmata.
+  const move=query.get('move');if(move&&date)queueMicrotask(()=>{this.selectedItemId.set('event:'+move);if(this.selectedItem()?.id==='event:'+move)this.quickMove();});
   const add=query.get('add');if(add==='rest'||add==='workout'||add==='cardio'||add==='mobility'||add==='other')queueMicrotask(()=>this.openAdd(add as CalendarEventKind));else if(add)queueMicrotask(()=>this.addOpen.set(true));
   if(this.todayClock)effect(()=>{const today=this.today,previous=this.lastToday;this.lastToday=today;if(today!==previous&&this.followsToday&&!this.modal())this.choose(today);});
  }
@@ -189,7 +191,7 @@ export class CalendarComponent {
  canRemove(item=this.selectedItem()){if(item?.workout)return item.workout.status!=='completed'||this.s.settings().allowCompletedWorkoutDeletion===true;return !!item?.event&&!item.event.done;}
  repeatPreview(){try{return weeklyDates(this.eventDate,Number(this.repeatCount)).map(date=>this.shortLabel(date)).join(' · ');}catch{return '';}}
  formTitle(){return this.formMode()==='move'?'Sposta attività':this.formMode()==='duplicate'?'Duplica attività':this.formMode()==='edit'?'Modifica attività':'Aggiungi al calendario';}
- formKindChanged(){if(this.kind==='rest')this.estimatedCalories=null;}
+ formKindChanged(){if(this.kind==='rest'){this.estimatedCalories=null;if(!this.activityTitle.trim())this.activityTitle='Giorno di riposo';}else if(this.activityTitle==='Giorno di riposo')this.activityTitle='';}
  private fillForm(event?:ScheduledWorkout){
   this.kind=event?.kind||'workout';this.eventDate=event?.date||this.selected();this.eventTime=event?.time||'';this.activityTitle=event?.dayName||'';
   this.dayId=event?.dayId||this.s.nextDay()?.id||this.availableDays()[0]?.id||'';this.notes=event?.notes||'';this.repeatCount=1;

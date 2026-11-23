@@ -26,6 +26,8 @@ export class PlanDashboardComponent{
  status(row:PlanSessionStatistics){return({completed:'Concluso',draft:'In corso',planned:'Programmato',missed:'Non svolto',cancelled:'Annullato'})[row.status];}
  weightLabel(row:PlanExerciseStatistics){return row.mode==='weighted-bodyweight'?'Zavorra massima':row.mode==='assisted'?'Assistenza registrata':'Carico massimo';}
  exercisePoints(row:PlanExerciseStatistics){const weights=this.exerciseMetric==='weight'&&row.maxWeight!==null;return row.history.map(point=>({label:this.date(point.date),value:weights?this.s.weight(point.maxWeight!):point.maxReps}));}
+ /** Valore in evidenza nella riga: segue la scelta «Grafico» (carico o ripetizioni). L'assistenza non è un massimo da migliorare. */
+ recordLabel(row:PlanExerciseStatistics){return this.exerciseMetric==='weight'&&row.maxWeight!==null&&row.mode!=='assisted'?this.s.formatWeight(row.maxWeight)+' '+this.s.settings().unit+' max':row.maxReps+' rip. max';}
  exerciseUnit(row:PlanExerciseStatistics){return this.exerciseMetric==='weight'&&row.maxWeight!==null?this.s.settings().unit:'rip.';}
  async finish(){if(this.finishing()||!this.plan()||this.stats().draftCount)return;this.finishing.set(true);try{if(await this.s.finishPlan(this.id(),this.cancelFuture)){this.finishOpen.set(false);void this.router.navigate([], {relativeTo:this.route,queryParams:{finish:null},queryParamsHandling:'merge',replaceUrl:true});}}finally{this.finishing.set(false);}}
 }

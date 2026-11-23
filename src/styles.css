@@ -1546,7 +1546,7 @@ input[type=date],input[type=time],select {min-inline-size:0;max-inline-size:100%
 .calendar-cell.outside {opacity:.4;}
 .calendar-dots {display:flex;gap:3px;height:4px;}
 .calendar-dots i,.calendar-legend i {display:inline-block;width:4px;height:4px;border-radius:50%;}
-.planned {background:#168dff;}.done {background:#35d5a1;}.meal {background:#e5bd32;}
+:is(.calendar-dots,.calendar-legend) i.planned {background:#168dff;}:is(.calendar-dots,.calendar-legend) i.done {background:#35d5a1;}:is(.calendar-dots,.calendar-legend) i.meal {background:#e5bd32;}
 .calendar-cell.selected .planned {background:white;}
 .calendar-legend {display:flex;gap:12px;font-size:9px;color:var(--muted);margin-top:16px;flex-wrap:wrap;}
 .calendar-legend span {display:flex;align-items:center;gap:5px;}

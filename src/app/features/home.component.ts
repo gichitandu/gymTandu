@@ -160,6 +160,8 @@ export class HomeComponent {
     if(!session.date)return 'Prossima seduta';
     return (session.date===this.today?'Oggi':this.dateLabel(session.date))+(session.time?' · '+session.time:'');
   }
+  /** «Sposta»: una seduta programmata apre lo spostamento; un giorno della scheda senza data apre la programmazione. */
+  moveParams(session:HomeUpcomingSession){return session.kind==='scheduled'&&session.eventId?{date:session.date||this.today,move:session.eventId}:session.kind==='plan'?{date:this.today,add:'workout'}:{date:session.date||this.today};}
   sessionPreview(session:HomeUpcomingSession){return session.kind==='scheduled'?{scheduled:session.eventId,return:'home'}:{day:session.dayId,return:'home'};}
   private weekDays = computed(() => Array.from({ length: 7 }, (_, i) => {
     const d = new Date(this.today+'T12:00:00');
@@ -291,7 +293,9 @@ export class HomeComponent {
   });
   tagLabel(session: HomeUpcomingSession) {
     if (session.kind === 'draft') return 'In corso';
-    if (!session.date || session.date === this.today) return 'Allenamento di oggi';
+    if (session.date === this.today) return 'Allenamento di oggi';
+    // Seduta della rotazione senza data: se oggi hai già completato un allenamento è la prossima, non quella di oggi.
+    if (!session.date) return this.s.data().workouts.some(w => w.status === 'completed' && w.date === this.today) ? 'Prossimo allenamento' : 'Allenamento di oggi';
     return 'Prossimo · ' + this.dateLabel(session.date);
   }
   subLine(session: HomeUpcomingSession) {

@@ -34,7 +34,7 @@
       }@else if(canStartNow(session)){
         <a class="su-btn sm" routerLink="/anteprima-allenamento" [queryParams]="sessionPreview(session)" gtDesign="home.actions.preview"><gt-icon name="eye"/><span gtDesignLabel="home.actions.preview" gtDesignLabelDefault="Vedi esercizi">Vedi esercizi</span></a>
       }
-      <a class="su-btn sm" routerLink="/calendario" [queryParams]="{date:session.date||today}" gtDesign="home.actions.schedule"><gt-icon name="calendar"/><span gtDesignLabel="home.actions.schedule" gtDesignLabelDefault="Sposta">Sposta</span></a>
+      <a class="su-btn sm" routerLink="/calendario" [queryParams]="moveParams(session)" gtDesign="home.actions.schedule"><gt-icon name="calendar"/><span gtDesignLabel="home.actions.schedule" gtDesignLabelDefault="Sposta">Sposta</span></a>
     </div>
   }@else{
     <div class="hx-next-row"><span class="su-badge muted">Nessun allenamento in programma</span></div>

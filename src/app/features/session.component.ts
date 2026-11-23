@@ -87,6 +87,9 @@ export class SessionComponent {
       if(!workout)return;
       const withoutCompletedSets=this.completedSets(workout.id)===0;
       if(withoutCompletedSets&&!await this.confirmation.ask('Nessuna serie è stata segnata come completata. Vuoi terminare comunque l’allenamento? Tutti i valori inseriti saranno conservati nello storico e potrai registrare un altro giorno.'))return;
+      // Un tocco involontario su «Termina» non deve chiudere una seduta a metà.
+      const pending=withoutCompletedSets?0:this.allSets(workout.id).length-this.completedSets(workout.id);
+      if(pending>0&&!await this.confirmation.ask({title:'Terminare l’allenamento?',message:pending===1?'Resta 1 serie non completata. Sarà conservata nello storico e potrai riaprire l’allenamento dal riepilogo.':'Restano '+pending+' serie non completate. Saranno conservate nello storico e potrai riaprire l’allenamento dal riepilogo.',confirmLabel:'Termina allenamento',cancelLabel:'Continua l’allenamento'}))return;
       if (await this.s.finish(withoutCompletedSets)) {
         active?.externalTimer?.stop();
         const plan=this.s.data().plans.find(plan=>plan.id===workout.planId);

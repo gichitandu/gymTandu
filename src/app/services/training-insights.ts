@@ -45,15 +45,15 @@ export function summarizeTraining(data:DataSet,days=28,today=localDate()):{curre
  else{
   if(previous.workouts>0){
    const delta=current.workouts-previous.workouts;
-   insights.push({kind:'consistency',title:delta>0?'Più costanza':delta<0?'Ritmo da ritrovare':'Costanza stabile',message:delta===0?'Hai completato lo stesso numero di sedute del periodo precedente.':delta>0?`Hai completato ${delta} sedute in più del periodo precedente.`:`Hai completato ${-delta} sedute in meno del periodo precedente.`});
-  }else insights.push({kind:'consistency',title:'Il tuo punto di partenza',message:`${current.workouts} sedute completate: continua a registrarle per ottenere confronti attendibili.`});
+   insights.push({kind:'consistency',title:delta>0?'Più costanza':delta<0?'Ritmo da ritrovare':'Costanza stabile',message:delta===0?'Hai completato lo stesso numero di sedute del periodo precedente.':delta>0?`Hai completato ${delta} ${delta===1?'seduta':'sedute'} in più del periodo precedente.`:`Hai completato ${-delta} ${delta===-1?'seduta':'sedute'} in meno del periodo precedente.`});
+  }else insights.push({kind:'consistency',title:'Il tuo punto di partenza',message:`${current.workouts} ${current.workouts===1?'seduta completata':'sedute completate'}: continua a registrarle per ottenere confronti attendibili.`});
   if(current.externalVolume>0&&previous.externalVolume>0){
    const diff=(current.externalVolume/previous.externalVolume-1)*100;
    insights.push({kind:'progress',title:'Volume a carico esterno',message:`Rispetto al periodo precedente: ${diff>=0?'+':''}${diff.toLocaleString('it-IT',{maximumFractionDigits:1})}%. Il volume dipende anche dal numero e dal tipo di sedute, non prova da solo un miglioramento di forza.`});
   }
  }
  const next=data.scheduledWorkouts.filter(e=>(e.kind??'workout')==='workout'&&e.date>=today&&!e.done&&!data.workouts.some(w=>w.id===e.workoutId&&w.status==='completed')).sort((a,b)=>a.date.localeCompare(b.date)||(a.time||'').localeCompare(b.time||''))[0];
- if(next)insights.push({kind:'schedule',title:'Prossimo appuntamento',message:`${next.dayName} · ${next.date}${next.time?' alle '+next.time:''}. Puoi aggiungere un promemoria al calendario del telefono.`});
+ if(next)insights.push({kind:'schedule',title:'Prossimo appuntamento',message:`${next.dayName} · ${new Date(next.date+'T12:00:00').toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long'})}${next.time?' alle '+next.time:''}. Puoi aggiungere un promemoria al calendario del telefono.`});
  const wellness=data.wellnessLogs.find(row=>row.date===today);
  if(wellness&&((wellness.energy!==undefined&&wellness.energy<=2)||(wellness.stress!==undefined&&wellness.stress>=4)))
   insights.push({kind:'recovery',title:'Ascolta le sensazioni',message:'Oggi hai registrato poca energia o stress elevato. Valuta personalmente l’intensità e, se necessario, confrontati con un professionista.'});

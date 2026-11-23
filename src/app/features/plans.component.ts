@@ -41,6 +41,8 @@ type PlanEditorDraft = {
   day: ReturnType<PlansComponent['dayForm']['getRawValue']>;
   exercise: ReturnType<PlansComponent['exerciseForm']['getRawValue']>;
 };
+/** Durata indicativa unica per editor e lista schede: al minuto sotto i 20 minuti, poi a multipli di 5. */
+export function estimatedMinutes(seconds:number){const minutes=seconds/60;return minutes<20?Math.max(1,Math.round(minutes)):Math.round(minutes/5)*5;}
 @Component({
   standalone: true,
   styleUrls: ["./feature-polish.css", "./plans-simple.css", "./plans-reference.css", "./plans-redesign.css", "./plans-editor.css"],
@@ -84,7 +86,7 @@ type PlanEditorDraft = {
             <button type="button" class="simple-plan-title" [attr.aria-expanded]="expanded()===p.id" (click)="expanded.set(expanded()===p.id?'':p.id)"><span><strong>{{p.name}}</strong><small>{{p.program?p.program.weeks+' settimane · ':''}}{{s.days(p.id).length}} {{s.days(p.id).length===1?'allenamento':'allenamenti'}}</small></span><span class="plan-chevron" aria-hidden="true">{{expanded()===p.id?'⌃':'›'}}</span></button>
             @if(p.completedAt){<span class="su-badge muted">Conclusa</span>}@else if(p.active){<span class="su-badge green"><gt-icon name="check"/>Attiva</span>}
           </div>
-          @if(p.active&&!p.completedAt&&!p.archived&&s.days(p.id).length){<div class="pl-progress"><div class="pl-progress-row">@if(p.program){<span><b>Settimana {{currentWeek(p)}}</b> di {{p.program.weeks}}</span>}@else{<span><b>{{completedForPlan(p.id)}}</b> allenamenti fatti</span>}<small>{{completedForPlan(p.id)}} di {{s.days(p.id).length}}</small></div><div class="su-bar"><i [style.width.%]="planProgress(p)"></i></div></div>}
+          @if(p.active&&!p.completedAt&&!p.archived&&s.days(p.id).length){<div class="pl-progress"><div class="pl-progress-row">@if(p.program){<span><b>Settimana {{currentWeek(p)}}</b> di {{p.program.weeks}}</span>}@else{<span><b>{{completedForPlan(p.id)}}</b> {{completedForPlan(p.id)===1?'allenamento fatto':'allenamenti fatti'}}</span>}<small>{{completedForPlan(p.id)}} di {{s.days(p.id).length}}</small></div><div class="su-bar"><i [style.width.%]="planProgress(p)"></i></div></div>}
           @if(expanded()===p.id){
             @if(p.description){@if(p.program){<details class="program-description"><summary>Note del programma</summary><p class="simple-plan-description">{{p.description | coachText}}</p></details>}@else{<p class="simple-plan-description">{{p.description | coachText}}</p>}}
             @if(p.program){<div class="program-week-picker"><label>Settimana<select [ngModel]="weekFor(p)" (ngModelChange)="selectWeek(p.id,$event)">@for(week of weeksFor(p);track week){<option [ngValue]="week">Settimana {{week}} / {{p.program.weeks}}</option>}</select></label></div>}
@@ -365,7 +367,7 @@ export class PlansComponent {
   /** Riepilogo dell'allenamento: esercizi, serie allenanti e durata indicativa (lavoro + recuperi). */
   dayMeta(day:TrainingPlanDay){
     const rows=this.s.planExercises(day.id),sets=rows.reduce((total,row)=>total+row.sets,0);
-    const seconds=rows.reduce((total,row)=>total+row.sets*(45+row.rest)+(row.warmupSets||0)*75,0),minutes=Math.max(5,Math.round(seconds/300)*5);
+    const seconds=rows.reduce((total,row)=>total+row.sets*(45+row.rest)+(row.warmupSets||0)*75,0),minutes=estimatedMinutes(seconds);
     return rows.length+(rows.length===1?' esercizio':' esercizi')+(sets?' · '+sets+' serie · ~'+minutes+' min':'');
   }
   /** Serie allenanti per gruppo muscolare principale negli allenamenti mostrati (una settimana tipo). */
@@ -398,7 +400,7 @@ export class PlansComponent {
   exerciseSummary(){
     const v=this.exerciseForm.getRawValue(),sets=Number(v.sets)||0,min=Number(v.repsMin)||0,max=Number(v.repsMax)||0,rest=Number(v.rest)||0,warm=Number(v.warmupSets)||0;
     if(!sets||!min||!max)return 'Imposta serie e ripetizioni';
-    const minutes=Math.max(1,Math.round((sets*(45+rest)+warm*75)/60));
+    const minutes=estimatedMinutes(sets*(45+rest)+warm*75);
     return sets+' × '+(min===max?min:min+'–'+max)+' rip · rec. '+this.restLabel(rest)+(warm?' · '+warm+' risc.':'')+' · ~'+minutes+' min';
   }
   useCoachWeight(weight:number){const control=this.exerciseForm.controls.targetWeight;control.setValue(weight);control.markAsDirty();this.advancedOpen.set(true);}
