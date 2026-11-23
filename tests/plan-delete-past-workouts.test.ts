@@ -70,7 +70,11 @@ it('records a past workout on its chosen date and keeps its entered duration thr
   const past=moveDate(localDate(),-7),plan=structuredClone(s.data().plans[0]);
   expect(await s.start('day-a',past)).toBe(true);const w=s.draft()!,exercise=s.workoutExercises(w.id)[0];
   const session=runInInjectionContext(injector,()=>new SessionComponent());sessions.push(session);
-  session.update(w.id,'duration',55);await s.settled();await s.updateSet(s.sets(exercise.id)[0].id,{weight:82.5,reps:8,completed:true});await session.finish();
+  session.update(w.id,'duration',55);await s.settled();await s.updateSet(s.sets(exercise.id)[0].id,{weight:82.5,reps:8,completed:true});
+  // Restano serie non completate: «Termina» chiede conferma e, se annulli, la seduta resta aperta.
+  const confirm=vi.fn().mockReturnValue(false);vi.stubGlobal('confirm',confirm);const pending=session.allSets(w.id).length-1;
+  await session.finish();expect(s.draft()?.id).toBe(w.id);expect(confirm).toHaveBeenCalledExactlyOnceWith(expect.stringContaining(pending===1?'Resta 1 serie':'Restano '+pending+' serie'));
+  confirm.mockReturnValue(true);await session.finish();
   expect(s.completed()[0]).toMatchObject({id:w.id,date:past,duration:55});expect(s.data().plans[0]).toEqual(plan);expect(calendarActivity(s.data()).get(past)?.completed).toBe(1);
   const restored=await importBackup(await exportBackup(s.data()));expect(restored.workouts[0].date).toBe(past);expect(restored.workouts[0].duration).toBe(55);
 });

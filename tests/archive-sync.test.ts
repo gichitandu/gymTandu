@@ -282,3 +282,13 @@ it('keeps a real conflict when the same record was edited on both sides',async()
   await t.service.open(t.key,plans('Copia dispositivo'));
   expect(t.service.status()).toBe('conflict');expect(t.posts).toHaveLength(0);
 });
+
+it('keeps the device space local, without waiting for the network, when the static build has no archive API',async()=>{
+  const t=await setup(),local=plans('Solo sul dispositivo');
+  t.fetch.mockImplementation(async()=>new Response('Not found',{status:404}));
+  expect(await t.service.open(t.key,local)).toBe(local);
+  expect(t.service.status()).toBe('local');expect(t.posts).toHaveLength(0);
+  // Hosting statico con fallback dell'app: risponde con la pagina HTML invece del JSON.
+  const spa=await setup();spa.fetch.mockImplementation(async()=>new Response('<!doctype html><title>GymTrack</title>',{status:200,headers:{'content-type':'text/html; charset=utf-8'}}));
+  expect(await spa.service.open(spa.key,local)).toBe(local);expect(spa.service.status()).toBe('local');
+});
