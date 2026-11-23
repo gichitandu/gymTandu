@@ -153,3 +153,10 @@ body gt-shell .app-main:has(.modal-backdrop) {
 /* Recupera allenamenti: the long title goes under the back link instead of running off screen. */
 body.theme-ready gt-shell main .page-heading:has(.rc3-back) { flex-wrap: wrap; gap: 10px; }
 body.theme-ready gt-shell main .page-heading:has(.rc3-back) h1 { flex: 1 1 100%; min-width: 0; }
+
+/* Tema chiaro: --accent-text è scurito per il testo su fondo chiaro; come sfondo dei
+   pulsanti con --accent-ink scuro ridurrebbe il contrasto. Si usa il colore pieno. */
+body.theme-ready.light gt-shell main .segmented > button.active,
+body.theme-ready.light gt-shell main :is(button.primary, a.button.primary):not(.save-series):not(.cal-fab) {
+  background: linear-gradient(135deg, var(--accent), var(--theme-secondary, var(--accent)));
+}

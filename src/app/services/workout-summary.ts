@@ -2,7 +2,7 @@ import {DataSet,localDate} from '../models/domain';
 import {machineKey} from './training-flow';
 export function buildWorkoutSummary(data:DataSet,id:string){
  const workout=data.workouts.find(w=>w.id===id&&w.status==='completed');
- const rows=data.workoutExercises.filter(e=>e.workoutId===id),ids=new Set(rows.map(e=>e.id));
+ const rows=data.workoutExercises.filter(e=>e.workoutId===id).sort((a,b)=>a.order-b.order),ids=new Set(rows.map(e=>e.id));
  const all=data.sets.filter(s=>ids.has(s.workoutExerciseId)),done=all.filter(s=>s.completed),work=done.filter(s=>s.kind!=='warmup');
  const known=(unit?:string)=>!unit||!/da verificare|da confermare|unknown|sconosciut/i.test(unit);
  const comparable=new Set(rows.filter(e=>e.loadMode==='external'&&known(e.loadUnit)).map(e=>e.id));
