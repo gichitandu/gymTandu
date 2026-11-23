@@ -66,6 +66,9 @@ export class ActiveWorkoutComponent {
  previous=computed(()=>{const e=this.selected();return e?this.s.previous(e.exerciseId,e.workoutId,e.machineSetup):[];});
  remaining=computed(()=>this.paused()?this.pausedSeconds():remainingSeconds(this.restEnd(),this.clock()));restRatio=computed(()=>Math.min(100,this.remaining()/Math.max(1,this.restTotal())*100));
  nextExercise=computed(()=>{const current=this.selected();if(current){if(this.currentSet()?.kind==='warmup'&&this.s.sets(current.id).some(s=>!s.completed))return current;const next=supersetNext(this.exercises(),this.allSets(),current.id).next;if(next)return next;if(this.s.sets(current.id).some(s=>!s.completed))return current;}return this.exercises().find(e=>this.s.sets(e.id).some(s=>!s.completed));});
+ /** Passando a un altro esercizio (fine serie, superset, avanti) mostra in alto il suo nome invece di restare a metà pagina. */
+ private shownExercise='';
+ ngAfterViewChecked(){const id=this.exerciseId(),previous=this.shownExercise;if(id===previous)return;this.shownExercise=id;if(!previous||!id||this.step()==='list'||typeof window==='undefined'||typeof requestAnimationFrame==='undefined')return;requestAnimationFrame(()=>window.scrollTo({top:0,behavior:'smooth'}));}
  ngOnInit(){this.restore();this.draftSession=this.draftStorage?.bind<ActiveDraftSnapshot>(this.s.archiveKey(),'active-sets:'+this.workoutId(),()=>this.inputDrafts.size?{entries:[...this.inputDrafts],exerciseId:this.exerciseId(),setId:this.setId(),bases:Object.fromEntries(this.allSets().filter(set=>this.inputDrafts.has(set.id)).map(set=>[set.id,JSON.stringify(set)]))}:null,data=>{
   if(!Array.isArray(data?.entries)||data.entries.length>1000)return;
   const owned=new Set(this.allSets().map(set=>set.id));

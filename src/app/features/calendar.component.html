@@ -233,7 +233,7 @@
       </div>
 
       <p class="cal-sr-only" role="status">
-        {{ visibleAgenda().length }} voci per {{ label(selected()) }}
+        {{ visibleAgenda().length }} {{ visibleAgenda().length === 1 ? 'voce' : 'voci' }} per {{ label(selected()) }}
       </p>
       @if (timeline(); as tl) {
         @if (tl.untimed.length) {
@@ -570,7 +570,7 @@
         >
       </div>
       <p class="cal-sr-only" role="status">
-        {{ visibleAgenda().length }} voci per {{ label(selected()) }}
+        {{ visibleAgenda().length }} {{ visibleAgenda().length === 1 ? 'voce' : 'voci' }} per {{ label(selected()) }}
       </p>
       <div class="cal-agenda-list" aria-label="Agenda del giorno">
         @for (item of visibleAgenda(); track item.id; let n = $index) {

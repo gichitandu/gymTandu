@@ -2,7 +2,7 @@ import {Component,computed,effect,inject,input,output,signal} from '@angular/cor
 import {FormsModule} from '@angular/forms';
 import {Store} from '../services/store';
 import {TodayService} from '../services/today';
-import {WellnessLog} from '../models/domain';
+import {WellnessLog,localDate} from '../models/domain';
 import {validWellness} from '../services/wellness';
 import {IconComponent} from './icon.component';
 
@@ -65,7 +65,7 @@ export class CheckinSheetComponent {
  soreCount=computed(()=>Object.keys(this.soreness()).length);
  hours=computed(()=>Math.floor((this.sleepMinutes()??0)/60));
  minutes=computed(()=>String((this.sleepMinutes()??0)%60).padStart(2,'0'));
- private today(){return this.clock?.date()||new Date().toISOString().slice(0,10);}
+ private today(){return this.clock?.date()||localDate();}
  dateLabel(){return new Date(this.today()+'T12:00:00').toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long'});}
  constructor(){effect(()=>{if(!this.open())return;const row=this.s.data().wellnessLogs.find(log=>log.date===this.today());this.energy.set(this.presetEnergy()??row?.energy??null);this.sleepMinutes.set(row?.sleepMinutes??null);this.sleepQuality.set(row?.sleepQuality??null);this.stress.set(row?.stress??null);this.soreness.set({...(row?.soreness||{})});this.notes=row?.notes||'';});}
  sleep(delta:number){const now=this.sleepMinutes();this.sleepMinutes.set(Math.max(0,Math.min(1440,(now??450)+(now===null?0:delta))));}

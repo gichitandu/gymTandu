@@ -81,6 +81,10 @@ export const NATIVE_CATALOG_MAP: ReadonlyArray<{ nativeId: string; coreId: strin
   { nativeId: 'library-bodyweight_air_squats', coreId: 'bodyweight-squat', name: 'Squat a corpo libero', equipment: 'Corpo libero' },
   { nativeId: 'library-bodyweight_glute_bridge', coreId: 'bodyweight-glute-bridge', name: 'Ponte glutei', equipment: 'Corpo libero' },
   { nativeId: 'library-bodyweight_dead_bug', coreId: 'bodyweight-dead-bug', name: 'Dead bug', equipment: 'Corpo libero' },
+  { nativeId: 'library-cable_standing_biceps_cable_curl', coreId: 'cable-curl', name: 'Curl al cavo', equipment: 'Cavi' },
+  { nativeId: 'library-cable_crunch', coreId: 'cable-crunch', name: 'Crunch al cavo', equipment: 'Cavi' },
+  { nativeId: 'variant-lunge-reverse', coreId: 'dumbbell-reverse-lunge', name: 'Affondi indietro con manubri', equipment: 'Manubri' },
+  { nativeId: 'library-bodyweight_standing_calf_raise', coreId: 'bodyweight-calf-raise', name: 'Calf raise a corpo libero', equipment: 'Corpo libero' },
 ];
 
 export function nativeToCore(exercise: NativeExercise | undefined): string | null {
@@ -92,7 +96,9 @@ export function nativeToCore(exercise: NativeExercise | undefined): string | nul
 }
 
 export function coreToNative(data: DataSet, coreId: string): NativeExercise | undefined {
-  return data.exercises.find(row => row.active && nativeToCore(row) === coreId);
+  // Chi ha già un esercizio creato dal coach continua a usarlo: lo storico resta sullo stesso esercizio.
+  return data.exercises.find(row => row.active && row.id === `coach-exercise-${coreId}` && nativeToCore(row) === coreId)
+    ?? data.exercises.find(row => row.active && nativeToCore(row) === coreId);
 }
 
 export function equipmentIdentity(exerciseId: string, setup?: WorkoutLogExercise['machineSetup']): string {
@@ -229,6 +235,7 @@ export function profileFromSavedPlan(data: DataSet): Profile | null {
 }
 
 const MUSCLE_GROUPS: Record<string, string> = { chest: 'Petto', back: 'Schiena', quads: 'Quadricipiti', hamstrings: 'Femorali', glutes: 'Glutei', shoulders: 'Spalle', biceps: 'Bicipiti', triceps: 'Tricipiti', calves: 'Polpacci', core: 'Core' };
+const BROAD_GROUPS: Record<string, string> = { quads: 'Gambe', hamstrings: 'Gambe', biceps: 'Braccia', triceps: 'Braccia' };
 const EQUIPMENT_LABELS = { machine: 'Macchina', cable: 'Cavi', dumbbell: 'Manubri', barbell: 'Bilanciere', bodyweight: 'Corpo libero' };
 
 /** Mutates ONLY the unpublished clone supplied by Store.change; never Store.data(). */
@@ -241,7 +248,9 @@ export function insertCoachPlan(data: DataSet, plan: TrainingPlan): string {
   const groupId = (muscle: string) => {
     const name = MUSCLE_GROUPS[muscle];
     if (!name) throw Error('Gruppo muscolare del coach non riconosciuto.');
-    const existing = data.muscleGroups.find(row => normalize(row.name) === normalize(name));
+    const existing = data.muscleGroups.find(row => normalize(row.name) === normalize(name))
+      // Il catalogo predefinito usa gruppi ampi: non frammentare i filtri con Bicipiti/Quadricipiti.
+      ?? data.muscleGroups.find(row => normalize(row.name) === normalize(BROAD_GROUPS[muscle] ?? ''));
     if (existing) return existing.id;
     const id = `coach-muscle-${muscle}`;
     if (data.muscleGroups.some(row => row.id === id)) throw Error('Identificativo del gruppo già utilizzato.');

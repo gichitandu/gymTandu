@@ -117,7 +117,8 @@ export class CoachPageComponent {
   get name() { return this.gateway.displayName()?.trim().split(' ')[0] || 'Coach'; }
   get historyCount() { return this.gateway.completedWorkoutCount(); }
   get todayLabel() { return new Date().toLocaleDateString('it-IT', { day: 'numeric', month: 'long', year: 'numeric' }); }
-  date() { return new Date().toISOString().slice(0, 10); }
+  /** Data locale (non UTC): dopo mezzanotte in Italia toISOString darebbe ancora il giorno precedente. */
+  date() { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; }
   setTab(tab: Tab) { this.tab.set(tab); this.error.set(''); }
   markDirty() { this.dirty.set(true); this.notice.set(''); }
 

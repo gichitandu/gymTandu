@@ -225,3 +225,19 @@ describe('adattatore GymTrack: aggiunta di un piano', () => {
     expect(profileFromSavedPlan(data)).toMatchObject({ daysPerWeek: 2, minutesPerSession: 60, goal: p.goal });
   });
 });
+
+describe('catalogo nativo e coach', () => {
+  it('collega gli esercizi del coach agli omonimi del catalogo predefinito, senza duplicarli', async () => {
+    const { defaultExercises } = await import('../src/app/core/default-catalog');
+    const { NATIVE_CATALOG_MAP, coreToNative } = await import('../src/app/services/coach-expert-adapter');
+    for (const row of NATIVE_CATALOG_MAP) {
+      const native = defaultExercises.find(exercise => exercise.id === row.nativeId);
+      expect(native, row.nativeId).toBeDefined();
+      expect(nativeToCore(native)).toBe(row.coreId);
+    }
+    const data = { exercises: structuredClone(defaultExercises) } as unknown as NativeData;
+    expect(coreToNative(data, 'cable-curl')?.id).toBe('library-cable_standing_biceps_cable_curl');
+    const legacy = { ...structuredClone(defaultExercises[0]), id: 'coach-exercise-cable-curl', name: 'Curl al cavo', tags: ['gt-coach:cable-curl'] };
+    expect(coreToNative({ exercises: [...data.exercises, legacy] } as unknown as NativeData, 'cable-curl')?.id).toBe('coach-exercise-cable-curl');
+  });
+});

@@ -118,7 +118,7 @@ type CatalogEditorDraft = {
                   formControlName="description"
                   maxlength="2000"
                 ></textarea></label
-              ><label class="wide">Video dimostrativo (link HTTPS facoltativo)<input type="url" formControlName="videoUrl" maxlength="1000" placeholder="Link video facoltativo" /></label>
+              ><label class="wide">Video dimostrativo (link HTTPS facoltativo)<input type="url" formControlName="videoUrl" maxlength="1000" placeholder="Link video facoltativo" [attr.aria-invalid]="form.controls.videoUrl.invalid" /></label>@if(form.controls.videoUrl.invalid){<p class="notice wide" role="alert">Usa un link che inizia con https://</p>}
               <label class="wide active-check"><input type="checkbox" formControlName="active" />Attivo · visibile ai clienti e selezionabile nelle schede</label>
               <p class="subtle wide">Se la spunta non è selezionata, l’esercizio resta nel catalogo degli admin. Il video è facoltativo: la visibilità dipende soltanto dalla spunta Attivo.</p>
               <label class="wide"
@@ -209,7 +209,8 @@ export class CatalogComponent {
     loadMode: ["external" as LoadMode],
     description: [""],
     tags: [""],
-    videoUrl: [""],
+    // Il campo indica «link HTTPS»: rifiuta http:, javascript: e testo non valido.
+    videoUrl: ["", Validators.pattern(/^\s*(https:\/\/\S+)?\s*$/i)],
     active: [false],
   });
   ngOnInit(){
