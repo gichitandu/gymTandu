@@ -62,7 +62,7 @@ import { ExerciseFilterComponent } from "../shared/exercise-filter.component";
               <option [value]="d.id">{{ d.name }}</option>
             }
           </select></label
-        ><gt-exercise-filter [exercises]="s.data().exercises" [value]="exercise()"
+        ><gt-exercise-filter [exercises]="loggedExercises()" [value]="exercise()"
           [includeAll]="true" (choose)="exercise.set($event)" /><label class="history-from-filter"
           >Data iniziale<gt-date-field aria-label="Data iniziale dello storico"
             [ngModel]="from()"
@@ -107,6 +107,8 @@ export class WorkoutsComponent {
   plan = signal("");
   day = signal("");
   exercise = signal("");
+  /** Solo esercizi presenti nello storico: filtrare per uno mai registrato darebbe sempre un elenco vuoto. */
+  loggedExercises = computed(() => { const ids = new Set(this.s.data().workoutExercises.map(row => row.exerciseId)); return this.s.data().exercises.filter(e => ids.has(e.id)); });
   from = signal("");
   to = signal("");
   selectedId = signal("");

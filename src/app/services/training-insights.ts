@@ -53,7 +53,7 @@ export function summarizeTraining(data:DataSet,days=28,today=localDate()):{curre
   }
  }
  const next=data.scheduledWorkouts.filter(e=>(e.kind??'workout')==='workout'&&e.date>=today&&!e.done&&!data.workouts.some(w=>w.id===e.workoutId&&w.status==='completed')).sort((a,b)=>a.date.localeCompare(b.date)||(a.time||'').localeCompare(b.time||''))[0];
- if(next)insights.push({kind:'schedule',title:'Prossimo appuntamento',message:`${next.dayName} · ${next.date}${next.time?' alle '+next.time:''}. Puoi aggiungere un promemoria al calendario del telefono.`});
+ if(next)insights.push({kind:'schedule',title:'Prossimo appuntamento',message:`${next.dayName} · ${new Date(next.date+'T12:00:00').toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long'})}${next.time?' alle '+next.time:''}. Puoi aggiungere un promemoria al calendario del telefono.`});
  const wellness=data.wellnessLogs.find(row=>row.date===today);
  if(wellness&&((wellness.energy!==undefined&&wellness.energy<=2)||(wellness.stress!==undefined&&wellness.stress>=4)))
   insights.push({kind:'recovery',title:'Ascolta le sensazioni',message:'Oggi hai registrato poca energia o stress elevato. Valuta personalmente l’intensità e, se necessario, confrontati con un professionista.'});

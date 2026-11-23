@@ -37,7 +37,7 @@ import {StatusComponent} from '../shared/status.component';
  <section class="card exercise-instructions ex-numbers"><h2>I tuoi numeri</h2>
   @if(history().length){
    <div class="su-stats"><div class="su-stat"><strong class="ex-record">{{fmt(record()!.weight)}}<small>{{unit(record()!.weight)}}</small></strong><span>record × {{record()!.reps}}</span></div><div class="su-stat"><strong>{{oneRm()?fmt(oneRm()!):'—'}}<small>{{oneRm()?s.settings().unit:''}}</small></strong><span>1RM stimato</span></div><div class="su-stat"><strong>{{fmt(last()!.weight)}}<small>{{unit(last()!.weight)}}</small></strong><span>ultima × {{last()!.reps}}</span></div></div>
-   @if(trend();as chart){<div class="ex-chart"><div class="ex-chart-head"><span>Carico migliore per seduta</span>@if(chart.delta){<b [class.su-up]="chart.delta>0" [class.su-down]="chart.delta<0">{{chart.delta>0?'+':''}}{{s.formatWeight(chart.delta)}} {{s.settings().unit}}</b>}</div><svg viewBox="0 0 320 90" preserveAspectRatio="none" role="img" [attr.aria-label]="'Andamento su '+history().length+' sedute'"><path [attr.d]="chart.area" class="ex-area"/><path [attr.d]="chart.line" class="ex-line"/><circle [attr.cx]="chart.x" [attr.cy]="chart.y" r="4.5" class="ex-dot"/></svg><div class="ex-chart-foot"><span>{{dateLabel(history()[0].date)}}</span><span>{{dateLabel(history()[history().length-1].date)}}</span></div></div>}
+   @if(trend();as chart){<div class="ex-chart"><div class="ex-chart-head"><span>Carico migliore per seduta</span>@if(chart.delta){<b [class.su-up]="chart.improved" [class.su-down]="!chart.improved">{{chart.delta>0?'+':''}}{{s.formatWeight(chart.delta)}} {{s.settings().unit}}</b>}</div><svg viewBox="0 0 320 90" preserveAspectRatio="none" role="img" [attr.aria-label]="'Andamento su '+history().length+' sedute'"><path [attr.d]="chart.area" class="ex-area"/><path [attr.d]="chart.line" class="ex-line"/><circle [attr.cx]="chart.x" [attr.cy]="chart.y" r="4.5" class="ex-dot"/></svg><div class="ex-chart-foot"><span>{{dateLabel(history()[0].date)}}</span><span>{{dateLabel(history()[history().length-1].date)}}</span></div></div>}
    <p class="subtle">{{history().length}} {{history().length===1?'seduta registrata':'sedute registrate'}} con questo esercizio.</p>
   }@else{<p>Quando registrerai questo esercizio qui vedrai record, 1RM stimato e andamento.</p>}
  </section>
@@ -54,21 +54,25 @@ export class ExerciseDetailComponent{
  secondary=computed(()=>this.exercise()?.secondaryMuscleIds.map(id=>this.s.muscle(id))||[]);
  /** Miglior serie per ogni seduta completata con questo esercizio, dalla più vecchia. */
  history=computed(()=>{
-  const id=this.exercise()?.id;if(!id)return [] as {date:string;weight:number;reps:number}[];
-  const data=this.s.data(),done=new Map(data.workouts.filter(w=>w.status==='completed').map(w=>[w.id,w.date]));
-  const rows=data.workoutExercises.filter(row=>row.exerciseId===id&&done.has(row.workoutId)),out:{date:string;weight:number;reps:number}[]=[];
-  for(const row of rows){const sets=data.sets.filter(set=>set.workoutExerciseId===row.id&&set.completed&&set.kind!=='warmup');if(!sets.length)continue;const best=[...sets].sort((a,b)=>b.weight-a.weight||b.reps-a.reps)[0];out.push({date:done.get(row.workoutId)!,weight:best.weight,reps:best.reps});}
-  return out.sort((a,b)=>a.date.localeCompare(b.date));
+  const exercise=this.exercise();if(!exercise)return [] as {date:string;weight:number;reps:number}[];
+  const data=this.s.data(),done=new Map(data.workouts.filter(w=>w.status==='completed').map(w=>[w.id,w]));
+  // Solo sedute con la stessa modalità di carico: assistenza, zavorra e carico esterno non sono confrontabili.
+  const rows=data.workoutExercises.filter(row=>row.exerciseId===exercise.id&&row.loadMode===exercise.loadMode&&done.has(row.workoutId)),out:{date:string;startedAt:string;weight:number;reps:number}[]=[];
+  for(const row of rows){const sets=data.sets.filter(set=>set.workoutExerciseId===row.id&&set.completed&&set.kind!=='warmup');if(!sets.length)continue;const best=[...sets].sort(this.better)[0],workout=done.get(row.workoutId)!;out.push({date:workout.date,startedAt:workout.startedAt,weight:best.weight,reps:best.reps});}
+  return out.sort((a,b)=>a.date.localeCompare(b.date)||a.startedAt.localeCompare(b.startedAt));
  });
- record=computed(()=>[...this.history()].sort((a,b)=>b.weight-a.weight||b.reps-a.reps)[0]);
+ /** Con l'assistenza il risultato migliore è il carico più basso; negli altri casi il più alto. */
+ private get better(){const assisted=this.exercise()?.loadMode==='assisted';return (a:{weight:number;reps:number},b:{weight:number;reps:number})=>(assisted?a.weight-b.weight:b.weight-a.weight)||b.reps-a.reps;}
+ record=computed(()=>[...this.history()].sort(this.better)[0]);
  last=computed(()=>this.history().at(-1));
- oneRm=computed(()=>{const best=this.history().filter(h=>h.weight>0&&h.reps>0&&h.reps<=12).map(h=>h.weight*(1+h.reps/30));return best.length?Math.round(Math.max(...best)*2)/2:undefined;});
+ /** 1RM stimato solo per il carico esterno: su assistenza o zavorra senza peso corporeo il numero non avrebbe senso. */
+ oneRm=computed(()=>{if(this.exercise()?.loadMode!=='external')return undefined;const best=this.history().filter(h=>h.weight>0&&h.reps>0&&h.reps<=12).map(h=>h.weight*(1+h.reps/30));return best.length?Math.round(Math.max(...best)*2)/2:undefined;});
  trend=computed(()=>{
   const rows=this.history().slice(-12);if(rows.length<2)return undefined;
   const values=rows.map(r=>r.weight),min=Math.min(...values),max=Math.max(...values),span=max-min||1;
   const points=values.map((v,i)=>({x:4+i*(312/(values.length-1)),y:82-((v-min)/span)*70}));
   const line=points.map((p,i)=>(i?'L':'M')+p.x.toFixed(1)+' '+p.y.toFixed(1)).join(' ');const end=points[points.length-1];
-  return {line,area:line+' L'+end.x.toFixed(1)+' 90 L4 90Z',x:end.x,y:end.y,delta:values[values.length-1]-values[0]};
+  const delta=values[values.length-1]-values[0];return {line,area:line+' L'+end.x.toFixed(1)+' 90 L4 90Z',x:end.x,y:end.y,delta,improved:this.exercise()?.loadMode==='assisted'?delta<0:delta>0};
  });
  fmt(value:number){return value>0?this.s.formatWeight(value):'—';}
  unit(value:number){return value>0?this.s.settings().unit:'';}
