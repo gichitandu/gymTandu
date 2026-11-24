@@ -66,7 +66,7 @@ export function estimatedMinutes(seconds:number){const minutes=seconds/60;return
     @if(!archived()&&overlaps().length){<section class="card plan-overlap" role="status" aria-label="Piani con date sovrapposte">
      <h3>Piani sovrapposti</h3>
      @for(o of overlaps();track o.keep.plan.id+o.drop.plan.id){<div class="plan-overlap-row">
-      <p>“{{o.keep.plan.name}}” ({{o.keep.workouts}} sedute, {{o.keep.sets}} serie) e “{{o.drop.plan.name}}” ({{o.drop.workouts}} sedute, {{o.drop.sets}} serie) occupano le stesse date.</p>
+      <p>“{{o.keep.plan.name}}” ({{o.keep.workouts}} {{o.keep.workouts===1?'seduta':'sedute'}}, {{o.keep.sets}} serie) e “{{o.drop.plan.name}}” ({{o.drop.workouts}} {{o.drop.workouts===1?'seduta':'sedute'}}, {{o.drop.sets}} serie) occupano le stesse date.</p>
       <button type="button" class="button" [disabled]="s.busy()" (click)="resolveOverlap(o.keep.plan.id,o.drop.plan.id)">Tieni “{{o.keep.plan.name}}” e concludi l’altro</button>
      </div>}
      <small>Il piano concluso va in archivio: sedute, serie e statistiche restano consultabili.</small>

@@ -30,3 +30,13 @@ it('checks offline resources from one complete matching cache and ignores an obs
 it('undo restores edited values together with confirmation, and preserves RPE',async()=>{const e=await setup(),id=s.sets(e.id)[0].id;await s.updateSet(id,{weight:50,rpe:7});await s.updateSet(id,{weight:55},true);await s.updateSet(id,{completed:true},true);expect(await s.undoGymAction()).toBe(true);expect(s.sets(e.id)[0]).toMatchObject({weight:50,rpe:7,completed:false});});
 
 it('undoes an added warmup without renumbering or losing the original work sets',async()=>{const e=await setup(),before=structuredClone(s.sets(e.id));await s.addSet(e.id,'warmup');expect(s.sets(e.id)).toHaveLength(4);expect(await s.undoGymAction()).toBe(true);expect(s.sets(e.id)).toEqual(before);});
+
+it('non registra come durata le ore di una seduta lasciata aperta, ma la segna come non indicata',async()=>{
+ const e=await setup();await s.updateSet(s.sets(e.id)[0].id,{completed:true});
+ const opened=s.draft()!;const start=Date.now()-22*3600*1000;
+ await s.change(d=>{d.workouts.find(w=>w.id===opened.id)!.startedAt=new Date(start).toISOString();},'',false);
+ await s.finish();expect(s.completed()[0]).toMatchObject({duration:0,durationUnknown:true});
+ const f=await setup();await s.updateSet(s.sets(f.id)[0].id,{completed:true});
+ const second=s.draft()!;await s.change(d=>{d.workouts.find(w=>w.id===second.id)!.startedAt=new Date(Date.now()-65*60000).toISOString();},'',false);
+ await s.finish();expect(s.completed().find(w=>w.id===second.id)).toMatchObject({duration:65});expect(s.completed().find(w=>w.id===second.id)?.durationUnknown).toBeFalsy();
+});

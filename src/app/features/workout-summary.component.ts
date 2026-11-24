@@ -20,8 +20,8 @@ import {IconComponent} from '../shared/icon.component';
  @if(workout.notes){<section class="card summary-notes"><gt-icon name="note"/><p>{{workout.notes}}</p></section>}
  <div class="summary-section-title"><h2>Le tue serie</h2><small>R = riscaldamento</small></div>
  <section class="card summary-exercises" aria-label="Le serie dell’allenamento">@for(row of summary().rows;track row.id){<div class="summary-exercise ws-exercise"><span class="summary-exercise-name"><strong>{{row.name}}</strong>@if(row.substitutedFrom){<small>Al posto di {{row.substitutedFrom.name}}</small>}</span><span class="set-count">{{s.sets(row.id).filter(completed).length}}/{{s.sets(row.id).length}}</span><span class="ws-sets">@for(set of s.sets(row.id);track set.id){<span class="ws-set" [class.off]="!set.completed" [class.warm]="set.kind==='warmup'">{{setLabel(row,set)}}</span>}</span></div>}</section>
- @if(summary().pending){<p class="summary-note">{{summary().pending}} serie non completate, conservate nello storico.</p>}
- @if(summary().warmups){<p class="summary-note">{{summary().warmups}} serie di riscaldamento escluse dal volume allenante.</p>}
+ @if(summary().pending){<p class="summary-note">{{summary().pending}} {{summary().pending===1?'serie non completata, conservata':'serie non completate, conservate'}} nello storico.</p>}
+ @if(summary().warmups){<p class="summary-note">{{summary().warmups}} {{summary().warmups===1?'serie di riscaldamento esclusa':'serie di riscaldamento escluse'}} dal volume allenante.</p>}
  <div class="summary-actions"><a class="su-btn su-primary summary-main" [routerLink]="closePath()">Fatto</a></div>
  }@else{<section class="card"><h1>Riepilogo non disponibile</h1><a class="button" routerLink="/allenamenti">Apri l’elenco degli allenamenti</a></section>}
 </div>`})
