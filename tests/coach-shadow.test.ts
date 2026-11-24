@@ -655,3 +655,49 @@ describe("Coach Ombra · ragionamento sui carichi", () => {
     expect(coachNextSet({ ...base, reference: rpeSets([[60, 12, 8], [60, 11, 9], [60, 10, 9]]), done: [] })!.title).not.toBe("Più recupero, poi sali");
   });
 });
+
+describe("Coach Ombra · storico completo, corpo libero, schema e record", () => {
+  it("legge ripetizioni in riserva, tecnica e dolore salvati nelle serie passate", async () => {
+    const { annotateSetNotes } = await import("../src/app/services/coach-expert-adapter");
+    const { coachSetFromLog } = await import("../src/app/services/coach-shadow");
+    const notes = annotateSetNotes("Buona", { technique: "good", pain: false, rir: 2 });
+    expect(coachSetFromLog({ weight: 60, reps: 10, notes })).toEqual({ weight: 60, reps: 10, rir: 2, technique: "good", pain: false });
+    expect(coachSetFromLog({ weight: 60, reps: 10, rpe: 8 })).toEqual({ weight: 60, reps: 10, rpe: 8 });
+    // Con il solo margine dichiarato (senza RPE) l'andamento del massimale ora c'è.
+    const withRir = (weight: number, reps: number) => [0, 1, 2].map(() => ({ weight, reps, rir: 2 }));
+    const suggestion = coachNextSet({ ...base, reference: withRir(60, 10), history: [{ sets: withRir(60, 9) }], done: [] });
+    expect(suggestion!.evidence.join(" ")).toContain("Massimale stimato: 84 kg · +2%");
+  });
+
+  it("con zavorra e assistenza ragiona sul carico effettivo, peso corporeo compreso", () => {
+    // Dip: 80 kg di corpo + 10 kg di zavorra = 90 kg × 12 a RPE 7.
+    const weighted = coachNextSet({ ...base, compound: true, loadMode: "weighted-bodyweight", bodyWeight: 80, reference: sets(10, [12, 12, 12], 7), done: [] });
+    expect(weighted).toMatchObject({ action: "raise", weight: 15, reps: 10 });
+    expect(weighted!.evidence.join(" ")).toContain("peso corporeo compreso");
+    expect(weighted!.estimated1rm).toBeUndefined();
+    // Senza peso corporeo resta la regola semplice.
+    expect(coachNextSet({ ...base, loadMode: "weighted-bodyweight", reference: sets(10, [12, 12, 12], 7), done: [] })).toMatchObject({ weight: 12.5, reps: 8 });
+    // Trazioni assistite: 80 kg − 30 kg di assistenza = 50 kg effettivi.
+    const assisted = coachNextSet({ ...base, loadMode: "assisted", bodyWeight: 80, reference: sets(30, [12, 12, 12], 7), done: [] });
+    expect(assisted).toMatchObject({ action: "raise", weight: 27.5, reps: 10, title: "Riduci l'assistenza" });
+  });
+
+  it("per la prossima seduta propone carico e ripetizioni di ogni serie", () => {
+    const next = coachNextSession({ ...base, completed: sets(60, [10, 9, 9], 8) })!;
+    expect(next.sets).toEqual([{ weight: 60, reps: 11 }, { weight: 60, reps: 10 }, { weight: 60, reps: 10 }]);
+    expect(next.weight).toBe(60);
+    expect(next.reps).toBe(11);
+  });
+
+  it("riconosce un nuovo massimale stimato solo con almeno due sedute precedenti", () => {
+    const live = coachNextSet({ ...base, reference: sets(60, [10], 8), history: [{ sets: sets(60, [9], 8) }], done: [{ weight: 60, reps: 12, rpe: 8 }] })!;
+    expect(live.record).toBe(5);
+    expect(live.pulse).toEqual({ tone: "up", text: "+2 rip. sulla volta scorsa · nuovo massimale stimato (+5%)" });
+    expect(live.evidence.join(" ")).toContain("Nuovo massimale stimato: 88 kg, +5% sul miglior valore precedente");
+    // Con una sola seduta precedente è solo un confronto.
+    expect(coachNextSet({ ...base, reference: sets(60, [10], 8), done: [{ weight: 60, reps: 12, rpe: 8 }] })!.record).toBeUndefined();
+    // Nel riepilogo il record apre il consiglio per la prossima volta.
+    const summary = coachNextSession({ ...base, completed: sets(60, [12, 12], 8), history: [{ sets: sets(60, [10, 10], 8) }, { sets: sets(60, [9, 9], 8) }] })!;
+    expect(summary.reason.startsWith("Nuovo massimale stimato (+5%).")).toBe(true);
+  });
+});

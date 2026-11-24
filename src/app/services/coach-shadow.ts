@@ -29,6 +29,7 @@
  */
 import type { DataSet, WorkoutLogExercise } from "../models/domain";
 import { machineKey } from "./training-flow";
+import { readSetFeedback } from "./coach-expert-adapter";
 
 export type CoachAction = "raise" | "hold" | "lower" | "stop";
 export type Readiness = "low" | "normal" | "high";
@@ -105,6 +106,11 @@ export interface CoachInput {
   weeklySets?: number;
   /** Nome del muscolo principale, per i testi. */
   muscleName?: string;
+  /**
+   * Peso corporeo in kg: con zavorra o assistenza il carico che conta è peso corporeo ± carico
+   * registrato. Senza peso corporeo questi esercizi non hanno massimale stimato.
+   */
+  bodyWeight?: number;
 }
 
 export interface CoachSuggestion {
@@ -129,6 +135,10 @@ export interface CoachSuggestion {
   rest?: { seconds: number; reason: string };
   /** Andamento di oggi rispetto all'ultima seduta, quando ci sono serie confrontabili. */
   pulse?: CoachPulse;
+  /** Nuovo massimale stimato: percentuale sopra il miglior valore delle sedute precedenti. */
+  record?: number;
+  /** Solo per la prossima seduta: carico e ripetizioni proposti per ogni serie, in ordine. */
+  sets?: { weight: number; reps: number }[];
 }
 
 const EPSILON = 0.000001;
@@ -192,10 +202,10 @@ function raiseSteps(best: number | undefined, weight: number, increment: number,
 }
 
 /** Massimale stimato migliore di una seduta, solo da serie con sforzo dichiarato (RPE o RIR). */
-function sessionBest(sets: CoachSetResult[]) {
+function sessionBest(sets: CoachSetResult[], measure: (set: CoachSetResult) => number | undefined = estimate1rm) {
   const values = sets
     .filter((set) => validSet(set) && effort(set) !== undefined)
-    .map(estimate1rm)
+    .map(measure)
     .filter((value): value is number => value !== undefined);
   return values.length ? Math.max(...values) : undefined;
 }
@@ -309,6 +319,14 @@ export function coachNextSet(input: CoachInput): CoachSuggestion | null {
   const loaded = mode !== "bodyweight";
   const assisted = mode === "assisted";
   const format = input.formatWeight ?? defaultFormat;
+  // Carico effettivo: con zavorra il corpo più il peso aggiunto, con assistenza il corpo meno l'aiuto.
+  const body = Number.isFinite(input.bodyWeight) && (input.bodyWeight as number) > 0 ? (input.bodyWeight as number) : undefined;
+  const withBody = mode === "weighted-bodyweight" || assisted;
+  const measurable = mode === "external" || (withBody && body !== undefined);
+  const effective = (weight: number) =>
+    mode === "weighted-bodyweight" ? body! + weight : assisted ? body! - weight : weight;
+  const e1rm = (set: CoachSetResult) =>
+    measurable ? estimate1rm({ ...set, weight: effective(set.weight) }) : undefined;
   const target = validRpe(input.targetRpe) ? clamp(input.targetRpe, 6, 10) : 8;
   const next = input.perspective === "next";
   const tired = readiness === "low" || input.sore === true;
@@ -357,11 +375,36 @@ export function coachNextSet(input: CoachInput): CoachSuggestion | null {
       " rip. · RPE " +
       number(target),
   );
-  const maxes = (mode === "external" ? [...done, ...(done.length ? [] : reference)] : [])
-    .map(estimate1rm)
+  const maxes = (measurable ? [...done, ...(done.length ? [] : reference)] : [])
+    .map(e1rm)
     .filter((value): value is number => value !== undefined);
-  const estimated1rm = maxes.length ? round(Math.max(...maxes)) : undefined;
-  if (estimated1rm !== undefined) evidence.push("Massimale stimato ≈ " + format(estimated1rm));
+  const strongest = maxes.length ? round(Math.max(...maxes)) : undefined;
+  // Il campo resta riservato al carico esterno; con il corpo il massimale include il peso corporeo.
+  const estimated1rm = mode === "external" ? strongest : undefined;
+  if (strongest !== undefined)
+    evidence.push("Massimale stimato" + (withBody ? " (peso corporeo compreso)" : "") + " ≈ " + format(strongest));
+  // Nuovo massimale stimato rispetto a tutte le sedute precedenti ricevute (solo serie con sforzo dichiarato).
+  const currentSets = next ? reference : done;
+  const priorBests = measurable
+    ? (next ? [] : [reference])
+        .concat((input.history ?? []).map((session) => session.sets))
+        .map((sets) => sets.filter(validSet))
+        .filter((sets) => sets.length)
+        .map((sets) => sessionBest(sets, e1rm))
+        .filter((value): value is number => value !== undefined)
+    : [];
+  const currentBest = measurable && currentSets.length ? sessionBest(currentSets, e1rm) : undefined;
+  let record: number | undefined;
+  // Con una sola seduta precedente è un confronto, non un record: servono almeno due sedute.
+  if (currentBest !== undefined && priorBests.length >= 2) {
+    const prior = Math.max(...priorBests);
+    if (currentBest > prior * 1.01) {
+      record = Math.max(1, Math.round((currentBest / prior - 1) * 100));
+      evidence.push(
+        `Nuovo massimale stimato${withBody ? " (peso corporeo compreso)" : ""}: ${format(round(currentBest))}, +${record}% sul miglior valore precedente`,
+      );
+    }
+  }
   if (readiness === "low") {
     evidence.push("Check-in di oggi: recupero basso");
     flags.push("low-readiness");
@@ -393,7 +436,11 @@ export function coachNextSet(input: CoachInput): CoachSuggestion | null {
           reason: `${input.compound ? "Esercizio multiarticolare" : "Con questo intervallo di ripetizioni"}: circa ${advisedRest >= 120 ? number(advisedRest / 60) + " min" : advisedRest + " s"} di recupero aiutano a non perdere ripetizioni nelle serie successive.`,
         }
       : undefined;
-  const pulse = next ? undefined : coachPulse(done, reference, mode);
+  const compared = next ? undefined : coachPulse(done, reference, mode);
+  const pulse: CoachPulse | undefined =
+    !next && record !== undefined && done.length
+      ? { tone: "up", text: compared?.tone === "up" ? `${compared.text} · nuovo massimale stimato (+${record}%)` : `Nuovo massimale stimato (+${record}%)` }
+      : compared;
 
   const titles: Record<CoachAction, string> = {
     raise: !loaded ? "Una ripetizione in più" : assisted ? "Riduci l'assistenza" : "Sali di carico",
@@ -415,7 +462,7 @@ export function coachNextSet(input: CoachInput): CoachSuggestion | null {
       action,
       weight: value,
       reps,
-      reason,
+      reason: record !== undefined && next ? `Nuovo massimale stimato (+${record}%). ${reason}` : reason,
       basis,
       title: extra.title ?? titles[action],
       confidence,
@@ -426,6 +473,7 @@ export function coachNextSet(input: CoachInput): CoachSuggestion | null {
       options: alternatives(action, value, reps, confidence),
       ...(rest && action !== "stop" ? { rest } : {}),
       ...(pulse ? { pulse } : {}),
+      ...(record === undefined ? {} : { record }),
     };
   };
   /**
@@ -555,17 +603,17 @@ export function coachNextSet(input: CoachInput): CoachSuggestion | null {
           last.reps + 1,
           `Serie facile al massimo delle ripetizioni: prova ${last.reps + 1}. Quando superi di molto l'intervallo, passa a una variante più difficile o aggiungi zavorra.`,
         );
-      const fresh = mode === "external" ? estimate1rm(last) : undefined;
+      const fresh = e1rm(last);
       const simple = rpe <= target - 2 ? 2 : 1;
       // Oltre 12 ripetizioni la riserva dichiarata è meno precisa: un passo alla volta.
       const reliable = last.reps <= RELIABLE_REPS;
       if (!reliable) evidence.push("Oltre 12 ripetizioni la stima della riserva è meno precisa: un passo alla volta");
       let steps = reliable
-        ? raiseSteps(fresh, last.weight, incrementKg, Math.min(repsMax, repsMin + 1), target, raiseCap(input.compound, true), simple)
+        ? raiseSteps(fresh, measurable ? effective(last.weight) : last.weight, incrementKg, Math.min(repsMax, repsMin + 1), target, raiseCap(input.compound, true), simple)
         : 1;
       // Dopo una serie già fatta le ripetizioni disponibili calano di circa una.
       const reachable = (count: number) => {
-        const top = fresh === undefined ? undefined : repsAt(fresh, shift(last.weight, count), 10);
+        const top = fresh === undefined ? undefined : repsAt(fresh, effective(shift(last.weight, count)), 10);
         return top === undefined ? undefined : top - 1;
       };
       while (steps > 1 && (reachable(steps) ?? repsMin) < repsMin) steps--;
@@ -580,7 +628,7 @@ export function coachNextSet(input: CoachInput): CoachSuggestion | null {
           { title: "Consolida prima del salto" },
         );
       }
-      const expected = fresh === undefined ? undefined : repsAt(fresh, weight, target);
+      const expected = fresh === undefined ? undefined : repsAt(fresh, effective(weight), target);
       const reps = expected === undefined ? repsMin : inRange(expected - 1);
       return session(
         "raise",
@@ -738,11 +786,11 @@ export function coachNextSet(input: CoachInput): CoachSuggestion | null {
   const total = (sets: CoachSetResult[]) => sets.reduce((sum, set) => sum + set.reps, 0);
   // Andamento del massimale stimato tra le sedute (carico esterno, sforzo dichiarato): misura i
   // progressi anche quando carico e ripetizioni cambiano insieme.
-  const bests = mode === "external"
+  const bests = measurable
     ? [reference, ...(input.history ?? []).map((session) => session.sets.filter(validSet))]
         .filter((sets) => sets.length)
         .slice(0, 4)
-        .map(sessionBest)
+        .map((sets) => sessionBest(sets, e1rm))
     : [];
   const latestBest = bests[0];
   const olderBest = bests.slice(1).filter((value): value is number => value !== undefined);
@@ -750,7 +798,7 @@ export function coachNextSet(input: CoachInput): CoachSuggestion | null {
     const baseline = olderBest[olderBest.length - 1];
     const percent = Math.round((latestBest / baseline - 1) * 100);
     evidence.push(
-      `Massimale stimato: ${format(round(latestBest))} · ` +
+      `Massimale stimato${withBody ? " (peso corporeo compreso)" : ""}: ${format(round(latestBest))} · ` +
         (percent === 0 ? "stabile" : (percent > 0 ? "+" : "−") + Math.abs(percent) + "%") +
         ` rispetto a ${olderBest.length === 1 ? "una seduta" : olderBest.length + " sedute"} fa`,
     );
@@ -798,16 +846,16 @@ export function coachNextSet(input: CoachInput): CoachSuggestion | null {
         anchor.reps + 1,
         `${LastTime} tutte le serie a ${repsMax} ripetizioni con RPE fino a ${number(maxRpe)}: ${next ? "la prossima volta " : ""}aggiungi una ripetizione o passa a una variante più difficile.`,
       );
-    const best = mode === "external" ? estimate1rm(reference[0]) : undefined;
+    const best = e1rm(reference[0]);
     const simple = maxRpe <= target - 2 ? 2 : 1;
     const reliable = reference.every((set) => set.reps <= RELIABLE_REPS);
     if (!reliable) evidence.push("Oltre 12 ripetizioni la stima della riserva è meno precisa: un passo alla volta");
     // Carico che il massimale stimato consente restando nella parte bassa dell'intervallo allo sforzo previsto.
     let steps = reliable
-      ? raiseSteps(best, weight, incrementKg, Math.min(repsMax, repsMin + 1), target, raiseCap(input.compound, false), simple)
+      ? raiseSteps(best, measurable ? effective(weight) : weight, incrementKg, Math.min(repsMax, repsMin + 1), target, raiseCap(input.compound, false), simple)
       : 1;
     const top = (count: number) =>
-      best === undefined ? undefined : repsAt(best, shift(weight, count), 10);
+      best === undefined ? undefined : repsAt(best, effective(shift(weight, count)), 10);
     while (steps > 1 && (top(steps) ?? repsMin) < repsMin) steps--;
     const heavier = shift(weight, steps);
     if ((top(steps) ?? repsMin) < repsMin) {
@@ -821,13 +869,13 @@ export function coachNextSet(input: CoachInput): CoachSuggestion | null {
         { title: "Consolida prima del salto" },
       );
     }
-    const expected = best === undefined ? undefined : repsAt(best, heavier, target);
+    const expected = best === undefined ? undefined : repsAt(best, effective(heavier), target);
     const reps = expected === undefined ? repsMin : inRange(expected);
     return fromReference(
       "raise",
       heavier,
       reps,
-      `${LastTime} tutte le serie a ${repsMax} ripetizioni con RPE fino a ${number(maxRpe)}: ${next ? "la prossima volta " : ""}prova ${format(heavier)} (${change(weight, heavier)}${weight > 0 && !assisted ? ", circa +" + Math.round(((heavier - weight) / weight) * 100) + "%" : ""}) e punta a ${reps} ripetizioni.`,
+      `${LastTime} tutte le serie a ${repsMax} ripetizioni con RPE fino a ${number(maxRpe)}: ${next ? "la prossima volta " : ""}prova ${format(heavier)} (${change(weight, heavier)}${weight > 0 && mode === "external" ? ", circa +" + Math.round(((heavier - weight) / weight) * 100) + "%" : ""}) e punta a ${reps} ripetizioni.`,
     );
   }
   // Massimale fermo (o in calo) su quattro sedute con sforzo dichiarato: non basta ripetere.
@@ -911,7 +959,24 @@ export function coachNextSession(
   const { completed, ...rest } = input;
   const sets = completed.filter(validSet);
   if (!sets.length) return null;
-  return coachNextSet({ ...rest, reference: sets, done: [], setIndex: 0, perspective: "next" });
+  const advice = (setIndex: number) =>
+    coachNextSet({ ...rest, reference: sets, done: [], setIndex, perspective: "next" });
+  const first = advice(0);
+  if (!first) return null;
+  // Schema completo come lo darebbe un allenatore: ogni serie parte dalla stessa serie di oggi.
+  const plan = sets.map((_, index) => (index === 0 ? first : advice(index) ?? first));
+  return { ...first, sets: plan.map((item) => ({ weight: item.weight, reps: item.reps })) };
+}
+
+/** Serie registrata → risultato per il Coach, con il riscontro strutturato salvato nelle note. */
+export function coachSetFromLog(set: { weight: number; reps: number; rpe?: number; notes?: string }): CoachSetResult {
+  const feedback = readSetFeedback(set.notes);
+  return {
+    weight: set.weight,
+    reps: set.reps,
+    ...(set.rpe === undefined ? {} : { rpe: set.rpe }),
+    ...(feedback ? { rir: feedback.rir ?? null, technique: feedback.technique, pain: feedback.pain } : {}),
+  };
 }
 
 /**
@@ -948,7 +1013,9 @@ export function coachHistory(
     const sets = data.sets
       .filter((set) => set.workoutExerciseId === row.id && set.completed && set.kind !== "warmup")
       .sort((a, b) => a.number - b.number)
-      .map((set) => ({ weight: set.weight, reps: set.reps, rpe: set.rpe }));
+      // Anche ripetizioni in riserva, tecnica e dolore dichiarati nella serie: senza questi dati
+      // chi indica il margine al posto dell'RPE non avrebbe andamento né stallo sulle sedute passate.
+      .map((set) => coachSetFromLog(set));
     if (!sets.length) continue;
     sessions.push({ id: row.id, date: workout.date, sets });
     if (sessions.length >= limit) break;
