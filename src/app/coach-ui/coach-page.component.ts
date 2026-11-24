@@ -201,6 +201,6 @@ export class CoachPageComponent {
   loadUnit(e: ExercisePrescription) { return e.loadType === 'bodyweight' ? '' : e.loadType === 'per-dumbbell' ? 'kg per manubrio' : e.loadType === 'total' ? 'kg totali' : 'kg sulla stessa macchina'; }
   loadText(e: ExercisePrescription) { return e.loadKg === null ? (e.loadType === 'bodyweight' ? 'Corpo libero' : 'Da calibrare') : `${e.loadKg.toLocaleString('it-IT')} kg`; }
   confidenceLabel(value: string) { return ({ initial: 'Prima impostazione', limited: 'Pochi dati', established: 'Storico confrontabile' } as Record<string, string>)[value] || value; }
-  actionLabel(value: string) { return ({ calibrate: 'Troviamo il tuo carico', maintain: 'Mantieni il carico', reduce: 'Alleggerisci la prossima', rest: 'Prenditi più recupero', stop: 'Interrompi questo esercizio', complete: 'Esercizio completato' } as Record<string, string>)[value] || value; }
+  actionLabel(value: string) { return ({ calibrate: 'Troviamo il tuo carico', maintain: 'Mantieni il carico', increase: 'Sali di carico, solo oggi', reduce: 'Alleggerisci la prossima', rest: 'Prenditi più recupero', stop: 'Interrompi questo esercizio', complete: 'Esercizio completato' } as Record<string, string>)[value] || value; }
   rest(seconds: number) { return seconds >= 60 ? `${Math.floor(seconds / 60)}′${seconds % 60 ? ` ${seconds % 60}″` : ''}` : `${seconds}″`; }
 }

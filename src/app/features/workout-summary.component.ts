@@ -5,7 +5,7 @@ import {confirmationForContext} from '../services/confirmation';
 import {WorkoutLogExercise,WorkoutLogSet} from '../models/domain';
 import {Store} from '../services/store';
 import {buildWorkoutSummary} from '../services/workout-summary';
-import {coachHistory,coachNextSession,isCompoundExercise} from '../services/coach-shadow';
+import {coachHistory,coachNextSession,exerciseWeightStep,isCompoundExercise} from '../services/coach-shadow';
 import {readSetFeedback} from '../services/coach-expert-adapter';
 import {IconComponent} from '../shared/icon.component';
 @Component({standalone:true,imports:[RouterLink,IconComponent],styleUrl:'./workout-summary.component.css',template:`
@@ -35,7 +35,7 @@ export class WorkoutSummaryComponent{
   return this.summary().rows.flatMap(row=>{
    if(row.repsMin===undefined||row.repsMax===undefined||data.workoutExercises.some(e=>e.exerciseId===row.exerciseId&&later.has(e.workoutId)))return [];
    const completed=this.s.sets(row.id).filter(set=>set.completed&&set.kind!=='warmup').map(set=>{const f=readSetFeedback(set.notes);return {weight:set.weight,reps:set.reps,rpe:set.rpe,...(f?{rir:f.rir??null,technique:f.technique,pain:f.pain}:{})};});
-   const coach=coachNextSession({repsMin:row.repsMin,repsMax:row.repsMax,incrementKg:this.s.preference(row.exerciseId)?.weightStep??this.s.kg(2.5),loadMode:row.loadMode,targetRpe:row.rirMin===undefined?undefined:10-(row.rirMin+(row.rirMax??row.rirMin))/2,history:coachHistory(data,row,12),completed,formatWeight:unit,compound:isCompoundExercise(this.s.exercise(row.exerciseId)??row),bodyWeight:workout.bodyWeight??data.profiles[0]?.bodyWeight});
+   const coach=coachNextSession({repsMin:row.repsMin,repsMax:row.repsMax,incrementKg:this.s.preference(row.exerciseId)?.weightStep??(this.s.settings().unit==='kg'?exerciseWeightStep(data,row.exerciseId,row.machineSetup):undefined)??this.s.kg(2.5),incrementInferred:!this.s.preference(row.exerciseId)?.weightStep&&this.s.settings().unit==='kg'&&!!exerciseWeightStep(data,row.exerciseId,row.machineSetup),loadMode:row.loadMode,targetRpe:row.rirMin===undefined?undefined:10-(row.rirMin+(row.rirMax??row.rirMin))/2,history:coachHistory(data,row,12),completed,formatWeight:unit,compound:isCompoundExercise(this.s.exercise(row.exerciseId)??row),bodyWeight:workout.bodyWeight??data.profiles[0]?.bodyWeight});
    if(!coach)return [];
    // Schema per serie: «40 kg × 10 · 9 · 9 rip.» oppure «42,5 kg × 8 · 40 kg × 10» se i carichi cambiano.
    const plan=coach.sets?.length?coach.sets:[{weight:coach.weight,reps:coach.reps}],sameLoad=plan.every(item=>Math.abs(item.weight-plan[0].weight)<0.000001);

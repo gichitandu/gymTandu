@@ -111,6 +111,8 @@ export interface CoachInput {
    * registrato. Senza peso corporeo questi esercizi non hanno massimale stimato.
    */
   bodyWeight?: number;
+  /** L'incremento è stato ricavato dai carichi già usati (nessuna impostazione dell'utente). */
+  incrementInferred?: boolean;
 }
 
 export interface CoachSuggestion {
@@ -276,8 +278,39 @@ export function coachPulse(
 }
 
 /**
- * Serie allenanti completate per un muscolo principale negli ultimi 7 giorni
- * (data indicata compresa), contando anche la seduta in corso.
+ * Muscoli coinvolti in modo indiretto: quelli indicati nel catalogo oppure, se mancano, quelli
+ * tipici di un multiarticolare (spinte → spalle e tricipiti, tirate → bicipiti, gambe ↔ glutei).
+ * Tra due nomi alternativi (es. «Tricipiti» o «Braccia») vale il primo presente.
+ */
+export function secondaryMuscleGroups(
+  exercise: { name?: string; muscleGroupId?: string; secondaryMuscleIds?: string[] } | undefined,
+  groups: { id: string; name: string }[],
+): string[] {
+  if (!exercise) return [];
+  if (exercise.secondaryMuscleIds?.length)
+    return exercise.secondaryMuscleIds.filter((id) => id !== exercise.muscleGroupId);
+  if (!isCompoundExercise(exercise)) return [];
+  const byName = new Map(groups.map((group) => [group.name.trim().toLocaleLowerCase("it"), group.id]));
+  const primary = groups.find((group) => group.id === exercise.muscleGroupId)?.name.trim().toLocaleLowerCase("it") ?? "";
+  const rules: Record<string, string[][]> = {
+    petto: [["spalle"], ["tricipiti", "braccia"]],
+    schiena: [["bicipiti", "braccia"]],
+    dorso: [["bicipiti", "braccia"]],
+    spalle: [["tricipiti", "braccia"]],
+    gambe: [["glutei"]],
+    quadricipiti: [["glutei"]],
+    femorali: [["glutei"]],
+    glutei: [["gambe", "quadricipiti"]],
+  };
+  return (rules[primary] ?? [])
+    .map((names) => names.map((name) => byName.get(name)).find((id): id is string => !!id))
+    .filter((id): id is string => !!id && id !== exercise.muscleGroupId);
+}
+
+/**
+ * Serie allenanti per un muscolo negli ultimi 7 giorni (data indicata compresa), contando anche la
+ * seduta in corso: 1 per le serie in cui è il muscolo principale, 0,5 per quelle in cui lavora in
+ * modo indiretto, come nelle analisi recenti sul volume (Pelland 2024).
  */
 export function weeklyMuscleSets(data: DataSet, muscleGroupId: string, today: string) {
   const end = Date.parse(today.slice(0, 10) + "T12:00:00Z");
@@ -288,15 +321,21 @@ export function weeklyMuscleSets(data: DataSet, muscleGroupId: string, today: st
       .filter((workout) => workout.date >= from && workout.date <= today.slice(0, 10))
       .map((workout) => workout.id),
   );
-  const muscles = new Map(data.exercises.map((exercise) => [exercise.id, exercise.muscleGroupId]));
-  const rows = new Set(
+  const groups = data.muscleGroups ?? [];
+  const weights = new Map<string, number>();
+  for (const exercise of data.exercises) {
+    if (exercise.muscleGroupId === muscleGroupId) weights.set(exercise.id, 1);
+    else if (secondaryMuscleGroups(exercise, groups).includes(muscleGroupId)) weights.set(exercise.id, 0.5);
+  }
+  const rows = new Map(
     data.workoutExercises
-      .filter((row) => workouts.has(row.workoutId) && muscles.get(row.exerciseId) === muscleGroupId)
-      .map((row) => row.id),
+      .filter((row) => workouts.has(row.workoutId) && weights.has(row.exerciseId))
+      .map((row) => [row.id, weights.get(row.exerciseId)!]),
   );
-  return data.sets.filter(
-    (set) => set.completed && set.kind !== "warmup" && rows.has(set.workoutExerciseId),
-  ).length;
+  return data.sets.reduce(
+    (total, set) => total + (set.completed && set.kind !== "warmup" ? rows.get(set.workoutExerciseId) ?? 0 : 0),
+    0,
+  );
 }
 
 /**
@@ -351,6 +390,25 @@ export function coachNextSet(input: CoachInput): CoachSuggestion | null {
 
   const evidence: string[] = [];
   const flags: CoachFlag[] = [];
+  // Coerenza dello sforzo dichiarato: ripetizioni possibili (fatte + in riserva) molto oltre quelle
+  // mai mostrate allo stesso carico nelle sedute precedenti. Nel dubbio il Coach resta prudente.
+  const priorSets = [...(last ? reference : []), ...(input.history ?? []).flatMap((session) => session.sets)].filter(validSet);
+  const capacity = (weight: number) => {
+    const values = priorSets
+      .filter((set) => same(set.weight, weight) && effort(set) !== undefined)
+      .map((set) => set.reps + (10 - effort(set)!));
+    return values.length ? Math.max(...values) : undefined;
+  };
+  const doubtful = (set: CoachSetResult | undefined) => {
+    const level = set ? effort(set) : undefined;
+    const known = set && level !== undefined ? capacity(set.weight) : undefined;
+    return !!set && level !== undefined && known !== undefined && set.reps + (10 - level) >= known + 4;
+  };
+  const effortDoubt = last ? doubtful(last) : reference.some(doubtful);
+  if (effortDoubt) {
+    flags.push("caution");
+    evidence.push("Lo sforzo indicato sembra più basso di quanto mostrano le sedute precedenti allo stesso carico: verifica la stima. Nel dubbio il Coach sale di un passo alla volta");
+  }
   if (reference.length) {
     const rpes = reference.map(effort).filter((value): value is number => value !== undefined);
     evidence.push(
@@ -369,6 +427,8 @@ export function coachNextSet(input: CoachInput): CoachSuggestion | null {
         setsLine(done, format, loaded) +
         (effort(last) !== undefined ? " · ultima serie RPE " + number(effort(last)!) : ""),
     );
+  if (input.incrementInferred && (mode === "external" || mode === "weighted-bodyweight" || assisted))
+    evidence.push(`Scatti da ${format(incrementKg)} ricavati dai carichi che hai usato`);
   evidence.push(
     "Obiettivo: " +
       (repsMin === repsMax ? repsMin : repsMin + "–" + repsMax) +
@@ -413,10 +473,11 @@ export function coachNextSet(input: CoachInput): CoachSuggestion | null {
     evidence.push("Check-in di oggi: muscolo indolenzito");
     flags.push("sore");
   }
-  if (!next && input.weeklySets !== undefined && Number.isInteger(input.weeklySets) && input.weeklySets > 0) {
+  if (!next && input.weeklySets !== undefined && Number.isFinite(input.weeklySets) && input.weeklySets > 0) {
     const weekly = input.weeklySets;
     evidence.push(
-      `${input.muscleName || "Questo muscolo"}: ${weekly} serie allenanti negli ultimi 7 giorni` +
+      `${input.muscleName || "Questo muscolo"}: ${number(weekly)} serie allenanti negli ultimi 7 giorni` +
+        (Number.isInteger(weekly) ? "" : " (le serie indirette contano metà)") +
         (weekly > 20
           ? " · volume alto: oltre le 20 il beneficio in più è piccolo"
           : weekly >= 10
@@ -524,7 +585,7 @@ export function coachNextSet(input: CoachInput): CoachSuggestion | null {
         "La tecnica è peggiorata: chiudi qui l'esercizio. La prossima volta riparti da questo carico curando l'esecuzione.",
       );
     const rpe = effort(last);
-    const confidence: CoachConfidence = rpe === undefined ? "medium" : "high";
+    const confidence: CoachConfidence = rpe === undefined || effortDoubt ? "medium" : "high";
     const session = (
       action: CoachAction,
       weight: number,
@@ -608,7 +669,7 @@ export function coachNextSet(input: CoachInput): CoachSuggestion | null {
       // Oltre 12 ripetizioni la riserva dichiarata è meno precisa: un passo alla volta.
       const reliable = last.reps <= RELIABLE_REPS;
       if (!reliable) evidence.push("Oltre 12 ripetizioni la stima della riserva è meno precisa: un passo alla volta");
-      let steps = reliable
+      let steps = reliable && !effortDoubt
         ? raiseSteps(fresh, measurable ? effective(last.weight) : last.weight, incrementKg, Math.min(repsMax, repsMin + 1), target, raiseCap(input.compound, true), simple)
         : 1;
       // Dopo una serie già fatta le ripetizioni disponibili calano di circa una.
@@ -715,7 +776,7 @@ export function coachNextSet(input: CoachInput): CoachSuggestion | null {
   const ofLastTime = next ? "di oggi" : "dell'ultima volta";
   const LastTime = next ? "Oggi" : "L'ultima volta";
   const confidence: CoachConfidence =
-    allRpe && (days === undefined || days <= 14) ? "high" : "medium";
+    allRpe && !effortDoubt && (days === undefined || days <= 14) ? "high" : "medium";
   const fromReference = (
     action: CoachAction,
     value: number,
@@ -851,7 +912,7 @@ export function coachNextSet(input: CoachInput): CoachSuggestion | null {
     const reliable = reference.every((set) => set.reps <= RELIABLE_REPS);
     if (!reliable) evidence.push("Oltre 12 ripetizioni la stima della riserva è meno precisa: un passo alla volta");
     // Carico che il massimale stimato consente restando nella parte bassa dell'intervallo allo sforzo previsto.
-    let steps = reliable
+    let steps = reliable && !effortDoubt
       ? raiseSteps(best, measurable ? effective(weight) : weight, incrementKg, Math.min(repsMax, repsMin + 1), target, raiseCap(input.compound, false), simple)
       : 1;
     const top = (count: number) =>
@@ -966,6 +1027,66 @@ export function coachNextSession(
   // Schema completo come lo darebbe un allenatore: ogni serie parte dalla stessa serie di oggi.
   const plan = sets.map((_, index) => (index === 0 ? first : advice(index) ?? first));
   return { ...first, sets: plan.map((item) => ({ weight: item.weight, reps: item.reps })) };
+}
+
+/** Scatti standard di pesi e macchine, dal più grande: 10, 5, 4, 2,5, 2, 1,25, 1, 0,5 kg. */
+const STANDARD_STEPS = [10, 5, 4, 2.5, 2, 1.25, 1, 0.5];
+/**
+ * Scatto di carico ricavato dai pesi già usati: il più grande scatto standard che divide tutte
+ * le differenze. Servono almeno tre carichi diversi, tutti multipli di 0,25 kg (con le libbre
+ * i valori convertiti non lo sono e la stima non viene fatta).
+ */
+export function inferWeightStep(weightsKg: number[]): number | undefined {
+  const quarters = [...new Set(weightsKg.filter((value) => Number.isFinite(value) && value > 0).map((value) => Math.round(value * 4 * 1000) / 1000))];
+  if (quarters.length < 3 || quarters.some((value) => Math.abs(value - Math.round(value)) > 0.001)) return undefined;
+  const values = quarters.map(Math.round).sort((a, b) => a - b);
+  const gcd = (a: number, b: number): number => (b ? gcd(b, a % b) : a);
+  const common = values.slice(1).reduce((result, value, index) => gcd(result, value - values[index]), 0);
+  return STANDARD_STEPS.find((step) => common % (step * 4) === 0);
+}
+
+/** Scatto dell'esercizio dalle serie allenanti completate, sulla stessa macchina se indicata. */
+export function exerciseWeightStep(
+  data: Pick<DataSet, "sets" | "workoutExercises" | "workouts">,
+  exerciseId: string,
+  machineSetup?: WorkoutLogExercise["machineSetup"],
+): number | undefined {
+  const completed = new Set(data.workouts.filter((workout) => workout.status === "completed").map((workout) => workout.id));
+  const key = machineKey(machineSetup);
+  const rows = new Set(
+    data.workoutExercises
+      .filter((row) => row.exerciseId === exerciseId && completed.has(row.workoutId) && row.loadMode !== "bodyweight" && (!key || machineKey(row.machineSetup) === key))
+      .map((row) => row.id),
+  );
+  return inferWeightStep(
+    data.sets.filter((set) => rows.has(set.workoutExerciseId) && set.completed && set.kind !== "warmup").map((set) => set.weight),
+  );
+}
+
+/**
+ * Serie di avvicinamento prima della prima serie di lavoro, in percentuale del carico di lavoro:
+ *  - multiarticolare pesante (fino a 6 ripetizioni): 40% × 8, 60% × 5, 75% × 3, 85% × 1;
+ *  - multiarticolare: 50% × 8, 70% × 5, 85% × 2;
+ *  - isolamento: una serie al 50% × 10;
+ *  - muscolo già scaldato da un esercizio precedente: una sola serie al 70% × 4 nei multiarticolari,
+ *    nessuna nell'isolamento.
+ * Sotto i 20 kg non serve; i carichi sono arrotondati allo scatto e mai uguali o superiori al lavoro.
+ */
+export function warmupPlan(input: { weight: number; repsMin: number; compound: boolean; muscleWarm: boolean; step: number }) {
+  const { weight, repsMin, compound, muscleWarm } = input;
+  if (!(weight >= 20)) return [] as { weight: number; reps: number }[];
+  const step = input.step > 0 ? input.step : 2.5;
+  const scheme: [number, number][] = muscleWarm
+    ? compound ? [[0.7, 4]] : []
+    : !compound ? [[0.5, 10]]
+    : repsMin <= 6 ? [[0.4, 8], [0.6, 5], [0.75, 3], [0.85, 1]]
+    : [[0.5, 8], [0.7, 5], [0.85, 2]];
+  const result: { weight: number; reps: number }[] = [];
+  for (const [fraction, reps] of scheme) {
+    const value = round(Math.max(step, Math.round((weight * fraction) / step) * step));
+    if (value < weight - EPSILON && !result.some((item) => same(item.weight, value))) result.push({ weight: value, reps });
+  }
+  return result;
 }
 
 /** Serie registrata → risultato per il Coach, con il riscontro strutturato salvato nelle note. */

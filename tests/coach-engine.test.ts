@@ -422,3 +422,17 @@ describe('range di ripetizioni per tipo di esercizio e obiettivo', () => {
   });
 
 });
+
+describe('autoregolazione in seduta', () => {
+  it('con una serie chiaramente facile al limite propone un incremento solo per oggi', () => {
+    const easy = recommendNextSet({ profile: profile(), prescription: prescription(), completedSets: [actualSet({ reps: 12, rir: 4 })] });
+    expect(easy).toMatchObject({ action: 'increase', ruleId: 'next-easy-increase', isTemporary: true });
+    expect(easy.loadKg).toBeGreaterThan(40);
+    expect(easy.loadKg).toBeLessThanOrEqual(44);
+    expect(easy.reason).toContain('solo per questa seduta');
+    // Margine di una sola ripetizione in più del previsto: nessun aumento.
+    expect(recommendNextSet({ profile: profile(), prescription: prescription(), completedSets: [actualSet({ reps: 12, rir: 3 })] }).action).not.toBe('increase');
+    // Tecnica non verificata: nessun aumento.
+    expect(recommendNextSet({ profile: profile(), prescription: prescription(), completedSets: [actualSet({ reps: 12, rir: 4, technique: 'unknown' })] }).action).not.toBe('increase');
+  });
+});

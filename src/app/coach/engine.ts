@@ -199,7 +199,13 @@ export function recommendNextSet({profile,prescription,completedSets}: NextSetIn
     return {...result,loadKg:lower ?? last.loadKg,action:lower === null ? 'rest' : 'reduce',restSeconds:p.restSeconds+30,reason:lower === null ? 'La serie è risultata molto difficile: prolunga il recupero e valuta una variante più gestibile.' : 'Serie sotto il range e vicina al cedimento: riduci di un incremento disponibile e recupera 30 secondi in più. Vale per questa seduta.',ruleId:'next-hard-set'};
   }
   if (last.reps < p.repsMin) return {...result,action:'rest',restSeconds:p.restSeconds+30,reason:'Prova un recupero leggermente più lungo. Un calo moderato tra serie non richiede automaticamente meno peso.',ruleId:'next-recovery'};
-  if (last.reps >= p.repsMax && last.rir >= p.rir+2) return {...result,action:'maintain',reason:'Serie più facile del previsto: conferma il risultato nella prossima. L’aumento stabile richiede sedute confrontabili, senza rincorrere ogni variazione.',ruleId:'next-easy-confirm'};
+  if (last.reps >= p.repsMax && last.rir >= p.rir+2) {
+    // Autoregolazione in seduta: serie chiaramente facile al limite superiore → un incremento solo per oggi.
+    const heavier = last.loadKg === null || ex.loadType === 'bodyweight' || last.pain || last.technique !== 'good' ? null : nextLoad(last.loadKg,loadSetting(profile,ex),1);
+    if (heavier !== null && last.loadKg !== null && last.loadKg > 0 && (heavier-last.loadKg)/last.loadKg <= HEURISTICS.maxRelativeIncrease)
+      return {...result,loadKg:heavier,action:'increase',reason:`Serie molto più facile del previsto (${last.rir} ripetizioni in riserva invece di ${p.rir}): per le prossime serie di oggi prova ${heavier} kg. Vale solo per questa seduta; la progressione del piano resta legata alle sedute complete.`,ruleId:'next-easy-increase'};
+    return {...result,action:'maintain',reason:'Serie più facile del previsto: conferma il risultato nella prossima. L’aumento stabile richiede sedute confrontabili, senza rincorrere ogni variazione.',ruleId:'next-easy-confirm'};
+  }
   if (p.failureAllowedLastSet && actual.length+1 === p.sets) result.rir = 0;
   return result;
 }
