@@ -29,7 +29,7 @@ import {
   localDate,
 } from "../models/domain";
 import { TodayService } from '../services/today';
-import { coachNextSet, daysBetween } from '../services/coach-shadow';
+import { coachNextSet, daysBetween, isCompoundExercise } from '../services/coach-shadow';
 import { parseLocalDate } from '../services/calendar';
 import { IconComponent } from "../shared/icon.component";
 import { StatusComponent } from "../shared/status.component";
@@ -388,7 +388,7 @@ export class PlansComponent {
     const unit=(kg:number)=>this.s.formatWeight(kg)+' '+this.s.settings().unit,data=this.s.data();
     const row=data.workoutExercises.find(item=>item.id===previous[0].workoutExerciseId),date=data.workouts.find(workout=>workout.id===row?.workoutId)?.date;
     const loaded=exercise.loadMode!=='bodyweight';
-    const suggestion=coachNextSet({repsMin,repsMax,incrementKg:this.s.preference(exercise.id)?.weightStep??this.s.kg(2.5),loadMode:exercise.loadMode,targetRpe:form.rpe??undefined,reference:previous.map(item=>({weight:item.weight,reps:item.reps,rpe:item.rpe})),daysSinceReference:daysBetween(date,this.today),done:[],formatWeight:unit});
+    const suggestion=coachNextSet({repsMin,repsMax,incrementKg:this.s.preference(exercise.id)?.weightStep??this.s.kg(2.5),loadMode:exercise.loadMode,compound:isCompoundExercise(exercise),targetRpe:form.rpe??undefined,reference:previous.map(item=>({weight:item.weight,reps:item.reps,rpe:item.rpe})),daysSinceReference:daysBetween(date,this.today),done:[],formatWeight:unit});
     if(!suggestion)return null;
     const same=previous.every(item=>Math.abs(item.weight-previous[0].weight)<0.000001);
     const last='Ultima volta: '+(loaded?(same?unit(previous[0].weight)+' × '+previous.map(item=>item.reps).join(' · '):previous.map(item=>unit(item.weight)+' × '+item.reps).join(' · ')):previous.map(item=>item.reps).join(' · ')+' rip.');

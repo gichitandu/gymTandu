@@ -5,7 +5,7 @@ import {confirmationForContext} from '../services/confirmation';
 import {WorkoutLogExercise,WorkoutLogSet} from '../models/domain';
 import {Store} from '../services/store';
 import {buildWorkoutSummary} from '../services/workout-summary';
-import {coachHistory,coachNextSession} from '../services/coach-shadow';
+import {coachHistory,coachNextSession,isCompoundExercise} from '../services/coach-shadow';
 import {readSetFeedback} from '../services/coach-expert-adapter';
 import {IconComponent} from '../shared/icon.component';
 @Component({standalone:true,imports:[RouterLink,IconComponent],styleUrl:'./workout-summary.component.css',template:`
@@ -35,7 +35,7 @@ export class WorkoutSummaryComponent{
   return this.summary().rows.flatMap(row=>{
    if(row.repsMin===undefined||row.repsMax===undefined||data.workoutExercises.some(e=>e.exerciseId===row.exerciseId&&later.has(e.workoutId)))return [];
    const completed=this.s.sets(row.id).filter(set=>set.completed&&set.kind!=='warmup').map(set=>{const f=readSetFeedback(set.notes);return {weight:set.weight,reps:set.reps,rpe:set.rpe,...(f?{rir:f.rir??null,technique:f.technique,pain:f.pain}:{})};});
-   const coach=coachNextSession({repsMin:row.repsMin,repsMax:row.repsMax,incrementKg:this.s.preference(row.exerciseId)?.weightStep??this.s.kg(2.5),loadMode:row.loadMode,targetRpe:row.rirMin===undefined?undefined:10-(row.rirMin+(row.rirMax??row.rirMin))/2,history:coachHistory(data,row),completed,formatWeight:unit});
+   const coach=coachNextSession({repsMin:row.repsMin,repsMax:row.repsMax,incrementKg:this.s.preference(row.exerciseId)?.weightStep??this.s.kg(2.5),loadMode:row.loadMode,targetRpe:row.rirMin===undefined?undefined:10-(row.rirMin+(row.rirMax??row.rirMin))/2,history:coachHistory(data,row),completed,formatWeight:unit,compound:isCompoundExercise(this.s.exercise(row.exerciseId)??row)});
    return coach?[{id:row.id,name:row.name,coach,target:(row.loadMode==='bodyweight'?'':unit(coach.weight)+' × ')+coach.reps+' rip.'}]:[];
   });
  });

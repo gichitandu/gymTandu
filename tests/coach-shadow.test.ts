@@ -593,3 +593,65 @@ describe("Coach Ombra: alternative, recupero, andamento e volume", () => {
     expect(weeklyMuscleSets(data, "", "2026-03-10")).toBe(0);
   });
 });
+
+describe("Coach Ombra · ragionamento sui carichi", () => {
+  const rpeSets = (pairs: [number, number, number][]) => pairs.map(([weight, reps, rpe]) => ({ weight, reps, rpe }));
+
+  it("sui carichi alti calcola l'aumento dal massimale stimato, con un tetto più ampio per i multiarticolari", () => {
+    // 200 kg × 12 a RPE 7 → massimale ≈ 300 kg; 9 ripetizioni a RPE 8 ≈ 219,5 kg.
+    const compound = coachNextSet({ ...base, compound: true, reference: sets(200, [12, 12, 12], 7), done: [] });
+    expect(compound).toMatchObject({ action: "raise", weight: 215, reps: 9 });
+    expect(compound!.reason).toContain("circa +8%");
+    const isolation = coachNextSet({ ...base, reference: sets(200, [12, 12, 12], 7), done: [] });
+    expect(isolation).toMatchObject({ action: "raise", weight: 210 });
+    // Sui carichi bassi resta il singolo scatto: il tetto non scende mai sotto la regola semplice.
+    expect(coachNextSet({ ...base, compound: true, reference: sets(60, [12, 12, 12], 8), done: [] })).toMatchObject({ weight: 62.5 });
+  });
+
+  it("in seduta sale in proporzione al carico, entro il 5%", () => {
+    const suggestion = coachNextSet({ ...base, compound: true, done: [{ weight: 200, reps: 12, rpe: 6 }] });
+    expect(suggestion).toMatchObject({ action: "raise", weight: 210, basis: "session" });
+    expect(suggestion!.reps).toBeGreaterThanOrEqual(8);
+  });
+
+  it("oltre 12 ripetizioni sale di un solo passo e lo spiega", () => {
+    const suggestion = coachNextSet({ repsMin: 12, repsMax: 15, incrementKg: 2.5, reference: sets(20, [15, 15, 15], 6), done: [] });
+    expect(suggestion).toMatchObject({ action: "raise", weight: 22.5 });
+    expect(suggestion!.evidence.join(" ")).toContain("Oltre 12 ripetizioni");
+  });
+
+  it("mostra l'andamento del massimale stimato tra le sedute", () => {
+    const suggestion = coachNextSet({ ...base, reference: sets(60, [10, 10, 10], 8), history: [{ sets: sets(60, [9, 9, 9], 8) }], done: [] });
+    expect(suggestion!.evidence.join(" ")).toContain("Massimale stimato: 84 kg · +2% rispetto a una seduta fa");
+  });
+
+  it("con il massimale fermo da quattro sedute propone di cambiare stimolo, anche se il carico cambia", () => {
+    const suggestion = coachNextSet({
+      ...base,
+      reference: sets(60, [10, 10, 10], 8),
+      history: [{ sets: sets(62.5, [9, 9, 9], 8) }, { sets: sets(65, [8, 8, 8], 8) }, { sets: sets(60, [10, 10, 10], 8) }],
+      done: [],
+    });
+    expect(suggestion).toMatchObject({ action: "hold", weight: 60, title: "Cambia stimolo" });
+    expect(suggestion!.flags).toContain("stall");
+  });
+
+  it("con il massimale in calo e sforzo alto propone una seduta di scarico", () => {
+    const suggestion = coachNextSet({
+      ...base,
+      reference: sets(60, [8, 8, 8], 9),
+      history: [{ sets: sets(62.5, [10, 10, 10], 8) }, { sets: sets(65, [8, 8, 8], 8) }, { sets: sets(62.5, [10, 10, 10], 8) }],
+      done: [],
+    });
+    expect(suggestion).toMatchObject({ action: "lower", weight: 55, title: "Seduta di scarico" });
+    expect(suggestion!.flags).toContain("deload");
+  });
+
+  it("con un calo marcato tra le serie chiede più recupero prima di salire", () => {
+    const suggestion = coachNextSet({ ...base, reference: rpeSets([[60, 12, 8], [60, 9, 9], [60, 8, 9]]), done: [] });
+    expect(suggestion).toMatchObject({ action: "hold", weight: 60, title: "Più recupero, poi sali", restBonus: 30 });
+    expect(suggestion!.reason).toContain("da 12 a 8 ripetizioni");
+    // Un calo normale vicino al cedimento (12 → 10) non basta.
+    expect(coachNextSet({ ...base, reference: rpeSets([[60, 12, 8], [60, 11, 9], [60, 10, 9]]), done: [] })!.title).not.toBe("Più recupero, poi sali");
+  });
+});
