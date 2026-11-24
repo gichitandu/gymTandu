@@ -197,6 +197,8 @@ export class CoachPageComponent {
     const a = document.createElement('a'); a.href = url; a.download = `gymtrack-coach-${this.date()}.json`; a.click();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
+  /** Solo l'unità accanto al numero: loadLabel contiene già il valore («20 kg sulla stessa macchina») e lo ripeterebbe. */
+  loadUnit(e: ExercisePrescription) { return e.loadType === 'bodyweight' ? '' : e.loadType === 'per-dumbbell' ? 'kg per manubrio' : e.loadType === 'total' ? 'kg totali' : 'kg sulla stessa macchina'; }
   loadText(e: ExercisePrescription) { return e.loadKg === null ? (e.loadType === 'bodyweight' ? 'Corpo libero' : 'Da calibrare') : `${e.loadKg.toLocaleString('it-IT')} kg`; }
   confidenceLabel(value: string) { return ({ initial: 'Prima impostazione', limited: 'Pochi dati', established: 'Storico confrontabile' } as Record<string, string>)[value] || value; }
   actionLabel(value: string) { return ({ calibrate: 'Troviamo il tuo carico', maintain: 'Mantieni il carico', reduce: 'Alleggerisci la prossima', rest: 'Prenditi più recupero', stop: 'Interrompi questo esercizio', complete: 'Esercizio completato' } as Record<string, string>)[value] || value; }

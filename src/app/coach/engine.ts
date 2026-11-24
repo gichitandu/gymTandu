@@ -78,6 +78,10 @@ function successful(h: WorkoutHistory, p: ExercisePrescription): boolean {
   const sets = working(h);
   return complete(h,p) && contextual(h,p) && sets.every(s => s.reps >= p.repsMax && s.rir !== null && s.rir >= p.rir && s.technique === 'good' && !s.pain && (s.targetRir === undefined || s.targetRir === p.rir)) && sets.every(s => s.loadKg === sets[0]?.loadKg);
 }
+/** Successo netto: tutte le serie al limite superiore con almeno una ripetizione in riserva oltre a quella prevista. */
+function clearlyEasy(h: WorkoutHistory, p: ExercisePrescription): boolean {
+  return successful(h,p) && working(h).every(s => s.rir !== null && s.rir >= p.rir + 1);
+}
 function difficult(h: WorkoutHistory, p?: ExercisePrescription): boolean {
   const sets = working(h);
   const minimum = p?.repsMin ?? h.repsMin;
@@ -139,11 +143,18 @@ export function recommendExercise(input: ExerciseRecommendationInput): ExerciseP
       const lower = firstLoad === null ? null : nextLoad(firstLoad,settings,-1);
       p.loadKg = lower ?? firstLoad; p.progression = lower === null ? 'review' : 'reduce'; p.dropSet = undefined; p.failureAllowedLastSet = false;
       p.decisions.push(decision('repeated-difficulty','Tre sedute complete con difficoltà ripetuta: proponi un piccolo passo indietro e rivedi il recupero. La causa non è deducibile automaticamente.'));
-    } else if (recentCompleteLogs.length >= HEURISTICS.comparableSuccessesForIncrease && recentCompleteLogs.slice(0,2).every(h => successful(h,p)) && working(recentCompleteLogs[1]!)[0]?.loadKg === firstLoad && firstLoad !== null && ex.loadType !== 'bodyweight') {
+    } else if (firstLoad !== null && ex.loadType !== 'bodyweight' && (
+      // Doppia progressione: due sedute al limite superiore con il margine richiesto…
+      (recentCompleteLogs.length >= HEURISTICS.comparableSuccessesForIncrease && recentCompleteLogs.slice(0,2).every(h => successful(h,p)) && working(recentCompleteLogs[1]!)[0]?.loadKg === firstLoad)
+      // …oppure, per principianti e intermedi che progrediscono più in fretta, una sola seduta chiaramente facile.
+      || (profile.experience !== 'advanced' && clearlyEasy(mostRecent,p)))) {
+      const single = !(recentCompleteLogs.length >= HEURISTICS.comparableSuccessesForIncrease && recentCompleteLogs.slice(0,2).every(h => successful(h,p)) && working(recentCompleteLogs[1]!)[0]?.loadKg === firstLoad);
       const next = nextLoad(firstLoad,settings,1);
       if (next !== null && (firstLoad === 0 || (next-firstLoad)/firstLoad <= HEURISTICS.maxRelativeIncrease)) {
         p.loadKg = next; p.progression = 'increase'; p.calibration = false;
-        p.decisions.push(decision('double-progression','Due sedute complete al limite superiore con tecnica e margine richiesti: prova il minimo incremento disponibile, ripartendo dalla parte bassa del range.','heuristic',['acsm-2026']));
+        p.decisions.push(decision('double-progression',single
+          ? 'Ultima seduta completa al limite superiore con almeno una ripetizione in riserva in più del previsto: chi è all’inizio o a livello intermedio progredisce in fretta, quindi prova già il minimo incremento disponibile, ripartendo dalla parte bassa del range.'
+          : 'Due sedute complete al limite superiore con tecnica e margine richiesti: prova il minimo incremento disponibile, ripartendo dalla parte bassa del range.','heuristic',['acsm-2026']));
       } else {
         p.decisions.push(decision('increment-too-large',next === null ? 'Nessun incremento disponibile: mantieni il carico e rivedi la progressione.' : 'Il minimo incremento supera il 10%: mantieni il carico; valuta un incremento più piccolo senza forzare il salto.'));
       }

@@ -408,7 +408,7 @@
       <section class="cal-overview" aria-label="Riepilogo della settimana">
         <div class="cal-bigring" [style.--p]="scoreProgress()">
           <strong
-            >{{ summary().completed
+            >{{ ringCompleted()
             }}<small>/{{ target() || summary().total }}</small></strong
           >
         </div>

@@ -5,7 +5,7 @@ import {confirmationForContext} from '../services/confirmation';
 import {WorkoutLogExercise,WorkoutLogSet} from '../models/domain';
 import {Store} from '../services/store';
 import {buildWorkoutSummary} from '../services/workout-summary';
-import {coachHistory,coachNextSession} from '../services/coach-shadow';
+import {coachHistory,coachNextSession,isCompoundExercise} from '../services/coach-shadow';
 import {readSetFeedback} from '../services/coach-expert-adapter';
 import {IconComponent} from '../shared/icon.component';
 @Component({standalone:true,imports:[RouterLink,IconComponent],styleUrl:'./workout-summary.component.css',template:`
@@ -20,8 +20,8 @@ import {IconComponent} from '../shared/icon.component';
  @if(workout.notes){<section class="card summary-notes"><gt-icon name="note"/><p>{{workout.notes}}</p></section>}
  <div class="summary-section-title"><h2>Le tue serie</h2><small>R = riscaldamento</small></div>
  <section class="card summary-exercises" aria-label="Le serie dell’allenamento">@for(row of summary().rows;track row.id){<div class="summary-exercise ws-exercise"><span class="summary-exercise-name"><strong>{{row.name}}</strong>@if(row.substitutedFrom){<small>Al posto di {{row.substitutedFrom.name}}</small>}</span><span class="set-count">{{s.sets(row.id).filter(completed).length}}/{{s.sets(row.id).length}}</span><span class="ws-sets">@for(set of s.sets(row.id);track set.id){<span class="ws-set" [class.off]="!set.completed" [class.warm]="set.kind==='warmup'">{{setLabel(row,set)}}</span>}</span></div>}</section>
- @if(summary().pending){<p class="summary-note">{{summary().pending}} serie non completate, conservate nello storico.</p>}
- @if(summary().warmups){<p class="summary-note">{{summary().warmups}} serie di riscaldamento escluse dal volume allenante.</p>}
+ @if(summary().pending){<p class="summary-note">{{summary().pending}} {{summary().pending===1?'serie non completata, conservata':'serie non completate, conservate'}} nello storico.</p>}
+ @if(summary().warmups){<p class="summary-note">{{summary().warmups}} {{summary().warmups===1?'serie di riscaldamento esclusa':'serie di riscaldamento escluse'}} dal volume allenante.</p>}
  <div class="summary-actions"><a class="su-btn su-primary summary-main" [routerLink]="closePath()">Fatto</a></div>
  }@else{<section class="card"><h1>Riepilogo non disponibile</h1><a class="button" routerLink="/allenamenti">Apri l’elenco degli allenamenti</a></section>}
 </div>`})
@@ -35,7 +35,7 @@ export class WorkoutSummaryComponent{
   return this.summary().rows.flatMap(row=>{
    if(row.repsMin===undefined||row.repsMax===undefined||data.workoutExercises.some(e=>e.exerciseId===row.exerciseId&&later.has(e.workoutId)))return [];
    const completed=this.s.sets(row.id).filter(set=>set.completed&&set.kind!=='warmup').map(set=>{const f=readSetFeedback(set.notes);return {weight:set.weight,reps:set.reps,rpe:set.rpe,...(f?{rir:f.rir??null,technique:f.technique,pain:f.pain}:{})};});
-   const coach=coachNextSession({repsMin:row.repsMin,repsMax:row.repsMax,incrementKg:this.s.preference(row.exerciseId)?.weightStep??this.s.kg(2.5),loadMode:row.loadMode,targetRpe:row.rirMin===undefined?undefined:10-(row.rirMin+(row.rirMax??row.rirMin))/2,history:coachHistory(data,row),completed,formatWeight:unit});
+   const coach=coachNextSession({repsMin:row.repsMin,repsMax:row.repsMax,incrementKg:this.s.preference(row.exerciseId)?.weightStep??this.s.kg(2.5),loadMode:row.loadMode,targetRpe:row.rirMin===undefined?undefined:10-(row.rirMin+(row.rirMax??row.rirMin))/2,history:coachHistory(data,row),completed,formatWeight:unit,compound:isCompoundExercise(this.s.exercise(row.exerciseId)??row)});
    return coach?[{id:row.id,name:row.name,coach,target:(row.loadMode==='bodyweight'?'':unit(coach.weight)+' × ')+coach.reps+' rip.'}]:[];
   });
  });

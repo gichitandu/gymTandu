@@ -4,7 +4,7 @@ import { confirmationForContext } from '../services/confirmation';
 import { Component, inject, signal, viewChild } from "@angular/core";
 import { ActivatedRoute, Router, RouterLink } from "@angular/router";
 import { FormsModule } from "@angular/forms";
-import { Store } from "../services/store";
+import { MAX_AUTOMATIC_DURATION_MINUTES, Store } from "../services/store";
 import { StatusComponent } from "../shared/status.component";
 import { IconComponent } from "../shared/icon.component";
 import { ActiveWorkoutComponent } from "../shared/active-workout.component";
@@ -35,7 +35,7 @@ import { ScreenWakeLock } from '../services/screen-wake-lock';
       <gt-active-workout [workoutId]="w.id" (finish)="finish()" />
       <details class="session-options session-simple-options"><summary>Le tue note e la durata</summary>
         <div class="form-grid"><label class="wide">Note<textarea maxlength="2000" [ngModel]="w.notes" (ngModelChange)="update(w.id,'notes',$event)"></textarea></label>
-        @if(w.date < today){<label>Durata (minuti)<input type="number" inputmode="numeric" min="1" max="1440" [ngModel]="w.duration||null" (ngModelChange)="update(w.id,'duration',$event)" placeholder="Es. 60"/></label>}
+        @if(w.date < today || staleOpen(w)){<label>Durata (minuti)<input type="number" inputmode="numeric" min="1" max="1440" [ngModel]="w.duration||null" (ngModelChange)="update(w.id,'duration',$event)" placeholder="Es. 60"/></label>}
         </div><p class="subtle">{{durationText(w)}}</p>
         <div class="actions"><a class="button ghost" routerLink="/">Torna alla Home</a><button class="danger ghost" (click)="discard(w.id)">Elimina sessione aperta</button></div>
       </details>
@@ -61,7 +61,9 @@ export class SessionComponent {
     clearInterval(this.timer);
     this.wakeLock.stop();
   }
-  durationText(w:{duration:number;date:string;startedAt:string;durationUnknown?:boolean}){return w.duration>0?w.duration+' min registrati':w.durationUnknown||w.date<localDate(new Date(w.startedAt))?'Durata non indicata':this.elapsed(w.startedAt);}
+  /** Aperta da oltre 4 ore senza durata: il tempo trascorso non sarà usato, chiediamo quella reale. */
+  staleOpen(w:{duration:number;startedAt:string;durationUnknown?:boolean}){return !(w.duration>0)&&!w.durationUnknown&&this.clock()-new Date(w.startedAt).getTime()>MAX_AUTOMATIC_DURATION_MINUTES*60000;}
+  durationText(w:{duration:number;date:string;startedAt:string;durationUnknown?:boolean}){return w.duration>0?w.duration+' min registrati':this.staleOpen(w)?'Aperta da '+this.elapsed(w.startedAt)+': inserisci la durata reale, altrimenti resterà non indicata.':w.durationUnknown||w.date<localDate(new Date(w.startedAt))?'Durata non indicata':this.elapsed(w.startedAt);}
   elapsed(date:string){const seconds=Math.max(0,Math.floor((this.clock()-new Date(date).getTime())/1000));return `${Math.floor(seconds/3600).toString().padStart(2,'0')}:${Math.floor(seconds%3600/60).toString().padStart(2,'0')}:${(seconds%60).toString().padStart(2,'0')}`;}
   allSets(id: string) {
     return this.s.workoutExercises(id).flatMap((e) => this.s.sets(e.id));

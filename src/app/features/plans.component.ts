@@ -29,7 +29,7 @@ import {
   localDate,
 } from "../models/domain";
 import { TodayService } from '../services/today';
-import { coachNextSet, daysBetween } from '../services/coach-shadow';
+import { coachNextSet, daysBetween, isCompoundExercise } from '../services/coach-shadow';
 import { parseLocalDate } from '../services/calendar';
 import { IconComponent } from "../shared/icon.component";
 import { StatusComponent } from "../shared/status.component";
@@ -66,7 +66,7 @@ export function estimatedMinutes(seconds:number){const minutes=seconds/60;return
     @if(!archived()&&overlaps().length){<section class="card plan-overlap" role="status" aria-label="Piani con date sovrapposte">
      <h3>Piani sovrapposti</h3>
      @for(o of overlaps();track o.keep.plan.id+o.drop.plan.id){<div class="plan-overlap-row">
-      <p>“{{o.keep.plan.name}}” ({{o.keep.workouts}} sedute, {{o.keep.sets}} serie) e “{{o.drop.plan.name}}” ({{o.drop.workouts}} sedute, {{o.drop.sets}} serie) occupano le stesse date.</p>
+      <p>“{{o.keep.plan.name}}” ({{o.keep.workouts}} {{o.keep.workouts===1?'seduta':'sedute'}}, {{o.keep.sets}} serie) e “{{o.drop.plan.name}}” ({{o.drop.workouts}} {{o.drop.workouts===1?'seduta':'sedute'}}, {{o.drop.sets}} serie) occupano le stesse date.</p>
       <button type="button" class="button" [disabled]="s.busy()" (click)="resolveOverlap(o.keep.plan.id,o.drop.plan.id)">Tieni “{{o.keep.plan.name}}” e concludi l’altro</button>
      </div>}
      <small>Il piano concluso va in archivio: sedute, serie e statistiche restano consultabili.</small>
@@ -388,7 +388,7 @@ export class PlansComponent {
     const unit=(kg:number)=>this.s.formatWeight(kg)+' '+this.s.settings().unit,data=this.s.data();
     const row=data.workoutExercises.find(item=>item.id===previous[0].workoutExerciseId),date=data.workouts.find(workout=>workout.id===row?.workoutId)?.date;
     const loaded=exercise.loadMode!=='bodyweight';
-    const suggestion=coachNextSet({repsMin,repsMax,incrementKg:this.s.preference(exercise.id)?.weightStep??this.s.kg(2.5),loadMode:exercise.loadMode,targetRpe:form.rpe??undefined,reference:previous.map(item=>({weight:item.weight,reps:item.reps,rpe:item.rpe})),daysSinceReference:daysBetween(date,this.today),done:[],formatWeight:unit});
+    const suggestion=coachNextSet({repsMin,repsMax,incrementKg:this.s.preference(exercise.id)?.weightStep??this.s.kg(2.5),loadMode:exercise.loadMode,compound:isCompoundExercise(exercise),targetRpe:form.rpe??undefined,reference:previous.map(item=>({weight:item.weight,reps:item.reps,rpe:item.rpe})),daysSinceReference:daysBetween(date,this.today),done:[],formatWeight:unit});
     if(!suggestion)return null;
     const same=previous.every(item=>Math.abs(item.weight-previous[0].weight)<0.000001);
     const last='Ultima volta: '+(loaded?(same?unit(previous[0].weight)+' × '+previous.map(item=>item.reps).join(' · '):previous.map(item=>unit(item.weight)+' × '+item.reps).join(' · ')):previous.map(item=>item.reps).join(' · ')+' rip.');

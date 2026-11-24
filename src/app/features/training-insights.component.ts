@@ -21,7 +21,7 @@ import {summarizeTraining,trainingTimeline,trainingReportCsv,workoutReminderIcs}
    <div class="card"><span><i class="ins-ic ins-c"><gt-icon name="repeat"/></i>Serie di lavoro</span><strong>{{summary().current.completedSets}}</strong><small>Riscaldamento escluso</small></div>
    <div class="card"><span><i class="ins-ic ins-d"><gt-icon name="chart"/></i>Volume carico esterno</span><strong>{{volumeDisplay()}}</strong><small>{{s.settings().unit}} · non include corpo libero</small></div>
   </div>
-  <p class="insights-note">Le durate mancanti non vengono interpretate come zero. {{summary().current.unknownDurations}} sedute senza durata verificabile.</p>
+  <p class="insights-note">Le durate mancanti non vengono interpretate come zero. {{summary().current.unknownDurations}} {{summary().current.unknownDurations===1?'seduta':'sedute'}} senza durata verificabile.</p>
   <div class="insights-charts"><div class="card"><h3>Sedute per settimana</h3><gt-data-chart [points]="sessionTimeline()" title="Sedute settimanali" unit="sedute"/></div><div class="card"><h3>Volume esterno per settimana</h3><gt-data-chart [points]="volumeTimeline()" title="Volume settimanale" [unit]="s.settings().unit"/></div></div>
  </section>
  <section class="insights-section" aria-labelledby="suggestions-heading">

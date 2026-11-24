@@ -116,7 +116,10 @@ export class CalendarComponent {
  readonly completedCount=computed(()=>this.dayStats().completed);
  readonly periodStats=computed(()=>({planned:this.summary().planned+this.summary().partial,completed:this.summary().completed,active:this.periodDates().filter(date=>(this.agendaByDate().get(date)||[]).some(item=>item.kind!=='rest'&&item.status!=='missed')).length}));
  readonly target=computed(()=>this.view()==='week'?this.s.settings().goals?.workoutsPerWeek:undefined);
- readonly scoreProgress=computed(()=>{const goal=this.target()||this.summary().total;return goal?Math.min(100,this.summary().completed/goal*100):0;});
+ /** L'obiettivo è «allenamenti a settimana» (come in Home): cardio, mobilità e altre attività completate non lo fanno avanzare. */
+ readonly goalCompleted=computed(()=>this.periodDates().flatMap(date=>this.agendaByDate().get(date)||[]).filter(item=>item.kind==='workout'&&item.status==='completed').length);
+ readonly ringCompleted=computed(()=>this.target()?this.goalCompleted():this.summary().completed);
+ readonly scoreProgress=computed(()=>{const goal=this.target()||this.summary().total;return goal?Math.min(100,this.ringCompleted()/goal*100):0;});
  readonly upcoming=computed(()=>this.view()==='day'?[]:this.s.data().scheduledWorkouts.filter(event=>this.periodDates().includes(event.date)&&event.date!==this.selected()&&!this.ended(event)&&!event.done&&this.linked(event)?.status!=='completed').sort((a,b)=>a.date.localeCompare(b.date)||(a.time||'99:99').localeCompare(b.time||'99:99')).slice(0,4));
  constructor(){
   const query=inject(ActivatedRoute).snapshot.queryParamMap,date=query.get('date');if(date)this.choose(date);if(query.get('view')==='month')this.view.set('month');
@@ -141,7 +144,7 @@ export class CalendarComponent {
  periodLabel(){const dates=this.dates();if(this.view()==='day')return this.label(this.selected());if(this.view()==='month')return this.monthLabel();const first=parseLocalDate(dates[0]),last=parseLocalDate(dates[6]);return first.getMonth()===last.getMonth()?`${first.getDate()}–${last.getDate()} ${last.toLocaleDateString('it-IT',{month:'long',year:'numeric'})}`:`${first.toLocaleDateString('it-IT',{day:'numeric',month:'short',...(first.getFullYear()!==last.getFullYear()?{year:'numeric' as const}:{})})} – ${last.toLocaleDateString('it-IT',{day:'numeric',month:'short',year:'numeric'})}`;}
  periodTitle(){return this.view()==='week'?'La tua settimana':this.view()==='month'?'Il tuo mese':'Il tuo giorno';}
  dayHint(date:string){const stats=calendarAgendaStats(this.agendaByDate().get(date)||[]);return stats.completed?`${stats.completed} svolti`:stats.partial?'In corso':stats.planned?`${stats.planned} in programma`:stats.rest?'Riposo':'Libero';}
- dayAria(date:string){const stats=calendarAgendaStats(this.agendaByDate().get(date)||[]);return `${this.label(date)}, ${stats.planned} in programma, ${stats.completed} completati, ${stats.partial} in corso, ${stats.rest} riposi${date===this.today?', oggi':''}`;}
+ dayAria(date:string){const stats=calendarAgendaStats(this.agendaByDate().get(date)||[]);const parts=[stats.planned?stats.planned+' in programma':'',stats.completed?stats.completed+(stats.completed===1?' completato':' completati'):'',stats.partial?stats.partial+' in corso':'',stats.rest?(stats.rest===1?'riposo':stats.rest+' riposi'):''].filter(Boolean);return `${this.label(date)}, ${parts.length?parts.join(', '):'giornata libera'}${date===this.today?', oggi':''}`;}
  dateHas(date:string,value:string){return (this.agendaByDate().get(date)||[]).some(item=>item.status===value||item.kind===value);}
  dateMarkers(date:string){
   const items=this.agendaByDate().get(date)||[],seen=new Set<string>();
@@ -156,7 +159,7 @@ export class CalendarComponent {
  headTitle(){const date=parseLocalDate(this.selected());if(this.view()==='day')return date.toLocaleDateString('it-IT',{weekday:'long',day:'numeric'});if(this.view()==='month')return date.toLocaleDateString('it-IT',{month:'long'});const dates=this.dates(),first=parseLocalDate(dates[0]),last=parseLocalDate(dates[6]);return first.getMonth()===last.getMonth()?`${first.getDate()} – ${last.getDate()}`:`${first.getDate()} ${first.toLocaleDateString('it-IT',{month:'short'}).replace('.','')} – ${last.getDate()} ${last.toLocaleDateString('it-IT',{month:'short'}).replace('.','')}`;}
  headSub(){const date=parseLocalDate(this.selected());if(this.view()==='day')return date.toLocaleDateString('it-IT',{month:'long'});if(this.view()==='month')return String(date.getFullYear());const dates=this.dates(),first=parseLocalDate(dates[0]),last=parseLocalDate(dates[6]);return first.getMonth()===last.getMonth()?last.toLocaleDateString('it-IT',{month:'long'}):String(last.getFullYear());}
  navSummary(){const stats=this.view()==='day'?this.dayStats():this.summary();const parts=[`${stats.completed} ${stats.completed===1?'completata':'completate'}`];if(stats.partial)parts.push(`${stats.partial} in corso`);if(stats.planned)parts.push(`${stats.planned} ${stats.planned===1?'prevista':'previste'}`);return stats.total||stats.rest?parts.join(' · '):'Nessuna attività';}
- weekGoalText(){const target=this.target();if(!target)return `${this.summary().completed} di ${this.summary().total} attività completate`;const left=target-this.summary().completed;return left>0?`Ancora ${left} ${left===1?'allenamento':'allenamenti'} per chiudere la settimana`:'Obiettivo raggiunto: ottimo lavoro';}
+ weekGoalText(){const target=this.target();if(!target)return `${this.summary().completed} di ${this.summary().total} attività completate`;const left=target-this.goalCompleted();return left>0?`Ancora ${left} ${left===1?'allenamento':'allenamenti'} per chiudere la settimana`:'Obiettivo raggiunto: ottimo lavoro';}
  isSelected(item:CalendarAgendaItem){return this.dockVisible()&&this.selectedItem()?.id===item.id;}
  visibleCount(){return this.view()==='day'?this.visibleAgenda().length:this.periodDates().reduce((total,date)=>total+this.visibleFor(date).length,0);}
  hiddenByFilters(date:string){return !!(this.agendaByDate().get(date)||[]).length&&!this.visibleFor(date).length;}
@@ -262,7 +265,9 @@ export class CalendarComponent {
   else if(item.workout)await this.router.navigateByUrl('/sessione');
   else{this.selectItem(item);this.view.set('day');}
  }
- async toggleItem(item:CalendarAgendaItem){if(this.actionBusy()||!item.event||item.kind==='workout'||item.kind==='rest')return;this.actionBusy.set(true);try{await this.s.toggleCalendarActivity(item.event.id);}finally{this.actionBusy.set(false);}}
+ async toggleItem(item:CalendarAgendaItem){if(this.actionBusy()||!item.event||item.kind==='workout'||item.kind==='rest')return;
+  // Come per gli allenamenti, una data futura non si segna come già fatta.
+  if(item.status!=='completed'&&item.date>this.today){this.s.error.set('Potrai segnarla come fatta dal '+this.label(item.date)+'. Se l’hai già svolta, spostala a oggi.');return;}this.actionBusy.set(true);try{await this.s.toggleCalendarActivity(item.event.id);}finally{this.actionBusy.set(false);}}
  async remove(event:ScheduledWorkout){
   if(this.actionBusy())return;this.actionBusy.set(true);const archive=this.s.archiveKey();
   try{if(!await this.confirmation.ask({title:'Rimuovere dal calendario?',message:'La voce sarà rimossa dal calendario. Le sessioni e le serie registrate restano nel tuo archivio.',confirmLabel:'Rimuovi',tone:'danger'}))return;

@@ -18,7 +18,14 @@
  *    pesanti; negli esercizi di isolamento bastano 60–90 s (Schoenfeld 2016, Singer 2024);
  *  - volume settimanale per muscolo: circa 10–20 serie allenanti, con benefici che
  *    crescono sempre meno oltre questa fascia (Schoenfeld 2017, Pelland 2024);
- *  - scarico dopo cali ripetuti con sforzo alto (Bell 2023, consenso tra allenatori).
+ *  - scarico dopo cali ripetuti con sforzo alto (Bell 2023, consenso tra allenatori);
+ *  - aumento di carico ricavato dal massimale stimato e dalle ripetizioni in riserva
+ *    (autoregolazione con RIR, Helms 2016; Zourdos 2016), con un tetto del 5–7,5% per
+ *    seduta nella fascia 2–10% indicata dall'ACSM;
+ *  - la stima delle ripetizioni in riserva è meno precisa oltre le 12 ripetizioni
+ *    (Halperin 2022): lì si sale di un passo alla volta;
+ *  - progressi valutati sull'andamento del massimale stimato tra le sedute, non solo
+ *    a parità di carico; un calo marcato tra le serie chiede più recupero prima di salire.
  */
 import type { DataSet, WorkoutLogExercise } from "../models/domain";
 import { machineKey } from "./training-flow";
@@ -165,6 +172,32 @@ export function estimate1rm(set: CoachSetResult): number | undefined {
 function repsAt(max: number, weight: number, rpe: number) {
   if (!(weight > 0) || !(max > 0)) return undefined;
   return Math.floor(30 * (max / weight - 1) - (10 - rpe) + 1e-9);
+}
+
+/** Oltre 12 ripetizioni la stima delle ripetizioni in riserva perde precisione (Halperin 2022). */
+const RELIABLE_REPS = 12;
+/** Tetto all'aumento per seduta: multiarticolari 7,5%, isolamento 5% (in seduta sempre 5%). */
+const raiseCap = (compound: boolean | undefined, inSession: boolean) => (inSession || !compound ? 0.05 : 0.075);
+
+/**
+ * Scatti di carico verso il peso che il massimale stimato consente per `reps` ripetizioni
+ * a sforzo `rpe`. Il tetto percentuale non scende mai sotto la regola semplice (`floor`).
+ */
+function raiseSteps(best: number | undefined, weight: number, increment: number, reps: number, rpe: number, cap: number, floor: number) {
+  if (best === undefined || !(weight > 0) || !(increment > 0)) return floor;
+  const goal = best / (1 + (reps + (10 - rpe)) / 30);
+  const raw = Math.floor((goal - weight) / increment + 1e-9);
+  const limit = Math.max(floor, Math.floor((weight * cap) / increment + 1e-9));
+  return clamp(raw, 1, limit);
+}
+
+/** Massimale stimato migliore di una seduta, solo da serie con sforzo dichiarato (RPE o RIR). */
+function sessionBest(sets: CoachSetResult[]) {
+  const values = sets
+    .filter((set) => validSet(set) && effort(set) !== undefined)
+    .map(estimate1rm)
+    .filter((value): value is number => value !== undefined);
+  return values.length ? Math.max(...values) : undefined;
 }
 
 function daysLabel(days: number) {
@@ -523,13 +556,19 @@ export function coachNextSet(input: CoachInput): CoachSuggestion | null {
           `Serie facile al massimo delle ripetizioni: prova ${last.reps + 1}. Quando superi di molto l'intervallo, passa a una variante più difficile o aggiungi zavorra.`,
         );
       const fresh = mode === "external" ? estimate1rm(last) : undefined;
-      let steps = rpe <= target - 2 ? 2 : 1;
+      const simple = rpe <= target - 2 ? 2 : 1;
+      // Oltre 12 ripetizioni la riserva dichiarata è meno precisa: un passo alla volta.
+      const reliable = last.reps <= RELIABLE_REPS;
+      if (!reliable) evidence.push("Oltre 12 ripetizioni la stima della riserva è meno precisa: un passo alla volta");
+      let steps = reliable
+        ? raiseSteps(fresh, last.weight, incrementKg, Math.min(repsMax, repsMin + 1), target, raiseCap(input.compound, true), simple)
+        : 1;
       // Dopo una serie già fatta le ripetizioni disponibili calano di circa una.
       const reachable = (count: number) => {
         const top = fresh === undefined ? undefined : repsAt(fresh, shift(last.weight, count), 10);
         return top === undefined ? undefined : top - 1;
       };
-      if (steps === 2 && (reachable(2) ?? repsMin) < repsMin) steps = 1;
+      while (steps > 1 && (reachable(steps) ?? repsMin) < repsMin) steps--;
       const weight = shift(last.weight, steps);
       if ((reachable(steps) ?? repsMin) < repsMin) {
         flags.push("big-jump");
@@ -697,6 +736,25 @@ export function coachNextSet(input: CoachInput): CoachSuggestion | null {
     .filter((sets) => sets.length)
     .slice(0, 3);
   const total = (sets: CoachSetResult[]) => sets.reduce((sum, set) => sum + set.reps, 0);
+  // Andamento del massimale stimato tra le sedute (carico esterno, sforzo dichiarato): misura i
+  // progressi anche quando carico e ripetizioni cambiano insieme.
+  const bests = mode === "external"
+    ? [reference, ...(input.history ?? []).map((session) => session.sets.filter(validSet))]
+        .filter((sets) => sets.length)
+        .slice(0, 4)
+        .map(sessionBest)
+    : [];
+  const latestBest = bests[0];
+  const olderBest = bests.slice(1).filter((value): value is number => value !== undefined);
+  if (latestBest !== undefined && olderBest.length) {
+    const baseline = olderBest[olderBest.length - 1];
+    const percent = Math.round((latestBest / baseline - 1) * 100);
+    evidence.push(
+      `Massimale stimato: ${format(round(latestBest))} · ` +
+        (percent === 0 ? "stabile" : (percent > 0 ? "+" : "−") + Math.abs(percent) + "%") +
+        ` rispetto a ${olderBest.length === 1 ? "una seduta" : olderBest.length + " sedute"} fa`,
+    );
+  }
   const stalled =
     sessions.length === 3 &&
     !allAtMax &&
@@ -741,10 +799,16 @@ export function coachNextSet(input: CoachInput): CoachSuggestion | null {
         `${LastTime} tutte le serie a ${repsMax} ripetizioni con RPE fino a ${number(maxRpe)}: ${next ? "la prossima volta " : ""}aggiungi una ripetizione o passa a una variante più difficile.`,
       );
     const best = mode === "external" ? estimate1rm(reference[0]) : undefined;
-    let steps = maxRpe <= target - 2 ? 2 : 1;
+    const simple = maxRpe <= target - 2 ? 2 : 1;
+    const reliable = reference.every((set) => set.reps <= RELIABLE_REPS);
+    if (!reliable) evidence.push("Oltre 12 ripetizioni la stima della riserva è meno precisa: un passo alla volta");
+    // Carico che il massimale stimato consente restando nella parte bassa dell'intervallo allo sforzo previsto.
+    let steps = reliable
+      ? raiseSteps(best, weight, incrementKg, Math.min(repsMax, repsMin + 1), target, raiseCap(input.compound, false), simple)
+      : 1;
     const top = (count: number) =>
       best === undefined ? undefined : repsAt(best, shift(weight, count), 10);
-    if (steps === 2 && (top(2) ?? repsMin) < repsMin) steps = 1;
+    while (steps > 1 && (top(steps) ?? repsMin) < repsMin) steps--;
     const heavier = shift(weight, steps);
     if ((top(steps) ?? repsMin) < repsMin) {
       flags.push("big-jump");
@@ -763,7 +827,46 @@ export function coachNextSet(input: CoachInput): CoachSuggestion | null {
       "raise",
       heavier,
       reps,
-      `${LastTime} tutte le serie a ${repsMax} ripetizioni con RPE fino a ${number(maxRpe)}: ${next ? "la prossima volta " : ""}prova ${format(heavier)} (${change(weight, heavier)}).`,
+      `${LastTime} tutte le serie a ${repsMax} ripetizioni con RPE fino a ${number(maxRpe)}: ${next ? "la prossima volta " : ""}prova ${format(heavier)} (${change(weight, heavier)}${weight > 0 && !assisted ? ", circa +" + Math.round(((heavier - weight) / weight) * 100) + "%" : ""}) e punta a ${reps} ripetizioni.`,
+    );
+  }
+  // Massimale fermo (o in calo) su quattro sedute con sforzo dichiarato: non basta ripetere.
+  if (latestBest !== undefined && olderBest.length === 3 && bests.every((value) => value !== undefined)) {
+    const previousBest = Math.max(...olderBest);
+    if (loaded && latestBest <= previousBest * 0.95 && maxRpe !== undefined && maxRpe >= 8.5) {
+      flags.push("deload");
+      const lighter = shift(weight, -stepsFor(weight, 0.1));
+      return fromReference(
+        "lower",
+        lighter,
+        inRange(anchor.reps),
+        `Il massimale stimato è sceso di circa ${Math.round((1 - latestBest / previousBest) * 100)}% rispetto alle sedute precedenti, con sforzo alto: è fatica accumulata più che mancanza di forza. ${next ? "La prossima volta fai" : "Fai oggi"} una seduta di scarico a ${format(lighter)} (circa ${assisted ? "+" : "−"}10%), lontano dal cedimento, poi riparti.`,
+        { title: "Seduta di scarico", confidence: "medium" },
+      );
+    }
+    if (latestBest <= previousBest * 1.01 && Math.min(...olderBest) >= latestBest * 0.97) {
+      flags.push("stall");
+      return fromReference(
+        "hold",
+        weight,
+        inRange(anchor.reps + 1),
+        `Da quattro sedute il massimale stimato non sale: ripetere la stessa seduta difficilmente lo sblocca. ${next ? "Dalla prossima volta" : "Da oggi"}, per 3–4 settimane, cambia uno stimolo alla volta: un intervallo di ripetizioni diverso, una variante dell'esercizio o una serie in più; se lo sforzo è sempre alto, prima una settimana più leggera.`,
+        { title: "Cambia stimolo" },
+      );
+    }
+  }
+  // Calo marcato tra la prima e l'ultima serie allo stesso carico: il limite è il recupero.
+  const firstSet = reference[0], lastSet = reference[reference.length - 1];
+  const drop = firstSet.reps - lastSet.reps;
+  if (reference.length >= 2 && same(firstSet.weight, lastSet.weight) && drop >= 3 && drop >= firstSet.reps * 0.3 && !allAtMax) {
+    flags.push("fatigue");
+    const advised = coachRestSeconds(repsMin, repsMax, input.compound === true) + 30;
+    return fromReference(
+      "hold",
+      weight,
+      inRange(anchor.reps),
+      `${LastTime} sei passato da ${firstSet.reps} a ${lastSet.reps} ripetizioni tra la prima e l'ultima serie: ${next ? "la prossima volta " : ""}prima di aumentare allunga il recupero a circa ${advised >= 120 ? number(advised / 60) + " min" : advised + " s"} e cerca di ridurre il calo.`,
+      { title: "Più recupero, poi sali", restBonus: 30 },
     );
   }
   if (allAtMax && !allRpe)

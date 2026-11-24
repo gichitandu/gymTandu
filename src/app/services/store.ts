@@ -34,6 +34,8 @@ import { TodayService } from "./today";
 import { CREATINE_MAX_DAILY_GRAMS, roundGrams } from "./creatine";
 import { ExcelProgramDraft } from '../models/excel-import';
 import { autoCompletePlan,effectiveProgramRange,excelProgramConflicts,missingProgramEvents,normalizedExerciseName,prescriptionDetails,scheduleConflicts,validateExcelProgram } from './plan-program';
+/** Oltre questa soglia il tempo trascorso non è una durata attendibile dell'allenamento. */
+export const MAX_AUTOMATIC_DURATION_MINUTES=240;
 @Injectable({ providedIn: "root" })
 export class Store {
   saveWellness(row:import('../models/domain').WellnessLog){return this.change(d=>{const existing=d.wellnessLogs.find(v=>v.date===row.date);const next={...structuredClone(row),id:existing?.id||row.id};d.wellnessLogs=d.wellnessLogs.filter(v=>v.date!==row.date);d.wellnessLogs.push(next);},'Diario recupero salvato',false);}
@@ -863,10 +865,11 @@ export class Store {
       w.status = "completed";
       d.workoutUi=d.workoutUi.filter(x=>x.id!==w.id);
       w.endedAt = now();
-      w.duration = w.duration>0?w.duration:w.durationUnknown||w.date<localDate(new Date(w.startedAt))?0:Math.max(
-        1,
-        Math.round((Date.now() - new Date(w.startedAt).getTime()) / 60000),
-      );
+      // Senza una durata inserita si usa il tempo trascorso, ma una seduta lasciata aperta per ore
+      // (es. dalla sera prima) non diventa un allenamento di 20 ore: resta «durata non indicata».
+      const elapsed=Math.max(1,Math.round((Date.now() - new Date(w.startedAt).getTime()) / 60000));
+      w.duration = w.duration>0?w.duration:w.durationUnknown||w.date<localDate(new Date(w.startedAt))||elapsed>MAX_AUTOMATIC_DURATION_MINUTES?0:elapsed;
+      if(w.duration<=0&&elapsed>MAX_AUTOMATIC_DURATION_MINUTES)w.durationUnknown=true;
       autoCompletePlan(d,d.plans.find(plan=>plan.id===w.planId));
     }, "Allenamento salvato. Ottimo lavoro!");
   }
