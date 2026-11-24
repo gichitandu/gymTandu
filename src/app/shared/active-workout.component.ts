@@ -23,7 +23,7 @@ import { IconComponent } from './icon.component';
 import { LoadProgressionComponent } from './load-progression.component';
 import { ExternalTimerService } from '../services/external-timer';
 import { TodayService } from '../services/today';
-import { coachHistory, coachNextSet, daysBetween, readinessFromWellness, isCompoundExercise, weeklyMuscleSets, type CoachOption } from '../services/coach-shadow';
+import { coachHistory, coachNextSet, daysBetween, exerciseWeightStep, warmupPlan, readinessFromWellness, isCompoundExercise, weeklyMuscleSets, type CoachOption } from '../services/coach-shadow';
 import type { AppUpdateEvent } from '../services/pwa';
 import { FormDraftService } from '../services/form-drafts';
 type ActiveSetDraft={weight:number;reps:number;rpe:number|undefined;setNotes:string;kind:'work'|'warmup'};
@@ -41,7 +41,9 @@ export class ActiveWorkoutComponent {
  weight=0;reps=8;rpe:number|undefined;setNotes='';kind:'work'|'warmup'='work';rpes=[1,2,3,4,5,6,6.5,7,7.5,8,8.5,9,9.5,10];
  gymMode=signal(this.s.settings().gymMode!==false);
  setGymMode(enabled:boolean){this.gymMode.set(enabled);void this.s.change(d=>{d.settings[0].gymMode=enabled;},'',false);}swapQuery=signal('');replacementId='';
- weightStep(){const id=this.selected()?.exerciseId,value=id?this.s.preference(id)?.weightStep:undefined;return value?this.s.weight(value):2.5;}
+ /** Scatto ricavato dai carichi già usati su questo esercizio e macchina, se non è impostato. */
+ inferredStep=computed(()=>{const e=this.selected();return e&&e.loadMode!=='bodyweight'?exerciseWeightStep(this.s.data(),e.exerciseId,e.machineSetup):undefined;});
+ weightStep(){const id=this.selected()?.exerciseId,value=id?this.s.preference(id)?.weightStep:undefined,inferred=this.inferredStep();return value?this.s.weight(value):inferred&&this.s.settings().unit==='kg'?inferred:2.5;}
  stepLabel(){return this.weightStep().toLocaleString('it-IT',{maximumFractionDigits:2});}
  async saveIncrement(value:number){const id=this.selected()?.exerciseId;if(id)await this.s.saveWeightStep(id,this.s.kg(Number(value)));}
  alternatives=computed(()=>{const current=this.selected(),base=current?this.s.exercise(current.exerciseId):undefined;return this.s.data().exercises.filter(e=>e.active&&e.id!==current?.exerciseId&&(!base||e.muscleGroupId===base.muscleGroupId)&&matchesExercise(e,this.swapQuery())).slice(0,80);});
@@ -158,8 +160,8 @@ export class ActiveWorkoutComponent {
   const data=this.s.data(),sourceId=previous[0]?.workoutExerciseId,sourceRow=data.workoutExercises.find(x=>x.id===sourceId),sourceDate=data.workouts.find(w=>w.id===sourceRow?.workoutId)?.date;
   const catalog=this.s.exercise(e.exerciseId),muscle=catalog?.muscleGroupId,past=this.recordingPast(),day=this.workout()?.date??localDate();
   const today=data.wellnessLogs.find(w=>w.date===(this.todayClock?.date()??localDate()));
-  const suggestion=coachNextSet({repsMin:e.repsMin,repsMax:e.repsMax,incrementKg:this.s.kg(this.weightStep()),loadMode:e.loadMode,targetRpe:this.coachTargetRpe(e),plannedWeight:set.weight,setIndex:working.filter(x=>x.number<set.number).length,reference,history:coachHistory(data,e).filter(session=>session.id!==sourceId),daysSinceReference:this.recordingPast()?undefined:daysBetween(sourceDate,this.workout()?.date),done,readiness:this.recordingPast()?undefined:readinessFromWellness(today),sore:!this.recordingPast()&&!!muscle&&(today?.soreness?.[muscle]??0)>=2,formatWeight:this.coachUnit,
-   compound:isCompoundExercise(catalog??e),plannedRest:past?undefined:this.restDefault(),weeklySets:past||!muscle?undefined:weeklyMuscleSets(data,muscle,day),muscleName:muscle?this.s.muscle(muscle):undefined});
+  const suggestion=coachNextSet({repsMin:e.repsMin,repsMax:e.repsMax,incrementKg:this.s.kg(this.weightStep()),incrementInferred:!this.s.preference(e.exerciseId)?.weightStep&&!!this.inferredStep()&&this.s.settings().unit==='kg',loadMode:e.loadMode,targetRpe:this.coachTargetRpe(e),plannedWeight:set.weight,setIndex:working.filter(x=>x.number<set.number).length,reference,history:coachHistory(data,e,12).filter(session=>session.id!==sourceId),daysSinceReference:this.recordingPast()?undefined:daysBetween(sourceDate,this.workout()?.date),done,readiness:this.recordingPast()?undefined:readinessFromWellness(today),sore:!this.recordingPast()&&!!muscle&&(today?.soreness?.[muscle]??0)>=2,formatWeight:this.coachUnit,
+   compound:isCompoundExercise(catalog??e),plannedRest:past?undefined:this.restDefault(),weeklySets:past||!muscle?undefined:weeklyMuscleSets(data,muscle,day),muscleName:muscle?this.s.muscle(muscle):undefined,bodyWeight:this.workout()?.bodyWeight??data.profiles[0]?.bodyWeight});
   // Senza storico propone il carico della scheda solo se è davvero impostato (mai 0 kg).
   return suggestion&&(suggestion.basis!=='none'||suggestion.weight>0)?suggestion:null;
  });
@@ -216,7 +218,11 @@ export class ActiveWorkoutComponent {
  newBest(){const e=this.selected(),rows=this.comparison();if(!e||e.loadMode==='bodyweight'||e.loadMode==='assisted'||!rows.length||!(this.weight>0))return false;return this.weight>Math.max(...rows.map(row=>this.s.weightInput(row.weight)))+0.005;}
  /** Dischi per lato solo per il bilanciere olimpico: macchine, cavi, manubri, EZ e multipower non hanno una barra da 20 kg. */
  platePlan(){const e=this.selected();if(!e||e.loadMode==='bodyweight'||e.loadMode==='assisted'||e.loadMode==='weighted-bodyweight'||!/^bilanciere$/i.test((this.s.exercise(e.exerciseId)?.equipment||'').trim()))return undefined;const lb=this.s.settings().unit!=='kg',bar=lb?45:20,available=lb?[45,35,25,10,5,2.5]:[25,20,15,10,5,2.5,1.25];let side=(this.weight-bar)/2;if(!(side>0))return undefined;const plates:number[]=[];for(const plate of available){while(side>=plate-1e-9){plates.push(plate);side=+(side-plate).toFixed(3);}}return {bar,plates,left:+side.toFixed(2)};}
- warmupIdeas(){const e=this.selected(),set=this.currentSet();if(!e||!set||set.kind==='warmup'||set.number>1||e.loadMode==='bodyweight'||e.loadMode==='assisted'||e.loadMode==='weighted-bodyweight'||!(this.weight>=30))return [];const step=Math.max(.5,this.weightStep());const round=(value:number)=>Math.max(step,Math.round(value/step)*step);return [{weight:round(this.weight*.5),reps:10},{weight:round(this.weight*.7),reps:5},{weight:round(this.weight*.85),reps:3}];}
+ warmupIdeas(){const e=this.selected(),set=this.currentSet();if(!e||!set||set.kind==='warmup'||e.loadMode!=='external')return [];
+  const own=this.s.sets(e.id);if(own.some(x=>x.kind==='warmup')||own.find(x=>x.kind!=='warmup')?.id!==set.id)return [];
+  // Muscolo già scaldato: un esercizio precedente di oggi sullo stesso muscolo principale ha serie di lavoro completate.
+  const muscle=this.s.exercise(e.exerciseId)?.muscleGroupId,muscleWarm=!!muscle&&this.exercises().some(other=>other.id!==e.id&&other.order<e.order&&this.s.exercise(other.exerciseId)?.muscleGroupId===muscle&&this.s.sets(other.id).some(x=>x.completed&&x.kind!=='warmup'));
+  return warmupPlan({weight:this.weight,repsMin:e.repsMin??8,compound:isCompoundExercise(this.s.exercise(e.exerciseId)??e),muscleWarm,step:Math.max(.5,this.weightStep())});}
  spark(){const rows=[...this.comparison()].reverse().map(row=>this.s.weight(row.weight));if(!rows.length||!(this.weight>0))return undefined;const values=[...rows,this.weight],min=Math.min(...values),max=Math.max(...values),span=Math.max(1,max-min);const points=values.map((value,index)=>({x:8+index*(184/Math.max(1,values.length-1)),y:44-(value-min)/span*34}));return {points,line:points.map(point=>point.x.toFixed(1)+','+point.y.toFixed(1)).join(' '),first:values[0],last:values.at(-1)??0};}
  adjustWeight(delta:number){this.weight=Math.max(0,+(this.weight+delta).toFixed(2));this.inputChanged();}
  adjustReps(delta:number){this.reps=Math.min(999,Math.max(1,this.reps+delta));this.inputChanged();}

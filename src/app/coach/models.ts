@@ -137,7 +137,7 @@ export interface SetRecommendation {
   repsMax: number;
   rir: number;
   restSeconds: number;
-  action: 'calibrate' | 'maintain' | 'reduce' | 'rest' | 'stop' | 'complete';
+  action: 'calibrate' | 'maintain' | 'increase' | 'reduce' | 'rest' | 'stop' | 'complete';
   reason: string;
   ruleId: string;
   confidence: Confidence;

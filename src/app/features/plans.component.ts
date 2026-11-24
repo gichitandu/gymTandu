@@ -29,7 +29,8 @@ import {
   localDate,
 } from "../models/domain";
 import { TodayService } from '../services/today';
-import { coachNextSet, daysBetween, isCompoundExercise } from '../services/coach-shadow';
+import { coachNextSet, coachSetFromLog, daysBetween, exerciseWeightStep, isCompoundExercise } from '../services/coach-shadow';
+import { coachBlockReview } from '../services/coach-block';
 import { parseLocalDate } from '../services/calendar';
 import { IconComponent } from "../shared/icon.component";
 import { StatusComponent } from "../shared/status.component";
@@ -88,6 +89,7 @@ export function estimatedMinutes(seconds:number){const minutes=seconds/60;return
           </div>
           @if(p.active&&!p.completedAt&&!p.archived&&s.days(p.id).length){<div class="pl-progress"><div class="pl-progress-row">@if(p.program){<span><b>Settimana {{currentWeek(p)}}</b> di {{p.program.weeks}}</span>}@else{<span><b>{{completedForPlan(p.id)}}</b> {{completedForPlan(p.id)===1?'allenamento fatto':'allenamenti fatti'}}</span>}<small>{{completedForPlan(p.id)}} di {{s.days(p.id).length}}</small></div><div class="su-bar"><i [style.width.%]="planProgress(p)"></i></div></div>}
           @if(expanded()===p.id){
+            @if(coachBlock(p);as block){@if(block.ended||block.week===block.weeks){<section class="notice coach-block" role="status" aria-label="Blocco del Coach"><strong>{{block.ended?'Blocco di '+block.weeks+' settimane concluso':'Ultima settimana del blocco'}} · {{block.sessions}} di circa {{block.expected}} sedute</strong>@if(block.progress.length){<p>@for(item of block.progress.slice(0,3);track item.name){<span>{{item.name}} {{item.percent>0?'+':item.percent<0?'−':''}}{{item.percent<0?-item.percent:item.percent}}%</span>@if(!$last){ · }}</p><small>Massimale stimato tra la prima e l’ultima seduta del blocco.</small>}<p>{{block.advice}}</p>@if(block.ended){<a class="button ghost" routerLink="/coach">Apri il Coach</a>}</section>}}
             @if(p.description){@if(p.program){<details class="program-description"><summary>Note del programma</summary><p class="simple-plan-description">{{p.description | coachText}}</p></details>}@else{<p class="simple-plan-description">{{p.description | coachText}}</p>}}
             @if(p.program){<div class="program-week-picker"><label>Settimana<select [ngModel]="weekFor(p)" (ngModelChange)="selectWeek(p.id,$event)">@for(week of weeksFor(p);track week){<option [ngValue]="week">Settimana {{week}} / {{p.program.weeks}}</option>}</select></label></div>}
             <div class="simple-days">
@@ -365,6 +367,8 @@ export class PlansComponent {
   repsInverted(){const {repsMin,repsMax}=this.exerciseForm.controls;return Number(repsMin.value)>Number(repsMax.value);}
   advancedSummary(){const v=this.exerciseForm.getRawValue(),parts=[v.targetWeight!==null&&v.targetWeight!==undefined?'peso target':'',v.rpe!==null&&v.rpe!==undefined?'RPE '+v.rpe:'',v.superset?'superset '+v.superset:'',v.notes?'note':''].filter(Boolean);return parts.length?parts.join(' · '):'Peso target · RPE · superset · note';}
   /** Riepilogo dell'allenamento: esercizi, serie allenanti e durata indicativa (lavoro + recuperi). */
+  /** Piano creato dal Coach: settimana del blocco, sedute e progressi a fine blocco. */
+  coachBlock(plan:TrainingPlan){return plan.archived||plan.completedAt?null:coachBlockReview(this.s.data(),plan.id,this.today);}
   dayMeta(day:TrainingPlanDay){
     const rows=this.s.planExercises(day.id),sets=rows.reduce((total,row)=>total+row.sets,0);
     const seconds=rows.reduce((total,row)=>total+row.sets*(45+row.rest)+(row.warmupSets||0)*75,0),minutes=estimatedMinutes(seconds);
@@ -388,7 +392,8 @@ export class PlansComponent {
     const unit=(kg:number)=>this.s.formatWeight(kg)+' '+this.s.settings().unit,data=this.s.data();
     const row=data.workoutExercises.find(item=>item.id===previous[0].workoutExerciseId),date=data.workouts.find(workout=>workout.id===row?.workoutId)?.date;
     const loaded=exercise.loadMode!=='bodyweight';
-    const suggestion=coachNextSet({repsMin,repsMax,incrementKg:this.s.preference(exercise.id)?.weightStep??this.s.kg(2.5),loadMode:exercise.loadMode,compound:isCompoundExercise(exercise),targetRpe:form.rpe??undefined,reference:previous.map(item=>({weight:item.weight,reps:item.reps,rpe:item.rpe})),daysSinceReference:daysBetween(date,this.today),done:[],formatWeight:unit});
+    const inferred=this.s.settings().unit==='kg'&&!this.s.preference(exercise.id)?.weightStep?exerciseWeightStep(data,exercise.id):undefined;
+    const suggestion=coachNextSet({repsMin,repsMax,incrementKg:this.s.preference(exercise.id)?.weightStep??inferred??this.s.kg(2.5),incrementInferred:!!inferred,loadMode:exercise.loadMode,compound:isCompoundExercise(exercise),bodyWeight:data.profiles[0]?.bodyWeight,targetRpe:form.rpe??undefined,reference:previous.map(coachSetFromLog),daysSinceReference:daysBetween(date,this.today),done:[],formatWeight:unit});
     if(!suggestion)return null;
     const same=previous.every(item=>Math.abs(item.weight-previous[0].weight)<0.000001);
     const last='Ultima volta: '+(loaded?(same?unit(previous[0].weight)+' × '+previous.map(item=>item.reps).join(' · '):previous.map(item=>unit(item.weight)+' × '+item.reps).join(' · ')):previous.map(item=>item.reps).join(' · ')+' rip.');
