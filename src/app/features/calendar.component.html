@@ -418,7 +418,7 @@
     </div>
   } @else if (view() === "week") {
     <div class="cal-view cal-view-week">
-      <nav class="el-only el-week" aria-label="Giorni della settimana">
+      <nav class="el-only el-week" aria-label="Giorni della settimana" (pointerdown)="swipeStart($event)" (pointerup)="swipeEnd($event, 'week')" (pointercancel)="swipeCancel()">
         @for (date of dates(); track date) {
           <button
             type="button"
@@ -460,7 +460,7 @@
         </div>
       </section>
       <ng-container *ngTemplateOutlet="periodNav" />
-      <div class="cal-week-list" aria-label="Giorni della settimana">
+      <div class="cal-week-list" aria-label="Giorni della settimana" (pointerdown)="swipeStart($event)" (pointerup)="swipeEnd($event, 'day')" (pointercancel)="swipeCancel()">
         @for (date of dates(); track date; let i = $index) {
           @let items = visibleFor(date);
           <div

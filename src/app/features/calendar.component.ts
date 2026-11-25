@@ -125,6 +125,17 @@ export class CalendarComponent {
  readonly ringCompleted=computed(()=>this.target()?this.goalCompleted():this.summary().completed);
  readonly scoreProgress=computed(()=>{const goal=this.target()||this.summary().total;return goal?Math.min(100,this.ringCompleted()/goal*100):0;});
  readonly upcoming=computed(()=>this.view()==='day'?[]:this.s.data().scheduledWorkouts.filter(event=>this.periodDates().includes(event.date)&&event.date!==this.selected()&&!this.ended(event)&&!event.done&&this.linked(event)?.status!=='completed').sort((a,b)=>a.date.localeCompare(b.date)||(a.time||'99:99').localeCompare(b.time||'99:99')).slice(0,4));
+ /** Scorrimento orizzontale (solo Rimodernizzato): la striscia dei giorni cambia settimana, l'elenco cambia giorno. */
+ swipeOn=false;private swipeX=0;private swipeY=0;
+ swipeStart(event:PointerEvent){if(!this.modern()||event.pointerType==='mouse')return;this.swipeOn=true;this.swipeX=event.clientX;this.swipeY=event.clientY;}
+ swipeCancel(){this.swipeOn=false;}
+ swipeEnd(event:PointerEvent,kind:'week'|'day'){
+  if(!this.swipeOn)return;this.swipeOn=false;
+  const dx=event.clientX-this.swipeX,dy=event.clientY-this.swipeY;
+  if(Math.abs(dx)<70||Math.abs(dx)<Math.abs(dy)*1.4)return;
+  const direction=dx<0?1:-1;
+  if(kind==='week')this.move(direction);else this.choose(moveDate(this.selected(),direction));
+ }
  /** Percentuale di voci completate in un giorno (anello nella striscia della settimana). */
  dayPercent(date:string){return calendarAgendaStats(this.visibleFor(date)).completionPercent;}
  /** Obiettivo della settimana del giorno scelto: allenamenti completati su quelli previsti (o sull'obiettivo impostato). */

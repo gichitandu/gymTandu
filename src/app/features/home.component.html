@@ -60,6 +60,13 @@
   <p class="hx-weeknote">{{weekNote()}}</p>
 </section>
 @if(modern()){
+@if(streak()>0){
+<section class="su-card md-streak" aria-label="Giornate di fila">
+  <span class="md-flame" aria-hidden="true"><gt-icon name="fire"/></span>
+  <span class="md-streak-text"><strong>{{streak()}} {{streak()===1?'giorno':'giorni'}} di fila</strong><small>Un allenamento o un riposo registrato ogni giorno</small></span>
+  <span class="md-streak-bars" aria-hidden="true">@for(day of week;track day.date){<i [class.on]="dayInfo(day.date).state==='done'||dayInfo(day.date).state==='rest'"></i>}</span>
+</section>
+}
 <a class="su-card md-coach" routerLink="/coach" aria-label="Coach: apri il tuo piano e i consigli passo dopo passo">
   <span class="md-orb" aria-hidden="true"><gt-icon name="sparkle"/></span>
   <span class="md-coach-text"><small>Il tuo coach</small><strong>Il tuo prossimo passo, chiaro</strong></span>
