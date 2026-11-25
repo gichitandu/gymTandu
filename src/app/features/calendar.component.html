@@ -34,6 +34,34 @@
   </header>
   <gt-status />
 
+  @if (modern()) {
+    @let c = cover();
+    <section class="cal-cover" aria-label="Il giorno in sintesi">
+      <span class="cal-cover-blob a" aria-hidden="true"></span><span class="cal-cover-blob b" aria-hidden="true"></span>
+      <div class="cal-cover-main">
+        <div class="cal-cover-date">
+          <span class="cal-cover-num" aria-hidden="true">{{ c.day }}</span>
+          <span class="cal-cover-wd"><b>{{ c.weekday }}</b><small>{{ c.month }}</small></span>
+        </div>
+        <div
+          class="cal-cover-goal"
+          role="img"
+          [style.--p]="coverGoal().pct"
+          [attr.aria-label]="'Obiettivo della settimana: ' + coverGoal().done + ' su ' + coverGoal().total"
+        >
+          <strong>{{ coverGoal().done }}/{{ coverGoal().total }}</strong><span>sett.</span>
+        </div>
+      </div>
+      <div class="cal-cover-next">
+        <div><small>{{ c.label }}</small><strong>{{ c.title }}</strong></div>
+        @if (c.count) {
+          <span class="cal-cover-count">{{ c.count }}@if (c.unit) {<small>{{ c.unit }}</small>}</span>
+        }
+      </div>
+      <div class="cal-cover-day" [style.--p]="c.dayPct" aria-hidden="true"><i></i></div>
+    </section>
+  }
+
   <div class="cal-view-switch" role="group" aria-label="Vista del calendario">
     <span
       class="cal-view-glider"
@@ -397,6 +425,7 @@
             [class.today]="date === today"
             [attr.data-state]="dayState(date) === 'completed' ? 'done' : dayState(date) === 'rest' ? 'rest' : dayState(date) ? 'plan' : 'empty'"
             [attr.aria-label]="dayAria(date)"
+            [style.--p]="dayPercent(date)"
             (click)="choose(date)"
           >
             <small aria-hidden="true">{{ weekday(date).slice(0, 1) }}</small

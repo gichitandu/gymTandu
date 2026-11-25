@@ -17,6 +17,7 @@ import {WorkoutResumeService,validWorkoutUi} from '../services/workout-resume';
 import {formatSeconds,remainingSeconds} from '../services/rest-clock';
 import {IconComponent} from '../shared/icon.component';
 import {StatusComponent} from '../shared/status.component';
+import {ThemeService} from '../services/theme';
 
 type AgendaFilter='all'|'planned'|'completed'|'partial'|'rest'|'other';
 type FormMode='create'|'edit'|'move'|'duplicate';
@@ -27,6 +28,9 @@ export class CalendarComponent {
  private resume=inject(WorkoutResumeService,{optional:true});
  private host=inject<ElementRef<HTMLElement>>(ElementRef,{optional:true});
  private todayClock=inject(TodayService,{optional:true});
+ private theme=inject(ThemeService,{optional:true});
+ /** Vero quando è attivo lo stile «Rimodernizzato»: mostra la copertina del giorno e gli anelli per giorno. */
+ readonly modern=computed(()=>this.theme?.config().style==='modern');
  private scrollKey='';private frame:number|undefined;private timer:ReturnType<typeof setInterval>|undefined;private destroyed=false;
  private clock=signal(Date.now());
  get today(){return this.todayClock?.date()||localDate();}
@@ -121,6 +125,36 @@ export class CalendarComponent {
  readonly ringCompleted=computed(()=>this.target()?this.goalCompleted():this.summary().completed);
  readonly scoreProgress=computed(()=>{const goal=this.target()||this.summary().total;return goal?Math.min(100,this.ringCompleted()/goal*100):0;});
  readonly upcoming=computed(()=>this.view()==='day'?[]:this.s.data().scheduledWorkouts.filter(event=>this.periodDates().includes(event.date)&&event.date!==this.selected()&&!this.ended(event)&&!event.done&&this.linked(event)?.status!=='completed').sort((a,b)=>a.date.localeCompare(b.date)||(a.time||'99:99').localeCompare(b.time||'99:99')).slice(0,4));
+ /** Percentuale di voci completate in un giorno (anello nella striscia della settimana). */
+ dayPercent(date:string){return calendarAgendaStats(this.visibleFor(date)).completionPercent;}
+ /** Obiettivo della settimana del giorno scelto: allenamenti completati su quelli previsti (o sull'obiettivo impostato). */
+ readonly coverGoal=computed(()=>{
+  const week=this.weekStrip().flatMap(date=>this.agendaByDate().get(date)||[]),target=this.s.settings().goals?.workoutsPerWeek;
+  const done=week.filter(item=>item.kind==='workout'&&item.status==='completed').length;
+  const total=target||week.filter(item=>item.kind!=='rest'&&item.status!=='missed').length;
+  return {done,total,pct:total?Math.min(100,Math.round(done/total*100)):0};
+ });
+ /** Copertina del giorno: data grande, prossima voce con conto alla rovescia e avanzamento della giornata. */
+ readonly cover=computed(()=>{
+  const date=this.selected(),day=parseLocalDate(date),isToday=date===this.today,items=this.visibleAgenda();
+  const clock=new Date(this.minute()*60000),now=clock.getHours()*60+clock.getMinutes();
+  const minutes=(time:string)=>Number(time.slice(0,2))*60+Number(time.slice(3));
+  const pending=items.filter(item=>item.kind!=='rest'&&item.status!=='completed'&&item.status!=='missed');
+  const stats=calendarAgendaStats(items);
+  let label='Giornata libera',title='Niente in programma',count='',unit='';
+  if(isToday){
+   const next=pending.filter(item=>!!item.time&&minutes(item.time)>=now).sort((a,b)=>minutes(a.time!)-minutes(b.time!))[0];
+   if(next){const left=minutes(next.time!)-now;label='Prossimo';title=next.title+' · '+next.time;count=left>=60?Math.floor(left/60)+' h '+String(left%60).padStart(2,'0'):String(left);unit='min';}
+   else if(pending.length){label='Oggi';title=pending[0].title;}
+   else if(stats.total){label='Oggi';title='Tutto completato';}
+  }else if(date>this.today){
+   const days=Math.round((day.getTime()-parseLocalDate(this.today).getTime())/86400000);
+   if(pending.length||stats.rest){label='In programma';title=items.filter(item=>item.kind!=='rest').slice(0,2).map(item=>item.title).join(' · ')||'Riposo';}
+   count=days===1?'domani':'tra '+days+' g';
+  }else if(stats.total){label='Bilancio';title=stats.completed+' di '+stats.total+' completate'+(stats.hasCalories?' · '+Math.round(stats.estimatedCalories)+' kcal':'');}
+  const dayPct=isToday?Math.max(0,Math.min(100,Math.round((now-360)/1080*100))):date<this.today?100:0;
+  return {day:day.getDate(),weekday:isToday?'Oggi':day.toLocaleDateString('it-IT',{weekday:'long'}).replace(/^./,c=>c.toUpperCase()),month:day.toLocaleDateString('it-IT',{month:'long',year:'numeric'}),label,title,count,unit,dayPct};
+ });
  constructor(){
   const query=inject(ActivatedRoute).snapshot.queryParamMap,date=query.get('date');if(date)this.choose(date);if(query.get('view')==='month')this.view.set('month');
   // Un solo modo per programmare: altre pagine aprono qui il pannello «Aggiungi» (es. riposo).

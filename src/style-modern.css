@@ -236,9 +236,81 @@ body.theme-ready.style-elegant.style-modern gt-shell .cal-item-action:not(.is-do
 body.theme-ready.style-elegant.style-modern gt-shell .cal-item-action.is-done{background:color-mix(in srgb,var(--accent) 16%,var(--card));color:var(--accent-text,var(--accent))}
 body.theme-ready.style-elegant.style-modern gt-shell .cal-filter-chips :is(button,label){border-radius:999px}
 
-/* ---------- 13. Movimento: ingresso delle pagine ---------- */
-body.theme-ready.style-elegant.style-modern gt-shell main>:not(router-outlet){animation:md-page .55s var(--md-ease) both}
-body.theme-ready.style-elegant.style-modern gt-shell main>:not(router-outlet)>:is(section,header,article,div,form,.card){animation:md-rise .7s var(--md-ease) both}
+/* Scheda del coach in Home */
+body.theme-ready.style-elegant.style-modern gt-shell a.md-coach{display:flex;align-items:center;gap:14px;margin-top:12px;padding:14px 14px 14px 14px;text-decoration:none;color:var(--text);border-radius:999px!important}
+body.theme-ready.style-elegant.style-modern gt-shell .md-orb{
+ flex:none;width:54px;height:54px;border-radius:50%;position:relative;display:grid;place-items:center;color:#fff;
+ background:conic-gradient(from 0deg,var(--md-a),var(--md-b),var(--accent),var(--md-a));animation:md-spin 7s linear infinite;box-shadow:0 0 28px -4px var(--md-glow);
+}
+body.theme-ready.style-elegant.style-modern gt-shell .md-orb::after{content:"";position:absolute;inset:6px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#3a3d4a,#0d0e13 70%)}
+body.theme-ready.style-elegant.style-modern gt-shell .md-orb gt-icon{position:relative;z-index:1;width:22px;height:22px;animation:md-spin 7s linear infinite reverse}
+@keyframes md-spin{to{transform:rotate(360deg)}}
+body.theme-ready.style-elegant.style-modern gt-shell .md-coach-text{flex:1;min-width:0}
+body.theme-ready.style-elegant.style-modern gt-shell .md-coach-text small{display:block;font-size:11px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--accent-text,var(--accent))}
+body.theme-ready.style-elegant.style-modern gt-shell .md-coach-text strong{display:block;margin-top:2px;font-size:15.5px;font-weight:750;line-height:1.25}
+body.theme-ready.style-elegant.style-modern gt-shell .md-coach-go{flex:none;width:42px;height:42px;border-radius:50%;display:grid;place-items:center;background:var(--md-surface-2);transition:transform .4s var(--md-spring),background .3s}
+@media(hover:hover){body.theme-ready.style-elegant.style-modern gt-shell a.md-coach:hover .md-coach-go{transform:translateX(3px);background:var(--md-grad);color:var(--md-ink)}}
+
+/* Copertina del giorno (Calendario) */
+@property --cp{syntax:'<number>';inherits:false;initial-value:0}
+body.theme-ready.style-elegant.style-modern gt-shell .cal-cover{
+ position:relative;margin:6px 0 14px;padding:20px 20px 18px;border-radius:34px;overflow:hidden;isolation:isolate;color:#fff;
+ background:var(--md-hero);box-shadow:0 30px 60px -28px var(--md-glow),0 2px 6px #00000026;
+}
+body.theme-ready.style-elegant.style-modern gt-shell .cal-cover-blob{position:absolute;border-radius:50%;filter:blur(36px);z-index:-1;pointer-events:none}
+body.theme-ready.style-elegant.style-modern gt-shell .cal-cover-blob.a{width:260px;height:260px;right:-90px;top:-110px;background:var(--md-a);opacity:.85;animation:md-blobA 11s ease-in-out infinite alternate}
+body.theme-ready.style-elegant.style-modern gt-shell .cal-cover-blob.b{width:210px;height:210px;left:-80px;bottom:-110px;background:var(--md-b);opacity:.5;animation:md-blobB 13s ease-in-out infinite alternate}
+body.theme-ready.style-elegant.style-modern gt-shell .cal-cover-main{display:flex;align-items:flex-end;justify-content:space-between;gap:12px}
+body.theme-ready.style-elegant.style-modern gt-shell .cal-cover-date{display:flex;align-items:flex-end;gap:12px;min-width:0}
+body.theme-ready.style-elegant.style-modern gt-shell .cal-cover-num{
+ font-family:var(--md-display);font-size:92px;font-weight:800;letter-spacing:-.07em;line-height:.82;padding-right:4px;
+ background:linear-gradient(180deg,#fff,#ffffffb8);-webkit-background-clip:text;background-clip:text;color:transparent;animation:md-roll .6s var(--md-spring) both;
+}
+@keyframes md-roll{from{transform:translateY(40%);opacity:0}}
+body.theme-ready.style-elegant.style-modern gt-shell .cal-cover-wd{padding-bottom:4px;min-width:0}
+body.theme-ready.style-elegant.style-modern gt-shell .cal-cover-wd b{display:block;font-family:var(--md-display);font-size:22px;font-weight:700;letter-spacing:-.03em;line-height:1}
+body.theme-ready.style-elegant.style-modern gt-shell .cal-cover-wd small{display:block;margin-top:4px;color:#ffffffa8;font-weight:700;font-size:13px}
+body.theme-ready.style-elegant.style-modern gt-shell .cal-cover-goal{
+ --cp:var(--p);flex:none;width:76px;height:76px;border-radius:50%;position:relative;display:grid;place-content:center;text-align:center;
+ background:conic-gradient(from 0deg,#fff calc(var(--cp)*1%),#ffffff2b 0);animation:md-goal 1.4s var(--md-ease) .3s both;
+}
+@keyframes md-goal{from{--cp:0}}
+body.theme-ready.style-elegant.style-modern gt-shell .cal-cover-goal::before{content:"";position:absolute;inset:8px;border-radius:50%;background:var(--md-hero)}
+body.theme-ready.style-elegant.style-modern gt-shell .cal-cover-goal>*{position:relative}
+body.theme-ready.style-elegant.style-modern gt-shell .cal-cover-goal strong{font-family:var(--md-display);font-size:19px;font-weight:800;line-height:1}
+body.theme-ready.style-elegant.style-modern gt-shell .cal-cover-goal span{font-size:9px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#ffffffb3;margin-top:2px}
+body.theme-ready.style-elegant.style-modern gt-shell .cal-cover-next{
+ display:flex;align-items:center;gap:12px;margin-top:16px;padding:10px 10px 10px 16px;min-height:60px;border-radius:999px;
+ background:#ffffff1f;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);box-shadow:inset 0 0 0 1px #ffffff29;
+}
+body.theme-ready.style-elegant.style-modern gt-shell .cal-cover-next>div{flex:1;min-width:0}
+body.theme-ready.style-elegant.style-modern gt-shell .cal-cover-next small{display:block;font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#ffffffb3}
+body.theme-ready.style-elegant.style-modern gt-shell .cal-cover-next strong{display:block;font-size:15px;font-weight:750;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+body.theme-ready.style-elegant.style-modern gt-shell .cal-cover-count{
+ flex:none;display:inline-flex;align-items:baseline;gap:3px;padding:9px 15px;border-radius:999px;background:#fff;color:#14151B;
+ font-family:var(--md-display);font-weight:800;font-size:16px;
+}
+body.theme-ready.style-elegant.style-modern gt-shell .cal-cover-count small{font-family:inherit;font-size:11px;font-weight:800;letter-spacing:0;text-transform:none;color:#5b6273;display:inline}
+body.theme-ready.style-elegant.style-modern gt-shell .cal-cover-day{margin-top:14px;height:6px;border-radius:999px;background:#ffffff29;position:relative}
+body.theme-ready.style-elegant.style-modern gt-shell .cal-cover-day i{position:absolute;left:0;top:0;bottom:0;width:calc(var(--p)*1%);border-radius:999px;background:linear-gradient(90deg,#ffffff80,#fff);animation:md-day 1.3s var(--md-ease) .2s both}
+body.theme-ready.style-elegant.style-modern gt-shell .cal-cover-day i::after{content:"";position:absolute;right:-6px;top:50%;width:14px;height:14px;margin-top:-7px;border-radius:50%;background:#fff;box-shadow:0 0 0 4px #ffffff40}
+@keyframes md-day{from{width:0}}
+/* Anello di completamento attorno al numero di ogni giorno della settimana */
+body.theme-ready.style-elegant.style-modern gt-shell .cal-view-week .el-week :is(a,button){position:relative}
+body.theme-ready.style-elegant.style-modern gt-shell .cal-view-week .el-week b{
+ position:relative;isolation:isolate;display:grid;place-items:center;width:40px;height:40px;
+}
+body.theme-ready.style-elegant.style-modern gt-shell .cal-view-week .el-week b::before{
+ content:"";position:absolute;inset:0;border-radius:50%;z-index:-1;
+ background:conic-gradient(from 0deg,var(--accent) calc(var(--p,0)*1%),var(--md-surface-3) 0);
+ -webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 4px),#000 calc(100% - 3px));mask:radial-gradient(farthest-side,transparent calc(100% - 4px),#000 calc(100% - 3px));
+}
+body.theme-ready.style-elegant.style-modern gt-shell .cal-view-week .el-week :is(a,button).today b::before{background:conic-gradient(from 0deg,#fff calc(var(--p,0)*1%),#ffffff4d 0)}
+
+/* ---------- 13. Movimento: ingresso delle pagine ----------
+   fill-mode «backwards»: a fine animazione l'effetto sparisce e non resta un livello di sovrapposizione che copre pannelli e finestre. */
+body.theme-ready.style-elegant.style-modern gt-shell main>:not(router-outlet){animation:md-page .55s var(--md-ease) backwards}
+body.theme-ready.style-elegant.style-modern gt-shell main>:not(router-outlet)>:is(section,header,article,div,form,.card){animation:md-rise .7s var(--md-ease) backwards}
 body.theme-ready.style-elegant.style-modern gt-shell main>:not(router-outlet)>:nth-child(2){animation-delay:.05s}
 body.theme-ready.style-elegant.style-modern gt-shell main>:not(router-outlet)>:nth-child(3){animation-delay:.1s}
 body.theme-ready.style-elegant.style-modern gt-shell main>:not(router-outlet)>:nth-child(4){animation-delay:.15s}

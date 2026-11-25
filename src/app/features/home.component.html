@@ -59,6 +59,13 @@
   </a>
   <p class="hx-weeknote">{{weekNote()}}</p>
 </section>
+@if(modern()){
+<a class="su-card md-coach" routerLink="/coach" aria-label="Coach: apri il tuo piano e i consigli passo dopo passo">
+  <span class="md-orb" aria-hidden="true"><gt-icon name="sparkle"/></span>
+  <span class="md-coach-text"><small>Il tuo coach</small><strong>Il tuo prossimo passo, chiaro</strong></span>
+  <span class="md-coach-go" aria-hidden="true"><gt-icon name="arrow"/></span>
+</a>
+}
 }@else{
 <section class="su-card hx-weekcard" gtDesign="home.week" aria-label="Questa settimana">
   <div class="hx-head"><h2 gtDesign="home.week.title" gtDesignLabel="home.week.title" gtDesignLabelDefault="Questa settimana">Questa settimana</h2><a class="hx-link" routerLink="/calendario"><span gtDesign="home.week.calendarLink" gtDesignLabel="home.week.calendarLink">Calendario</span><gt-icon name="chevron-right"/></a></div>
