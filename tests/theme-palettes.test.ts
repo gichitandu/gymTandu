@@ -65,7 +65,7 @@ it('keeps accent fill intact while adapting link and navigation text to the surr
 });
 
 it('offers Nero and Bianco as readable monochrome themes next to the original blue and violet',()=>{
- expect(SELECTABLE_THEME_PRESETS.map(p=>p.id)).toEqual(['blu-azzurro','viola-neon','nero','bianco']);
+ expect(SELECTABLE_THEME_PRESETS.map(p=>p.id)).toEqual(['cobalto','blu-azzurro','viola-neon','nero','bianco']);
  for(const palette of ELEGANT_THEME_PRESETS){
   const config={palette:palette.id,mode:palette.tone} as const;
   expect(validThemeConfig(config)).toBe(true);
@@ -88,6 +88,8 @@ it('keeps the «Elegante» style as an optional part of the theme, independent f
   const classic={palette:palette.id,mode:palette.tone} as const,elegant={...classic,style:'elegant'} as const;
   expect(validThemeConfig(elegant)).toBe(true);
   expect(validThemeConfig({...classic,style:'classic'})).toBe(true);
+  expect(validThemeConfig({...classic,style:'modern'})).toBe(true);
+  expect(resolveTheme({...classic,style:'modern'},false)).toEqual(resolveTheme(classic,false));
   // The style never changes colours: tokens are identical with and without it.
   expect(resolveTheme(elegant,false)).toEqual(resolveTheme(classic,false));
  }
