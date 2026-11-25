@@ -77,7 +77,7 @@ interface ProfileFormDraft {
 </button>
 <section class="su-card el-only el-look" aria-label="Aspetto">
  <button type="button" class="el-look-top" (click)="panel.set('theme')" aria-label="Apri tema e colori"><span><span class="el-eyebrow">Aspetto</span><strong>{{lookLabel()}}</strong></span><gt-icon name="chevron-right"/></button>
- <div class="su-seg" role="group" aria-label="Stile dell’app"><button type="button" [class.on]="!theme.elegant()" [attr.aria-pressed]="!theme.elegant()" [disabled]="theme.busy()" (click)="setLook('classic')">Classico</button><button type="button" [class.on]="theme.elegant()" [attr.aria-pressed]="theme.elegant()" [disabled]="theme.busy()" (click)="setLook('elegant')">Elegante</button></div>
+ <div class="su-seg" role="group" aria-label="Stile dell’app"><button type="button" [class.on]="!theme.elegant() && !theme.modern()" [attr.aria-pressed]="!theme.elegant() && !theme.modern()" [disabled]="theme.busy()" (click)="setLook('classic')">Classico</button><button type="button" [class.on]="theme.elegant()" [attr.aria-pressed]="theme.elegant()" [disabled]="theme.busy()" (click)="setLook('elegant')">Elegante</button><button type="button" [class.on]="theme.modern()" [attr.aria-pressed]="theme.modern()" [disabled]="theme.busy()" (click)="setLook('modern')">Rimodernizzato</button></div>
 </section>
 <div class="su-group">Obiettivi</div>
 <div class="su-list">
@@ -387,12 +387,12 @@ export class ProfileComponent {
   removeProfilePhoto(){this.photoRequest++;this.photoBusy.set(false);this.photoDraft.set(null);this.draftSession?.changed();}
   async saveUsername(){if(this.usernameBusy())return;this.accountError.set('');this.accountMessage.set('');this.usernameBusy.set(true);try{await this.auth.setUsername(this.usernameDraft()??this.auth.user()?.username??'');this.usernameDraft.set(null);this.accountMessage.set('Nome utente salvato. Puoi accedere con questo nome oppure con l’email.');await this.persistDraftState();}catch(e){this.accountError.set((e as Error).message);}finally{this.usernameBusy.set(false);}}
   theme = inject(ThemeService);
-  lookLabel() { const config = this.theme.config(), palette = THEME_PALETTES.find((item) => item.id === config.palette); return (config.style === 'elegant' ? 'Elegante' : 'Classico') + (palette ? ' · ' + palette.name : ''); }
+  lookLabel() { const config = this.theme.config(), palette = THEME_PALETTES.find((item) => item.id === config.palette); return (config.style === 'elegant' ? 'Elegante' : config.style === 'modern' ? 'Rimodernizzato' : 'Classico') + (palette ? ' · ' + palette.name : ''); }
   /** Cambia solo lo stile: palette, modalità e colori personali restano quelli salvati. */
-  async setLook(style: 'classic' | 'elegant') {
-    const { style: _current, ...config } = this.theme.config();
-    if ((style === 'elegant') === this.theme.elegant()) return;
-    await this.theme.saveConfig(style === 'elegant' ? { ...config, style } : config);
+  async setLook(style: 'classic' | 'elegant' | 'modern') {
+    const { style: current, ...config } = this.theme.config();
+    if (style === (current ?? 'classic')) return;
+    await this.theme.saveConfig(style === 'classic' ? config : { ...config, style });
   }
   defaultBackground = DEFAULT_BACKGROUND;
   auth = inject(AuthService);
