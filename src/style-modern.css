@@ -1,3 +1,9 @@
+/* Carattere dei titoli: Bricolage Grotesque (licenza SIL OFL, file in /licenses), ospitato sul sito e quindi disponibile anche offline. */
+@font-face{
+ font-family:"Bricolage Grotesque";font-style:normal;font-weight:200 800;font-display:swap;
+ src:url("/fonts/bricolage-grotesque-latin-wght.woff2") format("woff2-variations"),url("/fonts/bricolage-grotesque-latin-wght.woff2") format("woff2");
+}
+
 /* Stile «Rimodernizzato»: tutto stondato, gradienti dell'accento, vetro e animazioni con molla.
    Attivo solo con body.style-modern (il corpo porta anche style-elegant, di cui riusa la struttura:
    barra a pillola, Home compatta, seduta). Solo presentazione: handler, route, form, stati disabled
@@ -20,7 +26,7 @@ body.theme-ready.style-elegant.style-modern{
  --md-shadow-hi:0 2px 4px #00000012,0 26px 50px -20px #00000066;
  --md-spring:cubic-bezier(.34,1.56,.64,1);
  --md-ease:cubic-bezier(.22,1,.36,1);
- --md-display:ui-rounded,"SF Pro Rounded","Avenir Next","Segoe UI",system-ui,sans-serif;
+ --md-display:"Bricolage Grotesque",ui-rounded,"SF Pro Rounded","Avenir Next","Segoe UI",system-ui,sans-serif;
  /* variabili dello stile Elegante riallineate */
  --el-line:var(--md-line);
  --el-hi:var(--md-shadow);
