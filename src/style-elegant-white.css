@@ -12,8 +12,8 @@ body.theme-ready.style-elegant.custom-light:not(.style-modern){
  --at-noir:linear-gradient(160deg,#1c1c1f,#0b0b0c);
  --at-hair:color-mix(in srgb,var(--text) 9%,transparent);
  --at-hair-2:color-mix(in srgb,var(--text) 16%,transparent);
- --at-r:4px;
- --at-r-sm:2px;
+ --at-r:28px;      /* schede e superfici */
+ --at-r-sm:999px;    /* pulsanti, campi, chip e controlli: sempre arrotondati */
  --at-sh:0 0 0 1px var(--at-hair),0 22px 44px -26px #0d0d0f40;
  --at-sh-hover:0 0 0 1px var(--at-hair-2),0 30px 56px -26px #0d0d0f59;
  --at-serif:"Didot","Bodoni 72","Bodoni Moda",ui-serif,"New York","Iowan Old Style",Georgia,serif;
@@ -98,7 +98,7 @@ body.theme-ready.style-elegant.custom-light:not(.style-modern) gt-shell main :is
 
 /* ---------- 6. Segmenti, schede, badge ---------- */
 body.theme-ready.style-elegant.custom-light:not(.style-modern) gt-shell :is(.ref-tabs,.segmented,.neon-segments){
- border-radius:var(--at-r)!important;background:#fff!important;border:1px solid var(--at-hair-2)!important;box-shadow:none!important;padding:3px;
+ border-radius:999px!important;background:#fff!important;border:1px solid var(--at-hair-2)!important;box-shadow:none!important;padding:3px;
 }
 body.theme-ready.style-elegant.custom-light:not(.style-modern) gt-shell :is(.ref-tabs,.segmented,.neon-segments)>:is(button,a){border-radius:var(--at-r-sm)!important;letter-spacing:.04em}
 body.theme-ready.style-elegant.custom-light:not(.style-modern) gt-shell :is(.ref-tabs,.segmented,.neon-segments)>:is(button,a).active{
@@ -112,6 +112,8 @@ body.theme-ready.style-elegant.custom-light:not(.style-modern) gt-shell :is(.ref
 /* ---------- 7. Campi ---------- */
 body.theme-ready.style-elegant.custom-light:not(.style-modern) gt-shell main :is(input:not([type=checkbox],[type=radio],[type=range],[type=color]),select,textarea){
  background:#fff;border:1px solid var(--at-hair-2);border-radius:var(--at-r-sm);box-shadow:none;transition:border-color .25s ease,box-shadow .25s ease;
+}
+body.theme-ready.style-elegant.custom-light:not(.style-modern) gt-shell main textarea{border-radius:24px
 }
 body.theme-ready.style-elegant.custom-light:not(.style-modern) gt-shell main :is(input,select,textarea):focus-visible{
  outline:0;border-color:#0d0d0f;box-shadow:0 0 0 3px #c9a96a40;
@@ -184,7 +186,7 @@ body.theme-ready.style-elegant.custom-light:not(.style-modern) gt-shell .hx-next
 }
 body.theme-ready.style-elegant.custom-light:not(.style-modern) gt-shell .hx-next .su-badge{color:var(--at-gold)!important;background:none!important;border:0!important;padding:0;letter-spacing:.26em}
 body.theme-ready.style-elegant.custom-light:not(.style-modern) gt-shell .hx-next .hx-when{color:#f4ecdc;border-color:#f4ecdc33;border-radius:var(--at-r-sm)}
-body.theme-ready.style-elegant.custom-light:not(.style-modern) gt-shell .hx-next h2{color:#f4ecdc;font-size:38px!important;line-height:1.02;margin-top:44px!important}
+body.theme-ready.style-elegant.custom-light:not(.style-modern) gt-shell .hx-next h2{color:#f4ecdc;font-size:34px!important;line-height:1.04;margin:44px 88px 0 0!important}
 body.theme-ready.style-elegant.custom-light:not(.style-modern) gt-shell .hx-next .hx-sub{color:#f4ecdcb3;letter-spacing:.04em}
 body.theme-ready.style-elegant.custom-light:not(.style-modern) gt-shell .hx-next .hx-main{
  background:var(--at-gold-grad)!important;color:#0d0d0f!important;border-radius:50%!important;box-shadow:0 12px 26px -8px #00000099,inset 0 1px 0 #ffffff80!important;
@@ -201,7 +203,7 @@ body.theme-ready.style-elegant.custom-light:not(.style-modern) gt-shell .hx-leve
 /* ---------- 10. Navigazione: barra nera, voce attiva in oro ---------- */
 @media(max-width:800px),(max-width:1100px) and (pointer:coarse){
  body.theme-ready.style-elegant.custom-light:not(.style-modern) gt-shell .bottom-nav{
-  border-radius:var(--at-r)!important;background:#0d0d0f!important;border:0!important;
+  border-radius:999px!important;background:#0d0d0f!important;border:0!important;
   box-shadow:0 26px 50px -14px #0d0d0fa6,inset 0 1px 0 #ffffff14!important;
  }
  body.theme-ready.style-elegant.custom-light:not(.style-modern) gt-shell .bottom-nav a{border-radius:var(--at-r-sm)!important;color:#ffffff80!important}
@@ -257,7 +259,7 @@ body.theme-ready.style-elegant.custom-light:not(.style-modern) .entry-page input
 body.theme-ready.style-elegant.custom-light:not(.style-modern) .entry-page .entry-field{background:#fff;border:1px solid var(--at-hair-2);border-radius:var(--at-r-sm);box-shadow:none}
 body.theme-ready.style-elegant.custom-light:not(.style-modern) .entry-page .entry-field:focus-within{border-color:#0d0d0f;box-shadow:0 0 0 3px #c9a96a40}
 body.theme-ready.style-elegant.custom-light:not(.style-modern) .entry-page .entry-field>gt-icon{border-radius:50%;background:#0d0d0f;color:var(--at-gold)}
-body.theme-ready.style-elegant.custom-light:not(.style-modern) .entry-page .entry-tabs{border-radius:var(--at-r);background:#fff;border:1px solid var(--at-hair-2);box-shadow:none}
+body.theme-ready.style-elegant.custom-light:not(.style-modern) .entry-page .entry-tabs{border-radius:999px;background:#fff;border:1px solid var(--at-hair-2);box-shadow:none}
 body.theme-ready.style-elegant.custom-light:not(.style-modern) .entry-page .entry-tabs [role=tab]{border-radius:var(--at-r-sm)}
 body.theme-ready.style-elegant.custom-light:not(.style-modern) .entry-page .entry-tabs [role=tab][aria-selected=true]{background:#0d0d0f;color:#efdcab;box-shadow:none}
 
@@ -268,7 +270,7 @@ body.theme-ready.style-elegant.custom-light:not(.style-modern) .hb .hb-hero::bef
 body.theme-ready.style-elegant.custom-light:not(.style-modern) .hb :is(.hb-btn.pri,.hb-fab){background:var(--at-gold-grad);color:#0d0d0f;border-radius:var(--at-r-sm)}
 body.theme-ready.style-elegant.custom-light:not(.style-modern) .hb .hb-fab.round{border-radius:50%}
 body.theme-ready.style-elegant.custom-light:not(.style-modern) .hb :is(.hb-ch.on,.hb-seg .on){background:#0d0d0f;color:#efdcab}
-body.theme-ready.style-elegant.custom-light:not(.style-modern) .hb .hb-tabbar{border-radius:var(--at-r);background:#0d0d0f;border:0;box-shadow:0 26px 50px -14px #0d0d0fa6}
+body.theme-ready.style-elegant.custom-light:not(.style-modern) .hb .hb-tabbar{border-radius:999px;background:#0d0d0f;border:0;box-shadow:0 26px 50px -14px #0d0d0fa6}
 body.theme-ready.style-elegant.custom-light:not(.style-modern) .hb .hb-tabbar a{border-radius:var(--at-r-sm);color:#ffffff80}
 body.theme-ready.style-elegant.custom-light:not(.style-modern) .hb .hb-tabbar a.on{background:var(--at-gold-grad);color:#0d0d0f;box-shadow:none}
 body.theme-ready.style-elegant.custom-light:not(.style-modern) .hb :is(.hb-h1,h1){font-family:var(--at-serif);font-weight:400;letter-spacing:-.015em}
