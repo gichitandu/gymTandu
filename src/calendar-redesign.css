@@ -34,6 +34,41 @@ body.theme-ready.custom-light gt-shell .history-overview {
   );
 }
 
+/* ---------- 0b. Titolo: mai spezzato a metà parola ----------
+   Con quattro pulsanti a destra il titolo andava a capo dentro la parola
+   («Calendari / o», «23 – / 29»). La colonna del titolo prende lo spazio rimasto e il
+   carattere si riduce quanto basta. */
+body.theme-ready gt-shell .cal-page .cal-heading {
+  gap: 10px;
+}
+body.theme-ready gt-shell .cal-page .cal-heading-copy {
+  flex: 1 1 0;
+  min-width: 0;
+  container-type: inline-size;
+}
+body.theme-ready gt-shell .cal-page .cal-heading :is(h1, .cal-eyebrow) {
+  overflow-wrap: normal !important;
+  word-break: normal !important;
+  hyphens: none;
+}
+body.theme-ready:not(.style-elegant) gt-shell .cal-page .cal-heading h1 {
+  font-size: min(32px, 15.5cqi) !important;
+}
+/* «23 – 29» e «novembre» vanno a capo solo tra loro, mai dentro il periodo. */
+body.theme-ready gt-shell .cal-page .cal-heading h1 {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: 0.28em;
+}
+body.theme-ready gt-shell .cal-page .cal-heading h1 em {
+  margin-left: 0 !important;
+}
+body.theme-ready.style-elegant gt-shell .cal-page .cal-heading .cal-eyebrow {
+  font-size: min(37.44px, 17.5cqi) !important;
+  white-space: nowrap;
+}
+
 /* ---------- 1. Mese: riepilogo con numeri grandi ---------- */
 body.theme-ready gt-shell .cal-page .cal-month-kpis {
   display: grid;

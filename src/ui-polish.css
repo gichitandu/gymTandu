@@ -90,3 +90,186 @@ body.theme-ready gt-shell .su-seg.look-styles > button {
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
+/* ---------- Pannelli che salgono dal basso sopra la barra di navigazione ----------
+   .app-main è uno strato isolato: si alzava solo per .modal-backdrop, quindi il pannello
+   Filtri del calendario (e il modulo utenti) restavano sotto la barra e il pulsante finale
+   non si poteva toccare. */
+body
+  gt-shell
+  .app-main:has(.cal-sheet-backdrop, .us3-scrim, .su-sheet-backdrop) {
+  position: relative;
+  z-index: 60;
+}
+
+/* ---------- Campi di ricerca: un solo riquadro ----------
+   Negli stili Elegante e Rimodernizzato il campo interno riceveva un secondo bordo e
+   sfondo dentro il contenitore già disegnato (Esercizi, Allenamento in gruppo). */
+body.theme-ready gt-shell :is(.catalog-search, .gdp-search):not(#_) input {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  outline-offset: 2px;
+}
+
+/* ---------- Home: «Come stai oggi?» leggibile nel tema chiaro ----------
+   I numeri 1-5 usavano colori pastello pensati per lo sfondo scuro. */
+body.theme-ready.custom-light:not(.style-elegant)
+  gt-shell
+  .hx-levels
+  button:nth-child(1) {
+  color: #c2364f;
+}
+body.theme-ready.custom-light:not(.style-elegant)
+  gt-shell
+  .hx-levels
+  button:nth-child(2) {
+  color: #b35f14;
+}
+body.theme-ready.custom-light:not(.style-elegant)
+  gt-shell
+  .hx-levels
+  button:nth-child(3) {
+  color: #8a7000;
+}
+body.theme-ready.custom-light:not(.style-elegant)
+  gt-shell
+  .hx-levels
+  button:nth-child(4) {
+  color: #23824a;
+}
+body.theme-ready.custom-light:not(.style-elegant)
+  gt-shell
+  .hx-levels
+  button:nth-child(5) {
+  color: #136b4d;
+}
+
+/* ---------- Elegante chiaro: scheda del piano attivo ----------
+   Testo crema (inchiostro Atelier) su fondo rosa dell'accento: quasi illeggibile.
+   Diventa nera come la scheda dell'allenamento in Home. */
+body.theme-ready.style-elegant.custom-light:not(.style-modern) {
+  --el-solid: #141416;
+}
+
+/* ---------- Rimodernizzato: pulsante «Termina piano» visibile ----------
+   Aveva lo stesso colore della scheda e sembrava testo semplice. */
+body.theme-ready.style-elegant.style-modern gt-shell main .ghost.pd3-finish {
+  background: var(--md-surface-3) !important;
+}
+
+/* ---------- Selettore temi: riquadri delle palette non a pillola ----------
+   In Rimodernizzato il raggio 999px dei pulsanti li trasformava in ovali e tagliava i nomi. */
+body.theme-ready gt-theme-picker :is(.palette-tile, .style-option) {
+  border-radius: 20px !important;
+}
+
+/* ---------- Scelta dell'app nel tema chiaro (Classico e Sportivo) ----------
+   Il riquadro «Oggi» e il centro dell'anello erano scuri fissi: il numero spariva. */
+body.theme-ready.custom-light:not(.style-elegant) gt-app-chooser .a-gt .wd {
+  background: color-mix(in srgb, var(--text) 5%, transparent);
+  border-color: color-mix(in srgb, var(--text) 10%, transparent);
+}
+body.theme-ready.custom-light:not(.style-elegant)
+  gt-app-chooser
+  .a-gt
+  .ring::before {
+  background: var(--card);
+}
+body.theme-ready.custom-light:not(.style-elegant) gt-app-chooser .a-gt .ring {
+  background: conic-gradient(
+    from -90deg,
+    var(--accent) calc(var(--p) * 1%),
+    color-mix(in srgb, var(--text) 12%, transparent) 0
+  );
+}
+
+/* ---------- GT Garage chiaro (Elegante e Rimodernizzato): «Budget auto consigliato» ----------
+   Fondo scuro fisso con titolo scuro: illeggibile. */
+body.theme-ready.style-elegant.custom-light gt-garage-insights .save {
+  background:
+    radial-gradient(
+      120% 100% at 0% 0%,
+      rgba(31, 157, 122, 0.12),
+      transparent 60%
+    ),
+    var(--el-surface, var(--card)) !important;
+  border-color: rgba(31, 157, 122, 0.3) !important;
+  color: var(--text);
+}
+
+/* ---------- GT Hub chiaro (Elegante e Rimodernizzato): colori delle etichette ----------
+   Le tinte pastello del Hub sono pensate per lo sfondo scuro: sul bianco si leggevano a stento. */
+body.theme-ready.style-elegant.custom-light .hb {
+  --hb-g: #18865f;
+  --hb-r: #c8324d;
+  --hb-o: #b9581c;
+  --hb-y: #8f6a00;
+  --hb-p: #b8357a;
+  --hb-b: #2f5fd0;
+  --hb-c: #1279a3;
+}
+body.theme-ready.style-elegant.custom-light .hb .hb-tag.v {
+  color: #5a43d6;
+}
+body.theme-ready.style-elegant.custom-light .hb .hb-tag.b {
+  color: #2f5fd0;
+}
+body.theme-ready.style-elegant.custom-light gt-hub-today .now {
+  color: #5a43d6;
+}
+
+/* ---------- Elegante chiaro: titolo dell'allenamento in corso ----------
+   Il titolo grande delle pagine (36-46px) finiva anche nell'intestazione compatta della
+   seduta, stretta tra «indietro» e «Termina»: «Quadricipit / i» spezzato a metà parola. */
+body.theme-ready.style-elegant.custom-light:not(.style-modern)
+  gt-shell
+  main
+  .session-header
+  .session-title
+  h1 {
+  font-size: 24px !important;
+  line-height: 1.1;
+  overflow-wrap: normal;
+}
+body.theme-ready.style-elegant.custom-light:not(.style-modern)
+  gt-shell
+  main
+  .session-header
+  .session-title
+  h1::after {
+  display: none;
+}
+
+/* ---------- Schermi larghi (iPad, computer) negli stili Elegante e Rimodernizzato ---------- */
+/* Progressi: la colonna ereditava «align-items:start» dalla griglia di base e ogni blocco
+   si restringeva al proprio contenuto (selettore e grafico larghi pochi centimetri). */
+body.theme-ready.style-elegant gt-shell main .reference-progress.pg-simple {
+  align-items: stretch;
+}
+/* Home: la fila dei giorni si allungava fino all'altezza della scheda accanto
+   (pillola del giorno altissima). Ora occupa una riga intera. */
+@media (min-width: 700px) {
+  body.theme-ready.style-elegant gt-shell .hx-simple > .el-week {
+    flex-basis: 100%;
+    align-self: start;
+  }
+}
+
+/* ---------- Schermi stretti (iPhone SE e mini) ---------- */
+/* Pasti: «P 68 g · C 94 g · G 19 g» non lascia più l'unità da sola a capo. */
+body.theme-ready gt-shell .meal-macros {
+  text-wrap: balance;
+}
+/* Home: «Vedi esercizi» e «Sposta» restano su una riga. */
+@media (max-width: 370px) {
+  body.theme-ready gt-shell .hx-secondary .su-btn {
+    white-space: nowrap;
+    padding-inline: 8px;
+    font-size: 13px;
+  }
+  /* Scelta dell'app: senza le miniature il titolo dell'allenamento resta leggibile. */
+  body.theme-ready gt-app-chooser .a-gt .strip {
+    display: none;
+  }
+}
