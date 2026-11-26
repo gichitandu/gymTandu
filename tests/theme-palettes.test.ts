@@ -65,7 +65,7 @@ it('keeps accent fill intact while adapting link and navigation text to the surr
 });
 
 it('offers Nero and Bianco as readable monochrome themes next to the original blue and violet',()=>{
- expect(SELECTABLE_THEME_PRESETS.map(p=>p.id)).toEqual(['cobalto','blu-azzurro','viola-neon','nero','bianco']);
+ expect(SELECTABLE_THEME_PRESETS.map(p=>p.id)).toEqual(['cobalto','blu-azzurro','viola-neon','smeraldo-sport','nero','bianco']);
  for(const palette of ELEGANT_THEME_PRESETS){
   const config={palette:palette.id,mode:palette.tone} as const;
   expect(validThemeConfig(config)).toBe(true);

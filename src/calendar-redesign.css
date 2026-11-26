@@ -1,0 +1,535 @@
+/* Calendario: aspetto rinnovato per Settimana, Mese ed Elenco (storico) in tutti gli stili
+   (Classico, Elegante, Rimodernizzato). Solo presentazione: handler, route, form, stati disabled
+   e valori calcolati non cambiano. I colori derivano sempre dalla palette scelta (--accent,
+   --theme-secondary, --card…), quindi seguono qualsiasi tema, chiaro o scuro.
+   Caricato per ultimo: sovrascrive calendar.component.css e gli stili Elegante/Rimodernizzato. */
+
+/* ---------- 0. Valori condivisi ---------- */
+body.theme-ready gt-shell .cal-page,
+body.theme-ready gt-shell .hx3-list,
+body.theme-ready gt-shell .history-overview {
+  --cr-a: var(--accent);
+  --cr-b: var(--theme-secondary, var(--accent-text, var(--accent)));
+  --cr-grad: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--cr-b) 70%, #fff),
+    var(--cr-a) 48%,
+    color-mix(in srgb, var(--cr-b) 60%, var(--cr-a))
+  );
+  --cr-glow: color-mix(in srgb, var(--cr-a) 55%, transparent);
+  --cr-done: var(--cal-green, var(--green, #5fe0b0));
+  --cr-part: var(--cal-amber, var(--warning, #f5c765));
+  --cr-track: color-mix(in srgb, var(--text) 9%, transparent);
+  --cr-radius: 26px;
+}
+
+/* ---------- 1. Mese: riepilogo con numeri grandi ---------- */
+body.theme-ready gt-shell .cal-page .cal-month-kpis {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin: 2px 2px 16px;
+}
+body.theme-ready gt-shell .cal-page .cal-month-kpis > div {
+  min-width: 0;
+  padding: 0 4px 0 12px;
+  border-left: 1px solid var(--line);
+}
+body.theme-ready gt-shell .cal-page .cal-month-kpis > div:first-child {
+  padding-left: 2px;
+  border-left: 0;
+}
+body.theme-ready gt-shell .cal-page .cal-month-kpis b {
+  display: block;
+  font-size: clamp(22px, 7.2vw, 30px);
+  font-weight: 850;
+  line-height: 1.05;
+  letter-spacing: -0.035em;
+  font-variant-numeric: tabular-nums;
+  background: var(--cr-grad);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: var(--text);
+  animation: crRise 0.6s cubic-bezier(0.2, 0.9, 0.25, 1) both;
+}
+body.theme-ready gt-shell .cal-page .cal-month-kpis > div:nth-child(2) b {
+  animation-delay: 60ms;
+}
+body.theme-ready gt-shell .cal-page .cal-month-kpis > div:nth-child(3) b {
+  animation-delay: 120ms;
+}
+body.theme-ready gt-shell .cal-page .cal-month-kpis b em {
+  font-style: normal;
+  font-size: 0.5em;
+  font-weight: 700;
+  letter-spacing: 0;
+  -webkit-text-fill-color: var(--muted);
+  color: var(--muted);
+}
+body.theme-ready gt-shell .cal-page .cal-month-kpis small {
+  display: block;
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+/* ---------- 2. Mese: griglia ad anelli con colonna settimanale ---------- */
+body.theme-ready gt-shell .cal-page .cal-month-weekdays,
+body.theme-ready gt-shell .cal-page .cal-month-grid {
+  grid-template-columns: repeat(7, minmax(0, 1fr)) 30px;
+  column-gap: 1px;
+}
+body.theme-ready gt-shell .cal-page .cal-month-grid {
+  row-gap: 8px;
+  align-items: center;
+}
+body.theme-ready gt-shell .cal-page .cal-month-weekdays span {
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+}
+body.theme-ready gt-shell .cal-page .cal-month-weekdays .cal-wk-head {
+  font-size: 8.5px;
+  letter-spacing: 0.08em;
+  color: color-mix(in srgb, var(--muted) 80%, transparent);
+}
+/* La fascia continua dei giorni completati lascia il posto agli anelli. */
+body.theme-ready gt-shell .cal-page .cal-cw::before {
+  display: none !important;
+}
+body.theme-ready gt-shell .cal-page .cal-cw {
+  height: 44px;
+}
+body.theme-ready gt-shell .cal-page .cal-day {
+  width: 38px;
+  height: 38px;
+}
+body.theme-ready gt-shell .cal-page .cal-day strong {
+  font-size: 14px;
+  font-weight: 700;
+}
+body.theme-ready gt-shell .cal-page .cal-day-ring {
+  -webkit-mask: radial-gradient(
+    farthest-side,
+    transparent calc(100% - 3px),
+    #000 calc(100% - 2.5px)
+  );
+  mask: radial-gradient(
+    farthest-side,
+    transparent calc(100% - 3px),
+    #000 calc(100% - 2.5px)
+  );
+  background: conic-gradient(
+    var(--st, transparent) calc(var(--p, 0) * 1%),
+    var(--cr-track) 0
+  );
+}
+body.theme-ready gt-shell .cal-page .cal-day[data-state=""] .cal-day-ring,
+body.theme-ready gt-shell .cal-page .cal-day[data-state="out"] .cal-day-ring,
+body.theme-ready
+  gt-shell
+  .cal-page
+  .cal-day[data-state="planned"]
+  .cal-day-ring {
+  background: none;
+}
+body.theme-ready gt-shell .cal-page .cal-day[data-state="completed"] {
+  background: radial-gradient(
+    circle,
+    color-mix(in srgb, var(--cr-done) 30%, transparent) 0 58%,
+    transparent 62%
+  );
+}
+body.theme-ready gt-shell .cal-page .cal-day[data-state="planned"] {
+  border: 2px dashed color-mix(in srgb, var(--cr-a) 62%, transparent);
+  background: color-mix(in srgb, var(--cr-a) 8%, transparent);
+}
+body.theme-ready gt-shell .cal-page .cal-day.today:not(.selected) {
+  background: var(--cr-grad);
+  box-shadow: 0 8px 22px -4px var(--cr-glow);
+  animation: crGlow 2.6s ease-in-out infinite;
+}
+body.theme-ready gt-shell .cal-page .cal-day.today:not(.selected) strong {
+  color: var(--accent-ink, #04121f);
+  font-weight: 850;
+}
+body.theme-ready gt-shell .cal-page .cal-day.today:not(.selected) .cal-day-ring,
+body.theme-ready gt-shell .cal-page .cal-day.today::after {
+  display: none;
+}
+body.theme-ready gt-shell .cal-page .cal-day.selected {
+  background: var(--cr-grad);
+  transform: scale(1.04);
+  box-shadow:
+    0 0 0 3px var(--card),
+    0 0 0 5px var(--text),
+    0 12px 26px -6px var(--cr-glow);
+}
+body.theme-ready gt-shell .cal-page .cal-day.selected strong {
+  color: var(--accent-ink, #04121f);
+}
+
+body.theme-ready gt-shell .cal-page .cal-day[data-state="rest"] {
+  color: var(--muted);
+}
+body.theme-ready gt-shell .cal-page .cal-day[data-state="rest"] .cal-day-ring {
+  --st: var(--muted);
+  opacity: 0.3;
+}
+
+/* Anello della settimana: allenamenti fatti sull'obiettivo. */
+body.theme-ready gt-shell .cal-page .cal-wk {
+  --st: var(--cr-a);
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  margin: auto;
+  border-radius: 50%;
+  background: conic-gradient(
+    var(--st) calc(var(--wp, 0) * 1%),
+    var(--cr-track) 0
+  );
+  font-size: 9.5px;
+  font-weight: 850;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+body.theme-ready gt-shell .cal-page .cal-wk::before {
+  content: "";
+  position: absolute;
+  inset: 3px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--card) 96%, var(--bg));
+}
+body.theme-ready gt-shell .cal-page .cal-wk span {
+  position: relative;
+}
+body.theme-ready gt-shell .cal-page .cal-wk.full {
+  --st: var(--cr-done);
+  color: var(--cr-done);
+  filter: drop-shadow(
+    0 0 5px color-mix(in srgb, var(--cr-done) 70%, transparent)
+  );
+}
+
+/* Scheda del mese: respiro e vetro. */
+body.theme-ready gt-shell .cal-page .cal-board {
+  padding: 14px 10px 12px;
+  border-radius: 30px;
+}
+body.theme-ready gt-shell .cal-page .cal-legend {
+  margin-top: 12px;
+  padding-top: 11px;
+  border-top: 1px solid var(--line);
+}
+
+/* Titolo del giorno selezionato. */
+body.theme-ready gt-shell .cal-page .cal-agenda-heading h2 {
+  font-size: 20px;
+  font-weight: 850;
+  letter-spacing: -0.03em;
+}
+body.theme-ready gt-shell .cal-page .cal-now-label {
+  background: var(--cr-grad);
+  color: var(--accent-ink, #04121f);
+}
+
+/* ---------- 3. Settimana: riepilogo e voci in evidenza ---------- */
+body.theme-ready gt-shell .cal-page .cal-overview {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  padding: 16px;
+  border-radius: var(--cr-radius);
+}
+body.theme-ready gt-shell .cal-page .cal-overview::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  right: -70px;
+  top: -80px;
+  width: 230px;
+  height: 230px;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--cr-glow), transparent 68%);
+  opacity: 0.55;
+  pointer-events: none;
+}
+body.theme-ready gt-shell .cal-page .cal-bigring {
+  background: conic-gradient(
+    from -90deg,
+    var(--cr-a),
+    var(--cr-b) calc(var(--p, 0) * 1%),
+    var(--cr-track) 0
+  );
+  filter: drop-shadow(0 0 12px var(--cr-glow));
+}
+body.theme-ready gt-shell .cal-page .cal-bar i[data-state="completed"] {
+  background: linear-gradient(
+    var(--cr-done),
+    color-mix(in srgb, var(--cr-done) 40%, transparent)
+  );
+}
+body.theme-ready gt-shell .cal-page .cal-bar i[data-state="planned"] {
+  background: linear-gradient(
+    var(--cr-a),
+    color-mix(in srgb, var(--cr-a) 35%, transparent)
+  );
+}
+
+/* Voce selezionata del giorno: scheda grande con alone dello stato. */
+body.theme-ready gt-shell .cal-page .cal-row-item {
+  border-radius: 22px;
+  padding: 11px 12px 11px 18px;
+}
+body.theme-ready gt-shell .cal-page .cal-row-item.selected {
+  background:
+    radial-gradient(
+      200px 120px at 100% 0,
+      color-mix(in srgb, var(--k) 34%, transparent),
+      transparent 70%
+    ),
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--k) 16%, var(--card)),
+      var(--card)
+    );
+}
+body.theme-ready
+  gt-shell
+  .cal-page
+  .cal-row-item.selected
+  .cal-item-action:not(.is-done) {
+  animation: crPulse 2.2s ease-in-out infinite;
+}
+body.theme-ready gt-shell .cal-page .cal-row-item .cal-item-thumb {
+  box-shadow: 0 6px 16px -6px color-mix(in srgb, var(--k) 70%, transparent);
+}
+
+body.theme-ready gt-shell .cal-page .cal-strip-day.selected,
+body.theme-ready gt-shell .cal-page .el-week .today {
+  box-shadow: 0 12px 26px -10px var(--cr-glow);
+}
+
+/* ---------- 4. Elenco (storico allenamenti) ---------- */
+body.theme-ready gt-shell .history-overview {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  padding: 16px 8px;
+  border-radius: var(--cr-radius);
+}
+body.theme-ready gt-shell .history-overview::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  right: -60px;
+  top: -70px;
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--cr-glow), transparent 68%);
+  opacity: 0.5;
+  pointer-events: none;
+}
+body.theme-ready gt-shell .history-overview b {
+  font-size: clamp(18px, 5.6vw, 24px);
+  letter-spacing: -0.03em;
+  background: var(--cr-grad);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: var(--text);
+}
+body.theme-ready gt-shell .history-overview em {
+  -webkit-text-fill-color: var(--muted);
+}
+body.theme-ready gt-shell .hx3-list .history-month {
+  align-items: center;
+  gap: 10px;
+  margin: 14px 2px 2px;
+}
+body.theme-ready gt-shell .hx3-list .history-month::after {
+  content: "";
+  order: 1;
+  flex: 1;
+  height: 1px;
+  background: var(--line);
+}
+body.theme-ready gt-shell .hx3-list .history-month span {
+  order: 0;
+  color: var(--text);
+  font-size: 12px;
+}
+body.theme-ready gt-shell .hx3-list .history-month small {
+  order: 2;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--cr-a) 14%, transparent);
+  color: var(--accent-text, var(--cr-a));
+  font-weight: 800;
+}
+body.theme-ready gt-shell .hx3-list .hx3-session {
+  position: relative;
+  overflow: hidden;
+  gap: 12px;
+  padding: 12px 14px 12px 20px;
+  border-radius: 22px;
+  transition:
+    transform 0.25s cubic-bezier(0.3, 1.4, 0.5, 1),
+    box-shadow 0.25s;
+}
+body.theme-ready gt-shell .hx3-list .hx3-session::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 12px;
+  bottom: 12px;
+  width: 4px;
+  border-radius: 0 4px 4px 0;
+  background: var(--cr-done);
+  box-shadow: 0 0 14px var(--cr-done);
+}
+body.theme-ready gt-shell .hx3-list .hx3-date {
+  border-radius: 50%;
+  width: 52px;
+  height: 52px;
+  background: color-mix(in srgb, var(--cr-done) 16%, transparent);
+  border-color: color-mix(in srgb, var(--cr-done) 55%, transparent);
+}
+body.theme-ready gt-shell .hx3-list .hx3-session:first-of-type .hx3-date {
+  background: var(--cr-grad) !important;
+  border-color: transparent !important;
+  box-shadow: 0 10px 22px -8px var(--cr-glow);
+}
+body.theme-ready gt-shell .hx3-list .hx3-session:first-of-type .hx3-date strong,
+body.theme-ready gt-shell .hx3-list .hx3-session:first-of-type .hx3-date small {
+  color: var(--accent-ink, #04121f);
+}
+body.theme-ready gt-shell .hx3-list .hx3-meta span {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--text) 7%, transparent);
+  font-size: 11px;
+}
+
+/* ---------- 5. Elegante: forme tonde, toni morbidi ---------- */
+body.theme-ready.style-elegant gt-shell .cal-page {
+  --cr-radius: 30px;
+}
+body.theme-ready.style-elegant gt-shell .cal-page .cal-month-kpis b,
+body.theme-ready.style-elegant gt-shell .history-overview b {
+  font-weight: 560;
+  letter-spacing: -0.05em;
+}
+body.theme-ready.style-elegant gt-shell .cal-page .cal-board {
+  border-radius: 32px;
+  background: var(--el-surface, var(--card));
+  border: 1px solid var(--el-line, var(--line));
+  box-shadow: var(--el-hi, 0 14px 34px -18px #0006);
+}
+body.theme-ready.style-elegant
+  gt-shell
+  .cal-page
+  .cal-day[data-state="completed"] {
+  background: radial-gradient(
+    circle,
+    color-mix(in srgb, var(--cr-done) 22%, transparent) 0 58%,
+    transparent 62%
+  );
+}
+body.theme-ready.style-elegant gt-shell .cal-page .cal-row-item {
+  border-radius: 26px;
+}
+body.theme-ready.style-elegant gt-shell .hx3-list .hx3-session {
+  border-radius: 26px;
+}
+
+/* ---------- 6. Rimodernizzato: stondato, gradienti, molla ---------- */
+body.theme-ready.style-elegant.style-modern gt-shell .cal-page {
+  --cr-grad: var(--md-grad);
+  --cr-glow: var(--md-glow);
+  --cr-radius: 34px;
+}
+body.theme-ready.style-elegant.style-modern gt-shell .history-overview,
+body.theme-ready.style-elegant.style-modern gt-shell .hx3-list {
+  --cr-grad: var(--md-grad);
+  --cr-glow: var(--md-glow);
+}
+body.theme-ready.style-elegant.style-modern gt-shell .cal-page .cal-board {
+  border: 0;
+  border-radius: 36px;
+  background: var(--md-surface);
+  box-shadow: var(--md-shadow);
+}
+body.theme-ready.style-elegant.style-modern gt-shell .cal-page .cal-row-item,
+body.theme-ready.style-elegant.style-modern gt-shell .hx3-list .hx3-session {
+  border-radius: 30px;
+}
+body.theme-ready.style-elegant.style-modern gt-shell .cal-page .cal-day {
+  transition:
+    transform 0.4s var(--md-spring),
+    box-shadow 0.3s;
+}
+body.theme-ready.style-elegant.style-modern gt-shell .cal-page .cal-day:active {
+  transform: scale(0.9);
+}
+body.theme-ready.style-elegant.style-modern
+  gt-shell
+  .cal-page
+  .cal-day.selected {
+  transform: scale(1.1);
+}
+body.theme-ready.style-elegant.style-modern gt-shell .hx3-list .hx3-session {
+  background: var(--md-surface);
+  border: 0;
+  box-shadow: var(--md-shadow);
+}
+
+/* ---------- 7. Movimento ---------- */
+@keyframes crRise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+@keyframes crGlow {
+  50% {
+    box-shadow: 0 10px 30px -2px var(--cr-glow);
+  }
+}
+@keyframes crPulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--k) 50%, transparent);
+  }
+  50% {
+    box-shadow: 0 0 0 9px transparent;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  body.theme-ready gt-shell .cal-page *,
+  body.theme-ready gt-shell .hx3-list * {
+    animation: none !important;
+  }
+}
+@media (max-width: 359px) {
+  body.theme-ready gt-shell .cal-page .cal-day {
+    width: 33px;
+    height: 33px;
+  }
+  body.theme-ready gt-shell .cal-page .cal-month-weekdays,
+  body.theme-ready gt-shell .cal-page .cal-month-grid {
+    grid-template-columns: repeat(7, minmax(0, 1fr)) 26px;
+  }
+  body.theme-ready gt-shell .cal-page .cal-wk {
+    width: 22px;
+    height: 22px;
+    font-size: 8.5px;
+  }
+}

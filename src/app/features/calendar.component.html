@@ -512,40 +512,76 @@
     </div>
   } @else {
     <div class="cal-view cal-view-month">
+      <section class="cal-month-kpis" aria-label="Riepilogo del mese">
+        <div>
+          <b
+            >{{ goalCompleted()
+            }}@if (monthTarget()) {<em>/{{ monthTarget() }}</em>}</b
+          ><small>Allenamenti</small>
+        </div>
+        <div>
+          <b>{{
+            summary().hasDuration ? compactDuration(summary().durationMinutes) : "—"
+          }}</b
+          ><small>Tempo</small>
+        </div>
+        <div>
+          <b>{{ monthActiveDays() }}</b><small>Giorni attivi</small>
+        </div>
+      </section>
       <section class="cal-board" aria-label="Seleziona una data">
         <ng-container *ngTemplateOutlet="periodNav" />
         <div class="cal-month-weekdays" aria-hidden="true">
           @for (name of weekdays; track $index) {
             <span>{{ name }}</span>
           }
+          <span class="cal-wk-head">Sett.</span>
         </div>
         <div class="cal-month-grid" aria-label="Giorni del mese">
-          @for (cell of monthCells(); track cell.date; let i = $index) {
-            <div
-              class="cal-cw"
-              [class.join-l]="cell.joinLeft"
-              [class.join-r]="cell.joinRight"
-            >
-              <button
-                type="button"
-                class="cal-day"
-                [attr.data-state]="cell.state"
-                [class.selected]="selected() === cell.date"
-                [class.today]="cell.date === today"
-                [attr.aria-label]="dayAria(cell.date)"
-                [attr.aria-pressed]="selected() === cell.date"
-                [attr.aria-current]="cell.date === today ? 'date' : null"
-                [style.--i]="i"
-                (click)="choose(cell.date)"
+          @for (week of monthWeeks(); track week.index) {
+            @for (cell of week.cells; track cell.date; let i = $index) {
+              <div
+                class="cal-cw"
+                [class.join-l]="cell.joinLeft"
+                [class.join-r]="cell.joinRight"
               >
-                <span class="cal-day-ring" aria-hidden="true"></span>
-                <strong>{{ +cell.date.slice(8) }}</strong>
-                @if (cell.extra) {
-                  <span class="cal-day-extra" aria-hidden="true"
-                    ><gt-icon name="activity"
-                  /></span>
-                }
-              </button>
+                <button
+                  type="button"
+                  class="cal-day"
+                  [attr.data-state]="cell.state"
+                  [class.selected]="selected() === cell.date"
+                  [class.today]="cell.date === today"
+                  [attr.aria-label]="dayAria(cell.date)"
+                  [attr.aria-pressed]="selected() === cell.date"
+                  [attr.aria-current]="cell.date === today ? 'date' : null"
+                  [style.--i]="week.index * 7 + i"
+                  (click)="choose(cell.date)"
+                >
+                  <span class="cal-day-ring" aria-hidden="true"></span>
+                  <strong>{{ +cell.date.slice(8) }}</strong>
+                  @if (cell.extra) {
+                    <span class="cal-day-extra" aria-hidden="true"
+                      ><gt-icon name="activity"
+                    /></span>
+                  }
+                </button>
+              </div>
+            }
+            <div
+              class="cal-wk"
+              role="img"
+              [class.full]="week.percent >= 100"
+              [style.--wp]="week.percent"
+              [attr.aria-label]="
+                'Settimana ' +
+                (week.index + 1) +
+                ': ' +
+                week.done +
+                (week.target ? ' su ' + week.target : '') +
+                (week.done === 1 ? ' allenamento completato' : ' allenamenti completati')
+              "
+            >
+              <span aria-hidden="true">{{ week.done }}</span>
             </div>
           }
         </div>

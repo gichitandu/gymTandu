@@ -99,6 +99,22 @@ export class CalendarComponent {
    joinRight:states[index]==='completed'&&index%7<6&&states[index+1]==='completed',
    extra:(this.agendaByDate().get(date)||[]).some(item=>item.kind!=='workout'&&item.kind!=='rest')}));
  });
+ /** Anello della settimana nel mese: allenamenti completati rispetto all'obiettivo settimanale (o a quelli in programma). */
+ readonly monthWeeks=computed(()=>{
+  const cells=this.monthCells(),goal=this.s.settings().goals?.workoutsPerWeek||0;
+  return Array.from({length:Math.ceil(cells.length/7)},(_,index)=>{
+   const row=cells.slice(index*7,index*7+7);
+   const workouts=row.filter(cell=>!cell.out).flatMap(cell=>this.agendaByDate().get(cell.date)||[]).filter(item=>item.kind==='workout'&&item.status!=='missed');
+   const done=workouts.filter(item=>item.status==='completed').length,target=goal||workouts.length;
+   return {index,cells:row,done,target,percent:target?Math.min(100,done/target*100):0};
+  });
+ });
+ /** Obiettivo mensile derivato da quello settimanale, in proporzione ai giorni del mese. */
+ readonly monthTarget=computed(()=>{const goal=this.s.settings().goals?.workoutsPerWeek;return goal?Math.max(1,Math.round(goal*this.periodDates().length/7)):0;});
+ /** Giorni del mese con almeno un'attività svolta (anche in parte): non conta ciò che è solo in programma. */
+ readonly monthActiveDays=computed(()=>this.periodDates().filter(date=>(this.agendaByDate().get(date)||[]).some(item=>item.kind!=='rest'&&(item.status==='completed'||item.status==='partial'))).length);
+ /** Durata compatta per i numeri grandi del riepilogo (es. «11h 55»). */
+ compactDuration(minutes:number){const total=Math.max(0,Math.round(minutes)),hours=Math.floor(total/60),rest=total%60;return hours?hours+'h'+(rest?' '+String(rest).padStart(2,'0'):''):rest+' min';}
  readonly durationText=formatCalendarDuration;
  readonly modal=signal(false);readonly saving=signal(false);readonly formMode=signal<FormMode>('create');
  editing='';kind:CalendarEventKind='workout';eventDate=this.today;eventTime='';activityTitle='';dayId='';notes='';repeatCount=1;

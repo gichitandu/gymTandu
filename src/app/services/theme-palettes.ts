@@ -181,7 +181,7 @@ export const MODERN_THEME_PRESETS: readonly ThemePalette[] = [
     buttonEnd: "#1A6FDB",
   },
 ];
-const SELECTABLE_ORIGINAL_IDS = ["blu-azzurro", "viola-neon"];
+const SELECTABLE_ORIGINAL_IDS = ["blu-azzurro", "viola-neon", "smeraldo-sport"];
 /** The only themes offered in the picker. Every other palette stays valid for saved themes and backups. */
 export const SELECTABLE_THEME_PRESETS: readonly ThemePalette[] = [
   ...MODERN_THEME_PRESETS,

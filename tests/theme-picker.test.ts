@@ -76,10 +76,10 @@ it("previews preset, mode and color choices locally until explicit save", () => 
   expect(theme.saveConfig).not.toHaveBeenCalled();
 });
 
-it("offers Cobalto, blue, violet, Nero and Bianco without discarding the saved theme", () => {
+it("offers Cobalto, blue, violet, Smeraldo Sport, Nero and Bianco without discarding the saved theme", () => {
   const { component } = setup();
   expect(component.palettes.map((palette) => palette.id)).toEqual([
-    "cobalto", "blu-azzurro", "viola-neon", "nero", "bianco",
+    "cobalto", "blu-azzurro", "viola-neon", "smeraldo-sport", "nero", "bianco",
   ]);
   expect(component.draft()).toEqual(saved);
   expect(component.isLegacyPalette()).toBe(true);
@@ -225,7 +225,7 @@ it("rejects malformed HEX input without corrupting the draft or writing a prefer
 
 it('previews every selectable palette without saving, then restores its original colours after customisation',()=>{
  const {component,theme}=setup();
- expect(component.paletteGroups).toHaveLength(1);expect(component.paletteGroups[0].palettes).toHaveLength(5);
+ expect(component.paletteGroups).toHaveLength(1);expect(component.paletteGroups[0].palettes).toHaveLength(6);
  for(const palette of component.paletteGroups[0].palettes){
   component.choosePalette(palette.id);expect(component.draft()).toEqual({palette:palette.id,mode:palette.tone});
   component.setColor('accent','#ABCDEF');component.setColor('background','#112233');component.resetColors();
