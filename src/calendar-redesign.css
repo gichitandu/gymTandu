@@ -23,6 +23,17 @@ body.theme-ready gt-shell .history-overview {
   --cr-radius: 26px;
 }
 
+/* Temi chiari: gradiente più scuro, leggibile sul bianco. */
+body.theme-ready.custom-light gt-shell .cal-page,
+body.theme-ready.custom-light gt-shell .hx3-list,
+body.theme-ready.custom-light gt-shell .history-overview {
+  --cr-text-grad: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--cr-a) 58%, var(--text)),
+    color-mix(in srgb, var(--cr-b) 50%, var(--text))
+  );
+}
+
 /* ---------- 1. Mese: riepilogo con numeri grandi ---------- */
 body.theme-ready gt-shell .cal-page .cal-month-kpis {
   display: grid;
@@ -45,7 +56,7 @@ body.theme-ready gt-shell .cal-page .cal-month-kpis b {
   line-height: 1.05;
   letter-spacing: -0.035em;
   font-variant-numeric: tabular-nums;
-  background: var(--cr-grad);
+  background: var(--cr-text-grad, var(--cr-grad));
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -106,6 +117,12 @@ body.theme-ready gt-shell .cal-page .cal-cw {
 body.theme-ready gt-shell .cal-page .cal-day {
   width: 38px;
   height: 38px;
+  /* Le regole globali dei pulsanti (area di tocco 44px) rendevano ovali i cerchi. */
+  min-width: 0 !important;
+  min-height: 0 !important;
+  aspect-ratio: 1;
+  /* Anche il raggio dei pulsanti dello stile Classico (11px) li squadrava. */
+  border-radius: 50% !important;
 }
 body.theme-ready gt-shell .cal-page .cal-day strong {
   font-size: 14px;
@@ -240,6 +257,41 @@ body.theme-ready gt-shell .cal-page .cal-now-label {
 }
 
 /* ---------- 3. Settimana: riepilogo e voci in evidenza ---------- */
+/* Scheda attiva del selettore: il testo segue il colore dell'inchiostro dello stile
+   (in Elegante chiaro la pillola è nera e il testo scuro diventava invisibile). */
+body.theme-ready.style-elegant
+  gt-shell
+  .cal-page
+  .cal-view-switch
+  button.active {
+  color: var(--el-ink, var(--accent-ink)) !important;
+}
+body.theme-ready.style-elegant.style-modern
+  gt-shell
+  .cal-page
+  .cal-view-switch
+  button.active {
+  color: var(--md-ink, var(--accent-ink)) !important;
+}
+/* Nel giorno selezionato della settimana lo spazio è stretto: titolo su una riga. */
+body.theme-ready gt-shell .cal-page .cal-week-row .cal-row-item {
+  padding: 9px 10px 9px 14px;
+  gap: 8px;
+}
+body.theme-ready gt-shell .cal-page .cal-row-item .cal-item-copy {
+  min-width: 0;
+}
+body.theme-ready
+  gt-shell
+  .cal-page
+  .cal-row-item
+  .cal-item-copy
+  :is(strong, small) {
+  display: block;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
 body.theme-ready gt-shell .cal-page .cal-overview {
   position: relative;
   overflow: hidden;
@@ -340,7 +392,7 @@ body.theme-ready gt-shell .history-overview::after {
 body.theme-ready gt-shell .history-overview b {
   font-size: clamp(18px, 5.6vw, 24px);
   letter-spacing: -0.03em;
-  background: var(--cr-grad);
+  background: var(--cr-text-grad, var(--cr-grad));
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
