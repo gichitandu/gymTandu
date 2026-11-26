@@ -461,7 +461,8 @@ body.theme-ready gt-shell .hx3-list .hx3-session:first-of-type .hx3-date {
 }
 body.theme-ready gt-shell .hx3-list .hx3-session:first-of-type .hx3-date strong,
 body.theme-ready gt-shell .hx3-list .hx3-session:first-of-type .hx3-date small {
-  color: var(--accent-ink, #04121f);
+  color: var(--accent-ink, #04121f) !important;
+  opacity: 0.78;
 }
 body.theme-ready gt-shell .hx3-list .hx3-meta span {
   padding: 2px 8px;
@@ -541,6 +542,121 @@ body.theme-ready.style-elegant.style-modern gt-shell .hx3-list .hx3-session {
   background: var(--md-surface);
   border: 0;
   box-shadow: var(--md-shadow);
+}
+
+/* ---------- 6b. Sportivo: tabellone, anelli spessi, linee di velocità ---------- */
+body.theme-ready.style-sport gt-shell .cal-page {
+  --cr-radius: 16px;
+}
+body.theme-ready.style-sport gt-shell .cal-page .cal-month-kpis b {
+  font-size: clamp(28px, 9vw, 38px);
+  line-height: 1;
+}
+body.theme-ready.style-sport gt-shell .cal-page .cal-month-kpis small,
+body.theme-ready.style-sport gt-shell .cal-page .cal-month-weekdays span,
+body.theme-ready.style-sport gt-shell .cal-page .cal-legend {
+  font-family: var(--sp-display);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+}
+body.theme-ready.style-sport gt-shell .cal-page .cal-board {
+  border-radius: 18px;
+  background:
+    repeating-linear-gradient(
+      -62deg,
+      transparent 0 18px,
+      color-mix(in srgb, var(--text) 3%, transparent) 18px 19px
+    ),
+    var(--cal-glass);
+}
+body.theme-ready.style-sport gt-shell .cal-page .cal-day strong {
+  font-family: var(--sp-display);
+  font-size: 17px;
+  font-weight: 700;
+}
+body.theme-ready.style-sport gt-shell .cal-page .cal-day-ring {
+  -webkit-mask: radial-gradient(
+    farthest-side,
+    transparent calc(100% - 4px),
+    #000 calc(100% - 3.5px)
+  );
+  mask: radial-gradient(
+    farthest-side,
+    transparent calc(100% - 4px),
+    #000 calc(100% - 3.5px)
+  );
+}
+body.theme-ready.style-sport gt-shell .cal-page .cal-day.today:not(.selected),
+body.theme-ready.style-sport gt-shell .cal-page .cal-day.selected {
+  background: var(--sp-grad);
+}
+body.theme-ready.style-sport gt-shell .cal-page .cal-wk span {
+  font-family: var(--sp-display);
+  font-size: 12px;
+  font-style: italic;
+}
+body.theme-ready.style-sport gt-shell .cal-page .cal-overview {
+  border-radius: 18px;
+  background:
+    repeating-linear-gradient(
+      -62deg,
+      transparent 0 16px,
+      color-mix(in srgb, var(--sp-a) 6%, transparent) 16px 18px
+    ),
+    var(--cal-glass);
+}
+body.theme-ready.style-sport
+  gt-shell
+  .cal-page
+  :is(.cal-row-item, .cal-week-row) {
+  border-radius: 14px;
+}
+body.theme-ready.style-sport gt-shell .cal-page .cal-row-item::before {
+  width: 6px;
+  transform: skewX(-10deg);
+}
+body.theme-ready.style-sport
+  gt-shell
+  .cal-page
+  .cal-row-item
+  .cal-item-copy
+  strong {
+  font-family: var(--sp-display);
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+body.theme-ready.style-sport gt-shell .cal-page .cal-week-date small {
+  font-family: var(--sp-display);
+  font-weight: 700;
+  letter-spacing: 0.12em;
+}
+body.theme-ready.style-sport gt-shell .cal-page .cal-agenda-heading h2 {
+  font-style: italic;
+  font-weight: 800;
+  text-transform: uppercase;
+  font-size: 24px;
+}
+body.theme-ready.style-sport gt-shell .hx3-list .hx3-session {
+  border-radius: 14px;
+}
+body.theme-ready.style-sport gt-shell .hx3-list .hx3-date {
+  border-radius: 12px;
+  transform: skewX(-8deg);
+}
+body.theme-ready.style-sport gt-shell .hx3-list .hx3-date > * {
+  transform: skewX(8deg);
+}
+body.theme-ready.style-sport gt-shell .hx3-list .hx3-text > strong {
+  font-family: var(--sp-display);
+  font-size: 18px;
+  font-weight: 700;
+}
+body.theme-ready.style-sport gt-shell .hx3-list .history-month span {
+  font-family: var(--sp-display);
+  font-style: italic;
+  font-weight: 800;
+  font-size: 15px;
 }
 
 /* ---------- 7. Movimento ---------- */

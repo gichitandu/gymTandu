@@ -251,13 +251,15 @@ it("keeps the chosen style while palette, mode and colours change, and stores Cl
 
 it("keeps «Rimodernizzato» as its own style next to Elegante and Classico", () => {
   const { component } = setup();
-  expect(component.styles.map((style) => style.value)).toEqual(["classic", "elegant", "modern"]);
+  expect(component.styles.map((style) => style.value)).toEqual(["classic", "elegant", "modern", "sport"]);
   component.chooseStyle("modern");
   component.choosePalette("cobalto");
   component.chooseMode("dark");
   expect(component.draft()).toEqual({ palette: "cobalto", mode: "dark", style: "modern" });
   component.chooseStyle("elegant");
   expect(component.draft().style).toBe("elegant");
+  component.chooseStyle("sport");
+  expect(component.draft()).toEqual({ palette: "cobalto", mode: "dark", style: "sport" });
   component.chooseStyle("classic");
   expect(component.draft()).toEqual({ palette: "cobalto", mode: "dark" });
 });

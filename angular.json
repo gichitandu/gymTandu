@@ -31,7 +31,9 @@
               "src/style-elegant.css",
               "src/style-elegant-white.css",
               "src/style-modern.css",
-              "src/calendar-redesign.css"
+              "src/style-sport.css",
+              "src/calendar-redesign.css",
+              "src/ui-polish.css"
             ],
             "outputPath": "dist/gymtrack"
           },

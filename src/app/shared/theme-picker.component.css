@@ -736,3 +736,44 @@
   border-radius: 50%;
   box-shadow: none;
 }
+.style-option[data-style="modern"] .style-sample {
+  border-radius: 18px;
+}
+.style-option[data-style="modern"] .style-sample i {
+  border-radius: 999px;
+}
+.style-option[data-style="modern"] .style-sample b {
+  border-radius: 999px;
+}
+/* Sportivo: barre inclinate e fascia da tabellone. */
+.style-option[data-style="sport"] .style-sample {
+  position: relative;
+  overflow: hidden;
+  border-radius: 6px;
+  background:
+    repeating-linear-gradient(
+      -60deg,
+      transparent 0 9px,
+      color-mix(in srgb, var(--preview-accent) 14%, transparent) 9px 12px
+    ),
+    var(--preview-bg);
+}
+.style-option[data-style="sport"] .style-sample i {
+  width: 44%;
+  height: 10px;
+  border-radius: 1px;
+  transform: skewX(-14deg);
+}
+.style-option[data-style="sport"] .style-sample b {
+  width: 36%;
+  height: 20px;
+  border-radius: 2px;
+  transform: skewX(-14deg);
+  box-shadow: 4px 0 0 color-mix(in srgb, var(--preview-accent) 45%, transparent);
+}
+.style-option[data-style="sport"] strong {
+  font-style: italic;
+  font-weight: 850;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}

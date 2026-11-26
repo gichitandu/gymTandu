@@ -89,6 +89,8 @@ it('keeps the «Elegante» style as an optional part of the theme, independent f
   expect(validThemeConfig(elegant)).toBe(true);
   expect(validThemeConfig({...classic,style:'classic'})).toBe(true);
   expect(validThemeConfig({...classic,style:'modern'})).toBe(true);
+  expect(validThemeConfig({...classic,style:'sport'})).toBe(true);
+  expect(resolveTheme({...classic,style:'sport'},false)).toEqual(resolveTheme(classic,false));
   expect(resolveTheme({...classic,style:'modern'},false)).toEqual(resolveTheme(classic,false));
   // The style never changes colours: tokens are identical with and without it.
   expect(resolveTheme(elegant,false)).toEqual(resolveTheme(classic,false));

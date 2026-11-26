@@ -1,0 +1,92 @@
+/* Rifiniture dell'interfaccia in tutti gli stili: scelta dell'app (GymTrack, GT Hub,
+   GT Garage) e selettore dello stile nel profilo. Solo presentazione: scelte, permessi
+   e salvataggi non cambiano. Caricato dopo gli stili Elegante, Rimodernizzato e Sportivo. */
+
+/* Le regole generiche sui pulsanti (es. Rimodernizzato: raggio 999px) trasformavano le
+   schede in pillole e il bordo tagliava i testi a sinistra. */
+body.theme-ready gt-app-chooser .apps > .app.app {
+  border-radius: 30px !important;
+  padding: 16px !important;
+  min-height: 0 !important;
+  height: auto !important;
+}
+body.theme-ready.style-sport gt-app-chooser .apps > .app.app {
+  border-radius: 18px !important;
+}
+/* I valori lunghi («Nessun impegno») vanno a capo invece di essere troncati. */
+body.theme-ready gt-app-chooser .stats em {
+  white-space: normal !important;
+  text-overflow: clip !important;
+  line-height: 1.25;
+}
+body.theme-ready gt-app-chooser .open {
+  min-width: 0 !important;
+  min-height: 0 !important;
+  padding: 0 !important;
+  border-radius: 50% !important;
+}
+
+/* Elegante e Rimodernizzato rendevano Hub e Garage due schede bianche identiche:
+   tornano riconoscibili con la luce del loro colore, sopra la superficie dello stile. */
+body.theme-ready.style-elegant gt-app-chooser .app.a-hub {
+  background:
+    radial-gradient(
+      120% 100% at 0% 0%,
+      color-mix(in srgb, #7c6bff 22%, transparent),
+      transparent 62%
+    ),
+    radial-gradient(
+      90% 90% at 100% 100%,
+      color-mix(in srgb, #3a7bff 12%, transparent),
+      transparent 60%
+    ),
+    var(--el-surface, var(--card)) !important;
+  border: 1px solid color-mix(in srgb, #7c6bff 34%, transparent) !important;
+}
+body.theme-ready.style-elegant gt-app-chooser .app.a-car {
+  background:
+    radial-gradient(
+      120% 100% at 0% 0%,
+      color-mix(in srgb, #37c98b 22%, transparent),
+      transparent 62%
+    ),
+    radial-gradient(
+      90% 90% at 100% 100%,
+      color-mix(in srgb, #788ca0 12%, transparent),
+      transparent 60%
+    ),
+    var(--el-surface, var(--card)) !important;
+  border: 1px solid color-mix(in srgb, #37c98b 34%, transparent) !important;
+}
+body.theme-ready.style-elegant gt-app-chooser .a-hub .open {
+  background: linear-gradient(140deg, #9d8cff, #6e6bff) !important;
+  color: #fff !important;
+}
+body.theme-ready.style-elegant gt-app-chooser .a-car .open {
+  background: linear-gradient(140deg, #5fe0a8, #1f9d7a) !important;
+  color: #04241a !important;
+}
+/* Elegante: la freccia di GymTrack era quasi invisibile (accento su fondo chiaro). */
+body.theme-ready.style-elegant gt-app-chooser .a-gt .open {
+  color: var(--text) !important;
+}
+body.theme-ready.style-elegant.style-modern gt-app-chooser .a-gt .open {
+  background: var(--md-ink, var(--el-ink)) !important;
+  color: var(--accent) !important;
+}
+
+/* Profilo: con quattro stili il selettore a pillola non bastava più («Rimodernizzato»
+   finiva sopra «Elegante»). Diventa una griglia 2×2 con pulsanti interi. */
+body.theme-ready gt-shell .su-seg.look-styles {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px;
+  border-radius: 22px !important;
+}
+body.theme-ready gt-shell .su-seg.look-styles > button {
+  min-width: 0;
+  padding: 9px 6px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

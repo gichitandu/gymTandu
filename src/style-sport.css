@@ -1,0 +1,218 @@
+/* Stile «Sportivo»: grintoso, numeri da tabellone, linee di velocità.
+   Attivo solo con body.style-sport. Riusa la struttura dello stile Classico (nessuna
+   classe style-elegant): cambia solo la presentazione. Handler, route, form, stati
+   disabled e valori calcolati non cambiano. I colori derivano sempre dalla palette. */
+
+@font-face {
+  font-family: "Barlow Condensed";
+  font-style: italic;
+  font-weight: 800;
+  font-display: swap;
+  src: url("/fonts/barlow-condensed-latin-800-italic.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Barlow Condensed";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("/fonts/barlow-condensed-latin-700-normal.woff2") format("woff2");
+}
+
+/* ---------- 1. Valori ---------- */
+body.theme-ready.style-sport {
+  --sp-a: var(--accent);
+  --sp-b: var(--theme-secondary, var(--accent-text, var(--accent)));
+  --sp-grad: linear-gradient(
+    100deg,
+    color-mix(in srgb, var(--sp-a) 88%, #fff),
+    var(--sp-a) 45%,
+    color-mix(in srgb, var(--sp-b) 65%, var(--sp-a))
+  );
+  --sp-ink: var(--accent-ink);
+  --sp-glow: color-mix(in srgb, var(--sp-a) 50%, transparent);
+  --sp-line: color-mix(in srgb, var(--text) 10%, transparent);
+  --sp-display:
+    "Barlow Condensed", "Avenir Next Condensed", "Roboto Condensed",
+    "Arial Narrow", sans-serif;
+  --sp-radius: 14px;
+  --radius: 14px;
+}
+
+/* ---------- 2. Sfondo: luce dell'accento e linee di velocità ---------- */
+body.theme-ready.style-sport {
+  background:
+    radial-gradient(
+      70% 34% at 100% -4%,
+      color-mix(in srgb, var(--sp-a) 20%, transparent),
+      transparent 70%
+    ),
+    repeating-linear-gradient(
+      -62deg,
+      transparent 0 26px,
+      color-mix(in srgb, var(--text) 2.6%, transparent) 26px 27px
+    ),
+    var(--bg);
+  background-attachment: fixed;
+}
+body.theme-ready.style-sport gt-shell {
+  background: none;
+}
+
+/* ---------- 3. Tipografia da tabellone ---------- */
+body.theme-ready.style-sport gt-shell main :is(h1, .hx-title) {
+  font-family: var(--sp-display) !important;
+  font-style: italic;
+  font-weight: 800 !important;
+  text-transform: uppercase;
+  letter-spacing: 0.005em !important;
+  line-height: 0.95 !important;
+}
+body.theme-ready.style-sport gt-shell main :is(h2, h3) {
+  font-family: var(--sp-display);
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+body.theme-ready.style-sport
+  gt-shell
+  :is(.cal-eyebrow, .el-eyebrow, .hx-date, .rec3-kicker) {
+  font-family: var(--sp-display);
+  font-style: italic;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  color: var(--accent-text, var(--accent));
+}
+/* Numeri grandi: cifre condensate, come su un tabellone. */
+body.theme-ready.style-sport
+  gt-shell
+  :is(
+    .cal-month-kpis b,
+    .cal-bigring strong,
+    .history-overview b,
+    .su-stat b,
+    .el-num,
+    .hx3-date strong,
+    .cal-week-date strong,
+    .cal-strip-day strong
+  ) {
+  font-family: var(--sp-display);
+  font-style: italic;
+  font-weight: 800;
+  letter-spacing: 0;
+}
+
+/* ---------- 4. Pulsanti principali: pieni, inclinati nel testo ---------- */
+body.theme-ready.style-sport
+  gt-shell
+  :is(
+    button.primary,
+    .button.primary,
+    .su-btn.su-primary,
+    .cal-primary,
+    .cal-dock-go,
+    .save-theme
+  ):not(:disabled) {
+  background: var(--sp-grad) !important;
+  color: var(--sp-ink) !important;
+  border: 0 !important;
+  border-radius: 12px !important;
+  box-shadow:
+    0 10px 24px -12px var(--sp-glow),
+    inset 0 1px 0 #ffffff40 !important;
+  font-family: var(--sp-display);
+  font-style: italic;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* ---------- 5. Selettori a segmenti ---------- */
+body.theme-ready.style-sport gt-shell :is(.su-seg, .cal-view-switch) {
+  border-radius: 14px;
+}
+body.theme-ready.style-sport
+  gt-shell
+  :is(
+    .su-seg > :is(a, button),
+    .cal-view-switch > :is(a, button),
+    .cal-view-glider
+  ) {
+  border-radius: 10px !important;
+}
+body.theme-ready.style-sport gt-shell .cal-view-glider {
+  background: var(--sp-grad) !important;
+}
+body.theme-ready.style-sport
+  gt-shell
+  :is(.su-seg > :is(a, button), .cal-view-switch > :is(a, button)) {
+  font-family: var(--sp-display);
+  font-size: 15px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+body.theme-ready.style-sport
+  gt-shell
+  :is(.su-seg > .on, .cal-view-switch button.active) {
+  font-style: italic;
+  font-weight: 800;
+}
+
+/* ---------- 6. Schede: angoli più vivi ---------- */
+body.theme-ready.style-sport gt-shell main .card {
+  border-radius: var(--sp-radius);
+}
+
+/* ---------- 7. Barra di navigazione: tacca d'accento sulla voce attiva ---------- */
+body.theme-ready.style-sport gt-shell .bottom-nav a {
+  position: relative;
+}
+body.theme-ready.style-sport
+  gt-shell
+  .bottom-nav
+  a:is(.selected, .training-selected)::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 26px;
+  height: 4px;
+  margin-left: -13px;
+  border-radius: 0 0 4px 4px;
+  background: var(--sp-grad);
+  box-shadow: 0 0 12px var(--sp-glow);
+  transform: skewX(-18deg);
+}
+body.theme-ready.style-sport gt-shell .bottom-nav a > span {
+  font-family: var(--sp-display);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+/* ---------- 8. Selettore delle app ---------- */
+body.theme-ready.style-sport gt-app-chooser h1.x {
+  font-family: var(--sp-display);
+  font-style: italic;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0;
+  line-height: 0.95;
+}
+body.theme-ready.style-sport
+  gt-app-chooser
+  :is(.t b, .tx strong, .stats b, .ring b) {
+  font-family: var(--sp-display);
+  font-style: italic;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+}
+body.theme-ready.style-sport gt-app-chooser .t b {
+  font-size: 25px;
+  text-transform: uppercase;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body.theme-ready.style-sport * {
+    animation: none !important;
+  }
+}

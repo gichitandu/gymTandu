@@ -36,6 +36,14 @@ it.each(['oro','argento','multicolore','bianco-elegante','scuro','rosso','verde'
  expect(JSON.parse(await exportBackup(restored)).data).toEqual(JSON.parse(text).data);
 });
 
+it.each(['smeraldo-sport','cobalto','nero'])('round-trips the «Sportivo» style with the %s palette',async(palette)=>{
+ const data=seed(),themeConfig={palette,mode:'dark' as const,style:'sport' as const};
+ data.settings[0].themeConfig=themeConfig;
+ expect(()=>validateIntegrity(data)).not.toThrow();
+ const text=await exportBackup(data),restored=await importBackup(text);
+ expect(restored.settings[0].themeConfig).toEqual(themeConfig);
+});
+
 it.each(['cobalto','blu-azzurro','nero'])('round-trips the «Rimodernizzato» style with the %s palette',async(palette)=>{
  const data=seed(),themeConfig={palette,mode:'light' as const,style:'modern' as const};
  data.settings[0].themeConfig=themeConfig;
