@@ -63,9 +63,10 @@ export class AuthService {
     catch(e) {if(generation!==this.lifecycle||this.loggingOut())return;if(!this.offlineMode()){const choice=this.archiveChoice(),saved=this.offlineAccount();if(choice?.mode==='account'&&saved?.id===choice.accountId)this.openLocal(true,false);else this.error.set('Accesso online non disponibile. Puoi aprire l’archivio locale.');}}
     finally {if(generation===this.lifecycle)this.loading.set(false);}
   }
-  /** Nuovo account Cliente: possibile solo con il link di invito di un allenamento in gruppo ancora aperto. */
-  register(invite:string,fields:{name:string;email:string;username:string;password:string},remember=true) {
-    return this.enter('auth/register',{invite,...fields},remember);
+  /** Nuovo account Cliente: possibile solo con il link di invito di un allenamento in gruppo ancora aperto
+   *  o con il link di invito all'app creato dal Super Admin. */
+  register(invite:string,fields:{name:string;email:string;username:string;password:string},remember=true,kind:'group'|'app'='group') {
+    return this.enter('auth/register',kind==='app'?{appInvite:invite,...fields}:{invite,...fields},remember);
   }
   login(email:string,password:string,setup=false,remember=true,username?:string,setupCode?:string) {
     return this.enter(setup?'auth/setup':'auth/login',{email,password,...(setup&&username?{username}:{}),...(setup&&setupCode?{setupCode}:{})},remember);

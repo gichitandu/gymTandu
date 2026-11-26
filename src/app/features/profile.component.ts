@@ -1,3 +1,4 @@
+import {AppInviteComponent} from '../shared/app-invite.component';
 import {backupReminder} from '../services/backup-reminder';
 import { DESIGN_DIRECTIVES } from '../design/design-directives';
 import {DesignRuntime} from '../design/design-runtime';
@@ -50,7 +51,7 @@ interface ProfileFormDraft {
 @Component({
   standalone: true,
   styleUrls: ["./account-polish.css", "./profile-redesign.css", "./profile-readability.css"],
-  imports: [InstallHelpComponent,...DESIGN_DIRECTIVES,ThemePickerComponent,PushReminderComponent,CalendarSubscriptionComponent,DateFieldComponent,BackupReminderComponent,ArchiveSyncComponent,AppUpdatesComponent,
+  imports: [AppInviteComponent,InstallHelpComponent,...DESIGN_DIRECTIVES,ThemePickerComponent,PushReminderComponent,CalendarSubscriptionComponent,DateFieldComponent,BackupReminderComponent,ArchiveSyncComponent,AppUpdatesComponent,
     A11yModule,
     AvatarComponent,
     IosStatusComponent,
@@ -100,6 +101,7 @@ interface ProfileFormDraft {
 @if(auth.uiRole()==='SuperAdmin'||auth.uiRole()==='Admin'||(auth.user()?.role==='SuperAdmin'&&!auth.offlineMode())){<div class="su-group">Amministrazione</div>
 <div class="su-list">
  @if(auth.uiRole()==='SuperAdmin'||auth.uiRole()==='Admin'){<a class="su-row" routerLink="/utenti"><span class="su-bubble violet"><gt-icon name="user"/></span><span class="su-tx"><strong>{{auth.uiRole()==='SuperAdmin'?'Utenti, spazio e quota AI':'Utenti'}}</strong><small>Account, sezioni dell’app{{auth.uiRole()==='SuperAdmin'?', spazio R2 e riconoscimento foto':''}}</small></span><gt-icon class="su-chev" name="chevron-right"/></a>}
+ @if(auth.uiRole()==='SuperAdmin'&&!auth.offlineMode()){<button type="button" class="su-row" (click)="panel.set('invite')"><span class="su-bubble green"><gt-icon name="share"/></span><span class="su-tx"><strong>Invita qualcuno</strong><small>Link da condividere: entra dal browser e crea il suo account</small></span><gt-icon class="su-chev" name="chevron-right"/></button>}
  @if(design?.canManage()){<a class="su-row" routerLink="/design-studio"><span class="su-bubble blue"><gt-icon name="palette"/></span><span class="su-tx"><strong>GT Design Studio</strong><small>Pagine, controlli, palette e preset</small></span><gt-icon class="su-chev" name="chevron-right"/></a>}
  @if(auth.user()?.role==='SuperAdmin'&&!auth.offlineMode()){<label class="su-row pf-toggle"><span class="su-bubble green"><gt-icon name="eye"/></span><span class="su-tx"><strong>Vedi come cliente</strong><small>{{auth.viewAsClient()?'Vista cliente attiva · usi i tuoi dati':'Anteprima del ruolo con i tuoi dati'}}</small></span><input type="checkbox" role="switch" aria-label="Visualizza come cliente" [checked]="auth.viewAsClient()" (change)="auth.setClientView($any($event.target).checked)"/></label>}
 </div>}
@@ -115,7 +117,9 @@ interface ProfileFormDraft {
 @if(panel()==='calendar'){<gt-calendar-subscription [expanded]="true"/>}
 @if(panel()==='settings'){
  <div class="profile-menu-group settings-shortcuts"><div class="account-section-label"><span>PROFILO E ASPETTO</span></div><nav class="profile-menu" aria-label="Aspetto"><button gtDesign="profile.theme" (click)="panel.set('theme')"><gt-icon name="palette" gtDesignIcon="profile.theme"/><span><strong gtDesignLabel="profile.theme">Tema e personalizzazione</strong><small>Palette, colori e intensità glow</small></span>›</button></nav></div>
+ @if(auth.uiRole()==='SuperAdmin'&&!auth.offlineMode()){<div class="profile-menu-group settings-shortcuts"><div class="account-section-label"><span>CONDIVIDI L’APP</span></div><nav class="profile-menu" aria-label="Condividi l’app"><button type="button" (click)="panel.set('invite')"><gt-icon name="share"/><span><strong>Invita qualcuno</strong><small>Link per entrare dal browser e creare il proprio account</small></span>›</button></nav></div>}
 }
+@if(panel()==='invite'){<gt-app-invite/>}
 @if(panel()==='settings'||panel()==='theme'||panel()==='info'){
     <div class="profile-settings-panels">
       <details class="card settings-disclosure" [hidden]="panel()!=='settings'"><summary><gt-icon name="user"/><span><strong>Dati personali</strong><small>Nome, foto, peso e altezza</small></span><span class="disclosure-chevron">›</span></summary><div class="settings-disclosure-body">
@@ -451,7 +455,7 @@ export class ProfileComponent {
   panel=signal('overview');
   backupDue=computed(()=>backupReminder(this.s.settings()).due);
   shortDate(value:string){return new Date(value).toLocaleDateString('it-IT',{day:'numeric',month:'short'});}
-  panelLabel(){return ({overview:'Profilo',goals:'Obiettivi',measurements:'Misurazioni corporee',settings:'Impostazioni',calendar:'Calendario iPhone',theme:'Tema e personalizzazione',backup:'Backup e ripristino',security:'Account e sicurezza',info:'Informazioni app'} as Record<string,string>)[this.panel()]||'Profilo';}
+  panelLabel(){return ({overview:'Profilo',goals:'Obiettivi',measurements:'Misurazioni corporee',settings:'Impostazioni',invite:'Invita qualcuno',calendar:'Calendario iPhone',theme:'Tema e personalizzazione',backup:'Backup e ripristino',security:'Account e sicurezza',info:'Informazioni app'} as Record<string,string>)[this.panel()]||'Profilo';}
   age(){const birth=this.s.profile().birthDate;if(!birth)return null;const d=new Date(birth+'T12:00:00'),now=new Date();return now.getFullYear()-d.getFullYear()-((now.getMonth()<d.getMonth()||now.getMonth()===d.getMonth()&&now.getDate()<d.getDate())?1:0);}
   measurementDate=this.today;measurementWeight:number|null=null;measurementWaist:number|null=null;measurementBodyFat:number|null=null;private measurementDateChosen=false;
   chooseMeasurementDate(date:string){this.measurementDate=date;this.measurementDateChosen=true;this.draftSession?.changed();}

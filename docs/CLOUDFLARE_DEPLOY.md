@@ -14,7 +14,10 @@ per una ventina di utenti.
   `SETUP_CODE`: senza il codice nessuno può reclamarlo. Sono ammessi al massimo
   10 tentativi ogni 15 minuti per indirizzo.
 - Gli altri utenti li crei tu dall'app (Profilo, Gestione utenti) con ruolo Cliente
-  o Admin. Non esiste registrazione libera.
+  o Admin. Non esiste registrazione libera: in alternativa condividi un link di
+  invito (Profilo, Invita qualcuno, riservato al Super Admin). Chi lo apre nel browser
+  si crea da solo un account Cliente; il link vale 7 giorni e per 5 account, crearne
+  uno nuovo disattiva il precedente e puoi disattivarlo in ogni momento.
 - I file statici dell'app (circa 49 MB) sono serviti da Workers Static Assets, non
   dal bundle del Worker, che altrimenti supererebbe i limiti di Cloudflare.
 - Lo spazio "senza account" non ha copia sul server in questa modalità: chi vuole

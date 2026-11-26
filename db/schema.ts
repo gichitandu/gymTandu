@@ -61,3 +61,7 @@ export const groupSessions=sqliteTable('group_sessions',{
 export const groupMembers=sqliteTable('group_members',{
  sessionId:text('session_id').notNull().references(()=>groupSessions.id),userId:text('user_id').notNull().references(()=>users.id),name:text('name').notNull(),mode:text('mode').notNull(),payload:text('payload').notNull(),joinedAt:integer('joined_at').notNull(),updatedAt:integer('updated_at').notNull(),leftAt:integer('left_at')
 },table=>[primaryKey({columns:[table.sessionId,table.userId]}),index('group_members_user').on(table.userId)]);
+/** Link di invito all'app creati dal Super Admin: ognuno registra pochi account Cliente e scade. */
+export const appInvites=sqliteTable('app_invites',{
+ id:text('id').primaryKey(),token:text('token').notNull().unique(),createdBy:text('created_by').notNull().references(()=>users.id),createdAt:integer('created_at').notNull(),expiresAt:integer('expires_at').notNull(),maxRegistrations:integer('max_registrations').notNull(),registrations:integer('registrations').notNull().default(0),revokedAt:integer('revoked_at')
+},table=>[index('app_invites_created_by').on(table.createdBy)]);
