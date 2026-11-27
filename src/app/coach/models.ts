@@ -20,6 +20,15 @@ export interface LoadSetting {
   /** Variante reale (id del catalogo dell'app) scelta per questo esercizio: la imposta il collegamento con l'archivio. */
   variantId?: string;
 }
+/** Esercizio proposto dal coach che l'utente ha chiesto di cambiare, con quello scelto al suo posto. */
+export interface ExerciseReplacement {
+  /** Nome della seduta del piano (es. «Upper A»): le sostituzioni restano legate a quella seduta. */
+  session: string;
+  from: string;
+  to: string;
+  /** similar: stesso movimento e stesso muscolo. muscle: stesso muscolo principale con un altro movimento. */
+  kind: 'similar' | 'muscle';
+}
 export interface Profile {
   goal: Goal;
   experience: Experience;
@@ -50,6 +59,8 @@ export interface Profile {
   varyRepeatedDays?: boolean;
   /** Variante scelta dall'utente per un esercizio del coach (id esercizio → id del catalogo). */
   variants?: Record<string, string>;
+  /** Esercizi che l'utente ha chiesto di sostituire; si applicano a ogni nuova generazione del piano. */
+  replacements?: ExerciseReplacement[];
 }
 export interface Exercise {
   id: string;

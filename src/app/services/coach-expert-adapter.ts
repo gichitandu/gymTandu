@@ -164,6 +164,20 @@ function encodeMetadata(data: unknown): string {
   return result;
 }
 
+/**
+ * Il profilo salvato con la scheda può essere grande (carico e macchina di ogni esercizio, varianti, sostituzioni).
+ * Se non entra nel limite si omettono i dati collegati all'archivio: bindProfileToGymTrack li ricalcola a ogni apertura.
+ */
+function encodePlanMetadata(metadata: PlanMetadata): string {
+  try { return encodeMetadata(metadata); }
+  catch (error) {
+    if (!metadata.profile.loadSettings) throw error;
+    const profile = structuredClone(metadata.profile);
+    delete profile.loadSettings;
+    return encodeMetadata({ ...metadata, profile });
+  }
+}
+
 export function readCoachMetadata<T>(text?: string): T | null {
   if (!text || text.length > 10000) return null;
   const start = text.indexOf(META_START), end = text.indexOf(META_END, start + META_START.length);
@@ -321,7 +335,7 @@ export function insertCoachPlan(data: DataSet, plan: TrainingPlan): string {
     data.muscleGroups.push({ id, name }); return id;
   };
   const planMetadata: PlanMetadata = { schema: 1, version: plan.version, corePlanId: plan.id, profile: structuredClone(plan.profile) };
-  const description = `Programma Coach · ${plan.blockWeeks} settimane. Regole ${plan.version}. Le prescrizioni sono modificabili; gli aumenti restano suggerimenti.\n${plan.warnings.join('\n')}${encodeMetadata(planMetadata)}`;
+  const description = `Programma Coach · ${plan.blockWeeks} settimane. Regole ${plan.version}. Le prescrizioni sono modificabili; gli aumenti restano suggerimenti.\n${plan.warnings.join('\n')}${encodePlanMetadata(planMetadata)}`;
   if (description.length > 10000) throw Error('Descrizione del piano troppo lunga.');
   data.plans.push({ id: planId, userId: data.profiles[0]?.id ?? 'local', name: `Coach · ${plan.profile.daysPerWeek} giorni${plan.profile.split && plan.profile.split !== 'auto' && Object.hasOwn(SPLIT_LABELS, plan.profile.split) ? ` · ${SPLIT_LABELS[plan.profile.split]}` : ''}`, description,
     createdAt: plan.createdAt, updatedAt: plan.createdAt,

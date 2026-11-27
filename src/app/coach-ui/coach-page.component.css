@@ -426,3 +426,16 @@ input[type=number]:disabled{opacity:.55}
 .variant-pick select{min-height:42px;font-size:13px;text-overflow:ellipsis}
 .variant-caption{margin:6px 16px 0;padding-bottom:4px}
 @media(max-width:370px){.variant-pick{padding-left:10px}}
+
+/* Cambia esercizi: selezione multipla e sostituzione */
+.swap-bar{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin:2px 8px 10px;padding:0 4px}
+.swap-bar.active{padding:10px 12px;border-radius:16px;background:var(--leaf);border:1px solid #cfe6c6}
+.swap-note{font-size:12px;font-weight:650;color:var(--soft-ink)}
+.swap-count{font-size:13px;font-weight:750;color:var(--green-3)}
+.swap-go{min-height:44px;padding:0 18px;border-radius:14px;font-size:13.5px}
+.swap-hint{margin:-2px 12px 10px}
+.exercise-row.picked{background:var(--leaf)}
+.select-check{grid-area:arrow;display:grid;place-items:center;width:24px;height:24px;border-radius:50%;border:2px solid #b9c7b6;color:transparent;background:#fff;transition:background .15s,border-color .15s}
+.select-check svg{width:14px;height:14px;stroke-width:3}
+.select-check.on{background:var(--deep);border-color:var(--deep);color:var(--lime)}
+.exercise-row[aria-pressed]{width:100%}
