@@ -18,6 +18,7 @@ export const MEAL_SCAN_MAX_OUTPUT_TOKENS=900;
 export const MEAL_SCAN_RESERVATION=100;
 export const MEAL_SCAN_IMAGE_LIMIT=700000;
 const MEAL_SCAN_BODY_LIMIT=MEAL_SCAN_IMAGE_LIMIT+2048;
+// Funzioni di chiamata e conteggio condivise con il Coach (worker/coach-ai.js): stesso limite giornaliero.
 const MEAL_SCAN_TIMEOUT_MS=45000;
 const MEAL_SCAN_MAX_ITEMS=8;
 // Gemini (piano gratuito di Google AI Studio): solo Admin e Super Admin che incollano la propria chiave
@@ -49,7 +50,7 @@ Usa questo schema, con numeri senza unità di misura, con UN solo alimento e "gr
 {"kind":"plate","dish":"","items":[{"name":"nome in italiano","grams":${grams},"calories":0,"protein":0,"carbs":0,"fat":0}]}
 Se non è un alimento rispondi {"kind":"none","dish":"","items":[]}.`;
 
-function mealScanReply(data,status=200,headers={}){return Response.json(data,{status,headers:{'Cache-Control':'private, no-store','X-Content-Type-Options':'nosniff',...headers}});}
+export function mealScanReply(data,status=200,headers={}){return Response.json(data,{status,headers:{'Cache-Control':'private, no-store','X-Content-Type-Options':'nosniff',...headers}});}
 function mealScanFail(message,status=400){throw Object.assign(new Error(message),{status});}
 const mealScanDay=now=>new Date(now).toISOString().slice(0,10);
 const mealScanResetAt=now=>{const date=new Date(now);return Date.UTC(date.getUTCFullYear(),date.getUTCMonth(),date.getUTCDate()+1);};
@@ -77,7 +78,7 @@ export async function mealScanStatus(env,now=Date.now()){
 }
 
 /** Prenotazione atomica: una sola istruzione SQL decide se la richiesta rientra nel limite. */
-async function mealScanReserve(env,now){
+export async function mealScanReserve(env,now){
  const {cap}=mealScanBudget(env),day=mealScanDay(now);
  const created=await env.DB.prepare('INSERT INTO ai_usage(day,neurons,requests,blocked,updated_at) VALUES(?,0,0,0,?) ON CONFLICT(day) DO NOTHING').bind(day,now).run();
  if(created?.meta?.changes===1)await env.DB.prepare('DELETE FROM ai_usage WHERE day<?').bind(mealScanDay(now-MEAL_SCAN_HISTORY_DAYS*86400000)).run();
@@ -85,12 +86,12 @@ async function mealScanReserve(env,now){
  return reserved?.meta?.changes===1?day:null;
 }
 /** Sostituisce la prenotazione con il consumo reale, quando il modello lo comunica. */
-async function mealScanSettle(env,day,neurons){
+export async function mealScanSettle(env,day,neurons){
  const delta=neurons-MEAL_SCAN_RESERVATION;
  if(delta)await env.DB.prepare('UPDATE ai_usage SET neurons=MAX(0,neurons+?),updated_at=? WHERE day=?').bind(delta,Date.now(),day).run();
 }
 /** Cloudflare ha dichiarato esaurita l'allocazione: stop fino al ripristino, qualunque sia il nostro conteggio. */
-async function mealScanBlockDay(env,day){
+export async function mealScanBlockDay(env,day){
  await env.DB.prepare('UPDATE ai_usage SET blocked=1,updated_at=? WHERE day=?').bind(Date.now(),day).run();
 }
 
@@ -104,7 +105,7 @@ function mealScanNumber(value,max){
  const number=typeof value==='number'?value:typeof value==='string'?parseFloat(value.replace(',','.')):NaN;
  return Number.isFinite(number)&&number>=0?Math.min(max,Math.round(number*10)/10):null;
 }
-function mealScanText(value,max){
+export function mealScanText(value,max){
  return typeof value==='string'?value.replace(/[\u0000-\u001f\u007f<>]/g,' ').replace(/\s+/g,' ').trim().slice(0,max):'';
 }
 /** Accetta solo alimenti con nome, grammi e valori plausibili: il testo del modello non è mai fidato. */
@@ -130,7 +131,7 @@ export function mealScanParse(output){
  return{kind,dish:items.length?mealScanText(value.dish,100):'',items};
 }
 
-function mealScanOutput(result){
+export function mealScanOutput(result){
  if(typeof result?.response==='string'||result?.response&&typeof result.response==='object')return result.response;
  const content=result?.choices?.[0]?.message?.content;
  if(Array.isArray(content))return content.map(part=>typeof part?.text==='string'?part.text:'').join('');
@@ -161,13 +162,13 @@ async function mealScanAllowed(env,user){
  return (await appFeatureFlags(env)).nutritionEnabled===true;
 }
 
-async function mealScanRun(env,input){
+export async function mealScanRun(env,input){
  let timer;
  const timeout=new Promise((_,reject)=>{timer=setTimeout(()=>reject(Object.assign(new Error('timeout'),{timeout:true})),MEAL_SCAN_TIMEOUT_MS);});
  try{
   return await Promise.race([env.AI.run(MEAL_SCAN_MODEL,{
-   messages:[{role:'system',content:MEAL_SCAN_SYSTEM},{role:'user',content:[{type:'text',text:input.prompt},...(input.image?[{type:'image_url',image_url:{url:input.image}}]:[])]}],
-   max_completion_tokens:MEAL_SCAN_MAX_OUTPUT_TOKENS,temperature:.2,chat_template_kwargs:{enable_thinking:false},
+   messages:[{role:'system',content:input.system||MEAL_SCAN_SYSTEM},{role:'user',content:[{type:'text',text:input.prompt},...(input.image?[{type:'image_url',image_url:{url:input.image}}]:[])]}],
+   max_completion_tokens:input.maxTokens||MEAL_SCAN_MAX_OUTPUT_TOKENS,temperature:input.temperature??.2,chat_template_kwargs:{enable_thinking:false},
   },{rejectIfBusy:true}),timeout]);
  }finally{clearTimeout(timer);}
 }
@@ -219,7 +220,7 @@ export function geminiDailyLimit(env){
 }
 const geminiCounterKey=(user,now)=>'gemini-'+mealScanDay(now)+'-'+user.id;
 /** Contatore giornaliero per utente, nella stessa tabella ai_usage con chiave «gemini-AAAA-MM-GG-id». */
-async function geminiReserve(env,user,now){
+export async function geminiReserve(env,user,now){
  const key=geminiCounterKey(user,now);
  const created=await env.DB.prepare('INSERT INTO ai_usage(day,neurons,requests,blocked,updated_at) VALUES(?,0,0,0,?) ON CONFLICT(day) DO NOTHING').bind(key,now).run();
  if(created?.meta?.changes===1)await env.DB.prepare('DELETE FROM ai_usage WHERE day LIKE ? AND day<?').bind('gemini-%','gemini-'+mealScanDay(now-MEAL_SCAN_HISTORY_DAYS*86400000)).run();
@@ -230,16 +231,16 @@ async function geminiFetch(url,init,timeout){
  const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),timeout);
  try{return await fetch(url,{...init,signal:controller.signal});}finally{clearTimeout(timer);}
 }
-async function geminiRun(credentials,input){
+export async function geminiRun(credentials,input){
  const match=input.image?/^data:(image\/(?:jpeg|png|webp));base64,(.+)$/.exec(input.image):null;
  if(input.image&&!match)throw new Error('immagine non valida');
  const send=async thinking=>{
   const response=await geminiFetch(GEMINI_API+credentials.model+':generateContent',{
    method:'POST',headers:{'Content-Type':'application/json','x-goog-api-key':credentials.apiKey},
    body:JSON.stringify({
-    systemInstruction:{parts:[{text:MEAL_SCAN_SYSTEM}]},
+    systemInstruction:{parts:[{text:input.system||MEAL_SCAN_SYSTEM}]},
     contents:[{role:'user',parts:[{text:input.prompt},...(match?[{inline_data:{mime_type:match[1],data:match[2]}}]:[])]}],
-    generationConfig:{temperature:.2,maxOutputTokens:GEMINI_MAX_OUTPUT_TOKENS,responseMimeType:'application/json',...(thinking?{thinkingConfig:{thinkingLevel:'low'}}:{})},
+    generationConfig:{temperature:input.temperature??.2,maxOutputTokens:GEMINI_MAX_OUTPUT_TOKENS,responseMimeType:'application/json',...(thinking?{thinkingConfig:{thinkingLevel:'low'}}:{})},
    }),
   },GEMINI_TIMEOUT_MS);
   if(response.ok)return{response};

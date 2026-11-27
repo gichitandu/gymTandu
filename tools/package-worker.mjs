@@ -22,6 +22,8 @@ const vwSource=await readFile('worker/vw.js','utf8');
 const groupSource=await readFile('worker/group.js','utf8');
 const devLogSource=await readFile('worker/dev-log.js','utf8');
 const mealScanSource=(await readFile('worker/meal-scan.js','utf8')).replace("import {appFeatureFlags} from './program-imports.js';",'');
+const coachAiSource=(await readFile('worker/coach-ai.js','utf8')).replace(/^import\s*\{[^}]+\}\s*from\s*['"]\.\/meal-scan\.js['"];?\n/,'');
+if(/^import\s/m.test(coachAiSource))throw Error('Unexpected import in worker/coach-ai.js.');
 const hubSource=(await readFile('worker/hub.js','utf8')).replace("import {calendarRuntimeEnv,calendarRelay,calendarConfigured} from './calendar.js';",'').replace("import {appFeatureFlags} from './program-imports.js';",'');
 const manifest=JSON.parse(await readFile(root+'/ngsw.json','utf8'));
 for(const url of ['/index.html','/manifest.webmanifest'])manifest.hashTable[url]=createHash('sha1').update(await readFile(root+url)).digest('hex');
@@ -74,7 +76,7 @@ await scan(root);
 await rm('dist/server',{recursive:true,force:true});await mkdir('dist/server',{recursive:true});await mkdir('dist/.openai',{recursive:true});
 const composedWorker=approvedPaletteSource.replaceAll('export ','')+'\n'+workerSource.replace("/* __APP_BUILD_ID__ */ 'development'",JSON.stringify(buildId)).replace("import { APPROVED_THEME_IDS } from '../shared/approved-palettes.js';",'').replace("import { designStudioApi } from './design-studio.js';",[designPresetsSource,designSystemSource,designApiSource].map(source=>source.replaceAll('export ','')).join('\n')).replace("import { defaultExercises, defaultGroups } from './default-catalog.js';",serverCatalogSource.replaceAll('export const','const')).replace("import { archiveApi, archiveRetention } from './archive.js';",archiveSource.replaceAll('export ',''))
 .replace("import { storageAlert, storageStatus } from './storage-alert.js';",storageAlertSource.replaceAll('export ','')).replace("import { calendarApi, calendarPublish, calendarConfigure } from './calendar.js';",calendarSource.replaceAll('export ','')).replace("import { pushReminderApi } from './push.js';",pushSource.replaceAll('export ','')).replace("import {excelImportsApi,appFeaturesApi} from './program-imports.js';",programSource.replaceAll('export ','')).replace("import { hubApi, hubInvitesApi, hubInvitePublicApi } from './hub.js';",hubSource.replaceAll('export ','')).replace("import { vwApi, vwScheduled } from './vw.js';",vwSource.replaceAll('export ','')).replace("import { groupApi, groupInvite, groupReserveRegistration } from './group.js';",()=>groupSource.replaceAll('export ',''))
-.replace("import { mealScanApi } from './meal-scan.js';",mealScanSource.replaceAll('export ','')).replace("import { devLogApi, devLogAgentApi, devLogServerError } from './dev-log.js';",()=>devLogSource.replaceAll('export ',''));
+.replace("import { mealScanApi } from './meal-scan.js';",mealScanSource.replaceAll('export ','')).replace("import { coachAiApi } from './coach-ai.js';",()=>coachAiSource.replaceAll('export ','')).replace("import { devLogApi, devLogAgentApi, devLogServerError } from './dev-log.js';",()=>devLogSource.replaceAll('export ',''));
 await writeFile('dist/server/index.js',composedWorker.replace('/* __ASSETS__ */ {}',JSON.stringify(assets)));
 // Variante Cloudflare: i file statici non vengono incorporati (49 MB superano il limite dei Worker)
 // ma serviti da Workers Static Assets, configurati in wrangler.jsonc.

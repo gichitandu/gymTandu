@@ -143,7 +143,7 @@ Cloudflare come "zero data retention".
 Workers AI include **10.000 Neuron al giorno**, con ripristino alle **00:00 UTC** (le 01:00
 o le 02:00 in Italia). Per non superarli mai:
 
-- prima di ogni lettura il Worker prenota in D1 (tabella `ai_usage`, migrazione `0013`) il
+- prima di ogni lettura il Worker prenota in D1 (tabella `ai_usage`, migrazione `0014`) il
   costo massimo della richiesta, con una sola istruzione SQL atomica. Se il totale
   supererebbe il **95%** dell'allocazione (9.500 Neuron) il modello non viene chiamato e
   l'app mostra **«Attendere ripristino»** con l'orario;
@@ -198,6 +198,21 @@ Cose da sapere:
 - Anche `wrangler dev` usa il vero Workers AI e consuma l'allocazione dell'account.
 - I Super Admin e gli Admin vedono consumo, soglia e orario di ripristino in Pasti, nel
   riquadro "Lettura foto con AI".
+
+### Coach Ombra con l'AI (stesso servizio, nessuna configurazione in più)
+
+Il Coach Ombra calcola carichi e ripetizioni sul dispositivo, anche offline. Su richiesta
+(«Chiedi al coach AI» in seduta, «Analisi completa con il coach AI» nel riepilogo) l'app invia a
+`/api/coach-ai` solo i dati dell'allenamento in forma compatta (esercizio, serie, sforzo, proposta
+del Coach, volume): nessun nome, email o dato del profilo. Il Worker usa Gemini se l'account ha
+una chiave attiva (vedi sopra), altrimenti Workers AI con la stessa prenotazione e lo stesso
+limite giornaliero di Neuron della lettura dei pasti. La risposta è solo un parere scritto: non
+modifica mai carichi, ripetizioni o dati salvati.
+
+- Disponibile a ogni account con accesso online; ogni account ha fino a 20 analisi al giorno
+  (variabile facoltativa `COACH_AI_DAILY_LIMIT`, massimo 200). Le richieste a cui nessun modello
+  risponde non vengono contate.
+- Non servono migrazioni: il conteggio usa la tabella `ai_usage` (righe `coach-AAAA-MM-GG-id`).
 
 ## GT Garage: dati automatici della Golf (facoltativo, gratuito)
 

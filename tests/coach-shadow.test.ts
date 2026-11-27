@@ -787,4 +787,68 @@ describe("Coach Ombra · scatti, volume indiretto, riscaldamento e coerenza dell
     expect(fromReference).toMatchObject({ action: "raise", weight: 62.5, confidence: "medium" });
     expect(coachNextSet({ ...base, reference: sets(60, [12, 12, 12], 6), done: [] })).toMatchObject({ weight: 65 });
   });
+
+  describe("forma del giorno e fatica nella seduta", () => {
+    const range = { repsMin: 6, repsMax: 10, incrementKg: 2.5 };
+    const usual = [{ sets: sets(100, [9, 9], 8) }, { sets: sets(100, [9, 8], 8) }];
+
+    it("in una giornata sotto tono adatta il carico alla capacità di oggi", () => {
+      const suggestion = coachNextSet({ ...range, reference: sets(100, [9, 9, 9], 8), history: usual, daysSinceReference: 4, done: [{ weight: 100, reps: 6, rpe: 9 }] })!;
+      expect(suggestion).toMatchObject({ action: "lower", weight: 95, reps: 6, title: "Giornata sotto tono", form: -10 });
+      expect(suggestion.flags).toContain("off-day");
+      expect(suggestion.reason).toContain("circa il 10% sotto il tuo solito");
+      expect(suggestion.evidence.join(" ")).toContain("Forma di oggi: massimale stimato −10%");
+      expect(suggestion.options.some((option) => option.kind === "harder")).toBe(false);
+      // Con una sola seduta precedente o dopo una pausa lunga non si parla di forma del giorno.
+      expect(coachNextSet({ ...range, reference: sets(100, [9, 9, 9], 8), done: [{ weight: 100, reps: 6, rpe: 9 }] })!.title).not.toBe("Giornata sotto tono");
+      expect(coachNextSet({ ...range, reference: sets(100, [9, 9, 9], 8), history: usual, daysSinceReference: 30, done: [{ weight: 100, reps: 6, rpe: 9 }] })!.form).toBeUndefined();
+    });
+
+    it("segnala quando oggi rendi sopra il solito senza forzare la decisione", () => {
+      const suggestion = coachNextSet({ ...range, reference: sets(100, [8, 8], 8), history: [{ sets: sets(100, [8], 8) }], done: [{ weight: 100, reps: 10, rpe: 8 }] })!;
+      expect(suggestion.form).toBe(5);
+      expect(suggestion.evidence.join(" ")).toContain("Forma di oggi: massimale stimato +5%");
+    });
+
+    it("con un calo marcato dalla prima serie alleggerisce e allunga il recupero", () => {
+      const suggestion = coachNextSet({ ...range, done: [{ weight: 100, reps: 10, rpe: 7.5 }, { weight: 100, reps: 8, rpe: 8.5 }, { weight: 100, reps: 6, rpe: 9 }] })!;
+      expect(suggestion).toMatchObject({ action: "lower", weight: 95, reps: 6, title: "Fatica in aumento", restBonus: 60 });
+      expect(suggestion.flags).toContain("fatigue");
+      expect(suggestion.reason).toContain("calata di circa il 13%");
+    });
+
+    it("oltre il 20% di calo chiude l'esercizio", () => {
+      const suggestion = coachNextSet({ ...range, repsMin: 5, repsMax: 12, done: [{ weight: 100, reps: 12, rpe: 6 }, { weight: 100, reps: 8, rpe: 8.5 }, { weight: 100, reps: 5, rpe: 9 }] })!;
+      expect(suggestion).toMatchObject({ action: "stop", title: "Basta così per oggi" });
+      expect(suggestion.reason).toContain("più fatica che stimolo");
+      expect(suggestion.forecast).toBeUndefined();
+    });
+
+    it("non tocca il calo se lo sforzo è basso o non dichiarato", () => {
+      expect(coachNextSet({ ...range, done: [{ weight: 100, reps: 10, rpe: 6 }, { weight: 100, reps: 7 }] })!.title).not.toBe("Fatica in aumento");
+      expect(coachNextSet({ ...range, done: [{ weight: 100, reps: 10, rpe: 6 }, { weight: 100, reps: 7, rpe: 8 }] })!.title).not.toBe("Fatica in aumento");
+    });
+  });
+
+  it("non cerca l'aumento sullo stesso esercizio fatto duro meno di 48 ore fa", () => {
+    const hard = coachNextSet({ ...base, reference: sets(60, [12, 12, 12], 9), daysSinceReference: 1, done: [] })!;
+    expect(hard).toMatchObject({ action: "hold", weight: 60, reps: 12, title: "Recupero incompleto" });
+    expect(hard.reason).toContain("ieri con sforzo alto");
+    const rested = coachNextSet({ ...base, reference: sets(60, [12, 12, 12], 8), daysSinceReference: 1, done: [] })!;
+    expect(rested.action).toBe("raise");
+    expect(coachNextSet({ ...base, reference: sets(60, [12, 12, 12], 9), daysSinceReference: 3, done: [] })!.title).not.toBe("Recupero incompleto");
+  });
+
+  it("stima le ripetizioni per un carico diverso da quello proposto", async () => {
+    const { coachForecastReps } = await import("../src/app/services/coach-shadow");
+    const suggestion = coachNextSet({ repsMin: 6, repsMax: 10, incrementKg: 2.5, done: [{ weight: 100, reps: 8, rpe: 8 }] })!;
+    expect(suggestion.forecast).toEqual({ e1rm: 133.333333, rpe: 8, fatigue: 1 });
+    expect(coachForecastReps(suggestion.forecast, 90)).toBe(11);
+    expect(coachForecastReps(suggestion.forecast, 110)).toBe(3);
+    expect(coachForecastReps(suggestion.forecast, 30)).toBeUndefined();
+    expect(coachForecastReps(undefined, 90)).toBeUndefined();
+    // Prima serie: base dalla seduta di riferimento, senza fatica.
+    expect(coachNextSet({ ...base, reference: sets(60, [10, 10], 8), done: [] })!.forecast).toMatchObject({ fatigue: 0, rpe: 8 });
+    expect(coachNextSet({ ...base, loadMode: "bodyweight", done: [{ weight: 0, reps: 10, rpe: 8 }] })!.forecast).toBeUndefined();
+  });
 });

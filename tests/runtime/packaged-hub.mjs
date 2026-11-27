@@ -46,11 +46,25 @@ try {
   const photo = {image: 'data:image/jpeg;base64,AAAA'};
   const scanned = await call('/api/meal-scan', 'POST', photo); assert.equal(scanned.status, 200, await scanned.clone().text());
   const meal = await scanned.json(); assert.equal(meal.items[0].name, 'Riso'); assert.equal(meal.status.used, 23); assert.equal(meal.status.cap, 9500);
-  sql.prepare('UPDATE ai_usage SET neurons = 9401').run();
+  // Coach con l'AI: stesso modello e stesso limite giornaliero di Neuron della lettura dei pasti.
+  let coachCalls = 0;
+  const mealRun = env.AI.run;
+  env.AI.run = async (model, input) => {
+    if (!String(input?.messages?.[0]?.content).startsWith('Sei il Coach Ombra')) return mealRun(model, input);
+    coachCalls++; assert.ok(model.startsWith('@cf/'));
+    return {choices: [{message: {content: '{"headline":"Tieni il carico","advice":"Ripeti 80 kg con tecnica pulita.","cues":["Scapole addotte"],"stance":"agree","answer":""}'}}], usage: {prompt_tokens: 1200, completion_tokens: 220}};
+  };
+  const coachBody = {kind: 'set', context: {esercizio: 'Panca piana', proposta: {azione: 'Mantieni il carico', carico: 80, ripetizioni: 8}}, question: ''};
+  const coached = await call('/api/coach-ai', 'POST', coachBody); assert.equal(coached.status, 200, await coached.clone().text());
+  const advice = await coached.json(); assert.equal(advice.provider, 'cloudflare'); assert.equal(advice.cues[0], 'Scapole addotte'); assert.equal(advice.remaining, 19);
+  assert.equal((await (await call('/api/meal-scan')).json()).used, 44);
+  sql.prepare('UPDATE ai_usage SET neurons = 9401 WHERE day NOT LIKE ?').run('%-%-%-%');
   const waiting = await call('/api/meal-scan', 'POST', photo); assert.equal(waiting.status, 429); assert.equal((await waiting.json()).code, 'AI_LIMIT');
-  assert.equal(aiCalls, 1); assert.equal((await (await call('/api/meal-scan')).json()).blocked, true);
+  const coachWaiting = await call('/api/coach-ai', 'POST', coachBody); assert.equal(coachWaiting.status, 429); assert.equal((await coachWaiting.json()).code, 'AI_LIMIT');
+  assert.equal(aiCalls, 1); assert.equal(coachCalls, 1); assert.equal((await (await call('/api/meal-scan')).json()).blocked, true);
+  assert.equal((await (await call('/api/coach-ai')).json()).remaining, 19);
   delete env.AI;
-  console.log('PASS packaged Worker: meal photo reading stops before the free Workers AI allocation');
+  console.log('PASS packaged Worker: meal photo reading and Coach AI stop before the free Workers AI allocation');
   sql.prepare("UPDATE users SET role = 'Admin'").run();
   const denied = await call('/api/hub'); assert.equal(denied.status, 403);
   assert.equal((await call('/api/hub/vw')).status, 403);
