@@ -3,7 +3,7 @@ import { APPROVED_THEME_PALETTES } from "../../../shared/approved-palettes.js";
 export { APPROVED_THEME_PALETTES };
 export type ThemeMode = "dark" | "light" | "system";
 /** Look of the whole experience (GymTrack, GT Hub, GT Garage). Colours stay those of the chosen palette. */
-export type ThemeStyle = "classic" | "elegant" | "modern";
+export type ThemeStyle = "classic" | "elegant" | "modern" | "sport";
 export interface ThemeConfig {
   palette: string;
   mode: ThemeMode;
@@ -181,7 +181,7 @@ export const MODERN_THEME_PRESETS: readonly ThemePalette[] = [
     buttonEnd: "#1A6FDB",
   },
 ];
-const SELECTABLE_ORIGINAL_IDS = ["blu-azzurro", "viola-neon"];
+const SELECTABLE_ORIGINAL_IDS = ["blu-azzurro", "viola-neon", "smeraldo-sport"];
 /** The only themes offered in the picker. Every other palette stays valid for saved themes and backups. */
 export const SELECTABLE_THEME_PRESETS: readonly ThemePalette[] = [
   ...MODERN_THEME_PRESETS,
@@ -303,7 +303,8 @@ export function validThemeConfig(value: unknown): value is ThemeConfig {
     (config["style"] === undefined ||
       config["style"] === "classic" ||
       config["style"] === "elegant" ||
-      config["style"] === "modern") &&
+      config["style"] === "modern" ||
+      config["style"] === "sport") &&
     Object.keys(config).every((key) =>
       ["palette", "mode", "background", "accent", "style"].includes(key),
     )

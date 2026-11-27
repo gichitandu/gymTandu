@@ -44,6 +44,8 @@ export class HomeComponent {
   private todayClock = inject(TodayService,{optional:true});
   private theme = inject(ThemeService,{optional:true});
   /** Stile «Elegante»: striscia della settimana in alto e riquadri Volume/Settimana al posto dell'anello. */
+  /** Vero solo con lo stile «Rimodernizzato»: aggiunge la scheda del coach. */
+  modern = computed(() => this.theme?.config().style === 'modern');
   /** Home compatta: usata dagli stili Elegante e Rimodernizzato. */
   elegant = computed(() => { const style = this.theme?.config().style; return style === 'elegant' || style === 'modern'; });
   dayNumber(date: string) { return +date.slice(8, 10); }

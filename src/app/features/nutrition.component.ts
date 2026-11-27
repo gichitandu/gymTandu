@@ -47,7 +47,7 @@ interface MealFormDraft {
 @if(pendingPhoto&&!photoBusy()){<div class="actions"><button type="button" (click)="resumePhoto()">Riprendi preparazione della foto</button><button type="button" (click)="removePhoto()">Scarta foto in attesa</button></div>}
 @if(photoBusy()){<p class="subtle" role="status">Preparazione della foto…</p>}
 @if(error()){<p class="notice meal-error" role="alert">{{error()}}</p>}
-@if(photo){<img class="meal-preview" [src]="url(photo)" alt="Foto del pasto da controllare"/>
+@if(photo){<div class="meal-scan" [class.scanning]="analysisState()==='running'"><img class="meal-preview" [src]="url(photo)" alt="Foto del pasto da controllare"/></div>
 <div class="meal-ai-status" role="status" aria-live="polite" [attr.aria-busy]="analysisState()==='running'">
 @if(analysisState()==='running'){<strong>{{analysisSource()==='cloud'?'Lettura della foto con l’AI…':'Analisi della foto…'}}</strong>@if(analysisSource()!=='cloud'){<p>{{ai.status()}}</p>}}@else if(analysisState()==='blocked'||aiBlocked()&&analysisState()==='idle'){<p class="meal-ai-wait"><gt-icon name="clock"/><span><b>Attendere ripristino</b>{{aiWaitDetail()}}</span></p>}@else if(analysisMessage()){<p>{{analysisMessage()}}</p>}
 </div>

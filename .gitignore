@@ -63,3 +63,6 @@ calendar-relay/wrangler.ci.jsonc
 *.swo
 *~
 *.tsbuildinfo
+
+# Impostazioni personali di Claude Code (permessi locali)
+.claude/settings.local.json
