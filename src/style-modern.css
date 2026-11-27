@@ -226,9 +226,53 @@ body.theme-ready.style-elegant.style-modern gt-shell :is(.cal-empty,.cal-preview
 body.theme-ready.style-elegant.style-modern gt-shell .cal-strip-day{transition:background .45s var(--md-spring),color .3s,transform .4s var(--md-spring)}
 body.theme-ready.style-elegant.style-modern gt-shell .cal-strip-day.selected{background:var(--md-grad)!important;color:var(--md-ink)!important;box-shadow:0 12px 24px -10px var(--md-glow)!important;transform:scale(1.05)}
 body.theme-ready.style-elegant.style-modern gt-shell .cal-row-item{background:var(--md-surface);box-shadow:var(--md-shadow);border:0}
+/* Riga del calendario a pillola: niente barretta laterale, che stona sul bordo tondo. La foto e' tonda e
+   concentrica alla curva della pillola (stesso margine sopra, sotto e a sinistra); l'immagine resta quella
+   reale dell'esercizio, solo ritagliata dal contorno. L'orario, se indicato, e' un piccolo chip. */
+body.theme-ready.style-elegant.style-modern gt-shell main .cal-row-item{padding:6px 7px 6px 6px;gap:12px}
+body.theme-ready.style-elegant.style-modern gt-shell main .cal-row-item::before{display:none}
+body.theme-ready.style-elegant.style-modern gt-shell main .cal-row-item .cal-item-select{order:1;gap:12px}
+body.theme-ready.style-elegant.style-modern gt-shell main .cal-row-item .cal-item-thumb{width:48px;height:48px;border:0;border-radius:50%;box-shadow:none}
+body.theme-ready.style-elegant.style-modern gt-shell main .cal-row-item .cal-item-thumb>gt-exercise-thumb{--thumb-width:100%;--thumb-height:100%;border-radius:50%}
+body.theme-ready.style-elegant.style-modern gt-shell main .cal-row-time{order:2;background:var(--md-surface-2);color:var(--text)}
+body.theme-ready.style-elegant.style-modern gt-shell main .cal-row-item .cal-item-action{order:3}
 body.theme-ready.style-elegant.style-modern gt-shell .cal-item-action:not(.is-done){background:var(--md-grad);color:var(--md-ink)}
 body.theme-ready.style-elegant.style-modern gt-shell .cal-item-action.is-done{background:color-mix(in srgb,var(--accent) 16%,var(--card));color:var(--accent-text,var(--accent))}
 body.theme-ready.style-elegant.style-modern gt-shell .cal-filter-chips :is(button,label){border-radius:999px}
+
+/* Schede: la scheda attiva ha lo stesso aspetto della scheda «Allenamento di oggi» della Home
+   (fondo scuro, luci dell'accento, testi bianchi, pulsanti in vetro), con qualunque palette.
+   Le tre parti alte (intestazione, avanzamento, pulsanti) sono blocchi separati: le luci restano dentro ciascuno. */
+body.theme-ready.style-elegant.style-modern gt-shell main .simple-plan.pl-active{--el-ink:#fff;--el-ink-muted:#ffffffb3;--el-ink-line:#ffffff2e}
+body.theme-ready.style-elegant.style-modern gt-shell main .pl-active>:is(.simple-plan-top,.pl-progress,.pl-actions){background:var(--md-hero);color:#fff}
+body.theme-ready.style-elegant.style-modern gt-shell main .pl-active>.simple-plan-top{
+ display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"badge thumb" "title title";align-items:start;gap:14px 12px;
+ position:relative;isolation:isolate;overflow:hidden;border-radius:34px 34px 0 0;padding:22px 22px 8px}
+body.theme-ready.style-elegant.style-modern gt-shell main .pl-active>.simple-plan-top::before{
+ content:"";position:absolute;z-index:-1;width:230px;height:230px;right:-70px;top:-120px;border-radius:50%;filter:blur(34px);
+ background:var(--md-a);opacity:.85;pointer-events:none;animation:md-blobA 10s ease-in-out infinite alternate}
+body.theme-ready.style-elegant.style-modern gt-shell main .pl-active>.simple-plan-top>.su-badge{
+ grid-area:badge;align-self:center;justify-self:start;gap:6px;min-height:0;padding:0!important;border:0!important;background:none!important;
+ color:#ffffffc7!important;font-size:11px;font-weight:600;letter-spacing:.2em;text-transform:uppercase}
+body.theme-ready.style-elegant.style-modern gt-shell main .pl-active>.simple-plan-top>.su-badge gt-icon{width:13px;height:13px}
+body.theme-ready.style-elegant.style-modern gt-shell main .pl-active .plan-cover-thumb{
+ grid-area:thumb;--thumb-width:52px;--thumb-height:52px;width:52px;height:52px;max-width:none;border-radius:16px;overflow:hidden;box-shadow:0 0 0 1px #ffffff2e}
+body.theme-ready.style-elegant.style-modern gt-shell main .pl-active .simple-plan-title{grid-area:title;width:100%;padding:0;align-items:flex-start;gap:10px}
+body.theme-ready.style-elegant.style-modern gt-shell main .pl-active .simple-plan-title strong{
+ font-family:var(--md-display);font-size:26px;font-weight:750;line-height:1.08;letter-spacing:-.03em;color:#fff;overflow-wrap:normal;word-break:normal;hyphens:manual}
+body.theme-ready.style-elegant.style-modern gt-shell main .pl-active .simple-plan-title small{color:#ffffffb3!important}
+body.theme-ready.style-elegant.style-modern gt-shell main .pl-active .plan-chevron{flex:none;margin-top:2px;color:#ffffffb3}
+body.theme-ready.style-elegant.style-modern gt-shell main .pl-active>.pl-progress{padding:14px 22px 16px}
+body.theme-ready.style-elegant.style-modern gt-shell main .pl-active .pl-progress :is(span,small){color:#ffffffb3!important}
+body.theme-ready.style-elegant.style-modern gt-shell main .pl-active .pl-progress b{color:#fff!important}
+body.theme-ready.style-elegant.style-modern gt-shell main .pl-active .su-bar{height:6px;border-radius:999px;background:#ffffff26}
+body.theme-ready.style-elegant.style-modern gt-shell main .pl-active .su-bar i{border-radius:999px;background:#fff;box-shadow:0 0 12px #ffffff66}
+body.theme-ready.style-elegant.style-modern gt-shell main .pl-active>.pl-actions{
+ border-radius:0 0 34px 34px;padding:2px 22px 22px;
+ background:radial-gradient(170px 70px at 0% 100%,color-mix(in srgb,var(--md-b) 50%,transparent),transparent),var(--md-hero);
+ box-shadow:0 30px 60px -28px var(--md-glow),0 2px 6px #00000026}
+body.theme-ready.style-elegant.style-modern gt-shell main .pl-active .pl-actions .su-btn{background:#ffffff1f!important;border:0!important;color:#fff!important;box-shadow:none!important}
+body.theme-ready.style-elegant.style-modern gt-shell main .pl-active .pl-actions .su-btn.su-primary{background:#fff!important;color:var(--accent)!important}
 
 /* ---------- 13. Movimento: ingresso delle pagine ---------- */
 body.theme-ready.style-elegant.style-modern gt-shell main>:not(router-outlet){animation:md-page .55s var(--md-ease) both}

@@ -64,13 +64,15 @@ export function estimatedMinutes(seconds:number){const minutes=seconds/60;return
     @if(draftNotice()){<p class="notice" role="status">{{draftNotice()}}</p>}
     <a class="button ghost group-entry" routerLink="/gruppo"><gt-icon name="users"/>Allenamento in gruppo</a>
     <div class="pl-body">
-    @if(!archived()&&overlaps().length){<section class="card plan-overlap" role="status" aria-label="Piani con date sovrapposte">
-     <h3>Piani sovrapposti</h3>
+    @if(!archived()&&overlaps().length){<section class="card plan-overlap" role="status" aria-label="Schede con date sovrapposte">
+     <div class="po-head"><span class="su-bubble amber"><gt-icon name="layers"/></span><div><h3>Due schede sulle stesse date</h3><small>Ne resta attiva una: l’altra va in archivio con i suoi dati.</small></div></div>
      @for(o of overlaps();track o.keep.plan.id+o.drop.plan.id){<div class="plan-overlap-row">
-      <p>“{{o.keep.plan.name}}” ({{o.keep.workouts}} {{o.keep.workouts===1?'seduta':'sedute'}}, {{o.keep.sets}} serie) e “{{o.drop.plan.name}}” ({{o.drop.workouts}} {{o.drop.workouts===1?'seduta':'sedute'}}, {{o.drop.sets}} serie) occupano le stesse date.</p>
-      <button type="button" class="button" [disabled]="s.busy()" (click)="resolveOverlap(o.keep.plan.id,o.drop.plan.id)">Tieni “{{o.keep.plan.name}}” e concludi l’altro</button>
+      <ul class="po-plans">
+       <li class="po-keep"><gt-icon name="check"/><strong>{{o.keep.plan.name}}</strong><span>{{o.keep.workouts}} {{o.keep.workouts===1?'seduta':'sedute'}}</span></li>
+       <li class="po-drop"><gt-icon name="close"/><strong>{{o.drop.plan.name}}</strong><span>{{o.drop.workouts}} {{o.drop.workouts===1?'seduta':'sedute'}}</span></li>
+      </ul>
+      <button type="button" class="button po-resolve" [disabled]="s.busy()" (click)="resolveOverlap(o.keep.plan.id,o.drop.plan.id)" [attr.aria-label]="'Tieni '+o.keep.plan.name+' e concludi '+o.drop.plan.name">Concludi la seconda</button>
      </div>}
-     <small>Il piano concluso va in archivio: sedute, serie e statistiche restano consultabili.</small>
     </section>}
     @if(!archived()){
       @for(p of activePlans();track p.id){<ng-container *ngTemplateOutlet="planCard;context:{$implicit:p}"/>}
@@ -84,7 +86,7 @@ export function estimatedMinutes(seconds:number){const minutes=seconds/60;return
     <ng-template #planCard let-p>
         <section class="card simple-plan" [class.pl-active]="p.active&&!p.completedAt&&!p.archived" [class.pl-editing]="editing()===p.id">
           <div class="simple-plan-top"><gt-exercise-thumb class="plan-cover-thumb" [exercise]="thumbnailExercise(p.id)"/>
-            <button type="button" class="simple-plan-title" [attr.aria-expanded]="expanded()===p.id" (click)="expanded.set(expanded()===p.id?'':p.id)"><span><strong>{{p.name}}</strong><small>{{p.program?p.program.weeks+' settimane · ':''}}{{s.days(p.id).length}} {{s.days(p.id).length===1?'allenamento':'allenamenti'}}</small></span><span class="plan-chevron" aria-hidden="true">{{expanded()===p.id?'⌃':'›'}}</span></button>
+            <button type="button" class="simple-plan-title" [attr.aria-expanded]="expanded()===p.id" (click)="expanded.set(expanded()===p.id?'':p.id)"><span><strong>{{p.name}}</strong>@if(!(p.active&&!p.completedAt&&!p.archived&&s.days(p.id).length)){<small>{{p.program?p.program.weeks+' settimane · ':''}}{{s.days(p.id).length}} {{s.days(p.id).length===1?'allenamento':'allenamenti'}}</small>}</span><span class="plan-chevron" aria-hidden="true">{{expanded()===p.id?'⌃':'›'}}</span></button>
             @if(p.completedAt){<span class="su-badge muted">Conclusa</span>}@else if(p.active){<span class="su-badge green"><gt-icon name="check"/>Attiva</span>}
           </div>
           @if(p.active&&!p.completedAt&&!p.archived&&s.days(p.id).length){<div class="pl-progress"><div class="pl-progress-row">@if(p.program){<span><b>Settimana {{currentWeek(p)}}</b> di {{p.program.weeks}}</span>}@else{<span><b>{{completedForPlan(p.id)}}</b> {{completedForPlan(p.id)===1?'allenamento fatto':'allenamenti fatti'}}</span>}<small>{{completedForPlan(p.id)}} di {{s.days(p.id).length}}</small></div><div class="su-bar"><i [style.width.%]="planProgress(p)"></i></div></div>}
