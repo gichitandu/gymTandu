@@ -4,6 +4,7 @@ import { DESIGN_DIRECTIVES } from '../design/design-directives';
 import {DesignRuntime} from '../design/design-runtime';
 import {ThemePickerComponent} from '../shared/theme-picker.component';
 import {InstallHelpComponent} from '../shared/install-help.component';
+import {InstallAppComponent} from '../shared/install-app.component';
 import {AppFeaturesService} from '../services/app-features';
 import {PushReminderComponent} from '../shared/push-reminder.component';
 import {CalendarSubscriptionComponent} from '../shared/calendar-subscription.component';
@@ -51,7 +52,7 @@ interface ProfileFormDraft {
 @Component({
   standalone: true,
   styleUrls: ["./account-polish.css", "./profile-redesign.css", "./profile-readability.css"],
-  imports: [AppInviteComponent,InstallHelpComponent,...DESIGN_DIRECTIVES,ThemePickerComponent,PushReminderComponent,CalendarSubscriptionComponent,DateFieldComponent,BackupReminderComponent,ArchiveSyncComponent,AppUpdatesComponent,
+  imports: [AppInviteComponent,InstallHelpComponent,InstallAppComponent,...DESIGN_DIRECTIVES,ThemePickerComponent,PushReminderComponent,CalendarSubscriptionComponent,DateFieldComponent,BackupReminderComponent,ArchiveSyncComponent,AppUpdatesComponent,
     A11yModule,
     AvatarComponent,
     IosStatusComponent,
@@ -229,19 +230,7 @@ interface ProfileFormDraft {
             Dopo il primo caricamento completo via HTTPS, l’app conserva le
             risorse dell’interfaccia. La verifica dell’account al caricamento richiede una connessione.
           </p>
-          @if (pwa.installed()) {
-            <span class="pill green">App installata</span>
-          } @else if (pwa.event()) {
-            <button class="primary" (click)="pwa.install()">
-              Installa GymTrack
-            </button>
-          } @else {
-            <p class="subtle">
-              Dal menu del browser scegli “Installa app” o “Aggiungi a schermata
-              Home”. Su iPhone usa Safari → Condividi → Aggiungi alla schermata
-              Home.
-            </p>
-          }
+          <gt-install-app />
           <div class="actions">
             <button class="ghost" (click)="persist()">
               Richiedi archiviazione persistente
