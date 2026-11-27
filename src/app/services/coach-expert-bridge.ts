@@ -19,6 +19,8 @@ export class CoachExpertBridge implements CoachGateway {
   displayName(): string { return this.store.profile()?.name || 'Atleta'; }
   completedWorkoutCount(): number { return this.store.data().workouts.filter(row => row.status === 'completed').length; }
   getHistory() { return historyFromGymTrack(this.store.data()); }
+  /** Collega il profilo all'archivio: variante usata, carichi e macchina di ciascun esercizio. */
+  bindProfile(profile: Profile): Profile { return bindProfileToGymTrack(profile, this.store.data()); }
 
   loadProfile(): Profile | null {
     const fallback = () => {

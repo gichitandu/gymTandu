@@ -6,6 +6,8 @@ export interface CoachGateway {
   displayName(): string;
   getHistory(): WorkoutHistory[];
   completedWorkoutCount(): number;
+  /** Facoltativo: applica al profilo ciò che dipende dall'archivio (variante usata, macchina, incrementi). */
+  bindProfile?(profile: Profile): Profile;
   loadProfile(): Profile | null;
   saveProfile(profile: Profile): void;
   savePlan(plan: TrainingPlan): Promise<{ ok: boolean; message: string }>;

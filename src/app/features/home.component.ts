@@ -22,6 +22,8 @@ interface HomeUpcomingSession {
   exerciseCount:number;setCount:number;activePlan:boolean;
 }
 
+import { InstallAppComponent } from '../shared/install-app.component';
+
 @Component({
   standalone: true,
   imports: [...DESIGN_DIRECTIVES,
@@ -32,6 +34,7 @@ interface HomeUpcomingSession {
     ExerciseThumbComponent,
     CheckinSheetComponent,
     ProfileLinkComponent,
+    InstallAppComponent,
   ],
   templateUrl: "./home.component.html",
   styleUrls: ["./home-redesign.css"],

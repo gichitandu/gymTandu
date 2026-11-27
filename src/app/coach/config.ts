@@ -1,7 +1,7 @@
-import type { Profile, Goal, Experience } from './models.js';
+import type { DayFocus, Profile, Goal, Experience, SplitMode } from './models.js';
 
-export const ENGINE_VERSION = '1.2.0';
-export const RULESET_DATE = '2026-11-24';
+export const ENGINE_VERSION = '1.3.0';
+export const RULESET_DATE = '2026-11-27';
 export const DEFAULT_PROFILE: Profile = {
   goal: 'hypertrophy', experience: 'beginner', daysPerWeek: 3,
   minutesPerSession: 45, equipment: ['machine', 'cable', 'dumbbell', 'bodyweight'],
@@ -45,3 +45,22 @@ export const MUSCLE_LABELS = {
   chest: 'Petto', back: 'Dorso', quads: 'Quadricipiti', hamstrings: 'Femorali', glutes: 'Glutei',
   shoulders: 'Spalle', biceps: 'Bicipiti', triceps: 'Tricipiti', calves: 'Polpacci', core: 'Core',
 };
+
+/** Strutture settimanali selezionabili. 'auto' conserva la proposta storica (full body fino a 3 sedute, poi upper/lower). */
+export const SPLIT_LABELS: Record<SplitMode, string> = {
+  auto: 'Automatica', 'full-body': 'Full body', 'upper-lower': 'Upper / Lower',
+  'push-pull-legs': 'Push / Pull / Legs', 'body-part': 'Per gruppi muscolari', custom: 'Personalizzata',
+};
+export const DAY_FOCUS_LABELS: Record<DayFocus, string> = {
+  full: 'Full body', upper: 'Upper · parte alta', lower: 'Lower · gambe', push: 'Push · spinta', pull: 'Pull · tirata',
+  'chest-back': 'Petto e dorso', 'chest-triceps': 'Petto e tricipiti', 'back-biceps': 'Dorso e bicipiti',
+  'shoulders-arms': 'Spalle e braccia', 'glutes-hamstrings': 'Glutei e femorali',
+};
+export const SESSION_MINUTES_RANGE = { min: 20, max: 120 } as const;
+export const BLOCK_WEEKS_RANGE = { min: 2, max: 16, default: 4 } as const;
+export const MAX_EXERCISES_RANGE = { min: 3, max: 10, default: 8 } as const;
+/** Serie in più o in meno per esercizio rispetto al preset di esperienza. */
+export const VOLUME_SET_DELTA = { low: -1, standard: 0, high: 1 } as const;
+/** Secondi in più o in meno sul recupero del preset; i recuperi brevi non scendono sotto 45 secondi. */
+export const REST_DELTA_SECONDS = { short: -30, standard: 0, long: 30 } as const;
+export const MIN_REST_SECONDS = 45;
