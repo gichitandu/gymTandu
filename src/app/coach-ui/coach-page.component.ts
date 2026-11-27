@@ -3,8 +3,8 @@ import { Component, HostListener, ViewEncapsulation, computed, inject, signal } 
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { COACH_GATEWAY } from './coach-gateway';
-import { CATALOG, DAY_FOCUS_LABELS, DEFAULT_PROFILE, SPLIT_LABELS, VARIANTS, findVariant, generatePlan, recommendNextSet, assessRecovery, weekFocuses } from '../coach/index';
-import type { ActualSet, DayFocus, Equipment, ExercisePrescription, Muscle, Profile, RestPreference, SplitMode, TrainingPlan, RecoveryAssessment, VolumeLevel } from '../coach/models';
+import { CATALOG, DAY_FOCUS_LABELS, DEFAULT_PROFILE, REPLACEMENTS_MAX, SPLIT_LABELS, VARIANTS, compactReplacements, findVariant, generatePlan, recommendNextSet, assessRecovery, suggestReplacement, weekFocuses } from '../coach/index';
+import type { ActualSet, DayFocus, Equipment, ExercisePrescription, ExerciseReplacement, Muscle, PlanSession, Profile, RestPreference, SplitMode, TrainingPlan, RecoveryAssessment, VolumeLevel } from '../coach/models';
 
 type Tab = 'plan' | 'train' | 'profile' | 'method';
 type MuscleGroup = 'upper' | 'legs' | 'core';
@@ -35,6 +35,9 @@ export class CoachPageComponent {
   readonly saving = signal(false);
   readonly selectedDay = signal(0);
   readonly selectedExercise = signal(0);
+  /** Modalità «Cambia esercizi»: la selezione è per seduta + esercizio, quindi può coprire più sedute. */
+  readonly selecting = signal(false);
+  readonly selected = signal<ReadonlySet<string>>(new Set());
   readonly done = signal<ActualSet[]>([]);
   readonly sources = signal<Source[]>([]);
   readonly sourceError = signal(false);
@@ -243,8 +246,68 @@ export class CoachPageComponent {
       if (useDraft) this.gateway.saveProfile(nextProfile);
       this.profile.set(nextProfile); this.plan.set(nextPlan); this.recovery.set(recovery); this.draft = structuredClone(nextProfile);
       this.dirty.set(false); this.selectedDay.set(0); this.selectedExercise.set(0); this.resetSimulation();
+      this.selecting.set(false); this.selected.set(new Set());
       if (useDraft) { this.notice.set('Piano aggiornato con i tuoi parametri. Controllalo prima di salvarlo.'); this.tab.set('plan'); }
     } catch (e) { this.error.set(e instanceof Error ? e.message : 'Non è stato possibile generare il piano. Controlla i parametri.'); }
+  }
+
+  readonly selectedCount = computed(() => this.selected().size);
+  readonly replacementCount = computed(() => this.profile().replacements?.length ?? 0);
+  private key(day: PlanSession, e: ExercisePrescription) { return `${day.id}|${e.exerciseId}`; }
+  isSelected(day: PlanSession, e: ExercisePrescription) { return this.selected().has(this.key(day, e)); }
+  allSelected(day: PlanSession) { return day.exercises.length > 0 && day.exercises.every(e => this.isSelected(day, e)); }
+  isReplaced(e: ExercisePrescription) { return e.decisions.some(d => d.ruleId === 'replacement'); }
+  toggleSelecting() { this.selecting.update(on => !on); this.selected.set(new Set()); }
+  toggleSelect(day: PlanSession, e: ExercisePrescription) {
+    const next = new Set(this.selected()); const k = this.key(day, e);
+    if (!next.delete(k)) next.add(k);
+    this.selected.set(next);
+  }
+  toggleDaySelection(day: PlanSession) {
+    const next = new Set(this.selected()); const all = this.allSelected(day);
+    for (const e of day.exercises) { if (all) next.delete(this.key(day, e)); else next.add(this.key(day, e)); }
+    this.selected.set(next);
+  }
+
+  /** Sostituisce gli esercizi selezionati con alternative scelte dal coach (simili, poi dello stesso muscolo). */
+  replaceSelected() {
+    const plan = this.plan();
+    if (!plan || this.dirty() || this.saving() || !this.selected().size) return;
+    const profile = this.profile();
+    let entries: ExerciseReplacement[] = [...profile.replacements ?? []];
+    const taken = new Map<string, Set<string>>();
+    const changed: { dayName: string; from: string; to: string }[] = [], missing: string[] = [];
+    for (const day of plan.sessions) for (const e of day.exercises) {
+      if (!this.isSelected(day, e)) continue;
+      const already = taken.get(day.id) ?? new Set<string>();
+      const suggestion = suggestReplacement({ ...profile, replacements: entries }, plan, day.id, e.exerciseId, already);
+      if (!suggestion) { missing.push(e.name); continue; }
+      already.add(suggestion.exerciseId); taken.set(day.id, already);
+      entries = [...entries, { session: day.name, from: e.exerciseId, to: suggestion.exerciseId, kind: suggestion.kind }];
+      changed.push({ dayName: day.name, from: e.name, to: suggestion.exerciseId });
+    }
+    if (!changed.length) { this.error.set(`Nessun esercizio alternativo compatibile con attrezzatura, livello ed esclusioni per: ${missing.join(', ')}.`); return; }
+    // Le catene (A→B, poi B→C) si riducono a una voce: il profilo salvato con la scheda ha uno spazio limitato.
+    if (entries.length > 12) entries = compactReplacements(entries);
+    if (entries.length > REPLACEMENTS_MAX) { this.error.set('Hai già sostituito molti esercizi: ripristina la proposta del coach prima di farne altre.'); return; }
+    const day = this.selectedDay();
+    this.draft.replacements = entries;
+    this.regenerate(true);
+    if (this.error()) { this.draft = structuredClone(this.profile()); return; }
+    this.selectedDay.set(Math.min(day, (this.plan()?.sessions.length ?? 1) - 1));
+    const nameOf = (c: { dayName: string; to: string }) => this.plan()?.sessions.find(s => s.name === c.dayName)?.exercises.find(e => e.exerciseId === c.to)?.name ?? this.exerciseName(c.to);
+    this.notice.set(`Sostituiti ${changed.length} esercizi: ${changed.map(c => `${c.dayName}: ${c.from} → ${nameOf(c)}`).join('; ')}.${missing.length ? ` Nessuna alternativa per: ${missing.join(', ')}.` : ''} I carichi dei nuovi esercizi si calibrano con una serie di prova.`);
+  }
+
+  /** Torna alla proposta originale del coach, senza le sostituzioni. */
+  resetReplacements() {
+    if (this.dirty() || this.saving() || !this.replacementCount()) return;
+    const day = this.selectedDay();
+    delete this.draft.replacements;
+    this.regenerate(true);
+    if (this.error()) { this.draft = structuredClone(this.profile()); return; }
+    this.selectedDay.set(Math.min(day, (this.plan()?.sessions.length ?? 1) - 1));
+    this.notice.set('Sostituzioni annullate: la scheda è tornata alla proposta del coach.');
   }
 
   /** Varianti reali tra cui scegliere; vuoto se l'esercizio ne ha una sola. */

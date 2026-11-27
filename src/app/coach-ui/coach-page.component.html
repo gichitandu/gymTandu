@@ -69,20 +69,32 @@
           <div class="day-tabs" aria-label="Sedute del piano">@for (day of p.sessions; track day.id; let i = $index) {<button type="button" [class.selected]="selectedDay() === i" [attr.aria-pressed]="selectedDay() === i" (click)="selectDay(i)"><span>SEDUTA {{i + 1}}</span>{{day.name}}</button>}</div>
           @if (session(); as day) {
             <div class="session-heading"><div><h3>{{day.focus}}</h3><p>{{day.exercises.length}} esercizi · circa {{day.estimatedMinutes}} minuti, riscaldamento incluso</p></div><span class="small-tag">{{selectedDay() + 1}} / {{p.sessions.length}}</span></div>
+            <div class="swap-bar" [class.active]="selecting()">
+              @if (!selecting()) {
+                <button type="button" class="pill-button" (click)="toggleSelecting()" [disabled]="dirty()"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7h11l-3-3M17 17H6l3 3"/></svg>Cambia esercizi</button>
+                @if (replacementCount()) {<span class="swap-note">{{replacementCount()}} {{replacementCount() === 1 ? 'sostituzione' : 'sostituzioni'}}</span><button type="button" class="text-button" (click)="resetReplacements()" [disabled]="dirty()">Ripristina la proposta</button>}
+              } @else {
+                <span class="swap-count" role="status">{{selectedCount()}} {{selectedCount() === 1 ? 'selezionato' : 'selezionati'}}</span>
+                <button type="button" class="text-button" (click)="toggleDaySelection(day)">{{allSelected(day) ? 'Deseleziona la seduta' : 'Seleziona la seduta'}}</button>
+                <button type="button" class="button primary swap-go" (click)="replaceSelected()" [disabled]="!selectedCount() || saving()">Sostituisci</button>
+                <button type="button" class="text-button" (click)="toggleSelecting()">Annulla</button>
+              }
+            </div>
+            @if (selecting()) {<p class="caption swap-hint">Tocca gli esercizi da cambiare, anche di sedute diverse. Il coach propone prima esercizi simili (stesso movimento e muscolo), poi altri dello stesso muscolo.</p>}
             <div class="exercise-list">
               @for (e of day.exercises; track e.exerciseId; let i = $index) {
                 @let muscle = primaryMuscle(e.exerciseId);
                 <div class="exercise-item">
-                <button type="button" class="exercise-row" [style.--i]="i" [attr.data-tone]="muscle?.tone" (click)="startTraining(i)">
+                <button type="button" class="exercise-row" [class.picked]="selecting() && isSelected(day, e)" [attr.aria-pressed]="selecting() ? isSelected(day, e) : null" [style.--i]="i" [attr.data-tone]="muscle?.tone" (click)="selecting() ? toggleSelect(day, e) : startTraining(i)">
                   <span class="exercise-number">{{(i + 1).toString().padStart(2, '0')}}</span>
                   <span class="exercise-name">{{e.name}}</span>
                   <span class="exercise-weight" [class.calibration]="e.calibration">@if (e.calibration) {<span class="calibrate-pill">Da calibrare</span>} @else {<span>{{loadText(e)}}</span>}<small>{{loadUnit(e)}}</small></span>
-                  <span class="exercise-meta"><span class="meta-chip lead">{{e.sets}} × {{e.repsMin}}–{{e.repsMax}} rip</span><span class="meta-chip">{{e.rir}} di margine</span><span class="meta-chip">{{rest(e.restSeconds)}} recupero</span>@if (muscle) {<span class="meta-chip muscle">{{muscle.name}}</span>}@if(e.supersetGroup) {<span class="meta-chip tag">Superset {{e.supersetGroup}}</span>}@if(e.dropSet) {<span class="meta-chip tag">Dropset opzionale</span>}</span>
-                  <span class="row-arrow" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></span>
+                  <span class="exercise-meta"><span class="meta-chip lead">{{e.sets}} × {{e.repsMin}}–{{e.repsMax}} rip</span><span class="meta-chip">{{e.rir}} di margine</span><span class="meta-chip">{{rest(e.restSeconds)}} recupero</span>@if (muscle) {<span class="meta-chip muscle">{{muscle.name}}</span>}@if(e.supersetGroup) {<span class="meta-chip tag">Superset {{e.supersetGroup}}</span>}@if(e.dropSet) {<span class="meta-chip tag">Dropset opzionale</span>}@if(isReplaced(e)) {<span class="meta-chip tag">Alternativa</span>}</span>
+                  @if (selecting()) {<span class="select-check" [class.on]="isSelected(day, e)" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span>} @else {<span class="row-arrow" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></span>}
                 </button>
-                @if (variantOptions(e); as variants) { @if (variants.length) {
+                @if (!selecting()) { @if (variantOptions(e); as variants) { @if (variants.length) {
                   <label class="variant-pick"><span>Variante</span><select [attr.aria-label]="'Variante di ' + e.name" [ngModel]="variantValue(e)" (ngModelChange)="setVariant(e, $event)" [disabled]="dirty() || saving()">@if (!variantValue(e)) {<option value="" disabled>Esercizio generico</option>}@for (v of variants; track v.id) {<option [value]="v.id">{{v.name}}</option>}</select></label>
-                } }
+                } } }
                 </div>
               }
             </div>

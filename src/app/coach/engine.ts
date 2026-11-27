@@ -1,7 +1,7 @@
 import { CATALOG, getExercise } from './catalog.js';
 import { VARIANTS, findVariant, resolveVariantId } from './variants.js';
 import { BLOCK_WEEKS_RANGE, DAY_FOCUS_LABELS, ENGINE_VERSION, EXPERIENCE_PRESETS, GOAL_PRESETS, HEAVY_COMPOUNDS, HEURISTICS, MAX_EXERCISES_RANGE, MIN_REST_SECONDS, MUSCLE_LABELS, REST_DELTA_SECONDS, SESSION_MINUTES_RANGE, SPLIT_LABELS, VOLUME_SET_DELTA, type RepTier } from './config.js';
-import type { ActualSet, DayFocus, Decision, Exercise, ExercisePrescription, ExerciseRecommendationInput, LoadSetting, Muscle, NextSetInput, PlanSession, Profile, RecoveryAssessment, SetRecommendation, SplitMode, TrainingPlan, WorkoutHistory } from './models.js';
+import type { ActualSet, DayFocus, Decision, Exercise, ExercisePrescription, ExerciseReplacement, ExerciseRecommendationInput, LoadSetting, Muscle, NextSetInput, PlanSession, Profile, RecoveryAssessment, SetRecommendation, SplitMode, TrainingPlan, WorkoutHistory } from './models.js';
 
 const MUSCLES = Object.keys(MUSCLE_LABELS) as Muscle[];
 const DAY_MS = 86_400_000;
@@ -45,9 +45,14 @@ function validatePreferences(p: Profile): void {
   if (p.rest !== undefined && !Object.hasOwn(REST_DELTA_SECONDS, p.rest)) throw new RangeError('Preferenza di recupero non supportata.');
   if (p.preferredExerciseIds !== undefined && (!Array.isArray(p.preferredExerciseIds) || p.preferredExerciseIds.some(id => typeof id !== 'string'))) throw new RangeError('Elenco esercizi preferiti non valido.');
   if (p.varyRepeatedDays !== undefined && typeof p.varyRepeatedDays !== 'boolean') throw new RangeError('Preferenza di variazione non valida.');
+  if (p.replacements !== undefined && (!Array.isArray(p.replacements) || p.replacements.length > REPLACEMENTS_MAX
+    || p.replacements.some(r => !r || typeof r !== 'object' || typeof r.session !== 'string' || r.session.length > 60 || typeof r.from !== 'string' || typeof r.to !== 'string' || !['similar', 'muscle'].includes(r.kind)))) throw new RangeError('Sostituzioni degli esercizi non valide.');
   // Gli id sconosciuti non sono un errore (il catalogo può cambiare tra versioni): valgono come «esercizio generico».
   if (p.variants !== undefined && (typeof p.variants !== 'object' || p.variants === null || Array.isArray(p.variants) || Object.values(p.variants).some(id => typeof id !== 'string'))) throw new RangeError('Varianti degli esercizi non valide.');
 }
+
+/** Oltre questo numero il profilo diventerebbe troppo grande per essere salvato insieme alla scheda. */
+export const REPLACEMENTS_MAX = 40;
 
 function loadSetting(profile: Profile, ex: Exercise): LoadSetting {
   return profile.loadSettings?.[ex.id] ?? { incrementKg: ex.defaultIncrementKg, minKg: ex.defaultMinKg, equipmentKey: ex.id };
@@ -338,12 +343,102 @@ function pickExercise(choices: Exercise[], s: Slot, used: Set<string>, profile:P
     const leading = free.filter(ex => ex.primary[0] === s.muscle);
     matching = leading.length ? leading : free.filter(ex => ex.primary.includes(s.muscle!));
   }
-  const preferred = profile.preferredExerciseIds ?? [];
   return [...matching].sort((a,b) => {
-    const score = (ex:Exercise): number => (profile.goal==='strength' && profile.experience!=='beginner' && ex.equipment==='barbell' ? 10 : 0) + (profile.experience==='beginner' && ex.stable ? 5 : 0) + ex.primary.filter(m=>profile.priorities.includes(m)).length*2 - (ex.loadType==='bodyweight' ? 2 : 0)
-      + (preferred.includes(ex.id) ? 20 : 0) - (avoid.has(ex.id) ? 8 : 0);
+    const score = (ex:Exercise): number => exerciseScore(ex,profile) - (avoid.has(ex.id) ? 8 : 0);
     return score(b)-score(a) || CATALOG.indexOf(a)-CATALOG.indexOf(b);
   })[0];
+}
+
+/** Preferenza del coach per un esercizio, a parità di ruolo nella seduta. Usata anche per scegliere le sostituzioni. */
+function exerciseScore(ex: Exercise, profile: Profile): number {
+  return (profile.goal==='strength' && profile.experience!=='beginner' && ex.equipment==='barbell' ? 10 : 0) + (profile.experience==='beginner' && ex.stable ? 5 : 0) + ex.primary.filter(m=>profile.priorities.includes(m)).length*2 - (ex.loadType==='bodyweight' ? 2 : 0)
+    + ((profile.preferredExerciseIds ?? []).includes(ex.id) ? 20 : 0);
+}
+
+/** Sostituzioni a catena per uno stesso esercizio (A→B, poi B→C), dalla prima all'ultima. */
+function replacementChain(profile: Pick<Profile, 'replacements'>, sessionName: string, exerciseId: string): ExerciseReplacement[] {
+  const chain: ExerciseReplacement[] = []; const seen = new Set([exerciseId]); let current = exerciseId;
+  for (let i = 0; i < REPLACEMENTS_MAX; i++) {
+    const step = profile.replacements?.find(r => r.session === sessionName && r.from === current);
+    if (!step || seen.has(step.to)) break;
+    chain.push(step); seen.add(step.to); current = step.to;
+  }
+  return chain;
+}
+
+/** Esercizi già sostituiti in quella posizione: non vanno riproposti finché ci sono altre alternative. */
+function replacementPast(profile: Profile, sessionName: string, exerciseId: string): Set<string> {
+  const past = new Set<string>(); let current = exerciseId;
+  for (let i = 0; i < REPLACEMENTS_MAX; i++) {
+    const step = profile.replacements?.find(r => r.session === sessionName && r.to === current);
+    if (!step || past.has(step.from)) break;
+    past.add(step.from); current = step.from;
+  }
+  return past;
+}
+
+const exerciseName = (id: string): string => CATALOG.find(ex => ex.id === id)?.name ?? id;
+
+/**
+ * Esercizio scelto dall'utente al posto di quello proposto dal coach. Se quello scelto non è più disponibile
+ * (attrezzatura, esclusioni, già in seduta) prova i precedenti della catena; se nessuno va, lascia l'originale e lo dice.
+ */
+function replacementFor(profile: Profile, sessionName: string, picked: Exercise, choices: Exercise[], used: Set<string>): { exercise?: Exercise; kind?: ExerciseReplacement['kind']; warning?: string } | undefined {
+  const chain = replacementChain(profile, sessionName, picked.id);
+  if (!chain.length) return undefined;
+  for (const step of [...chain].reverse()) {
+    const candidate = choices.find(ex => ex.id === step.to);
+    if (candidate && !used.has(candidate.id)) return { exercise: candidate, kind: step.kind };
+  }
+  return { warning: `Sostituzione non applicata in ${sessionName}: «${exerciseName(chain.at(-1)!.to)}» al posto di «${picked.name}» non è disponibile con attrezzatura, esclusioni e seduta attuali.` };
+}
+
+function replacementDecision(from: Exercise, kind: ExerciseReplacement['kind']): Decision {
+  return decision('replacement',`Scelto da te al posto di «${from.name}»: ${kind === 'similar' ? 'esercizio simile, stesso movimento e stesso muscolo' : 'stesso muscolo principale con un movimento diverso'}. Il carico si calibra su questo esercizio.`,'constraint');
+}
+
+/**
+ * Riduce ogni catena (A→B, poi B→C) a una sola voce (A→C): stesso risultato, meno spazio nel profilo salvato.
+ * Si perde solo la memoria degli esercizi già scartati; una catena che torna all'inizio (A→B→A) sparisce.
+ */
+export function compactReplacements(list: readonly ExerciseReplacement[]): ExerciseReplacement[] {
+  const holder = { replacements: [...list] };
+  return list.flatMap(entry => {
+    if (list.some(other => other !== entry && other.session === entry.session && other.to === entry.from)) return [];
+    const last = replacementChain(holder, entry.session, entry.from).at(-1) ?? entry;
+    return [{ session: entry.session, from: entry.from, to: last.to, kind: last.kind }];
+  });
+}
+
+export interface ReplacementSuggestion { exerciseId: string; kind: ExerciseReplacement['kind']; }
+
+/**
+ * Propone un altro esercizio per una posizione del piano: prima simili (stesso movimento e stesso muscolo), poi dello
+ * stesso muscolo principale. Rispetta attrezzatura, livello ed esclusioni, non ripete esercizi già nella seduta né
+ * quelli indicati in `taken` (altre sostituzioni della stessa richiesta) e, se può, evita quelli già sostituiti.
+ * A parità preferisce lo stesso tipo di carico (con peso o a corpo libero) e un esercizio non ancora presente altrove.
+ */
+export function suggestReplacement(profile: Profile, plan: TrainingPlan, sessionId: string, exerciseId: string, taken: ReadonlySet<string> = NONE): ReplacementSuggestion | null {
+  validateProfile(profile);
+  const session = plan.sessions.find(s => s.id === sessionId);
+  const current = CATALOG.find(ex => ex.id === exerciseId);
+  if (!session || !current) return null;
+  const inSession = new Set(session.exercises.map(p => p.exerciseId));
+  const elsewhere = new Set(plan.sessions.filter(s => s !== session).flatMap(s => s.exercises.map(p => p.exerciseId)));
+  const past = replacementPast(profile, session.name, exerciseId);
+  const pool = availableExercises(profile).filter(ex => ex.id !== exerciseId && !inSession.has(ex.id) && !taken.has(ex.id));
+  // Con carico resta con carico: un esercizio a corpo libero non è un'alternativa equivalente a una macchina o a un bilanciere.
+  const loadMismatch = (ex: Exercise) => Number((ex.loadType === 'bodyweight') !== (current.loadType === 'bodyweight'));
+  const tierOf = (ex: Exercise): 0 | 1 | undefined => ex.movement === current.movement && ex.primary.some(m => current.primary.includes(m)) ? 0 : ex.primary.includes(current.primary[0]!) ? 1 : undefined;
+  const ranked = (skipPast: boolean) => pool.filter(ex => !skipPast || !past.has(ex.id)).flatMap(ex => { const tier = tierOf(ex); return tier === undefined ? [] : [{ ex, tier }]; })
+    .sort((a, b) => a.tier - b.tier
+      || Number(a.ex.isolation !== current.isolation) - Number(b.ex.isolation !== current.isolation)
+      || loadMismatch(a.ex) - loadMismatch(b.ex)
+      || Number(elsewhere.has(a.ex.id)) - Number(elsewhere.has(b.ex.id))
+      || exerciseScore(b.ex, profile) - exerciseScore(a.ex, profile)
+      || CATALOG.indexOf(a.ex) - CATALOG.indexOf(b.ex));
+  const best = ranked(true)[0] ?? ranked(false)[0];
+  return best ? { exerciseId: best.ex.id, kind: best.tier === 0 ? 'similar' : 'muscle' } : null;
 }
 
 function estimateMinutes(exercises: ExercisePrescription[]): number {
@@ -424,9 +519,16 @@ export function generatePlan(profile:Profile,history:WorkoutHistory[]=[],asOf:st
     // Le priorità entrano solo nelle sedute che allenano quel muscolo; la struttura automatica le aggiunge ovunque come prima.
     const prioritySlots=profile.priorities.filter(m=>!template.muscles || template.muscles.includes(m)).map(targetSlot);
     for(const s of [...template.slots.slice(0,4),...prioritySlots,...template.slots.slice(4)]) {
-      const ex=pickExercise(choices,s,used,profile,avoid);
-      if(!ex) { if(!s.optional && s.movement && ['squat','hinge','push','pull','vertical-pull'].includes(s.movement)) sessionWarnings.push(`Movimento ${s.movement} non coperto con le impostazioni attuali.`); continue; }
-      used.add(ex.id); selected.push(basePrescription(ex,profile,choices));
+      const picked=pickExercise(choices,s,used,profile,avoid);
+      if(!picked) { if(!s.optional && s.movement && ['squat','hinge','push','pull','vertical-pull'].includes(s.movement)) sessionWarnings.push(`Movimento ${s.movement} non coperto con le impostazioni attuali.`); continue; }
+      // Una sostituzione chiesta dall'utente prende il posto dell'esercizio scelto; quello originale non rientra in un altro slot.
+      const swap=replacementFor(profile,template.name,picked,choices,used);
+      const ex=swap?.exercise ?? picked;
+      if(swap?.warning) sessionWarnings.push(swap.warning);
+      used.add(picked.id); used.add(ex.id);
+      const prescription=basePrescription(ex,profile,choices);
+      if(swap?.exercise && swap.kind) prescription.decisions.unshift(replacementDecision(picked,swap.kind));
+      selected.push(prescription);
       if(selected.length>=maxExercises) break;
     }
     while(selected.length>3 && estimateMinutes(selected)>budget) selected.pop();
