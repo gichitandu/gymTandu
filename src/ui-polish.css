@@ -273,3 +273,39 @@ body.theme-ready gt-shell .meal-macros {
     display: none;
   }
 }
+
+/* ===== Calendario e Schede: pulizia valida per TUTTI gli stili (Classico, Elegante, Rimodernizzato, Sportivo) e tutte le palette =====
+   Solo layout e forma: i colori restano quelli dello stile e della palette scelti.
+   I selettori ripetono la classe (.x.x) per battere le regole degli stili senza usare !important. */
+
+/* Riga di una voce del calendario: niente barretta laterale, foto ben incastrata, orario in un chip. */
+body.theme-ready gt-shell .cal-page .cal-row-item.cal-row-item{padding:7px 8px 7px 7px;gap:12px}
+body.theme-ready gt-shell .cal-page .cal-week-row .cal-row-item.cal-row-item{padding:7px 8px 7px 7px;gap:10px}
+body.theme-ready gt-shell .cal-page .cal-row-item.cal-row-item::before{display:none}
+body.theme-ready gt-shell .cal-page .cal-row-item.cal-row-item .cal-item-select{order:1;gap:12px;padding:0}
+body.theme-ready gt-shell .cal-page .cal-row-item.cal-row-item .cal-item-thumb{
+ width:48px;height:48px;border:0;border-radius:17px;overflow:hidden;
+ box-shadow:0 0 0 1.5px color-mix(in srgb,var(--k) 45%,transparent)}
+body.theme-ready gt-shell .cal-page .cal-row-item.cal-row-item .cal-item-thumb>gt-exercise-thumb{--thumb-width:100%;--thumb-height:100%;width:100%;height:100%;border-radius:inherit}
+body.theme-ready.style-modern gt-shell .cal-page .cal-row-item.cal-row-item .cal-item-thumb{border-radius:50%}
+body.theme-ready.style-sport gt-shell .cal-page .cal-row-item.cal-row-item .cal-item-thumb{border-radius:10px}
+body.theme-ready gt-shell .cal-page .cal-row-item.cal-row-item .cal-row-time{
+ order:2;width:auto;padding:5px 9px;border-radius:999px;font-size:12px;font-weight:700;line-height:1;white-space:nowrap;
+ color:var(--text);background:color-mix(in srgb,var(--text) 8%,transparent)}
+body.theme-ready.style-sport gt-shell .cal-page .cal-row-item.cal-row-item .cal-row-time{border-radius:6px}
+body.theme-ready gt-shell .cal-page .cal-row-item.cal-row-item .cal-item-action{order:3}
+
+/* Scheda attiva: intestazione ordinata (etichetta e foto in alto, titolo a tutta larghezza), titolo che non si spezza a metà parola. */
+body.theme-ready gt-shell main .simple-plan.pl-active>.simple-plan-top{
+ display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"badge thumb" "title title";align-items:start;gap:14px 12px;position:relative}
+body.theme-ready gt-shell main .simple-plan.pl-active>.simple-plan-top>.su-badge{
+ grid-area:badge;align-self:center;justify-self:start;margin:0;font-size:11px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;white-space:nowrap}
+body.theme-ready gt-shell main .simple-plan.pl-active>.simple-plan-top>.su-badge gt-icon{width:13px;height:13px}
+body.theme-ready gt-shell main .simple-plan.pl-active .plan-cover-thumb{
+ grid-area:thumb;--thumb-width:52px;--thumb-height:52px;width:52px;height:52px;max-width:none;border-radius:16px;overflow:hidden}
+body.theme-ready gt-shell main .simple-plan.pl-active .simple-plan-title{
+ grid-area:title;width:100%;min-width:0;padding:0;display:flex;align-items:flex-start;gap:10px;text-align:left}
+body.theme-ready gt-shell main .simple-plan.pl-active .simple-plan-title>span:first-child{flex:1;min-width:0}
+body.theme-ready gt-shell main .simple-plan.pl-active .simple-plan-title strong{
+ display:block;font-size:24px;line-height:1.1;overflow-wrap:normal;word-break:normal;hyphens:manual}
+body.theme-ready gt-shell main .simple-plan.pl-active .plan-chevron{flex:none;margin-top:2px}
