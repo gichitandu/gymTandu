@@ -3,8 +3,8 @@ import { Component, HostListener, ViewEncapsulation, computed, inject, signal } 
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { COACH_GATEWAY } from './coach-gateway';
-import { CATALOG, DEFAULT_PROFILE, generatePlan, recommendNextSet, assessRecovery } from '../coach/index';
-import type { ActualSet, Equipment, ExercisePrescription, Muscle, Profile, TrainingPlan, RecoveryAssessment } from '../coach/models';
+import { CATALOG, DAY_FOCUS_LABELS, DEFAULT_PROFILE, SPLIT_LABELS, generatePlan, recommendNextSet, assessRecovery, weekFocuses } from '../coach/index';
+import type { ActualSet, DayFocus, Equipment, ExercisePrescription, Muscle, Profile, RestPreference, SplitMode, TrainingPlan, RecoveryAssessment, VolumeLevel } from '../coach/models';
 
 type Tab = 'plan' | 'train' | 'profile' | 'method';
 type MuscleGroup = 'upper' | 'legs' | 'core';
@@ -55,6 +55,20 @@ export class CoachPageComponent {
     { id: 'hamstrings', name: 'Femorali' }, { id: 'glutes', name: 'Glutei' }, { id: 'shoulders', name: 'Spalle' },
     { id: 'biceps', name: 'Bicipiti' }, { id: 'triceps', name: 'Tricipiti' }, { id: 'calves', name: 'Polpacci' }, { id: 'core', name: 'Core' },
   ];
+  readonly splitOptions: { id: SplitMode; name: string; hint: string }[] = [
+    { id: 'auto', name: 'Automatica', hint: 'Decide il coach in base alle sedute' },
+    { id: 'full-body', name: 'Full body', hint: 'Tutto il corpo in ogni seduta' },
+    { id: 'upper-lower', name: 'Upper / Lower', hint: 'Parte alta e gambe alternate' },
+    { id: 'push-pull-legs', name: 'Push / Pull / Legs', hint: 'Spinta, tirata e gambe' },
+    { id: 'body-part', name: 'Per gruppi muscolari', hint: 'Pochi muscoli per seduta' },
+    { id: 'custom', name: 'Personalizzata', hint: 'Scegli tu ogni seduta' },
+  ];
+  readonly focusOptions = (Object.keys(DAY_FOCUS_LABELS) as DayFocus[]).map(id => ({ id, name: DAY_FOCUS_LABELS[id] }));
+  readonly minuteOptions = [20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 100, 110, 120];
+  readonly blockOptions = [2, 3, 4, 5, 6, 8, 10, 12, 16];
+  readonly exerciseCountOptions = [3, 4, 5, 6, 7, 8, 9, 10];
+  readonly volumeOptions: { id: VolumeLevel; name: string }[] = [{ id: 'low', name: 'Ridotto' }, { id: 'standard', name: 'Standard' }, { id: 'high', name: 'Alto' }];
+  readonly restOptions: { id: RestPreference; name: string }[] = [{ id: 'short', name: 'Brevi' }, { id: 'standard', name: 'Standard' }, { id: 'long', name: 'Lunghi' }];
   readonly goalLabels = { hypertrophy: 'Crescita muscolare', strength: 'Forza', endurance: 'Resistenza muscolare' };
   readonly experienceLabels = { beginner: 'Principiante', intermediate: 'Intermedio', advanced: 'Avanzato' };
   readonly session = computed(() => this.plan()?.sessions[this.selectedDay()] ?? null);
@@ -70,6 +84,19 @@ export class CoachPageComponent {
   readonly volumeRows = computed(() => this.muscleOptions.map(m => ({ ...m, sets: this.plan()?.weeklyVolume[m.id] ?? 0 })).filter(m => m.sets > 0));
   readonly maxVolume = computed(() => Math.max(1, ...this.volumeRows().map(m => m.sets)));
   readonly workingDone = computed(() => this.done().filter(s => s.kind === 'working').length);
+  /** «4 × 60 min» oppure, con durate diverse per seduta, «4 sedute · 45–90 min». */
+  readonly weekSummary = computed(() => {
+    const p = this.plan(), prof = this.profile();
+    if (!p?.sessions.length) return '';
+    const minutes = p.sessions.map((_, i) => prof.sessionMinutes?.[i] ?? prof.minutesPerSession);
+    const min = Math.min(...minutes), max = Math.max(...minutes);
+    return min === max ? `${p.sessions.length} × ${min} min` : `${p.sessions.length} sedute · ${min}–${max} min`;
+  });
+  /** Struttura scelta dall'utente; null per la proposta automatica. */
+  readonly structureLabel = computed(() => {
+    const split = this.profile().split ?? 'auto';
+    return split === 'auto' ? null : SPLIT_LABELS[split];
+  });
   readonly weeklySets = computed(() => this.volumeRows().reduce((sum, m) => sum + m.sets, 0));
   readonly volumeSorted = computed(() => [...this.volumeRows()].sort((a, b) => b.sets - a.sets));
   readonly volumeGroups = computed(() => {
@@ -86,6 +113,7 @@ export class CoachPageComponent {
   inputTechnique: ActualSet['technique'] = 'unknown';
   pain = false;
   excluded = '';
+  preferred = '';
 
   constructor() {
     try {
@@ -132,11 +160,69 @@ export class CoachPageComponent {
   }
   addExclusion() {
     if (this.excluded && !this.draft.excludedExerciseIds.includes(this.excluded)) {
-      this.draft.excludedExerciseIds = [...this.draft.excludedExerciseIds, this.excluded]; this.markDirty();
+      this.draft.excludedExerciseIds = [...this.draft.excludedExerciseIds, this.excluded];
+      this.removePreferred(this.excluded); this.markDirty();
     }
     this.excluded = '';
   }
   removeExclusion(id: string) { this.draft.excludedExerciseIds = this.draft.excludedExerciseIds.filter(x => x !== id); this.markDirty(); }
+
+  /* Preferenze facoltative: il valore predefinito elimina il campo, così il profilo resta quello di prima. */
+  splitMode(): SplitMode { return this.draft.split ?? 'auto'; }
+  /** Sedute della settimana come le genererà il motore con le scelte correnti. */
+  weekPlan(): DayFocus[] { return weekFocuses(this.draft); }
+  setSplit(mode: SplitMode) {
+    // «Personalizzata» parte dalla proposta visibile: l'utente modifica solo ciò che vuole.
+    const days = this.weekPlan();
+    if (mode === 'custom') this.draft.customDays = days; else delete this.draft.customDays;
+    if (mode === 'auto') delete this.draft.split; else this.draft.split = mode;
+    this.markDirty();
+  }
+  setDayFocus(index: number, focus: DayFocus) {
+    const days = this.weekPlan(); days[index] = focus;
+    this.draft.split = 'custom'; this.draft.customDays = days; this.markDirty();
+  }
+  daysChanged() {
+    if (this.draft.split === 'custom') this.draft.customDays = weekFocuses(this.draft);
+    if (this.draft.sessionMinutes) this.setSessionMinutesList(this.draft.sessionMinutes.slice(0, this.draft.daysPerWeek));
+    this.markDirty();
+  }
+  sessionMinutesAt(index: number): number | null { return this.draft.sessionMinutes?.[index] ?? null; }
+  setSessionMinutes(index: number, value: number | null) {
+    const list = Array.from({ length: this.draft.daysPerWeek }, (_, i) => this.sessionMinutesAt(i));
+    list[index] = value;
+    this.setSessionMinutesList(list); this.markDirty();
+  }
+  private setSessionMinutesList(list: Array<number | null>) {
+    if (list.some(value => value !== null)) this.draft.sessionMinutes = list; else delete this.draft.sessionMinutes;
+  }
+  /** Mantiene selezionabile anche un valore importato fuori dall'elenco standard. */
+  withCurrent(options: number[], current: number | null | undefined): number[] {
+    return current === null || current === undefined || options.includes(current) ? options : [...options, current].sort((a, b) => a - b);
+  }
+  setBlockWeeks(weeks: number) { if (weeks === 4) delete this.draft.blockWeeks; else this.draft.blockWeeks = weeks; this.markDirty(); }
+  setMaxExercises(value: number | null) { if (value === null) delete this.draft.maxExercises; else this.draft.maxExercises = value; this.markDirty(); }
+  setVolume(value: VolumeLevel) { if (value === 'standard') delete this.draft.volume; else this.draft.volume = value; this.markDirty(); }
+  setRest(value: RestPreference) { if (value === 'standard') delete this.draft.rest; else this.draft.rest = value; this.markDirty(); }
+  setVary(value: boolean) { if (value) this.draft.varyRepeatedDays = true; else delete this.draft.varyRepeatedDays; this.markDirty(); }
+  /** Solo esercizi con l'attrezzatura scelta e non esclusi: gli altri non potrebbero entrare nella scheda. */
+  preferredChoices() {
+    return CATALOG.filter(e => this.draft.equipment.includes(e.equipment) && !this.draft.excludedExerciseIds.includes(e.id) && !this.draft.preferredExerciseIds?.includes(e.id));
+  }
+  addPreferred() {
+    if (this.preferred && !this.draft.preferredExerciseIds?.includes(this.preferred)) {
+      this.draft.preferredExerciseIds = [...this.draft.preferredExerciseIds ?? [], this.preferred];
+      this.draft.excludedExerciseIds = this.draft.excludedExerciseIds.filter(x => x !== this.preferred);
+      this.markDirty();
+    }
+    this.preferred = '';
+  }
+  removePreferred(id: string) {
+    if (!this.draft.preferredExerciseIds?.includes(id)) return;
+    const next = this.draft.preferredExerciseIds.filter(x => x !== id);
+    if (next.length) this.draft.preferredExerciseIds = next; else delete this.draft.preferredExerciseIds;
+    this.markDirty();
+  }
   exerciseName(id: string) { return CATALOG.find(e => e.id === id)?.name || id; }
   /** Muscolo principale dal catalogo, solo per etichetta e colore della riga. */
   primaryMuscle(id: string): { name: string; tone: MuscleTone } | null {

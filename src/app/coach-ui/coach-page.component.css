@@ -395,3 +395,27 @@ input[type=number]:disabled{opacity:.55}
 .wide-only{display:none}
 @media(max-width:639px){.form-grid{grid-template-columns:1fr}.section-heading h2{font-size:26px}}
 @media(min-width:640px){.hero-text{max-width:360px}.wide-only{display:inline;margin-left:-3px}}
+
+/* Struttura settimanale e preferenze di composizione */
+.field-label.first{margin-top:0}
+.field-caption{margin-top:10px}
+.form-grid.spaced{margin-top:22px}
+.toggle-row.spaced{margin-top:20px}
+.split-options{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.split-options button{display:grid;gap:2px;min-height:58px;padding:10px 12px;border-radius:16px;border:1px solid #dbe3d6;background:#fff;color:var(--ink-2);text-align:left;transition:background .15s,border-color .15s,color .15s}
+.split-options strong{font-size:13px;font-weight:700;line-height:1.3}
+.split-options small{font-size:11px;line-height:1.35;color:var(--muted)}
+.split-options button.checked{background:var(--deep);border-color:var(--deep);color:#fff}
+.split-options button.checked small{color:#cfe3d6}
+.week-days{display:grid;gap:8px;margin-top:16px}
+.week-day{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:8px;padding:10px;border-radius:18px;background:var(--chip)}
+.week-day-label{grid-column:1/-1;display:flex;align-items:center;gap:8px;font-size:11px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--soft-ink)}
+.week-day-label b{display:grid;place-items:center;width:22px;height:22px;border-radius:8px;background:var(--deep);color:var(--lime);font-size:11px;letter-spacing:0}
+.week-day select{min-height:44px;padding:0 30px 0 12px;font-size:13.5px;background-color:#fff;background-position:right 10px center;text-overflow:ellipsis}
+.preferred-chips{margin-top:10px}
+.preferred-chips button{background:var(--leaf);border-color:#b9dcb0;color:var(--green-3)}
+@media(min-width:640px){
+  .split-options{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .week-day{grid-template-columns:120px minmax(0,1.6fr) minmax(0,1fr);align-items:center}
+  .week-day-label{grid-column:auto}
+}

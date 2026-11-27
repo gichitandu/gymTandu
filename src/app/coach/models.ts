@@ -5,6 +5,12 @@ export type Muscle = 'chest' | 'back' | 'quads' | 'hamstrings' | 'glutes' | 'sho
 export type Movement = 'squat' | 'hinge' | 'push' | 'pull' | 'vertical-push' | 'vertical-pull' | 'isolation' | 'core';
 export type LoadType = 'total' | 'per-dumbbell' | 'stack' | 'bodyweight';
 export type Confidence = 'initial' | 'limited' | 'established';
+/** Struttura settimanale. 'auto' (o assente) mantiene la proposta storica del coach. */
+export type SplitMode = 'auto' | 'full-body' | 'upper-lower' | 'push-pull-legs' | 'body-part' | 'custom';
+/** Contenuto di una singola seduta quando la struttura non è automatica. */
+export type DayFocus = 'full' | 'upper' | 'lower' | 'push' | 'pull' | 'chest-back' | 'chest-triceps' | 'back-biceps' | 'shoulders-arms' | 'glutes-hamstrings';
+export type VolumeLevel = 'low' | 'standard' | 'high';
+export type RestPreference = 'short' | 'standard' | 'long';
 export interface LoadSetting {
   incrementKg: number;
   minKg: number;
@@ -24,6 +30,22 @@ export interface Profile {
   allowDropSets: boolean;
   allowFailure: boolean;
   loadSettings?: Record<string, LoadSetting>;
+  /* Preferenze facoltative: se assenti il piano resta identico a quello delle versioni precedenti. */
+  split?: SplitMode;
+  /** Contenuto di ogni seduta, usato solo con split 'custom' (lunghezza = daysPerWeek). */
+  customDays?: DayFocus[];
+  /** Durata specifica per seduta, nello stesso ordine delle sedute; null = minutesPerSession. */
+  sessionMinutes?: Array<number | null>;
+  /** Settimane del blocco (predefinito 4). */
+  blockWeeks?: number;
+  /** Numero massimo di esercizi per seduta (predefinito 8). */
+  maxExercises?: number;
+  volume?: VolumeLevel;
+  rest?: RestPreference;
+  /** Esercizi da scegliere per primi quando la seduta prevede quel movimento o muscolo. */
+  preferredExerciseIds?: string[];
+  /** Evita di ripetere gli stessi esercizi nelle sedute dello stesso tipo, se esistono alternative. */
+  varyRepeatedDays?: boolean;
 }
 export interface Exercise {
   id: string;

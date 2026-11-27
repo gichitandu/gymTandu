@@ -1,6 +1,6 @@
 /** Pure, conservative adapters for GymTrack a7b15bb. Stored weights are kg. */
 import type { DataSet, Exercise as NativeExercise, WorkoutLogExercise, WorkoutLogSet } from '../models/domain';
-import { CATALOG, DEFAULT_PROFILE } from '../coach/index';
+import { CATALOG, DEFAULT_PROFILE, SPLIT_LABELS } from '../coach/index';
 import type { ActualSet, ExercisePrescription, Profile, TrainingPlan, WorkoutHistory } from '../coach/models';
 import { setupKey } from './training-flow';
 
@@ -259,7 +259,7 @@ export function insertCoachPlan(data: DataSet, plan: TrainingPlan): string {
   const planMetadata: PlanMetadata = { schema: 1, version: plan.version, corePlanId: plan.id, profile: structuredClone(plan.profile) };
   const description = `Programma Coach · ${plan.blockWeeks} settimane. Regole ${plan.version}. Le prescrizioni sono modificabili; gli aumenti restano suggerimenti.\n${plan.warnings.join('\n')}${encodeMetadata(planMetadata)}`;
   if (description.length > 10000) throw Error('Descrizione del piano troppo lunga.');
-  data.plans.push({ id: planId, userId: data.profiles[0]?.id ?? 'local', name: `Coach · ${plan.profile.daysPerWeek} giorni`, description,
+  data.plans.push({ id: planId, userId: data.profiles[0]?.id ?? 'local', name: `Coach · ${plan.profile.daysPerWeek} giorni${plan.profile.split && plan.profile.split !== 'auto' && Object.hasOwn(SPLIT_LABELS, plan.profile.split) ? ` · ${SPLIT_LABELS[plan.profile.split]}` : ''}`, description,
     createdAt: plan.createdAt, updatedAt: plan.createdAt,
     active: !data.plans.some(row => row.active && !row.archived && !row.completedAt), archived: false });
   for (const [dayOrder, session] of plan.sessions.entries()) {

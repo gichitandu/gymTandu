@@ -1,6 +1,6 @@
 import { CATALOG, getExercise } from './catalog.js';
-import { ENGINE_VERSION, EXPERIENCE_PRESETS, GOAL_PRESETS, HEAVY_COMPOUNDS, HEURISTICS, MUSCLE_LABELS, type RepTier } from './config.js';
-import type { ActualSet, Decision, Exercise, ExercisePrescription, ExerciseRecommendationInput, LoadSetting, Muscle, NextSetInput, PlanSession, Profile, RecoveryAssessment, SetRecommendation, TrainingPlan, WorkoutHistory } from './models.js';
+import { BLOCK_WEEKS_RANGE, DAY_FOCUS_LABELS, ENGINE_VERSION, EXPERIENCE_PRESETS, GOAL_PRESETS, HEAVY_COMPOUNDS, HEURISTICS, MAX_EXERCISES_RANGE, MIN_REST_SECONDS, MUSCLE_LABELS, REST_DELTA_SECONDS, SESSION_MINUTES_RANGE, SPLIT_LABELS, VOLUME_SET_DELTA, type RepTier } from './config.js';
+import type { ActualSet, DayFocus, Decision, Exercise, ExercisePrescription, ExerciseRecommendationInput, LoadSetting, Muscle, NextSetInput, PlanSession, Profile, RecoveryAssessment, SetRecommendation, SplitMode, TrainingPlan, WorkoutHistory } from './models.js';
 
 const MUSCLES = Object.keys(MUSCLE_LABELS) as Muscle[];
 const DAY_MS = 86_400_000;
@@ -22,11 +22,27 @@ function validateProfile(p: Profile): void {
   if (!Array.isArray(p.equipment) || !p.equipment.length || p.equipment.some(e => !['machine','cable','dumbbell','barbell','bodyweight'].includes(e))) throw new RangeError('Seleziona almeno un tipo di attrezzatura valido.');
   if (!Array.isArray(p.priorities) || p.priorities.some(m => !MUSCLES.includes(m))) throw new RangeError('Priorità muscolari non valide.');
   if (!Array.isArray(p.excludedExerciseIds)) throw new RangeError('Elenco esclusioni non valido.');
+  validatePreferences(p);
   for (const [id, setting] of Object.entries(p.loadSettings ?? {})) {
     const isBodyweight = CATALOG.find(ex => ex.id === id)?.loadType === 'bodyweight';
     if (!valid(setting.minKg) || setting.minKg < 0 || !valid(setting.incrementKg) || (isBodyweight ? setting.incrementKg < 0 : setting.incrementKg <= 0)) throw new RangeError('Incremento e minimo di carico devono essere numeri validi (incremento > 0, oppure 0 a corpo libero).');
     if (setting.availableLoadsKg && (!setting.availableLoadsKg.length || setting.availableLoadsKg.some(x => !valid(x) || x < setting.minKg))) throw new RangeError('Carichi disponibili non validi.');
   }
+}
+
+/** Preferenze facoltative di struttura e dosaggio: assenti = comportamento delle versioni precedenti. */
+function validatePreferences(p: Profile): void {
+  const integerIn = (n: unknown, min: number, max: number) => Number.isInteger(n) && (n as number) >= min && (n as number) <= max;
+  if (p.split !== undefined && !Object.hasOwn(SPLIT_LABELS, p.split)) throw new RangeError('Struttura settimanale non supportata.');
+  if (p.customDays !== undefined && (!Array.isArray(p.customDays) || p.customDays.length > 6 || p.customDays.some(d => !Object.hasOwn(DAY_FOCUS_LABELS, d)))) throw new RangeError('Contenuto delle sedute non valido.');
+  if (p.split === 'custom' && p.customDays?.length !== p.daysPerWeek) throw new RangeError('Nella settimana personalizzata scegli il contenuto di ogni seduta.');
+  if (p.sessionMinutes !== undefined && (!Array.isArray(p.sessionMinutes) || p.sessionMinutes.length > 6 || p.sessionMinutes.some(m => m !== null && (!valid(m) || m < SESSION_MINUTES_RANGE.min || m > SESSION_MINUTES_RANGE.max)))) throw new RangeError('La durata di ogni seduta deve essere tra 20 e 120 minuti.');
+  if (p.blockWeeks !== undefined && !integerIn(p.blockWeeks, BLOCK_WEEKS_RANGE.min, BLOCK_WEEKS_RANGE.max)) throw new RangeError('Scegli un blocco da 2 a 16 settimane.');
+  if (p.maxExercises !== undefined && !integerIn(p.maxExercises, MAX_EXERCISES_RANGE.min, MAX_EXERCISES_RANGE.max)) throw new RangeError('Scegli da 3 a 10 esercizi per seduta.');
+  if (p.volume !== undefined && !Object.hasOwn(VOLUME_SET_DELTA, p.volume)) throw new RangeError('Livello di volume non supportato.');
+  if (p.rest !== undefined && !Object.hasOwn(REST_DELTA_SECONDS, p.rest)) throw new RangeError('Preferenza di recupero non supportata.');
+  if (p.preferredExerciseIds !== undefined && (!Array.isArray(p.preferredExerciseIds) || p.preferredExerciseIds.some(id => typeof id !== 'string'))) throw new RangeError('Elenco esercizi preferiti non valido.');
+  if (p.varyRepeatedDays !== undefined && typeof p.varyRepeatedDays !== 'boolean') throw new RangeError('Preferenza di variazione non valida.');
 }
 
 function loadSetting(profile: Profile, ex: Exercise): LoadSetting {
@@ -232,33 +248,96 @@ export function assessRecovery(profile: Profile, history: WorkoutHistory[], asOf
   return {action:'continue',reason:'Non emerge una difficoltà ripetuta sufficiente a proporre uno scarico. Continua a raccogliere sedute confrontabili.',affectedExerciseIds:[],suggestedVolumeFactor:1,automatic:false,decisions:[decision('insufficient-trend','Una giornata difficile o pochi dati non bastano per concludere che serva uno scarico.')]};
 }
 
-interface Slot { movement?: Exercise['movement']; muscle?: Muscle; }
+/** optional: slot accessorio, nessun avviso se manca. fallback: senza isolamento usa un multiarticolare dello stesso muscolo. */
+interface Slot { movement?: Exercise['movement']; muscle?: Muscle; optional?: boolean; fallback?: boolean; }
 const slot = (movement: Exercise['movement']): Slot => ({movement});
 const muscleSlot = (muscle: Muscle): Slot => ({muscle});
+/** Muscolo scelto esplicitamente (priorità o sedute dedicate): se manca un isolamento, ripiega su un multiarticolare. */
+const targetSlot = (muscle: Muscle): Slot => ({muscle,fallback:true});
+const extra = (s: Slot): Slot => ({...s,optional:true,fallback:false});
+/** key raggruppa le sedute dello stesso tipo (variazione); muscles limita le priorità alle sedute che allenano quel muscolo. */
+interface SessionTemplate { key: string; name: string; focus: string; slots: Slot[]; muscles?: Muscle[]; }
 
-function sessionTemplates(days: number): Array<{name:string;focus:string;slots:Slot[]}> {
-  const full = [
-    {name:'Full body A',focus:'Squat · spinta · tirata',slots:[slot('squat'),slot('push'),slot('pull'),slot('hinge'),slot('vertical-push'),slot('core'),muscleSlot('biceps')]},
-    {name:'Full body B',focus:'Catena posteriore · dorso · petto',slots:[slot('hinge'),slot('vertical-pull'),slot('push'),slot('squat'),muscleSlot('shoulders'),slot('core'),muscleSlot('triceps')]},
-    {name:'Full body C',focus:'Gambe · dorso · spalle',slots:[slot('squat'),slot('pull'),slot('vertical-push'),slot('hinge'),slot('push'),slot('core'),muscleSlot('calves')]},
-  ];
+const FULL_TEMPLATES: SessionTemplate[] = [
+  {key:'full',name:'Full body A',focus:'Squat · spinta · tirata',slots:[slot('squat'),slot('push'),slot('pull'),slot('hinge'),slot('vertical-push'),slot('core'),muscleSlot('biceps')]},
+  {key:'full',name:'Full body B',focus:'Catena posteriore · dorso · petto',slots:[slot('hinge'),slot('vertical-pull'),slot('push'),slot('squat'),muscleSlot('shoulders'),slot('core'),muscleSlot('triceps')]},
+  {key:'full',name:'Full body C',focus:'Gambe · dorso · spalle',slots:[slot('squat'),slot('pull'),slot('vertical-push'),slot('hinge'),slot('push'),slot('core'),muscleSlot('calves')]},
+];
+
+/** Struttura automatica storica: invariata, così chi non modifica la settimana riceve lo stesso piano. */
+function sessionTemplates(days: number): SessionTemplate[] {
+  const full = FULL_TEMPLATES;
   if (days <= 3) return full.slice(0,days);
-  const upper = {name:'Upper A',focus:'Petto · dorso · spalle',slots:[slot('push'),slot('pull'),slot('vertical-pull'),slot('vertical-push'),muscleSlot('biceps'),muscleSlot('triceps')]};
-  const lower = {name:'Lower A',focus:'Gambe · glutei · core',slots:[slot('squat'),slot('hinge'),muscleSlot('quads'),muscleSlot('hamstrings'),muscleSlot('calves'),slot('core')]};
+  const upper = {key:'upper',name:'Upper A',focus:'Petto · dorso · spalle',slots:[slot('push'),slot('pull'),slot('vertical-pull'),slot('vertical-push'),muscleSlot('biceps'),muscleSlot('triceps')]};
+  const lower = {key:'lower',name:'Lower A',focus:'Gambe · glutei · core',slots:[slot('squat'),slot('hinge'),muscleSlot('quads'),muscleSlot('hamstrings'),muscleSlot('calves'),slot('core')]};
   const result = [upper,lower,{...upper,name:'Upper B'},{...lower,name:'Lower B'}];
   if(days===5) result.push({...full[2]!,name:'Full body · richiami'});
   if(days===6) result.push({...upper,name:'Upper C'},{...lower,name:'Lower C'});
   return result;
 }
 
+/** Sedute selezionabili. L'ordine degli slot conta: in mancanza di tempo si tolgono gli ultimi. */
+const FOCUS_TEMPLATES: Record<Exclude<DayFocus,'full'>, Omit<SessionTemplate,'key'> & { muscles: Muscle[] }> = {
+  upper: {name:'Upper',focus:'Petto · dorso · spalle',muscles:['chest','back','shoulders','biceps','triceps'],slots:[slot('push'),slot('pull'),slot('vertical-pull'),slot('vertical-push'),targetSlot('biceps'),targetSlot('triceps')]},
+  lower: {name:'Lower',focus:'Gambe · glutei · core',muscles:['quads','hamstrings','glutes','calves','core'],slots:[slot('squat'),slot('hinge'),targetSlot('quads'),targetSlot('hamstrings'),muscleSlot('calves'),slot('core')]},
+  push: {name:'Push',focus:'Petto · spalle · tricipiti',muscles:['chest','shoulders','triceps'],slots:[slot('push'),slot('vertical-push'),targetSlot('chest'),targetSlot('triceps'),targetSlot('shoulders'),extra(slot('push'))]},
+  pull: {name:'Pull',focus:'Dorso · bicipiti',muscles:['back','biceps','core'],slots:[slot('vertical-pull'),slot('pull'),extra(slot('pull')),targetSlot('biceps'),extra(slot('vertical-pull')),slot('core')]},
+  'chest-back': {name:'Petto e dorso',focus:'Petto · dorso',muscles:['chest','back'],slots:[slot('push'),slot('pull'),slot('vertical-pull'),extra(slot('push')),targetSlot('chest'),extra(slot('pull'))]},
+  'chest-triceps': {name:'Petto e tricipiti',focus:'Petto · tricipiti',muscles:['chest','triceps'],slots:[slot('push'),extra(slot('push')),targetSlot('chest'),targetSlot('triceps'),extra(muscleSlot('chest')),extra(muscleSlot('triceps'))]},
+  'back-biceps': {name:'Dorso e bicipiti',focus:'Dorso · bicipiti',muscles:['back','biceps'],slots:[slot('vertical-pull'),slot('pull'),extra(slot('pull')),targetSlot('biceps'),extra(slot('vertical-pull')),extra(muscleSlot('biceps'))]},
+  'shoulders-arms': {name:'Spalle e braccia',focus:'Spalle · bicipiti · tricipiti',muscles:['shoulders','biceps','triceps'],slots:[slot('vertical-push'),targetSlot('shoulders'),targetSlot('biceps'),targetSlot('triceps'),extra(muscleSlot('shoulders')),extra(muscleSlot('biceps')),extra(muscleSlot('triceps'))]},
+  'glutes-hamstrings': {name:'Glutei e femorali',focus:'Glutei · femorali · polpacci',muscles:['glutes','hamstrings','calves','core'],slots:[slot('hinge'),targetSlot('glutes'),targetSlot('hamstrings'),extra(slot('squat')),muscleSlot('calves'),slot('core')]},
+};
+
+const alternate = (n: number, a: DayFocus, b: DayFocus): DayFocus[] => Array.from({length:n},(_,i)=>i%2 ? b : a);
+/** Contenuto delle sedute per ogni struttura. Con la struttura automatica descrive la proposta storica. */
+export function weekFocuses(profile: Pick<Profile,'daysPerWeek'|'split'|'customDays'>): DayFocus[] {
+  const n = Math.max(1, Math.min(6, Math.trunc(profile.daysPerWeek) || 1));
+  const mode: SplitMode = profile.split ?? 'auto';
+  if (n === 1 && mode !== 'custom') return ['full'];
+  switch (mode) {
+    case 'custom': {
+      const automatic = weekFocuses({daysPerWeek:n});
+      return automatic.map((day,i) => profile.customDays?.[i] ?? day);
+    }
+    case 'full-body': return Array.from({length:n},() => 'full' as const);
+    case 'upper-lower': return n === 3 ? ['upper','lower','full'] : n === 5 ? ['upper','lower','upper','lower','full'] : alternate(n,'upper','lower');
+    case 'push-pull-legs': return ([['upper','lower'],['push','pull','lower'],['push','pull','lower','upper'],['push','pull','lower','upper','lower'],['push','pull','lower','push','pull','lower']] as DayFocus[][])[n-2]!;
+    case 'body-part': return ([['upper','lower'],['chest-back','lower','shoulders-arms'],['chest-triceps','back-biceps','lower','shoulders-arms'],['chest-triceps','back-biceps','lower','shoulders-arms','glutes-hamstrings'],['chest-triceps','back-biceps','lower','shoulders-arms','glutes-hamstrings','chest-back']] as DayFocus[][])[n-2]!;
+    default: return n <= 3 ? Array.from({length:n},() => 'full' as const) : n === 5 ? ['upper','lower','upper','lower','full'] : alternate(n,'upper','lower');
+  }
+}
+
+/** Sedute dello stesso tipo prendono una lettera (A, B, C…) solo se ripetute nella settimana. */
+function focusTemplates(days: DayFocus[]): SessionTemplate[] {
+  const seen = new Map<DayFocus,number>();
+  return days.map(day => {
+    const k = seen.get(day) ?? 0; seen.set(day,k+1);
+    const repeated = days.filter(d => d === day).length > 1;
+    const suffix = repeated ? ` ${'ABCDEF'[k]}` : '';
+    if (day === 'full') { const base = FULL_TEMPLATES[k % FULL_TEMPLATES.length]!; return {...base,name:`Full body${suffix}`}; }
+    const t = FOCUS_TEMPLATES[day];
+    return {key:day,name:`${t.name}${suffix}`,focus:t.focus,slots:t.slots,muscles:t.muscles};
+  });
+}
+
 function availableExercises(profile: Profile): Exercise[] {
   return CATALOG.filter(ex => profile.equipment.includes(ex.equipment) && !profile.excludedExerciseIds.includes(ex.id) && (profile.experience !== 'beginner' || ex.beginnerSuitable));
 }
 
-function pickExercise(choices: Exercise[], s: Slot, used: Set<string>, profile:Profile): Exercise | undefined {
-  const matching = choices.filter(ex => !used.has(ex.id) && (s.movement ? ex.movement === s.movement : s.muscle ? ex.primary.includes(s.muscle) && ex.isolation : false));
+const NONE: ReadonlySet<string> = new Set();
+/** I preferiti vincono quando compatibili; con la variazione attiva gli esercizi già usati in sedute dello stesso tipo scendono in classifica. */
+function pickExercise(choices: Exercise[], s: Slot, used: Set<string>, profile:Profile, avoid: ReadonlySet<string> = NONE): Exercise | undefined {
+  const free = choices.filter(ex => !used.has(ex.id));
+  let matching = free.filter(ex => s.movement ? ex.movement === s.movement : s.muscle ? ex.primary.includes(s.muscle) && ex.isolation : false);
+  if (!matching.length && s.muscle && s.fallback) {
+    const leading = free.filter(ex => ex.primary[0] === s.muscle);
+    matching = leading.length ? leading : free.filter(ex => ex.primary.includes(s.muscle!));
+  }
+  const preferred = profile.preferredExerciseIds ?? [];
   return [...matching].sort((a,b) => {
-    const score = (ex:Exercise): number => (profile.goal==='strength' && profile.experience!=='beginner' && ex.equipment==='barbell' ? 10 : 0) + (profile.experience==='beginner' && ex.stable ? 5 : 0) + ex.primary.filter(m=>profile.priorities.includes(m)).length*2 - (ex.loadType==='bodyweight' ? 2 : 0);
+    const score = (ex:Exercise): number => (profile.goal==='strength' && profile.experience!=='beginner' && ex.equipment==='barbell' ? 10 : 0) + (profile.experience==='beginner' && ex.stable ? 5 : 0) + ex.primary.filter(m=>profile.priorities.includes(m)).length*2 - (ex.loadType==='bodyweight' ? 2 : 0)
+      + (preferred.includes(ex.id) ? 20 : 0) - (avoid.has(ex.id) ? 8 : 0);
     return score(b)-score(a) || CATALOG.indexOf(a)-CATALOG.indexOf(b);
   })[0];
 }
@@ -290,8 +369,20 @@ function basePrescription(ex: Exercise, profile:Profile, all:Exercise[]): Exerci
   const preset = GOAL_PRESETS[profile.goal]; const experience = EXPERIENCE_PRESETS[profile.experience];
   const tier = repTier(ex, profile); const { reps: range, rest } = preset[tier];
   const setting = loadSetting(profile,ex);
-  const sets = profile.daysPerWeek >= 5 ? Math.min(2,experience.sets) : experience.sets;
-  return {exerciseId:ex.id,name:ex.name,equipmentKey:setting.equipmentKey ?? ex.id,sets,repsMin:range[0],repsMax:range[1],rir:experience.rir,restSeconds:rest,loadKg:null,loadLabel:label(ex,null),loadType:ex.loadType,calibration:ex.loadType!=='bodyweight',confidence:'initial',progression:'calibrate',alternatives:all.filter(other=>other.id!==ex.id && other.movement===ex.movement && other.primary.some(m=>ex.primary.includes(m))).slice(0,3).map(other=>other.id),failureAllowedLastSet:false,decisions:[decision(`rep-range-${tier}`,repRangeReason(tier,profile,range),'evidence-informed',['repetition-continuum-2021','acsm-2026']),decision('goal-preset','Range, recupero e margine sono un punto di partenza configurabile, non l’unica prescrizione efficace.','heuristic',['acsm-2026','prescription-2023','rest-2024'])]};
+  const baseSets = profile.daysPerWeek >= 5 ? Math.min(2,experience.sets) : experience.sets;
+  const sets = Math.min(5, Math.max(1, baseSets + VOLUME_SET_DELTA[profile.volume ?? 'standard']));
+  const restSeconds = Math.max(MIN_REST_SECONDS, rest + REST_DELTA_SECONDS[profile.rest ?? 'standard']);
+  return {exerciseId:ex.id,name:ex.name,equipmentKey:setting.equipmentKey ?? ex.id,sets,repsMin:range[0],repsMax:range[1],rir:experience.rir,restSeconds,loadKg:null,loadLabel:label(ex,null),loadType:ex.loadType,calibration:ex.loadType!=='bodyweight',confidence:'initial',progression:'calibrate',alternatives:all.filter(other=>other.id!==ex.id && other.movement===ex.movement && other.primary.some(m=>ex.primary.includes(m))).slice(0,3).map(other=>other.id),failureAllowedLastSet:false,decisions:[decision(`rep-range-${tier}`,repRangeReason(tier,profile,range),'evidence-informed',['repetition-continuum-2021','acsm-2026']),decision('goal-preset','Range, recupero e margine sono un punto di partenza configurabile, non l’unica prescrizione efficace.','heuristic',['acsm-2026','prescription-2023','rest-2024']),...dosePreferences(baseSets,sets,rest,restSeconds)]};
+}
+
+/** Volume e recuperi scelti dall'utente restano visibili nella motivazione dell'esercizio. */
+function dosePreferences(baseSets: number, sets: number, baseRest: number, rest: number): Decision[] {
+  const result: Decision[] = [];
+  if (sets !== baseSets) result.push(decision('volume-preference',`Volume ${sets > baseSets ? 'più alto' : 'ridotto'} scelto da te: ${sets} serie invece di ${baseSets}. Il tempo disponibile può ridurle ancora.`,'constraint',['volume-frequency-2026']));
+  if (rest !== baseRest) result.push(decision('rest-preference',rest > baseRest
+    ? `Recupero più lungo scelto da te: ${rest} secondi invece di ${baseRest}. Aiuta a mantenere le ripetizioni tra le serie, ma allunga la seduta.`
+    : `Recupero più breve scelto da te: ${rest} secondi invece di ${baseRest}. La seduta dura meno; se le ripetizioni calano molto tra le serie, allunga la pausa.`,'constraint',['rest-2024']));
+  return result;
 }
 
 /** Cold start works with zero history. No biological profile or photo infers a load. */
@@ -303,21 +394,31 @@ export function generatePlan(profile:Profile,history:WorkoutHistory[]=[],asOf:st
   if(profile.experience==='beginner' && profile.equipment.every(e=>e==='barbell')) warnings.push('Il catalogo iniziale esclude i principali esercizi con bilanciere senza esperienza: aggiungi attrezzatura o verifica la tecnica con un professionista.');
   if(profile.equipment.every(e=>e==='bodyweight')) warnings.push('Con il solo corpo libero e senza un punto di tirata il catalogo non copre adeguatamente il dorso. Aggiungi attrezzatura di tirata prima di considerare la scheda completa.');
   if((profile.allowDropSets||profile.allowFailure) && profile.experience==='beginner') warnings.push('Cedimento e dropset restano disabilitati nella fase iniziale, anche se selezionati.');
-  const sessions:PlanSession[]=sessionTemplates(profile.daysPerWeek).map((template,index)=>{
+  const split:SplitMode=profile.split ?? 'auto';
+  const templates=split==='auto' ? sessionTemplates(profile.daysPerWeek) : focusTemplates(weekFocuses(profile));
+  const maxExercises=profile.maxExercises ?? MAX_EXERCISES_RANGE.default;
+  const usedByType=new Map<string,Set<string>>();
+  const sessions:PlanSession[]=templates.map((template,index)=>{
     const used=new Set<string>(); const sessionWarnings:string[]=[];
     const selected:ExercisePrescription[]=[];
-    const prioritySlots=profile.priorities.map(muscleSlot);
+    const budget=profile.sessionMinutes?.[index] ?? profile.minutesPerSession;
+    const avoid=profile.varyRepeatedDays ? usedByType.get(template.key) ?? NONE : NONE;
+    // Le priorità entrano solo nelle sedute che allenano quel muscolo; la struttura automatica le aggiunge ovunque come prima.
+    const prioritySlots=profile.priorities.filter(m=>!template.muscles || template.muscles.includes(m)).map(targetSlot);
     for(const s of [...template.slots.slice(0,4),...prioritySlots,...template.slots.slice(4)]) {
-      const ex=pickExercise(choices,s,used,profile);
-      if(!ex) { if(s.movement && ['squat','hinge','push','pull','vertical-pull'].includes(s.movement)) sessionWarnings.push(`Movimento ${s.movement} non coperto con le impostazioni attuali.`); continue; }
+      const ex=pickExercise(choices,s,used,profile,avoid);
+      if(!ex) { if(!s.optional && s.movement && ['squat','hinge','push','pull','vertical-pull'].includes(s.movement)) sessionWarnings.push(`Movimento ${s.movement} non coperto con le impostazioni attuali.`); continue; }
       used.add(ex.id); selected.push(basePrescription(ex,profile,choices));
-      if(selected.length>=8) break;
+      if(selected.length>=maxExercises) break;
     }
-    while(selected.length>3 && estimateMinutes(selected)>profile.minutesPerSession) selected.pop();
-    if(estimateMinutes(selected)>profile.minutesPerSession) {
-      for(let i=selected.length-1;i>=0 && estimateMinutes(selected)>profile.minutesPerSession;i--) selected[i]!.sets=Math.max(1,selected[i]!.sets-1);
+    while(selected.length>3 && estimateMinutes(selected)>budget) selected.pop();
+    if(estimateMinutes(selected)>budget) {
+      for(let i=selected.length-1;i>=0 && estimateMinutes(selected)>budget;i--) selected[i]!.sets=Math.max(1,selected[i]!.sets-1);
     }
-    if(estimateMinutes(selected)>profile.minutesPerSession) sessionWarnings.push('Il tempo richiesto supera il budget anche dopo la riduzione del lavoro: aumenta il tempo o rivedi la frequenza.');
+    if(estimateMinutes(selected)>budget) sessionWarnings.push('Il tempo richiesto supera il budget anche dopo la riduzione del lavoro: aumenta il tempo o rivedi la frequenza.');
+    const typeUsed=usedByType.get(template.key) ?? new Set<string>();
+    for(const p of selected) typeUsed.add(p.exerciseId);
+    usedByType.set(template.key,typeUsed);
     if(selected.length<3) sessionWarnings.push('Pochi esercizi compatibili: la copertura del programma è incompleta.');
     const prescriptions=selected.map(p=>recommendExercise({profile,prescription:p,history,asOf}));
     if(profile.allowSupersets && profile.goal!=='strength' && profile.experience!=='beginner') {
@@ -328,7 +429,7 @@ export function generatePlan(profile:Profile,history:WorkoutHistory[]=[],asOf:st
     }
     const advanced=profile.experience==='advanced' && profile.goal==='hypertrophy';
     const finisher=[...prescriptions].reverse().find(p=>{const ex=getExercise(p.exerciseId);return ex.isolation&&ex.stable&&ex.loadType!=='bodyweight'&&!p.calibration&&p.progression!=='review'&&p.progression!=='reduce'&&!p.supersetGroup;});
-    if(finisher&&advanced&&profile.allowDropSets && index===0 && profile.minutesPerSession-estimateMinutes(prescriptions)>=1) {
+    if(finisher&&advanced&&profile.allowDropSets && index===0 && budget-estimateMinutes(prescriptions)>=1) {
       finisher.dropSet={afterSet:finisher.sets,reductionPercent:HEURISTICS.dropReductionPercent,targetRir:1,maxDrops:1,countsAsAdditionalWork:true,instruction:'Dopo l’ultima serie, riduci circa il 20% usando un carico realmente disponibile e fai un solo segmento aggiuntivo, fermandoti con circa 1 ripetizione di margine. Se il carico non è disponibile, salta la dropset.'};
       finisher.decisions.push(decision('dropset-opt-in','Un solo segmento aggiuntivo nella prima seduta: lavoro supplementare registrato separatamente, non equivalente a un numero fisso di serie.','heuristic',['dropsets-2026']));
     } else if(finisher&&advanced&&profile.allowFailure) {
@@ -343,6 +444,26 @@ export function generatePlan(profile:Profile,history:WorkoutHistory[]=[],asOf:st
   const untrained=MUSCLES.filter(m=>weeklyVolume[m]===0&&secondaryExposure[m]===0);
   if(untrained.length) warnings.push(`Nessun lavoro diretto o indiretto previsto per: ${untrained.map(m=>MUSCLE_LABELS[m]).join(', ')}. Valuta tempo, attrezzatura e priorità.`);
   if(profile.priorities.some(m=>weeklyVolume[m]===0)) warnings.push('Alcune priorità non sono coperte nel tempo e con l’attrezzatura scelti. Non aggiungere volume automaticamente: rivedi i vincoli.');
+  const planned=new Set(sessions.flatMap(s=>s.exercises.map(p=>p.exerciseId)));
+  const missingPreferred=[...new Set(profile.preferredExerciseIds ?? [])].filter(id=>!planned.has(id));
+  if(missingPreferred.length) warnings.push(`Esercizi preferiti non inseriti: ${missingPreferred.map(id=>CATALOG.find(ex=>ex.id===id)?.name ?? id).join(', ')}. Possibili cause: attrezzatura, livello o esclusioni, nessuna seduta che preveda quel movimento, oppure tempo insufficiente.`);
+  const blockWeeks=profile.blockWeeks ?? BLOCK_WEEKS_RANGE.default;
+  const decisions=[decision('program-template',`Struttura stabile per un blocco ${profile.blockWeeks === undefined ? 'iniziale di quattro settimane' : `di ${blockWeeks} settimane scelto da te`}; giorni, selezione e dosi sono euristiche verificabili e modificabili.`,'heuristic',['acsm-2026','prescription-2023']),...structureDecisions(profile,split,sessions)];
   const serialized=JSON.stringify({profile,asOf,sessions:sessions.map(s=>s.exercises.map(p=>[p.exerciseId,p.sets,p.loadKg]))});let hash=2166136261;for(let i=0;i<serialized.length;i++){hash^=serialized.charCodeAt(i);hash=Math.imul(hash,16777619);}
-  return {id:`coach-${(hash>>>0).toString(16)}`,version:ENGINE_VERSION,createdAt:asOf,profile:JSON.parse(JSON.stringify(profile)) as Profile,sessions,weeklyVolume,secondaryExposure,supplementalDropSets,warnings:[...new Set(warnings)],blockWeeks:4,decisions:[decision('program-template','Struttura stabile per un blocco iniziale di quattro settimane; giorni, selezione e dosi sono euristiche verificabili e modificabili.','heuristic',['acsm-2026','prescription-2023']),decision('volume-accounting','Volume mostrato come serie dirette; esposizioni secondarie e dropset restano separate. Il conteggio non misura la risposta biologica individuale.','evidence-informed',['volume-frequency-2026']),decision('no-photo-load','Nessun carico è ricavato da foto, peso corporeo o aspetto fisico.','constraint')]};
+  return {id:`coach-${(hash>>>0).toString(16)}`,version:ENGINE_VERSION,createdAt:asOf,profile:JSON.parse(JSON.stringify(profile)) as Profile,sessions,weeklyVolume,secondaryExposure,supplementalDropSets,warnings:[...new Set(warnings)],blockWeeks,decisions:[...decisions,decision('volume-accounting','Volume mostrato come serie dirette; esposizioni secondarie e dropset restano separate. Il conteggio non misura la risposta biologica individuale.','evidence-informed',['volume-frequency-2026']),decision('no-photo-load','Nessun carico è ricavato da foto, peso corporeo o aspetto fisico.','constraint')]};
+}
+
+/** Spiega la struttura settimanale e le scelte di composizione, distinguendo la proposta automatica dalle scelte dell'utente. */
+function structureDecisions(profile: Profile, split: SplitMode, sessions: PlanSession[]): Decision[] {
+  const names = sessions.map(s => s.name).join(', ');
+  const result: Decision[] = split === 'auto'
+    ? [decision('week-structure',`Struttura automatica (${names}): full body fino a 3 sedute, upper/lower da 4 in su. Dal profilo puoi scegliere un'altra struttura o decidere il contenuto di ogni seduta.`,'heuristic',['volume-frequency-2026'])]
+    : [decision('week-structure',`Struttura scelta da te: ${SPLIT_LABELS[split]} (${names}).`,'constraint')];
+  if (split === 'push-pull-legs' && profile.daysPerWeek < 3) result.push(decision('split-fallback','Push / Pull / Legs richiede almeno 3 sedute: con meno sedute il coach usa full body o upper/lower per allenare tutti i gruppi.','heuristic'));
+  if (split !== 'auto' && split !== 'full-body') result.push(decision('split-frequency','Con sedute dedicate a pochi muscoli ogni gruppo viene allenato meno volte a settimana. Per la crescita muscolare pesa soprattutto il volume settimanale; per la forza ripetere più spesso i movimenti principali può aiutare. Controlla negli avvisi i gruppi rimasti scoperti.','evidence-informed',['volume-frequency-2026']));
+  if (profile.sessionMinutes?.some((m, i) => m !== null && i < sessions.length)) result.push(decision('session-minutes','Alcune sedute hanno una durata diversa scelta da te: esercizi e serie si adattano al tempo di ciascuna.','constraint'));
+  if (profile.maxExercises !== undefined) result.push(decision('max-exercises',`Al massimo ${profile.maxExercises} esercizi per seduta, come da tua scelta.`,'constraint'));
+  if (profile.varyRepeatedDays) result.push(decision('vary-repeated-days','Le sedute dello stesso tipo usano esercizi diversi quando l’attrezzatura offre alternative; i movimenti principali restano gli stessi.','heuristic'));
+  if (profile.preferredExerciseIds?.length) result.push(decision('preferred-exercises','Gli esercizi preferiti vengono scelti per primi quando la seduta prevede il loro movimento o muscolo.','constraint'));
+  return result;
 }
