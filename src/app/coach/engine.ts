@@ -1,4 +1,5 @@
 import { CATALOG, getExercise } from './catalog.js';
+import { VARIANTS, findVariant, resolveVariantId } from './variants.js';
 import { BLOCK_WEEKS_RANGE, DAY_FOCUS_LABELS, ENGINE_VERSION, EXPERIENCE_PRESETS, GOAL_PRESETS, HEAVY_COMPOUNDS, HEURISTICS, MAX_EXERCISES_RANGE, MIN_REST_SECONDS, MUSCLE_LABELS, REST_DELTA_SECONDS, SESSION_MINUTES_RANGE, SPLIT_LABELS, VOLUME_SET_DELTA, type RepTier } from './config.js';
 import type { ActualSet, DayFocus, Decision, Exercise, ExercisePrescription, ExerciseRecommendationInput, LoadSetting, Muscle, NextSetInput, PlanSession, Profile, RecoveryAssessment, SetRecommendation, SplitMode, TrainingPlan, WorkoutHistory } from './models.js';
 
@@ -27,6 +28,7 @@ function validateProfile(p: Profile): void {
     const isBodyweight = CATALOG.find(ex => ex.id === id)?.loadType === 'bodyweight';
     if (!valid(setting.minKg) || setting.minKg < 0 || !valid(setting.incrementKg) || (isBodyweight ? setting.incrementKg < 0 : setting.incrementKg <= 0)) throw new RangeError('Incremento e minimo di carico devono essere numeri validi (incremento > 0, oppure 0 a corpo libero).');
     if (setting.availableLoadsKg && (!setting.availableLoadsKg.length || setting.availableLoadsKg.some(x => !valid(x) || x < setting.minKg))) throw new RangeError('Carichi disponibili non validi.');
+    if (setting.variantId !== undefined && typeof setting.variantId !== 'string') throw new RangeError('Variante dell’esercizio non valida.');
   }
 }
 
@@ -43,6 +45,8 @@ function validatePreferences(p: Profile): void {
   if (p.rest !== undefined && !Object.hasOwn(REST_DELTA_SECONDS, p.rest)) throw new RangeError('Preferenza di recupero non supportata.');
   if (p.preferredExerciseIds !== undefined && (!Array.isArray(p.preferredExerciseIds) || p.preferredExerciseIds.some(id => typeof id !== 'string'))) throw new RangeError('Elenco esercizi preferiti non valido.');
   if (p.varyRepeatedDays !== undefined && typeof p.varyRepeatedDays !== 'boolean') throw new RangeError('Preferenza di variazione non valida.');
+  // Gli id sconosciuti non sono un errore (il catalogo può cambiare tra versioni): valgono come «esercizio generico».
+  if (p.variants !== undefined && (typeof p.variants !== 'object' || p.variants === null || Array.isArray(p.variants) || Object.values(p.variants).some(id => typeof id !== 'string'))) throw new RangeError('Varianti degli esercizi non valide.');
 }
 
 function loadSetting(profile: Profile, ex: Exercise): LoadSetting {
@@ -365,6 +369,19 @@ function repRangeReason(tier: RepTier, profile: Profile, [min, max]: [number, nu
   return `Isolamento o corpo libero, ${range}: carichi assoluti più bassi e più ripetizioni, più adatti a un singolo muscolo e alle articolazioni coinvolte.`;
 }
 
+/** Variante da prescrivere: quella collegata all'archivio (storico, disponibilità, scelta) oppure scelta/predefinita. */
+function chosenVariant(profile: Profile, ex: Exercise): string | undefined {
+  if (!VARIANTS[ex.id]) return undefined;
+  return profile.loadSettings?.[ex.id]?.variantId ?? resolveVariantId(ex.id, profile.variants?.[ex.id]);
+}
+
+function variantDecisions(profile: Profile, ex: Exercise, variantId: string | undefined): Decision[] {
+  const variant = findVariant(ex.id, variantId);
+  if (!variant) return [];
+  const mine = profile.variants?.[ex.id] === variant.id;
+  return [decision('variant-choice',`Variante: ${variant.name}. ${mine ? 'Scelta da te.' : 'Proposta del coach: puoi cambiarla dalla scheda.'} I carichi si confrontano solo sulla stessa variante, quindi se la cambi il peso va ricalibrato.`,mine ? 'constraint' : 'heuristic')];
+}
+
 function basePrescription(ex: Exercise, profile:Profile, all:Exercise[]): ExercisePrescription {
   const preset = GOAL_PRESETS[profile.goal]; const experience = EXPERIENCE_PRESETS[profile.experience];
   const tier = repTier(ex, profile); const { reps: range, rest } = preset[tier];
@@ -372,7 +389,8 @@ function basePrescription(ex: Exercise, profile:Profile, all:Exercise[]): Exerci
   const baseSets = profile.daysPerWeek >= 5 ? Math.min(2,experience.sets) : experience.sets;
   const sets = Math.min(5, Math.max(1, baseSets + VOLUME_SET_DELTA[profile.volume ?? 'standard']));
   const restSeconds = Math.max(MIN_REST_SECONDS, rest + REST_DELTA_SECONDS[profile.rest ?? 'standard']);
-  return {exerciseId:ex.id,name:ex.name,equipmentKey:setting.equipmentKey ?? ex.id,sets,repsMin:range[0],repsMax:range[1],rir:experience.rir,restSeconds,loadKg:null,loadLabel:label(ex,null),loadType:ex.loadType,calibration:ex.loadType!=='bodyweight',confidence:'initial',progression:'calibrate',alternatives:all.filter(other=>other.id!==ex.id && other.movement===ex.movement && other.primary.some(m=>ex.primary.includes(m))).slice(0,3).map(other=>other.id),failureAllowedLastSet:false,decisions:[decision(`rep-range-${tier}`,repRangeReason(tier,profile,range),'evidence-informed',['repetition-continuum-2021','acsm-2026']),decision('goal-preset','Range, recupero e margine sono un punto di partenza configurabile, non l’unica prescrizione efficace.','heuristic',['acsm-2026','prescription-2023','rest-2024']),...dosePreferences(baseSets,sets,rest,restSeconds)]};
+  const variantId=chosenVariant(profile,ex);
+  return {exerciseId:ex.id,name:findVariant(ex.id,variantId)?.name ?? ex.name,...(variantId!==undefined?{variantId}:{}),equipmentKey:setting.equipmentKey ?? ex.id,sets,repsMin:range[0],repsMax:range[1],rir:experience.rir,restSeconds,loadKg:null,loadLabel:label(ex,null),loadType:ex.loadType,calibration:ex.loadType!=='bodyweight',confidence:'initial',progression:'calibrate',alternatives:all.filter(other=>other.id!==ex.id && other.movement===ex.movement && other.primary.some(m=>ex.primary.includes(m))).slice(0,3).map(other=>other.id),failureAllowedLastSet:false,decisions:[...variantDecisions(profile,ex,variantId),decision(`rep-range-${tier}`,repRangeReason(tier,profile,range),'evidence-informed',['repetition-continuum-2021','acsm-2026']),decision('goal-preset','Range, recupero e margine sono un punto di partenza configurabile, non l’unica prescrizione efficace.','heuristic',['acsm-2026','prescription-2023','rest-2024']),...dosePreferences(baseSets,sets,rest,restSeconds)]};
 }
 
 /** Volume e recuperi scelti dall'utente restano visibili nella motivazione dell'esercizio. */

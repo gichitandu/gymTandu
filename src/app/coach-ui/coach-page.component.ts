@@ -3,7 +3,7 @@ import { Component, HostListener, ViewEncapsulation, computed, inject, signal } 
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { COACH_GATEWAY } from './coach-gateway';
-import { CATALOG, DAY_FOCUS_LABELS, DEFAULT_PROFILE, SPLIT_LABELS, generatePlan, recommendNextSet, assessRecovery, weekFocuses } from '../coach/index';
+import { CATALOG, DAY_FOCUS_LABELS, DEFAULT_PROFILE, SPLIT_LABELS, VARIANTS, findVariant, generatePlan, recommendNextSet, assessRecovery, weekFocuses } from '../coach/index';
 import type { ActualSet, DayFocus, Equipment, ExercisePrescription, Muscle, Profile, RestPreference, SplitMode, TrainingPlan, RecoveryAssessment, VolumeLevel } from '../coach/models';
 
 type Tab = 'plan' | 'train' | 'profile' | 'method';
@@ -234,7 +234,9 @@ export class CoachPageComponent {
   regenerate(useDraft = true) {
     this.error.set('');
     try {
-      const nextProfile = structuredClone(useDraft ? this.draft : this.profile());
+      const base = structuredClone(useDraft ? this.draft : this.profile());
+      // Il collegamento con l'archivio sceglie la variante realmente usata e ne separa carichi e macchina.
+      const nextProfile = this.gateway.bindProfile?.(base) ?? base;
       const history = this.gateway.getHistory();
       const nextPlan = generatePlan(nextProfile, history, this.date());
       const recovery = assessRecovery(nextProfile, history, this.date());
@@ -243,6 +245,25 @@ export class CoachPageComponent {
       this.dirty.set(false); this.selectedDay.set(0); this.selectedExercise.set(0); this.resetSimulation();
       if (useDraft) { this.notice.set('Piano aggiornato con i tuoi parametri. Controllalo prima di salvarlo.'); this.tab.set('plan'); }
     } catch (e) { this.error.set(e instanceof Error ? e.message : 'Non è stato possibile generare il piano. Controlla i parametri.'); }
+  }
+
+  /** Varianti reali tra cui scegliere; vuoto se l'esercizio ne ha una sola. */
+  variantOptions(e: ExercisePrescription) {
+    const options = VARIANTS[e.exerciseId]?.options ?? [];
+    return options.length > 1 ? options : [];
+  }
+  /** Id della variante in uso, oppure '' se la scheda usa l'esercizio generico. */
+  variantValue(e: ExercisePrescription) { return findVariant(e.exerciseId, e.variantId) ? e.variantId! : ''; }
+  readonly hasVariants = computed(() => !!this.plan()?.sessions.some(day => day.exercises.some(e => this.variantOptions(e).length)));
+  /** Cambia la variante di un esercizio in tutta la scheda e la ricorda per i prossimi piani. */
+  setVariant(e: ExercisePrescription, variantId: string) {
+    if (this.dirty() || this.saving() || !findVariant(e.exerciseId, variantId)) return;
+    const day = this.selectedDay();
+    this.draft.variants = { ...this.draft.variants, [e.exerciseId]: variantId };
+    this.regenerate(true);
+    if (this.error()) { this.draft = structuredClone(this.profile()); return; }
+    this.selectedDay.set(Math.min(day, (this.plan()?.sessions.length ?? 1) - 1));
+    this.notice.set(`Variante cambiata: ${findVariant(e.exerciseId, variantId)!.name}. Il carico si calibra per variante: se non l’hai mai usata parti da una serie di prova.`);
   }
 
   selectDay(index: number) { this.selectedDay.set(index); this.selectedExercise.set(0); this.resetSimulation(); }

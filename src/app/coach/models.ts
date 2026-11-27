@@ -17,6 +17,8 @@ export interface LoadSetting {
   /** Specific real machine/setup. Change it when moving to a different machine. */
   equipmentKey?: string;
   availableLoadsKg?: number[];
+  /** Variante reale (id del catalogo dell'app) scelta per questo esercizio: la imposta il collegamento con l'archivio. */
+  variantId?: string;
 }
 export interface Profile {
   goal: Goal;
@@ -46,6 +48,8 @@ export interface Profile {
   preferredExerciseIds?: string[];
   /** Evita di ripetere gli stessi esercizi nelle sedute dello stesso tipo, se esistono alternative. */
   varyRepeatedDays?: boolean;
+  /** Variante scelta dall'utente per un esercizio del coach (id esercizio → id del catalogo). */
+  variants?: Record<string, string>;
 }
 export interface Exercise {
   id: string;
@@ -102,6 +106,8 @@ export interface ExercisePrescription {
   exerciseId: string;
   name: string;
   equipmentKey: string;
+  /** Variante reale del catalogo; se assente (o sconosciuta) vale l'esercizio generico. `name` ne riporta il nome. */
+  variantId?: string;
   sets: number;
   repsMin: number;
   repsMax: number;

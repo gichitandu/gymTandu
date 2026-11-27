@@ -72,6 +72,7 @@
             <div class="exercise-list">
               @for (e of day.exercises; track e.exerciseId; let i = $index) {
                 @let muscle = primaryMuscle(e.exerciseId);
+                <div class="exercise-item">
                 <button type="button" class="exercise-row" [style.--i]="i" [attr.data-tone]="muscle?.tone" (click)="startTraining(i)">
                   <span class="exercise-number">{{(i + 1).toString().padStart(2, '0')}}</span>
                   <span class="exercise-name">{{e.name}}</span>
@@ -79,8 +80,13 @@
                   <span class="exercise-meta"><span class="meta-chip lead">{{e.sets}} × {{e.repsMin}}–{{e.repsMax}} rip</span><span class="meta-chip">{{e.rir}} di margine</span><span class="meta-chip">{{rest(e.restSeconds)}} recupero</span>@if (muscle) {<span class="meta-chip muscle">{{muscle.name}}</span>}@if(e.supersetGroup) {<span class="meta-chip tag">Superset {{e.supersetGroup}}</span>}@if(e.dropSet) {<span class="meta-chip tag">Dropset opzionale</span>}</span>
                   <span class="row-arrow" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></span>
                 </button>
+                @if (variantOptions(e); as variants) { @if (variants.length) {
+                  <label class="variant-pick"><span>Variante</span><select [attr.aria-label]="'Variante di ' + e.name" [ngModel]="variantValue(e)" (ngModelChange)="setVariant(e, $event)" [disabled]="dirty() || saving()">@if (!variantValue(e)) {<option value="" disabled>Esercizio generico</option>}@for (v of variants; track v.id) {<option [value]="v.id">{{v.name}}</option>}</select></label>
+                } }
+                </div>
               }
             </div>
+            @if (hasVariants()) {<p class="caption variant-caption">Ogni esercizio ha più varianti reali: il coach ne propone una, tu puoi cambiarla. I carichi si calibrano per variante, quindi se ne scegli una nuova parti da una serie di prova.</p>}
             @for (warning of day.warnings; track $index) {<p class="inline-warning">{{warning}}</p>}
           }
           <div class="plan-actions"><button type="button" class="button primary" (click)="savePlan()" [disabled]="saving() || dirty()"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>{{saving() ? 'Salvataggio…' : gateway.mode === 'demo' ? 'Salva piano nella demo' : 'Aggiungi alle mie schede'}}</button><button type="button" class="button secondary icon-only" (click)="exportPlan()" aria-label="Esporta JSON" title="Esporta JSON"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg><span class="label-wide">Esporta JSON</span></button></div>
