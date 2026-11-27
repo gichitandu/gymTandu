@@ -143,7 +143,7 @@ Cloudflare come "zero data retention".
 Workers AI include **10.000 Neuron al giorno**, con ripristino alle **00:00 UTC** (le 01:00
 o le 02:00 in Italia). Per non superarli mai:
 
-- prima di ogni lettura il Worker prenota in D1 (tabella `ai_usage`, migrazione `0013`) il
+- prima di ogni lettura il Worker prenota in D1 (tabella `ai_usage`, migrazione `0014`) il
   costo massimo della richiesta, con una sola istruzione SQL atomica. Se il totale
   supererebbe il **95%** dell'allocazione (9.500 Neuron) il modello non viene chiamato e
   l'app mostra **«Attendere ripristino»** con l'orario;
