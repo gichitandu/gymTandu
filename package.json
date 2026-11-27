@@ -19,6 +19,7 @@
     "postbuild": "node tools/package-worker.mjs",
     "package:deploy": "node tools/package-deploy.mjs",
     "db:generate": "drizzle-kit generate",
+    "devlog": "node --use-env-proxy --no-warnings tools/dev-log.mjs",
     "test:affected": "node tools/test-affected.mjs"
   },
   "engines": {

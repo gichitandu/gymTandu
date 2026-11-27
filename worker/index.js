@@ -10,6 +10,7 @@ import { hubApi, hubInvitesApi, hubInvitePublicApi } from './hub.js';
 import { vwApi, vwScheduled } from './vw.js';
 import { groupApi, groupInvite, groupReserveRegistration } from './group.js';
 import { mealScanApi } from './meal-scan.js';
+import { devLogApi, devLogAgentApi, devLogServerError } from './dev-log.js';
 // The platform's ChatGPT access boundary remains in place. App sessions are
 // additionally bound to that authenticated visitor, and never stored in JS.
 const OWNER = 'giacomotanduo004@gmail.com';
@@ -131,21 +132,25 @@ async function readLimitedJsonBody(request,limit) {
  try{return JSON.parse(chunks.join(''));}catch{fail('Richiesta non valida.');}
 }
 export async function api(request,env,ctx) {
+  let me=null;
   try {
     const url=new URL(request.url), path=url.pathname, db=env.DB;
     if(!db) fail('Servizio account non ancora configurato.',503);
+    // Registro sviluppo per Claude: autorizzato solo dal segreto DEVLOG_TOKEN, senza cookie né archivi.
+    if(path.startsWith('/api/dev-log/agent/'))return await devLogAgentApi(request,env,{build:APP_BUILD_ID,limit:()=>attempt(db,'devlog:'+clientKey(request,env))});
     // Su Sites l'autenticazione della piattaforma non va mai sostituita, bootstrap compreso.
     // In modalità autonoma l'identità è solo quella degli account dell'app.
     if(!visitorId(request,env)) fail('Accedi prima con ChatGPT.',401);
     if(request.method!=='GET' && request.headers.get('origin')!==url.origin) fail('Richiesta non autorizzata.',403);
     if(request.method!=='GET' && !request.headers.get('content-type')?.startsWith('application/json')) fail('Formato non supportato.',415);
-    const me=await session(request,db,env);
+    me=await session(request,db,env);
     if(path==='/api/storage-status'){
       if(!me)fail('Accedi al tuo account.',401);
       if(me.role!=='SuperAdmin')fail('Accesso riservato al Super Admin.',403);
       if(request.method!=='GET')fail('Metodo non supportato.',405);
       return json(await storageStatus(env));
     }
+    if(path.startsWith('/api/dev-log/'))return await devLogApi(request,env,me,{build:APP_BUILD_ID});
     if(path==='/api/hub'||path==='/api/hub/due')return await hubApi(request,env,me,ctx);
     if(path==='/api/hub/invites')return await hubInvitesApi(request,env,me);
     // Link d'invito di Dividi: chi lo apre non ha bisogno di un account (resta l'identità dell'hosting).
@@ -334,6 +339,8 @@ export async function api(request,env,ctx) {
   } catch(e) {
     if(/UNIQUE constraint failed: users.username|users_username_unique/.test(e.message||''))return json({error:'Nome utente già utilizzato. Scegline un altro.'},409);
     if(/UNIQUE constraint failed: users.email/.test(e.message||''))return json({error:'Questa email è già registrata.'},409);
+    // Solo gli errori inattesi delle richieste del Super Admin finiscono nel registro sviluppo.
+    if(!e.status&&me?.role==='SuperAdmin'){const log=devLogServerError(env,e,request,APP_BUILD_ID);if(ctx?.waitUntil)ctx.waitUntil(log);else await log;}
     return json({error:e.status?e.message:'Servizio non disponibile. Riprova.',...(e.code==='PLAN_OVERLAP'?{code:e.code}:{})},e.status||503); }
 }
 // __ASSETS__ is replaced by the build, keeping this deployment dependency-free.
