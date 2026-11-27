@@ -4,10 +4,13 @@ import { Routes } from "@angular/router";
 import { preserveFormDrafts } from '../services/draft-navigation';
 import { nutritionEnabledGuard } from '../services/nutrition-guard';
 import { designStudioGuard } from '../design/design-guard';
+import { devLogGuard } from '../services/dev-log';
 import { appChooserGuard, garageGuard, hubGuard } from '../hub/hub-access';
 const pages: Routes = [
  {path:'coach',canDeactivate:[(page:{canLeave():boolean}|null)=>page?.canLeave()??true],providers:[{provide:COACH_GATEWAY,useExisting:CoachExpertBridge}],loadComponent:()=>import('../coach-ui/coach-page.component').then(m=>m.CoachPageComponent)},
  {path:'recupera-allenamenti',loadComponent:()=>import('../features/workout-recovery.component').then(m=>m.WorkoutRecoveryComponent)},
+ // Registro sviluppo: solo Super Admin, il Worker lo verifica di nuovo.
+ {path:'registro',canActivate:[devLogGuard],loadComponent:()=>import('../features/dev-log.component').then(m=>m.DevLogComponent)},
  {path:'design-studio',canActivate:[designStudioGuard],loadComponent:()=>import('../design/design-studio.component').then(m=>m.DesignStudioComponent)},
  {path:'esercizio/:id',loadComponent:()=>import('../features/exercise-detail.component').then(m=>m.ExerciseDetailComponent)},
  {path:'recupero',data:{mode:'recovery'},loadComponent:()=>import('../features/recovery.component').then(m=>m.RecoveryComponent)},

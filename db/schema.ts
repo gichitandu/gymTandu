@@ -61,6 +61,24 @@ export const groupSessions=sqliteTable('group_sessions',{
 export const groupMembers=sqliteTable('group_members',{
  sessionId:text('session_id').notNull().references(()=>groupSessions.id),userId:text('user_id').notNull().references(()=>users.id),name:text('name').notNull(),mode:text('mode').notNull(),payload:text('payload').notNull(),joinedAt:integer('joined_at').notNull(),updatedAt:integer('updated_at').notNull(),leftAt:integer('left_at')
 },table=>[primaryKey({columns:[table.sessionId,table.userId]}),index('group_members_user').on(table.userId)]);
+
+// Registro sviluppo (solo Super Admin): errori registrati in automatico, bug, migliorie e idee,
+// con la cronologia delle correzioni che Claude legge per non ripetere lavoro già fatto.
+// Mai parte degli archivi personali.
+export const devItems=sqliteTable('dev_items',{
+ id:integer('id').primaryKey({autoIncrement:true}),kind:text('kind').notNull(),source:text('source').notNull(),title:text('title').notNull(),details:text('details').notNull().default(''),route:text('route'),status:text('status').notNull().default('open'),priority:text('priority').notNull().default('medium'),regression:integer('regression').notNull().default(0),fingerprint:text('fingerprint').unique(),occurrences:integer('occurrences').notNull().default(0),firstSeen:integer('first_seen'),lastSeen:integer('last_seen'),lastBuild:text('last_build'),fixedAt:integer('fixed_at'),fixSummary:text('fix_summary'),fixCommit:text('fix_commit'),resolvedAt:integer('resolved_at'),createdAt:integer('created_at').notNull(),updatedAt:integer('updated_at').notNull()
+},table=>[index('dev_items_status').on(table.status,table.updatedAt)]);
+export const devItemEvents=sqliteTable('dev_item_events',{
+ id:integer('id').primaryKey({autoIncrement:true}),itemId:integer('item_id').notNull().references(()=>devItems.id),at:integer('at').notNull(),actor:text('actor').notNull(),kind:text('kind').notNull(),note:text('note').notNull().default('')
+},table=>[index('dev_item_events_item').on(table.itemId,table.id)]);
+export const devOccurrences=sqliteTable('dev_occurrences',{
+ id:integer('id').primaryKey({autoIncrement:true}),itemId:integer('item_id').notNull().references(()=>devItems.id),at:integer('at').notNull(),build:text('build').notNull(),route:text('route'),device:text('device'),message:text('message').notNull(),stack:text('stack')
+},table=>[index('dev_occurrences_item').on(table.itemId,table.id)]);
+// Uso dell'app per build e pagina: dice se una correzione è già stata provata davvero.
+export const devBuildUsage=sqliteTable('dev_build_usage',{
+ build:text('build').notNull(),route:text('route').notNull(),visits:integer('visits').notNull().default(0),firstSeen:integer('first_seen').notNull(),lastSeen:integer('last_seen').notNull()
+},table=>[primaryKey({columns:[table.build,table.route]})]);
+
 /** Link di invito all'app creati dal Super Admin: ognuno registra pochi account Cliente e scade. */
 export const appInvites=sqliteTable('app_invites',{
  id:text('id').primaryKey(),token:text('token').notNull().unique(),createdBy:text('created_by').notNull().references(()=>users.id),createdAt:integer('created_at').notNull(),expiresAt:integer('expires_at').notNull(),maxRegistrations:integer('max_registrations').notNull(),registrations:integer('registrations').notNull().default(0),revokedAt:integer('revoked_at')

@@ -4,6 +4,10 @@ export type FeedbackKind = 'success' | 'error';
 export interface FeedbackNotice { id: number; kind: FeedbackKind; message: string }
 export const FEEDBACK_DURATION = 3000;
 
+// Il registro sviluppo riceve una copia dei messaggi di errore mostrati, senza cambiarne la visualizzazione.
+let errorHook: ((message: string) => void) | null = null;
+export function setFeedbackErrorHook(hook: ((message: string) => void) | null) { errorHook = hook; }
+
 @Injectable({ providedIn: 'root' })
 export class FeedbackService {
   readonly current = signal<FeedbackNotice | null>(null);
@@ -12,6 +16,7 @@ export class FeedbackService {
 
   show(kind: FeedbackKind, message: string) {
     if (!message.trim()) return;
+    if (kind === 'error') { try { errorHook?.(message); } catch { /* il registro non blocca mai il messaggio */ } }
     clearTimeout(this.timeout);
     const id = ++this.sequence;
     this.current.set({ id, kind, message });
