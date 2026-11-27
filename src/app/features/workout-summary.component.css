@@ -122,3 +122,37 @@
 .coach-next[data-coach-action=lower] { --coach-tone: var(--warning, #f5c76d); }
 .coach-next b { color: var(--text); font-size: 14px; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .summary-row .coach-next small { margin-top: 3px; padding: 2px 8px; border-radius: 999px; background: color-mix(in srgb, var(--coach-tone) 18%, transparent); color: var(--coach-tone); font-size: 11px; font-weight: 700; line-height: 1.4; }
+
+/* Valutazione del Coach */
+.summary-review .summary-card-head h2 { color: var(--accent-text, var(--accent)); }
+.summary-review .summary-row { align-items: flex-start; }
+.review-effort { display: grid; gap: 6px; padding: 2px 0 10px; }
+.review-bar { display: flex; height: 8px; overflow: hidden; border-radius: 999px; background: color-mix(in srgb, var(--text) 10%, transparent); }
+.review-bar i { display: block; height: 100%; }
+.review-bar i.ok, .review-effort b.ok { background: var(--green, #42d5a0); color: var(--green, #42d5a0); }
+.review-bar i.fail, .review-effort b.fail { background: var(--danger, #f05a5a); color: var(--danger, #f05a5a); }
+.review-bar i.easy, .review-effort b.easy { background: var(--warning, #f5c76d); color: var(--warning, #f5c76d); }
+.review-effort b { background: none !important; font-variant-numeric: tabular-nums; }
+.review-effort small { color: var(--muted); font-size: 12px; line-height: 1.45; }
+.review-dot { --tone: var(--accent-text, var(--accent)); flex: none; display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: color-mix(in srgb, var(--tone) 16%, transparent); color: var(--tone); }
+.review-dot gt-icon { width: 15px; height: 15px; }
+.review-item[data-tone=good] .review-dot { --tone: var(--green, #42d5a0); }
+.review-item[data-tone=warn] .review-dot { --tone: var(--warning, #f5c76d); }
+.review-ai-open { display: inline-flex; align-items: center; gap: 7px; min-height: 44px; margin-top: 10px; padding: 0 16px; border: 1px solid color-mix(in srgb, var(--accent-text, var(--accent)) 45%, transparent); border-radius: 999px; background: transparent; color: var(--accent-text, var(--accent)); font: inherit; font-size: 13.5px; font-weight: 700; }
+.review-ai-open gt-icon, .review-ai-answer strong gt-icon { width: 15px; height: 15px; flex: none; }
+.review-ai-answer { display: grid; gap: 7px; margin-top: 10px; padding: 14px; border-radius: 16px; background: color-mix(in srgb, var(--accent-text, var(--accent)) 9%, transparent); font-size: 13.5px; line-height: 1.5; }
+.review-ai-answer[data-stance=cautious] { background: color-mix(in srgb, var(--warning, #f5c76d) 11%, transparent); }
+.review-ai-answer strong { display: flex; align-items: center; gap: 7px; font-size: 15px; color: var(--text); }
+.review-ai-answer strong gt-icon { color: var(--accent-text, var(--accent)); }
+.review-ai-answer p { margin: 0; color: color-mix(in srgb, var(--text) 84%, var(--muted)); }
+.review-ai-answer p.review-ai-reply, .review-ai-focus b { color: var(--text); font-weight: 650; }
+.review-ai-answer h3 { margin: 4px 0 0; color: var(--muted); font-size: 11px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
+.review-ai-answer ul { display: grid; gap: 3px; margin: 0; padding-left: 18px; }
+.review-ai-answer small { color: var(--muted); font-size: 11.5px; line-height: 1.4; }
+.review-ai-form { display: grid; gap: 7px; margin-top: 10px; }
+.review-ai-form label { color: var(--muted); font-size: 12.5px; font-weight: 650; }
+.review-ai-form label small { font-weight: 500; }
+.review-ai-form textarea { width: 100%; box-sizing: border-box; min-height: 60px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 14px; background: var(--card); color: var(--text); font: inherit; font-size: 16px; line-height: 1.4; resize: vertical; }
+.review-ai-form > div { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.review-ai-close { min-height: 44px; padding: 0 4px; border: 0; background: none; color: var(--muted); font: inherit; font-size: 13px; font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
+.review-ai-error { margin: 8px 0 0; color: var(--warning, #f5c76d); font-size: 12.5px; line-height: 1.45; }

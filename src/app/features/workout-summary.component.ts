@@ -7,6 +7,8 @@ import {Store} from '../services/store';
 import {buildWorkoutSummary} from '../services/workout-summary';
 import {coachHistory,coachNextSession,exerciseWeightStep,isCompoundExercise} from '../services/coach-shadow';
 import {readSetFeedback} from '../services/coach-expert-adapter';
+import {coachSessionReview} from '../services/coach-review';
+import {CoachAiService,coachAiSessionContext,type CoachAiAdvice} from '../services/coach-ai';
 import {IconComponent} from '../shared/icon.component';
 @Component({standalone:true,imports:[RouterLink,IconComponent],styleUrl:'./workout-summary.component.css',template:`
 <div class="workout-summary">
@@ -17,6 +19,14 @@ import {IconComponent} from '../shared/icon.component';
  @if(summary().improvements.length){<section class="card summary-records"><div class="summary-card-head"><h2>Nuovi record · {{summary().improvements.length}}</h2><small>stessa configurazione</small></div>@for(record of summary().improvements;track $index){<div class="summary-row"><span class="record-medal"><gt-icon name="trophy"/></span><span><strong>{{record.name}}</strong><small>{{record.kind==='load'?'Carico massimo':'Ripetizioni massime'}} · {{record.kind==='load'?s.formatWeight(record.before):record.before}} → <b>{{record.kind==='load'?s.formatWeight(record.after):record.after}} {{record.kind==='load'?s.settings().unit:'rip.'}}</b></small></span></div>}</section>}
  @if(summary().comparisons.length){<section class="card summary-records summary-compare"><div class="summary-card-head"><h2>Rispetto all’ultima seduta</h2></div>@for(row of summary().comparisons;track $index){<div class="summary-row"><span><strong>{{row.name}}</strong><small>{{row.kind==='load'?'Carico massimo':'Ripetizioni massime'}} · {{date(row.date)}}</small></span><span class="compare-values">{{row.kind==='load'?s.formatWeight(row.before):row.before}} → <b>{{row.kind==='load'?s.formatWeight(row.after):row.after}}</b> {{row.kind==='load'?s.settings().unit:'rip.'}}</span></div>}</section>}
  @if(coachNext().length){<section class="card summary-records summary-coach" aria-label="Coach Ombra: consigli per la prossima seduta"><div class="summary-card-head"><h2>Coach Ombra · prossima volta</h2></div>@for(row of coachNext();track row.id){<div class="summary-row"><span><strong>{{row.name}}</strong><small>{{row.coach.reason}}</small></span><span class="compare-values coach-next" [attr.data-coach-action]="row.coach.action"><b>{{row.target}}</b><small>{{row.coach.title}}</small></span></div>}</section>}
+ @if(review();as r){<section class="card summary-records summary-review" aria-label="Valutazione del Coach">
+  <div class="summary-card-head"><h2>Valutazione del Coach</h2><small>{{r.workingSets}} {{r.workingSets===1?'serie allenante':'serie allenanti'}}</small></div>
+  @if(r.declared){<div class="review-effort"><span class="review-bar" aria-hidden="true"><i class="ok" [style.width.%]="(r.effective-r.failure)/r.declared*100"></i><i class="fail" [style.width.%]="r.failure/r.declared*100"></i><i class="easy" [style.width.%]="r.easy/r.declared*100"></i></span><small><b class="ok">{{r.effective-r.failure}}</b> utili · <b class="fail">{{r.failure}}</b> a cedimento · <b class="easy">{{r.easy}}</b> facili<span> su {{r.declared}} con sforzo indicato</span></small></div>}
+  @for(item of r.insights;track $index){<div class="summary-row review-item" [attr.data-tone]="item.tone"><span class="review-dot" aria-hidden="true"><gt-icon [name]="item.tone==='good'?'check':item.tone==='warn'?'shield':'info'"/></span><span><strong>{{item.title}}</strong><small>{{item.text}}</small></span></div>}
+  @if(aiAdvice();as a){<div class="review-ai-answer" [attr.data-stance]="a.stance" aria-live="polite"><strong><gt-icon name="sparkle"/>{{a.headline||'Il parere del coach'}}</strong>@if(a.answer){<p class="review-ai-reply">{{a.answer}}</p>}<p>{{a.advice}}</p>@if(a.positives.length){<h3>Punti di forza</h3><ul>@for(item of a.positives;track $index){<li>{{item}}</li>}</ul>}@if(a.improvements.length){<h3>Da correggere</h3><ul>@for(item of a.improvements;track $index){<li>{{item}}</li>}</ul>}@if(a.focus){<p class="review-ai-focus"><b>Priorità per la prossima seduta:</b> {{a.focus}}</p>}<small>Risposta AI ({{a.provider==='gemini'?'Gemini':'Workers AI'}}): i carichi proposti restano quelli del Coach Ombra.@if(a.remaining!==undefined){ Analisi AI rimaste oggi: {{a.remaining}}.}</small></div>}
+  @if(coachAi?.online()){@if(aiOpen()){<div class="review-ai-form"><label for="summary-coach-question">Domanda per il coach <small>(facoltativa)</small></label><textarea id="summary-coach-question" rows="2" maxlength="300" [value]="aiQuestion()" (input)="aiQuestion.set($any($event.target).value)" placeholder="Es. come organizzo la prossima settimana? Perché ho perso ripetizioni?" [disabled]="coachAi?.busy()"></textarea><div><button type="button" class="su-btn su-primary" (click)="askCoach()" [disabled]="coachAi?.busy()">{{coachAi?.busy()?'Il coach sta analizzando…':'Analizza la seduta'}}</button><button type="button" class="review-ai-close" (click)="coachAi?.cancel();aiOpen.set(false)">{{coachAi?.busy()?'Annulla':'Chiudi'}}</button></div></div>}@else{<button type="button" class="review-ai-open" (click)="aiOpen.set(true)"><gt-icon name="sparkle"/>{{aiAdvice()?'Altra domanda al coach AI':'Analisi completa con il coach AI'}}</button>}}
+  @if(aiError();as error){<p class="review-ai-error" role="alert">{{error}}</p>}
+ </section>}
  @if(workout.notes){<section class="card summary-notes"><gt-icon name="note"/><p>{{workout.notes}}</p></section>}
  <div class="summary-section-title"><h2>Le tue serie</h2><small>R = riscaldamento</small></div>
  <section class="card summary-exercises" aria-label="Le serie dell’allenamento">@for(row of summary().rows;track row.id){<div class="summary-exercise ws-exercise"><span class="summary-exercise-name"><strong>{{row.name}}</strong>@if(row.substitutedFrom){<small>Al posto di {{row.substitutedFrom.name}}</small>}</span><span class="set-count">{{s.sets(row.id).filter(completed).length}}/{{s.sets(row.id).length}}</span><span class="ws-sets">@for(set of s.sets(row.id);track set.id){<span class="ws-set" [class.off]="!set.completed" [class.warm]="set.kind==='warmup'">{{setLabel(row,set)}}</span>}</span></div>}</section>
@@ -43,6 +53,21 @@ export class WorkoutSummaryComponent{
    return [{id:row.id,name:row.name,coach,target}];
   });
  });
+ /** Valutazione del Coach: qualità dello sforzo, segnali da correggere e volume per muscolo. */
+ readonly review=computed(()=>coachSessionReview(this.s.data(),this.id()));
+ /* Coach con l'AI: analisi della seduta su richiesta, con la valutazione del Coach come base. */
+ readonly coachAi=inject(CoachAiService,{optional:true});readonly aiOpen=signal(false);readonly aiQuestion=signal('');
+ private aiResult=signal<{id:string;advice?:CoachAiAdvice;error?:string}|null>(null);
+ readonly aiAdvice=computed(()=>{const r=this.aiResult();return r&&r.id===this.id()?r.advice??null:null;});
+ readonly aiError=computed(()=>{const r=this.aiResult();return r&&r.id===this.id()?r.error??'':'';});
+ async askCoach(){
+  const workout=this.summary().workout,review=this.review(),ai=this.coachAi;if(!ai||!workout||!review||ai.busy())return;
+  const id=workout.id,context=coachAiSessionContext({dayName:workout.dayName,planName:workout.planName,date:workout.date,duration:this.summary().duration,unit:this.s.settings().unit,review,
+   next:this.coachNext().map(row=>({name:row.name,target:row.target,title:row.coach.title})),records:this.summary().improvements,toUnit:kg=>this.s.weight(kg)});
+  this.aiResult.set(null);
+  try{const advice=await ai.ask('session',context,this.aiQuestion());this.aiResult.set({id,advice});this.aiOpen.set(false);this.aiQuestion.set('');}
+  catch(error){this.aiResult.set({id,error:error instanceof Error?error.message:'Analisi del coach non riuscita. Riprova.'});}
+ }
  completed=(set:{completed:boolean})=>set.completed;
  private router=inject(Router);private confirmation=confirmationForContext();
  readonly reopening=signal(false);readonly deleting=signal(false);private from=signal('');
