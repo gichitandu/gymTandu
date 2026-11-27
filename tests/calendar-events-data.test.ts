@@ -109,8 +109,13 @@ it('moves workout schedules with the existing overlap guards and never moves or 
  await s.savePlan('other','Altro piano','');await s.saveDay('other-day','other','Giorno');
  expect(await s.scheduleWorkout(blockedDate,'other-day','','other-event')).toBe(true);
  expect(await s.scheduleWorkout('2026-11-01','day','','movable')).toBe(true);
- expect(await s.moveCalendarEvent('movable',blockedDate)).toBe(false);
- expect(s.data().scheduledWorkouts.find(row=>row.id==='movable')?.date).toBe('2026-11-01');
+ // Un piano aperto ma non attivo (per esempio una copia recuperata) non blocca lo spostamento del piano attivo, come per l'avvio.
+ expect(await s.moveCalendarEvent('movable',blockedDate)).toBe(true);
+ expect(s.data().scheduledWorkouts.find(row=>row.id==='movable')?.date).toBe(blockedDate);
+ expect(await s.moveCalendarEvent('movable','2026-11-01')).toBe(true);
+ // Il piano non attivo resta invece bloccato dalle date del piano attivo.
+ expect(await s.moveCalendarEvent('other-event','2026-11-01')).toBe(false);
+ expect(s.data().scheduledWorkouts.find(row=>row.id==='other-event')?.date).toBe(blockedDate);
 });
 
 it('roundtrips all new metadata and migrates version 8 backups without replacing legacy data',async()=>{
@@ -135,7 +140,7 @@ it('lets the active plan move or schedule a session over the period of an open i
  expect(await s.moveCalendarEvent('mine','2026-11-18')).toBe(true);expect(s.data().scheduledWorkouts.find(row=>row.id==='mine')?.date).toBe('2026-11-18');
  expect(await s.scheduleWorkout('2026-11-20','day','','mine-2')).toBe(true);
  await s.change(data=>{data.scheduledWorkouts.push({id:'theirs',date:'2026-11-10',planId:'copy',dayId:'copy-day',planName:'Piano · recuperato',dayName:'Parte alta',notes:''});},'',false);
- // Una seduta già programmata della copia blocca ancora quella data precisa; la copia non può invadere il piano attivo.
- expect(await s.moveCalendarEvent('mine','2026-11-10')).toBe(false);expect(s.error()).toContain('è già programmato');
- expect(await s.moveCalendarEvent('theirs','2026-11-18')).toBe(false);expect(s.error()).toContain('Spostamento bloccato');
+ // Stessa regola ovunque: un piano non attivo non blocca quello attivo (né con il periodo né con le sue sedute), ma non può invadere il piano attivo.
+ expect(await s.moveCalendarEvent('mine','2026-11-10')).toBe(true);
+ expect(await s.moveCalendarEvent('theirs','2026-11-20')).toBe(false);expect(s.error()).toContain('Spostamento bloccato');
 });

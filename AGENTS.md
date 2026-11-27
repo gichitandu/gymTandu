@@ -113,6 +113,14 @@ Dettagli da consultare senza duplicarli qui:
 [Design Studio](docs/GT_DESIGN_STUDIO_IMPLEMENTAZIONE.md),
 [testi e obiettivo settimanale](docs/GT_LOGO_TESTI_OBIETTIVO_SETTIMANALE.md).
 
+## Registro sviluppo
+
+All'inizio di ogni lavoro sull'app e dopo ogni aggiornamento pubblicato usare la skill
+`registro-sviluppo` (`.claude/skills/registro-sviluppo/SKILL.md`): leggere le voci `GT-n`
+con la loro cronologia per non ripetere correzioni già fatte o smentite, segnare le
+correzioni come «da verificare» e chiudere solo ciò che il Worker conferma.
+Dettagli in [docs/REGISTRO_SVILUPPO.md](docs/REGISTRO_SVILUPPO.md).
+
 ## Verifiche selettive durante lo sviluppo
 
 Per modifiche locali usa `npm run test:affected` e `npm run typecheck` quando tocchi

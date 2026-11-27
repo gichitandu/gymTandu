@@ -799,10 +799,14 @@
 }
 .cal-row-time {
   flex: none;
-  width: 38px;
+  padding: 5px 9px;
+  border-radius: 999px;
   font-size: 12px;
   font-weight: 700;
-  color: var(--muted);
+  line-height: 1;
+  white-space: nowrap;
+  color: var(--k);
+  background: color-mix(in srgb, var(--k) 13%, transparent);
   font-variant-numeric: tabular-nums;
 }
 .cal-row-item .cal-item-thumb {
@@ -2257,7 +2261,7 @@
     font-size: 13px;
   }
   .cal-row-time {
-    width: 32px;
+    padding: 4px 7px;
     font-size: 11px;
   }
   .cal-item-copy strong {

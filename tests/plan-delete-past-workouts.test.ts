@@ -70,7 +70,11 @@ it('records a past workout on its chosen date and keeps its entered duration thr
   const past=moveDate(localDate(),-7),plan=structuredClone(s.data().plans[0]);
   expect(await s.start('day-a',past)).toBe(true);const w=s.draft()!,exercise=s.workoutExercises(w.id)[0];
   const session=runInInjectionContext(injector,()=>new SessionComponent());sessions.push(session);
-  session.update(w.id,'duration',55);await s.settled();await s.updateSet(s.sets(exercise.id)[0].id,{weight:82.5,reps:8,completed:true});await session.finish();
+  session.update(w.id,'duration',55);await s.settled();await s.updateSet(s.sets(exercise.id)[0].id,{weight:82.5,reps:8,completed:true});
+  // Restano serie non completate: «Termina» chiede conferma e, se annulli, la seduta resta aperta.
+  const confirm=vi.fn().mockReturnValue(false);vi.stubGlobal('confirm',confirm);const pending=session.allSets(w.id).length-1;
+  await session.finish();expect(s.draft()?.id).toBe(w.id);expect(confirm).toHaveBeenCalledExactlyOnceWith(expect.stringContaining(pending===1?'Resta 1 serie':'Restano '+pending+' serie'));
+  confirm.mockReturnValue(true);await session.finish();
   expect(s.completed()[0]).toMatchObject({id:w.id,date:past,duration:55});expect(s.data().plans[0]).toEqual(plan);expect(calendarActivity(s.data()).get(past)?.completed).toBe(1);
   const restored=await importBackup(await exportBackup(s.data()));expect(restored.workouts[0].date).toBe(past);expect(restored.workouts[0].duration).toBe(55);
 });
@@ -93,13 +97,13 @@ it('starts an old calendar appointment on its own date',async()=>{
   const calendar=runInInjectionContext(injector,()=>new CalendarComponent());await calendar.start(s.data().scheduledWorkouts[0]);
   expect(s.draft()!.date).toBe(past);expect(s.data().scheduledWorkouts[0].workoutId).toBe(s.draft()!.id);
 });
-it('moves directly to the next historical set without a rest timer or notification permission prompt',async()=>{
+it('starts the rest timer also on a past date, without notification permission prompt',async()=>{
   await s.start('day-a',moveDate(localDate(),-4));const w=s.draft()!;
   const c=runInInjectionContext(injector,()=>new ActiveWorkoutComponent());active.push(c);Object.defineProperty(c,'workoutId',{value:()=>w.id});
   const timer={requestAutomaticPermission:vi.fn(),stop:vi.fn(),sync:vi.fn()};Object.defineProperty(c,'externalTimer',{value:timer});
   const exercise=s.workoutExercises(w.id)[0],sets=s.sets(exercise.id);c.open(exercise);c.record(sets[0]);c.weight=80;c.reps=8;
   await c.complete({timeStamp:1000} as MouseEvent);
-  expect(c.recordingPast()).toBe(true);expect(c.step()).toBe('record');expect(c.currentSet()!.id).toBe(sets[1].id);expect(c.restEnd()).toBe(0);expect(timer.requestAutomaticPermission).not.toHaveBeenCalled();expect(s.sets(exercise.id)[0].completed).toBe(true);
+  expect(c.recordingPast()).toBe(true);expect(c.restRunning()).toBe(true);expect(c.remaining()).toBeGreaterThan(0);expect(timer.requestAutomaticPermission).not.toHaveBeenCalled();expect(s.sets(exercise.id)[0].completed).toBe(true);
 });
 it.each([true,false,undefined])('keeps the in-app recovery working without requesting notification permission with legacy preference %s',async enabled=>{
   await s.change(data=>{data.settings[0].externalTimerEnabled=enabled;},'',false);await s.start('day-a');const workout=s.draft()!,plans=structuredClone(s.data().plans);
@@ -110,6 +114,16 @@ it.each([true,false,undefined])('keeps the in-app recovery working without reque
   expect(c.step()).toBe('record');expect(c.remaining()).toBeGreaterThan(0);expect(timer.requestAutomaticPermission).not.toHaveBeenCalled();
   c.pauseRest();const paused=c.remaining();expect(c.paused()).toBe(true);c.adjustRest(15);expect(c.remaining()).toBe(paused+15);c.pauseRest();expect(c.paused()).toBe(false);expect(c.remaining()).toBe(paused+15);
   expect(s.sets(exercise.id)[0]).toMatchObject({id:set.id,completed:true,weight:80,reps:8});expect(s.data().plans).toEqual(plans);
+});
+it('moves a started workout to another past day keeping its sets and the linked calendar event',async()=>{
+  const from=moveDate(localDate(),-4),to=moveDate(localDate(),-2);await s.start('day-a',from);const w=s.draft()!,exercise=s.workoutExercises(w.id)[0],set=s.sets(exercise.id)[0];
+  await s.updateSet(set.id,{weight:60,reps:10,completed:true});
+  await s.change(d=>{d.scheduledWorkouts.push({id:'ev-moved',date:from,planId:w.planId,dayId:w.dayId,planName:w.planName,dayName:w.dayName,notes:'',workoutId:w.id});},'',false);
+  expect(await s.moveWorkoutDate(w.id,moveDate(localDate(),1))).toBe(false);expect(s.error()).toContain('data passata');
+  expect(await s.moveWorkoutDate(w.id,to)).toBe(true);
+  expect(s.data().workouts.find(x=>x.id===w.id)).toMatchObject({date:to,status:'draft'});
+  expect(s.data().scheduledWorkouts.find(x=>x.id==='ev-moved')!.date).toBe(to);
+  expect(s.sets(exercise.id)[0]).toMatchObject({weight:60,reps:10,completed:true});
 });
 it('closes an unconfirmed past session only after confirmation, preserving inputs and unlocking another date',async()=>{
   const past=moveDate(localDate(),-4);await s.start('day-a',past);

@@ -12,7 +12,7 @@ import { Store } from '../services/store';
 import { Meal, MealIngredient, localDate, now, uid } from '../models/domain';
 import { compressPhoto } from '../services/images';
 import { LocalAiService } from '../services/local-ai';
-import { FOODS, foodSuggestions, mealTypeForHour, portion, sumIngredients, resizeIngredient } from '../services/nutrition';
+import { FOODS, foodSuggestions, mealTypeForHour, portion, sumIngredients, resizeIngredient, matchFood, ingredientFromFood, ingredientFromEstimate } from '../services/nutrition';
 import { MealScanLimitError, MealScanResult, MealScanService } from '../services/meal-scan';
 import { StatusComponent } from '../shared/status.component';
 import { feedbackForContext, feedbackSignal } from '../services/feedback';
@@ -47,7 +47,7 @@ interface MealFormDraft {
 @if(pendingPhoto&&!photoBusy()){<div class="actions"><button type="button" (click)="resumePhoto()">Riprendi preparazione della foto</button><button type="button" (click)="removePhoto()">Scarta foto in attesa</button></div>}
 @if(photoBusy()){<p class="subtle" role="status">Preparazione della foto…</p>}
 @if(error()){<p class="notice meal-error" role="alert">{{error()}}</p>}
-@if(photo){<img class="meal-preview" [src]="url(photo)" alt="Foto del pasto da controllare"/>
+@if(photo){<div class="meal-scan" [class.scanning]="analysisState()==='running'"><img class="meal-preview" [src]="url(photo)" alt="Foto del pasto da controllare"/></div>
 <div class="meal-ai-status" role="status" aria-live="polite" [attr.aria-busy]="analysisState()==='running'">
 @if(analysisState()==='running'){<strong>{{analysisSource()==='cloud'?'Lettura della foto con l’AI…':'Analisi della foto…'}}</strong>@if(analysisSource()!=='cloud'){<p>{{ai.status()}}</p>}}@else if(analysisState()==='blocked'||aiBlocked()&&analysisState()==='idle'){<p class="meal-ai-wait"><gt-icon name="clock"/><span><b>Attendere ripristino</b>{{aiWaitDetail()}}</span></p>}@else if(analysisMessage()){<p>{{analysisMessage()}}</p>}
 </div>
@@ -56,7 +56,7 @@ interface MealFormDraft {
 @else{<div class="actions meal-photo-add"><button type="button" (click)="camera.click()" [disabled]="photoBusy()"><gt-icon name="camera"/>Scatta foto</button><button type="button" (click)="gallery.click()" [disabled]="photoBusy()">Scegli da Foto</button></div>}
 @if(suggestions().length){<div class="notice"><b>Possibili alimenti · scegli e correggi</b><div class="actions">@for(food of suggestions();track food.id){<button (click)="choose(food.id,true)">{{food.name}}</button>}</div></div>}
 @if(photo){<p class="meal-estimate-note">Stima da verificare: controlla alimenti, quantità e valori prima di salvare.@if(analysisSource()==='cloud'){ {{providerNote()}}}</p>}
-@if(ingredients.length){<section class="ingredient-review"><div class="section-title"><h3>Alimenti del pasto</h3><span class="pill">{{ingredients.length}} {{ingredients.length===1?'voce':'voci'}}</span></div>@for(item of ingredients;track item.id){<div class="ingredient-item"><div class="ingredient-title"><strong>{{item.name}}</strong><button class="icon-btn ghost danger" [attr.aria-label]="'Rimuovi '+item.name" (click)="removeIngredient(item.id)">×</button></div><div class="ingredient-quick"><label>Quantità (g)<input type="number" inputmode="decimal" min="1" max="10000" [ngModel]="item.grams" (change)="changeIngredientGrams(item.id,$any($event.target).valueAsNumber)"/></label><p class="ingredient-summary"><strong>{{item.calories.toLocaleString('it-IT',{maximumFractionDigits:0})}} kcal</strong><span>P {{item.protein.toLocaleString('it-IT',{maximumFractionDigits:1})}} · C {{item.carbs.toLocaleString('it-IT',{maximumFractionDigits:1})}} · G {{item.fat.toLocaleString('it-IT',{maximumFractionDigits:1})}}</span></p></div><details class="ingredient-more"><summary>Correggi nome e valori</summary><label>Nome<input type="text" maxlength="100" [ngModel]="item.name" (change)="renameIngredient(item.id,$any($event.target).value)"/></label><div class="ingredient-values">@for(field of nutritionFields;track field.key){<label>{{field.label}}<input type="number" inputmode="decimal" min="0" step="0.1" [ngModel]="item[field.key]" (ngModelChange)="changeIngredientValue(item.id,field.key,$event)"/></label>}</div></details></div>}<p class="subtle">Cambia i grammi: calorie e macronutrienti si ricalcolano in proporzione.</p></section>}
+@if(ingredients.length){<section class="ingredient-review"><div class="section-title"><h3>Alimenti del pasto</h3><span class="pill">{{ingredients.length}} {{ingredients.length===1?'voce':'voci'}}</span></div>@for(item of ingredients;track item.id){<div class="ingredient-item"><div class="ingredient-title"><strong>{{item.name}}</strong><button class="icon-btn ghost danger" [attr.aria-label]="'Rimuovi '+item.name" (click)="removeIngredient(item.id)">×</button></div><div class="ingredient-quick"><label>Quantità (g)<input type="number" inputmode="decimal" min="1" max="10000" [ngModel]="item.grams" (change)="changeIngredientGrams(item.id,$any($event.target).valueAsNumber)"/></label><p class="ingredient-summary"><strong>{{item.calories.toLocaleString('it-IT',{maximumFractionDigits:0})}} kcal</strong><span>P {{item.protein.toLocaleString('it-IT',{maximumFractionDigits:1})}} · C {{item.carbs.toLocaleString('it-IT',{maximumFractionDigits:1})}} · G {{item.fat.toLocaleString('it-IT',{maximumFractionDigits:1})}}</span></p></div>@if(ingredientNotes()[item.id];as note){<p class="subtle ingredient-note" role="status">{{note}}</p>}<details class="ingredient-more"><summary>Correggi alimento e valori</summary><p class="subtle">Scrivi il nome giusto (es. «Pasta» invece di «Riso»), poi premi «Ricalcola valori dal nome»: calorie e macro vengono aggiornati per i grammi indicati.</p><label>Nome<input type="text" maxlength="100" [ngModel]="item.name" [disabled]="ingredientBusy()[item.id]" (change)="renameIngredient(item.id,$any($event.target).value)"/></label><button type="button" class="primary" (click)="reestimate(item.id)" [disabled]="ingredientBusy()[item.id]">Ricalcola valori dal nome</button><div class="ingredient-values">@for(field of nutritionFields;track field.key){<label>{{field.label}}<input type="number" inputmode="decimal" min="0" step="0.1" [ngModel]="item[field.key]" (ngModelChange)="changeIngredientValue(item.id,field.key,$event)"/></label>}</div></details></div>}<p class="subtle">Cambia i grammi: calorie e macronutrienti si ricalcolano in proporzione.</p></section>}
 <form (ngSubmit)="save()"><div class="meal-type-chips" role="radiogroup" aria-label="Tipo di pasto">@for(type of mealTypes;track type.id){<button type="button" role="radio" [attr.aria-checked]="mealType===type.id" [class.active]="mealType===type.id" (click)="setMealType(type.id)">{{type.label}}</button>}</div>
 <div class="form-grid">
 @if(ingredients.length){<label class="wide meal-name-field">Nome del pasto<input name="composed-name" [(ngModel)]="composedName" maxlength="100" placeholder="Es. Pollo con riso e verdure"/></label><div class="wide meal-confirm-totals"><span>Totale del pasto</span><strong>{{ingredientTotal()?.calories??'—'}} kcal</strong><small>Proteine {{ingredientTotal()?.protein??'—'}} g · Carboidrati {{ingredientTotal()?.carbs??'—'}} g · Grassi {{ingredientTotal()?.fat??'—'}} g</small></div>
@@ -102,7 +102,36 @@ export class NutritionComponent {
  clearFood(){this.name='';this.foodId='';this.grams=100;this.calories=0;this.protein=0;this.carbs=0;this.fat=0;}
  removeIngredient(id:string){this.ingredients=this.ingredients.filter(i=>i.id!==id);this.draftChanged();}
  changeIngredientGrams(id:string,grams:number){try{this.ingredients=this.ingredients.map(i=>i.id===id?resizeIngredient(i,grams):i);this.error.set('');this.draftChanged();}catch(e){this.error.set((e as Error).message);}}
- renameIngredient(id:string,value:string){const name=String(value||'').trim().slice(0,100);if(!name)return;this.ingredients=this.ingredients.map(i=>i.id===id?{...i,name}:i);this.draftChanged();}
+ /** Cambia solo il nome; i valori si aggiornano con `reestimate`, su richiesta dell'utente. */
+ renameIngredient(id:string,value:string){
+  const name=String(value||'').trim().slice(0,100),current=this.ingredients.find(i=>i.id===id);if(!name||!current)return;
+  if(name===current.name)return;
+  this.ingredients=this.ingredients.map(i=>i.id===id?{...i,name}:i);this.reestimates.delete(id);this.setIngredientState(id,'Nome cambiato: i valori sono ancora quelli di prima. Premi «Ricalcola valori dal nome» per aggiornarli.');this.draftChanged();
+ }
+ ingredientNotes=signal<Record<string,string>>({});ingredientBusy=signal<Record<string,boolean>>({});private reestimates=new Map<string,number>();
+ private setIngredientState(id:string,note:string,busy=false){this.ingredientNotes.update(n=>({...n,[id]:note}));this.ingredientBusy.update(b=>({...b,[id]:busy}));}
+ /** Ricalcola i valori dal nome per i grammi attuali: prima dal riferimento locale, poi con l'AI. */
+ async reestimate(id:string){
+  const item=this.ingredients.find(i=>i.id===id);if(!item||this.saving())return;
+  const request=(this.reestimates.get(id)||0)+1,version=this.formVersion,name=item.name,grams=item.grams;this.reestimates.set(id,request);
+  const stale=()=>this.destroyed||version!==this.formVersion||this.reestimates.get(id)!==request||this.ingredients.find(i=>i.id===id)?.name!==name;
+  const apply=(next:(i:MealIngredient)=>MealIngredient,note:string)=>{
+   try{const updated=this.ingredients.map(i=>i.id===id?next(i):i);sumIngredients(updated);this.ingredients=updated;this.setIngredientState(id,note);this.draftChanged();}
+   catch(e){this.setIngredientState(id,'Valori non aggiornati: '+(e as Error).message);}
+  };
+  const food=matchFood(name);
+  if(food){apply(i=>ingredientFromFood(i,food),'Valori ricalcolati da «'+food.name+'» per '+grams+' g. Controllali prima di salvare.');return;}
+  if(!this.cloud||!this.cloud.online()||this.cloud.blocked()){this.setIngredientState(id,'Nome cambiato ma valori non aggiornati: AI non disponibile ora. Correggi i valori qui sotto a mano.');return;}
+  this.setIngredientState(id,'Ricalcolo dei valori in corso…',true);
+  try{
+   const estimate=await this.cloud.correct(name,grams);if(stale())return;
+   if(!estimate){this.setIngredientState(id,'Non riconosco «'+name+'» come alimento: valori non aggiornati. Correggili a mano.');return;}
+   apply(i=>ingredientFromEstimate(i,estimate),'Valori ricalcolati con l’AI per '+grams+' g. Sono una stima: controllali prima di salvare.');
+  }catch(e){
+   if(stale())return;
+   this.setIngredientState(id,e instanceof MealScanLimitError?'Nome cambiato ma valori non aggiornati: '+this.cloud.waitMessage():'Valori non aggiornati: '+((e as Error).message||'AI non disponibile')+' Correggi i valori a mano o riprova.');
+  }
+ }
  changeIngredientValue(id:string,key:'calories'|'protein'|'carbs'|'fat',value:number){this.ingredients=this.ingredients.map(i=>i.id===id?{...i,[key]:value}:i);this.draftChanged();}
  private todayService=inject(TodayService,{optional:true});private lastToday=localDate();private followDay=true;private followMealDate=true;
  get today(){return this.todayService?.date()||localDate();}
@@ -254,6 +283,6 @@ export class NutritionComponent {
  openNew(){if(this.saving()||!this.draftReady())return;this.captureMenu.set(false);this.reset();this.showForm.set(true);this.markBaseline();this.draftChanged();}
  async closeForm(){if(this.saving())return;if(this.drafts&&this.hasMealChanges()&&!await this.confirmation.ask('Scartare la bozza di questo pasto? I pasti già salvati restano conservati.'))return;this.reset();this.showForm.set(false);this.clearStoredDraft();}
  reset(){if(!this.saving())this.clearDraft();}
- private clearDraft(){this.formVersion++;this.photoRequest++;this.analysisRequest++;this.formSaveId=uid();this.ai.cancel();this.cloud?.cancel();this.photoBusy.set(false);this.analysisState.set('idle');this.analysisMessage.set('');this.analysisSource.set('');this.scanIds.clear();this.addingFood.set(false);this.mealType=mealTypeForHour(new Date().getHours());this.ingredients=[];this.composedName='';this.error.set('');this.editing='';this.name='';this.foodId='';this.grams=100;this.calories=0;this.protein=0;this.carbs=0;this.fat=0;this.notes='';this.photo=undefined;this.pendingPhoto=undefined;this.source='manual';this.mealDate=this.day;this.followMealDate=this.followDay&&this.day===this.today;this.suggestions.set([]);this.recoveredDraft.set(false);this.baseline='';this.baselinePhoto=undefined;}
+ private clearDraft(){this.formVersion++;this.photoRequest++;this.analysisRequest++;this.formSaveId=uid();this.ai.cancel();this.cloud?.cancel();this.photoBusy.set(false);this.analysisState.set('idle');this.analysisMessage.set('');this.analysisSource.set('');this.scanIds.clear();this.ingredientNotes.set({});this.ingredientBusy.set({});this.reestimates.clear();this.addingFood.set(false);this.mealType=mealTypeForHour(new Date().getHours());this.ingredients=[];this.composedName='';this.error.set('');this.editing='';this.name='';this.foodId='';this.grams=100;this.calories=0;this.protein=0;this.carbs=0;this.fat=0;this.notes='';this.photo=undefined;this.pendingPhoto=undefined;this.source='manual';this.mealDate=this.day;this.followMealDate=this.followDay&&this.day===this.today;this.suggestions.set([]);this.recoveredDraft.set(false);this.baseline='';this.baselinePhoto=undefined;}
  ngOnDestroy(){void this.draftSession?.destroy();this.destroyed=true;this.formVersion++;this.photoRequest++;this.ai.cancel();this.cloud?.cancel();this.urls.forEach(url=>URL.revokeObjectURL(url));}
 }

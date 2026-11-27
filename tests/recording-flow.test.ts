@@ -192,6 +192,7 @@ it('non conclude la sessione quando gli ultimi input sono invalidi o non vengono
   await s.updateSet(c.setId(), { completed: true });
   const session = runInInjectionContext(injector, () => new SessionComponent());
   Object.defineProperty(session, 'activeWorkout', { value: () => c });
+  vi.stubGlobal('confirm', vi.fn().mockReturnValue(true));
   try {
     c.weight = -5; c.inputChanged(); await session.finish();
     expect(s.draft()).toBeDefined(); expect(session.finishing()).toBe(false);

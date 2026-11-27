@@ -1,5 +1,5 @@
 import { DataSet, TrainingPlanExercise } from "../models/domain";
-import { hasSetup, setupKey } from "./training-flow";
+import { hasSetup, machineKey } from "./training-flow";
 
 export interface ProgressionProposal {
   status: "increase" | "maintain" | "unavailable";
@@ -103,7 +103,7 @@ export function weightProgression(
         e.workoutId === previous.id &&
         e.exerciseId === current.exerciseId &&
         e.loadMode === current.loadMode &&
-        setupKey(e.machineSetup) === setupKey(current.machineSetup),
+        machineKey(e.machineSetup) === machineKey(current.machineSetup),
     );
     if (!matches.length) continue;
     const orderedMatches = matches.filter((e) => e.order === current.order);

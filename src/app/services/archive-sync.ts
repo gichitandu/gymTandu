@@ -115,7 +115,11 @@ export class ArchiveSyncService {
         headers: body === undefined ? {} : { 'Content-Type': 'application/json', 'If-Match': String(this.revision()) }, body });
       // Keep the timeout active until the backup body is received as well.
       const value=await response.json().catch(()=>undefined);
-      if (scope === 'device' && response.status === 403) {
+      // 403: hosting senza copia per il dispositivo. 404 o pagina HTML al posto del JSON: build statica
+      // senza API (nessun Worker), dove una copia server non esiste e attendere la rete non serve.
+      // Il Worker risponde sempre in JSON (anche il 404 di una versione inesistente): conta solo una risposta non JSON.
+      const noArchiveApi = value === undefined && (response.status === 404 || response.ok && /text\/html/i.test(response.headers?.get('content-type') || ''));
+      if (scope === 'device' && (response.status === 403 || noArchiveApi)) {
         // Nessuna copia server possibile: i dati restano sul dispositivo e gli aggiornamenti non vanno bloccati.
         this.deviceLocalOnly = true;this.scope = undefined;this.pending = undefined;
         this.status.set('local');this.message.set('Archivio conservato su questo dispositivo.');

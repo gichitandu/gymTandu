@@ -37,6 +37,21 @@ export function foodSuggestions(predictions:{label:string;probability:number}[])
   .filter(candidate=>candidate.score>=.15).sort((a,b)=>b.score-a.score).map(candidate=>candidate.food);
 }
 
+const norm=(value:string)=>value.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9 ]+/g,' ').replace(/\s+/g,' ').trim();
+const STOP=new Set(['di','da','al','alla','con','e','il','la','lo','le','un','una','del','della','cotto','cotta']);
+/** Abbina il nome digitato a un alimento del riferimento (singolare/plurale tollerati): serve ogni parola, altrimenti null e decide l'AI. */
+export function matchFood(name:string){
+ const words=norm(name).split(' ').filter(word=>word&&!STOP.has(word));
+ if(!words.length)return null;
+ const stem=(word:string)=>word.length>=4?word.replace(/[aeio]$/,''):word;
+ return FOODS.find(food=>{const tokens=norm(food.name).split(' ');return words.every(word=>tokens.some(token=>token.startsWith(stem(word))));})??null;
+}
+/** Valori del riferimento per i grammi correnti, mantenendo nome (scelto dall'utente) e ID della voce. */
+export function ingredientFromFood(item:MealIngredient,food:typeof FOODS[number]):MealIngredient{return {...item,...portion(food,item.grams)};}
+/** Applica una stima AI alla voce: i valori sono riportati ai grammi correnti, il nome resta quello scritto dall'utente. */
+export function ingredientFromEstimate(item:MealIngredient,estimate:Pick<MealIngredient,'grams'|'calories'|'protein'|'carbs'|'fat'>):MealIngredient{
+ return resizeIngredient({...item,calories:estimate.calories,protein:estimate.protein,carbs:estimate.carbs,fat:estimate.fat,grams:estimate.grams},item.grams);
+}
 export function sumIngredients(items:MealIngredient[]){
  if(!items.length||items.length>30)throw Error('Aggiungi da 1 a 30 alimenti.');
  const totals={grams:0,calories:0,protein:0,carbs:0,fat:0};

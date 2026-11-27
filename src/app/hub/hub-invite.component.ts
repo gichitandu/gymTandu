@@ -59,7 +59,8 @@ form{margin-top:22px;text-align:left}
 .inv-home{display:inline-block;margin-top:20px;font-size:13px;font-weight:600;color:var(--muted,#9a9aab);text-decoration:underline}`],
 })
 export class HubInviteComponent {
-  readonly token = input.required<string>();
+  // La shell passa solo token validi; la rotta /invito/:token (token non valido) non lega l'input.
+  readonly token = input('');
   readonly group = signal<HubInviteGroup | null>(null);
   readonly loading = signal(true);
   readonly busy = signal(false);
@@ -71,6 +72,7 @@ export class HubInviteComponent {
   async load() {
     const token = this.token();
     this.loading.set(true); this.error.set(''); this.retry.set(false);
+    if (!token) { this.group.set(null); this.loading.set(false); return; }
     try { this.joined.set(localStorage.getItem(JOINED_KEY + token) ?? ''); } catch { this.joined.set(''); }
     try { this.group.set((await inviteApi.read(token)).group); }
     catch (e) {

@@ -44,7 +44,10 @@ export class HomeComponent {
   private todayClock = inject(TodayService,{optional:true});
   private theme = inject(ThemeService,{optional:true});
   /** Stile «Elegante»: striscia della settimana in alto e riquadri Volume/Settimana al posto dell'anello. */
-  elegant = computed(() => this.theme?.config().style === 'elegant');
+  /** Vero solo con lo stile «Rimodernizzato»: aggiunge la scheda del coach. */
+  modern = computed(() => this.theme?.config().style === 'modern');
+  /** Home compatta: usata dagli stili Elegante e Rimodernizzato. */
+  elegant = computed(() => { const style = this.theme?.config().style; return style === 'elegant' || style === 'modern'; });
   dayNumber(date: string) { return +date.slice(8, 10); }
   private volumeOf(workoutId: string) {
     return this.s.workoutExercises(workoutId).reduce((sum, row) => sum + this.s.sets(row.id).reduce((total, set) => total + (set.completed && set.kind !== 'warmup' ? (set.weight || 0) * (set.reps || 0) : 0), 0), 0);
@@ -160,6 +163,8 @@ export class HomeComponent {
     if(!session.date)return 'Prossima seduta';
     return (session.date===this.today?'Oggi':this.dateLabel(session.date))+(session.time?' · '+session.time:'');
   }
+  /** «Sposta»: una seduta programmata apre lo spostamento; un giorno della scheda senza data apre la programmazione. */
+  moveParams(session:HomeUpcomingSession){return session.kind==='scheduled'&&session.eventId?{date:session.date||this.today,move:session.eventId}:session.kind==='plan'?{date:this.today,add:'workout'}:{date:session.date||this.today};}
   sessionPreview(session:HomeUpcomingSession){return session.kind==='scheduled'?{scheduled:session.eventId,return:'home'}:{day:session.dayId,return:'home'};}
   private weekDays = computed(() => Array.from({ length: 7 }, (_, i) => {
     const d = new Date(this.today+'T12:00:00');
@@ -291,7 +296,9 @@ export class HomeComponent {
   });
   tagLabel(session: HomeUpcomingSession) {
     if (session.kind === 'draft') return 'In corso';
-    if (!session.date || session.date === this.today) return 'Allenamento di oggi';
+    if (session.date === this.today) return 'Allenamento di oggi';
+    // Seduta della rotazione senza data: se oggi hai già completato un allenamento è la prossima, non quella di oggi.
+    if (!session.date) return this.s.data().workouts.some(w => w.status === 'completed' && w.date === this.today) ? 'Prossimo allenamento' : 'Allenamento di oggi';
     return 'Prossimo · ' + this.dateLabel(session.date);
   }
   subLine(session: HomeUpcomingSession) {

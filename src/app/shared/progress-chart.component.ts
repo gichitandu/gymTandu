@@ -31,7 +31,7 @@ import { ExerciseFilterComponent } from "./exercise-filter.component";
         </select></label
       >
       @if (metric() !== "weekly") {
-        <gt-exercise-filter [exercises]="s.data().exercises" [value]="exercise() || defaultId()"
+        <gt-exercise-filter [exercises]="trained()" [value]="exercise() || defaultId()"
           (choose)="exercise.set($event);machine.set('')" />
       }
       @if(metric()!=='weekly'&&s.configurations(exercise()||defaultId()).length){<label>Configurazione macchina<select [ngModel]="machine()" (ngModelChange)="machine.set($event)"><option value="">Tutte le configurazioni</option>@for(config of s.configurations(exercise()||defaultId());track config.key){<option [value]="config.key">{{config.label}}</option>}</select></label>}
@@ -119,7 +119,16 @@ export class ProgressChartComponent implements AfterViewInit {
   private themeSignature = "";
   private mounted = signal(false);
   private clock = inject(TodayService, {optional:true});
-  defaultId = computed(() => this.s.data().exercises[0]?.id || "");
+  /** Esercizi con almeno una seduta completata, dal più recente: il catalogo completo renderebbe la scelta lunga e il grafico spesso vuoto. */
+  trained = computed(() => {
+    const data = this.s.data(), last = new Map<string, string>();
+    const done = new Map(data.workouts.filter(w => w.status === "completed").map(w => [w.id, w.date + w.startedAt]));
+    const performed = new Set(data.sets.filter(set => set.completed && set.kind !== "warmup").map(set => set.workoutExerciseId));
+    for (const row of data.workoutExercises) { const when = done.get(row.workoutId); if (when && performed.has(row.id) && (last.get(row.exerciseId) || "") < when) last.set(row.exerciseId, when); }
+    const rows = data.exercises.filter(e => last.has(e.id)).sort((a, b) => last.get(b.id)!.localeCompare(last.get(a.id)!) || a.name.localeCompare(b.name, "it"));
+    return rows.length ? rows : data.exercises;
+  });
+  defaultId = computed(() => this.trained()[0]?.id || "");
   points = computed(() =>
     chartSeries(
       this.s.data(),

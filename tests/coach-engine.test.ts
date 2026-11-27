@@ -148,8 +148,19 @@ describe('progressione fra sedute', () => {
     expect(result.decisions.length).toBeGreaterThan(0);
   });
 
-  it('un solo successo non basta per aumentare', () => {
+  it('un solo successo al limite del margine non basta per aumentare', () => {
     expect(recommend([successfulHistory()]).progression).not.toBe('increase');
+  });
+
+  it('principiante e intermedio: basta una seduta chiaramente facile; l’avanzato conferma con due', () => {
+    const easy = [successfulHistory({ sets: Array.from({ length: 3 }, () => actualSet({ rir: 3 })) })];
+    for (const experience of ['beginner', 'intermediate'] as const) {
+      const result = recommend(easy, { experience });
+      expect(result.progression).toBe('increase');
+      expect(result.loadKg).toBeGreaterThan(40);
+      expect(result.decisions.at(-1)?.message).toContain('almeno una ripetizione in riserva in più');
+    }
+    expect(recommend(easy, { experience: 'advanced' }).progression).not.toBe('increase');
   });
 
   it('non trasferisce il carico da una macchina o regolazione diversa', () => {
@@ -410,4 +421,18 @@ describe('range di ripetizioni per tipo di esercizio e obiettivo', () => {
       for (const e of ranges(goal, 'beginner').values()) expect(e.decisions.some(d => d.ruleId === 'rep-range-heavy'), `${goal} ${e.exerciseId}`).toBe(false);
   });
 
+});
+
+describe('autoregolazione in seduta', () => {
+  it('con una serie chiaramente facile al limite propone un incremento solo per oggi', () => {
+    const easy = recommendNextSet({ profile: profile(), prescription: prescription(), completedSets: [actualSet({ reps: 12, rir: 4 })] });
+    expect(easy).toMatchObject({ action: 'increase', ruleId: 'next-easy-increase', isTemporary: true });
+    expect(easy.loadKg).toBeGreaterThan(40);
+    expect(easy.loadKg).toBeLessThanOrEqual(44);
+    expect(easy.reason).toContain('solo per questa seduta');
+    // Margine di una sola ripetizione in più del previsto: nessun aumento.
+    expect(recommendNextSet({ profile: profile(), prescription: prescription(), completedSets: [actualSet({ reps: 12, rir: 3 })] }).action).not.toBe('increase');
+    // Tecnica non verificata: nessun aumento.
+    expect(recommendNextSet({ profile: profile(), prescription: prescription(), completedSets: [actualSet({ reps: 12, rir: 4, technique: 'unknown' })] }).action).not.toBe('increase');
+  });
 });

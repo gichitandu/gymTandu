@@ -9,7 +9,7 @@ import { GymDatabase } from '../src/app/core/database';
 import { GYM_REPOSITORY } from '../src/app/repositories/repository';
 import { Store } from '../src/app/services/store';
 import { FormDraftService } from '../src/app/services/form-drafts';
-import { PlansComponent } from '../src/app/features/plans.component';
+import { PlansComponent, estimatedMinutes } from '../src/app/features/plans.component';
 import { ActiveWorkoutComponent } from '../src/app/shared/active-workout.component';
 import { annotateSetNotes } from '../src/app/services/coach-expert-adapter';
 
@@ -122,8 +122,8 @@ it('riassume allenamento e serie per gruppo muscolare senza modificare l’archi
   await s.savePlanExercise({ id: 'b', dayId: 'd2', exerciseId: 'exercise-0', sets: 3, repsMin: 8, repsMax: 12, rest: 90, warmupSets: 2, notes: '', order: 0 });
   const component = createPlans(), before = JSON.stringify(s.data().planExercises);
   const [first, second, plan] = [s.days('p')[0], s.days('p')[1], s.data().plans[0]];
-  expect(component.dayMeta(first)).toBe('1 esercizio · 4 serie · ~10 min');
-  expect(component.dayMeta(second)).toBe('1 esercizio · 3 serie · ~10 min');
+  expect(component.dayMeta(first)).toBe('1 esercizio · 4 serie · ~11 min');
+  expect(component.dayMeta(second)).toBe('1 esercizio · 3 serie · ~9 min');
   expect(component.planBalance(plan)).toEqual([{ name: s.muscle(s.exercise('exercise-0')!.muscleGroupId), sets: 7 }]);
   await s.saveDay('d3', 'p', 'Vuoto');
   expect(component.dayMeta(s.days('p')[2])).toBe('0 esercizi');
@@ -245,4 +245,15 @@ it('nell’editor il Coach Ombra propone il peso dall’ultima seduta e lo usa s
   component.useCoachWeight(hint.weight!);
   expect(component.exerciseForm.controls.targetWeight.value).toBe(62.5); expect(component.advancedOpen()).toBe(true);
   expect(s.planExercises('d')).toHaveLength(1);
+});
+
+it('usa la stessa durata indicativa nell’editor dell’esercizio e nella lista delle schede', async () => {
+  expect([estimatedMinutes(30), estimatedMinutes(405), estimatedMinutes(19 * 60), estimatedMinutes(2100), estimatedMinutes(2280)]).toEqual([1, 7, 19, 35, 40]);
+  await s.savePlan('p', 'Piano', ''); await s.saveDay('d', 'p', 'Push');
+  await s.savePlanExercise({ id: 'a', dayId: 'd', exerciseId: 'exercise-0', sets: 3, repsMin: 8, repsMax: 12, rest: 90, notes: '', order: 0 });
+  const component = createPlans();
+  component.openExercise('d', s.planExercises('d')[0]);
+  expect(component.exerciseSummary()).toContain('~7 min');
+  expect(component.dayMeta(s.days('p')[0])).toBe('1 esercizio · 3 serie · ~7 min');
+  await component.closeModal();
 });

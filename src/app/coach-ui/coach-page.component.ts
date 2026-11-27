@@ -117,7 +117,8 @@ export class CoachPageComponent {
   get name() { return this.gateway.displayName()?.trim().split(' ')[0] || 'Coach'; }
   get historyCount() { return this.gateway.completedWorkoutCount(); }
   get todayLabel() { return new Date().toLocaleDateString('it-IT', { day: 'numeric', month: 'long', year: 'numeric' }); }
-  date() { return new Date().toISOString().slice(0, 10); }
+  /** Data locale (non UTC): dopo mezzanotte in Italia toISOString darebbe ancora il giorno precedente. */
+  date() { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; }
   setTab(tab: Tab) { this.tab.set(tab); this.error.set(''); }
   markDirty() { this.dirty.set(true); this.notice.set(''); }
 
@@ -196,8 +197,10 @@ export class CoachPageComponent {
     const a = document.createElement('a'); a.href = url; a.download = `gymtrack-coach-${this.date()}.json`; a.click();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
+  /** Solo l'unità accanto al numero: loadLabel contiene già il valore («20 kg sulla stessa macchina») e lo ripeterebbe. */
+  loadUnit(e: ExercisePrescription) { return e.loadType === 'bodyweight' ? '' : e.loadType === 'per-dumbbell' ? 'kg per manubrio' : e.loadType === 'total' ? 'kg totali' : 'kg sulla stessa macchina'; }
   loadText(e: ExercisePrescription) { return e.loadKg === null ? (e.loadType === 'bodyweight' ? 'Corpo libero' : 'Da calibrare') : `${e.loadKg.toLocaleString('it-IT')} kg`; }
   confidenceLabel(value: string) { return ({ initial: 'Prima impostazione', limited: 'Pochi dati', established: 'Storico confrontabile' } as Record<string, string>)[value] || value; }
-  actionLabel(value: string) { return ({ calibrate: 'Troviamo il tuo carico', maintain: 'Mantieni il carico', reduce: 'Alleggerisci la prossima', rest: 'Prenditi più recupero', stop: 'Interrompi questo esercizio', complete: 'Esercizio completato' } as Record<string, string>)[value] || value; }
+  actionLabel(value: string) { return ({ calibrate: 'Troviamo il tuo carico', maintain: 'Mantieni il carico', increase: 'Sali di carico, solo oggi', reduce: 'Alleggerisci la prossima', rest: 'Prenditi più recupero', stop: 'Interrompi questo esercizio', complete: 'Esercizio completato' } as Record<string, string>)[value] || value; }
   rest(seconds: number) { return seconds >= 60 ? `${Math.floor(seconds / 60)}′${seconds % 60 ? ` ${seconds % 60}″` : ''}` : `${seconds}″`; }
 }

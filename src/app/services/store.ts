@@ -4,7 +4,7 @@ import {historyReductions} from './workout-safety';
 import { previousWeekWorkout, reusableExerciseSets } from './weekly-reuse';
 import { WorkoutStartOptionsService } from './workout-start-options';
 import { PlanReplacementRequest, PlanReplacementResult, replacePlanExercise, replaceWorkoutExercise } from './exercise-replacement';
-import { setupKey,setupSummary,hasSetup } from "./training-flow";
+import { setupKey,setupSummary,hasSetup,machineKey,hasMachine } from "./training-flow";
 import { weightProgression } from "./progression";
 import { MachineSetup,WorkoutUiState,WorkoutLogExercise,CalendarActivityInput,CalendarEventOptions,ScheduledWorkout } from "../models/domain";
 import {calendarEventOptions,calendarWorkoutDuplicate,existingCalendarOptions,validateCalendarEvent} from './calendar-event-data';
@@ -34,6 +34,8 @@ import { TodayService } from "./today";
 import { CREATINE_MAX_DAILY_GRAMS, roundGrams } from "./creatine";
 import { ExcelProgramDraft } from '../models/excel-import';
 import { autoCompletePlan,effectiveProgramRange,excelProgramConflicts,missingProgramEvents,normalizedExerciseName,prescriptionDetails,scheduleConflicts,validateExcelProgram } from './plan-program';
+/** Oltre questa soglia il tempo trascorso non è una durata attendibile dell'allenamento. */
+export const MAX_AUTOMATIC_DURATION_MINUTES=240;
 @Injectable({ providedIn: "root" })
 export class Store {
   saveWellness(row:import('../models/domain').WellnessLog){return this.change(d=>{const existing=d.wellnessLogs.find(v=>v.date===row.date);const next={...structuredClone(row),id:existing?.id||row.id};d.wellnessLogs=d.wellnessLogs.filter(v=>v.date!==row.date);d.wellnessLogs.push(next);},'Diario recupero salvato',false);}
@@ -59,6 +61,43 @@ export class Store {
   preference(id:string){return this.data().exercisePreferences.find(p=>p.id===id);}
   isFavorite(id:string){return this.preference(id)?.favorite||false;}
   toggleFavorite(id:string){return this.change(d=>{if(!d.exercises.some(e=>e.id===id))throw Error('Esercizio non trovato.');const p=d.exercisePreferences.find(p=>p.id===id);if(p)p.favorite=!p.favorite;else d.exercisePreferences.push({id,favorite:true});},'',false);}
+  /**
+   * Indica su quale macchina è stato fatto l'esercizio di una seduta.
+   * Seduta in corso: riprende sedile/presa e i carichi delle serie non ancora registrate dall'ultima volta su quella macchina,
+   * e la ricorda come macchina abituale. Seduta registrata: cambia solo l'etichetta, le serie restano quelle salvate.
+   */
+  async assignMachine(workoutExerciseId:string,machine:string){
+    const name=String(machine||'').replace(/\s+/g,' ').trim().slice(0,120),key=machineKey({machine:name});let message='';
+    const ok=await this.change(d=>{
+      const e=d.workoutExercises.find(row=>row.id===workoutExerciseId);if(!e)throw Error('Esercizio della seduta non trovato.');
+      const workout=d.workouts.find(row=>row.id===e.workoutId);if(!workout)throw Error('Allenamento non trovato.');
+      if(machineKey(e.machineSetup)===key){message='';return;}
+      const {machine:_old,...rest}=e.machineSetup||{};
+      if(workout.status==='completed'){
+        const next={...rest,...(name?{machine:name}:{})};e.machineSetup=Object.values(next).some(v=>!!v)?next:undefined;
+        message=name?'Seduta del '+workout.date.split('-').reverse().join('/')+' assegnata a '+name+': ultima volta, progressione e Coach si aggiornano.':'Macchina tolta dalla seduta del '+workout.date.split('-').reverse().join('/')+'.';
+        return;
+      }
+      const earlier=d.workouts.filter(row=>row.status==='completed'&&row.id!==workout.id).sort((a,b)=>b.date.localeCompare(a.date)||b.startedAt.localeCompare(a.startedAt));
+      let source:typeof e|undefined,sets:WorkoutLogSet[]=[];
+      if(name)for(const row of earlier){
+        const match=d.workoutExercises.find(x=>x.workoutId===row.id&&x.exerciseId===e.exerciseId&&x.loadMode===e.loadMode&&machineKey(x.machineSetup)===key);
+        if(!match)continue;const done=d.sets.filter(x=>x.workoutExerciseId===match.id&&x.completed&&x.kind!=='warmup').sort((a,b)=>a.number-b.number);
+        if(done.length){source=match;sets=done;break;}
+      }
+      e.machineSetup=name?{...structuredClone(source?.machineSetup||{}),machine:name}:(Object.values(rest).some(v=>!!v)?rest:undefined);
+      const pref=d.exercisePreferences.find(row=>row.id===e.exerciseId),setup=e.machineSetup?structuredClone(e.machineSetup):undefined;
+      if(pref)pref.machineSetup=setup;else d.exercisePreferences.push({id:e.exerciseId,favorite:false,machineSetup:setup});
+      let refilled=0;
+      if(sets.length){
+        const own=d.sets.filter(x=>x.workoutExerciseId===e.id&&x.kind!=='warmup').sort((a,b)=>a.number-b.number);
+        own.forEach((set,index)=>{const ref=sets[index]??sets.at(-1);if(set.completed||!ref)return;set.weight=ref.weight;set.reps=ref.reps;refilled++;});
+      }
+      message=!name?'Macchina tolta: l’ultima volta torna a considerare tutte le sedute.':sets.length?name+': ripresi i carichi dell’ultima volta su questa macchina'+(refilled?'':' (le serie già registrate restano invariate)')+'.':name+': prima volta su questa macchina, la seduta di oggi farà da riferimento.';
+    },'',false);
+    if(ok&&message)this.message.set(message);
+    return ok;
+  }
   saveMachineSetup(id:string,setup:MachineSetup,workoutExerciseId?:string){return this.change(d=>{if(!d.exercises.some(e=>e.id===id))throw Error('Esercizio non trovato.');const clean=Object.fromEntries(Object.entries(setup).map(([key,value])=>[key,value?.trim()||undefined]));const p=d.exercisePreferences.find(p=>p.id===id);if(p)p.machineSetup=clean;else d.exercisePreferences.push({id,favorite:false,machineSetup:clean});if(workoutExerciseId){const e=d.workoutExercises.find(e=>e.id===workoutExerciseId&&e.exerciseId===id);if(e&&!d.sets.some(s=>s.workoutExerciseId===e.id&&s.completed))e.machineSetup=structuredClone(clean);}},'Configurazione personale salvata. Le serie già registrate conservano la configurazione precedente.',false);}
   rememberWorkout(state:WorkoutUiState){return this.change(d=>{if(!d.workouts.some(w=>w.id===state.id&&w.status==='draft'))return;d.workoutUi=[structuredClone(state)];},'',false);}
 
@@ -298,6 +337,20 @@ export class Store {
     const w = this.data().workouts.find((w) => w.id === id);
     return w ? sessionVolume(this.data(), w) : 0;
   }
+  /** Macchine già usate per l'esercizio, dalla più recente: per ognuna data e serie allenanti dell'ultima seduta completata su quella macchina. */
+  machinesFor(exerciseId:string,excludeWorkoutId?:string){
+    const data=this.data(),out=new Map<string,{key:string;name:string;date:string;sets:WorkoutLogSet[]}>();
+    for(const w of this.completed()){
+      if(w.id===excludeWorkoutId)continue;
+      for(const e of data.workoutExercises){
+        if(e.workoutId!==w.id||e.exerciseId!==exerciseId)continue;
+        const key=machineKey(e.machineSetup);if(!key||out.has(key))continue;
+        const sets=this.sets(e.id).filter(x=>x.completed&&x.kind!=='warmup');if(!sets.length)continue;
+        out.set(key,{key,name:e.machineSetup!.machine!.replace(/\s+/g,' ').trim(),date:w.date,sets});
+      }
+    }
+    return [...out.values()];
+  }
   configurations(id:string){return [...new Map(this.data().workoutExercises.filter(e=>e.exerciseId===id&&this.completed().some(w=>w.id===e.workoutId)).map(e=>[setupKey(e.machineSetup),{key:setupKey(e.machineSetup),label:setupSummary(e.machineSetup)||"Configurazione non registrata"}])).values()];}
   records(id: string,machine?:string) {
     return exerciseRecords(this.data(), id,machine);
@@ -325,7 +378,7 @@ export class Store {
         (e) =>
           e.workoutId === w.id &&
           e.exerciseId === exerciseId &&
-          (!hasSetup(machineSetup)||setupKey(e.machineSetup)===setupKey(machineSetup)) &&
+          (!hasMachine(machineSetup)||machineKey(e.machineSetup)===machineKey(machineSetup)) &&
           e.loadMode === (this.exercise(exerciseId)?.loadMode ?? e.loadMode),
       );
       if (e) {const sets=this.sets(e.id).filter((s) => s.completed&&s.kind!=="warmup");if(sets.length)return sets;}
@@ -812,10 +865,11 @@ export class Store {
       w.status = "completed";
       d.workoutUi=d.workoutUi.filter(x=>x.id!==w.id);
       w.endedAt = now();
-      w.duration = w.duration>0?w.duration:w.durationUnknown||w.date<localDate(new Date(w.startedAt))?0:Math.max(
-        1,
-        Math.round((Date.now() - new Date(w.startedAt).getTime()) / 60000),
-      );
+      // Senza una durata inserita si usa il tempo trascorso, ma una seduta lasciata aperta per ore
+      // (es. dalla sera prima) non diventa un allenamento di 20 ore: resta «durata non indicata».
+      const elapsed=Math.max(1,Math.round((Date.now() - new Date(w.startedAt).getTime()) / 60000));
+      w.duration = w.duration>0?w.duration:w.durationUnknown||w.date<localDate(new Date(w.startedAt))||elapsed>MAX_AUTOMATIC_DURATION_MINUTES?0:elapsed;
+      if(w.duration<=0&&elapsed>MAX_AUTOMATIC_DURATION_MINUTES)w.durationUnknown=true;
       autoCompletePlan(d,d.plans.find(plan=>plan.id===w.planId));
     }, "Allenamento salvato. Ottimo lavoro!");
   }
@@ -923,7 +977,8 @@ export class Store {
       if(plan.program&&(repeatCount!==1||d.scheduledWorkouts.some(event=>event.id!==id&&event.planId===plan.id&&event.dayId===dayId))||previous&&d.plans.some(item=>item.id===previous.planId&&item.program)&&previous.dayId!==dayId)throw Error('Questa seduta del piano importato è già programmata. Usa Sposta per cambiare data o ora.');
       if(index>=0&&d.scheduledWorkouts[index].workoutId)throw Error('Una programmazione già avviata non può essere modificata.');
       if(index>=0&&repeatCount!==1)throw Error('Per ripetere l’allenamento crea una nuova programmazione.');
-      const conflicts=scheduleConflicts(d,dates,plan.id,id,{inactivePeriodsFree:plan.active});
+      // Come per spostamento e avvio: i piani aperti ma non attivi (es. una copia recuperata) non bloccano il piano attivo.
+      const conflicts=scheduleConflicts(d,dates,plan.id,id,{onlyActivePlans:plan.active});
       if(conflicts.length)throw Error('Programmazione bloccata: data occupata da un altro piano. '+conflicts[0]);
       if(typeof notes!=='string')throw Error('Le note non sono valide.');
       if(notes.length>2000&&notes!==previous?.notes)throw Error('Le note possono contenere al massimo 2000 caratteri.');
@@ -957,12 +1012,28 @@ export class Store {
       validateCalendarEvent(candidate);
       if((event.kind??'workout')==='workout'){
         const plan=d.plans.find(plan=>plan.id===event.planId);if(!plan||plan.archived||!d.days.some(day=>day.id===event.dayId&&day.planId===plan.id))throw Error('Il giorno del piano non è più disponibile. La programmazione è conservata.');
-        // Il periodo di un piano aperto ma non attivo (es. una copia recuperata) non blocca il piano attivo; le sue sedute programmate sì.
-        const conflicts=scheduleConflicts(d,[date],event.planId,id,{inactivePeriodsFree:plan.active});if(conflicts.length)throw Error('Spostamento bloccato: '+conflicts[0]);
+        const conflicts=scheduleConflicts(d,[date],event.planId,id,{onlyActivePlans:plan.active});if(conflicts.length)throw Error('Spostamento bloccato: '+conflicts[0]);
         if(calendarWorkoutDuplicate(d.scheduledWorkouts,candidate))throw Error('Questo allenamento è già programmato nella data e nell’orario scelti.');
       }else if(d.scheduledWorkouts.some(other=>other.id!==id&&other.kind===candidate.kind&&other.date===candidate.date&&other.dayName.toLocaleLowerCase('it')===candidate.dayName.toLocaleLowerCase('it')&&(!other.time||!candidate.time||other.time===candidate.time)))throw Error('Questa attività è già presente nella data scelta.');
       Object.assign(event,candidate);if(candidate.time===undefined)delete event.time;
     },'Programmazione spostata.',false);
+  }
+  /** Sposta un allenamento già iniziato o registrato a un altro giorno (oggi o passato): serie, carichi e programmazione collegata restano invariati. */
+  async moveWorkoutDate(id:string,date:string) {
+    return this.change(d=>{
+      const workout=d.workouts.find(item=>item.id===id);if(!workout)throw Error('Allenamento non trovato.');
+      parseLocalDate(date);if(date>localDate())throw Error('Un allenamento registrato si può spostare a oggi o a una data passata.');
+      if(date===workout.date)throw Error('L’allenamento è già in questa data.');
+      if(d.workouts.some(other=>other.id!==id&&other.dayId===workout.dayId&&other.date===date))throw Error('Questa seduta è già registrata in quella data.');
+      const plan=d.plans.find(item=>item.id===workout.planId),event=d.scheduledWorkouts.find(item=>item.workoutId===id);
+      if(plan){
+        const conflicts=plan.program?scheduleConflicts(d,[date],plan.id,event?.id,{onlyActivePlans:plan.active}):d.plans.filter(other=>other.id!==plan.id&&other.program&&!other.archived&&!other.completedAt&&(!plan.active||other.active)).flatMap(other=>{const range=effectiveProgramRange(d,other);return range&&date>=range.startDate&&date<=range.endDate?[`Il periodo è già occupato dal piano “${other.name}”.`]:[];});
+        if(conflicts.length)throw Error('Spostamento bloccato: '+conflicts[0]);
+      }
+      workout.date=date;
+      if(workout.status==='draft')workout.durationUnknown=date<localDate();
+      if(event)event.date=date;
+    },'Allenamento spostato.',false);
   }
   async removeCalendarEvent(id:string) {
     return this.change(d=>{

@@ -1,7 +1,7 @@
 import type { Profile, Goal, Experience } from './models.js';
 
-export const ENGINE_VERSION = '1.1.0';
-export const RULESET_DATE = '2026-11-13';
+export const ENGINE_VERSION = '1.2.0';
+export const RULESET_DATE = '2026-11-24';
 export const DEFAULT_PROFILE: Profile = {
   goal: 'hypertrophy', experience: 'beginner', daysPerWeek: 3,
   minutesPerSession: 45, equipment: ['machine', 'cable', 'dumbbell', 'bodyweight'],

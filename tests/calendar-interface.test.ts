@@ -105,6 +105,34 @@ it('summarises each day for the month rings and joins consecutive completed days
  expect(first.joinRight).toBe(true);expect(second.joinLeft).toBe(true);expect(cells.find(cell=>cell.date==='2026-10-29')!.joinLeft).toBe(false);
 });
 
+it('builds one ring per month week from planned workouts and ignores days of other months',async()=>{
+ await s.scheduleWorkout('2026-10-28','day','','w1');await s.scheduleWorkout('2026-10-30','day','','w2');
+ await s.scheduleCalendarActivity({id:'run',date:'2026-10-29',kind:'cardio',title:'Corsa',done:true});
+ c.view.set('month');
+ const weeks=c.monthWeeks();
+ expect(weeks).toHaveLength(Math.ceil(c.monthCells().length/7));
+ for(const week of weeks)expect(week.cells).toHaveLength(7);
+ const target=weeks.find(week=>week.cells.some(cell=>cell.date==='2026-10-28'))!;
+ // Only workouts count toward the ring; the completed run does not, and nothing is completed yet.
+ expect(target.target).toBe(2);expect(target.done).toBe(0);expect(target.percent).toBe(0);
+ const empty=weeks.find(week=>week.cells.every(cell=>cell.out||!cell.state))!;
+ expect(empty.percent).toBe(0);expect(empty.done).toBe(0);
+});
+
+it('derives the monthly goal from the weekly goal in proportion to the days shown',async()=>{
+ c.view.set('month');expect(c.monthTarget()).toBe(0);
+ (s as any).data.update((value:any)=>({...value,settings:[{...value.settings[0],goals:{workoutsPerWeek:3}}]}));
+ expect(c.monthTarget()).toBe(Math.max(1,Math.round(3*c.periodDates().length/7)));
+});
+
+it('formats the month summary compactly and counts only days with activity done',async()=>{
+ expect(c.compactDuration(715)).toBe('11h 55');expect(c.compactDuration(120)).toBe('2h');expect(c.compactDuration(45)).toBe('45 min');
+ await s.scheduleCalendarActivity({id:'done1',date:'2026-10-27',kind:'cardio',title:'Corsa',done:true});
+ await s.scheduleCalendarActivity({id:'rest1',date:'2026-10-28',kind:'rest',title:'Riposo'});
+ await s.scheduleCalendarActivity({id:'next1',date:'2026-10-29',kind:'cardio',title:'Nuoto'});
+ c.view.set('month');expect(c.monthActiveDays()).toBe(1);
+});
+
 it('shows the contextual dock only for a chosen row outside the day view and resets filters in one step',async()=>{
  await s.scheduleCalendarActivity({id:'run',date:'2026-10-30',kind:'cardio',title:'Corsa',time:'11:00'});
  c.view.set('week');expect(c.dockVisible()).toBe(false);

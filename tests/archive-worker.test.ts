@@ -203,6 +203,16 @@ it('keeps origin and role checks on calendar activation',async()=>{
  expect(sql.prepare('SELECT count(*) AS n FROM calendar_service_config').get()?.n).toBe(0);
 });
 
+it('accepts every app style, «Sportivo» included, and rejects unknown styles in account archives',async()=>{
+ const cookie=await activate(),content=JSON.parse(backup);let revision=0;
+ for(const style of ['classic','elegant','modern','sport']){
+  content.data.settings[0].themeConfig={palette:'smeraldo-sport',mode:'dark',style};
+  expect((await put(JSON.stringify(content),revision,'account',{cookie})).response.status).toBe(200);revision++;
+ }
+ content.data.settings[0].themeConfig={palette:'smeraldo-sport',mode:'dark',style:'sporty'};
+ expect((await put(JSON.stringify(content),revision,'account',{cookie})).response.status).toBe(400);
+});
+
 it('retains a full theme in account archives and rejects malformed themes before replacing the head',async()=>{
  const cookie=await activate(),themeConfig={palette:'prugna',mode:'system',background:'#1D1424',accent:'#F0A6A0'};
  const content=JSON.parse(backup);content.data.settings[0].themeConfig=themeConfig;

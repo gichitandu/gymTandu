@@ -1,0 +1,281 @@
+/* Elegante · Atelier: carta bianca, inchiostro nero, oro champagne, titoli serif.
+   Attivo solo con body.style-elegant.custom-light (palette chiare dello stile Elegante), mai con lo stile Rimodernizzato.
+   Solo presentazione: handler, route, form, stati disabled e valori calcolati non cambiano. */
+
+/* ---------- 1. Valori ---------- */
+body.theme-ready.style-elegant.custom-light:not(.style-modern){
+ --at-ink:var(--text);
+ --at-paper:var(--bg);
+ --at-gold:#c9a96a;
+ --at-gold-ink:#8f7038;
+ --at-gold-grad:linear-gradient(135deg,#efdcab,#c9a96a 55%,#a8874a);
+ --at-noir:linear-gradient(160deg,#1c1c1f,#0b0b0c);
+ --at-hair:color-mix(in srgb,var(--text) 9%,transparent);
+ --at-hair-2:color-mix(in srgb,var(--text) 16%,transparent);
+ --at-r:28px;      /* schede e superfici */
+ --at-r-sm:999px;    /* pulsanti, campi, chip e controlli: sempre arrotondati */
+ --at-sh:0 0 0 1px var(--at-hair),0 22px 44px -26px #0d0d0f40;
+ --at-sh-hover:0 0 0 1px var(--at-hair-2),0 30px 56px -26px #0d0d0f59;
+ --at-serif:"Didot","Bodoni 72","Bodoni Moda",ui-serif,"New York","Iowan Old Style",Georgia,serif;
+ /* Variabili dello stile Elegante esistente, riallineate al registro Atelier. */
+ --el-line:var(--at-hair);
+ --el-hi:var(--at-sh);
+ --el-surface:#fff;
+ --el-raised:color-mix(in srgb,var(--text) 4%,#fff);
+ --el-grad:var(--at-noir);
+ --el-ink:#f4ecdc;
+ --el-ink-muted:#f4ecdcb3;
+ --el-ink-line:#c9a96a55;
+ --el-shadow:0 18px 36px -18px #0d0d0f80;
+ --radius:var(--at-r);
+}
+
+/* ---------- 2. Sfondo carta ---------- */
+body.theme-ready.style-elegant.custom-light:not(.style-modern){
+ background:url("/brand/gt-elegant-grain.png") 0 0/256px,linear-gradient(180deg,#fff 0,var(--bg) 40%,color-mix(in srgb,#e9dcc0 30%,var(--bg)) 100%);
+ background-attachment:fixed;
+}
+body.theme-ready.style-elegant.custom-light:not(.style-modern) gt-shell{background:none}
+body.theme-ready.style-elegant.custom-light:not(.style-modern).dynamic-background gt-shell::before{background:none}
+body.theme-ready.style-elegant.custom-light:not(.style-modern) gt-shell .app-main::before{display:none}
+
+/* ---------- 3. Tipografia editoriale ---------- */
+body.theme-ready.style-elegant.custom-light:not(.style-modern) gt-shell main :is(h1,.hx-title,.hx-next h2,.el-num,.rec3-ex-text h2,.hb-h1){
+ font-family:var(--at-serif)!important;font-weight:400!important;letter-spacing:-.015em!important;text-wrap:balance;
+}
+body.theme-ready.style-elegant.custom-light:not(.style-modern) gt-shell main h1{font-size:clamp(36px,10.4vw,46px)!important;line-height:1.02}
+body.theme-ready.style-elegant.custom-light:not(.style-modern) gt-shell .hx-title{font-size:clamp(40px,11.6vw,48px)!important}
+body.theme-ready.style-elegant.custom-light:not(.style-modern) gt-shell .hx-grad{font-style:italic;color:var(--at-gold-ink)!important;background:none!important;-webkit-text-fill-color:currentColor}
+body.theme-ready.style-elegant.custom-light:not(.style-modern) gt-shell main h1::after{
+ content:"";display:block;width:56px;height:1px;margin-top:16px;background:var(--at-gold-grad);
+}
+body.theme-ready.style-elegant.custom-light:not(.style-modern) gt-shell main :is(.hx-title,.hx-next h2)::after{display:none}
+/* Calendario: l'h1 è l'intervallo di date (piccolo), «Calendario» è l'etichetta grande. */
+body.theme-ready.style-elegant.custom-light:not(.style-modern) gt-shell main .cal-heading-copy h1{
+ font-family:inherit!important;font-size:13px!important;font-weight:600!important;letter-spacing:.06em!important;color:var(--at-gold-ink);
+}
+body.theme-ready.style-elegant.custom-light:not(.style-modern) gt-shell main .cal-heading-copy h1::after{display:none}
+body.theme-ready.style-elegant.custom-light:not(.style-modern) gt-shell main .cal-heading-copy .cal-eyebrow{font-family:var(--at-serif);font-weight:400;letter-spacing:-.015em}
+body.theme-ready.style-elegant.custom-light:not(.style-modern) gt-shell :is(.hx-date,.el-eyebrow,.rec3-kicker,.rec3-badge){
+ color:var(--at-gold-ink)!important;font-weight:600;letter-spacing:.28em!important;text-transform:uppercase;
+}
+body.theme-ready.style-elegant.custom-light:not(.style-modern) gt-shell main :is(h2,h3){font-weight:600;letter-spacing:-.015em}
+body.theme-ready.style-elegant.custom-light:not(.style-modern) gt-shell main .el-num{font-size:38px!important}
+body.theme-ready.style-elegant.custom-light:not(.style-modern) ::selection{background:#c9a96a55}
+
+/* ---------- 4. Superfici: angoli netti, filetto sottile ---------- */
+body.theme-ready.style-elegant.custom-light:not(.style-modern) gt-shell main :is(.card,.ref-card,.su-card,.rc3-card,.rec3-card,.el-stat){
+ background:#fff!important;border:0!important;border-radius:var(--at-r)!important;box-shadow:var(--at-sh)!important;
+ transition:box-shadow .35s ease,transform .35s cubic-bezier(.2,.7,.2,1);
+}
+@media(hover:hover){
+ body.theme-ready.style-elegant.custom-light:not(.style-modern) gt-shell main :is(a.card,a.ref-card,a.el-stat,.plan-card):hover{transform:translateY(-2px);box-shadow:var(--at-sh-hover)!important}
+}
+body.theme-ready.style-elegant.custom-light:not(.style-modern) gt-shell main .card.empty{
+ background:transparent!important;box-shadow:none!important;border:1px solid var(--at-hair-2)!important;
+}
+body.theme-ready.style-elegant.custom-light:not(.style-modern) gt-shell :is(.home-hero,.training-spotlight,.profile-cover){border-radius:var(--at-r);box-shadow:var(--at-sh)}
+body.theme-ready.style-elegant.custom-light:not(.style-modern) gt-shell hr{border:0;height:1px;background:var(--at-hair-2)}
+
+/* ---------- 5. Pulsanti ---------- */
+body.theme-ready.style-elegant.custom-light:not(.style-modern) gt-shell :is(button.primary,.button.primary,.ref-action.primary,.su-btn.su-primary,.save-theme){
+ background:var(--at-gold-grad)!important;color:#0d0d0f!important;border:0!important;border-radius:var(--at-r-sm)!important;
+ box-shadow:0 14px 28px -14px #8f703880,inset 0 1px 0 #ffffff70!important;
+ text-transform:uppercase;letter-spacing:.14em;font-size:13px;font-weight:700;
+ transition:filter .25s ease,transform .2s ease;
+}
+body.theme-ready.style-elegant.custom-light:not(.style-modern) gt-shell :is(button.primary,.button.primary,.ref-action.primary,.su-btn.su-primary) gt-icon{color:inherit}
+@media(hover:hover){body.theme-ready.style-elegant.custom-light:not(.style-modern) gt-shell :is(button.primary,.button.primary,.ref-action.primary,.su-btn.su-primary):hover{filter:brightness(1.06)}}
+body.theme-ready.style-elegant.custom-light:not(.style-modern) gt-shell main :is(.su-btn:not(.su-primary),button.secondary,.button.secondary,.ref-action.secondary,button.ghost,.button.ghost){
+ background:#fff;color:var(--at-ink);border:1px solid var(--at-hair-2)!important;border-radius:var(--at-r-sm)!important;box-shadow:none;font-weight:600;letter-spacing:.02em;
+}
+body.theme-ready.style-elegant.custom-light:not(.style-modern) gt-shell main :is(.ref-icon-button,.icon-btn,.rc3-back){
+ border-radius:50%;background:#fff;border:1px solid var(--at-hair-2);box-shadow:0 8px 18px -10px #0d0d0f40;
+}
+body.theme-ready.style-elegant.custom-light:not(.style-modern) gt-shell main :is(.ref-icon-button.primary,.icon-btn.primary){background:#0d0d0f;color:var(--at-gold);border-color:#0d0d0f}
+body.theme-ready.style-elegant.custom-light:not(.style-modern) gt-shell main :is(button,.button,.su-btn,.ref-action,.icon-btn):active{transform:scale(.97)}
+body.theme-ready.style-elegant.custom-light:not(.style-modern) gt-shell main :is(button,a,summary,[tabindex]):focus-visible{outline:1px solid var(--at-gold);outline-offset:3px}
+
+/* ---------- 6. Segmenti, schede, badge ---------- */
+body.theme-ready.style-elegant.custom-light:not(.style-modern) gt-shell :is(.ref-tabs,.segmented,.neon-segments){
+ border-radius:999px!important;background:#fff!important;border:1px solid var(--at-hair-2)!important;box-shadow:none!important;padding:3px;
+}
+body.theme-ready.style-elegant.custom-light:not(.style-modern) gt-shell :is(.ref-tabs,.segmented,.neon-segments)>:is(button,a){border-radius:var(--at-r-sm)!important;letter-spacing:.04em}
+body.theme-ready.style-elegant.custom-light:not(.style-modern) gt-shell :is(.ref-tabs,.segmented,.neon-segments)>:is(button,a).active{
+ background:#0d0d0f!important;color:#efdcab!important;box-shadow:0 10px 20px -12px #0d0d0f99!important;
+}
+body.theme-ready.style-elegant.custom-light:not(.style-modern) gt-shell :is(.ref-badge,.pill,.su-badge):not(.green,.warning,.danger){
+ background:transparent;border:1px solid color-mix(in srgb,var(--at-gold) 70%,transparent);border-radius:var(--at-r-sm);
+ color:var(--at-gold-ink);text-transform:uppercase;letter-spacing:.14em;font-size:10.5px;font-weight:700;
+}
+
+/* ---------- 7. Campi ---------- */
+body.theme-ready.style-elegant.custom-light:not(.style-modern) gt-shell main :is(input:not([type=checkbox],[type=radio],[type=range],[type=color]),select,textarea){
+ background:#fff;border:1px solid var(--at-hair-2);border-radius:var(--at-r-sm);box-shadow:none;transition:border-color .25s ease,box-shadow .25s ease;
+}
+body.theme-ready.style-elegant.custom-light:not(.style-modern) gt-shell main textarea{border-radius:24px
+}
+body.theme-ready.style-elegant.custom-light:not(.style-modern) gt-shell main :is(input,select,textarea):focus-visible{
+ outline:0;border-color:#0d0d0f;box-shadow:0 0 0 3px #c9a96a40;
+}
+body.theme-ready.style-elegant.custom-light:not(.style-modern) gt-shell main select{
+ appearance:none;-webkit-appearance:none;padding-right:42px;
+ background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='9' fill='none' stroke='%230d0d0f' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M1 1.5l6 6 6-6'/%3E%3C/svg%3E") right 16px center/13px no-repeat;
+}
+
+/* ---------- 8. Controlli ---------- */
+body.theme-ready.style-elegant.custom-light:not(.style-modern) gt-shell main :is(input[type=checkbox],input[type=radio]){
+ appearance:none;-webkit-appearance:none;flex:none;width:22px;height:22px;margin:0;display:inline-grid;place-content:center;
+ background:#fff;border:1.5px solid #0d0d0f;border-radius:var(--at-r-sm);cursor:pointer;
+ transition:background .2s ease,box-shadow .2s ease;
+}
+body.theme-ready.style-elegant.custom-light:not(.style-modern) gt-shell main input[type=radio]{border-radius:50%}
+body.theme-ready.style-elegant.custom-light:not(.style-modern) gt-shell main :is(input[type=checkbox],input[type=radio])::after{
+ content:"";width:10px;height:5px;border:2px solid #efdcab;border-top:0;border-right:0;transform:translateY(-1px) rotate(-45deg) scale(0);transition:transform .2s cubic-bezier(.3,1.5,.5,1);
+}
+body.theme-ready.style-elegant.custom-light:not(.style-modern) gt-shell main input[type=radio]::after{width:10px;height:10px;border:0;border-radius:50%;background:var(--at-gold-grad);transform:scale(0)}
+body.theme-ready.style-elegant.custom-light:not(.style-modern) gt-shell main input[type=checkbox]:checked{background:#0d0d0f}
+body.theme-ready.style-elegant.custom-light:not(.style-modern) gt-shell main input[type=checkbox]:checked::after{transform:translateY(-1px) rotate(-45deg) scale(1)}
+body.theme-ready.style-elegant.custom-light:not(.style-modern) gt-shell main input[type=radio]:checked::after{transform:scale(1)}
+body.theme-ready.style-elegant.custom-light:not(.style-modern) gt-shell main :is(input[type=checkbox],input[type=radio]):focus-visible{outline:0;box-shadow:0 0 0 3px #c9a96a55}
+body.theme-ready.style-elegant.custom-light:not(.style-modern) gt-shell main :is(input[type=checkbox],input[type=radio]):disabled{opacity:.4;cursor:not-allowed}
+/* Interruttori */
+body.theme-ready.style-elegant.custom-light:not(.style-modern) gt-shell main input[type=checkbox][role=switch]{
+ width:48px;height:28px;border-radius:999px;place-content:center start;padding:3px;border:1px solid var(--at-hair-2);background:color-mix(in srgb,var(--text) 6%,#fff);
+}
+body.theme-ready.style-elegant.custom-light:not(.style-modern) gt-shell main input[type=checkbox][role=switch]::after{
+ width:20px;height:20px;border:0;border-radius:50%;background:#fff;box-shadow:0 2px 5px #0d0d0f40,0 0 0 1px var(--at-hair-2);transform:none;transition:transform .28s cubic-bezier(.3,1.4,.5,1),background .28s ease;
+}
+body.theme-ready.style-elegant.custom-light:not(.style-modern) gt-shell main input[type=checkbox][role=switch]:checked{background:#0d0d0f;border-color:#0d0d0f}
+body.theme-ready.style-elegant.custom-light:not(.style-modern) gt-shell main input[type=checkbox][role=switch]:checked::after{transform:translateX(20px);background:var(--at-gold-grad);box-shadow:0 2px 5px #00000066}
+/* Slider */
+body.theme-ready.style-elegant.custom-light:not(.style-modern) gt-shell main input[type=range]{appearance:none;-webkit-appearance:none;height:26px;background:none;border:0;box-shadow:none;padding:0;accent-color:#0d0d0f}
+body.theme-ready.style-elegant.custom-light:not(.style-modern) gt-shell main input[type=range]::-webkit-slider-runnable-track{
+ height:2px;background:linear-gradient(90deg,#0d0d0f,#0d0d0f) 0/var(--fill,50%) 100% no-repeat,var(--at-hair-2);
+}
+body.theme-ready.style-elegant.custom-light:not(.style-modern) gt-shell main input[type=range]::-webkit-slider-thumb{
+ -webkit-appearance:none;width:20px;height:20px;margin-top:-9px;border-radius:50%;background:var(--at-gold-grad);border:2px solid #0d0d0f;box-shadow:0 4px 10px #0d0d0f40;
+}
+body.theme-ready.style-elegant.custom-light:not(.style-modern) gt-shell main input[type=range]::-moz-range-track{height:2px;background:var(--at-hair-2)}
+body.theme-ready.style-elegant.custom-light:not(.style-modern) gt-shell main input[type=range]::-moz-range-progress{height:2px;background:#0d0d0f}
+body.theme-ready.style-elegant.custom-light:not(.style-modern) gt-shell main input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;background:#c9a96a;border:2px solid #0d0d0f}
+/* Chip, stepper, righe con interruttore */
+body.theme-ready.style-elegant.custom-light:not(.style-modern) gt-shell main :is(.su-chip,.det3-chip,.mp-chip,.meta-chip,.ex3-chip,.csx-chip){
+ background:#fff;border:1px solid var(--at-hair-2);border-radius:var(--at-r-sm);color:var(--at-ink);box-shadow:none;letter-spacing:.03em;transition:background .2s ease,color .2s ease;
+}
+body.theme-ready.style-elegant.custom-light:not(.style-modern) gt-shell main :is(.su-chip,.ex3-chip,.csx-chip,.mp-chip):is([aria-pressed=true],.active){background:#0d0d0f;color:#efdcab;border-color:#0d0d0f}
+body.theme-ready.style-elegant.custom-light:not(.style-modern) gt-shell main .pe-stepper :is(button,input){background:#fff;border:1px solid var(--at-hair-2);border-radius:var(--at-r-sm);box-shadow:none}
+body.theme-ready.style-elegant.custom-light:not(.style-modern) gt-shell main :is(.toggle-row,.feature-switch,.studio-toggle){background:#fff;border:0;border-radius:var(--at-r);box-shadow:var(--at-sh)}
+
+/* ---------- 9. Home ---------- */
+body.theme-ready.style-elegant.custom-light:not(.style-modern) gt-shell .el-week :is(a,button){border-radius:0;padding-bottom:10px}
+body.theme-ready.style-elegant.custom-light:not(.style-modern) gt-shell .el-week b{font-family:var(--at-serif);font-weight:400;font-size:20px}
+body.theme-ready.style-elegant.custom-light:not(.style-modern) gt-shell .el-week small{color:var(--muted)}
+body.theme-ready.style-elegant.custom-light:not(.style-modern) gt-shell .el-week :is(a,button).today{background:none!important;color:var(--at-ink)!important;box-shadow:inset 0 -2px 0 #0d0d0f!important}
+body.theme-ready.style-elegant.custom-light:not(.style-modern) gt-shell .el-week :is(a,button).today small{color:var(--at-ink)}
+body.theme-ready.style-elegant.custom-light:not(.style-modern) gt-shell .el-week :is(a,button).today i{background:var(--at-gold)}
+body.theme-ready.style-elegant.custom-light:not(.style-modern) gt-shell .el-week :is(a,button):not(.today):hover{background:color-mix(in srgb,var(--at-gold) 10%,transparent)}
+/* Prossimo allenamento: scheda nera con anelli oro */
+body.theme-ready.style-elegant.custom-light:not(.style-modern) gt-shell .hx-simple .hx-next{
+ --el-ink:#f4ecdc;--el-ink-muted:#f4ecdcb3;--el-ink-line:#f4ecdc33;
+ background:url("/brand/gt-elegant-hero-dark.webp") right top/cover,#0b0b0c!important;color:#f4ecdc;
+ border:0;border-radius:var(--at-r)!important;box-shadow:0 34px 60px -26px #0d0d0fb3!important;overflow:hidden;
+}
+body.theme-ready.style-elegant.custom-light:not(.style-modern) gt-shell .hx-next::before{
+ content:"";position:absolute;left:22px;right:96px;top:44px;height:1px;background:linear-gradient(90deg,var(--at-gold),transparent);pointer-events:none;
+}
+body.theme-ready.style-elegant.custom-light:not(.style-modern) gt-shell .hx-next .su-badge{color:var(--at-gold)!important;background:none!important;border:0!important;padding:0;letter-spacing:.26em}
+body.theme-ready.style-elegant.custom-light:not(.style-modern) gt-shell .hx-next .hx-when{color:#f4ecdc;border-color:#f4ecdc33;border-radius:var(--at-r-sm)}
+body.theme-ready.style-elegant.custom-light:not(.style-modern) gt-shell .hx-next h2{color:#f4ecdc;font-size:34px!important;line-height:1.04;margin:44px 88px 0 0!important}
+body.theme-ready.style-elegant.custom-light:not(.style-modern) gt-shell .hx-next .hx-sub{color:#f4ecdcb3;letter-spacing:.04em}
+body.theme-ready.style-elegant.custom-light:not(.style-modern) gt-shell .hx-next .hx-main{
+ background:var(--at-gold-grad)!important;color:#0d0d0f!important;border-radius:50%!important;box-shadow:0 12px 26px -8px #00000099,inset 0 1px 0 #ffffff80!important;
+}
+body.theme-ready.style-elegant.custom-light:not(.style-modern) gt-shell .hx-next .hx-main gt-icon{color:#0d0d0f}
+body.theme-ready.style-elegant.custom-light:not(.style-modern) gt-shell .hx-next .hx-secondary .su-btn{background:transparent;color:#f4ecdc;border:1px solid #f4ecdc40!important;border-radius:var(--at-r-sm)!important}
+body.theme-ready.style-elegant.custom-light:not(.style-modern) gt-shell .el-spark path{stroke:#0d0d0f;stroke-width:1.6}
+body.theme-ready.style-elegant.custom-light:not(.style-modern) gt-shell .el-spark circle{fill:var(--at-gold)}
+body.theme-ready.style-elegant.custom-light:not(.style-modern) gt-shell .el-bars i{border-radius:0;height:3px;background:var(--at-hair-2)}
+body.theme-ready.style-elegant.custom-light:not(.style-modern) gt-shell .el-bars i.on{background:#0d0d0f}
+body.theme-ready.style-elegant.custom-light:not(.style-modern) gt-shell .hx-ring{background:conic-gradient(from 200deg,#0d0d0f var(--progress),var(--at-hair-2) 0)}
+body.theme-ready.style-elegant.custom-light:not(.style-modern) gt-shell .hx-levels button{border-radius:50%;background:#fff;border:1px solid var(--at-hair-2)}
+
+/* ---------- 10. Navigazione: barra nera, voce attiva in oro ---------- */
+@media(max-width:800px),(max-width:1100px) and (pointer:coarse){
+ body.theme-ready.style-elegant.custom-light:not(.style-modern) gt-shell .bottom-nav{
+  border-radius:999px!important;background:#0d0d0f!important;border:0!important;
+  box-shadow:0 26px 50px -14px #0d0d0fa6,inset 0 1px 0 #ffffff14!important;
+ }
+ body.theme-ready.style-elegant.custom-light:not(.style-modern) gt-shell .bottom-nav a{border-radius:var(--at-r-sm)!important;color:#ffffff80!important}
+ body.theme-ready.style-elegant.custom-light:not(.style-modern) gt-shell .bottom-nav a:is(.selected,.training-selected){
+  background:var(--at-gold-grad)!important;color:#0d0d0f!important;box-shadow:inset 0 1px 0 #ffffff80!important;filter:none!important;
+ }
+ body.theme-ready.style-elegant.custom-light:not(.style-modern) gt-shell .bottom-nav a gt-icon{filter:none!important}
+ body.theme-ready.style-elegant.custom-light:not(.style-modern) gt-shell .bottom-nav a:is(.selected,.training-selected)>span{text-transform:uppercase;letter-spacing:.12em;font-size:12.5px!important;font-weight:700}
+}
+@media(min-width:801px){
+ body.theme-ready.style-elegant.custom-light:not(.style-modern) gt-shell .sidebar{background:#fff;border-right:1px solid var(--at-hair);box-shadow:none}
+}
+body.theme-ready.style-elegant.custom-light:not(.style-modern) gt-shell img.app-brand-mark{content:url("/brand/gt-elegant-mark.png");border-radius:50%;box-shadow:0 0 0 2px var(--bg),0 0 0 3px var(--at-gold)}
+
+/* ---------- 11. Seduta ---------- */
+body.theme-ready.style-elegant.custom-light:not(.style-modern) gt-shell .session-progress{height:2px;border-radius:0;background:var(--at-hair-2)}
+body.theme-ready.style-elegant.custom-light:not(.style-modern) gt-shell .session-progress i{background:#0d0d0f;border-radius:0}
+body.theme-ready.style-elegant.custom-light:not(.style-modern) gt-shell .session-header .session-finish{border-radius:var(--at-r-sm);border:1px solid #0d0d0f;background:#fff;color:#0d0d0f;box-shadow:none;text-transform:uppercase;letter-spacing:.12em;font-size:12px}
+body.theme-ready.style-elegant.custom-light:not(.style-modern) gt-active-workout .rec3-set{border-radius:var(--at-r-sm)!important;background:#fff!important;border:1px solid var(--at-hair-2)!important;box-shadow:none!important}
+body.theme-ready.style-elegant.custom-light:not(.style-modern) gt-active-workout .rec3-set:not(.done,.current,.selected){background:none!important;border-style:dashed!important}
+body.theme-ready.style-elegant.custom-light:not(.style-modern) gt-active-workout .rec3-set:is(.current,.selected){background:#0d0d0f!important;color:#efdcab!important;border-color:#0d0d0f!important;box-shadow:0 12px 24px -12px #0d0d0f99!important}
+body.theme-ready.style-elegant.custom-light:not(.style-modern) gt-active-workout .rec3-set.rec3-add{border-radius:50%!important}
+body.theme-ready.style-elegant.custom-light:not(.style-modern) gt-active-workout .rec3-form{border-radius:var(--at-r)!important;background:#fff!important;box-shadow:var(--at-sh)!important}
+body.theme-ready.style-elegant.custom-light:not(.style-modern) gt-active-workout .rec3-input input{font-family:var(--at-serif)!important;font-weight:400!important;letter-spacing:-.02em}
+body.theme-ready.style-elegant.custom-light:not(.style-modern) gt-active-workout .rec3-step{background:#fff!important;border:1px solid var(--at-hair-2)!important;box-shadow:none!important}
+body.theme-ready.style-elegant.custom-light:not(.style-modern) gt-active-workout .rec3-rpe-track button{border-radius:var(--at-r-sm);background:#fff;border-color:var(--at-hair-2)}
+body.theme-ready.style-elegant.custom-light:not(.style-modern) gt-active-workout .rec3-rpe-track button.active{background:#0d0d0f;color:#efdcab;border-color:#0d0d0f}
+body.theme-ready.style-elegant.custom-light:not(.style-modern) gt-active-workout :is(.rec3-rest-chip,.rec3-nav,.rec3-ref,.rec3-more){background:#fff;border-color:var(--at-hair-2);box-shadow:none}
+body.theme-ready.style-elegant.custom-light:not(.style-modern) gt-active-workout .rec3-more{border-radius:var(--at-r)}
+
+/* ---------- 12. Accesso ---------- */
+body.theme-ready.style-elegant.custom-light:not(.style-modern) .entry-page{
+ background:
+  linear-gradient(90deg,var(--bg) 30%,color-mix(in srgb,var(--bg) 55%,transparent) 62%,transparent),
+  linear-gradient(180deg,transparent 0,transparent 160px,var(--bg) 300px),
+  url("/brand/gt-elegant-hero.webp") right -150px top -60px/620px auto no-repeat,
+  var(--bg);
+}
+body.theme-ready.style-elegant.custom-light:not(.style-modern) .entry-page::before,body.theme-ready.style-elegant.custom-light:not(.style-modern) .entry-page::after{display:none}
+body.theme-ready.style-elegant.custom-light:not(.style-modern) .entry-page :is(.xl-top,.entry-brand)>img{content:url("/brand/gt-elegant-mark.png");border-radius:50%;box-shadow:0 0 0 3px var(--bg),0 0 0 4px var(--at-gold)}
+body.theme-ready.style-elegant.custom-light:not(.style-modern) .entry-page .hero-introduction h1,
+body.theme-ready.style-elegant.custom-light:not(.style-modern) .entry-page h1{font-family:var(--at-serif);font-weight:400;letter-spacing:-.015em}
+body.theme-ready.style-elegant.custom-light:not(.style-modern) .entry-page :is(.entry-kicker,.brand-tagline){font-family:inherit;color:var(--at-gold-ink);letter-spacing:.28em;font-weight:600}
+body.theme-ready.style-elegant.custom-light:not(.style-modern) .entry-page .entry-wordmark{font-family:var(--at-serif);font-weight:400;letter-spacing:-.01em}
+body.theme-ready.style-elegant.custom-light:not(.style-modern) .entry-page .entry-wordmark span{color:var(--at-gold-ink)}
+body.theme-ready.style-elegant.custom-light:not(.style-modern) .entry-page .entry-primary{
+ border-radius:var(--at-r-sm)!important;background:#0d0d0f!important;color:#efdcab!important;border:0!important;
+ text-transform:uppercase;letter-spacing:.18em;font-size:14px!important;font-weight:700;box-shadow:0 20px 36px -18px #0d0d0fb3,inset 0 -2px 0 #c9a96a!important;animation:none!important;
+}
+body.theme-ready.style-elegant.custom-light:not(.style-modern) .entry-page .entry-heading h1{font-family:var(--at-serif)!important;font-weight:400!important;letter-spacing:-.015em!important;font-size:clamp(44px,13vw,56px)}
+body.theme-ready.style-elegant.custom-light:not(.style-modern) .entry-page .entry-heading h1::after{content:"";display:block;width:56px;height:1px;margin-top:16px;background:var(--at-gold-grad)}
+body.theme-ready.style-elegant.custom-light:not(.style-modern) .entry-page input[type=checkbox]{accent-color:#0d0d0f}
+body.theme-ready.style-elegant.custom-light:not(.style-modern) .entry-page .entry-field{background:#fff;border:1px solid var(--at-hair-2);border-radius:var(--at-r-sm);box-shadow:none}
+body.theme-ready.style-elegant.custom-light:not(.style-modern) .entry-page .entry-field:focus-within{border-color:#0d0d0f;box-shadow:0 0 0 3px #c9a96a40}
+body.theme-ready.style-elegant.custom-light:not(.style-modern) .entry-page .entry-field>gt-icon{border-radius:50%;background:#0d0d0f;color:var(--at-gold)}
+body.theme-ready.style-elegant.custom-light:not(.style-modern) .entry-page .entry-tabs{border-radius:999px;background:#fff;border:1px solid var(--at-hair-2);box-shadow:none}
+body.theme-ready.style-elegant.custom-light:not(.style-modern) .entry-page .entry-tabs [role=tab]{border-radius:var(--at-r-sm)}
+body.theme-ready.style-elegant.custom-light:not(.style-modern) .entry-page .entry-tabs [role=tab][aria-selected=true]{background:#0d0d0f;color:#efdcab;box-shadow:none}
+
+/* ---------- 13. GT Hub e GT Garage ---------- */
+body.theme-ready.style-elegant.custom-light:not(.style-modern) .hb .hb-c{border-radius:var(--at-r);background:#fff;box-shadow:var(--at-sh);border:0}
+body.theme-ready.style-elegant.custom-light:not(.style-modern) .hb .hb-hero{border-radius:var(--at-r);color:#f4ecdc;box-shadow:0 30px 56px -26px #0d0d0fb3}
+body.theme-ready.style-elegant.custom-light:not(.style-modern) .hb .hb-hero::before{background:url("/brand/gt-elegant-hero-dark.webp") right top/cover,#0b0b0c}
+body.theme-ready.style-elegant.custom-light:not(.style-modern) .hb :is(.hb-btn.pri,.hb-fab){background:var(--at-gold-grad);color:#0d0d0f;border-radius:var(--at-r-sm)}
+body.theme-ready.style-elegant.custom-light:not(.style-modern) .hb .hb-fab.round{border-radius:50%}
+body.theme-ready.style-elegant.custom-light:not(.style-modern) .hb :is(.hb-ch.on,.hb-seg .on){background:#0d0d0f;color:#efdcab}
+body.theme-ready.style-elegant.custom-light:not(.style-modern) .hb .hb-tabbar{border-radius:999px;background:#0d0d0f;border:0;box-shadow:0 26px 50px -14px #0d0d0fa6}
+body.theme-ready.style-elegant.custom-light:not(.style-modern) .hb .hb-tabbar a{border-radius:var(--at-r-sm);color:#ffffff80}
+body.theme-ready.style-elegant.custom-light:not(.style-modern) .hb .hb-tabbar a.on{background:var(--at-gold-grad);color:#0d0d0f;box-shadow:none}
+body.theme-ready.style-elegant.custom-light:not(.style-modern) .hb :is(.hb-h1,h1){font-family:var(--at-serif);font-weight:400;letter-spacing:-.015em}
+
+@media(prefers-reduced-motion:reduce){
+ body.theme-ready.style-elegant.custom-light:not(.style-modern) gt-shell *{transition:none!important}
+ body.theme-ready.style-elegant.custom-light:not(.style-modern) gt-shell main :is(button,.button,.su-btn):active{transform:none}
+}

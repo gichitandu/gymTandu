@@ -29,7 +29,8 @@ import {
   localDate,
 } from "../models/domain";
 import { TodayService } from '../services/today';
-import { coachNextSet, daysBetween } from '../services/coach-shadow';
+import { coachNextSet, coachSetFromLog, daysBetween, exerciseWeightStep, isCompoundExercise } from '../services/coach-shadow';
+import { coachBlockReview } from '../services/coach-block';
 import { parseLocalDate } from '../services/calendar';
 import { IconComponent } from "../shared/icon.component";
 import { StatusComponent } from "../shared/status.component";
@@ -41,6 +42,8 @@ type PlanEditorDraft = {
   day: ReturnType<PlansComponent['dayForm']['getRawValue']>;
   exercise: ReturnType<PlansComponent['exerciseForm']['getRawValue']>;
 };
+/** Durata indicativa unica per editor e lista schede: al minuto sotto i 20 minuti, poi a multipli di 5. */
+export function estimatedMinutes(seconds:number){const minutes=seconds/60;return minutes<20?Math.max(1,Math.round(minutes)):Math.round(minutes/5)*5;}
 @Component({
   standalone: true,
   styleUrls: ["./feature-polish.css", "./plans-simple.css", "./plans-reference.css", "./plans-redesign.css", "./plans-editor.css"],
@@ -61,13 +64,15 @@ type PlanEditorDraft = {
     @if(draftNotice()){<p class="notice" role="status">{{draftNotice()}}</p>}
     <a class="button ghost group-entry" routerLink="/gruppo"><gt-icon name="users"/>Allenamento in gruppo</a>
     <div class="pl-body">
-    @if(!archived()&&overlaps().length){<section class="card plan-overlap" role="status" aria-label="Piani con date sovrapposte">
-     <h3>Piani sovrapposti</h3>
+    @if(!archived()&&overlaps().length){<section class="card plan-overlap" role="status" aria-label="Schede con date sovrapposte">
+     <div class="po-head"><span class="su-bubble amber"><gt-icon name="layers"/></span><div><h3>Due schede sulle stesse date</h3><small>Ne resta attiva una: l’altra va in archivio con i suoi dati.</small></div></div>
      @for(o of overlaps();track o.keep.plan.id+o.drop.plan.id){<div class="plan-overlap-row">
-      <p>“{{o.keep.plan.name}}” ({{o.keep.workouts}} sedute, {{o.keep.sets}} serie) e “{{o.drop.plan.name}}” ({{o.drop.workouts}} sedute, {{o.drop.sets}} serie) occupano le stesse date.</p>
-      <button type="button" class="button" [disabled]="s.busy()" (click)="resolveOverlap(o.keep.plan.id,o.drop.plan.id)">Tieni “{{o.keep.plan.name}}” e concludi l’altro</button>
+      <ul class="po-plans">
+       <li class="po-keep"><gt-icon name="check"/><strong>{{o.keep.plan.name}}</strong><span>{{o.keep.workouts}} {{o.keep.workouts===1?'seduta':'sedute'}}</span></li>
+       <li class="po-drop"><gt-icon name="close"/><strong>{{o.drop.plan.name}}</strong><span>{{o.drop.workouts}} {{o.drop.workouts===1?'seduta':'sedute'}}</span></li>
+      </ul>
+      <button type="button" class="button po-resolve" [disabled]="s.busy()" (click)="resolveOverlap(o.keep.plan.id,o.drop.plan.id)" [attr.aria-label]="'Tieni '+o.keep.plan.name+' e concludi '+o.drop.plan.name">Concludi la seconda</button>
      </div>}
-     <small>Il piano concluso va in archivio: sedute, serie e statistiche restano consultabili.</small>
     </section>}
     @if(!archived()){
       @for(p of activePlans();track p.id){<ng-container *ngTemplateOutlet="planCard;context:{$implicit:p}"/>}
@@ -81,11 +86,12 @@ type PlanEditorDraft = {
     <ng-template #planCard let-p>
         <section class="card simple-plan" [class.pl-active]="p.active&&!p.completedAt&&!p.archived" [class.pl-editing]="editing()===p.id">
           <div class="simple-plan-top"><gt-exercise-thumb class="plan-cover-thumb" [exercise]="thumbnailExercise(p.id)"/>
-            <button type="button" class="simple-plan-title" [attr.aria-expanded]="expanded()===p.id" (click)="expanded.set(expanded()===p.id?'':p.id)"><span><strong>{{p.name}}</strong><small>{{p.program?p.program.weeks+' settimane · ':''}}{{s.days(p.id).length}} {{s.days(p.id).length===1?'allenamento':'allenamenti'}}</small></span><span class="plan-chevron" aria-hidden="true">{{expanded()===p.id?'⌃':'›'}}</span></button>
+            <button type="button" class="simple-plan-title" [attr.aria-expanded]="expanded()===p.id" (click)="expanded.set(expanded()===p.id?'':p.id)"><span><strong>{{p.name}}</strong>@if(!(p.active&&!p.completedAt&&!p.archived&&s.days(p.id).length)){<small>{{p.program?p.program.weeks+' settimane · ':''}}{{s.days(p.id).length}} {{s.days(p.id).length===1?'allenamento':'allenamenti'}}</small>}</span><span class="plan-chevron" aria-hidden="true">{{expanded()===p.id?'⌃':'›'}}</span></button>
             @if(p.completedAt){<span class="su-badge muted">Conclusa</span>}@else if(p.active){<span class="su-badge green"><gt-icon name="check"/>Attiva</span>}
           </div>
-          @if(p.active&&!p.completedAt&&!p.archived&&s.days(p.id).length){<div class="pl-progress"><div class="pl-progress-row">@if(p.program){<span><b>Settimana {{currentWeek(p)}}</b> di {{p.program.weeks}}</span>}@else{<span><b>{{completedForPlan(p.id)}}</b> allenamenti fatti</span>}<small>{{completedForPlan(p.id)}} di {{s.days(p.id).length}}</small></div><div class="su-bar"><i [style.width.%]="planProgress(p)"></i></div></div>}
+          @if(p.active&&!p.completedAt&&!p.archived&&s.days(p.id).length){<div class="pl-progress"><div class="pl-progress-row">@if(p.program){<span><b>Settimana {{currentWeek(p)}}</b> di {{p.program.weeks}}</span>}@else{<span><b>{{completedForPlan(p.id)}}</b> {{completedForPlan(p.id)===1?'allenamento fatto':'allenamenti fatti'}}</span>}<small>{{completedForPlan(p.id)}} di {{s.days(p.id).length}}</small></div><div class="su-bar"><i [style.width.%]="planProgress(p)"></i></div></div>}
           @if(expanded()===p.id){
+            @if(coachBlock(p);as block){@if(block.ended||block.week===block.weeks){<section class="notice coach-block" role="status" aria-label="Blocco del Coach"><strong>{{block.ended?'Blocco di '+block.weeks+' settimane concluso':'Ultima settimana del blocco'}} · {{block.sessions}} di circa {{block.expected}} sedute</strong>@if(block.progress.length){<p>@for(item of block.progress.slice(0,3);track item.name){<span>{{item.name}} {{item.percent>0?'+':item.percent<0?'−':''}}{{item.percent<0?-item.percent:item.percent}}%</span>@if(!$last){ · }}</p><small>Massimale stimato tra la prima e l’ultima seduta del blocco.</small>}<p>{{block.advice}}</p>@if(block.ended){<a class="button ghost" routerLink="/coach">Apri il Coach</a>}</section>}}
             @if(p.description){@if(p.program){<details class="program-description"><summary>Note del programma</summary><p class="simple-plan-description">{{p.description | coachText}}</p></details>}@else{<p class="simple-plan-description">{{p.description | coachText}}</p>}}
             @if(p.program){<div class="program-week-picker"><label>Settimana<select [ngModel]="weekFor(p)" (ngModelChange)="selectWeek(p.id,$event)">@for(week of weeksFor(p);track week){<option [ngValue]="week">Settimana {{week}} / {{p.program.weeks}}</option>}</select></label></div>}
             <div class="simple-days">
@@ -363,9 +369,11 @@ export class PlansComponent {
   repsInverted(){const {repsMin,repsMax}=this.exerciseForm.controls;return Number(repsMin.value)>Number(repsMax.value);}
   advancedSummary(){const v=this.exerciseForm.getRawValue(),parts=[v.targetWeight!==null&&v.targetWeight!==undefined?'peso target':'',v.rpe!==null&&v.rpe!==undefined?'RPE '+v.rpe:'',v.superset?'superset '+v.superset:'',v.notes?'note':''].filter(Boolean);return parts.length?parts.join(' · '):'Peso target · RPE · superset · note';}
   /** Riepilogo dell'allenamento: esercizi, serie allenanti e durata indicativa (lavoro + recuperi). */
+  /** Piano creato dal Coach: settimana del blocco, sedute e progressi a fine blocco. */
+  coachBlock(plan:TrainingPlan){return plan.archived||plan.completedAt?null:coachBlockReview(this.s.data(),plan.id,this.today);}
   dayMeta(day:TrainingPlanDay){
     const rows=this.s.planExercises(day.id),sets=rows.reduce((total,row)=>total+row.sets,0);
-    const seconds=rows.reduce((total,row)=>total+row.sets*(45+row.rest)+(row.warmupSets||0)*75,0),minutes=Math.max(5,Math.round(seconds/300)*5);
+    const seconds=rows.reduce((total,row)=>total+row.sets*(45+row.rest)+(row.warmupSets||0)*75,0),minutes=estimatedMinutes(seconds);
     return rows.length+(rows.length===1?' esercizio':' esercizi')+(sets?' · '+sets+' serie · ~'+minutes+' min':'');
   }
   /** Serie allenanti per gruppo muscolare principale negli allenamenti mostrati (una settimana tipo). */
@@ -386,7 +394,8 @@ export class PlansComponent {
     const unit=(kg:number)=>this.s.formatWeight(kg)+' '+this.s.settings().unit,data=this.s.data();
     const row=data.workoutExercises.find(item=>item.id===previous[0].workoutExerciseId),date=data.workouts.find(workout=>workout.id===row?.workoutId)?.date;
     const loaded=exercise.loadMode!=='bodyweight';
-    const suggestion=coachNextSet({repsMin,repsMax,incrementKg:this.s.preference(exercise.id)?.weightStep??this.s.kg(2.5),loadMode:exercise.loadMode,targetRpe:form.rpe??undefined,reference:previous.map(item=>({weight:item.weight,reps:item.reps,rpe:item.rpe})),daysSinceReference:daysBetween(date,this.today),done:[],formatWeight:unit});
+    const inferred=this.s.settings().unit==='kg'&&!this.s.preference(exercise.id)?.weightStep?exerciseWeightStep(data,exercise.id):undefined;
+    const suggestion=coachNextSet({repsMin,repsMax,incrementKg:this.s.preference(exercise.id)?.weightStep??inferred??this.s.kg(2.5),incrementInferred:!!inferred,loadMode:exercise.loadMode,compound:isCompoundExercise(exercise),bodyWeight:data.profiles[0]?.bodyWeight,targetRpe:form.rpe??undefined,reference:previous.map(coachSetFromLog),daysSinceReference:daysBetween(date,this.today),done:[],formatWeight:unit});
     if(!suggestion)return null;
     const same=previous.every(item=>Math.abs(item.weight-previous[0].weight)<0.000001);
     const last='Ultima volta: '+(loaded?(same?unit(previous[0].weight)+' × '+previous.map(item=>item.reps).join(' · '):previous.map(item=>unit(item.weight)+' × '+item.reps).join(' · ')):previous.map(item=>item.reps).join(' · ')+' rip.');
@@ -398,7 +407,7 @@ export class PlansComponent {
   exerciseSummary(){
     const v=this.exerciseForm.getRawValue(),sets=Number(v.sets)||0,min=Number(v.repsMin)||0,max=Number(v.repsMax)||0,rest=Number(v.rest)||0,warm=Number(v.warmupSets)||0;
     if(!sets||!min||!max)return 'Imposta serie e ripetizioni';
-    const minutes=Math.max(1,Math.round((sets*(45+rest)+warm*75)/60));
+    const minutes=estimatedMinutes(sets*(45+rest)+warm*75);
     return sets+' × '+(min===max?min:min+'–'+max)+' rip · rec. '+this.restLabel(rest)+(warm?' · '+warm+' risc.':'')+' · ~'+minutes+' min';
   }
   useCoachWeight(weight:number){const control=this.exerciseForm.controls.targetWeight;control.setValue(weight);control.markAsDirty();this.advancedOpen.set(true);}

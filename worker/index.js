@@ -10,6 +10,7 @@ import { hubApi, hubInvitesApi, hubInvitePublicApi } from './hub.js';
 import { vwApi, vwScheduled } from './vw.js';
 import { groupApi, groupInvite, groupReserveRegistration } from './group.js';
 import { mealScanApi } from './meal-scan.js';
+import { devLogApi, devLogAgentApi, devLogServerError } from './dev-log.js';
 // The platform's ChatGPT access boundary remains in place. App sessions are
 // additionally bound to that authenticated visitor, and never stored in JS.
 const OWNER = 'giacomotanduo004@gmail.com';
@@ -41,7 +42,7 @@ function equal(a, b) { if(a.length !== b.length) return false; let d=0; for(let 
 function json(data, status=200, headers={}) { return Response.json(data,{status,headers:{'Cache-Control':'no-store','X-Content-Type-Options':'nosniff',...headers}}); }
 function fail(message,status=400) { throw Object.assign(new Error(message),{status}); }
 function validThemeConfig(value) {
-  return !!value&&typeof value==='object'&&!Array.isArray(value)&&Object.keys(value).every(key=>['palette','mode','background','accent','style'].includes(key))&&(value.style===undefined||value.style==='classic'||value.style==='elegant')&&[...APPROVED_THEME_IDS,'oro','argento','multicolore','bianco-elegante','scuro','nero','bianco','rosso','verde','viola-neon','blu-azzurro','carbonio','artico','prugna','petrolio','sabbia','ghiaccio'].includes(value.palette)&&['dark','light','system'].includes(value.mode)&&['background','accent'].every(key=>value[key]===undefined||typeof value[key]==='string'&&/^#[0-9a-fA-F]{6}$/.test(value[key]));
+  return !!value&&typeof value==='object'&&!Array.isArray(value)&&Object.keys(value).every(key=>['palette','mode','background','accent','style'].includes(key))&&(value.style===undefined||value.style==='classic'||value.style==='elegant'||value.style==='modern'||value.style==='sport')&&[...APPROVED_THEME_IDS,'cobalto','oro','argento','multicolore','bianco-elegante','scuro','nero','bianco','rosso','verde','viola-neon','blu-azzurro','carbonio','artico','prugna','petrolio','sabbia','ghiaccio'].includes(value.palette)&&['dark','light','system'].includes(value.mode)&&['background','accent'].every(key=>value[key]===undefined||typeof value[key]==='string'&&/^#[0-9a-fA-F]{6}$/.test(value[key]));
 }
 const publicUser = u => ({id:u.id,email:u.email,name:u.name,username:u.username||null,role:u.role,active:!!u.active,owner:u.email===OWNER});
 function validPassword(p) { if(typeof p!=='string'||p.length<8||p.length>128) fail('Usa una password da 8 a 128 caratteri.'); }
@@ -90,6 +91,20 @@ async function catalog(db) {
   for(const g of groups.results) muscleGroups.set(g.id,g);
   return {exercises:[...exercises.values()],muscleGroups:[...muscleGroups.values()]};
 }
+/** Link di invito all'app: il Super Admin lo condivide e chi lo apre si crea da solo un account Cliente.
+ *  Un solo link attivo alla volta, valido 7 giorni e per pochi account; si può disattivare in ogni momento. */
+const APP_INVITE_TTL_MS=7*24*60*60*1000, APP_INVITE_MAX_REGISTRATIONS=5;
+function appInviteToken() { return [...crypto.getRandomValues(new Uint8Array(24))].map(x=>x.toString(16).padStart(2,'0')).join(''); }
+async function appInvite(db,token,now=Date.now()) {
+  if(typeof token!=='string'||!/^[0-9a-f]{48}$/.test(token)) return null;
+  return await db.prepare('SELECT i.*,u.name AS inviter_name FROM app_invites i JOIN users u ON u.id=i.created_by WHERE i.token=? AND i.revoked_at IS NULL AND i.expires_at>?').bind(token,now).first()||null;
+}
+/** Riserva uno dei posti dell'invito; false quando sono esauriti o il link non vale più. */
+async function appInviteReserve(db,id,now=Date.now()) {
+  const result=await db.prepare('UPDATE app_invites SET registrations=registrations+1 WHERE id=? AND registrations<max_registrations AND revoked_at IS NULL AND expires_at>?').bind(id,now).run();
+  return !!result.meta.changes;
+}
+const appInviteView = i => ({id:i.id,token:i.token,createdAt:i.created_at,expiresAt:i.expires_at,registrations:i.registrations,maxRegistrations:i.max_registrations});
 /** Il codice di setup è un segreto del deploy: protegge l'attivazione e il ripristino dell'account proprietario. */
 async function requireSetupCode(request,db,env,value) {
   const code=String(env.SETUP_CODE||'');
@@ -131,21 +146,25 @@ async function readLimitedJsonBody(request,limit) {
  try{return JSON.parse(chunks.join(''));}catch{fail('Richiesta non valida.');}
 }
 export async function api(request,env,ctx) {
+  let me=null;
   try {
     const url=new URL(request.url), path=url.pathname, db=env.DB;
     if(!db) fail('Servizio account non ancora configurato.',503);
+    // Registro sviluppo per Claude: autorizzato solo dal segreto DEVLOG_TOKEN, senza cookie né archivi.
+    if(path.startsWith('/api/dev-log/agent/'))return await devLogAgentApi(request,env,{build:APP_BUILD_ID,limit:()=>attempt(db,'devlog:'+clientKey(request,env))});
     // Su Sites l'autenticazione della piattaforma non va mai sostituita, bootstrap compreso.
     // In modalità autonoma l'identità è solo quella degli account dell'app.
     if(!visitorId(request,env)) fail('Accedi prima con ChatGPT.',401);
     if(request.method!=='GET' && request.headers.get('origin')!==url.origin) fail('Richiesta non autorizzata.',403);
     if(request.method!=='GET' && !request.headers.get('content-type')?.startsWith('application/json')) fail('Formato non supportato.',415);
-    const me=await session(request,db,env);
+    me=await session(request,db,env);
     if(path==='/api/storage-status'){
       if(!me)fail('Accedi al tuo account.',401);
       if(me.role!=='SuperAdmin')fail('Accesso riservato al Super Admin.',403);
       if(request.method!=='GET')fail('Metodo non supportato.',405);
       return json(await storageStatus(env));
     }
+    if(path.startsWith('/api/dev-log/'))return await devLogApi(request,env,me,{build:APP_BUILD_ID});
     if(path==='/api/hub'||path==='/api/hub/due')return await hubApi(request,env,me,ctx);
     if(path==='/api/hub/invites')return await hubInvitesApi(request,env,me);
     // Link d'invito di Dividi: chi lo apre non ha bisogno di un account (resta l'identità dell'hosting).
@@ -205,6 +224,17 @@ export async function api(request,env,ctx) {
       const rows=await db.prepare('SELECT * FROM users ORDER BY created_at').all();
       return json({users:rows.results.map(publicUser)});
     }
+    if(request.method==='GET'&&path==='/api/app-invite') {
+      // Anteprima per chi apre il link prima di avere un account: solo il nome di chi invita.
+      await attempt(db,'app-invite:'+clientKey(request,env));
+      const invite=await appInvite(db,url.searchParams.get('token'));
+      return json(invite?{valid:true,inviterName:invite.inviter_name,registrationOpen:invite.registrations<invite.max_registrations}:{valid:false});
+    }
+    if(request.method==='GET'&&path==='/api/app-invites') {
+      if(me?.role!=='SuperAdmin') fail('Accesso riservato al Super Admin.',403);
+      const rows=await db.prepare('SELECT * FROM app_invites WHERE revoked_at IS NULL AND expires_at>? ORDER BY created_at DESC').bind(Date.now()).all();
+      return json({invites:rows.results.map(appInviteView)});
+    }
     if(request.method==='GET') fail('Pagina non trovata.',404);
     const bodyLimit=path==='/api/catalog/exercise'?3000000:8192;
     const b=await readLimitedJsonBody(request,bodyLimit);if(!b||typeof b!=="object"||Array.isArray(b))return json({error:"Richiesta non valida."},400);
@@ -245,16 +275,18 @@ export async function api(request,env,ctx) {
       return startSession(request,db,u,env);
     }
     if(path==='/api/auth/register'&&request.method==='POST') {
-      // La registrazione libera non esiste: serve il link di invito di un gruppo ancora aperto,
-      // che vale per pochi nuovi account e scade con il gruppo. Il ruolo è sempre Cliente.
+      // La registrazione libera non esiste: serve il link di invito di un gruppo ancora aperto
+      // o il link di invito all'app creato dal Super Admin. Entrambi valgono per pochi nuovi
+      // account e scadono. Il ruolo è sempre Cliente.
       await attempt(db,'register:'+clientKey(request,env));
-      const invite=await groupInvite(db,b.invite);
-      if(!invite) fail('Invito non valido o scaduto. Chiedi un nuovo link.',403);
+      const invite=b.appInvite===undefined?await groupInvite(db,b.invite):null;
+      const appLink=b.appInvite===undefined?null:await appInvite(db,b.appInvite);
+      if(!invite&&!appLink) fail('Invito non valido o scaduto. Chiedi un nuovo link.',403);
       const u=fields({...b,role:'User'}); validPassword(b.password);
       if(u.email===OWNER) fail('Questa email è già registrata.',409);
       await availableUsername(db,u.username);
       if(await db.prepare('SELECT id FROM users WHERE email=?').bind(u.email).first()) fail('Questa email è già registrata.',409);
-      if(!await groupReserveRegistration(db,invite.id)) fail('Questo invito ha già registrato il numero massimo di account. Chiedi un nuovo link.',403);
+      if(!(invite?await groupReserveRegistration(db,invite.id):await appInviteReserve(db,appLink.id))) fail('Questo invito ha già registrato il numero massimo di account. Chiedi un nuovo link.',403);
       const created={id:crypto.randomUUID(),...u,active:1}, salt=random();
       await db.prepare('INSERT INTO users(id,email,name,username,role,active,salt,password_hash,created_at) VALUES(?,?,?,?,?,1,?,?,?)').bind(created.id,u.email,u.name,u.username,u.role,salt,await passwordHash(b.password,salt),Date.now()).run();
       return startSession(request,db,created,env);
@@ -308,6 +340,20 @@ export async function api(request,env,ctx) {
       return startSession(request,db,me,env);
     }
     if(me.role!=='SuperAdmin') fail('Accesso riservato al Super Admin.',403);
+    if(path==='/api/app-invites'&&request.method==='POST') {
+      // Crearne uno nuovo disattiva i precedenti: in giro resta un solo link valido.
+      const now=Date.now(), invite={id:crypto.randomUUID(),token:appInviteToken(),created_at:now,expires_at:now+APP_INVITE_TTL_MS,registrations:0,max_registrations:APP_INVITE_MAX_REGISTRATIONS};
+      await db.batch([
+        db.prepare('DELETE FROM app_invites WHERE expires_at<? OR revoked_at<?').bind(now-30*86400000,now-30*86400000),
+        db.prepare('UPDATE app_invites SET revoked_at=? WHERE revoked_at IS NULL').bind(now),
+        db.prepare('INSERT INTO app_invites(id,token,created_by,created_at,expires_at,max_registrations,registrations,revoked_at) VALUES(?,?,?,?,?,?,0,NULL)').bind(invite.id,invite.token,me.id,now,invite.expires_at,invite.max_registrations)
+      ]);
+      return json({invite:appInviteView(invite)},201);
+    }
+    if(path==='/api/app-invites/revoke'&&request.method==='POST') {
+      await db.prepare('UPDATE app_invites SET revoked_at=? WHERE revoked_at IS NULL').bind(Date.now()).run();
+      return json({ok:true});
+    }
     if(path==='/api/users'&&request.method==='POST') {
       const u=fields(b); validPassword(b.password);await availableUsername(db,u.username);
       if(u.email===OWNER) fail('Account proprietario già riservato.',409);
@@ -334,6 +380,8 @@ export async function api(request,env,ctx) {
   } catch(e) {
     if(/UNIQUE constraint failed: users.username|users_username_unique/.test(e.message||''))return json({error:'Nome utente già utilizzato. Scegline un altro.'},409);
     if(/UNIQUE constraint failed: users.email/.test(e.message||''))return json({error:'Questa email è già registrata.'},409);
+    // Solo gli errori inattesi delle richieste del Super Admin finiscono nel registro sviluppo.
+    if(!e.status&&me?.role==='SuperAdmin'){const log=devLogServerError(env,e,request,APP_BUILD_ID);if(ctx?.waitUntil)ctx.waitUntil(log);else await log;}
     return json({error:e.status?e.message:'Servizio non disponibile. Riprova.',...(e.code==='PLAN_OVERLAP'?{code:e.code}:{})},e.status||503); }
 }
 // __ASSETS__ is replaced by the build, keeping this deployment dependency-free.

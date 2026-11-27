@@ -67,7 +67,8 @@ it("preserves the original blue/violet records and lists them first without dupl
   expect(new Set(THEME_PALETTES.map((p) => p.id)).size).toBe(
     THEME_PALETTES.length,
   );
-  expect(THEME_PALETTES).toHaveLength(23);
+  // 23 palette storiche più Cobalto, aggiunta per lo stile «Rimodernizzato».
+  expect(THEME_PALETTES).toHaveLength(24);
   expect(FACTORY_PRESETS).toHaveLength(12);
 });
 

@@ -1,0 +1,311 @@
+/* Rifiniture dell'interfaccia in tutti gli stili: scelta dell'app (GymTrack, GT Hub,
+   GT Garage) e selettore dello stile nel profilo. Solo presentazione: scelte, permessi
+   e salvataggi non cambiano. Caricato dopo gli stili Elegante, Rimodernizzato e Sportivo. */
+
+/* Le regole generiche sui pulsanti (es. Rimodernizzato: raggio 999px) trasformavano le
+   schede in pillole e il bordo tagliava i testi a sinistra. */
+body.theme-ready gt-app-chooser .apps > .app.app {
+  border-radius: 30px !important;
+  padding: 16px !important;
+  min-height: 0 !important;
+  height: auto !important;
+}
+body.theme-ready.style-sport gt-app-chooser .apps > .app.app {
+  border-radius: 18px !important;
+}
+/* I valori lunghi («Nessun impegno») vanno a capo invece di essere troncati. */
+body.theme-ready gt-app-chooser .stats em {
+  white-space: normal !important;
+  text-overflow: clip !important;
+  line-height: 1.25;
+}
+body.theme-ready gt-app-chooser .open {
+  min-width: 0 !important;
+  min-height: 0 !important;
+  padding: 0 !important;
+  border-radius: 50% !important;
+}
+
+/* Elegante e Rimodernizzato rendevano Hub e Garage due schede bianche identiche:
+   tornano riconoscibili con la luce del loro colore, sopra la superficie dello stile. */
+body.theme-ready.style-elegant gt-app-chooser .app.a-hub {
+  background:
+    radial-gradient(
+      120% 100% at 0% 0%,
+      color-mix(in srgb, #7c6bff 22%, transparent),
+      transparent 62%
+    ),
+    radial-gradient(
+      90% 90% at 100% 100%,
+      color-mix(in srgb, #3a7bff 12%, transparent),
+      transparent 60%
+    ),
+    var(--el-surface, var(--card)) !important;
+  border: 1px solid color-mix(in srgb, #7c6bff 34%, transparent) !important;
+}
+body.theme-ready.style-elegant gt-app-chooser .app.a-car {
+  background:
+    radial-gradient(
+      120% 100% at 0% 0%,
+      color-mix(in srgb, #37c98b 22%, transparent),
+      transparent 62%
+    ),
+    radial-gradient(
+      90% 90% at 100% 100%,
+      color-mix(in srgb, #788ca0 12%, transparent),
+      transparent 60%
+    ),
+    var(--el-surface, var(--card)) !important;
+  border: 1px solid color-mix(in srgb, #37c98b 34%, transparent) !important;
+}
+body.theme-ready.style-elegant gt-app-chooser .a-hub .open {
+  background: linear-gradient(140deg, #9d8cff, #6e6bff) !important;
+  color: #fff !important;
+}
+body.theme-ready.style-elegant gt-app-chooser .a-car .open {
+  background: linear-gradient(140deg, #5fe0a8, #1f9d7a) !important;
+  color: #04241a !important;
+}
+/* Elegante: la freccia di GymTrack era quasi invisibile (accento su fondo chiaro). */
+body.theme-ready.style-elegant gt-app-chooser .a-gt .open {
+  color: var(--text) !important;
+}
+body.theme-ready.style-elegant.style-modern gt-app-chooser .a-gt .open {
+  background: var(--md-ink, var(--el-ink)) !important;
+  color: var(--accent) !important;
+}
+
+/* Profilo: con quattro stili il selettore a pillola non bastava più («Rimodernizzato»
+   finiva sopra «Elegante»). Diventa una griglia 2×2 con pulsanti interi. */
+body.theme-ready gt-shell .su-seg.look-styles {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px;
+  border-radius: 22px !important;
+}
+body.theme-ready gt-shell .su-seg.look-styles > button {
+  min-width: 0;
+  padding: 9px 6px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ---------- Pannelli che salgono dal basso sopra la barra di navigazione ----------
+   .app-main è uno strato isolato: si alzava solo per .modal-backdrop, quindi il pannello
+   Filtri del calendario (e il modulo utenti) restavano sotto la barra e il pulsante finale
+   non si poteva toccare. */
+body
+  gt-shell
+  .app-main:has(.cal-sheet-backdrop, .us3-scrim, .su-sheet-backdrop) {
+  position: relative;
+  z-index: 60;
+}
+
+/* ---------- Campi di ricerca: un solo riquadro ----------
+   Negli stili Elegante e Rimodernizzato il campo interno riceveva un secondo bordo e
+   sfondo dentro il contenitore già disegnato (Esercizi, Allenamento in gruppo). */
+body.theme-ready gt-shell :is(.catalog-search, .gdp-search):not(#_) input {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  outline-offset: 2px;
+}
+
+/* ---------- Home: «Come stai oggi?» leggibile nel tema chiaro ----------
+   I numeri 1-5 usavano colori pastello pensati per lo sfondo scuro. */
+body.theme-ready.custom-light:not(.style-elegant)
+  gt-shell
+  .hx-levels
+  button:nth-child(1) {
+  color: #c2364f;
+}
+body.theme-ready.custom-light:not(.style-elegant)
+  gt-shell
+  .hx-levels
+  button:nth-child(2) {
+  color: #b35f14;
+}
+body.theme-ready.custom-light:not(.style-elegant)
+  gt-shell
+  .hx-levels
+  button:nth-child(3) {
+  color: #8a7000;
+}
+body.theme-ready.custom-light:not(.style-elegant)
+  gt-shell
+  .hx-levels
+  button:nth-child(4) {
+  color: #23824a;
+}
+body.theme-ready.custom-light:not(.style-elegant)
+  gt-shell
+  .hx-levels
+  button:nth-child(5) {
+  color: #136b4d;
+}
+
+/* ---------- Elegante chiaro: scheda del piano attivo ----------
+   Testo crema (inchiostro Atelier) su fondo rosa dell'accento: quasi illeggibile.
+   Diventa nera come la scheda dell'allenamento in Home. */
+body.theme-ready.style-elegant.custom-light:not(.style-modern) {
+  --el-solid: #141416;
+}
+
+/* ---------- Rimodernizzato: pulsante «Termina piano» visibile ----------
+   Aveva lo stesso colore della scheda e sembrava testo semplice. */
+body.theme-ready.style-elegant.style-modern gt-shell main .ghost.pd3-finish {
+  background: var(--md-surface-3) !important;
+}
+
+/* ---------- Selettore temi: riquadri delle palette non a pillola ----------
+   In Rimodernizzato il raggio 999px dei pulsanti li trasformava in ovali e tagliava i nomi. */
+body.theme-ready gt-theme-picker :is(.palette-tile, .style-option) {
+  border-radius: 20px !important;
+}
+
+/* ---------- Scelta dell'app nel tema chiaro (Classico e Sportivo) ----------
+   Il riquadro «Oggi» e il centro dell'anello erano scuri fissi: il numero spariva. */
+body.theme-ready.custom-light:not(.style-elegant) gt-app-chooser .a-gt .wd {
+  background: color-mix(in srgb, var(--text) 5%, transparent);
+  border-color: color-mix(in srgb, var(--text) 10%, transparent);
+}
+body.theme-ready.custom-light:not(.style-elegant)
+  gt-app-chooser
+  .a-gt
+  .ring::before {
+  background: var(--card);
+}
+body.theme-ready.custom-light:not(.style-elegant) gt-app-chooser .a-gt .ring {
+  background: conic-gradient(
+    from -90deg,
+    var(--accent) calc(var(--p) * 1%),
+    color-mix(in srgb, var(--text) 12%, transparent) 0
+  );
+}
+
+/* ---------- GT Garage chiaro (Elegante e Rimodernizzato): «Budget auto consigliato» ----------
+   Fondo scuro fisso con titolo scuro: illeggibile. */
+body.theme-ready.style-elegant.custom-light gt-garage-insights .save {
+  background:
+    radial-gradient(
+      120% 100% at 0% 0%,
+      rgba(31, 157, 122, 0.12),
+      transparent 60%
+    ),
+    var(--el-surface, var(--card)) !important;
+  border-color: rgba(31, 157, 122, 0.3) !important;
+  color: var(--text);
+}
+
+/* ---------- GT Hub chiaro (Elegante e Rimodernizzato): colori delle etichette ----------
+   Le tinte pastello del Hub sono pensate per lo sfondo scuro: sul bianco si leggevano a stento. */
+body.theme-ready.style-elegant.custom-light .hb {
+  --hb-g: #18865f;
+  --hb-r: #c8324d;
+  --hb-o: #b9581c;
+  --hb-y: #8f6a00;
+  --hb-p: #b8357a;
+  --hb-b: #2f5fd0;
+  --hb-c: #1279a3;
+}
+body.theme-ready.style-elegant.custom-light .hb .hb-tag.v {
+  color: #5a43d6;
+}
+body.theme-ready.style-elegant.custom-light .hb .hb-tag.b {
+  color: #2f5fd0;
+}
+body.theme-ready.style-elegant.custom-light gt-hub-today .now {
+  color: #5a43d6;
+}
+
+/* ---------- Elegante chiaro: titolo dell'allenamento in corso ----------
+   Il titolo grande delle pagine (36-46px) finiva anche nell'intestazione compatta della
+   seduta, stretta tra «indietro» e «Termina»: «Quadricipit / i» spezzato a metà parola. */
+body.theme-ready.style-elegant.custom-light:not(.style-modern)
+  gt-shell
+  main
+  .session-header
+  .session-title
+  h1 {
+  font-size: 24px !important;
+  line-height: 1.1;
+  overflow-wrap: normal;
+}
+body.theme-ready.style-elegant.custom-light:not(.style-modern)
+  gt-shell
+  main
+  .session-header
+  .session-title
+  h1::after {
+  display: none;
+}
+
+/* ---------- Schermi larghi (iPad, computer) negli stili Elegante e Rimodernizzato ---------- */
+/* Progressi: la colonna ereditava «align-items:start» dalla griglia di base e ogni blocco
+   si restringeva al proprio contenuto (selettore e grafico larghi pochi centimetri). */
+body.theme-ready.style-elegant gt-shell main .reference-progress.pg-simple {
+  align-items: stretch;
+}
+/* Home: la fila dei giorni si allungava fino all'altezza della scheda accanto
+   (pillola del giorno altissima). Ora occupa una riga intera. */
+@media (min-width: 700px) {
+  body.theme-ready.style-elegant gt-shell .hx-simple > .el-week {
+    flex-basis: 100%;
+    align-self: start;
+  }
+}
+
+/* ---------- Schermi stretti (iPhone SE e mini) ---------- */
+/* Pasti: «P 68 g · C 94 g · G 19 g» non lascia più l'unità da sola a capo. */
+body.theme-ready gt-shell .meal-macros {
+  text-wrap: balance;
+}
+/* Home: «Vedi esercizi» e «Sposta» restano su una riga. */
+@media (max-width: 370px) {
+  body.theme-ready gt-shell .hx-secondary .su-btn {
+    white-space: nowrap;
+    padding-inline: 8px;
+    font-size: 13px;
+  }
+  /* Scelta dell'app: senza le miniature il titolo dell'allenamento resta leggibile. */
+  body.theme-ready gt-app-chooser .a-gt .strip {
+    display: none;
+  }
+}
+
+/* ===== Calendario e Schede: pulizia valida per TUTTI gli stili (Classico, Elegante, Rimodernizzato, Sportivo) e tutte le palette =====
+   Solo layout e forma: i colori restano quelli dello stile e della palette scelti.
+   I selettori ripetono la classe (.x.x) per battere le regole degli stili senza usare !important. */
+
+/* Riga di una voce del calendario: niente barretta laterale, foto ben incastrata, orario in un chip. */
+body.theme-ready gt-shell .cal-page .cal-row-item.cal-row-item{padding:7px 8px 7px 7px;gap:12px}
+body.theme-ready gt-shell .cal-page .cal-week-row .cal-row-item.cal-row-item{padding:7px 8px 7px 7px;gap:10px}
+body.theme-ready gt-shell .cal-page .cal-row-item.cal-row-item::before{display:none}
+body.theme-ready gt-shell .cal-page .cal-row-item.cal-row-item .cal-item-select{order:1;gap:12px;padding:0}
+body.theme-ready gt-shell .cal-page .cal-row-item.cal-row-item .cal-item-thumb{
+ width:48px;height:48px;border:0;border-radius:17px;overflow:hidden;
+ box-shadow:0 0 0 1.5px color-mix(in srgb,var(--k) 45%,transparent)}
+body.theme-ready gt-shell .cal-page .cal-row-item.cal-row-item .cal-item-thumb>gt-exercise-thumb{--thumb-width:100%;--thumb-height:100%;width:100%;height:100%;border-radius:inherit}
+body.theme-ready.style-modern gt-shell .cal-page .cal-row-item.cal-row-item .cal-item-thumb{border-radius:50%}
+body.theme-ready.style-sport gt-shell .cal-page .cal-row-item.cal-row-item .cal-item-thumb{border-radius:10px}
+body.theme-ready gt-shell .cal-page .cal-row-item.cal-row-item .cal-row-time{
+ order:2;width:auto;padding:5px 9px;border-radius:999px;font-size:12px;font-weight:700;line-height:1;white-space:nowrap;
+ color:var(--text);background:color-mix(in srgb,var(--text) 8%,transparent)}
+body.theme-ready.style-sport gt-shell .cal-page .cal-row-item.cal-row-item .cal-row-time{border-radius:6px}
+body.theme-ready gt-shell .cal-page .cal-row-item.cal-row-item .cal-item-action{order:3}
+
+/* Scheda attiva: intestazione ordinata (etichetta e foto in alto, titolo a tutta larghezza), titolo che non si spezza a metà parola. */
+body.theme-ready gt-shell main .simple-plan.pl-active>.simple-plan-top{
+ display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"badge thumb" "title title";align-items:start;gap:14px 12px;position:relative}
+body.theme-ready gt-shell main .simple-plan.pl-active>.simple-plan-top>.su-badge{
+ grid-area:badge;align-self:center;justify-self:start;margin:0;font-size:11px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;white-space:nowrap}
+body.theme-ready gt-shell main .simple-plan.pl-active>.simple-plan-top>.su-badge gt-icon{width:13px;height:13px}
+body.theme-ready gt-shell main .simple-plan.pl-active .plan-cover-thumb{
+ grid-area:thumb;--thumb-width:52px;--thumb-height:52px;width:52px;height:52px;max-width:none;border-radius:16px;overflow:hidden}
+body.theme-ready gt-shell main .simple-plan.pl-active .simple-plan-title{
+ grid-area:title;width:100%;min-width:0;padding:0;display:flex;align-items:flex-start;gap:10px;text-align:left}
+body.theme-ready gt-shell main .simple-plan.pl-active .simple-plan-title>span:first-child{flex:1;min-width:0}
+body.theme-ready gt-shell main .simple-plan.pl-active .simple-plan-title strong{
+ display:block;font-size:24px;line-height:1.1;overflow-wrap:normal;word-break:normal;hyphens:manual}
+body.theme-ready gt-shell main .simple-plan.pl-active .plan-chevron{flex:none;margin-top:2px}

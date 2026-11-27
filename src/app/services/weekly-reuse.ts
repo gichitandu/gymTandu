@@ -1,5 +1,5 @@
 import { DataSet, MachineSetup, TrainingPlanExercise, WorkoutLog, WorkoutLogSet, localDate } from '../models/domain';
-import { hasSetup, setupKey } from './training-flow';
+import { hasMachine, machineKey } from './training-flow';
 
 /** A previous week of this training slot, never another plan or a future log. */
 export function previousWeekWorkout(data: DataSet, dayId: string, date: string): WorkoutLog | undefined {
@@ -39,7 +39,7 @@ export function reusableExerciseSets(data: DataSet, workout: WorkoutLog, entry: 
   const occurrence = data.planExercises.filter(row => row.dayId === entry.dayId && row.exerciseId === entry.exerciseId).sort((a, b) => a.order - b.order).findIndex(row => row.id === entry.id);
   const source = data.workoutExercises.filter(row => row.workoutId === workout.id && row.exerciseId === entry.exerciseId && row.loadMode === mode)
     .sort((a, b) => a.order - b.order)[Math.max(0, occurrence)];
-  if (!source || hasSetup(setup) && setupKey(source.machineSetup) !== setupKey(setup)) return {work: [], warmup: []};
+  if (!source || hasMachine(setup) && machineKey(source.machineSetup) !== machineKey(setup)) return {work: [], warmup: []};
   const sets = data.sets.filter(row => row.workoutExerciseId === source.id && row.completed).sort((a, b) => a.number - b.number);
   return {work: sets.filter(row => row.kind !== 'warmup'), warmup: sets.filter(row => row.kind === 'warmup')};
 }

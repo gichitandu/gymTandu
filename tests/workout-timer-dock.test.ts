@@ -75,3 +75,10 @@ it('also reveals a paused timer after a redirect and leaves it visible when navi
  events.next(new NavigationStart(3,'/sessione'));events.next(new NavigationCancel(3,'/sessione','Modifiche non salvate'));
  expect(widget.visible()?.id).toBe(state.id);expect(widget.remaining()).toBe(37);
 });
+
+it('lascia il posto alla barra compatta quando il recupero è finito da più di 10 minuti',()=>{
+ navigate('/piani');expect(widget.visible()?.id).toBe(state.id);
+ widget.clock.set(state.restEnd+9*60*1000);expect(widget.visible()?.id).toBe(state.id);expect(widget.remaining()).toBe(0);
+ widget.clock.set(state.restEnd+10*60*1000+1000);
+ expect(widget.visible()).toBeUndefined();expect(widget.live()?.id).toBe(state.id);
+});

@@ -25,7 +25,9 @@ export class WorkoutClockComponent {
  private routeUrl=toSignal(this.router.events.pipe(filter((event):event is NavigationEnd=>event instanceof NavigationEnd),map(event=>event.urlAfterRedirects)),{initialValue:this.router.url||'/'});
  readonly clock=signal(Date.now());readonly busy=signal(false);readonly format=formatSeconds;
  private destroyed=false;
- state=computed(()=>{this.clock();const draft=this.s.draft();if(!draft)return undefined;const state=this.read(draft.id);return state&&(state.restEnd>0||state.paused)&&state.restTotal>0?state:undefined;});
+ /** Dopo 10 minuti dalla fine del recupero il riquadro grande lascia il posto alla barra compatta «In corso». */
+ static readonly STALE_REST_MS=10*60*1000;
+ state=computed(()=>{const now=this.clock();const draft=this.s.draft();if(!draft)return undefined;const state=this.read(draft.id);if(state&&!state.paused&&state.restEnd>0&&now-state.restEnd>WorkoutClockComponent.STALE_REST_MS)return undefined;return state&&(state.restEnd>0||state.paused)&&state.restTotal>0?state:undefined;});
  visible=computed(()=>this.outsideSession()?this.state():undefined);
  /** Allenamento aperto ma senza recupero attivo: barra compatta «In corso» sopra il menu, su ogni pagina tranne la seduta. */
  live=computed(()=>{const draft=this.s.draft();if(!draft||!this.outsideSession()||this.state())return undefined;const path=routePath(this.routeUrl());return ['/piani','/calendario','/progressi','/alimentazione','/catalogo','/allenamenti','/profilo'].includes(path)?draft:undefined;});

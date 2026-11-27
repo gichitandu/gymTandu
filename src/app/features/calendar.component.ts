@@ -17,6 +17,7 @@ import {WorkoutResumeService,validWorkoutUi} from '../services/workout-resume';
 import {formatSeconds,remainingSeconds} from '../services/rest-clock';
 import {IconComponent} from '../shared/icon.component';
 import {StatusComponent} from '../shared/status.component';
+import {ThemeService} from '../services/theme';
 
 type AgendaFilter='all'|'planned'|'completed'|'partial'|'rest'|'other';
 type FormMode='create'|'edit'|'move'|'duplicate';
@@ -27,6 +28,9 @@ export class CalendarComponent {
  private resume=inject(WorkoutResumeService,{optional:true});
  private host=inject<ElementRef<HTMLElement>>(ElementRef,{optional:true});
  private todayClock=inject(TodayService,{optional:true});
+ private theme=inject(ThemeService,{optional:true});
+ /** Vero quando è attivo lo stile «Rimodernizzato»: mostra la copertina del giorno e gli anelli per giorno. */
+ readonly modern=computed(()=>this.theme?.config().style==='modern');
  private scrollKey='';private frame:number|undefined;private timer:ReturnType<typeof setInterval>|undefined;private destroyed=false;
  private clock=signal(Date.now());
  get today(){return this.todayClock?.date()||localDate();}
@@ -99,6 +103,22 @@ export class CalendarComponent {
    joinRight:states[index]==='completed'&&index%7<6&&states[index+1]==='completed',
    extra:(this.agendaByDate().get(date)||[]).some(item=>item.kind!=='workout'&&item.kind!=='rest')}));
  });
+ /** Anello della settimana nel mese: allenamenti completati rispetto all'obiettivo settimanale (o a quelli in programma). */
+ readonly monthWeeks=computed(()=>{
+  const cells=this.monthCells(),goal=this.s.settings().goals?.workoutsPerWeek||0;
+  return Array.from({length:Math.ceil(cells.length/7)},(_,index)=>{
+   const row=cells.slice(index*7,index*7+7);
+   const workouts=row.filter(cell=>!cell.out).flatMap(cell=>this.agendaByDate().get(cell.date)||[]).filter(item=>item.kind==='workout'&&item.status!=='missed');
+   const done=workouts.filter(item=>item.status==='completed').length,target=goal||workouts.length;
+   return {index,cells:row,done,target,percent:target?Math.min(100,done/target*100):0};
+  });
+ });
+ /** Obiettivo mensile derivato da quello settimanale, in proporzione ai giorni del mese. */
+ readonly monthTarget=computed(()=>{const goal=this.s.settings().goals?.workoutsPerWeek;return goal?Math.max(1,Math.round(goal*this.periodDates().length/7)):0;});
+ /** Giorni del mese con almeno un'attività svolta (anche in parte): non conta ciò che è solo in programma. */
+ readonly monthActiveDays=computed(()=>this.periodDates().filter(date=>(this.agendaByDate().get(date)||[]).some(item=>item.kind!=='rest'&&(item.status==='completed'||item.status==='partial'))).length);
+ /** Durata compatta per i numeri grandi del riepilogo (es. «11h 55»). */
+ compactDuration(minutes:number){const total=Math.max(0,Math.round(minutes)),hours=Math.floor(total/60),rest=total%60;return hours?hours+'h'+(rest?' '+String(rest).padStart(2,'0'):''):rest+' min';}
  readonly durationText=formatCalendarDuration;
  readonly modal=signal(false);readonly saving=signal(false);readonly formMode=signal<FormMode>('create');
  editing='';kind:CalendarEventKind='workout';eventDate=this.today;eventTime='';activityTitle='';dayId='';notes='';repeatCount=1;
@@ -116,11 +136,57 @@ export class CalendarComponent {
  readonly completedCount=computed(()=>this.dayStats().completed);
  readonly periodStats=computed(()=>({planned:this.summary().planned+this.summary().partial,completed:this.summary().completed,active:this.periodDates().filter(date=>(this.agendaByDate().get(date)||[]).some(item=>item.kind!=='rest'&&item.status!=='missed')).length}));
  readonly target=computed(()=>this.view()==='week'?this.s.settings().goals?.workoutsPerWeek:undefined);
- readonly scoreProgress=computed(()=>{const goal=this.target()||this.summary().total;return goal?Math.min(100,this.summary().completed/goal*100):0;});
+ /** L'obiettivo è «allenamenti a settimana» (come in Home): cardio, mobilità e altre attività completate non lo fanno avanzare. */
+ readonly goalCompleted=computed(()=>this.periodDates().flatMap(date=>this.agendaByDate().get(date)||[]).filter(item=>item.kind==='workout'&&item.status==='completed').length);
+ readonly ringCompleted=computed(()=>this.target()?this.goalCompleted():this.summary().completed);
+ readonly scoreProgress=computed(()=>{const goal=this.target()||this.summary().total;return goal?Math.min(100,this.ringCompleted()/goal*100):0;});
  readonly upcoming=computed(()=>this.view()==='day'?[]:this.s.data().scheduledWorkouts.filter(event=>this.periodDates().includes(event.date)&&event.date!==this.selected()&&!this.ended(event)&&!event.done&&this.linked(event)?.status!=='completed').sort((a,b)=>a.date.localeCompare(b.date)||(a.time||'99:99').localeCompare(b.time||'99:99')).slice(0,4));
+ /** Scorrimento orizzontale (solo Rimodernizzato): la striscia dei giorni cambia settimana, l'elenco cambia giorno. */
+ swipeOn=false;private swipeX=0;private swipeY=0;
+ swipeStart(event:PointerEvent){if(!this.modern()||event.pointerType==='mouse')return;this.swipeOn=true;this.swipeX=event.clientX;this.swipeY=event.clientY;}
+ swipeCancel(){this.swipeOn=false;}
+ swipeEnd(event:PointerEvent,kind:'week'|'day'){
+  if(!this.swipeOn)return;this.swipeOn=false;
+  const dx=event.clientX-this.swipeX,dy=event.clientY-this.swipeY;
+  if(Math.abs(dx)<70||Math.abs(dx)<Math.abs(dy)*1.4)return;
+  const direction=dx<0?1:-1;
+  if(kind==='week')this.move(direction);else this.choose(moveDate(this.selected(),direction));
+ }
+ /** Percentuale di voci completate in un giorno (anello nella striscia della settimana). */
+ dayPercent(date:string){return calendarAgendaStats(this.visibleFor(date)).completionPercent;}
+ /** Obiettivo della settimana del giorno scelto: allenamenti completati su quelli previsti (o sull'obiettivo impostato). */
+ readonly coverGoal=computed(()=>{
+  const week=this.weekStrip().flatMap(date=>this.agendaByDate().get(date)||[]),target=this.s.settings().goals?.workoutsPerWeek;
+  const done=week.filter(item=>item.kind==='workout'&&item.status==='completed').length;
+  const total=target||week.filter(item=>item.kind!=='rest'&&item.status!=='missed').length;
+  return {done,total,pct:total?Math.min(100,Math.round(done/total*100)):0};
+ });
+ /** Copertina del giorno: data grande, prossima voce con conto alla rovescia e avanzamento della giornata. */
+ readonly cover=computed(()=>{
+  const date=this.selected(),day=parseLocalDate(date),isToday=date===this.today,items=this.visibleAgenda();
+  const clock=new Date(this.minute()*60000),now=clock.getHours()*60+clock.getMinutes();
+  const minutes=(time:string)=>Number(time.slice(0,2))*60+Number(time.slice(3));
+  const pending=items.filter(item=>item.kind!=='rest'&&item.status!=='completed'&&item.status!=='missed');
+  const stats=calendarAgendaStats(items);
+  let label='Giornata libera',title='Niente in programma',count='',unit='';
+  if(isToday){
+   const next=pending.filter(item=>!!item.time&&minutes(item.time)>=now).sort((a,b)=>minutes(a.time!)-minutes(b.time!))[0];
+   if(next){const left=minutes(next.time!)-now;label='Prossimo';title=next.title+' · '+next.time;count=left>=60?Math.floor(left/60)+' h '+String(left%60).padStart(2,'0'):String(left);unit='min';}
+   else if(pending.length){label='Oggi';title=pending[0].title;}
+   else if(stats.total){label='Oggi';title='Tutto completato';}
+  }else if(date>this.today){
+   const days=Math.round((day.getTime()-parseLocalDate(this.today).getTime())/86400000);
+   if(pending.length||stats.rest){label='In programma';title=items.filter(item=>item.kind!=='rest').slice(0,2).map(item=>item.title).join(' · ')||'Riposo';}
+   count=days===1?'domani':'tra '+days+' g';
+  }else if(stats.total){label='Bilancio';title=stats.completed+' di '+stats.total+' completate'+(stats.hasCalories?' · '+Math.round(stats.estimatedCalories)+' kcal':'');}
+  const dayPct=isToday?Math.max(0,Math.min(100,Math.round((now-360)/1080*100))):date<this.today?100:0;
+  return {day:day.getDate(),weekday:isToday?'Oggi':day.toLocaleDateString('it-IT',{weekday:'long'}).replace(/^./,c=>c.toUpperCase()),month:day.toLocaleDateString('it-IT',{month:'long',year:'numeric'}),label,title,count,unit,dayPct};
+ });
  constructor(){
   const query=inject(ActivatedRoute).snapshot.queryParamMap,date=query.get('date');if(date)this.choose(date);if(query.get('view')==='month')this.view.set('month');
   // Un solo modo per programmare: altre pagine aprono qui il pannello «Aggiungi» (es. riposo).
+  // «Sposta» dalla Home: apre direttamente lo spostamento della seduta programmata.
+  const move=query.get('move');if(move&&date)queueMicrotask(()=>{this.selectedItemId.set('event:'+move);if(this.selectedItem()?.id==='event:'+move)this.quickMove();});
   const add=query.get('add');if(add==='rest'||add==='workout'||add==='cardio'||add==='mobility'||add==='other')queueMicrotask(()=>this.openAdd(add as CalendarEventKind));else if(add)queueMicrotask(()=>this.addOpen.set(true));
   if(this.todayClock)effect(()=>{const today=this.today,previous=this.lastToday;this.lastToday=today;if(today!==previous&&this.followsToday&&!this.modal())this.choose(today);});
  }
@@ -139,7 +205,7 @@ export class CalendarComponent {
  periodLabel(){const dates=this.dates();if(this.view()==='day')return this.label(this.selected());if(this.view()==='month')return this.monthLabel();const first=parseLocalDate(dates[0]),last=parseLocalDate(dates[6]);return first.getMonth()===last.getMonth()?`${first.getDate()}–${last.getDate()} ${last.toLocaleDateString('it-IT',{month:'long',year:'numeric'})}`:`${first.toLocaleDateString('it-IT',{day:'numeric',month:'short',...(first.getFullYear()!==last.getFullYear()?{year:'numeric' as const}:{})})} – ${last.toLocaleDateString('it-IT',{day:'numeric',month:'short',year:'numeric'})}`;}
  periodTitle(){return this.view()==='week'?'La tua settimana':this.view()==='month'?'Il tuo mese':'Il tuo giorno';}
  dayHint(date:string){const stats=calendarAgendaStats(this.agendaByDate().get(date)||[]);return stats.completed?`${stats.completed} svolti`:stats.partial?'In corso':stats.planned?`${stats.planned} in programma`:stats.rest?'Riposo':'Libero';}
- dayAria(date:string){const stats=calendarAgendaStats(this.agendaByDate().get(date)||[]);return `${this.label(date)}, ${stats.planned} in programma, ${stats.completed} completati, ${stats.partial} in corso, ${stats.rest} riposi${date===this.today?', oggi':''}`;}
+ dayAria(date:string){const stats=calendarAgendaStats(this.agendaByDate().get(date)||[]);const parts=[stats.planned?stats.planned+' in programma':'',stats.completed?stats.completed+(stats.completed===1?' completato':' completati'):'',stats.partial?stats.partial+' in corso':'',stats.rest?(stats.rest===1?'riposo':stats.rest+' riposi'):''].filter(Boolean);return `${this.label(date)}, ${parts.length?parts.join(', '):'giornata libera'}${date===this.today?', oggi':''}`;}
  dateHas(date:string,value:string){return (this.agendaByDate().get(date)||[]).some(item=>item.status===value||item.kind===value);}
  dateMarkers(date:string){
   const items=this.agendaByDate().get(date)||[],seen=new Set<string>();
@@ -154,7 +220,7 @@ export class CalendarComponent {
  headTitle(){const date=parseLocalDate(this.selected());if(this.view()==='day')return date.toLocaleDateString('it-IT',{weekday:'long',day:'numeric'});if(this.view()==='month')return date.toLocaleDateString('it-IT',{month:'long'});const dates=this.dates(),first=parseLocalDate(dates[0]),last=parseLocalDate(dates[6]);return first.getMonth()===last.getMonth()?`${first.getDate()} – ${last.getDate()}`:`${first.getDate()} ${first.toLocaleDateString('it-IT',{month:'short'}).replace('.','')} – ${last.getDate()} ${last.toLocaleDateString('it-IT',{month:'short'}).replace('.','')}`;}
  headSub(){const date=parseLocalDate(this.selected());if(this.view()==='day')return date.toLocaleDateString('it-IT',{month:'long'});if(this.view()==='month')return String(date.getFullYear());const dates=this.dates(),first=parseLocalDate(dates[0]),last=parseLocalDate(dates[6]);return first.getMonth()===last.getMonth()?last.toLocaleDateString('it-IT',{month:'long'}):String(last.getFullYear());}
  navSummary(){const stats=this.view()==='day'?this.dayStats():this.summary();const parts=[`${stats.completed} ${stats.completed===1?'completata':'completate'}`];if(stats.partial)parts.push(`${stats.partial} in corso`);if(stats.planned)parts.push(`${stats.planned} ${stats.planned===1?'prevista':'previste'}`);return stats.total||stats.rest?parts.join(' · '):'Nessuna attività';}
- weekGoalText(){const target=this.target();if(!target)return `${this.summary().completed} di ${this.summary().total} attività completate`;const left=target-this.summary().completed;return left>0?`Ancora ${left} ${left===1?'allenamento':'allenamenti'} per chiudere la settimana`:'Obiettivo raggiunto: ottimo lavoro';}
+ weekGoalText(){const target=this.target();if(!target)return `${this.summary().completed} di ${this.summary().total} attività completate`;const left=target-this.goalCompleted();return left>0?`Ancora ${left} ${left===1?'allenamento':'allenamenti'} per chiudere la settimana`:'Obiettivo raggiunto: ottimo lavoro';}
  isSelected(item:CalendarAgendaItem){return this.dockVisible()&&this.selectedItem()?.id===item.id;}
  visibleCount(){return this.view()==='day'?this.visibleAgenda().length:this.periodDates().reduce((total,date)=>total+this.visibleFor(date).length,0);}
  hiddenByFilters(date:string){return !!(this.agendaByDate().get(date)||[]).length&&!this.visibleFor(date).length;}
@@ -183,10 +249,13 @@ export class CalendarComponent {
  itemActionLabel(item:CalendarAgendaItem){return item.status==='partial'?'Riprendi allenamento':item.date<this.today?'Registra allenamento passato':'Inizia allenamento';}
  canDuplicate(item=this.selectedItem()){if(!item)return false;if(item.kind!=='workout')return true;const dayId=item.workout?.dayId||item.event?.dayId,planId=item.workout?.planId||item.event?.planId;return this.availableDays().some(day=>day.id===dayId)&&!this.s.data().plans.find(plan=>plan.id===planId)?.program;}
  canMove(item=this.selectedItem()){return !!item?.event&&!item.event.workoutId&&!item.workout&&!item.event.done&&this.available(item.event);}
+ /** Un allenamento già iniziato o registrato si può spostare di giorno; la programmazione non ancora iniziata ha il suo percorso. */
+ canMoveWorkout(item=this.selectedItem()){return !!item?.workout&&!!item.workout.date;}
+ moveWorkoutId='';
  canRemove(item=this.selectedItem()){if(item?.workout)return item.workout.status!=='completed'||this.s.settings().allowCompletedWorkoutDeletion===true;return !!item?.event&&!item.event.done;}
  repeatPreview(){try{return weeklyDates(this.eventDate,Number(this.repeatCount)).map(date=>this.shortLabel(date)).join(' · ');}catch{return '';}}
  formTitle(){return this.formMode()==='move'?'Sposta attività':this.formMode()==='duplicate'?'Duplica attività':this.formMode()==='edit'?'Modifica attività':'Aggiungi al calendario';}
- formKindChanged(){if(this.kind==='rest')this.estimatedCalories=null;}
+ formKindChanged(){if(this.kind==='rest'){this.estimatedCalories=null;if(!this.activityTitle.trim())this.activityTitle='Giorno di riposo';}else if(this.activityTitle==='Giorno di riposo')this.activityTitle='';}
  private fillForm(event?:ScheduledWorkout){
   this.kind=event?.kind||'workout';this.eventDate=event?.date||this.selected();this.eventTime=event?.time||'';this.activityTitle=event?.dayName||'';
   this.dayId=event?.dayId||this.s.nextDay()?.id||this.availableDays()[0]?.id||'';this.notes=event?.notes||'';this.repeatCount=1;
@@ -194,7 +263,7 @@ export class CalendarComponent {
  }
  open(event?:ScheduledWorkout){
   if(event&&(event.workoutId||event.done)){this.s.error.set('Un’attività già avviata o completata mantiene la sua programmazione.');return;}
-  this.formVersion++;this.formId=event?.id||uid();this.s.error.set('');this.editing=event?.id||'';this.formMode.set(event?'edit':'create');this.fillForm(event);this.moreOpen.set(false);this.modal.set(true);
+  this.formVersion++;this.moveWorkoutId='';this.formId=event?.id||uid();this.s.error.set('');this.editing=event?.id||'';this.formMode.set(event?'edit':'create');this.fillForm(event);this.moreOpen.set(false);this.modal.set(true);
  }
  editSelected(){const item=this.selectedItem();if(this.canMove(item)&&item?.event)this.open(item.event);else this.s.error.set('Questa attività si può consultare senza modificarne i dati registrati.');}
  quickDuplicate(){
@@ -202,7 +271,14 @@ export class CalendarComponent {
   const source=item.event||{id:'',date:item.date,planId:item.workout!.planId,dayId:item.workout!.dayId,planName:item.planName,dayName:item.title,notes:item.notes};
   this.open();this.fillForm(source);this.formMode.set('duplicate');this.editing='';this.formId=uid();this.eventDate=moveDate(item.date,7);
  }
- quickMove(){const item=this.selectedItem();if(!item?.event||!this.canMove(item))return;this.open(item.event);this.formMode.set('move');}
+ quickMove(){
+  const item=this.selectedItem();
+  if(item?.workout&&this.canMoveWorkout(item)){
+   this.formVersion++;this.formId=item.workout.id;this.s.error.set('');this.editing='';this.fillForm(undefined);this.kind='workout';this.eventDate=item.workout.date;this.eventTime='';
+   this.moveWorkoutId=item.workout.id;this.formMode.set('move');this.moreOpen.set(false);this.modal.set(true);return;
+  }
+  if(!item?.event||!this.canMove(item))return;this.open(item.event);this.formMode.set('move');
+ }
  async quickRemove(){
   const item=this.selectedItem();if(!item||!this.canRemove(item)||this.actionBusy())return;
   if(!item.workout){if(item.event)await this.remove(item.event);return;}
@@ -218,7 +294,7 @@ export class CalendarComponent {
   if(this.saving()||!this.modal())return;this.saving.set(true);
   const version=this.formVersion,archive=this.s.archiveKey(),snapshot={id:this.formId||=this.editing||uid(),mode:this.formMode(),date:this.eventDate,time:this.eventTime.trim()||undefined,dayId:this.dayId,kind:this.kind,title:this.activityTitle,notes:this.notes,repeat:Number(this.repeatCount),durationMinutes:this.durationMinutes===null?undefined:Number(this.durationMinutes),estimatedCalories:this.estimatedCalories===null?undefined:Number(this.estimatedCalories)};
   try{
-   const saved=snapshot.mode==='move'?await this.s.moveCalendarEvent(snapshot.id,snapshot.date,snapshot.time||''):
+   const saved=snapshot.mode==='move'&&this.moveWorkoutId?await this.s.moveWorkoutDate(this.moveWorkoutId,snapshot.date):snapshot.mode==='move'?await this.s.moveCalendarEvent(snapshot.id,snapshot.date,snapshot.time||''):
     snapshot.kind==='workout'?await this.s.scheduleWorkout(snapshot.date,snapshot.dayId,snapshot.notes,snapshot.id,snapshot.repeat,{time:snapshot.time,durationMinutes:snapshot.durationMinutes,estimatedCalories:snapshot.estimatedCalories}):
     await this.s.scheduleCalendarActivity({id:snapshot.id,date:snapshot.date,kind:snapshot.kind,title:snapshot.title,notes:snapshot.notes,time:snapshot.time,durationMinutes:snapshot.durationMinutes,estimatedCalories:snapshot.estimatedCalories},snapshot.repeat);
    if(saved&&!this.destroyed&&version===this.formVersion&&archive===this.s.archiveKey()){this.choose(snapshot.date);this.filter.set('all');this.kindFilter.set('all');this.close();}
@@ -250,7 +326,9 @@ export class CalendarComponent {
   else if(item.workout)await this.router.navigateByUrl('/sessione');
   else{this.selectItem(item);this.view.set('day');}
  }
- async toggleItem(item:CalendarAgendaItem){if(this.actionBusy()||!item.event||item.kind==='workout'||item.kind==='rest')return;this.actionBusy.set(true);try{await this.s.toggleCalendarActivity(item.event.id);}finally{this.actionBusy.set(false);}}
+ async toggleItem(item:CalendarAgendaItem){if(this.actionBusy()||!item.event||item.kind==='workout'||item.kind==='rest')return;
+  // Come per gli allenamenti, una data futura non si segna come già fatta.
+  if(item.status!=='completed'&&item.date>this.today){this.s.error.set('Potrai segnarla come fatta dal '+this.label(item.date)+'. Se l’hai già svolta, spostala a oggi.');return;}this.actionBusy.set(true);try{await this.s.toggleCalendarActivity(item.event.id);}finally{this.actionBusy.set(false);}}
  async remove(event:ScheduledWorkout){
   if(this.actionBusy())return;this.actionBusy.set(true);const archive=this.s.archiveKey();
   try{if(!await this.confirmation.ask({title:'Rimuovere dal calendario?',message:'La voce sarà rimossa dal calendario. Le sessioni e le serie registrate restano nel tuo archivio.',confirmLabel:'Rimuovi',tone:'danger'}))return;

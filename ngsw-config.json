@@ -17,6 +17,7 @@
           "/templates/**",
           "/*.webp",
           "/brand/**",
+          "/fonts/**",
           "/exercises/**",
           "/training/figures/**",
           "/training/dumbbell.png"

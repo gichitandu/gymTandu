@@ -46,7 +46,7 @@ export class ExcelImportComponent{
  async confirm(){
   const draft=this.draft(),file=this.file();if(!draft||!file||this.busy()||this.parsing())return;
   if(this.conflicts().length){this.error.set('L’importazione è bloccata dalle sovrapposizioni indicate.');return;}
-  if(!this.online()){this.error.set('Collegati per confermare e verificare le sovrapposizioni.');return;}
+  if(!this.online()){this.error.set(this.offlineReason());return;}
   if(!await this.confirmation.ask({title:'Programmare questo piano?',message:`${draft.name}: ${draft.sessions.length} allenamenti dal ${this.label(draft.startDate)} al ${this.label(draft.endDate)}.`,detail:'I piani esistenti vengono conservati. Il file originale sarà archiviato dopo il salvataggio online.',confirmLabel:'Conferma e programma',tone:'info'}))return;
   if(this.destroyed)return;
   this.busy.set(true);this.error.set('');
@@ -61,6 +61,8 @@ export class ExcelImportComponent{
  completed(entry:ExcelImportEntry){return this.s.data().workouts.filter(workout=>workout.planId===entry.planId&&workout.status==='completed').length;}
  status(entry:ExcelImportEntry){return entry.status==='completed'?'Concluso':entry.status==='active'?'Attivo':'Archivio';}
  online(){return navigator.onLine!==false&&!this.auth.offlineMode();}
+ /** Perché la conferma non è disponibile: lo spazio sul dispositivo non ha la copia online con cui verificare le sovrapposizioni. */
+ offlineReason(){return this.auth.offlineMode()?'L’importazione da Excel richiede l’accesso con un account online: lo spazio sul dispositivo non può verificare le sovrapposizioni con la copia online. Puoi creare la scheda da zero in Schede.':'Collegati per confermare e verificare le sovrapposizioni.';}
  canLeave(){if(this.busy()){this.feedback.show('error','Attendi il termine dell’importazione prima di cambiare pagina.');return false;}return true;}
  ngOnDestroy(){this.destroyed=true;this.generation++;}
 }

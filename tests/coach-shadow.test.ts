@@ -409,7 +409,7 @@ describe("storico confrontabile", () => {
     workoutExercises: [
       row("old-row", "old"),
       row("mid-row", "mid"),
-      row("setup-row", "other-setup", { machineSetup: { seat: "4" } }),
+      row("setup-row", "other-setup", { machineSetup: { machine: "Altra macchina", seat: "4" } }),
       row("now-row", "now"),
       row("future-row", "future"),
     ],
@@ -425,7 +425,7 @@ describe("storico confrontabile", () => {
   } as unknown as DataSet;
   const current = data.workoutExercises[3] as WorkoutLogExercise;
 
-  it("restituisce solo sedute precedenti, completate e con la stessa configurazione", () => {
+  it("restituisce solo sedute precedenti, completate e sulla stessa macchina", () => {
     const history = coachHistory(data, current);
     expect(history.map((session) => session.id)).toEqual(["mid-row", "old-row"]);
     expect(history[0].sets).toEqual([
@@ -591,5 +591,200 @@ describe("Coach Ombra: alternative, recupero, andamento e volume", () => {
     expect(weeklyMuscleSets(data, "chest", "2026-03-10")).toBe(2);
     expect(weeklyMuscleSets(data, "back", "2026-03-10")).toBe(1);
     expect(weeklyMuscleSets(data, "", "2026-03-10")).toBe(0);
+  });
+});
+
+describe("Coach Ombra · ragionamento sui carichi", () => {
+  const rpeSets = (pairs: [number, number, number][]) => pairs.map(([weight, reps, rpe]) => ({ weight, reps, rpe }));
+
+  it("sui carichi alti calcola l'aumento dal massimale stimato, con un tetto più ampio per i multiarticolari", () => {
+    // 200 kg × 12 a RPE 7 → massimale ≈ 300 kg; 9 ripetizioni a RPE 8 ≈ 219,5 kg.
+    const compound = coachNextSet({ ...base, compound: true, reference: sets(200, [12, 12, 12], 7), done: [] });
+    expect(compound).toMatchObject({ action: "raise", weight: 215, reps: 9 });
+    expect(compound!.reason).toContain("circa +8%");
+    const isolation = coachNextSet({ ...base, reference: sets(200, [12, 12, 12], 7), done: [] });
+    expect(isolation).toMatchObject({ action: "raise", weight: 210 });
+    // Sui carichi bassi resta il singolo scatto: il tetto non scende mai sotto la regola semplice.
+    expect(coachNextSet({ ...base, compound: true, reference: sets(60, [12, 12, 12], 8), done: [] })).toMatchObject({ weight: 62.5 });
+  });
+
+  it("in seduta sale in proporzione al carico, entro il 5%", () => {
+    const suggestion = coachNextSet({ ...base, compound: true, done: [{ weight: 200, reps: 12, rpe: 6 }] });
+    expect(suggestion).toMatchObject({ action: "raise", weight: 210, basis: "session" });
+    expect(suggestion!.reps).toBeGreaterThanOrEqual(8);
+  });
+
+  it("oltre 12 ripetizioni sale di un solo passo e lo spiega", () => {
+    const suggestion = coachNextSet({ repsMin: 12, repsMax: 15, incrementKg: 2.5, reference: sets(20, [15, 15, 15], 6), done: [] });
+    expect(suggestion).toMatchObject({ action: "raise", weight: 22.5 });
+    expect(suggestion!.evidence.join(" ")).toContain("Oltre 12 ripetizioni");
+  });
+
+  it("mostra l'andamento del massimale stimato tra le sedute", () => {
+    const suggestion = coachNextSet({ ...base, reference: sets(60, [10, 10, 10], 8), history: [{ sets: sets(60, [9, 9, 9], 8) }], done: [] });
+    expect(suggestion!.evidence.join(" ")).toContain("Massimale stimato: 84 kg · +2% rispetto a una seduta fa");
+  });
+
+  it("con il massimale fermo da quattro sedute propone di cambiare stimolo, anche se il carico cambia", () => {
+    const suggestion = coachNextSet({
+      ...base,
+      reference: sets(60, [10, 10, 10], 8),
+      history: [{ sets: sets(62.5, [9, 9, 9], 8) }, { sets: sets(65, [8, 8, 8], 8) }, { sets: sets(60, [10, 10, 10], 8) }],
+      done: [],
+    });
+    expect(suggestion).toMatchObject({ action: "hold", weight: 60, title: "Cambia stimolo" });
+    expect(suggestion!.flags).toContain("stall");
+  });
+
+  it("con il massimale in calo e sforzo alto propone una seduta di scarico", () => {
+    const suggestion = coachNextSet({
+      ...base,
+      reference: sets(60, [8, 8, 8], 9),
+      history: [{ sets: sets(62.5, [10, 10, 10], 8) }, { sets: sets(65, [8, 8, 8], 8) }, { sets: sets(62.5, [10, 10, 10], 8) }],
+      done: [],
+    });
+    expect(suggestion).toMatchObject({ action: "lower", weight: 55, title: "Seduta di scarico" });
+    expect(suggestion!.flags).toContain("deload");
+  });
+
+  it("con un calo marcato tra le serie chiede più recupero prima di salire", () => {
+    const suggestion = coachNextSet({ ...base, reference: rpeSets([[60, 12, 8], [60, 9, 9], [60, 8, 9]]), done: [] });
+    expect(suggestion).toMatchObject({ action: "hold", weight: 60, title: "Più recupero, poi sali", restBonus: 30 });
+    expect(suggestion!.reason).toContain("da 12 a 8 ripetizioni");
+    // Un calo normale vicino al cedimento (12 → 10) non basta.
+    expect(coachNextSet({ ...base, reference: rpeSets([[60, 12, 8], [60, 11, 9], [60, 10, 9]]), done: [] })!.title).not.toBe("Più recupero, poi sali");
+  });
+});
+
+describe("Coach Ombra · storico completo, corpo libero, schema e record", () => {
+  it("legge ripetizioni in riserva, tecnica e dolore salvati nelle serie passate", async () => {
+    const { annotateSetNotes } = await import("../src/app/services/coach-expert-adapter");
+    const { coachSetFromLog } = await import("../src/app/services/coach-shadow");
+    const notes = annotateSetNotes("Buona", { technique: "good", pain: false, rir: 2 });
+    expect(coachSetFromLog({ weight: 60, reps: 10, notes })).toEqual({ weight: 60, reps: 10, rir: 2, technique: "good", pain: false });
+    expect(coachSetFromLog({ weight: 60, reps: 10, rpe: 8 })).toEqual({ weight: 60, reps: 10, rpe: 8 });
+    // Con il solo margine dichiarato (senza RPE) l'andamento del massimale ora c'è.
+    const withRir = (weight: number, reps: number) => [0, 1, 2].map(() => ({ weight, reps, rir: 2 }));
+    const suggestion = coachNextSet({ ...base, reference: withRir(60, 10), history: [{ sets: withRir(60, 9) }], done: [] });
+    expect(suggestion!.evidence.join(" ")).toContain("Massimale stimato: 84 kg · +2%");
+  });
+
+  it("con zavorra e assistenza ragiona sul carico effettivo, peso corporeo compreso", () => {
+    // Dip: 80 kg di corpo + 10 kg di zavorra = 90 kg × 12 a RPE 7.
+    const weighted = coachNextSet({ ...base, compound: true, loadMode: "weighted-bodyweight", bodyWeight: 80, reference: sets(10, [12, 12, 12], 7), done: [] });
+    expect(weighted).toMatchObject({ action: "raise", weight: 15, reps: 10 });
+    expect(weighted!.evidence.join(" ")).toContain("peso corporeo compreso");
+    expect(weighted!.estimated1rm).toBeUndefined();
+    // Senza peso corporeo resta la regola semplice.
+    expect(coachNextSet({ ...base, loadMode: "weighted-bodyweight", reference: sets(10, [12, 12, 12], 7), done: [] })).toMatchObject({ weight: 12.5, reps: 8 });
+    // Trazioni assistite: 80 kg − 30 kg di assistenza = 50 kg effettivi.
+    const assisted = coachNextSet({ ...base, loadMode: "assisted", bodyWeight: 80, reference: sets(30, [12, 12, 12], 7), done: [] });
+    expect(assisted).toMatchObject({ action: "raise", weight: 27.5, reps: 10, title: "Riduci l'assistenza" });
+  });
+
+  it("per la prossima seduta propone carico e ripetizioni di ogni serie", () => {
+    const next = coachNextSession({ ...base, completed: sets(60, [10, 9, 9], 8) })!;
+    expect(next.sets).toEqual([{ weight: 60, reps: 11 }, { weight: 60, reps: 10 }, { weight: 60, reps: 10 }]);
+    expect(next.weight).toBe(60);
+    expect(next.reps).toBe(11);
+  });
+
+  it("riconosce un nuovo massimale stimato solo con almeno due sedute precedenti", () => {
+    const live = coachNextSet({ ...base, reference: sets(60, [10], 8), history: [{ sets: sets(60, [9], 8) }], done: [{ weight: 60, reps: 12, rpe: 8 }] })!;
+    expect(live.record).toBe(5);
+    expect(live.pulse).toEqual({ tone: "up", text: "+2 rip. sulla volta scorsa · nuovo massimale stimato (+5%)" });
+    expect(live.evidence.join(" ")).toContain("Nuovo massimale stimato: 88 kg, +5% sul miglior valore precedente");
+    // Con una sola seduta precedente è solo un confronto.
+    expect(coachNextSet({ ...base, reference: sets(60, [10], 8), done: [{ weight: 60, reps: 12, rpe: 8 }] })!.record).toBeUndefined();
+    // Nel riepilogo il record apre il consiglio per la prossima volta.
+    const summary = coachNextSession({ ...base, completed: sets(60, [12, 12], 8), history: [{ sets: sets(60, [10, 10], 8) }, { sets: sets(60, [9, 9], 8) }] })!;
+    expect(summary.reason.startsWith("Nuovo massimale stimato (+5%).")).toBe(true);
+  });
+});
+
+describe("Coach Ombra · scatti, volume indiretto, riscaldamento e coerenza dello sforzo", () => {
+  it("ricava lo scatto dai carichi usati, sulla stessa macchina", async () => {
+    const { inferWeightStep, exerciseWeightStep } = await import("../src/app/services/coach-shadow");
+    expect(inferWeightStep([50, 55, 60])).toBe(5);
+    expect(inferWeightStep([10, 12, 14])).toBe(2);
+    expect(inferWeightStep([40, 42.5, 45, 45])).toBe(2.5);
+    expect(inferWeightStep([20, 30, 40])).toBe(10);
+    expect(inferWeightStep([40, 45])).toBeUndefined();
+    expect(inferWeightStep([45.359, 50, 55])).toBeUndefined();
+    const data = {
+      workouts: [{ id: "w", status: "completed" }, { id: "d", status: "draft" }],
+      workoutExercises: [
+        { id: "a", workoutId: "w", exerciseId: "press", loadMode: "external", machineSetup: { machine: "Pacco A" } },
+        { id: "b", workoutId: "w", exerciseId: "press", loadMode: "external", machineSetup: { machine: "Pacco B" } },
+        { id: "c", workoutId: "d", exerciseId: "press", loadMode: "external", machineSetup: { machine: "Pacco A" } },
+      ],
+      sets: [
+        ...[50, 55, 60].map((weight, i) => ({ id: "a" + i, workoutExerciseId: "a", weight, reps: 10, completed: true })),
+        ...[50, 52.5, 57.5].map((weight, i) => ({ id: "b" + i, workoutExerciseId: "b", weight, reps: 10, completed: true })),
+        { id: "c0", workoutExerciseId: "c", weight: 51, reps: 10, completed: true },
+      ],
+    } as unknown as DataSet;
+    expect(exerciseWeightStep(data, "press", { machine: "Pacco A" })).toBe(5);
+    expect(exerciseWeightStep(data, "press", { machine: "Pacco B" })).toBe(2.5);
+    const suggestion = coachNextSet({ ...base, incrementKg: 5, incrementInferred: true, reference: sets(50, [12, 12, 12], 8), done: [] });
+    expect(suggestion).toMatchObject({ action: "raise", weight: 55 });
+    expect(suggestion!.evidence.join(" ")).toContain("Scatti da 5 kg ricavati dai carichi che hai usato");
+  });
+
+  it("conta come mezza serie il lavoro indiretto dei multiarticolari", async () => {
+    const { secondaryMuscleGroups } = await import("../src/app/services/coach-shadow");
+    const groups = [{ id: "chest", name: "Petto" }, { id: "shoulders", name: "Spalle" }, { id: "arms", name: "Braccia" }, { id: "back", name: "Schiena" }];
+    expect(secondaryMuscleGroups({ name: "Panca piana", muscleGroupId: "chest" }, groups)).toEqual(["shoulders", "arms"]);
+    expect(secondaryMuscleGroups({ name: "Rematore bilanciere", muscleGroupId: "back" }, groups)).toEqual(["arms"]);
+    expect(secondaryMuscleGroups({ name: "Croci ai cavi", muscleGroupId: "chest" }, groups)).toEqual([]);
+    expect(secondaryMuscleGroups({ name: "Panca piana", muscleGroupId: "chest", secondaryMuscleIds: ["arms"] }, groups)).toEqual(["arms"]);
+    const data = {
+      muscleGroups: groups,
+      exercises: [
+        { id: "bench", name: "Panca piana", muscleGroupId: "chest" },
+        { id: "row", name: "Rematore bilanciere", muscleGroupId: "back" },
+        { id: "curl", name: "Curl manubri", muscleGroupId: "arms" },
+      ],
+      workouts: [{ id: "today", date: "2026-03-10" }],
+      workoutExercises: [
+        { id: "a", workoutId: "today", exerciseId: "bench" },
+        { id: "b", workoutId: "today", exerciseId: "row" },
+        { id: "c", workoutId: "today", exerciseId: "curl" },
+      ],
+      sets: [
+        ...[1, 2, 3].map(() => ({ workoutExerciseId: "a", completed: true })),
+        ...[1, 2].map(() => ({ workoutExerciseId: "b", completed: true })),
+        ...[1, 2].map(() => ({ workoutExerciseId: "c", completed: true })),
+      ],
+    } as unknown as DataSet;
+    expect(weeklyMuscleSets(data, "arms", "2026-03-10")).toBe(4.5);
+    expect(weeklyMuscleSets(data, "shoulders", "2026-03-10")).toBe(1.5);
+    expect(weeklyMuscleSets(data, "chest", "2026-03-10")).toBe(3);
+    const line = coachNextSet({ ...base, reference: sets(20, [10], 8), done: [], weeklySets: 4.5, muscleName: "Braccia" })!
+      .evidence.find((text) => text.startsWith("Braccia"));
+    expect(line).toContain("4,5 serie allenanti negli ultimi 7 giorni (le serie indirette contano metà)");
+  });
+
+  it("adatta il riscaldamento al tipo di esercizio e al muscolo già caldo", async () => {
+    const { warmupPlan } = await import("../src/app/services/coach-shadow");
+    const plan = (weight: number, repsMin: number, compound: boolean, muscleWarm = false) => warmupPlan({ weight, repsMin, compound, muscleWarm, step: 2.5 });
+    expect(plan(100, 5, true)).toEqual([{ weight: 40, reps: 8 }, { weight: 60, reps: 5 }, { weight: 75, reps: 3 }, { weight: 85, reps: 1 }]);
+    expect(plan(60, 8, true)).toEqual([{ weight: 30, reps: 8 }, { weight: 42.5, reps: 5 }, { weight: 50, reps: 2 }]);
+    expect(plan(30, 10, false)).toEqual([{ weight: 15, reps: 10 }]);
+    expect(plan(100, 5, true, true)).toEqual([{ weight: 70, reps: 4 }]);
+    expect(plan(30, 10, false, true)).toEqual([]);
+    expect(plan(15, 10, true)).toEqual([]);
+  });
+
+  it("con uno sforzo dichiarato incoerente con lo storico resta prudente", () => {
+    const history = [{ sets: sets(60, [10], 10) }];
+    const trusted = coachNextSet({ ...base, done: [{ weight: 60, reps: 12, rpe: 6 }] })!;
+    expect(trusted).toMatchObject({ action: "raise", weight: 65, confidence: "high" });
+    const doubtful = coachNextSet({ ...base, history, done: [{ weight: 60, reps: 12, rpe: 6 }] })!;
+    expect(doubtful).toMatchObject({ action: "raise", weight: 62.5, confidence: "medium" });
+    expect(doubtful.evidence.join(" ")).toContain("Lo sforzo indicato sembra più basso");
+    const fromReference = coachNextSet({ ...base, history, reference: sets(60, [12, 12, 12], 6), done: [] })!;
+    expect(fromReference).toMatchObject({ action: "raise", weight: 62.5, confidence: "medium" });
+    expect(coachNextSet({ ...base, reference: sets(60, [12, 12, 12], 6), done: [] })).toMatchObject({ weight: 65 });
   });
 });
