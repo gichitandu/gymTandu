@@ -110,8 +110,15 @@
     {
       "idx": 15,
       "version": "6",
-      "when": 1795742122473,
-      "tag": "0015_dev_log",
+      "when": 1795708652367,
+      "tag": "0015_app_invites",
+      "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "6",
+      "when": 1795768892804,
+      "tag": "0016_dev_log",
       "breakpoints": true
     }
   ]

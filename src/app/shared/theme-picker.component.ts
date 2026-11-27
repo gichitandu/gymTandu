@@ -42,6 +42,7 @@ export class ThemePickerComponent {
     { value: "classic", label: "Classico", hint: "L’aspetto di sempre" },
     { value: "elegant", label: "Elegante", hint: "Essenziale, titoli grandi" },
     { value: "modern", label: "Rimodernizzato", hint: "Tutto stondato, animato" },
+    { value: "sport", label: "Sportivo", hint: "Grintoso, numeri da tabellone" },
   ];
   readonly draft = signal<ThemeConfig>(structuredClone(this.theme.config()));
   private baseline = signal(JSON.stringify(this.theme.config()));

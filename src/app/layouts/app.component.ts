@@ -17,6 +17,7 @@ import { isHubUrl } from '../hub/hub-access';
 import { HubInviteComponent } from '../hub/hub-invite.component';
 import { inviteTokenFromUrl as hubInviteTokenFromUrl } from '../hub/hub-invite-links';
 import { inviteTokenFromUrl } from '../services/group-workout';
+import { appInviteTokenFromUrl } from '../services/app-invite';
 @Component({selector:'app-root',standalone:true,imports:[WorkoutStartOptionsComponent,ConfirmationDialogComponent,FormsModule,ShellComponent,IconComponent,FeedbackPopupsComponent,HubHostComponent,HubInviteComponent],styleUrls:['./entry.css','./entry-redesign.css'],template:`
 <gt-feedback-popups/><gt-confirmation-dialog/>
 @if(inviteToken(); as invite){@defer(on immediate){<gt-hub-invite [token]="invite"/>}@placeholder{<p class="entry-status" role="status">Apertura dell’invito…</p>}} @else if(auth.user()) { @if(hubMode()){@defer(on immediate){<gt-hub-host/>}@placeholder{<p class="entry-status" role="status">Apertura…</p>}}@else{<gt-shell /><gt-workout-start-options/>} } @else {
@@ -40,8 +41,8 @@ import { inviteTokenFromUrl } from '../services/group-workout';
 <section class="entry-panel" aria-labelledby="entry-title">
 <div class="entry-topline"><button class="entry-back" aria-label="Torna alla presentazione" (click)="welcome.set(true)" [disabled]="auth.setup()"><gt-icon name="back"/></button><span class="entry-language" lang="it">IT</span></div>
 <div class="entry-brand"><img src="/brand/gt-modern-mark.png" alt="Logo GT GymTrack"/><div class="entry-wordmark">Gym<span>Track</span></div><p class="brand-tagline">{{features?.nutritionEnabled()?'ALLENAMENTO · NUTRIZIONE · PROGRESSI':'ALLENAMENTO · PROGRESSI'}}</p></div>
-<header class="entry-heading"><p class="entry-kicker">IL TUO SPAZIO DI ALLENAMENTO</p><h1 id="entry-title">{{auth.setup()?'Attiva il tuo account':reset()?'Nuova password':registering()?'Crea il tuo account':'Bentornato'}}</h1><p>{{auth.setup()?'Giacomo, prepara il tuo spazio Super Admin.':reset()?'Reimposta l’accesso del proprietario.':registering()?'Bastano pochi dati per allenarti in gruppo.':'Gestisci i tuoi allenamenti ovunque.'}}</p></header>
-@if(invite()&&!auth.setup()&&!reset()){<p class="entry-help" role="status">@if(inviteHost()){<strong>{{inviteHost()}}</strong> ti ha invitato ad allenarti in gruppo@if(inviteDay()){ ({{inviteDay()}})}. }@else if(inviteChecked()){Questo invito non è più valido: chiedi un nuovo link o un codice. }@if(registering()){Hai già un account? <button type="button" class="entry-text-button" (click)="registering.set(false)">Accedi</button>}@else if(inviteOpen()){Non hai un account? <button type="button" class="entry-text-button" (click)="registering.set(true);tab.set('account')">Registrati</button>}</p>}
+<header class="entry-heading"><p class="entry-kicker">IL TUO SPAZIO DI ALLENAMENTO</p><h1 id="entry-title">{{auth.setup()?'Attiva il tuo account':reset()?'Nuova password':registering()?'Crea il tuo account':'Bentornato'}}</h1><p>{{auth.setup()?'Giacomo, prepara il tuo spazio Super Admin.':reset()?'Reimposta l’accesso del proprietario.':registering()?(appInvite()&&!invite()?'Scegli nome utente e password: il tuo spazio è pronto in un minuto.':'Bastano pochi dati per allenarti in gruppo.'):'Gestisci i tuoi allenamenti ovunque.'}}</p></header>
+@if((invite()||appInvite())&&!auth.setup()&&!reset()){<p class="entry-help" role="status">@if(inviteHost()){<strong>{{inviteHost()}}</strong>{{invite()?' ti ha invitato ad allenarti in gruppo':' ti ha invitato su GymTrack'}}@if(invite()&&inviteDay()){ ({{inviteDay()}})}. }@else if(inviteChecked()){Questo invito non è più valido: chiedi un nuovo link{{invite()?' o un codice':''}}. }@if(registering()){Hai già un account? <button type="button" class="entry-text-button" (click)="registering.set(false)">Accedi</button>}@else if(inviteOpen()){Non hai un account? <button type="button" class="entry-text-button" (click)="registering.set(true);tab.set('account')">Registrati</button>}</p>}
 @if(auth.previousAccountArchive()){<p class="entry-help">Per ritrovare piani ed esercizi, accedi allo stesso account usato nell’ultima apertura. Lo spazio senza account è un archivio separato.</p>}
 @if(!auth.setup()){<div class="entry-tabs" role="tablist" aria-label="Modalità di accesso"><button id="account-tab" role="tab" [attr.aria-selected]="tab()==='account'" aria-controls="account-panel" [class.active]="tab()==='account'" (click)="tab.set('account')">Account</button><button id="local-tab" role="tab" [attr.aria-selected]="tab()==='local'" aria-controls="local-panel" [class.active]="tab()==='local'" (click)="tab.set('local')">Sul dispositivo</button></div>}
 @if(tab()==='account' || auth.setup()) {
@@ -99,13 +100,19 @@ export class AppComponent {
  /** Link di invito a un allenamento in gruppo: l'unico modo per creare da soli un account Cliente. */
  readonly invite=signal(typeof location==='undefined'?'':inviteTokenFromUrl(location.href));
  readonly inviteHost=signal('');readonly inviteDay=signal('');readonly inviteOpen=signal(false);readonly inviteChecked=signal(false);
+ /** Link di invito all'app creato dal Super Admin (#/benvenuto?accesso=…): permette di creare un account Cliente. */
+ readonly appInvite=signal(typeof location==='undefined'?'':appInviteTokenFromUrl(location.href));
  readonly registering=signal(false);
  readonly creating=computed(()=>this.auth.setup()||this.registering()||this.reset());
  private async checkInvite(){
   try{const r=await this.auth.request('group/invite?token='+this.invite());this.inviteChecked.set(true);if(r.valid){this.inviteHost.set(r.hostName);this.inviteDay.set(r.dayName);this.inviteOpen.set(r.registrationOpen===true);if(r.registrationOpen===true&&!this.auth.user()&&!this.email&&!this.password)this.registering.set(true);}}
   catch{/* senza rete resta disponibile il normale accesso */}
  }
- constructor(){if(this.invite())void this.checkInvite();this.theme.restoreEntryTheme();effect(()=>{if(!this.auth.user())untracked(()=>this.theme.restoreEntryTheme());});effect(()=>{if(!this.auth.loading()&&!this.auth.loggingOut()&&!this.auth.user()&&!this.busy()&&this.releases.autoUpdateReady())queueMicrotask(()=>void this.updateSignedOut());});}
+ private async checkAppInvite(){
+  try{const r=await this.auth.request('app-invite?token='+this.appInvite());this.inviteChecked.set(true);if(r.valid){this.inviteHost.set(r.inviterName);this.inviteOpen.set(r.registrationOpen===true);if(r.registrationOpen===true&&!this.auth.user()&&!this.email&&!this.password)this.registering.set(true);}}
+  catch{/* senza rete resta disponibile il normale accesso */}
+ }
+ constructor(){if(this.invite())void this.checkInvite();else if(this.appInvite())void this.checkAppInvite();this.theme.restoreEntryTheme();effect(()=>{if(!this.auth.user())untracked(()=>this.theme.restoreEntryTheme());});effect(()=>{if(!this.auth.loading()&&!this.auth.loggingOut()&&!this.auth.user()&&!this.busy()&&this.releases.autoUpdateReady())queueMicrotask(()=>void this.updateSignedOut());});}
  private async updateSignedOut(){
   const target=this.releases.downloadedBuild();
   if(!target||this.attemptedEntryBuild===target||this.auth.user()||this.auth.loading()||this.auth.loggingOut()||this.busy()||this.email||this.name||this.username||this.password||this.confirm||!this.releases.autoUpdateReady())return;
@@ -122,7 +129,7 @@ export class AppComponent {
   if((this.auth.setup()||reset||registering)&&this.password!==this.confirm) {this.error.set('Le password non coincidono.');return;}
   if((this.auth.setup()||registering) && !/^[a-zA-Z0-9][a-zA-Z0-9._-]{2,29}$/.test(this.username.trim())) {this.error.set('Scegli un nome utente valido di 3–30 caratteri.');return;}
   this.busy.set(true);
-  try {if(registering){await this.auth.register(this.invite(),{name:this.name.trim(),email:this.email.trim(),username:this.username.trim(),password:this.password},this.remember);this.password='';this.confirm='';this.registering.set(false);return;}
+  try {if(registering){const appLink=!this.invite()&&!!this.appInvite();await this.auth.register(appLink?this.appInvite():this.invite(),{name:this.name.trim(),email:this.email.trim(),username:this.username.trim(),password:this.password},this.remember,appLink?'app':'group');this.password='';this.confirm='';this.registering.set(false);return;}
    if(reset)await this.auth.resetOwnerPassword(this.password,this.remember,this.setupCode.trim());else await this.auth.login(this.auth.setup()?this.auth.ownerEmail():this.email,this.password,this.auth.setup(),this.remember,this.username,this.setupCode.trim());this.password='';this.confirm='';this.setupCode='';this.reset.set(false);}
   catch(e) {this.error.set(e instanceof Error?e.message:'Accesso non riuscito.');}
   finally {this.busy.set(false);}

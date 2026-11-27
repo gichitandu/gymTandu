@@ -29,6 +29,8 @@ export class ThemeService{
  elegant(){return this.config().style==='elegant';}
  /** True when the «Rimodernizzato» look is active. */
  modern(){return this.config().style==='modern';}
+ /** True when the «Sportivo» look is active: struttura dello stile Classico, aspetto atletico. */
+ sport(){return this.config().style==='sport';}
  isLight(){return resolveTheme(this.config(),this.systemLight()).light;}
  /** Reuse the last confirmed palette before authentication, without loading account archives. */
  restoreEntryTheme(){
@@ -75,6 +77,7 @@ export class ThemeService{
   const look=this.config().style;
   document.body.classList.toggle('style-elegant',look==='elegant'||look==='modern');
   document.body.classList.toggle('style-modern',look==='modern');
+  document.body.classList.toggle('style-sport',look==='sport');
   document.body.classList.toggle('theme-multicolor',tokens.multicolor);
   document.body.classList.toggle('theme-metallic',['oro','argento'].includes(this.config().palette)&&!this.config().accent);
   document.body.classList.toggle('palette-violet',this.config().palette==='viola-neon'&&!this.config().accent);

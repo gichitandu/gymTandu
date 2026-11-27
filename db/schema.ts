@@ -78,3 +78,8 @@ export const devOccurrences=sqliteTable('dev_occurrences',{
 export const devBuildUsage=sqliteTable('dev_build_usage',{
  build:text('build').notNull(),route:text('route').notNull(),visits:integer('visits').notNull().default(0),firstSeen:integer('first_seen').notNull(),lastSeen:integer('last_seen').notNull()
 },table=>[primaryKey({columns:[table.build,table.route]})]);
+
+/** Link di invito all'app creati dal Super Admin: ognuno registra pochi account Cliente e scade. */
+export const appInvites=sqliteTable('app_invites',{
+ id:text('id').primaryKey(),token:text('token').notNull().unique(),createdBy:text('created_by').notNull().references(()=>users.id),createdAt:integer('created_at').notNull(),expiresAt:integer('expires_at').notNull(),maxRegistrations:integer('max_registrations').notNull(),registrations:integer('registrations').notNull().default(0),revokedAt:integer('revoked_at')
+},table=>[index('app_invites_created_by').on(table.createdBy)]);
