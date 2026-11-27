@@ -23,9 +23,10 @@ import { IconComponent } from './icon.component';
 import { LoadProgressionComponent } from './load-progression.component';
 import { ExternalTimerService } from '../services/external-timer';
 import { TodayService } from '../services/today';
-import { coachHistory, coachNextSet, daysBetween, exerciseWeightStep, warmupPlan, readinessFromWellness, isCompoundExercise, weeklyMuscleSets, type CoachOption } from '../services/coach-shadow';
+import { coachForecastReps, coachHistory, coachNextSet, coachSetFromLog, daysBetween, exerciseWeightStep, warmupPlan, readinessFromWellness, isCompoundExercise, weeklyMuscleSets, type CoachOption } from '../services/coach-shadow';
 import type { AppUpdateEvent } from '../services/pwa';
 import { FormDraftService } from '../services/form-drafts';
+import { CoachAiService, coachAiSetContext, type CoachAiAdvice } from '../services/coach-ai';
 type ActiveSetDraft={weight:number;reps:number;rpe:number|undefined;setNotes:string;kind:'work'|'warmup'};
 interface ActiveDraftSnapshot {entries:[string,ActiveSetDraft][];exerciseId:string;setId:string;bases?:Record<string,string>}
 @Component({selector:'gt-active-workout',standalone:true,imports:[MachinePickerComponent,CoachVisibleTextPipe,ExerciseReplacementComponent,ExerciseMotionComponent,NgTemplateOutlet,FormsModule,LoadProgressionComponent,MachineSetupComponent,MuscleMapComponent,ExerciseThumbComponent,ExerciseVideoComponent,IconComponent],templateUrl:'./active-workout.component.html',styleUrls:['./recording.css','./recording-simple.css','./workout-redesign.css','./recording-v3.css','./coach-expert-card.css']})
@@ -196,6 +197,25 @@ export class ActiveWorkoutComponent {
  coachAskChoices=[{rir:0,label:'0',hint:'al limite'},{rir:1,label:'1',hint:''},{rir:2,label:'2',hint:''},{rir:3,label:'3',hint:''},{rir:4,label:'4+',hint:'facile'}];
  /** Registra lo sforzo della serie precedente (RPE = 10 − ripetizioni in riserva) passando dallo Store. */
  async answerCoachAsk(rir:number){const last=this.coachAsk();if(!last||this.committing())return;this.committing.set(true);try{if(!await this.flushSet(last.id,true))return;await this.s.updateSet(last.id,{rpe:10-Math.min(4,Math.max(0,rir))},true);}catch(error){this.s.error.set(error instanceof Error?error.message:'Sforzo della serie non salvato.');}finally{this.committing.set(false);}}
+ /** Ripetizioni stimate se scegli un carico diverso da quello proposto dal coach (solo carico esterno). */
+ coachForecast(){const c=this.coach(),e=this.selected();if(!c?.forecast||c.action==='stop'||!e||!(this.weight>0))return undefined;const kg=this.s.kg(this.weight);if(Math.abs(kg-c.weight)<0.01)return undefined;const reps=coachForecastReps(c.forecast,kg);if(reps===undefined)return undefined;return {weight:this.s.formatWeight(kg)+' '+this.s.settings().unit,reps,rpe:this.fmt(c.forecast.rpe),low:e.repsMin!==undefined&&reps<e.repsMin,min:e.repsMin};}
+ /* Coach con l'AI: parere scritto su richiesta, legato alla serie per cui è stato chiesto. */
+ coachAi=inject(CoachAiService,{optional:true});coachAiOpen=signal(false);coachAiQuestion=signal('');
+ private coachAiResult=signal<{setId:string;advice?:CoachAiAdvice;error?:string}|null>(null);
+ coachAiAdvice=computed(()=>{const r=this.coachAiResult();return r&&r.setId===this.setId()?r.advice??null:null;});
+ coachAiError=computed(()=>{const r=this.coachAiResult();return r&&r.setId===this.setId()?r.error??'':'';});
+ async askCoachAi(){
+  const c=this.coach(),e=this.selected(),set=this.currentSet();const ai=this.coachAi;if(!ai||!c||!e||!set||e.repsMin===undefined||e.repsMax===undefined||ai.busy())return;
+  const data=this.s.data(),catalog=this.s.exercise(e.exerciseId),muscle=catalog?.muscleGroupId,past=this.recordingPast(),program=this.programContext(),setId=set.id;
+  const working=this.s.sets(e.id).filter(x=>x.kind!=='warmup'),today=data.wellnessLogs.find(w=>w.date===(this.todayClock?.date()??localDate()));
+  const context=coachAiSetContext({exercise:e.name,muscle:muscle?this.s.muscle(muscle):undefined,equipment:catalog?.equipment,description:coachVisibleText(catalog?.description),loadMode:e.loadMode,unit:this.s.settings().unit,repsMin:e.repsMin,repsMax:e.repsMax,targetRpe:this.coachTargetRpe(e),setNumber:set.number,plannedSets:working.length,
+   today:working.filter(x=>x.completed&&x.number<set.number).map(x=>coachSetFromLog(x)),history:coachHistory(data,e,3),suggestion:c,readiness:past?undefined:readinessFromWellness(today),sore:!past&&!!muscle&&(today?.soreness?.[muscle]??0)>=2,
+   weeklySets:past||!muscle?undefined:weeklyMuscleSets(data,muscle,this.workout()?.date??localDate()),week:program?.week,phase:program?.phase,toUnit:kg=>this.s.weight(kg)});
+  this.coachAiResult.set(null);
+  try{const advice=await ai.ask('set',context,this.coachAiQuestion());this.coachAiResult.set({setId,advice});this.coachAiOpen.set(false);this.coachAiQuestion.set('');}
+  catch(error){this.coachAiResult.set({setId,error:error instanceof Error?error.message:'Analisi del coach non riuscita. Riprova.'});}
+ }
+ closeCoachAi(){this.coachAi?.cancel();this.coachAiOpen.set(false);}
  coachIcon(){const action=this.coach()?.action;return action==='raise'?'strength':action==='lower'?'chevron-down':action==='stop'?'shield':'target';}
  nextRecord(){const e=this.selected();if(!e)return;const sets=this.s.sets(e.id),set=sets.find(s=>!s.completed)||sets[0];if(set)this.record(set);}
 

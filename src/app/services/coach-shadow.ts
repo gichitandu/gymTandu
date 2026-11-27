@@ -25,7 +25,14 @@
  *  - la stima delle ripetizioni in riserva è meno precisa oltre le 12 ripetizioni
  *    (Halperin 2022): lì si sale di un passo alla volta;
  *  - progressi valutati sull'andamento del massimale stimato tra le sedute, non solo
- *    a parità di carico; un calo marcato tra le serie chiede più recupero prima di salire.
+ *    a parità di carico; un calo marcato tra le serie chiede più recupero prima di salire;
+ *  - forma del giorno: il massimale stimato di oggi confrontato con la mediana delle ultime
+ *    sedute (autoregolazione giornaliera, Helms 2018; Zourdos 2016); sotto del 7% il carico
+ *    viene adattato alla capacità di oggi invece di inseguire il programma;
+ *  - fatica nella seduta: calo del massimale stimato dalla prima serie (metodo della «percentuale
+ *    di fatica», Tuchscherer); oltre il 12% si alleggerisce, oltre il 20% le serie in più danno
+ *    più fatica che stimolo;
+ *  - stesso esercizio a meno di 48 ore con sforzo alto: recupero incompleto, nessun aumento.
  */
 import type { DataSet, WorkoutLogExercise } from "../models/domain";
 import { machineKey } from "./training-flow";
@@ -38,7 +45,17 @@ export type CoachLoadMode =
 export type CoachConfidence = "low" | "medium" | "high";
 export type CoachFlag =
   | "stall" | "layoff" | "big-jump" | "fatigue" | "sore" | "low-readiness" | "first-time"
-  | "deload" | "caution";
+  | "deload" | "caution" | "off-day";
+
+/**
+ * Base per stimare le ripetizioni a un carico diverso da quello proposto: massimale stimato
+ * (kg, carico esterno), sforzo previsto e ripetizioni perse per la fatica delle serie già fatte.
+ */
+export interface CoachForecast {
+  e1rm: number;
+  rpe: number;
+  fatigue: number;
+}
 
 /** Alternativa di pari sforzo alla proposta principale: un incremento in meno o in più. */
 export interface CoachOption {
@@ -141,6 +158,10 @@ export interface CoachSuggestion {
   record?: number;
   /** Solo per la prossima seduta: carico e ripetizioni proposti per ogni serie, in ordine. */
   sets?: { weight: number; reps: number }[];
+  /** Per stimare le ripetizioni se scegli un carico diverso (solo carico esterno con sforzo dichiarato). */
+  forecast?: CoachForecast;
+  /** Forma di oggi rispetto alla mediana delle ultime sedute, in percentuale (solo con dati sufficienti). */
+  form?: number;
 }
 
 const EPSILON = 0.000001;
@@ -185,6 +206,23 @@ function repsAt(max: number, weight: number, rpe: number) {
   if (!(weight > 0) || !(max > 0)) return undefined;
   return Math.floor(30 * (max / weight - 1) - (10 - rpe) + 1e-9);
 }
+
+/**
+ * Ripetizioni stimate a un carico (kg) partendo dalla base del Coach: undefined se la stima
+ * non è affidabile (meno di 1 o più di 20 ripetizioni).
+ */
+export function coachForecastReps(forecast: CoachForecast | undefined, weightKg: number) {
+  if (!forecast || !(forecast.e1rm > 0) || !(weightKg > 0)) return undefined;
+  const reps = repsAt(forecast.e1rm, weightKg, forecast.rpe);
+  if (reps === undefined) return undefined;
+  const value = reps - Math.max(0, forecast.fatigue);
+  return value >= 1 && value <= 20 ? value : undefined;
+}
+
+const median = (values: number[]) => {
+  const sorted = [...values].sort((a, b) => a - b), middle = Math.floor(sorted.length / 2);
+  return sorted.length % 2 ? sorted[middle] : (sorted[middle - 1] + sorted[middle]) / 2;
+};
 
 /** Oltre 12 ripetizioni la stima delle ripetizioni in riserva perde precisione (Halperin 2022). */
 const RELIABLE_REPS = 12;
@@ -503,6 +541,34 @@ export function coachNextSet(input: CoachInput): CoachSuggestion | null {
       ? { tone: "up", text: compared?.tone === "up" ? `${compared.text} · nuovo massimale stimato (+${record}%)` : `Nuovo massimale stimato (+${record}%)` }
       : compared;
 
+  // Forma di oggi: massimale stimato delle serie fatte oggi rispetto alla mediana delle ultime sedute.
+  // Dopo una pausa lunga il confronto non dice nulla sulla giornata e non viene fatto.
+  const recentGap = input.daysSinceReference === undefined || input.daysSinceReference < 21;
+  const usualBests = measurable && last && recentGap
+    ? [reference, ...(input.history ?? []).map((session) => session.sets.filter(validSet))]
+        .filter((sets) => sets.length)
+        .slice(0, 4)
+        .map((sets) => sessionBest(sets, e1rm))
+        .filter((value): value is number => value !== undefined)
+    : [];
+  const usual = usualBests.length >= 2 ? median(usualBests) : undefined;
+  const todayBest = measurable && last && !effortDoubt ? sessionBest(done, e1rm) : undefined;
+  const form = todayBest !== undefined && usual !== undefined ? Math.round((todayBest / usual - 1) * 100) : undefined;
+  if (form !== undefined && Math.abs(form) >= 4)
+    evidence.push(
+      `Forma di oggi: massimale stimato ${form > 0 ? "+" : "−"}${Math.abs(form)}% rispetto al tuo solito (ultime ${usualBests.length} sedute)`,
+    );
+  // Base per stimare le ripetizioni a un carico diverso: l'ultima serie di oggi (con la fatica di
+  // una serie in più) oppure, alla prima serie, la seduta di riferimento recente.
+  const forecastBase =
+    mode !== "external" || effortDoubt
+      ? undefined
+      : last
+        ? effort(last) !== undefined ? e1rm(last) : undefined
+        : !next && recentGap && reference.length ? sessionBest(reference, e1rm) : undefined;
+  const forecast: CoachForecast | undefined =
+    forecastBase === undefined ? undefined : { e1rm: round(forecastBase), rpe: target, fatigue: last ? 1 : Math.min(index, 1) };
+
   const titles: Record<CoachAction, string> = {
     raise: !loaded ? "Una ripetizione in più" : assisted ? "Riduci l'assistenza" : "Sali di carico",
     hold: loaded ? "Mantieni il carico" : "Mantieni",
@@ -535,6 +601,8 @@ export function coachNextSet(input: CoachInput): CoachSuggestion | null {
       ...(rest && action !== "stop" ? { rest } : {}),
       ...(pulse ? { pulse } : {}),
       ...(record === undefined ? {} : { record }),
+      ...(forecast && action !== "stop" ? { forecast } : {}),
+      ...(form === undefined ? {} : { form }),
     };
   };
   /**
@@ -559,7 +627,7 @@ export function coachNextSet(input: CoachInput): CoachSuggestion | null {
         result.push({ kind: "easier", label: "Più leggero", weight: lighter, reps: lighterReps });
     }
     const blocked: CoachFlag[] = [
-      "fatigue", "sore", "low-readiness", "layoff", "big-jump", "deload", "caution", "first-time",
+      "fatigue", "sore", "low-readiness", "layoff", "big-jump", "deload", "caution", "first-time", "off-day",
     ];
     if (confidence === "high" && action === "hold" && !flags.some((flag) => blocked.includes(flag))) {
       const heavier = shift(weight, 1);
@@ -654,6 +722,61 @@ export function coachNextSet(input: CoachInput): CoachSuggestion | null {
           : "Serie al limite: anche una ripetizione in meno va bene. Recupera un po' di più.",
         { restBonus: 60 },
       );
+    }
+    // Fatica accumulata e forma del giorno: il carico segue la capacità di oggi (sforzo dichiarato).
+    const lastMax = rpe !== undefined && rpe >= 8.5 && loaded && !effortDoubt ? e1rm(last) : undefined;
+    if (lastMax !== undefined) {
+      /** Scatti in meno perché la capacità attuale consenta il minimo di ripetizioni allo sforzo previsto. */
+      const fit = (capacity: number) => {
+        const goal = capacity / (1 + (repsMin + (10 - target)) / 30);
+        const limit = stepsFor(last.weight, 0.1);
+        let steps = 0;
+        while (steps < limit && effective(shift(last.weight, -steps)) > goal + EPSILON) steps++;
+        const weight = shift(last.weight, -steps);
+        const expected = repsAt(capacity, effective(weight), target);
+        return { steps, weight, reps: expected === undefined ? repsMin : inRange(expected) };
+      };
+      const verb = assisted ? "aumenta l'assistenza" : "scendi";
+      const firstMax = done.filter((set) => effort(set) !== undefined).map(e1rm).find((value): value is number => value !== undefined);
+      const drop = firstMax !== undefined && done.length >= 2 ? 1 - lastMax / firstMax : 0;
+      if (drop >= 0.2 && done.length >= 3) {
+        flags.push("fatigue");
+        return build(
+          "stop",
+          last.weight,
+          repsMin,
+          `Dalla prima serie la forza stimata è calata di circa il ${Math.round(drop * 100)}%: altre serie oggi aggiungerebbero più fatica che stimolo. Chiudi qui l'esercizio e passa al prossimo.`,
+          "session",
+          confidence,
+          { title: "Basta così per oggi" },
+        );
+      }
+      if (drop >= 0.12) {
+        const fitted = fit(lastMax);
+        if (fitted.steps > 0) {
+          flags.push("fatigue");
+          return session(
+            "lower",
+            fitted.weight,
+            fitted.reps,
+            `Dalla prima serie la forza stimata è calata di circa il ${Math.round(drop * 100)}%: è fatica accumulata, non mancanza di forza. ${verb[0].toUpperCase() + verb.slice(1)} a ${format(fitted.weight)} e punta a ${fitted.reps}, recuperando un po' di più. Se cali ancora, chiudi qui l'esercizio.`,
+            { title: "Fatica in aumento", restBonus: 60 },
+          );
+        }
+      }
+      if (form !== undefined && form <= -7) {
+        const fitted = fit(lastMax);
+        if (fitted.steps > 0) {
+          flags.push("off-day");
+          return session(
+            "lower",
+            fitted.weight,
+            fitted.reps,
+            `Oggi rendi circa il ${Math.abs(form)}% sotto il tuo solito: è una giornata no, capita. Adatta il carico alla forma di oggi: ${verb} a ${format(fitted.weight)} e punta a ${fitted.reps}. Le serie restano allenanti e la prossima volta riparti dal carico abituale.`,
+            { title: "Giornata sotto tono" },
+          );
+        }
+      }
     }
     const atTop = last.reps >= repsMax;
     if (rpe !== undefined && atTop && rpe <= target - 1 && !tired) {
@@ -831,6 +954,17 @@ export function coachNextSet(input: CoachInput): CoachSuggestion | null {
     );
   }
 
+  // Stesso esercizio a meno di 48 ore con sforzo alto: la forza non è ancora tornata al massimo.
+  if (!next && days !== undefined && days >= 0 && days <= 1 && maxRpe !== undefined && maxRpe >= 9) {
+    flags.push("fatigue");
+    return fromReference(
+      "hold",
+      weight,
+      inRange(anchor.reps),
+      `Hai fatto questo esercizio ${daysLabel(days)} con sforzo alto (RPE fino a ${number(maxRpe)}): servono di solito 48–72 ore per recuperare. Tieni ${loaded ? "lo stesso carico" : "le stesse ripetizioni"}, senza cercare l'aumento oggi.`,
+      { title: "Recupero incompleto" },
+    );
+  }
   if (!next && tired)
     return fromReference(
       "hold",

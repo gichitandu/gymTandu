@@ -196,6 +196,21 @@ Cose da sapere:
 - I Super Admin e gli Admin vedono consumo, soglia e orario di ripristino in Pasti, nel
   riquadro "Lettura foto con AI".
 
+### Coach Ombra con l'AI (stesso servizio, nessuna configurazione in più)
+
+Il Coach Ombra calcola carichi e ripetizioni sul dispositivo, anche offline. Su richiesta
+(«Chiedi al coach AI» in seduta, «Analisi completa con il coach AI» nel riepilogo) l'app invia a
+`/api/coach-ai` solo i dati dell'allenamento in forma compatta (esercizio, serie, sforzo, proposta
+del Coach, volume): nessun nome, email o dato del profilo. Il Worker usa Gemini se l'account ha
+una chiave attiva (vedi sopra), altrimenti Workers AI con la stessa prenotazione e lo stesso
+limite giornaliero di Neuron della lettura dei pasti. La risposta è solo un parere scritto: non
+modifica mai carichi, ripetizioni o dati salvati.
+
+- Disponibile a ogni account con accesso online; ogni account ha fino a 20 analisi al giorno
+  (variabile facoltativa `COACH_AI_DAILY_LIMIT`, massimo 200). Le richieste a cui nessun modello
+  risponde non vengono contate.
+- Non servono migrazioni: il conteggio usa la tabella `ai_usage` (righe `coach-AAAA-MM-GG-id`).
+
 ## GT Garage: dati automatici della Golf (facoltativo, gratuito)
 
 Il Worker legge ogni 30 minuti (cron `*/30 * * * *`) il pacchetto di dati più recente dal
