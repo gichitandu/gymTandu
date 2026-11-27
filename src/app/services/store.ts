@@ -977,7 +977,8 @@ export class Store {
       if(plan.program&&(repeatCount!==1||d.scheduledWorkouts.some(event=>event.id!==id&&event.planId===plan.id&&event.dayId===dayId))||previous&&d.plans.some(item=>item.id===previous.planId&&item.program)&&previous.dayId!==dayId)throw Error('Questa seduta del piano importato è già programmata. Usa Sposta per cambiare data o ora.');
       if(index>=0&&d.scheduledWorkouts[index].workoutId)throw Error('Una programmazione già avviata non può essere modificata.');
       if(index>=0&&repeatCount!==1)throw Error('Per ripetere l’allenamento crea una nuova programmazione.');
-      const conflicts=scheduleConflicts(d,dates,plan.id,id);
+      // Come per spostamento e avvio: i piani aperti ma non attivi (es. una copia recuperata) non bloccano il piano attivo.
+      const conflicts=scheduleConflicts(d,dates,plan.id,id,{onlyActivePlans:plan.active});
       if(conflicts.length)throw Error('Programmazione bloccata: data occupata da un altro piano. '+conflicts[0]);
       if(typeof notes!=='string')throw Error('Le note non sono valide.');
       if(notes.length>2000&&notes!==previous?.notes)throw Error('Le note possono contenere al massimo 2000 caratteri.');
