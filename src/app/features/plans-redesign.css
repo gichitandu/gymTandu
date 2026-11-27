@@ -189,3 +189,20 @@ gt-icon.pl-down{transform:rotate(-90deg)}
  .simple-days{grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));align-items:start}
  .simple-plan-list{grid-template-columns:repeat(auto-fill,minmax(min(100%,380px),1fr));align-items:start}
 }
+
+/* Avviso schede sovrapposte: titolo breve, le due schede a confronto, un solo pulsante. */
+.plan-overlap{display:grid;gap:12px}
+.po-head{display:flex;align-items:center;gap:12px}
+.po-head h3{margin:0;font-size:16px;line-height:1.25}
+.po-head small{display:block;margin-top:2px;font-size:12.5px;line-height:1.35;color:var(--muted)}
+.plan-overlap-row{display:grid;gap:10px}
+.po-plans{display:grid;gap:6px;margin:0;padding:0;list-style:none}
+.po-plans li{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:14px;background:color-mix(in srgb,var(--text) 5%,transparent)}
+.po-plans gt-icon{flex:none;width:16px;height:16px}
+.po-plans strong{flex:1;min-width:0;font-size:13px;font-weight:650;line-height:1.3;overflow-wrap:break-word}
+.po-plans span{flex:none;font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.po-keep gt-icon{color:var(--green,var(--accent))}
+.po-drop{opacity:.7}
+.po-drop gt-icon{color:var(--muted)}
+.po-drop strong{font-weight:550}
+.po-resolve{width:100%}

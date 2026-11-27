@@ -98,13 +98,11 @@
       [attr.data-kind]="item.kind"
       [style.--i]="index"
     >
-      <span
-        class="cal-row-time"
-        [attr.aria-label]="
-          itemTime(item) ? 'Orario ' + itemTime(item) : 'Orario non indicato'
-        "
-        >{{ itemTime(item) || "—" }}</span
-      >
+      @if (itemTime(item); as time) {
+        <span class="cal-row-time" [attr.aria-label]="'Orario ' + time">{{
+          time
+        }}</span>
+      }
       <button
         type="button"
         class="cal-item-select"
